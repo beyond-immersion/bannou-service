@@ -1,8 +1,10 @@
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Telemetry;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -24,6 +26,9 @@ public class GameServiceServiceTests
     private readonly Mock<ILogger<GameServiceService>> _mockLogger;
     private readonly GameServiceServiceConfiguration _configuration;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private const string STATE_STORE = "game-service-statestore";
 
     public GameServiceServiceTests()
@@ -36,6 +41,9 @@ public class GameServiceServiceTests
         _mockLogger = new Mock<ILogger<GameServiceService>>();
         _configuration = new GameServiceServiceConfiguration();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockResourceClient = new Mock<IResourceClient>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<GameServiceRegistryModel>(STATE_STORE))
@@ -44,6 +52,15 @@ public class GameServiceServiceTests
             .Returns(_mockListStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
             .Returns(_mockStringStore.Object);
+
+        // Default: lock provider succeeds
+        var successLock = new Mock<ILockResponse>();
+        successLock.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLock.Object);
     }
 
     private GameServiceService CreateService()
@@ -51,9 +68,12 @@ public class GameServiceServiceTests
         return new GameServiceService(
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
+            _mockLockProvider.Object,
             _mockLogger.Object,
             _configuration,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            _mockResourceClient.Object,
+            _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests
@@ -227,43 +247,9 @@ public class GameServiceServiceTests
         Assert.Equal(StatusCodes.Conflict, statusCode);
     }
 
-    [Fact]
-    public async Task CreateServiceAsync_ShouldReturnBadRequest_WhenStubNameEmpty()
-    {
-        // Arrange
-        var service = CreateService();
-        var request = new CreateServiceRequest
-        {
-            StubName = "",
-            DisplayName = "Test Service",
-            IsActive = true
-        };
-
-        // Act
-        var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.BadRequest, statusCode);
-    }
-
-    [Fact]
-    public async Task CreateServiceAsync_ShouldReturnBadRequest_WhenDisplayNameEmpty()
-    {
-        // Arrange
-        var service = CreateService();
-        var request = new CreateServiceRequest
-        {
-            StubName = "testservice",
-            DisplayName = "",
-            IsActive = true
-        };
-
-        // Act
-        var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.BadRequest, statusCode);
-    }
+    // NOTE: Empty StubName and DisplayName validation is enforced by schema data annotations
+    // ([Required], [StringLength]) at the generated controller level, not in the service method.
+    // These cases are covered by HTTP integration tests, not unit tests.
 
     [Fact]
     public async Task CreateServiceAsync_ShouldNormalizeStubNameToLowercase()
@@ -297,6 +283,39 @@ public class GameServiceServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Equal("mygameservice", response.StubName);
+    }
+
+    [Fact]
+    public async Task CreateServiceAsync_ShouldDefaultAutoLobbyEnabledToFalse()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateServiceRequest
+        {
+            StubName = "nolobby",
+            DisplayName = "No Lobby Game"
+        };
+
+        // Mock: No existing stub name
+        _mockStringStore
+            .Setup(s => s.GetAsync("game-service-stub:nolobby", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Mock: Empty service list with ETag support
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync("game-service-list", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Guid>(), "etag-1"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync("game-service-list", It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        // Act
+        var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.False(response.AutoLobbyEnabled);
     }
 
     #endregion
@@ -653,8 +672,11 @@ public class GameServiceServiceTests
     }
 
     [Fact]
-    public async Task UpdateServiceAsync_ShouldReturnBadRequest_WhenServiceIdEmpty()
+    public async Task UpdateServiceAsync_ShouldReturnNotFound_WhenServiceIdEmpty()
     {
+        // Guid.Empty is no longer rejected as BadRequest — the service does a store lookup
+        // which returns null, yielding NotFound. Schema data annotations prevent Guid.Empty
+        // from reaching the service in production (controller-level validation).
         // Arrange
         var service = CreateService();
         var request = new UpdateServiceRequest
@@ -667,7 +689,7 @@ public class GameServiceServiceTests
         var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Equal(StatusCodes.NotFound, statusCode);
     }
 
     [Fact]
@@ -714,6 +736,53 @@ public class GameServiceServiceTests
         Assert.False(response.IsActive);
         Assert.NotNull(savedModel);
         Assert.False(savedModel.IsActive);
+    }
+
+    [Fact]
+    public async Task UpdateServiceAsync_ShouldUpdateAutoLobbyEnabled()
+    {
+        // Arrange
+        var service = CreateService();
+        var serviceId = Guid.NewGuid();
+        var request = new UpdateServiceRequest
+        {
+            ServiceId = serviceId,
+            AutoLobbyEnabled = true
+        };
+
+        // Mock: Service exists (autoLobbyEnabled = false)
+        _mockModelStore
+            .Setup(s => s.GetAsync($"game-service:{serviceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GameServiceRegistryModel
+            {
+                ServiceId = serviceId,
+                StubName = "testservice",
+                DisplayName = "Test Service",
+                IsActive = true,
+                AutoLobbyEnabled = false,
+                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            });
+
+        // Capture saved data
+        GameServiceRegistryModel? savedModel = null;
+        _mockModelStore
+            .Setup(s => s.SaveAsync(
+                $"game-service:{serviceId}",
+                It.IsAny<GameServiceRegistryModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, GameServiceRegistryModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data);
+
+        // Act
+        var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.True(response.AutoLobbyEnabled);
+        Assert.NotNull(savedModel);
+        Assert.True(savedModel.AutoLobbyEnabled);
     }
 
     #endregion
@@ -869,8 +938,11 @@ public class GameServiceServiceTests
     }
 
     [Fact]
-    public async Task DeleteServiceAsync_ShouldReturnBadRequest_WhenServiceIdEmpty()
+    public async Task DeleteServiceAsync_ShouldReturnNotFound_WhenServiceIdEmpty()
     {
+        // Guid.Empty is no longer rejected as BadRequest — the service does a store lookup
+        // which returns null, yielding NotFound. Schema data annotations prevent Guid.Empty
+        // from reaching the service in production (controller-level validation).
         // Arrange
         var service = CreateService();
         var request = new DeleteServiceRequest { ServiceId = Guid.Empty };
@@ -879,7 +951,7 @@ public class GameServiceServiceTests
         var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Equal(StatusCodes.NotFound, statusCode);
     }
 
     #endregion

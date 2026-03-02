@@ -5,7 +5,7 @@ using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-
+using System.Diagnostics;
 namespace LibOrchestrator;
 
 /// <summary>
@@ -22,23 +22,26 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     private readonly IOrchestratorStateManager _stateManager;
     private readonly IOrchestratorEventManager _eventManager;
     private readonly IControlPlaneServiceProvider _controlPlaneProvider;
+    private readonly IDistributedLockProvider _lockProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Cache of current service routings to detect changes
     private readonly ConcurrentDictionary<string, ServiceRouting> _currentRoutings = new();
 
-    // Version tracking for full mappings events
-    private long _mappingsVersion = 0;
+    // Mappings version tracked in Redis via _stateManager.IncrementMappingsVersionAsync()
 
     // Instance ID for this orchestrator (for source tracking in events)
     private readonly Guid _instanceId;
 
     // Periodic publication timer
     private Timer? _fullMappingsTimer;
-    private readonly TimeSpan _fullMappingsInterval = TimeSpan.FromSeconds(30);
+    private readonly TimeSpan _fullMappingsInterval;
 
-    // Track if routing changed since last publication
-    private bool _routingChanged = false;
-    private readonly object _routingChangeLock = new();
+    // Periodic lease cleanup timer
+    private Timer? _leaseCleanupTimer;
+    private readonly TimeSpan _leaseCleanupInterval;
+
+    // Periodic timer always publishes — no in-memory routing-change flag needed (IMPLEMENTATION TENETS)
 
     public ServiceHealthMonitor(
         ILogger<ServiceHealthMonitor> logger,
@@ -47,15 +50,22 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         IOrchestratorStateManager stateManager,
         IOrchestratorEventManager eventManager,
         IControlPlaneServiceProvider controlPlaneProvider,
-        IMeshInstanceIdentifier instanceIdentifier)
+        IMeshInstanceIdentifier instanceIdentifier,
+        IDistributedLockProvider lockProvider,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _configuration = configuration;
+        _fullMappingsInterval = TimeSpan.FromSeconds(configuration.FullMappingsIntervalSeconds);
+        _leaseCleanupInterval = TimeSpan.FromSeconds(configuration.LeaseCleanupIntervalSeconds);
         _appConfiguration = appConfiguration;
         _stateManager = stateManager;
         _eventManager = eventManager;
         _controlPlaneProvider = controlPlaneProvider;
         _instanceId = instanceIdentifier.InstanceId;
+        _lockProvider = lockProvider;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         // Subscribe to real-time heartbeat events from RabbitMQ
         _eventManager.HeartbeatReceived += OnHeartbeatReceived;
@@ -67,9 +77,17 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
             dueTime: _fullMappingsInterval,
             period: _fullMappingsInterval);
 
+        // Start periodic lease cleanup for processing pools
+        _leaseCleanupTimer = new Timer(
+            callback: _ => _ = ReclaimExpiredLeasesForAllPoolsAsync(),
+            state: null,
+            dueTime: _leaseCleanupInterval,
+            period: _leaseCleanupInterval);
+
         _logger.LogInformation(
-            "ServiceHealthMonitor started with {Interval}s full mappings publication interval",
-            _fullMappingsInterval.TotalSeconds);
+            "ServiceHealthMonitor started with {MappingsInterval}s full mappings and {LeaseInterval}s lease cleanup intervals",
+            _fullMappingsInterval.TotalSeconds,
+            _leaseCleanupInterval.TotalSeconds);
     }
 
     /// <summary>
@@ -111,6 +129,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     private async Task WriteHeartbeatAndUpdateRoutingAsync(ServiceHeartbeatEvent heartbeat)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.WriteHeartbeatAndUpdateRoutingAsync");
         try
         {
             // Write instance heartbeat to state store
@@ -151,7 +170,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                     }
 
                     // Same app-id - update status and load only
-                    existingRouting.Status = serviceStatus.Status.ToString().ToLowerInvariant();
+                    existingRouting.Status = serviceStatus.Status;
                     existingRouting.LoadPercent = loadPercent;
                     existingRouting.LastUpdated = DateTimeOffset.UtcNow;
 
@@ -180,7 +199,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                         }
 
                         // Same app-id - update status
-                        redisRouting.Status = serviceStatus.Status.ToString().ToLowerInvariant();
+                        redisRouting.Status = serviceStatus.Status;
                         redisRouting.LoadPercent = loadPercent;
                         redisRouting.LastUpdated = DateTimeOffset.UtcNow;
                         await _stateManager.WriteServiceRoutingAsync(serviceName, redisRouting);
@@ -196,8 +215,8 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                         {
                             AppId = heartbeat.AppId,
                             Host = heartbeat.AppId, // In Docker, container name = app_id
-                            Port = 80,
-                            Status = serviceStatus.Status.ToString().ToLowerInvariant(),
+                            Port = _configuration.DefaultServicePort,
+                            Status = serviceStatus.Status,
                             LoadPercent = loadPercent
                         };
 
@@ -212,10 +231,9 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                 }
             }
 
-            // If routing changed, mark for publication and publish immediately
+            // If routing changed, publish immediately
             if (routingChanged)
             {
-                MarkRoutingChanged();
                 await PublishFullMappingsAsync("new service routing initialized");
             }
         }
@@ -232,17 +250,18 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     public async Task SetServiceRoutingAsync(string serviceName, string appId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.SetServiceRoutingAsync");
         var routing = new ServiceRouting
         {
             AppId = appId,
             Host = appId,
-            Port = 80,
-            Status = "healthy"
+            Port = _configuration.DefaultServicePort,
+            Status = ServiceHealthStatus.Healthy
         };
 
         await _stateManager.WriteServiceRoutingAsync(serviceName, routing);
         _currentRoutings[serviceName] = routing;
-        MarkRoutingChanged();
+        // Routing change will be picked up by periodic timer publication
 
         _logger.LogInformation("Set routing for {ServiceName} -> {AppId}", serviceName, appId);
     }
@@ -254,6 +273,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     public async Task RestoreServiceRoutingToDefaultAsync(string serviceName)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.RestoreServiceRoutingToDefaultAsync");
         var defaultAppId = _appConfiguration.EffectiveAppId;
 
         // Set the routing to the default app-id instead of removing it
@@ -263,14 +283,14 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         {
             AppId = defaultAppId,
             Host = defaultAppId,
-            Port = 80,
-            Status = "healthy",
+            Port = _configuration.DefaultServicePort,
+            Status = ServiceHealthStatus.Healthy,
             LastUpdated = DateTimeOffset.UtcNow
         };
 
         await _stateManager.WriteServiceRoutingAsync(serviceName, defaultRouting);
         _currentRoutings[serviceName] = defaultRouting;
-        MarkRoutingChanged();
+        // Routing change will be picked up by periodic timer publication
 
         _logger.LogInformation(
             "Restored routing for {ServiceName} to default app-id '{DefaultAppId}'",
@@ -285,6 +305,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     public async Task ResetAllMappingsToDefaultAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.ResetAllMappingsToDefaultAsync");
         try
         {
             // Use the orchestrator's effective app-id (from configuration, not hardcoded constant)
@@ -302,14 +323,14 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                 {
                     AppId = defaultAppId,
                     Host = defaultAppId,
-                    Port = 80,
-                    Status = "healthy",
+                    Port = _configuration.DefaultServicePort,
+                    Status = ServiceHealthStatus.Healthy,
                     LastUpdated = DateTimeOffset.UtcNow
                 };
             }
 
             // Mark routing changed and publish immediately
-            MarkRoutingChanged();
+            // Routing change will be picked up by periodic timer publication
             await PublishFullMappingsAsync("reset to default topology");
 
             _logger.LogInformation(
@@ -324,30 +345,13 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     }
 
     /// <summary>
-    /// Mark that routing has changed, triggering immediate publication.
-    /// </summary>
-    private void MarkRoutingChanged()
-    {
-        lock (_routingChangeLock)
-        {
-            _routingChanged = true;
-        }
-    }
-
-    /// <summary>
-    /// Publish full mappings if routing changed or periodic timer fired.
+    /// Publish full mappings on periodic timer.
+    /// Every routing change already publishes immediately; this is the periodic heartbeat.
     /// </summary>
     private async Task PublishFullMappingsIfNeededAsync()
     {
-        bool shouldPublish;
-        lock (_routingChangeLock)
-        {
-            shouldPublish = _routingChanged;
-            _routingChanged = false;
-        }
-
-        // Always publish on timer (periodic heartbeat), but only increment version if changed
-        await PublishFullMappingsAsync(shouldPublish ? "routing changed" : "periodic");
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.PublishFullMappingsIfNeededAsync");
+        await PublishFullMappingsAsync("periodic");
     }
 
     /// <summary>
@@ -366,6 +370,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     public async Task PublishFullMappingsAsync(string reason)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.PublishFullMappingsAsync");
         try
         {
             // Get all current routings from Redis (source of truth)
@@ -383,8 +388,8 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                 mappings[routing.Key] = routing.Value.AppId;
             }
 
-            // Increment version
-            var version = Interlocked.Increment(ref _mappingsVersion);
+            // Increment version via Redis for multi-instance safety (IMPLEMENTATION TENETS)
+            var version = await _stateManager.IncrementMappingsVersionAsync();
 
             var fullMappingsEvent = new FullServiceMappingsEvent
             {
@@ -428,9 +433,10 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// Get comprehensive health report for all services (default: all sources).
     /// Reads heartbeat data from Redis and control plane info, evaluates health status.
     /// </summary>
-    public Task<ServiceHealthReport> GetServiceHealthReportAsync()
+    public async Task<ServiceHealthReport> GetServiceHealthReportAsync()
     {
-        return GetServiceHealthReportAsync(ServiceHealthSource.All, null);
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.GetServiceHealthReportAsync");
+        return await GetServiceHealthReportAsync(ServiceHealthSource.All, null);
     }
 
     /// <summary>
@@ -441,12 +447,13 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// <returns>Health report with services filtered by the specified source</returns>
     public async Task<ServiceHealthReport> GetServiceHealthReportAsync(ServiceHealthSource source, string? serviceFilter = null)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.GetServiceHealthReportAsync");
         var now = DateTimeOffset.UtcNow;
         var heartbeatTimeout = TimeSpan.FromSeconds(_configuration.HeartbeatTimeoutSeconds);
         var controlPlaneAppId = _controlPlaneProvider.ControlPlaneAppId;
 
-        var healthyServices = new List<ServiceHealthStatus>();
-        var unhealthyServices = new List<ServiceHealthStatus>();
+        var healthyServices = new List<ServiceHealthEntry>();
+        var unhealthyServices = new List<ServiceHealthEntry>();
 
         // Get deployed services from Redis heartbeats (if requested)
         if (source == ServiceHealthSource.All || source == ServiceHealthSource.DeployedOnly)
@@ -465,7 +472,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                 var timeSinceLastHeartbeat = now - heartbeat.LastSeen;
                 var isExpired = timeSinceLastHeartbeat > heartbeatTimeout;
 
-                if (isExpired || heartbeat.Status == "unavailable" || heartbeat.Status == "shutting_down")
+                if (isExpired || heartbeat.Status == InstanceHealthStatus.Unavailable)
                 {
                     unhealthyServices.Add(heartbeat);
                 }
@@ -535,6 +542,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     public async Task<RestartRecommendation> ShouldRestartServiceAsync(string serviceName)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.ShouldRestartServiceAsync");
         // Get all heartbeats for this service (may be multiple app-ids)
         var allHeartbeats = await _stateManager.GetServiceHeartbeatsAsync();
         var serviceHeartbeats = allHeartbeats
@@ -546,8 +554,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
             return new RestartRecommendation
             {
                 ShouldRestart = true,
-                ServiceName = serviceName,
-                CurrentStatus = "unavailable",
+                CurrentStatus = InstanceHealthStatus.Unavailable,
                 Reason = "No heartbeat data found - service appears to be down"
             };
         }
@@ -570,12 +577,12 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         string reason;
         string? degradedDuration = null;
 
-        if (worstStatus == "unavailable" || worstStatus == "shutting_down")
+        if (worstStatus == InstanceHealthStatus.Unavailable)
         {
             shouldRestart = true;
             reason = $"Service is {worstStatus}";
         }
-        else if (worstStatus == "degraded" || worstStatus == "overloaded")
+        else if (worstStatus == InstanceHealthStatus.Degraded)
         {
             if (timeSinceLastHeartbeat > degradationThreshold)
             {
@@ -599,7 +606,6 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         return new RestartRecommendation
         {
             ShouldRestart = shouldRestart,
-            ServiceName = serviceName,
             CurrentStatus = worstStatus,
             LastSeen = latestHeartbeat.LastSeen,
             DegradedDuration = degradedDuration, // Nullable per schema - null when not degraded
@@ -609,32 +615,17 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
 
     /// <summary>
     /// Determine the worst status among multiple service instances.
-    /// Priority: unavailable > shutting_down > overloaded > degraded > healthy
+    /// Priority: unavailable > unknown > degraded > healthy
     /// </summary>
-    private string DetermineWorstStatus(List<ServiceHealthStatus> heartbeats)
+    private static InstanceHealthStatus DetermineWorstStatus(List<ServiceHealthEntry> heartbeats)
     {
-        var statusPriority = new Dictionary<string, int>
-        {
-            { "unavailable", 5 },
-            { "shutting_down", 4 },
-            { "overloaded", 3 },
-            { "degraded", 2 },
-            { "healthy", 1 }
-        };
-
-        var worstStatus = "healthy";
-        var worstPriority = 0;
+        var worstStatus = InstanceHealthStatus.Healthy;
 
         foreach (var heartbeat in heartbeats)
         {
-            var status = heartbeat.Status ?? "unavailable";
-            if (statusPriority.TryGetValue(status, out var priority))
+            if (heartbeat.Status > worstStatus)
             {
-                if (priority > worstPriority)
-                {
-                    worstPriority = priority;
-                    worstStatus = status;
-                }
+                worstStatus = heartbeat.Status;
             }
         }
 
@@ -644,13 +635,110 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// <summary>
     /// Get health status for a specific service instance.
     /// </summary>
-    public async Task<ServiceHealthStatus?> GetServiceHealthStatusAsync(string serviceId, string appId)
+    public async Task<ServiceHealthEntry?> GetServiceHealthEntryAsync(string serviceId, string appId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.GetServiceHealthEntryAsync");
         return await _stateManager.GetServiceHeartbeatAsync(serviceId, appId);
+    }
+
+    /// <summary>
+    /// Periodically reclaims expired processing pool leases across all known pool types.
+    /// Returns expired processors to the available list so pools do not appear artificially exhausted.
+    /// Uses distributed locks to prevent concurrent modification with AcquireProcessor/ReleaseProcessor.
+    /// </summary>
+    private async Task ReclaimExpiredLeasesForAllPoolsAsync()
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.orchestrator", "ServiceHealthMonitor.ReclaimExpiredLeasesForAllPools");
+
+        var knownPools = await _stateManager.GetKnownPoolTypesAsync();
+        if (knownPools == null || knownPools.Count == 0)
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        foreach (var poolType in knownPools)
+        {
+            try
+            {
+                await using var poolLock = await _lockProvider.LockAsync(
+                    StateStoreDefinitions.OrchestratorLock,
+                    poolType,
+                    Guid.NewGuid().ToString(),
+                    _configuration.PoolLockTimeoutSeconds);
+
+                if (!poolLock.Success)
+                {
+                    _logger.LogDebug(
+                        "Skipping lease cleanup for pool {PoolType}: could not acquire lock",
+                        poolType);
+                    continue;
+                }
+
+                var leases = await _stateManager.GetLeasesAsync(poolType);
+                if (leases == null || leases.Count == 0)
+                {
+                    continue;
+                }
+
+                var expiredLeaseIds = new List<string>();
+                foreach (var kvp in leases)
+                {
+                    if (kvp.Value.ExpiresAt < now)
+                    {
+                        expiredLeaseIds.Add(kvp.Key);
+                    }
+                }
+
+                if (expiredLeaseIds.Count == 0)
+                {
+                    continue;
+                }
+
+                var availableProcessors = await _stateManager.GetAvailableProcessorsAsync(poolType)
+                    ?? new List<ProcessorInstance>();
+
+                foreach (var leaseId in expiredLeaseIds)
+                {
+                    var expiredLease = leases[leaseId];
+
+                    availableProcessors.Add(new ProcessorInstance
+                    {
+                        ProcessorId = expiredLease.ProcessorId,
+                        AppId = expiredLease.AppId,
+                        PoolType = poolType,
+                        Status = ProcessorStatus.Available,
+                        LastUpdated = now
+                    });
+
+                    leases.Remove(leaseId);
+
+                    _logger.LogInformation(
+                        "Background reclaimed expired lease {LeaseId} for processor {ProcessorId} in pool {PoolType} (expired at {ExpiresAt})",
+                        leaseId, expiredLease.ProcessorId, poolType, expiredLease.ExpiresAt);
+                }
+
+                await _stateManager.SetAvailableProcessorsAsync(poolType, availableProcessors);
+                await _stateManager.SetLeasesAsync(poolType, leases);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Failed to reclaim expired leases for pool {PoolType}", poolType);
+            }
+        }
     }
 
     public async ValueTask DisposeAsync()
     {
+        if (_leaseCleanupTimer != null)
+        {
+            await _leaseCleanupTimer.DisposeAsync();
+            _leaseCleanupTimer = null;
+        }
+
         if (_fullMappingsTimer != null)
         {
             await _fullMappingsTimer.DisposeAsync();

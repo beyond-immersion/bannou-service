@@ -29,6 +29,8 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IContractClient> _mockContractClient;
+    private readonly Mock<IQueryableStateStore<ItemInstanceModel>> _mockInstanceQueryableStore;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<ILogger<ItemService>> _mockLogger;
 
     public ItemServiceTests()
@@ -43,6 +45,8 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockContractClient = new Mock<IContractClient>();
+        _mockInstanceQueryableStore = new Mock<IQueryableStateStore<ItemInstanceModel>>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockLogger = new Mock<ILogger<ItemService>>();
 
         // Default lock provider returns successful lock
@@ -77,6 +81,11 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockStateStoreFactory
             .Setup(f => f.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceCache))
             .Returns(_mockInstanceCacheStore.Object);
+
+        // Instance queryable store (MySQL LINQ queries)
+        _mockStateStoreFactory
+            .Setup(f => f.GetQueryableStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore))
+            .Returns(_mockInstanceQueryableStore.Object);
 
         // Default cache stores return null (cache miss) so tests hit persistent stores
         _mockTemplateCacheStore
@@ -145,6 +154,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             _mockStateStoreFactory.Object,
             _mockLockProvider.Object,
             _mockContractClient.Object,
+            _mockTelemetryProvider.Object,
             _mockLogger.Object,
             Configuration);
     }
@@ -194,6 +204,13 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         Assert.True(response.IsActive);
         Assert.False(response.IsDeprecated);
         Assert.NotNull(savedModel);
+        Assert.Equal(request.Code, savedModel.Code);
+        Assert.Equal(request.GameId, savedModel.GameId);
+        Assert.Equal(request.Name, savedModel.Name);
+        Assert.Equal(ItemCategory.Weapon, savedModel.Category);
+        Assert.Equal(ItemRarity.Rare, savedModel.Rarity);
+        Assert.True(savedModel.IsActive);
+        Assert.False(savedModel.IsDeprecated);
     }
 
     [Fact]
@@ -230,44 +247,27 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
 
-        // Act
-        await service.CreateItemTemplateAsync(request);
-
-        // Assert
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "item-template.created",
-            It.Is<ItemTemplateCreatedEvent>(e =>
-                e.Code == request.Code &&
-                e.GameId == request.GameId &&
-                e.Name == request.Name),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task CreateItemTemplateAsync_UsesDefaultMaxStackSize_WhenNotProvided()
-    {
-        // Arrange
-        Configuration.DefaultMaxStackSize = 50;
-        var service = CreateService();
-        var request = CreateValidTemplateRequest();
-        request.MaxStackSize = 0;
-
-        _mockTemplateStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string?)null);
-
-        ItemTemplateModel? savedModel = null;
-        _mockTemplateStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, ItemTemplateModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
-            .ReturnsAsync("etag");
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
 
         // Act
         await service.CreateItemTemplateAsync(request);
 
         // Assert
-        Assert.NotNull(savedModel);
-        Assert.Equal(50, savedModel.MaxStackSize);
+        Assert.Equal("item.template.created", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<ItemTemplateCreatedEvent>(capturedEvent);
+        Assert.Equal(request.Code, typedEvent.Code);
+        Assert.Equal(request.GameId, typedEvent.GameId);
+        Assert.Equal(request.Name, typedEvent.Name);
     }
 
     [Fact]
@@ -521,8 +521,11 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockTemplateStore
             .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
+
+        ItemTemplateModel? savedModel = null;
         _mockTemplateStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ItemTemplateModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag");
 
         var request = new UpdateItemTemplateRequest
@@ -540,6 +543,9 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         Assert.NotNull(response);
         Assert.Equal("Updated Sword", response.Name);
         Assert.Equal(ItemRarity.Legendary, response.Rarity);
+        Assert.NotNull(savedModel);
+        Assert.Equal("Updated Sword", savedModel.Name);
+        Assert.Equal(ItemRarity.Legendary, savedModel.Rarity);
     }
 
     [Fact]
@@ -576,16 +582,27 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
 
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
         var request = new UpdateItemTemplateRequest { TemplateId = templateId, Name = "Updated" };
 
         // Act
         await service.UpdateItemTemplateAsync(request);
 
         // Assert
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "item-template.updated",
-            It.Is<ItemTemplateUpdatedEvent>(e => e.TemplateId == templateId),
-            It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal("item.template.updated", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<ItemTemplateUpdatedEvent>(capturedEvent);
+        Assert.Equal(templateId, typedEvent.TemplateId);
     }
 
     #endregion
@@ -604,8 +621,11 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockTemplateStore
             .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
+
+        ItemTemplateModel? savedModel = null;
         _mockTemplateStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ItemTemplateModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag");
 
         var request = new DeprecateItemTemplateRequest
@@ -623,6 +643,58 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         Assert.True(response.IsDeprecated);
         Assert.NotNull(response.DeprecatedAt);
         Assert.Equal(migrationTargetId, response.MigrationTargetId);
+        Assert.NotNull(savedModel);
+        Assert.True(savedModel.IsDeprecated);
+        Assert.NotNull(savedModel.DeprecatedAt);
+        Assert.Equal(migrationTargetId, savedModel.MigrationTargetId);
+    }
+
+    [Fact]
+    public async Task DeprecateItemTemplateAsync_PublishesUpdatedEventWithChangedFields()
+    {
+        // Arrange
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var migrationTargetId = Guid.NewGuid();
+        var model = CreateStoredTemplateModel(templateId);
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+        _mockTemplateStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
+        var request = new DeprecateItemTemplateRequest
+        {
+            TemplateId = templateId,
+            MigrationTargetId = migrationTargetId
+        };
+
+        // Act
+        await service.DeprecateItemTemplateAsync(request);
+
+        // Assert — per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
+        Assert.Equal("item.template.updated", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<ItemTemplateUpdatedEvent>(capturedEvent);
+        Assert.Equal(templateId, typedEvent.TemplateId);
+        Assert.Equal(model.Code, typedEvent.Code);
+        Assert.Equal(model.GameId, typedEvent.GameId);
+        Assert.True(typedEvent.IsDeprecated);
+        Assert.Contains("isDeprecated", typedEvent.ChangedFields);
+        Assert.Contains("deprecatedAt", typedEvent.ChangedFields);
     }
 
     [Fact]
@@ -661,8 +733,11 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockTemplateStore
             .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
+
+        ItemInstanceModel? savedModel = null;
         _mockInstanceStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ItemInstanceModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag");
 
         var request = new CreateItemInstanceRequest
@@ -685,6 +760,12 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         Assert.Equal(realmId, response.RealmId);
         Assert.Equal(1, response.Quantity);
         Assert.Equal(ItemOriginType.Loot, response.OriginType);
+        Assert.NotNull(savedModel);
+        Assert.Equal(templateId, savedModel.TemplateId);
+        Assert.Equal(containerId, savedModel.ContainerId);
+        Assert.Equal(realmId, savedModel.RealmId);
+        Assert.Equal(1, savedModel.Quantity);
+        Assert.Equal(ItemOriginType.Loot, savedModel.OriginType);
     }
 
     [Fact]
@@ -739,6 +820,36 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var (status, response) = await service.CreateItemInstanceAsync(request);
 
         // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CreateItemInstanceAsync_DeprecatedTemplate_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var template = CreateStoredTemplateModel(templateId);
+        template.IsDeprecated = true;
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var request = new CreateItemInstanceRequest
+        {
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 1,
+            OriginType = ItemOriginType.Loot
+        };
+
+        // Act
+        var (status, response) = await service.CreateItemInstanceAsync(request);
+
+        // Assert — per IMPLEMENTATION TENETS: deprecated templates must not produce new instances
         Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
     }
@@ -832,6 +943,17 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
 
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
         var containerId = Guid.NewGuid();
         var realmId = Guid.NewGuid();
         var request = new CreateItemInstanceRequest
@@ -847,13 +969,12 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         await service.CreateItemInstanceAsync(request);
 
         // Assert
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "item-instance.created",
-            It.Is<ItemInstanceCreatedEvent>(e =>
-                e.TemplateId == templateId &&
-                e.ContainerId == containerId &&
-                e.RealmId == realmId),
-            It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal("item.instance.created", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<ItemInstanceCreatedEvent>(capturedEvent);
+        Assert.Equal(templateId, typedEvent.TemplateId);
+        Assert.Equal(containerId, typedEvent.ContainerId);
+        Assert.Equal(realmId, typedEvent.RealmId);
     }
 
     #endregion
@@ -1036,8 +1157,11 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockInstanceStore
             .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
+
+        ItemInstanceModel? savedModel = null;
         _mockInstanceStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ItemInstanceModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag");
         _mockTemplateStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -1058,6 +1182,61 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         Assert.NotNull(response);
         Assert.Equal(characterId, response.BoundToId);
         Assert.NotNull(response.BoundAt);
+        Assert.NotNull(savedModel);
+        Assert.Equal(characterId, savedModel.BoundToId);
+        Assert.NotNull(savedModel.BoundAt);
+    }
+
+    [Fact]
+    public async Task BindItemInstanceAsync_PublishesBoundEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var model = CreateStoredInstanceModel(instanceId);
+        model.BoundToId = null;
+
+        var template = CreateStoredTemplateModel(model.TemplateId);
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
+        var request = new BindItemInstanceRequest
+        {
+            InstanceId = instanceId,
+            CharacterId = characterId,
+            BindType = SoulboundType.OnPickup
+        };
+
+        // Act
+        await service.BindItemInstanceAsync(request);
+
+        // Assert
+        Assert.Equal("item.instance.bound", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<ItemInstanceBoundEvent>(capturedEvent);
+        Assert.Equal(instanceId, typedEvent.InstanceId);
+        Assert.Equal(characterId, typedEvent.CharacterId);
+        Assert.Equal(SoulboundType.OnPickup, typedEvent.BindType);
     }
 
     [Fact]
@@ -1172,8 +1351,11 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockInstanceStore
             .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
+
+        ItemInstanceModel? savedModel = null;
         _mockInstanceStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ItemInstanceModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag");
         _mockTemplateStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -1182,7 +1364,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new UnbindItemInstanceRequest
         {
             InstanceId = instanceId,
-            Reason = "admin_override"
+            Reason = UnbindReason.Admin
         };
 
         // Act
@@ -1193,6 +1375,9 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         Assert.NotNull(response);
         Assert.Null(response.BoundToId);
         Assert.Null(response.BoundAt);
+        Assert.NotNull(savedModel);
+        Assert.Null(savedModel.BoundToId);
+        Assert.Null(savedModel.BoundAt);
     }
 
     [Fact]
@@ -1212,7 +1397,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new UnbindItemInstanceRequest
         {
             InstanceId = instanceId,
-            Reason = "admin_override"
+            Reason = UnbindReason.Admin
         };
 
         // Act
@@ -1235,7 +1420,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new UnbindItemInstanceRequest
         {
             InstanceId = Guid.NewGuid(),
-            Reason = "admin_override"
+            Reason = UnbindReason.Admin
         };
 
         // Act
@@ -1269,23 +1454,33 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
 
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
         var request = new UnbindItemInstanceRequest
         {
             InstanceId = instanceId,
-            Reason = "transfer_override"
+            Reason = UnbindReason.TransferOverride
         };
 
         // Act
         await service.UnbindItemInstanceAsync(request);
 
         // Assert
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "item-instance.unbound",
-            It.Is<ItemInstanceUnboundEvent>(e =>
-                e.InstanceId == instanceId &&
-                e.PreviousCharacterId == previousCharacterId &&
-                e.Reason == "transfer_override"),
-            It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal("item.instance.unbound", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<ItemInstanceUnboundEvent>(capturedEvent);
+        Assert.Equal(instanceId, typedEvent.InstanceId);
+        Assert.Equal(previousCharacterId, typedEvent.PreviousCharacterId);
+        Assert.Equal(UnbindReason.TransferOverride, typedEvent.Reason);
     }
 
     #endregion
@@ -1308,14 +1503,17 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockTemplateStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
+
+        string? deletedKey = null;
         _mockInstanceStore
             .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CancellationToken>((k, _) => deletedKey = k)
             .ReturnsAsync(true);
 
         var request = new DestroyItemInstanceRequest
         {
             InstanceId = instanceId,
-            Reason = "player_discard"
+            Reason = DestroyReason.Destroyed
         };
 
         // Act
@@ -1324,8 +1522,8 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Destroyed);
-        Assert.Equal(instanceId, response.InstanceId);
+        Assert.NotNull(deletedKey);
+        Assert.Contains(instanceId.ToString(), deletedKey);
     }
 
     [Fact]
@@ -1348,7 +1546,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new DestroyItemInstanceRequest
         {
             InstanceId = instanceId,
-            Reason = "player_discard"
+            Reason = DestroyReason.Destroyed
         };
 
         // Act
@@ -1382,7 +1580,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new DestroyItemInstanceRequest
         {
             InstanceId = instanceId,
-            Reason = "admin"
+            Reason = DestroyReason.Admin
         };
 
         // Act
@@ -1391,7 +1589,6 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Destroyed);
     }
 
     [Fact]
@@ -1406,7 +1603,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new DestroyItemInstanceRequest
         {
             InstanceId = Guid.NewGuid(),
-            Reason = "player_discard"
+            Reason = DestroyReason.Destroyed
         };
 
         // Act
@@ -1523,26 +1720,16 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var service = CreateService();
         var templateId = Guid.NewGuid();
         var targetRealm = Guid.NewGuid();
-        var otherId = Guid.NewGuid();
         var matchId = Guid.NewGuid();
 
-        _mockInstanceStringStore
-            .Setup(s => s.GetAsync($"inst-template:{templateId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(BannouJson.Serialize(new List<string> { matchId.ToString(), otherId.ToString() }));
-
         var matchModel = CreateStoredInstanceModel(matchId);
+        matchModel.TemplateId = templateId;
         matchModel.RealmId = targetRealm;
-        var otherModel = CreateStoredInstanceModel(otherId);
-        otherModel.RealmId = Guid.NewGuid();
 
-        // Implementation uses GetBulkAsync for performance
-        _mockInstanceStore
-            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Dictionary<string, ItemInstanceModel>
-            {
-                [$"inst:{matchId}"] = matchModel,
-                [$"inst:{otherId}"] = otherModel
-            });
+        // Implementation uses GetQueryableStore for MySQL LINQ queries
+        _mockInstanceQueryableStore
+            .Setup(s => s.QueryAsync(It.IsAny<System.Linq.Expressions.Expression<Func<ItemInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ItemInstanceModel> { matchModel });
 
         var request = new ListItemsByTemplateRequest
         {
@@ -1571,19 +1758,17 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var templateId = Guid.NewGuid();
         var ids = Enumerable.Range(0, 5).Select(_ => Guid.NewGuid()).ToList();
 
-        _mockInstanceStringStore
-            .Setup(s => s.GetAsync($"inst-template:{templateId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(BannouJson.Serialize(ids.Select(id => id.ToString()).ToList()));
-
-        // Implementation uses GetBulkAsync for performance
-        var bulkResult = new Dictionary<string, ItemInstanceModel>();
-        foreach (var id in ids)
+        // Implementation uses GetQueryableStore for MySQL LINQ queries
+        var queryResult = ids.Select(id =>
         {
-            bulkResult[$"inst:{id}"] = CreateStoredInstanceModel(id);
-        }
-        _mockInstanceStore
-            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(bulkResult);
+            var model = CreateStoredInstanceModel(id);
+            model.TemplateId = templateId;
+            return model;
+        }).ToList();
+
+        _mockInstanceQueryableStore
+            .Setup(s => s.QueryAsync(It.IsAny<System.Linq.Expressions.Expression<Func<ItemInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(queryResult);
 
         var request = new ListItemsByTemplateRequest
         {
@@ -1733,7 +1918,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = Guid.NewGuid(),
             UserId = Guid.NewGuid(),
-            UserType = "character"
+            UserType = EntityType.Character
         };
 
         _mockInstanceCacheStore
@@ -1773,7 +1958,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character"
+            UserType = EntityType.Character
         };
 
         _mockInstanceCacheStore
@@ -1828,7 +2013,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character"
+            UserType = EntityType.Character
         };
 
         _mockInstanceCacheStore
@@ -1883,7 +2068,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character"
+            UserType = EntityType.Character
         };
 
         _mockInstanceCacheStore
@@ -1945,7 +2130,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character"
+            UserType = EntityType.Character
         };
 
         _mockInstanceCacheStore
@@ -2018,7 +2203,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character"
+            UserType = EntityType.Character
         };
 
         _mockInstanceCacheStore
@@ -2048,21 +2233,29 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
+        var capturedEvents = new List<(string Topic, object Event)>();
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+                capturedEvents.Add((topic, evt)))
+            .ReturnsAsync(true);
+
         // Act
         var (status, response) = await service.UseItemAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.True(response.Consumed);
         Assert.Null(response.RemainingQuantity);  // Destroyed
         Assert.Equal(contractInstanceId, response.ContractInstanceId);
 
-        // Verify destroy event was published
-        _mockMessageBus.Verify(
-            m => m.TryPublishAsync("item-instance.destroyed", It.IsAny<ItemInstanceDestroyedEvent>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        var destroyEvent = capturedEvents
+            .Where(e => e.Topic == "item.instance.destroyed")
+            .Select(e => e.Event)
+            .SingleOrDefault();
+        Assert.NotNull(destroyEvent);
+        Assert.IsType<ItemInstanceDestroyedEvent>(destroyEvent);
     }
 
     [Fact]
@@ -2103,7 +2296,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character"
+            UserType = EntityType.Character
         };
 
         _mockInstanceCacheStore
@@ -2141,10 +2334,11 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.True(response.Consumed);
         Assert.Equal(4, response.RemainingQuantity);  // 5 - 1 = 4
         Assert.Equal(contractInstanceId, response.ContractInstanceId);
+        Assert.NotNull(savedInstance);
+        Assert.Equal(4, savedInstance.Quantity);
     }
 
     [Fact]
@@ -2236,13 +2430,13 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId1,
             UserId = Guid.NewGuid(),
-            UserType = "character"
+            UserType = EntityType.Character
         });
         await service.UseItemAsync(new UseItemRequest
         {
             InstanceId = instanceId2,
             UserId = Guid.NewGuid(),
-            UserType = "character"
+            UserType = EntityType.Character
         });
 
         // Assert - Both uses should have the same system party ID for the same game
@@ -2287,9 +2481,9 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character",
+            UserType = EntityType.Character,
             TargetId = targetId,
-            TargetType = "character"
+            TargetType = EntityType.Character
         };
 
         _mockInstanceCacheStore
@@ -2361,7 +2555,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character"
+            UserType = EntityType.Character
         };
 
         _mockInstanceCacheStore
@@ -2423,7 +2617,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character"
+            UserType = EntityType.Character
         };
 
         _mockInstanceCacheStore
@@ -2505,7 +2699,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character"
+            UserType = EntityType.Character
         };
 
         _mockInstanceCacheStore
@@ -2567,7 +2761,6 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Assert - Despite validation failure, use proceeds
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
     }
 
     [Fact]
@@ -2609,7 +2802,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character"
+            UserType = EntityType.Character
         };
 
         _mockInstanceCacheStore
@@ -2693,7 +2886,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character"
+            UserType = EntityType.Character
         };
 
         _mockInstanceCacheStore
@@ -2773,7 +2966,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = Guid.NewGuid(),
             UserId = Guid.NewGuid(),
-            UserType = "character",
+            UserType = EntityType.Character,
             MilestoneCode = "step_1"
         };
 
@@ -2826,7 +3019,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character",
+            UserType = EntityType.Character,
             MilestoneCode = "step_1"
         };
 
@@ -2883,7 +3076,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character",
+            UserType = EntityType.Character,
             MilestoneCode = "step_1"
         };
 
@@ -2938,7 +3131,6 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal("step_1", response.CompletedMilestone);
         Assert.False(response.IsComplete);  // More milestones remaining
         Assert.False(response.Consumed);
@@ -2990,7 +3182,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character",
+            UserType = EntityType.Character,
             MilestoneCode = "step_2"
         };
 
@@ -3043,7 +3235,6 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal("step_2", response.CompletedMilestone);
         Assert.True(response.IsComplete);  // All milestones done
         Assert.True(response.Consumed);
@@ -3089,7 +3280,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             UserId = Guid.NewGuid(),
-            UserType = "character",
+            UserType = EntityType.Character,
             MilestoneCode = "step_1"
         };
 
@@ -3187,6 +3378,232 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             OriginType = ItemOriginType.Loot,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-30)
         };
+    }
+
+    #endregion
+
+    #region Batch Event Flush Tests
+
+    [Fact]
+    public async Task UseItemAsync_ExpiredSuccessBatch_PublishesBeforeNewRecord()
+    {
+        // Arrange - set up a successful item use
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var contractTemplateId = Guid.NewGuid();
+        var contractInstanceId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "batch_test_item",
+            GameId = "game1",
+            Name = "Batch Test Item",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Discrete,
+            MaxStackSize = 99,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = contractTemplateId
+        };
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 50,
+            OriginType = ItemOriginType.Craft,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockContractClient
+            .Setup(c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContractInstanceResponse { ContractId = contractInstanceId });
+        _mockContractClient
+            .Setup(c => c.CompleteMilestoneAsync(It.IsAny<CompleteMilestoneRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MilestoneResponse
+            {
+                Milestone = new MilestoneInstanceResponse { Code = "use", Status = MilestoneStatus.Completed }
+            });
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Inject a pre-expired batch into the static _useBatches dictionary via reflection.
+        // This simulates a batch that accumulated records and then the window expired.
+        var batchKey = $"{templateId}:{userId}";
+        var useBatchesField = typeof(ItemService).GetField("_useBatches",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.NotNull(useBatchesField);
+        var useBatches = useBatchesField.GetValue(null) as System.Collections.Concurrent.ConcurrentDictionary<string, ItemUseBatchState>;
+        Assert.NotNull(useBatches);
+
+        // Create an expired batch with one record already in it
+        var expiredBatch = new ItemUseBatchState();
+        expiredBatch.AddRecord(new ItemUseRecord
+        {
+            InstanceId = Guid.NewGuid(),
+            TemplateId = templateId,
+            TemplateCode = "batch_test_item",
+            UserId = userId,
+            UserType = EntityType.Character,
+            UsedAt = DateTimeOffset.UtcNow.AddSeconds(-120),
+            Consumed = true,
+            ContractInstanceId = Guid.NewGuid()
+        });
+
+        // Set WindowStart to the past so it appears expired
+        var windowStartField = typeof(ItemUseBatchState).GetField("<WindowStart>k__BackingField",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.NotNull(windowStartField);
+        windowStartField.SetValue(expiredBatch, DateTimeOffset.UtcNow.AddSeconds(-120));
+        useBatches[batchKey] = expiredBatch;
+
+        // Capture published events
+        var capturedEvents = new List<(string Topic, object Event)>();
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+                capturedEvents.Add((topic, evt)))
+            .ReturnsAsync(true);
+
+        var request = new UseItemRequest
+        {
+            InstanceId = instanceId,
+            UserId = userId,
+            UserType = EntityType.Character
+        };
+
+        // Act - this should pre-flush the expired batch, then process the new use
+        var (status, response) = await service.UseItemAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // The expired batch should have been published as an item.used event
+        var usedEvents = capturedEvents.Where(e => e.Topic == "item.used").ToList();
+        Assert.True(usedEvents.Count >= 1, "Expected at least one item.used event from expired batch flush");
+        var flushedEvent = Assert.IsType<ItemUsedEvent>(usedEvents[0].Event);
+        Assert.Equal(1, flushedEvent.TotalCount);
+
+        // Clean up static state to avoid cross-test pollution
+        useBatches.TryRemove(batchKey, out _);
+    }
+
+    [Fact]
+    public async Task UseItemAsync_ExpiredFailureBatch_PublishesOnNextFailure()
+    {
+        // Arrange - set up a use that will fail via contract creation failure.
+        // The template HAS a UseBehaviorContractTemplateId so UseItemAsync passes validation,
+        // but CreateContractInstanceAsync throws ApiException → RecordUseFailureAsync is called.
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var contractTemplateId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "fail_use_item",
+            GameId = "game1",
+            Name = "Fail Use Item",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Discrete,
+            MaxStackSize = 10,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = contractTemplateId
+        };
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 5,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Contract creation throws ApiException → CreateItemUseContractInstanceAsync returns null
+        _mockContractClient
+            .Setup(c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Contract creation failed", 500));
+
+        // Inject a pre-expired failure batch via reflection
+        var batchKey = $"{templateId}:{userId}";
+        var failureBatchesField = typeof(ItemService).GetField("_failureBatches",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.NotNull(failureBatchesField);
+        var failureBatches = failureBatchesField.GetValue(null) as System.Collections.Concurrent.ConcurrentDictionary<string, ItemUseFailureBatchState>;
+        Assert.NotNull(failureBatches);
+
+        var expiredBatch = new ItemUseFailureBatchState();
+        expiredBatch.AddRecord(new ItemUseFailureRecord
+        {
+            InstanceId = Guid.NewGuid(),
+            TemplateId = templateId,
+            TemplateCode = "fail_use_item",
+            UserId = userId,
+            UserType = EntityType.Character,
+            FailedAt = DateTimeOffset.UtcNow.AddSeconds(-120),
+            Reason = "previous_failure"
+        });
+
+        var windowStartField = typeof(ItemUseFailureBatchState).GetField("<WindowStart>k__BackingField",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.NotNull(windowStartField);
+        windowStartField.SetValue(expiredBatch, DateTimeOffset.UtcNow.AddSeconds(-120));
+        failureBatches[batchKey] = expiredBatch;
+
+        // Capture published events
+        var capturedEvents = new List<(string Topic, object Event)>();
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+                capturedEvents.Add((topic, evt)))
+            .ReturnsAsync(true);
+
+        var request = new UseItemRequest
+        {
+            InstanceId = instanceId,
+            UserId = userId,
+            UserType = EntityType.Character
+        };
+
+        // Act - contract creation fails, triggering RecordUseFailureAsync which pre-flushes
+        var (status, _) = await service.UseItemAsync(request);
+
+        // Assert - the request fails (contract creation error)
+        Assert.Equal(StatusCodes.BadRequest, status);
+
+        // The expired failure batch should have been published before the new failure was recorded
+        var failedEvents = capturedEvents.Where(e => e.Topic == "item.use-failed").ToList();
+        Assert.True(failedEvents.Count >= 1, "Expected at least one item.use-failed event from expired batch flush");
+        var flushedEvent = Assert.IsType<ItemUseFailedEvent>(failedEvents[0].Event);
+        Assert.Equal(1, flushedEvent.TotalCount);
+
+        // Clean up static state
+        failureBatches.TryRemove(batchKey, out _);
     }
 
     #endregion

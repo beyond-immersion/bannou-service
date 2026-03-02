@@ -9,6 +9,7 @@ using LibOrchestrator;
 using LibOrchestrator.Backends;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Orchestrator;
 
@@ -33,16 +34,13 @@ public partial class OrchestratorService : IOrchestratorService
     private readonly PresetLoader _presetLoader;
     private readonly ILoggerFactory _loggerFactory;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Cached orchestrator instance for container operations.
+    /// Provides within-request reuse (service is Scoped, field resets per request).
     /// </summary>
     private IContainerOrchestrator? _orchestrator;
-
-    /// <summary>
-    /// Timestamp when the orchestrator was cached. Used for TTL-based invalidation.
-    /// </summary>
-    private DateTimeOffset _orchestratorCachedAt;
 
     /// <summary>
     /// Last known deployment configuration. Loaded on startup for awareness mode.
@@ -97,6 +95,7 @@ public partial class OrchestratorService : IOrchestratorService
         IBackendDetector backendDetector,
         IDistributedLockProvider lockProvider,
         IHttpClientFactory httpClientFactory,
+        ITelemetryProvider telemetryProvider,
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
@@ -111,10 +110,12 @@ public partial class OrchestratorService : IOrchestratorService
         _backendDetector = backendDetector;
         _lockProvider = lockProvider;
         _httpClientFactory = httpClientFactory;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         // Create preset loader with configured presets directory
         var presetsPath = configuration.PresetsHostPath;
-        _presetLoader = new PresetLoader(_loggerFactory.CreateLogger<PresetLoader>(), presetsPath);
+        _presetLoader = new PresetLoader(_loggerFactory.CreateLogger<PresetLoader>(), presetsPath, _telemetryProvider);
 
         // Register event handlers via partial class (OrchestratorServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -126,6 +127,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private async Task EnsureLastDeploymentLoadedAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.EnsureLastDeploymentLoadedAsync");
         // Skip if already loaded
         if (_lastKnownDeployment != null)
         {
@@ -158,54 +160,17 @@ public partial class OrchestratorService : IOrchestratorService
 
     /// <summary>
     /// Gets or creates the container orchestrator for the best available backend.
-    /// Implements TTL-based cache invalidation to handle connection staleness.
+    /// Provides within-request reuse only (service is Scoped, instance resets per request).
     /// </summary>
     private async Task<IContainerOrchestrator> GetOrchestratorAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.GetOrchestratorAsync");
         if (_orchestrator != null)
         {
-            // Check if TTL has expired (0 = caching disabled)
-            var ttlMinutes = _configuration.CacheTtlMinutes;
-            if (ttlMinutes > 0)
-            {
-                var cacheAge = DateTimeOffset.UtcNow - _orchestratorCachedAt;
-                if (cacheAge.TotalMinutes >= ttlMinutes)
-                {
-                    _logger.LogDebug(
-                        "Orchestrator cache TTL expired ({Age:F1}min >= {Ttl}min), re-validating connection",
-                        cacheAge.TotalMinutes, ttlMinutes);
-
-                    // Re-validate the connection using CheckAvailabilityAsync
-                    var (isAvailable, message) = await _orchestrator.CheckAvailabilityAsync(cancellationToken);
-
-                    if (isAvailable)
-                    {
-                        // Connection still valid - refresh the cache timestamp
-                        _orchestratorCachedAt = DateTimeOffset.UtcNow;
-                        _logger.LogDebug(
-                            "Orchestrator connection re-validated successfully: {Message}",
-                            message);
-                    }
-                    else
-                    {
-                        // Connection invalid - dispose and re-detect
-                        _logger.LogWarning(
-                            "Orchestrator connection invalid after TTL expiry: {Message}. Re-detecting backend.",
-                            message);
-                        _orchestrator.Dispose();
-                        _orchestrator = null;
-                    }
-                }
-            }
-
-            if (_orchestrator != null)
-            {
-                return _orchestrator;
-            }
+            return _orchestrator;
         }
 
         _orchestrator = await _backendDetector.CreateBestOrchestratorAsync(cancellationToken);
-        _orchestratorCachedAt = DateTimeOffset.UtcNow;
         return _orchestrator;
     }
 
@@ -215,6 +180,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, InfrastructureHealthResponse?)> GetInfrastructureHealthAsync(InfrastructureHealthRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.GetInfrastructureHealthAsync");
         _logger.LogDebug("Executing GetInfrastructureHealth operation");
 
         var components = new List<ComponentHealth>();
@@ -239,9 +205,8 @@ public partial class OrchestratorService : IOrchestratorService
         string pubsubMessage;
         try
         {
-            await _messageBus.TryPublishAsync("orchestrator-health", new OrchestratorHealthPingEvent
+            await _messageBus.TryPublishAsync("orchestrator.health-ping", new OrchestratorHealthPingEvent
             {
-                EventName = "orchestrator.health_ping",
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Status = OrchestratorHealthPingEventStatus.Ok
@@ -309,6 +274,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, ServiceHealthReport?)> GetServicesHealthAsync(ServiceHealthRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.GetServicesHealthAsync");
         _logger.LogDebug(
             "Executing GetServicesHealth operation (source: {Source}, filter: {Filter})",
             body.Source, body.ServiceFilter ?? "(none)");
@@ -323,25 +289,27 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, ServiceRestartResult?)> RestartServiceAsync(ServiceRestartRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.RestartServiceAsync");
         _logger.LogInformation(
             "Executing RestartService operation for: {ServiceName} (force: {Force})",
             body.ServiceName, body.Force);
 
-        var result = await _restartManager.RestartServiceAsync(body);
+        var outcome = await _restartManager.RestartServiceAsync(body);
 
-        if (!result.Success)
+        if (!outcome.Succeeded)
         {
-            // Check if restart was declined (healthy service)
-            if (result.Message?.Contains("not needed") == true)
-            {
-                return (StatusCodes.Conflict, result);
-            }
-
-            // Restart failed
-            return (StatusCodes.InternalServerError, result);
+            // Restart declined (healthy service) vs restart failed
+            return outcome.DeclineReason?.Contains("not needed") == true
+                ? (StatusCodes.Conflict, null)
+                : (StatusCodes.InternalServerError, null);
         }
 
-        return (StatusCodes.OK, result);
+        return (StatusCodes.OK, new ServiceRestartResult
+        {
+            Duration = outcome.Duration,
+            PreviousStatus = outcome.PreviousStatus,
+            CurrentStatus = outcome.CurrentStatus
+        });
     }
 
     /// <summary>
@@ -350,6 +318,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, RestartRecommendation?)> ShouldRestartServiceAsync(ShouldRestartServiceRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.ShouldRestartServiceAsync");
         _logger.LogDebug("Executing ShouldRestartService operation for: {ServiceName}", body.ServiceName);
 
         {
@@ -364,6 +333,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, BackendsResponse?)> GetBackendsAsync(ListBackendsRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.GetBackendsAsync");
         _logger.LogDebug("Executing GetBackends operation");
 
         var response = await _backendDetector.DetectBackendsAsync(cancellationToken);
@@ -376,6 +346,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, PresetsResponse?)> GetPresetsAsync(ListPresetsRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.GetPresetsAsync");
         _logger.LogDebug("Executing GetPresets operation");
 
         var presetMetadata = await _presetLoader.ListPresetsAsync(cancellationToken);
@@ -412,6 +383,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, DeployResponse?)> DeployAsync(DeployRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.DeployAsync");
         // Resolve effective backend: use request value if provided, otherwise use configured default
         var effectiveBackend = body.Backend ?? GetConfiguredDefaultBackend();
 
@@ -425,9 +397,9 @@ public partial class OrchestratorService : IOrchestratorService
         // Publish deployment started event
         await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Action = DeploymentEventAction.Started,
+            Action = DeploymentAction.Started,
             DeploymentId = deploymentId,
             Preset = body.Preset,
             Backend = effectiveBackend
@@ -549,7 +521,6 @@ public partial class OrchestratorService : IOrchestratorService
                 Backend = orchestrator.BackendType,
                 Preset = "default",
                 Duration = $"{resetDuration.TotalSeconds:F1}s",
-                Message = resetResult.Message,
                 Topology = new ServiceTopology { Nodes = new List<TopologyNode>() }, // Empty topology = default
                 Services = resetResult.TornDownServices.Select(s => new DeployedService
                 {
@@ -609,7 +580,7 @@ public partial class OrchestratorService : IOrchestratorService
 
             // VALIDATION: Reject any node attempting to deploy orchestrator service
             // Orchestrator cannot deploy itself or another orchestrator - route cannot be overridden
-            if (node.Services.Any(s => s.Equals("orchestrator", StringComparison.OrdinalIgnoreCase)))
+            if (node.Services?.Any(s => s.Equals("orchestrator", StringComparison.OrdinalIgnoreCase)) == true)
             {
                 _logger.LogError(
                     "REJECTED: Node '{NodeName}' contains 'orchestrator' service - orchestrator cannot deploy itself or another orchestrator",
@@ -684,7 +655,7 @@ public partial class OrchestratorService : IOrchestratorService
             }
 
             // Build service enable flags for this node's specified services
-            foreach (var serviceName in node.Services)
+            foreach (var serviceName in node.Services ?? Array.Empty<string>())
             {
                 var serviceEnvKey = $"{serviceName.ToUpperInvariant().Replace("-", "_")}_SERVICE_ENABLED";
                 environment[serviceEnvKey] = "true";
@@ -700,7 +671,7 @@ public partial class OrchestratorService : IOrchestratorService
                 node.Name,
                 hasLayerConfig ? "layer-based" : "BANNOU_SERVICES_ENABLED=false",
                 appId,
-                string.Join(", ", node.Services));
+                string.Join(", ", node.Services ?? Array.Empty<string>()));
 
             // DryRun mode: collect what would be deployed without actually deploying
             if (body.DryRun)
@@ -713,7 +684,7 @@ public partial class OrchestratorService : IOrchestratorService
                 });
                 _logger.LogDebug(
                     "DryRun mode: Would deploy node {NodeName} with app-id {AppId}, services: {Services}",
-                    node.Name, appId, string.Join(", ", node.Services));
+                    node.Name, appId, string.Join(", ", node.Services ?? Array.Empty<string>()));
                 continue;
             }
 
@@ -735,7 +706,7 @@ public partial class OrchestratorService : IOrchestratorService
 
                 // Register service routing for each service on this node
                 // ServiceHealthMonitor will automatically publish FullServiceMappingsEvent
-                foreach (var serviceName in node.Services)
+                foreach (var serviceName in node.Services ?? Array.Empty<string>())
                 {
                     await _healthMonitor.SetServiceRoutingAsync(serviceName, appId);
                 }
@@ -744,11 +715,11 @@ public partial class OrchestratorService : IOrchestratorService
                 expectedAppIds.Add(appId);
 
                 // Track for potential rollback
-                successfullyDeployedNodes.Add((appId, node.Services));
+                successfullyDeployedNodes.Add((appId, node.Services ?? new List<string>()));
 
                 _logger.LogInformation(
                     "Node {NodeName} deployed with app-id {AppId}, {ServiceCount} service routings set",
-                    node.Name, appId, node.Services.Count);
+                    node.Name, appId, node.Services?.Count ?? 0);
             }
             else
             {
@@ -926,7 +897,7 @@ public partial class OrchestratorService : IOrchestratorService
             // Build service configuration from deployed nodes
             foreach (var node in nodesToDeploy)
             {
-                foreach (var serviceName in node.Services)
+                foreach (var serviceName in node.Services ?? Array.Empty<string>())
                 {
                     deploymentConfig.Services[serviceName] = new ServiceDeploymentConfig
                     {
@@ -969,19 +940,15 @@ public partial class OrchestratorService : IOrchestratorService
             DeploymentId = deploymentId,
             Backend = orchestrator.BackendType,
             Duration = $"{duration.TotalSeconds:F1}s",
-            Message = body.DryRun
-                ? $"DryRun mode: Would deploy {deployedServices.Count} node(s)"
-                : success
-                    ? $"Successfully deployed {deployedServices.Count} node(s)"
-                    : $"Deployed {deployedServices.Count} node(s), {failedServices.Count} failed: {string.Join("; ", failedServices)}"
+            Warnings = failedServices.Count > 0 ? failedServices : null
         };
 
         // Publish deployment completed/failed event
         await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Action = success ? DeploymentEventAction.Completed : DeploymentEventAction.Failed,
+            Action = success ? DeploymentAction.Completed : DeploymentAction.Failed,
             DeploymentId = deploymentId,
             Preset = body.Preset,
             Backend = orchestrator.BackendType,
@@ -1000,6 +967,7 @@ public partial class OrchestratorService : IOrchestratorService
         GetServiceRoutingRequest body,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.GetServiceRoutingAsync");
         _logger.LogDebug("Executing GetServiceRouting operation");
 
         // Ensure we have the last deployment state loaded for DeploymentId
@@ -1053,6 +1021,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, EnvironmentStatus?)> GetStatusAsync(GetStatusRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.GetStatusAsync");
         _logger.LogDebug("Executing GetStatus operation");
 
         var orchestrator = await GetOrchestratorAsync(cancellationToken);
@@ -1097,6 +1066,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, TeardownResponse?)> TeardownAsync(TeardownRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.TeardownAsync");
         _logger.LogInformation(
             "Executing Teardown operation: dryRun={DryRun}, mode={Mode}, removeVolumes={RemoveVolumes}, includeInfrastructure={IncludeInfrastructure}",
             body.DryRun,
@@ -1120,9 +1090,9 @@ public partial class OrchestratorService : IOrchestratorService
             // Publish teardown started event (topology-changed action indicates infrastructure modification)
             await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                Action = DeploymentEventAction.TopologyChanged,
+                Action = DeploymentAction.TopologyChanged,
                 DeploymentId = teardownId
             });
         }
@@ -1158,7 +1128,6 @@ public partial class OrchestratorService : IOrchestratorService
         {
             return (StatusCodes.OK, new TeardownResponse
             {
-                Success = true,
                 Duration = "0s",
                 StoppedContainers = stoppedContainers,
                 RemovedVolumes = removedVolumes
@@ -1176,7 +1145,6 @@ public partial class OrchestratorService : IOrchestratorService
         var previewDuration = DateTime.UtcNow - startTime;
         var previewResponse = new TeardownResponse
         {
-            Success = true,
             Duration = $"{previewDuration.TotalSeconds:F1}s",
             StoppedContainers = servicesToTeardown,
             RemovedVolumes = new List<string>(),
@@ -1201,18 +1169,14 @@ public partial class OrchestratorService : IOrchestratorService
             cancellationToken);
 
         var duration = DateTime.UtcNow - startTime;
-        var success = result.Failed.Count == 0;
 
         var response = new TeardownResponse
         {
-            Success = success,
             Duration = $"{duration.TotalSeconds:F1}s",
             StoppedContainers = result.Stopped,
             RemovedVolumes = result.RemovedVolumes,
             RemovedInfrastructure = result.RemovedInfrastructure,
-            Message = success
-                ? "Teardown completed"
-                : "Teardown completed with failures"
+            Errors = result.Failed.Count > 0 ? result.Failed : null
         };
 
         return (StatusCodes.OK, response);
@@ -1230,6 +1194,7 @@ public partial class OrchestratorService : IOrchestratorService
         string teardownId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.ExecuteActualTeardownAsync");
         var stoppedContainers = new List<string>();
         var removedVolumes = new List<string>();
         var failedTeardowns = new List<string>();
@@ -1321,9 +1286,9 @@ public partial class OrchestratorService : IOrchestratorService
         // Publish teardown completed/failed event
         await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Action = success ? DeploymentEventAction.Completed : DeploymentEventAction.Failed,
+            Action = success ? DeploymentAction.Completed : DeploymentAction.Failed,
             DeploymentId = teardownId,
             Changes = stoppedContainers,
             Error = success ? null : string.Join("; ", failedTeardowns)
@@ -1343,6 +1308,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, CleanResponse?)> CleanAsync(CleanRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.CleanAsync");
         var targets = body.Targets?.ToList() ?? new List<CleanTarget>();
         var force = body.Force;
 
@@ -1373,7 +1339,7 @@ public partial class OrchestratorService : IOrchestratorService
             _logger.LogInformation("Cleaning stopped containers...");
             var containers = await orchestrator.ListContainersAsync(cancellationToken);
             var stoppedContainers = containers.Where(c =>
-                c.Status == ContainerStatusStatus.Stopped).ToList();
+                c.Status == ContainerStatusType.Stopped).ToList();
 
             foreach (var container in stoppedContainers)
             {
@@ -1474,16 +1440,13 @@ public partial class OrchestratorService : IOrchestratorService
             messageBuilder.Append("No cleanup targets specified");
         }
 
-        var cleanSuccess = true;
         var response = new CleanResponse
         {
-            Success = cleanSuccess,
             ReclaimedSpaceMb = (int)(reclaimedBytes / (1024 * 1024)),
             RemovedContainers = removedContainers,
             RemovedNetworks = removedNetworks,
             RemovedVolumes = removedVolumes,
-            RemovedImages = removedImages,
-            Message = messageBuilder.ToString()
+            RemovedImages = removedImages
         };
 
         _logger.LogInformation(
@@ -1559,7 +1522,7 @@ public partial class OrchestratorService : IOrchestratorService
     private static bool IsOrphanedContainer(ContainerStatus container)
     {
         // Container must be stopped to be considered orphaned
-        if (container.Status != ContainerStatusStatus.Stopped)
+        if (container.Status != ContainerStatusType.Stopped)
         {
             return false;
         }
@@ -1588,6 +1551,7 @@ public partial class OrchestratorService : IOrchestratorService
         GetLogsRequest body,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.GetLogsAsync");
         var service = body.Service;
         var container = body.Container;
         var since = body.Since;
@@ -1613,24 +1577,27 @@ public partial class OrchestratorService : IOrchestratorService
         // Docker logs with Timestamps=true format: "2024-01-01T12:00:00.123456789Z message"
         // Stderr section is appended after a "[STDERR]" marker by ReadDockerLogStreamAsync
         var logEntries = new List<LogEntry>();
-        var currentStream = LogEntryStream.Stdout;
+        var currentStream = LogStreamType.Stdout;
+        var lastTimestamp = DateTimeOffset.UtcNow;
 
         foreach (var line in logsText.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
             if (line == "[STDERR]")
             {
-                currentStream = LogEntryStream.Stderr;
+                currentStream = LogStreamType.Stderr;
                 continue;
             }
 
-            var timestamp = DateTimeOffset.UtcNow;
+            var timestamp = lastTimestamp;
             var message = line;
 
-            // Try to parse Docker timestamp prefix (ISO 8601 with nanoseconds)
+            // Try to parse Docker timestamp prefix (ISO 8601 with nanoseconds).
+            // Continuation lines (e.g., stack traces) inherit the preceding line's timestamp.
             var spaceIndex = line.IndexOf(' ');
             if (spaceIndex > 0 && DateTimeOffset.TryParse(line[..spaceIndex], out var parsed))
             {
                 timestamp = parsed;
+                lastTimestamp = parsed;
                 message = line[(spaceIndex + 1)..];
             }
 
@@ -1658,6 +1625,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, TopologyUpdateResponse?)> UpdateTopologyAsync(TopologyUpdateRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.UpdateTopologyAsync");
         _logger.LogInformation(
             "Executing UpdateTopology operation: mode={Mode}, changes={Changes}",
             body.Mode, body.Changes?.Count ?? 0);
@@ -1839,6 +1807,12 @@ public partial class OrchestratorService : IOrchestratorService
 
                     case TopologyChangeAction.Scale:
                         // Scale service instances on a node
+                        if (!change.Replicas.HasValue)
+                        {
+                            appliedChange.Success = false;
+                            appliedChange.Error = "Scale action requires replicas to be specified";
+                            break;
+                        }
                         if (change.Services != null)
                         {
                             var scaleSucceeded = 0;
@@ -1851,7 +1825,7 @@ public partial class OrchestratorService : IOrchestratorService
 
                                 var scaleResult = await orchestrator.ScaleServiceAsync(
                                     appId,
-                                    change.Replicas,
+                                    change.Replicas.Value,
                                     cancellationToken);
 
                                 if (scaleResult.Success)
@@ -1941,26 +1915,19 @@ public partial class OrchestratorService : IOrchestratorService
                 appliedChange.Error = ex.Message;
                 _logger.LogError(ex, "Error applying topology change: {Action} for {Target}",
                     change.Action, change.NodeName);
-                await PublishErrorEventAsync("UpdateTopology", ex.GetType().Name, ex.Message, details: new { Action = change.Action, NodeName = change.NodeName });
+                await PublishErrorEventAsync("UpdateTopology", ex.GetType().Name, ex.Message, details: new Dictionary<string, object?> { ["Action"] = change.Action, ["NodeName"] = change.NodeName });
             }
 
             appliedChanges.Add(appliedChange);
         }
 
         var duration = DateTime.UtcNow - startTime;
-        var allSucceeded = appliedChanges.All(c => c.Success);
-        var successCount = appliedChanges.Count(c => c.Success);
-        var failCount = appliedChanges.Count(c => !c.Success);
 
         var response = new TopologyUpdateResponse
         {
-            Success = allSucceeded,
             AppliedChanges = appliedChanges,
             Duration = $"{duration.TotalSeconds:F1}s",
-            Warnings = warnings,
-            Message = allSucceeded
-                ? $"Successfully applied {successCount} topology change(s)"
-                : $"Applied {successCount} change(s), {failCount} failed"
+            Warnings = warnings
         };
 
         return (StatusCodes.OK, response);
@@ -1974,6 +1941,7 @@ public partial class OrchestratorService : IOrchestratorService
         ContainerRestartRequestBody body,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.RequestContainerRestartAsync");
         var appName = body.AppName;
         _logger.LogInformation(
             "Executing RequestContainerRestart operation: app={AppName}, priority={Priority}",
@@ -1983,14 +1951,17 @@ public partial class OrchestratorService : IOrchestratorService
         // Create ContainerRestartRequest from the body for the orchestrator
         var restartRequest = new ContainerRestartRequest
         {
-            Priority = body.Priority,
             Reason = body.Reason
         };
+        if (body.Priority.HasValue)
+        {
+            restartRequest.Priority = body.Priority.Value;
+        }
         var response = await orchestrator.RestartContainerAsync(appName, restartRequest, cancellationToken);
 
         if (!response.Accepted)
         {
-            return (StatusCodes.InternalServerError, response);
+            return (StatusCodes.InternalServerError, null);
         }
 
         return (StatusCodes.OK, response);
@@ -2002,13 +1973,14 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, ContainerStatus?)> GetContainerStatusAsync(GetContainerStatusRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.GetContainerStatusAsync");
         var appName = body.AppName;
         _logger.LogDebug("Executing GetContainerStatus operation: app={AppName}", appName);
 
         var orchestrator = await GetOrchestratorAsync(cancellationToken);
         var status = await orchestrator.GetContainerStatusAsync(appName, cancellationToken);
 
-        if (status.Status == ContainerStatusStatus.Stopped && status.Instances == 0)
+        if (status.Status == ContainerStatusType.Stopped && status.Instances == 0)
         {
             // Container not found is returned as Stopped with 0 instances
             return (StatusCodes.NotFound, status);
@@ -2023,7 +1995,9 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, ConfigRollbackResponse?)> RollbackConfigurationAsync(ConfigRollbackRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Executing RollbackConfiguration operation: reason={Reason}", body.Reason);
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.RollbackConfigurationAsync");
+        _logger.LogDebug("Executing RollbackConfiguration operation: reason={Reason}, targetVersion={TargetVersion}",
+            body.Reason, body.TargetVersion);
 
         // Get current configuration
         var currentConfig = await _stateManager.GetCurrentConfigurationAsync();
@@ -2036,13 +2010,21 @@ public partial class OrchestratorService : IOrchestratorService
             return (StatusCodes.BadRequest, null);
         }
 
-        // Get the previous version (currentVersion - 1)
-        var targetVersion = currentVersion - 1;
+        // Use specified target version or default to N-1
+        var targetVersion = body.TargetVersion ?? currentVersion - 1;
+
+        if (targetVersion < 1 || targetVersion >= currentVersion)
+        {
+            _logger.LogWarning("Invalid target version {TargetVersion} (current version: {CurrentVersion})",
+                targetVersion, currentVersion);
+            return (StatusCodes.BadRequest, null);
+        }
+
         var previousConfig = await _stateManager.GetConfigurationVersionAsync(targetVersion);
 
         if (previousConfig == null)
         {
-            _logger.LogWarning("Previous configuration version {Version} not found in history (may have expired)", targetVersion);
+            _logger.LogWarning("Configuration version {Version} not found in history (may have expired)", targetVersion);
             return (StatusCodes.NotFound, null);
         }
 
@@ -2092,8 +2074,7 @@ public partial class OrchestratorService : IOrchestratorService
         {
             PreviousVersion = currentVersion,
             CurrentVersion = newVersion,
-            ChangedKeys = changedKeys,
-            Message = $"Successfully rolled back to configuration version {targetVersion}. Reason: {body.Reason}"
+            ChangedKeys = changedKeys
         });
     }
 
@@ -2103,6 +2084,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, ConfigVersionResponse?)> GetConfigVersionAsync(GetConfigVersionRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.GetConfigVersionAsync");
         _logger.LogDebug("Executing GetConfigVersion operation");
 
         // Get current version and configuration from Redis
@@ -2152,6 +2134,7 @@ public partial class OrchestratorService : IOrchestratorService
     async Task IBannouService.RegisterServicePermissionsAsync(
         string appId, IPermissionRegistry? registry)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.RegisterServicePermissionsAsync");
         if (registry == null) return;
 
         if (_configuration.SecureWebsocket)
@@ -2178,15 +2161,15 @@ public partial class OrchestratorService : IOrchestratorService
     /// <summary>
     /// Maps container status to deployed service status.
     /// </summary>
-    private static DeployedServiceStatus MapContainerStatusToDeployedServiceStatus(ContainerStatusStatus containerStatus)
+    private static DeployedServiceStatus MapContainerStatusToDeployedServiceStatus(ContainerStatusType containerStatus)
     {
         return containerStatus switch
         {
-            ContainerStatusStatus.Running => DeployedServiceStatus.Running,
-            ContainerStatusStatus.Stopped => DeployedServiceStatus.Stopped,
-            ContainerStatusStatus.Unhealthy => DeployedServiceStatus.Unhealthy,
-            ContainerStatusStatus.Starting => DeployedServiceStatus.Starting,
-            ContainerStatusStatus.Stopping => DeployedServiceStatus.Stopped, // Stopping maps to Stopped (closest match)
+            ContainerStatusType.Running => DeployedServiceStatus.Running,
+            ContainerStatusType.Stopped => DeployedServiceStatus.Stopped,
+            ContainerStatusType.Unhealthy => DeployedServiceStatus.Unhealthy,
+            ContainerStatusType.Starting => DeployedServiceStatus.Starting,
+            ContainerStatusType.Stopping => DeployedServiceStatus.Stopped, // Stopping maps to Stopped (closest match)
             _ => DeployedServiceStatus.Unhealthy
         };
     }
@@ -2202,6 +2185,7 @@ public partial class OrchestratorService : IOrchestratorService
         string? dependency = null,
         object? details = null)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.PublishErrorEventAsync");
         await _messageBus.TryPublishErrorAsync(
             serviceName: "orchestrator",
             operation: operation,
@@ -2243,6 +2227,7 @@ public partial class OrchestratorService : IOrchestratorService
         string deploymentId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.ResetToDefaultTopologyAsync");
         var tornDownServices = new List<string>();
 
         try
@@ -2336,12 +2321,7 @@ public partial class OrchestratorService : IOrchestratorService
 
     #region Processing Pool Management
 
-    // Redis key patterns for processing pool
-    private const string POOL_INSTANCES_KEY = "processing-pool:{0}:instances";
-    private const string POOL_AVAILABLE_KEY = "processing-pool:{0}:available";
-    private const string POOL_LEASES_KEY = "processing-pool:{0}:leases";
-    private const string POOL_METRICS_KEY = "processing-pool:{0}:metrics";
-    private const string POOL_CONFIG_KEY = "processing-pool:{0}:config";
+    // Pool key patterns moved to OrchestratorStateManager — typed methods used instead (FOUNDATION TENETS)
 
     /// <summary>
     /// Acquires a processor from the pool for processing work.
@@ -2353,7 +2333,7 @@ public partial class OrchestratorService : IOrchestratorService
         AcquireProcessorRequest body,
         CancellationToken cancellationToken = default)
     {
-
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.AcquireProcessorAsync");
         if (string.IsNullOrEmpty(body.PoolType))
         {
             _logger.LogWarning("AcquireProcessor: Missing pool_type");
@@ -2362,21 +2342,18 @@ public partial class OrchestratorService : IOrchestratorService
 
         // Acquire pool lock to serialize pool state changes
         await using var poolLock = await _lockProvider.LockAsync(
-            "orchestrator-pool", body.PoolType, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.OrchestratorLock, body.PoolType, Guid.NewGuid().ToString(), _configuration.PoolLockTimeoutSeconds, cancellationToken);
         if (!poolLock.Success)
         {
             _logger.LogWarning("Could not acquire pool lock for acquire in pool {PoolType}", body.PoolType);
             return (StatusCodes.Conflict, null);
         }
 
-        var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
-        var leasesKey = string.Format(POOL_LEASES_KEY, body.PoolType);
-
         // Reclaim any expired leases before checking availability
-        await ReclaimExpiredLeasesAsync(body.PoolType, availableKey, leasesKey);
+        await ReclaimExpiredLeasesAsync(body.PoolType);
 
         // Try to get an available processor from the pool
-        var availableProcessors = await _stateManager.GetListAsync<ProcessorInstance>(availableKey);
+        var availableProcessors = await _stateManager.GetAvailableProcessorsAsync(body.PoolType);
 
         if (availableProcessors == null || availableProcessors.Count == 0)
         {
@@ -2389,11 +2366,11 @@ public partial class OrchestratorService : IOrchestratorService
         // Pop the first available processor
         var processor = availableProcessors[0];
         availableProcessors.RemoveAt(0);
-        await _stateManager.SetListAsync(availableKey, availableProcessors);
+        await _stateManager.SetAvailableProcessorsAsync(body.PoolType, availableProcessors);
 
         // Create a lease for this processor
         var leaseId = Guid.NewGuid();
-        var timeoutSeconds = body.TimeoutSeconds > 0 ? body.TimeoutSeconds : 300;
+        var timeoutSeconds = body.TimeoutSeconds > 0 ? body.TimeoutSeconds : _configuration.DefaultPoolLeaseTimeoutSeconds;
         var expiresAt = DateTimeOffset.UtcNow.AddSeconds(timeoutSeconds);
 
         var lease = new ProcessorLease
@@ -2409,9 +2386,9 @@ public partial class OrchestratorService : IOrchestratorService
         };
 
         // Store the lease
-        var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
+        var leases = await _stateManager.GetLeasesAsync(body.PoolType) ?? new Dictionary<string, ProcessorLease>();
         leases[leaseId.ToString()] = lease;
-        await _stateManager.SetHashAsync(leasesKey, leases);
+        await _stateManager.SetLeasesAsync(body.PoolType, leases);
 
         _logger.LogInformation(
             "AcquireProcessor: Acquired processor {ProcessorId} from pool {PoolType} with lease {LeaseId}, expires at {ExpiresAt}",
@@ -2436,12 +2413,7 @@ public partial class OrchestratorService : IOrchestratorService
         ReleaseProcessorRequest body,
         CancellationToken cancellationToken = default)
     {
-
-        if (body.LeaseId == Guid.Empty)
-        {
-            _logger.LogWarning("ReleaseProcessor: Missing or invalid lease_id");
-            return (StatusCodes.BadRequest, null);
-        }
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.ReleaseProcessorAsync");
 
         // Find the lease across all pool types
         ProcessorLease? lease = null;
@@ -2452,8 +2424,7 @@ public partial class OrchestratorService : IOrchestratorService
 
         foreach (var pt in poolTypes)
         {
-            var leasesKey = string.Format(POOL_LEASES_KEY, pt);
-            var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey);
+            var leases = await _stateManager.GetLeasesAsync(pt);
 
             if (leases != null && leases.TryGetValue(body.LeaseId.ToString(), out var foundLease))
             {
@@ -2471,7 +2442,7 @@ public partial class OrchestratorService : IOrchestratorService
 
         // Acquire pool lock to serialize pool state changes
         await using var poolLock = await _lockProvider.LockAsync(
-            "orchestrator-pool", poolType, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.OrchestratorLock, poolType, Guid.NewGuid().ToString(), _configuration.PoolLockTimeoutSeconds, cancellationToken);
         if (!poolLock.Success)
         {
             _logger.LogWarning("Could not acquire pool lock for release in pool {PoolType}", poolType);
@@ -2479,14 +2450,12 @@ public partial class OrchestratorService : IOrchestratorService
         }
 
         // Remove the lease
-        var leasesKeyToUpdate = string.Format(POOL_LEASES_KEY, poolType);
-        var currentLeases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKeyToUpdate) ?? new Dictionary<string, ProcessorLease>();
+        var currentLeases = await _stateManager.GetLeasesAsync(poolType) ?? new Dictionary<string, ProcessorLease>();
         currentLeases.Remove(body.LeaseId.ToString());
-        await _stateManager.SetHashAsync(leasesKeyToUpdate, currentLeases);
+        await _stateManager.SetLeasesAsync(poolType, currentLeases);
 
         // Return processor to available pool
-        var availableKey = string.Format(POOL_AVAILABLE_KEY, poolType);
-        var availableProcessors = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+        var availableProcessors = await _stateManager.GetAvailableProcessorsAsync(poolType) ?? new List<ProcessorInstance>();
 
         availableProcessors.Add(new ProcessorInstance
         {
@@ -2497,7 +2466,7 @@ public partial class OrchestratorService : IOrchestratorService
             LastUpdated = DateTimeOffset.UtcNow
         });
 
-        await _stateManager.SetListAsync(availableKey, availableProcessors);
+        await _stateManager.SetAvailableProcessorsAsync(poolType, availableProcessors);
 
         // Update metrics
         await UpdatePoolMetricsAsync(poolType, body.Success);
@@ -2519,7 +2488,6 @@ public partial class OrchestratorService : IOrchestratorService
 
         return (StatusCodes.OK, new ReleaseProcessorResponse
         {
-            Released = true,
             ProcessorId = lease.ProcessorId
         });
     }
@@ -2534,27 +2502,20 @@ public partial class OrchestratorService : IOrchestratorService
         GetPoolStatusRequest body,
         CancellationToken cancellationToken = default)
     {
-
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.GetPoolStatusAsync");
         if (string.IsNullOrEmpty(body.PoolType))
         {
             _logger.LogWarning("GetPoolStatus: Missing pool_type");
             return (StatusCodes.BadRequest, null);
         }
 
-        var instancesKey = string.Format(POOL_INSTANCES_KEY, body.PoolType);
-        var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
-        var leasesKey = string.Format(POOL_LEASES_KEY, body.PoolType);
-        var configKey = string.Format(POOL_CONFIG_KEY, body.PoolType);
-        var metricsKey = string.Format(POOL_METRICS_KEY, body.PoolType);
-
-        var allInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
-        var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
-        var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
-        var config = await _stateManager.GetValueAsync<PoolConfiguration>(configKey);
+        var allInstances = await _stateManager.GetPoolInstancesAsync(body.PoolType) ?? new List<ProcessorInstance>();
+        var availableInstances = await _stateManager.GetAvailableProcessorsAsync(body.PoolType) ?? new List<ProcessorInstance>();
+        var leases = await _stateManager.GetLeasesAsync(body.PoolType) ?? new Dictionary<string, ProcessorLease>();
+        var config = await _stateManager.GetPoolConfigurationAsync(body.PoolType);
 
         var response = new PoolStatusResponse
         {
-            PoolType = body.PoolType,
             TotalInstances = allInstances.Count,
             AvailableInstances = availableInstances.Count,
             BusyInstances = leases.Count,
@@ -2566,7 +2527,7 @@ public partial class OrchestratorService : IOrchestratorService
         // Include metrics if requested
         if (body.IncludeMetrics)
         {
-            var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey);
+            var metrics = await _stateManager.GetPoolMetricsAsync(body.PoolType);
             if (metrics != null)
             {
                 response.RecentMetrics = new PoolMetrics
@@ -2592,7 +2553,7 @@ public partial class OrchestratorService : IOrchestratorService
         ScalePoolRequest body,
         CancellationToken cancellationToken = default)
     {
-
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.ScalePoolAsync");
         if (string.IsNullOrEmpty(body.PoolType))
         {
             _logger.LogWarning("ScalePool: Missing pool_type");
@@ -2606,8 +2567,7 @@ public partial class OrchestratorService : IOrchestratorService
         }
 
         // Load pool configuration - required to know how to deploy workers
-        var configKey = string.Format(POOL_CONFIG_KEY, body.PoolType);
-        var poolConfig = await _stateManager.GetValueAsync<PoolConfiguration>(configKey);
+        var poolConfig = await _stateManager.GetPoolConfigurationAsync(body.PoolType);
         if (poolConfig == null)
         {
             _logger.LogWarning("ScalePool: No configuration found for pool {PoolType}", body.PoolType);
@@ -2617,14 +2577,9 @@ public partial class OrchestratorService : IOrchestratorService
         // Get container orchestrator backend
         var orchestrator = await GetOrchestratorAsync(cancellationToken);
 
-        var instancesKey = string.Format(POOL_INSTANCES_KEY, body.PoolType);
-        var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
-        var leasesKey = string.Format(POOL_LEASES_KEY, body.PoolType);
-        var metricsKey = string.Format(POOL_METRICS_KEY, body.PoolType);
-
-        var currentInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
-        var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
-        var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
+        var currentInstances = await _stateManager.GetPoolInstancesAsync(body.PoolType) ?? new List<ProcessorInstance>();
+        var availableInstances = await _stateManager.GetAvailableProcessorsAsync(body.PoolType) ?? new List<ProcessorInstance>();
+        var leases = await _stateManager.GetLeasesAsync(body.PoolType) ?? new Dictionary<string, ProcessorLease>();
 
         var previousCount = currentInstances.Count;
         var scaledUp = 0;
@@ -2785,18 +2740,17 @@ public partial class OrchestratorService : IOrchestratorService
         }
 
         // Save updated state
-        await _stateManager.SetListAsync(instancesKey, currentInstances);
-        await _stateManager.SetListAsync(availableKey, availableInstances);
-        await _stateManager.SetHashAsync(leasesKey, leases);
+        await _stateManager.SetPoolInstancesAsync(body.PoolType, currentInstances);
+        await _stateManager.SetAvailableProcessorsAsync(body.PoolType, availableInstances);
+        await _stateManager.SetLeasesAsync(body.PoolType, leases);
 
         // Update metrics with scale event
-        var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey) ?? new PoolMetricsData();
+        var metrics = await _stateManager.GetPoolMetricsAsync(body.PoolType) ?? new PoolMetricsData();
         metrics.LastScaleEvent = DateTimeOffset.UtcNow;
-        await _stateManager.SetValueAsync(metricsKey, metrics);
+        await _stateManager.SetPoolMetricsAsync(body.PoolType, metrics);
 
         return (StatusCodes.OK, new ScalePoolResponse
         {
-            PoolType = body.PoolType,
             PreviousInstances = previousCount,
             CurrentInstances = currentInstances.Count,
             ScaledUp = scaledUp,
@@ -2814,20 +2768,16 @@ public partial class OrchestratorService : IOrchestratorService
         CleanupPoolRequest body,
         CancellationToken cancellationToken = default)
     {
-
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.CleanupPoolAsync");
         if (string.IsNullOrEmpty(body.PoolType))
         {
             _logger.LogWarning("CleanupPool: Missing pool_type");
             return (StatusCodes.BadRequest, null);
         }
 
-        var instancesKey = string.Format(POOL_INSTANCES_KEY, body.PoolType);
-        var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
-        var configKey = string.Format(POOL_CONFIG_KEY, body.PoolType);
-
-        var currentInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
-        var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
-        var config = await _stateManager.GetValueAsync<PoolConfiguration>(configKey);
+        var currentInstances = await _stateManager.GetPoolInstancesAsync(body.PoolType) ?? new List<ProcessorInstance>();
+        var availableInstances = await _stateManager.GetAvailableProcessorsAsync(body.PoolType) ?? new List<ProcessorInstance>();
+        var config = await _stateManager.GetPoolConfigurationAsync(body.PoolType);
 
         var minInstances = config?.MinInstances ?? 1;
         var targetCount = body.PreserveMinimum ? minInstances : 0;
@@ -2837,10 +2787,8 @@ public partial class OrchestratorService : IOrchestratorService
         {
             return (StatusCodes.OK, new CleanupPoolResponse
             {
-                PoolType = body.PoolType,
                 InstancesRemoved = 0,
-                CurrentInstances = currentInstances.Count,
-                Message = "No idle instances to remove"
+                CurrentInstances = currentInstances.Count
             });
         }
 
@@ -2874,8 +2822,8 @@ public partial class OrchestratorService : IOrchestratorService
             }
         }
 
-        await _stateManager.SetListAsync(instancesKey, currentInstances);
-        await _stateManager.SetListAsync(availableKey, availableInstances);
+        await _stateManager.SetPoolInstancesAsync(body.PoolType, currentInstances);
+        await _stateManager.SetAvailableProcessorsAsync(body.PoolType, availableInstances);
 
         _logger.LogInformation(
             "CleanupPool: Removed {Count} idle instances from pool {PoolType}, {Remaining} instances remaining",
@@ -2883,10 +2831,8 @@ public partial class OrchestratorService : IOrchestratorService
 
         return (StatusCodes.OK, new CleanupPoolResponse
         {
-            PoolType = body.PoolType,
             InstancesRemoved = removedCount,
-            CurrentInstances = currentInstances.Count,
-            Message = $"Cleaned up {removedCount} idle processor(s)"
+            CurrentInstances = currentInstances.Count
         });
     }
 
@@ -2900,6 +2846,7 @@ public partial class OrchestratorService : IOrchestratorService
         List<PresetProcessingPool> processingPools,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.InitializePoolConfigurationsAsync");
         foreach (var pool in processingPools)
         {
             if (string.IsNullOrEmpty(pool.PoolType))
@@ -2907,8 +2854,6 @@ public partial class OrchestratorService : IOrchestratorService
                 _logger.LogWarning("Skipping pool with empty pool_type");
                 continue;
             }
-
-            var configKey = string.Format(POOL_CONFIG_KEY, pool.PoolType);
 
             // Build the pool worker environment variables
             var poolEnvironment = new Dictionary<string, string>();
@@ -2943,7 +2888,7 @@ public partial class OrchestratorService : IOrchestratorService
                 IdleTimeoutMinutes = pool.IdleTimeoutMinutes
             };
 
-            await _stateManager.SetValueAsync(configKey, config);
+            await _stateManager.SetPoolConfigurationAsync(pool.PoolType, config);
 
             _logger.LogInformation(
                 "Initialized pool configuration: PoolType={PoolType}, Plugin={Plugin}, Min={Min}, Max={Max}",
@@ -2961,23 +2906,23 @@ public partial class OrchestratorService : IOrchestratorService
     /// <param name="cancellationToken">Cancellation token.</param>
     private async Task RegisterPoolTypeAsync(string poolType, CancellationToken cancellationToken)
     {
-        var knownPoolsKey = "orchestrator:pools:known";
-        var knownPools = await _stateManager.GetListAsync<string>(knownPoolsKey) ?? new List<string>();
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.RegisterPoolTypeAsync");
+        var knownPools = await _stateManager.GetKnownPoolTypesAsync() ?? new List<string>();
 
         if (!knownPools.Contains(poolType))
         {
             knownPools.Add(poolType);
-            await _stateManager.SetListAsync(knownPoolsKey, knownPools);
+            await _stateManager.SetKnownPoolTypesAsync(knownPools);
         }
     }
 
     /// <summary>
-    /// Gets a list of known pool types from Redis.
+    /// Gets a list of known pool types from state store.
     /// </summary>
     private async Task<List<string>> GetKnownPoolTypesAsync()
     {
-        var knownPoolsKey = "orchestrator:pools:known";
-        var knownPools = await _stateManager.GetListAsync<string>(knownPoolsKey);
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.GetKnownPoolTypesAsync");
+        var knownPools = await _stateManager.GetKnownPoolTypesAsync();
         return knownPools ?? new List<string>();
     }
 
@@ -2985,12 +2930,11 @@ public partial class OrchestratorService : IOrchestratorService
     /// Reclaims expired leases by returning their processors to the available list.
     /// Called before checking availability to ensure expired leases don't permanently consume processors.
     /// </summary>
-    /// <param name="poolType">The pool type for logging.</param>
-    /// <param name="availableKey">Redis key for the available processors list.</param>
-    /// <param name="leasesKey">Redis key for the leases hash.</param>
-    private async Task ReclaimExpiredLeasesAsync(string poolType, string availableKey, string leasesKey)
+    /// <param name="poolType">The pool type to reclaim leases for.</param>
+    private async Task ReclaimExpiredLeasesAsync(string poolType)
     {
-        var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey);
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.ReclaimExpiredLeasesAsync");
+        var leases = await _stateManager.GetLeasesAsync(poolType);
         if (leases == null || leases.Count == 0)
         {
             return;
@@ -3013,7 +2957,7 @@ public partial class OrchestratorService : IOrchestratorService
         }
 
         // Return expired processors to the available list
-        var availableProcessors = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+        var availableProcessors = await _stateManager.GetAvailableProcessorsAsync(poolType) ?? new List<ProcessorInstance>();
 
         foreach (var leaseId in expiredLeaseIds)
         {
@@ -3035,8 +2979,8 @@ public partial class OrchestratorService : IOrchestratorService
                 leaseId, expiredLease.ProcessorId, poolType, expiredLease.ExpiresAt);
         }
 
-        await _stateManager.SetListAsync(availableKey, availableProcessors);
-        await _stateManager.SetHashAsync(leasesKey, leases);
+        await _stateManager.SetAvailableProcessorsAsync(poolType, availableProcessors);
+        await _stateManager.SetLeasesAsync(poolType, leases);
     }
 
     /// <summary>
@@ -3045,8 +2989,8 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private async Task UpdatePoolMetricsAsync(string poolType, bool success)
     {
-        var metricsKey = string.Format(POOL_METRICS_KEY, poolType);
-        var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey) ?? new PoolMetricsData();
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.UpdatePoolMetricsAsync");
+        var metrics = await _stateManager.GetPoolMetricsAsync(poolType) ?? new PoolMetricsData();
 
         // Reset counters if the 1-hour window has elapsed
         if (metrics.WindowStart == default || DateTimeOffset.UtcNow - metrics.WindowStart >= TimeSpan.FromHours(1))
@@ -3065,7 +3009,7 @@ public partial class OrchestratorService : IOrchestratorService
             metrics.JobsFailed1h++;
         }
 
-        await _stateManager.SetValueAsync(metricsKey, metrics);
+        await _stateManager.SetPoolMetricsAsync(poolType, metrics);
     }
 
     /// <summary>
@@ -3075,6 +3019,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private async Task InvalidateOpenRestyRoutingCacheAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.InvalidateOpenRestyRoutingCacheAsync");
         try
         {
             // OpenResty exposes an internal cache invalidation endpoint
@@ -3111,120 +3056,6 @@ public partial class OrchestratorService : IOrchestratorService
         {
             _logger.LogWarning(ex, "Unexpected error invalidating OpenResty cache");
         }
-    }
-
-    #endregion
-
-    #region Processing Pool Internal Models
-
-    /// <summary>
-    /// Status of a processor instance in the pool.
-    /// </summary>
-    internal enum ProcessorStatus
-    {
-        /// <summary>Processor is ready to handle requests.</summary>
-        Available,
-        /// <summary>Processor is starting up and not yet ready.</summary>
-        Pending
-    }
-
-    /// <summary>
-    /// Represents a processor instance in the pool.
-    /// </summary>
-    internal sealed class ProcessorInstance
-    {
-        public string ProcessorId { get; set; } = string.Empty;
-        public string AppId { get; set; } = string.Empty;
-        public string PoolType { get; set; } = string.Empty;
-        public ProcessorStatus Status { get; set; } = ProcessorStatus.Available;
-        public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset LastUpdated { get; set; }
-    }
-
-    /// <summary>
-    /// Represents an active lease for a processor.
-    /// </summary>
-    internal sealed class ProcessorLease
-    {
-        public Guid LeaseId { get; set; }
-        public string ProcessorId { get; set; } = string.Empty;
-        public string AppId { get; set; } = string.Empty;
-        public string PoolType { get; set; } = string.Empty;
-        public DateTimeOffset AcquiredAt { get; set; }
-        public DateTimeOffset ExpiresAt { get; set; }
-        public int Priority { get; set; }
-        public object? Metadata { get; set; }
-    }
-
-    /// <summary>
-    /// Pool configuration stored in Redis.
-    /// Contains all settings needed to spawn pool worker containers.
-    /// </summary>
-    internal sealed class PoolConfiguration
-    {
-        /// <summary>Pool type identifier (e.g., "actor-shared", "asset-image").</summary>
-        public string PoolType { get; set; } = string.Empty;
-
-        /// <summary>Service/plugin name to enable on pool workers.</summary>
-        public string ServiceName { get; set; } = string.Empty;
-
-        /// <summary>Docker image for pool workers. If empty, uses default bannou image.</summary>
-        public string? Image { get; set; }
-
-        /// <summary>Environment variables for pool worker containers.</summary>
-        public Dictionary<string, string>? Environment { get; set; }
-
-        /// <summary>Minimum number of instances to maintain.</summary>
-        public int MinInstances { get; set; } = 1;
-
-        /// <summary>Maximum number of instances allowed.</summary>
-        public int MaxInstances { get; set; } = 5;
-
-        /// <summary>Scale up when utilization exceeds this threshold (0.0-1.0).</summary>
-        public double ScaleUpThreshold { get; set; } = 0.8;
-
-        /// <summary>Scale down when utilization drops below this threshold (0.0-1.0).</summary>
-        public double ScaleDownThreshold { get; set; } = 0.2;
-
-        /// <summary>Time in minutes before idle workers are cleaned up.</summary>
-        public int IdleTimeoutMinutes { get; set; } = 5;
-    }
-
-    /// <summary>
-    /// Pool metrics data stored in Redis.
-    /// </summary>
-    internal sealed class PoolMetricsData
-    {
-        public int JobsCompleted1h { get; set; }
-        public int JobsFailed1h { get; set; }
-        public int AvgProcessingTimeMs { get; set; }
-        public DateTimeOffset LastScaleEvent { get; set; }
-        public DateTimeOffset WindowStart { get; set; }
-    }
-
-    /// <summary>
-    /// Event published when a processor is released back to the pool.
-    /// Used by the Analytics service for pool utilization tracking.
-    /// </summary>
-    internal sealed class ProcessorReleasedEvent
-    {
-        /// <summary>Unique event identifier.</summary>
-        public Guid EventId { get; set; }
-
-        /// <summary>When the release occurred.</summary>
-        public DateTimeOffset Timestamp { get; set; }
-
-        /// <summary>The pool type the processor belongs to.</summary>
-        public string PoolType { get; set; } = string.Empty;
-
-        /// <summary>The processor that was released.</summary>
-        public string ProcessorId { get; set; } = string.Empty;
-
-        /// <summary>Whether the processing job completed successfully.</summary>
-        public bool Success { get; set; }
-
-        /// <summary>How long the lease was held in milliseconds.</summary>
-        public long LeaseDurationMs { get; set; }
     }
 
     #endregion

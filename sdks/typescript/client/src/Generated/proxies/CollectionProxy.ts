@@ -31,7 +31,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createEntryTemplateAsync(
+  async collectionCreateEntryTemplateAsync(
     request: Schemas['CreateEntryTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getEntryTemplateAsync(
+  async collectionGetEntryTemplateAsync(
     request: Schemas['GetEntryTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listEntryTemplatesAsync(
+  async collectionListEntryTemplatesAsync(
     request: Schemas['ListEntryTemplatesRequest'],
     channel: number = 0,
     timeout?: number
@@ -85,7 +85,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateEntryTemplateAsync(
+  async collectionUpdateEntryTemplateAsync(
     request: Schemas['UpdateEntryTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -103,7 +103,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deleteEntryTemplateAsync(
+  async collectionDeleteEntryTemplateAsync(
     request: Schemas['DeleteEntryTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -121,7 +121,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async seedEntryTemplatesAsync(
+  async collectionSeedEntryTemplatesAsync(
     request: Schemas['SeedEntryTemplatesRequest'],
     channel: number = 0,
     timeout?: number
@@ -139,7 +139,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createCollectionAsync(
+  async collectionCreateCollectionAsync(
     request: Schemas['CreateCollectionRequest'],
     channel: number = 0,
     timeout?: number
@@ -157,7 +157,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCollectionAsync(
+  async collectionGetCollectionAsync(
     request: Schemas['GetCollectionRequest'],
     channel: number = 0,
     timeout?: number
@@ -177,7 +177,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listCollectionsAsync(
+  async collectionListCollectionsAsync(
     request: Schemas['ListCollectionsRequest'],
     channel: number = 0,
     timeout?: number
@@ -195,7 +195,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deleteCollectionAsync(
+  async collectionDeleteCollectionAsync(
     request: Schemas['DeleteCollectionRequest'],
     channel: number = 0,
     timeout?: number
@@ -213,7 +213,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async grantEntryAsync(
+  async collectionGrantEntryAsync(
     request: Schemas['GrantEntryRequest'],
     channel: number = 0,
     timeout?: number
@@ -233,7 +233,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async hasEntryAsync(
+  async collectionHasEntryAsync(
     request: Schemas['HasEntryRequest'],
     channel: number = 0,
     timeout?: number
@@ -253,7 +253,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryEntriesAsync(
+  async collectionQueryEntriesAsync(
     request: Schemas['QueryEntriesRequest'],
     channel: number = 0,
     timeout?: number
@@ -273,7 +273,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateEntryMetadataAsync(
+  async collectionUpdateEntryMetadataAsync(
     request: Schemas['UpdateEntryMetadataRequest'],
     channel: number = 0,
     timeout?: number
@@ -291,7 +291,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCompletionStatsAsync(
+  async collectionGetCompletionStatsAsync(
     request: Schemas['GetCompletionStatsRequest'],
     channel: number = 0,
     timeout?: number
@@ -309,7 +309,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async selectContentForAreaAsync(
+  async collectionSelectContentForAreaAsync(
     request: Schemas['SelectContentForAreaRequest'],
     channel: number = 0,
     timeout?: number
@@ -327,7 +327,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async setAreaContentConfigAsync(
+  async collectionSetAreaContentConfigAsync(
     request: Schemas['SetAreaContentConfigRequest'],
     channel: number = 0,
     timeout?: number
@@ -345,7 +345,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getAreaContentConfigAsync(
+  async collectionGetAreaContentConfigAsync(
     request: Schemas['GetAreaContentConfigRequest'],
     channel: number = 0,
     timeout?: number
@@ -363,7 +363,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listAreaContentConfigsAsync(
+  async collectionListAreaContentConfigsAsync(
     request: Schemas['ListAreaContentConfigsRequest'],
     channel: number = 0,
     timeout?: number
@@ -381,7 +381,7 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async advanceDiscoveryAsync(
+  async collectionAdvanceDiscoveryAsync(
     request: Schemas['AdvanceDiscoveryRequest'],
     channel: number = 0,
     timeout?: number
@@ -390,5 +390,23 @@ export class CollectionProxy {
       Schemas['AdvanceDiscoveryRequest'],
       Schemas['AdvanceDiscoveryResponse']
     >('/collection/discovery/advance', request, channel, timeout);
+  }
+
+  /**
+   * Cleanup all collections for a deleted character
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async collectionCleanupByCharacterAsync(
+    request: Schemas['CleanupByCharacterRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['CleanupByCharacterResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['CleanupByCharacterRequest'],
+      Schemas['CleanupByCharacterResponse']
+    >('/collection/cleanup-by-character', request, channel, timeout);
   }
 }

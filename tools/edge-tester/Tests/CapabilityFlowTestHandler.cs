@@ -219,10 +219,10 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     Console.WriteLine($"   Payload preview: {responseText[..Math.Min(500, responseText.Length)]}");
 
                     // Check if this is a capability manifest
-                    var manifest = BannouJson.Deserialize<CapabilityManifestEvent>(responseText);
+                    var manifest = BannouJson.Deserialize<CapabilityManifestClientEvent>(responseText);
 
-                    // Capability manifest should have eventName="connect.capability_manifest" and availableApis
-                    if (manifest?.EventName == "connect.capability_manifest")
+                    // Capability manifest should have eventName="connect.capability-manifest" and availableApis
+                    if (manifest?.EventName == "connect.capability-manifest")
                     {
                         var apiCount = manifest.AvailableApis?.Count ?? 0;
                         Console.WriteLine($"✅ Received capability manifest with {apiCount} available APIs");
@@ -244,7 +244,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     }
                     else
                     {
-                        Console.WriteLine($"❌ Expected capability_manifest but received '{manifest?.EventName}'");
+                        Console.WriteLine($"❌ Expected capability-manifest but received '{manifest?.EventName}'");
                         return false;
                     }
                 }
@@ -594,11 +594,11 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
 
             var receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer, result.Count);
             var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
-            var initialManifest = BannouJson.Deserialize<CapabilityManifestEvent>(responseText);
+            var initialManifest = BannouJson.Deserialize<CapabilityManifestClientEvent>(responseText);
 
-            if (initialManifest?.EventName != "connect.capability_manifest")
+            if (initialManifest?.EventName != "connect.capability-manifest")
             {
-                Console.WriteLine($"❌ Expected connect.capability_manifest but received '{initialManifest?.EventName}'");
+                Console.WriteLine($"❌ Expected connect.capability-manifest but received '{initialManifest?.EventName}'");
                 return false;
             }
 
@@ -662,9 +662,9 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
 
                 receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer, result.Count);
                 responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
-                var updatedManifest = BannouJson.Deserialize<CapabilityManifestEvent>(responseText);
+                var updatedManifest = BannouJson.Deserialize<CapabilityManifestClientEvent>(responseText);
 
-                if (updatedManifest?.EventName == "connect.capability_manifest")
+                if (updatedManifest?.EventName == "connect.capability-manifest")
                 {
                     var updatedApiCount = updatedManifest.AvailableApis?.Count ?? 0;
 
@@ -685,8 +685,8 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 }
                 else
                 {
-                    // QUALITY TENETS: We expected capability_manifest, not something else
-                    Console.WriteLine($"❌ Expected capability_manifest but received: {updatedManifest?.EventName}");
+                    // QUALITY TENETS: We expected capability-manifest, not something else
+                    Console.WriteLine($"❌ Expected capability-manifest but received: {updatedManifest?.EventName}");
                     return false;
                 }
             }

@@ -55,6 +55,7 @@ public class DocumentationServiceConfiguration : BaseServiceConfiguration
     /// Delay in seconds before search index rebuild starts (allows services to initialize)
     /// Environment variable: DOCUMENTATION_SEARCH_INDEX_REBUILD_STARTUP_DELAY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 300)]
     public int SearchIndexRebuildStartupDelaySeconds { get; set; } = 5;
 
     /// <summary>
@@ -67,42 +68,62 @@ public class DocumentationServiceConfiguration : BaseServiceConfiguration
     /// Maximum document content size in bytes (500KB default)
     /// Environment variable: DOCUMENTATION_MAX_CONTENT_SIZE_BYTES
     /// </summary>
+    [ConfigRange(Minimum = 1024, Maximum = 52428800)]
     public int MaxContentSizeBytes { get; set; } = 524288;
 
     /// <summary>
     /// Days before trashcan items are auto-purged
     /// Environment variable: DOCUMENTATION_TRASHCAN_TTL_DAYS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 365)]
     public int TrashcanTtlDays { get; set; } = 7;
+
+    /// <summary>
+    /// Enable background trashcan purge service that periodically removes expired trashcan entries
+    /// Environment variable: DOCUMENTATION_TRASHCAN_PURGE_ENABLED
+    /// </summary>
+    public bool TrashcanPurgeEnabled { get; set; } = true;
+
+    /// <summary>
+    /// How often to check for expired trashcan entries (in minutes)
+    /// Environment variable: DOCUMENTATION_TRASHCAN_PURGE_CHECK_INTERVAL_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1440)]
+    public int TrashcanPurgeCheckIntervalMinutes { get; set; } = 60;
 
     /// <summary>
     /// Maximum characters for voice summaries
     /// Environment variable: DOCUMENTATION_VOICE_SUMMARY_MAX_LENGTH
     /// </summary>
+    [ConfigRange(Minimum = 50, Maximum = 1000)]
     public int VoiceSummaryMaxLength { get; set; } = 200;
 
     /// <summary>
     /// TTL for search result caching
     /// Environment variable: DOCUMENTATION_SEARCH_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 86400)]
     public int SearchCacheTtlSeconds { get; set; } = 300;
 
     /// <summary>
     /// Default minimum relevance score for search results
     /// Environment variable: DOCUMENTATION_MIN_RELEVANCE_SCORE
     /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
     public double MinRelevanceScore { get; set; } = 0.3;
 
     /// <summary>
     /// Maximum search results to return
     /// Environment variable: DOCUMENTATION_MAX_SEARCH_RESULTS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int MaxSearchResults { get; set; } = 20;
 
     /// <summary>
     /// Maximum documents per import (0 = unlimited)
     /// Environment variable: DOCUMENTATION_MAX_IMPORT_DOCUMENTS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 10000)]
     public int MaxImportDocuments { get; set; } = 0;
 
     /// <summary>
@@ -115,12 +136,14 @@ public class DocumentationServiceConfiguration : BaseServiceConfiguration
     /// Hours before inactive repos are cleaned up
     /// Environment variable: DOCUMENTATION_GIT_STORAGE_CLEANUP_HOURS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 720)]
     public int GitStorageCleanupHours { get; set; } = 24;
 
     /// <summary>
     /// Clone/pull operation timeout in seconds
     /// Environment variable: DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 3600)]
     public int GitCloneTimeoutSeconds { get; set; } = 300;
 
     /// <summary>
@@ -133,66 +156,77 @@ public class DocumentationServiceConfiguration : BaseServiceConfiguration
     /// How often to check for repos needing sync
     /// Environment variable: DOCUMENTATION_SYNC_SCHEDULER_CHECK_INTERVAL_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1440)]
     public int SyncSchedulerCheckIntervalMinutes { get; set; } = 5;
 
     /// <summary>
-    /// Maximum concurrent sync operations
-    /// Environment variable: DOCUMENTATION_MAX_CONCURRENT_SYNCS
+    /// Maximum sync operations per scheduler cycle (processed sequentially)
+    /// Environment variable: DOCUMENTATION_MAX_SYNCS_PER_CYCLE
     /// </summary>
-    public int MaxConcurrentSyncs { get; set; } = 3;
+    [ConfigRange(Minimum = 1, Maximum = 20)]
+    public int MaxSyncsPerCycle { get; set; } = 3;
 
     /// <summary>
     /// Maximum documents per sync operation
     /// Environment variable: DOCUMENTATION_MAX_DOCUMENTS_PER_SYNC
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100000)]
     public int MaxDocumentsPerSync { get; set; } = 1000;
 
     /// <summary>
     /// Interval in seconds between repository sync opportunity checks
     /// Environment variable: DOCUMENTATION_REPOSITORY_SYNC_CHECK_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 3600)]
     public int RepositorySyncCheckIntervalSeconds { get; set; } = 30;
 
     /// <summary>
     /// Maximum documents processed per bulk operation
     /// Environment variable: DOCUMENTATION_BULK_OPERATION_BATCH_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1000)]
     public int BulkOperationBatchSize { get; set; } = 10;
 
     /// <summary>
     /// Maximum related documents to return for standard depth
     /// Environment variable: DOCUMENTATION_MAX_RELATED_DOCUMENTS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 50)]
     public int MaxRelatedDocuments { get; set; } = 5;
 
     /// <summary>
     /// Maximum related documents to return for extended depth
     /// Environment variable: DOCUMENTATION_MAX_RELATED_DOCUMENTS_EXTENDED
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int MaxRelatedDocumentsExtended { get; set; } = 10;
 
     /// <summary>
     /// TTL in seconds for repository sync distributed lock
     /// Environment variable: DOCUMENTATION_SYNC_LOCK_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 60, Maximum = 7200)]
     public int SyncLockTtlSeconds { get; set; } = 1800;
 
     /// <summary>
     /// Maximum documents to fetch when filtering/sorting in memory
     /// Environment variable: DOCUMENTATION_MAX_FETCH_LIMIT
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100000)]
     public int MaxFetchLimit { get; set; } = 1000;
 
     /// <summary>
-    /// Number of documents to sample for namespace statistics
-    /// Environment variable: DOCUMENTATION_STATS_SAMPLE_SIZE
+    /// Estimated average document content size in bytes for stats calculations
+    /// Environment variable: DOCUMENTATION_ESTIMATED_BYTES_PER_DOCUMENT
     /// </summary>
-    public int StatsSampleSize { get; set; } = 10;
+    [ConfigRange(Minimum = 100, Maximum = 1000000)]
+    public int EstimatedBytesPerDocument { get; set; } = 10000;
 
     /// <summary>
     /// Length in characters for search result snippets
     /// Environment variable: DOCUMENTATION_SEARCH_SNIPPET_LENGTH
     /// </summary>
+    [ConfigRange(Minimum = 50, Maximum = 1000)]
     public int SearchSnippetLength { get; set; } = 200;
 
 }

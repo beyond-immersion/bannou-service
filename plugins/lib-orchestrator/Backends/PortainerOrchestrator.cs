@@ -1,17 +1,10 @@
+using BeyondImmersion.BannouService.Orchestrator;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-// Type aliases for Orchestrator types
-using BackendType = BeyondImmersion.BannouService.Orchestrator.BackendType;
-using ContainerRestartRequest = BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequest;
-using ContainerRestartResponse = BeyondImmersion.BannouService.Orchestrator.ContainerRestartResponse;
-using ContainerRestartResponseRestartStrategy = BeyondImmersion.BannouService.Orchestrator.ContainerRestartResponseRestartStrategy;
-using ContainerStatus = BeyondImmersion.BannouService.Orchestrator.ContainerStatus;
-using ContainerStatusStatus = BeyondImmersion.BannouService.Orchestrator.ContainerStatusStatus;
-using OrchestratorServiceConfiguration = BeyondImmersion.BannouService.Orchestrator.OrchestratorServiceConfiguration;
-using RestartHistoryEntry = BeyondImmersion.BannouService.Orchestrator.RestartHistoryEntry;
-using RestartPriority = BeyondImmersion.BannouService.Orchestrator.RestartPriority;
 
 namespace LibOrchestrator.Backends;
 
@@ -31,15 +24,17 @@ public class PortainerOrchestrator : IContainerOrchestrator
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly HttpClient _httpClient;
     private readonly int _endpointId;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Label used to identify app-id on containers.
     /// </summary>
     private const string BANNOU_APP_ID_LABEL = "bannou.app-id";
 
-    // NOTE: Portainer/Docker API uses camelCase - intentionally NOT using BannouJson.Options
-    // which is designed for internal Bannou service communication
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    // Portainer/Docker API uses camelCase and its own conventions. Isolated from BannouJson.Options
+    // so that changes to internal Bannou serialization (enum format, null handling, number handling)
+    // cannot break external API communication.
+    private static readonly JsonSerializerOptions PortainerJsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true
@@ -48,17 +43,20 @@ public class PortainerOrchestrator : IContainerOrchestrator
     public PortainerOrchestrator(
         ILogger<PortainerOrchestrator> logger,
         OrchestratorServiceConfiguration configuration,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         var portainerUrl = configuration.PortainerUrl
             ?? throw new InvalidOperationException("PORTAINER_URL not configured");
 
         _httpClient = httpClientFactory.CreateClient("Portainer");
         _httpClient.BaseAddress = new Uri(portainerUrl);
-        _httpClient.Timeout = TimeSpan.FromSeconds(30);
+        _httpClient.Timeout = TimeSpan.FromSeconds(configuration.PortainerRequestTimeoutSeconds);
 
         // Add API key if configured
         // See ORCHESTRATOR-SDK-REFERENCE.md for authentication options
@@ -78,6 +76,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<(bool Available, string Message)> CheckAvailabilityAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.CheckAvailabilityAsync");
         try
         {
             // GET /api/status - see ORCHESTRATOR-SDK-REFERENCE.md
@@ -87,7 +86,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
                 return (false, $"Portainer returned {response.StatusCode}");
             }
 
-            var status = await response.Content.ReadFromJsonAsync<PortainerStatus>(JsonOptions, cancellationToken);
+            var status = await response.Content.ReadFromJsonAsync<PortainerStatus>(PortainerJsonOptions, cancellationToken);
             return (true, $"Portainer {status?.Version ?? "unknown"}");
         }
         catch (Exception ex)
@@ -99,6 +98,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<ContainerStatus> GetContainerStatusAsync(string appName, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.GetContainerStatusAsync");
         _logger.LogDebug("Getting Portainer container status for app: {AppName}", appName);
 
         try
@@ -109,7 +109,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
                 return new ContainerStatus
                 {
                     AppName = appName,
-                    Status = ContainerStatusStatus.Stopped,
+                    Status = ContainerStatusType.Stopped,
                     Timestamp = DateTimeOffset.UtcNow,
                     Instances = 0
                 };
@@ -123,7 +123,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             return new ContainerStatus
             {
                 AppName = appName,
-                Status = ContainerStatusStatus.Unhealthy,
+                Status = ContainerStatusType.Unhealthy,
                 Timestamp = DateTimeOffset.UtcNow,
                 Instances = 0
             };
@@ -136,6 +136,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
         ContainerRestartRequest request,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.RestartContainerAsync");
         _logger.LogInformation(
             "Restarting Portainer container for app: {AppName}, Priority: {Priority}, Reason: {Reason}",
             appName,
@@ -149,9 +150,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             {
                 return new ContainerRestartResponse
                 {
-                    Accepted = false,
-                    AppName = appName,
-                    Message = $"No container found with app-id '{appName}'"
+                    Accepted = false
                 };
             }
 
@@ -173,9 +172,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
                 var error = await response.Content.ReadAsStringAsync(cancellationToken);
                 return new ContainerRestartResponse
                 {
-                    Accepted = false,
-                    AppName = appName,
-                    Message = $"Portainer API error: {response.StatusCode} - {error}"
+                    Accepted = false
                 };
             }
 
@@ -186,11 +183,9 @@ public class PortainerOrchestrator : IContainerOrchestrator
             return new ContainerRestartResponse
             {
                 Accepted = true,
-                AppName = appName,
                 ScheduledFor = DateTimeOffset.UtcNow,
                 CurrentInstances = 1,
-                RestartStrategy = ContainerRestartResponseRestartStrategy.Simultaneous,
-                Message = $"Container {container.Id[..12]} restarted successfully"
+                RestartStrategy = RestartStrategy.Simultaneous
             };
         }
         catch (Exception ex)
@@ -198,9 +193,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             _logger.LogError(ex, "Error restarting Portainer container for {AppName}", appName);
             return new ContainerRestartResponse
             {
-                Accepted = false,
-                AppName = appName,
-                Message = $"Error: {ex.Message}"
+                Accepted = false
             };
         }
     }
@@ -208,6 +201,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<IReadOnlyList<ContainerStatus>> ListContainersAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.ListContainersAsync");
         _logger.LogDebug("Listing all Portainer containers");
 
         try
@@ -224,7 +218,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             }
 
             var containers = await response.Content.ReadFromJsonAsync<List<PortainerContainer>>(
-                JsonOptions,
+                PortainerJsonOptions,
                 cancellationToken) ?? new List<PortainerContainer>();
 
             // Filter to containers with app-id label
@@ -247,6 +241,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
         DateTimeOffset? since = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.GetContainerLogsAsync");
         _logger.LogDebug("Getting Portainer container logs for app: {AppName}, tail: {Tail}", appName, tail);
 
         try
@@ -289,6 +284,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
         string appName,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.FindContainerByAppNameAsync");
         // Get all containers and filter by label
         // Portainer's Docker proxy supports filters but the format is complex
         var url = $"/api/endpoints/{_endpointId}/docker/containers/json?all=true";
@@ -300,7 +296,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
         }
 
         var containers = await response.Content.ReadFromJsonAsync<List<PortainerContainer>>(
-            JsonOptions,
+            PortainerJsonOptions,
             cancellationToken) ?? new List<PortainerContainer>();
 
         return containers.FirstOrDefault(c =>
@@ -330,13 +326,13 @@ public class PortainerOrchestrator : IContainerOrchestrator
         var dockerState = container.State?.ToLowerInvariant() ?? "";
         var status = dockerState switch
         {
-            "running" => ContainerStatusStatus.Running,
-            "restarting" => ContainerStatusStatus.Starting,
-            "exited" => ContainerStatusStatus.Stopped,
-            "dead" => ContainerStatusStatus.Unhealthy,
-            "created" => ContainerStatusStatus.Stopped,
-            "paused" => ContainerStatusStatus.Stopping,
-            _ => ContainerStatusStatus.Unhealthy
+            "running" => ContainerStatusType.Running,
+            "restarting" => ContainerStatusType.Starting,
+            "exited" => ContainerStatusType.Stopped,
+            "dead" => ContainerStatusType.Unhealthy,
+            "created" => ContainerStatusType.Stopped,
+            "paused" => ContainerStatusType.Stopping,
+            _ => ContainerStatusType.Unhealthy
         };
 
         return new ContainerStatus
@@ -344,7 +340,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             AppName = appName,
             Status = status,
             Timestamp = DateTimeOffset.UtcNow,
-            Instances = status == ContainerStatusStatus.Running ? 1 : 0,
+            Instances = status == ContainerStatusType.Running ? 1 : 0,
             RestartHistory = new List<RestartHistoryEntry>()
         };
     }
@@ -356,6 +352,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
         Dictionary<string, string>? environment = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.DeployServiceAsync");
         _logger.LogInformation(
             "Deploying Portainer container: {ServiceName} with app-id: {AppId}",
             serviceName, appId);
@@ -412,7 +409,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             }
 
             var createResult = await createResponse.Content.ReadFromJsonAsync<PortainerCreateContainerResponse>(
-                JsonOptions, cancellationToken);
+                PortainerJsonOptions, cancellationToken);
 
             // Start the container
             var startUrl = $"/api/endpoints/{_endpointId}/docker/containers/{createResult?.Id}/start";
@@ -460,6 +457,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
         bool removeVolumes = false,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.TeardownServiceAsync");
         _logger.LogInformation(
             "Tearing down Portainer container: {AppName}, removeVolumes: {RemoveVolumes}",
             appName, removeVolumes);
@@ -526,6 +524,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
         int replicas,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.ScaleServiceAsync");
         await Task.CompletedTask;
         _logger.LogWarning(
             "Scale operation not supported in Portainer standalone mode for {AppName}. Use Swarm or Kubernetes for scaling.",
@@ -546,6 +545,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<IReadOnlyList<string>> ListInfrastructureServicesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.ListInfrastructureServicesAsync");
         _logger.LogDebug("Listing infrastructure services (Portainer mode)");
 
         try
@@ -583,6 +583,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<PruneResult> PruneNetworksAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.PruneNetworksAsync");
         _logger.LogInformation("Pruning unused networks via Portainer");
 
         try
@@ -602,7 +603,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             }
 
             var result = await response.Content.ReadFromJsonAsync<PortainerNetworksPruneResponse>(
-                JsonOptions, cancellationToken);
+                PortainerJsonOptions, cancellationToken);
 
             var deletedNetworks = result?.NetworksDeleted ?? new List<string>();
 
@@ -635,6 +636,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<PruneResult> PruneVolumesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.PruneVolumesAsync");
         _logger.LogInformation("Pruning unused volumes via Portainer");
 
         try
@@ -654,7 +656,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             }
 
             var result = await response.Content.ReadFromJsonAsync<PortainerVolumesPruneResponse>(
-                JsonOptions, cancellationToken);
+                PortainerJsonOptions, cancellationToken);
 
             var deletedVolumes = result?.VolumesDeleted ?? new List<string>();
             var reclaimedBytes = (long)(result?.SpaceReclaimed ?? 0);
@@ -689,6 +691,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<PruneResult> PruneImagesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.PruneImagesAsync");
         _logger.LogInformation("Pruning dangling images via Portainer");
 
         try
@@ -708,7 +711,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             }
 
             var result = await response.Content.ReadFromJsonAsync<PortainerImagesPruneResponse>(
-                JsonOptions, cancellationToken);
+                PortainerJsonOptions, cancellationToken);
 
             var deletedImages = result?.ImagesDeleted ?? new List<PortainerImageDeleteResponse>();
             var reclaimedBytes = (long)(result?.SpaceReclaimed ?? 0);

@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Worldstate Client Events
   version: 1.0.0
@@ -19,20 +19,13 @@ paths: {}
 
 components:
   schemas:
-    WorldstateTimeSyncEvent:
+    WorldstateTimeSyncClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
       additionalProperties: false
       x-client-event: true
-      description: |
-        Published on period-changed boundaries, ratio changes, admin clock
-        advancement, and on-demand via TriggerTimeSync endpoint. Contains a
-        full game time snapshot so clients can render correct time-of-day,
-        season, and calendar state, and interpolate between syncs using
-        timeRatio. Routed via Entity Session Registry: query
-        IEntitySessionRegistry.GetSessionsForEntityAsync("realm", realmId),
-        publish via IClientEventPublisher.PublishToSessionsAsync.
+      description: Published on period-changed boundaries, ratio changes, admin clock advancement, and on-demand via TriggerTimeSync. Contains a full game time snapshot for client time rendering and interpolation. Routed via Entity Session Registry.
       required:
         - eventName
         - eventId
@@ -56,7 +49,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "worldstate.time_sync"
+          default: "worldstate.time-sync"
           description: Fixed event type identifier
         realmId:
           type: string
@@ -64,12 +57,16 @@ components:
           description: Realm this sync applies to
         year:
           type: integer
+          minimum: 0
           description: Current game year (0-based from realm epoch)
         monthIndex:
           type: integer
+          minimum: 0
           description: 0-based index into calendar months
         monthCode:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Month code from calendar template (e.g., "greenleaf")
         dayOfMonth:
           type: integer
@@ -90,12 +87,16 @@ components:
           description: Current game minute (0-59)
         period:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Current day period code (e.g., "dawn", "morning")
         isDaylight:
           type: boolean
           description: Whether current period has sunlight (from calendar template isDaylight flag)
         season:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Current season code (e.g., "spring")
         seasonIndex:
           type: integer
@@ -118,6 +119,7 @@ components:
         previousPeriod:
           type: string
           nullable: true
+          maxLength: 64
           description: Period before transition (null on TriggerSync, RatioChanged, and AdminAdvance sync reasons)
         syncReason:
           $ref: 'worldstate-api.yaml#/components/schemas/TimeSyncReason'

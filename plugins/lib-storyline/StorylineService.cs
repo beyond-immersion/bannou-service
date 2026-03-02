@@ -63,6 +63,7 @@ public partial class StorylineService : IStorylineService
     private readonly IRelationshipClient _relationshipClient;
     private readonly IServiceProvider _serviceProvider;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<StorylineService> _logger;
     private readonly StorylineServiceConfiguration _configuration;
 
@@ -91,6 +92,7 @@ public partial class StorylineService : IStorylineService
         IRelationshipClient relationshipClient,
         IServiceProvider serviceProvider,
         IDistributedLockProvider lockProvider,
+        ITelemetryProvider telemetryProvider,
         ILogger<StorylineService> logger,
         StorylineServiceConfiguration configuration)
     {
@@ -101,6 +103,7 @@ public partial class StorylineService : IStorylineService
         ArgumentNullException.ThrowIfNull(relationshipClient);
         ArgumentNullException.ThrowIfNull(serviceProvider);
         ArgumentNullException.ThrowIfNull(lockProvider);
+        ArgumentNullException.ThrowIfNull(telemetryProvider);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(configuration);
 
@@ -110,6 +113,7 @@ public partial class StorylineService : IStorylineService
         _relationshipClient = relationshipClient;
         _serviceProvider = serviceProvider;
         _lockProvider = lockProvider;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         _configuration = configuration;
 
@@ -436,7 +440,7 @@ public partial class StorylineService : IStorylineService
             RealmId = body.RealmId,
             GameServiceId = body.GameServiceId,
             TagsJson = body.Tags is not null ? BannouJson.Serialize(body.Tags) : null,
-            Deprecated = false,
+            IsDeprecated = false,
             CreatedAt = now,
             UpdatedAt = null,
             Etag = etag
@@ -545,7 +549,7 @@ public partial class StorylineService : IStorylineService
         // Filter deprecated
         if (!body.IncludeDeprecated)
         {
-            filtered = filtered.Where(d => !d.Deprecated);
+            filtered = filtered.Where(d => !d.IsDeprecated);
         }
 
         // Get total count before pagination
@@ -652,7 +656,9 @@ public partial class StorylineService : IStorylineService
             return StatusCodes.NotFound;
         }
 
-        existing.Deprecated = true;
+        existing.IsDeprecated = true;
+        existing.DeprecatedAt = DateTimeOffset.UtcNow;
+        existing.DeprecationReason = body.Reason;
         existing.Enabled = false;
         existing.UpdatedAt = DateTimeOffset.UtcNow;
         existing.Etag = Guid.NewGuid().ToString("N");
@@ -683,7 +689,7 @@ public partial class StorylineService : IStorylineService
 
             // Filter by scope and enabled status
             var candidates = allDefinitions
-                .Where(d => d.Enabled && !d.Deprecated)
+                .Where(d => d.Enabled && !d.IsDeprecated)
                 .Where(d => !d.RealmId.HasValue || d.RealmId == body.RealmId)
                 .Where(d => !d.GameServiceId.HasValue || d.GameServiceId == body.GameServiceId)
                 .ToList();
@@ -795,7 +801,7 @@ public partial class StorylineService : IStorylineService
         {
             blockingReason = "Scenario is disabled";
         }
-        else if (definition.Deprecated)
+        else if (definition.IsDeprecated)
         {
             blockingReason = "Scenario is deprecated";
         }
@@ -919,7 +925,7 @@ public partial class StorylineService : IStorylineService
         var lockResource = $"{body.CharacterId}:{body.ScenarioId}";
         var lockOwner = $"scenario-trigger-{executionId:N}";
         await using var lockHandle = await _lockProvider.LockAsync(
-            "storyline-scenario-lock",  // Lock store name
+            StateStoreDefinitions.StorylineLock,
             lockResource,
             lockOwner,
             _configuration.ScenarioTriggerLockTimeoutSeconds,
@@ -938,7 +944,7 @@ public partial class StorylineService : IStorylineService
             return (StatusCodes.NotFound, null);
         }
 
-        if (!definition.Enabled || definition.Deprecated)
+        if (!definition.Enabled || definition.IsDeprecated)
         {
             return (StatusCodes.BadRequest, null);
         }
@@ -1256,6 +1262,7 @@ public partial class StorylineService : IStorylineService
     private async Task<(ArchiveBundle bundle, List<Guid> archiveIds, List<Guid> snapshotIds, string? error)>
         FetchSeedDataAsync(ICollection<SeedSource> seedSources, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.FetchSeedDataAsync");
         var bundle = new ArchiveBundle();
         var archiveIds = new List<Guid>();
         var snapshotIds = new List<Guid>();
@@ -1698,6 +1705,7 @@ public partial class StorylineService : IStorylineService
         CachedPlan plan,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.UpdatePlanIndexAsync");
         var indexKey = $"realm:{realmId}";
         var score = plan.CreatedAt.ToUnixTimeSeconds();
 
@@ -1720,6 +1728,7 @@ public partial class StorylineService : IStorylineService
         int generationTimeMs,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.PublishComposedEventAsync");
         var composedEvent = new StorylineComposedEvent
         {
             PlanId = planId,
@@ -1756,6 +1765,7 @@ public partial class StorylineService : IStorylineService
         Guid scenarioId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.GetScenarioDefinitionWithCacheAsync");
         var key = scenarioId.ToString();
 
         // Try cache first
@@ -1789,6 +1799,7 @@ public partial class StorylineService : IStorylineService
         Guid? gameServiceId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.FindScenarioByCodeAsync");
         var normalizedCode = code.ToUpperInvariant();
 
         // Query with code filter (MySQL handles case-insensitive comparison)
@@ -1834,7 +1845,9 @@ public partial class StorylineService : IStorylineService
             Tags = string.IsNullOrEmpty(model.TagsJson)
                 ? null
                 : BannouJson.Deserialize<List<string>>(model.TagsJson),
-            Deprecated = model.Deprecated,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
             Etag = model.Etag
@@ -1862,7 +1875,9 @@ public partial class StorylineService : IStorylineService
             Name = model.Name,
             Priority = model.Priority,
             Enabled = model.Enabled,
-            Deprecated = model.Deprecated,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             ConditionCount = conditions?.Count ?? 0,
             PhaseCount = phases?.Count ?? 0,
             MutationCount = mutations?.Count ?? 0,
@@ -2061,6 +2076,7 @@ public partial class StorylineService : IStorylineService
         IDictionary<string, Guid>? additionalParticipants,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.ApplyMutationAsync");
         try
         {
             switch (mutation.MutationType)
@@ -2290,6 +2306,7 @@ public partial class StorylineService : IStorylineService
         Guid characterId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.SpawnQuestAsync");
         try
         {
             // Soft L4 dependency - graceful degradation

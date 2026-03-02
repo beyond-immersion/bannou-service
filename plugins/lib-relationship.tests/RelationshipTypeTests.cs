@@ -41,6 +41,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<RelationshipService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<IResourceClient> _mockResourceClient;
 
     public RelationshipTypeTests()
@@ -56,6 +57,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<RelationshipService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockResourceClient = new Mock<IResourceClient>();
 
         // Setup factory for relationship-type-statestore
@@ -90,6 +92,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
             Configuration,
             _mockLockProvider.Object,
             _mockEventConsumer.Object,
+            _mockTelemetryProvider.Object,
             _mockResourceClient.Object);
     }
 
@@ -301,7 +304,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "relationship-type.created",
+            "relationship.type.created",
             It.IsAny<RelationshipTypeCreatedEvent>(),
             It.IsAny<PublishOptions?>(),
             It.IsAny<Guid?>(),
@@ -389,7 +392,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "relationship-type.updated",
+            "relationship.type.updated",
             It.IsAny<RelationshipTypeUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
             It.IsAny<Guid?>(),
@@ -646,7 +649,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
     }
 
     [Fact]
-    public async Task UndeprecateRelationshipTypeAsync_NotDeprecated_ReturnsBadRequest()
+    public async Task UndeprecateRelationshipTypeAsync_NotDeprecated_ReturnsOk()
     {
         // Arrange
         var service = CreateService();
@@ -663,9 +666,9 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         // Act
         var (status, response) = await service.UndeprecateRelationshipTypeAsync(request);
 
-        // Assert - schema specifies 400 for "Relationship type is not deprecated"
-        Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.Null(response);
+        // Assert — idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     #endregion
@@ -833,8 +836,6 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(sourceId, response.SourceTypeId);
-        Assert.Equal(targetId, response.TargetTypeId);
         Assert.Equal(0, response.RelationshipsMigrated);
     }
 
@@ -1347,7 +1348,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.False(response.Matches);
-        Assert.Equal(-1, response.Depth);
+        Assert.Null(response.Depth);
     }
 
     [Fact]

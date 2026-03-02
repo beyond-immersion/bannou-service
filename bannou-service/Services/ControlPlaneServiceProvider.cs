@@ -29,21 +29,21 @@ public class ControlPlaneServiceProvider : IControlPlaneServiceProvider
     public string ControlPlaneAppId => _appConfiguration.EffectiveAppId;
 
     /// <inheritdoc/>
-    public IReadOnlyList<ServiceHealthStatus> GetControlPlaneServiceHealth()
+    public IReadOnlyList<ServiceHealthEntry> GetControlPlaneServiceHealth()
     {
         var enabledServices = GetEnabledServiceNames();
         var now = DateTimeOffset.UtcNow;
         var controlPlaneAppId = ControlPlaneAppId;
 
-        var healthStatuses = new List<ServiceHealthStatus>();
+        var healthStatuses = new List<ServiceHealthEntry>();
 
         foreach (var serviceName in enabledServices)
         {
-            healthStatuses.Add(new ServiceHealthStatus
+            healthStatuses.Add(new ServiceHealthEntry
             {
                 ServiceId = serviceName,
                 AppId = controlPlaneAppId,
-                Status = "healthy", // Control plane services are considered healthy if enabled
+                Status = (InstanceHealthStatus)ServiceHealthStatus.Healthy, // Control plane services are considered healthy if enabled
                 LastSeen = now,
                 Capacity = null, // Capacity tracking is done at instance level, not per-service
                 Metadata = null

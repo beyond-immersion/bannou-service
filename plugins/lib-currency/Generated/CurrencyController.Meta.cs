@@ -90,7 +90,8 @@ public partial class CurrencyController
                 },
                 "capOverflowBehavior": {
                     "$ref": "#/$defs/CapOverflowBehavior",
-                    "description": "What happens when credit exceeds wallet cap"
+                    "nullable": true,
+                    "description": "What happens when credit exceeds wallet cap (null defaults to reject)"
                 },
                 "globalSupplyCap": {
                     "type": "number",
@@ -112,6 +113,7 @@ public partial class CurrencyController
                 },
                 "earnCapResetTime": {
                     "type": "string",
+                    "maxLength": 20,
                     "nullable": true,
                     "description": "When earn caps reset (UTC time string, e.g. '00:00:00')"
                 },
@@ -122,7 +124,8 @@ public partial class CurrencyController
                 },
                 "autogainMode": {
                     "$ref": "#/$defs/AutogainMode",
-                    "description": "How autogain is calculated (simple flat or compound percentage)"
+                    "nullable": true,
+                    "description": "How autogain is calculated (simple flat or compound percentage, null when autogainEnabled is false)"
                 },
                 "autogainAmount": {
                     "type": "number",
@@ -132,6 +135,7 @@ public partial class CurrencyController
                 },
                 "autogainInterval": {
                     "type": "string",
+                    "maxLength": 50,
                     "nullable": true,
                     "description": "ISO 8601 duration between autogain applications (e.g. PT5M, PT1H)"
                 },
@@ -159,6 +163,7 @@ public partial class CurrencyController
                 },
                 "expirationDuration": {
                     "type": "string",
+                    "maxLength": 50,
                     "nullable": true,
                     "description": "Duration until expiration after earning (for duration_from_earn policy)"
                 },
@@ -181,7 +186,8 @@ public partial class CurrencyController
                 },
                 "linkageMode": {
                     "$ref": "#/$defs/ItemLinkageMode",
-                    "description": "How the item linkage works"
+                    "nullable": true,
+                    "description": "How the item linkage works (null when linkedToItem is false)"
                 },
                 "isBaseCurrency": {
                     "type": "boolean",
@@ -202,6 +208,7 @@ public partial class CurrencyController
                 },
                 "displayFormat": {
                     "type": "string",
+                    "maxLength": 200,
                     "nullable": true,
                     "description": "Format string for display (e.g. '{amount} gold', '${amount}')"
                 }
@@ -619,6 +626,7 @@ public partial class CurrencyController
                 },
                 "code": {
                     "type": "string",
+                    "maxLength": 32,
                     "nullable": true,
                     "description": "Currency code (provide this or definitionId)"
                 }
@@ -1427,6 +1435,12 @@ public partial class CurrencyController
                     "nullable": true,
                     "description": "New weekly earn cap"
                 },
+                "earnCapResetTime": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "nullable": true,
+                    "description": "New earn cap reset time (e.g. \"14:00:00\" for 2pm UTC)"
+                },
                 "autogainEnabled": {
                     "type": "boolean",
                     "nullable": true,
@@ -1445,6 +1459,7 @@ public partial class CurrencyController
                 },
                 "autogainInterval": {
                     "type": "string",
+                    "maxLength": 50,
                     "nullable": true,
                     "description": "New autogain interval"
                 },
@@ -1468,6 +1483,7 @@ public partial class CurrencyController
                 },
                 "displayFormat": {
                     "type": "string",
+                    "maxLength": 200,
                     "nullable": true,
                     "description": "New display format"
                 },
@@ -1853,7 +1869,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Type of owner entity"
                 },
                 "realmId": {
@@ -1863,19 +1879,6 @@ public partial class CurrencyController
                     "description": "Realm ID for realm-scoped wallets (null for global)"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         }
     }
 }
@@ -1909,7 +1912,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Owner type"
                 },
                 "realmId": {
@@ -1950,19 +1953,6 @@ public partial class CurrencyController
                     "description": "Last transaction timestamp"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "WalletStatus": {
             "type": "string",
@@ -2056,7 +2046,7 @@ public partial class CurrencyController
                     "description": "Owner ID (requires ownerType)"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "nullable": true,
                     "description": "Owner type (requires ownerId)"
                 },
@@ -2067,19 +2057,6 @@ public partial class CurrencyController
                     "description": "Realm ID (required if using ownerId lookup)"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         }
     }
 }
@@ -2135,7 +2112,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Owner type"
                 },
                 "realmId": {
@@ -2176,19 +2153,6 @@ public partial class CurrencyController
                     "description": "Last transaction timestamp"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "WalletStatus": {
             "type": "string",
@@ -2317,7 +2281,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Type of owner entity"
                 },
                 "realmId": {
@@ -2327,19 +2291,6 @@ public partial class CurrencyController
                     "description": "Realm ID for realm-scoped wallets"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         }
     }
 }
@@ -2400,7 +2351,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Owner type"
                 },
                 "realmId": {
@@ -2441,19 +2392,6 @@ public partial class CurrencyController
                     "description": "Last transaction timestamp"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "WalletStatus": {
             "type": "string",
@@ -2583,6 +2521,7 @@ public partial class CurrencyController
                 },
                 "reason": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 500,
                     "description": "Reason for freezing"
                 }
@@ -2620,7 +2559,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Owner type"
                 },
                 "realmId": {
@@ -2661,19 +2600,6 @@ public partial class CurrencyController
                     "description": "Last transaction timestamp"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "WalletStatus": {
             "type": "string",
@@ -2796,7 +2722,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Owner type"
                 },
                 "realmId": {
@@ -2837,19 +2763,6 @@ public partial class CurrencyController
                     "description": "Last transaction timestamp"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "WalletStatus": {
             "type": "string",
@@ -3000,7 +2913,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Owner type"
                 },
                 "realmId": {
@@ -3041,19 +2954,6 @@ public partial class CurrencyController
                     "description": "Last transaction timestamp"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "WalletStatus": {
             "type": "string",
@@ -3187,6 +3087,7 @@ public partial class CurrencyController
             "required": [
                 "walletId",
                 "currencyDefinitionId",
+                "currencyCode",
                 "amount",
                 "lockedAmount",
                 "effectiveAmount"
@@ -3578,6 +3479,8 @@ public partial class CurrencyController
                 "amount": {
                     "type": "number",
                     "format": "double",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
                     "description": "Amount to credit (must be positive)"
                 },
                 "transactionType": {
@@ -3586,6 +3489,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "What triggered this transaction (quest, admin, etc.)"
                 },
@@ -3597,6 +3501,7 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 128,
                     "description": "Unique key to prevent duplicate processing"
                 },
@@ -3735,6 +3640,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "What triggered this transaction"
                 },
@@ -3752,6 +3658,8 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Idempotency key"
                 },
                 "timestamp": {
@@ -3923,6 +3831,8 @@ public partial class CurrencyController
                 "amount": {
                     "type": "number",
                     "format": "double",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
                     "description": "Amount to debit (must be positive)"
                 },
                 "transactionType": {
@@ -3931,6 +3841,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "What triggered this transaction"
                 },
@@ -3942,6 +3853,7 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 128,
                     "description": "Unique key to prevent duplicate processing"
                 },
@@ -4058,6 +3970,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "What triggered this transaction"
                 },
@@ -4075,6 +3988,8 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Idempotency key"
                 },
                 "timestamp": {
@@ -4252,6 +4167,8 @@ public partial class CurrencyController
                 "amount": {
                     "type": "number",
                     "format": "double",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
                     "description": "Amount to transfer (must be positive)"
                 },
                 "transactionType": {
@@ -4260,6 +4177,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "What triggered this transfer"
                 },
@@ -4271,6 +4189,7 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 128,
                     "description": "Unique key to prevent duplicate processing"
                 },
@@ -4399,6 +4318,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "What triggered this transaction"
                 },
@@ -4416,6 +4336,8 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Idempotency key"
                 },
                 "timestamp": {
@@ -4582,6 +4504,7 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 128,
                     "description": "Unique key covering the entire batch"
                 }
@@ -4611,7 +4534,9 @@ public partial class CurrencyController
                 "amount": {
                     "type": "number",
                     "format": "double",
-                    "description": "Amount to credit"
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "description": "Amount to credit (must be positive)"
                 },
                 "transactionType": {
                     "$ref": "#/$defs/TransactionType",
@@ -4619,6 +4544,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Reference type"
                 },
@@ -4756,6 +4682,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "What triggered this transaction"
                 },
@@ -4773,6 +4700,8 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Idempotency key"
                 },
                 "timestamp": {
@@ -4912,6 +4841,381 @@ public partial class CurrencyController
 
     #endregion
 
+    #region Meta Endpoints for BatchDebitCurrency
+
+    private static readonly string _BatchDebitCurrency_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BatchDebitRequest",
+    "$defs": {
+        "BatchDebitRequest": {
+            "type": "object",
+            "description": "Request to debit multiple wallets",
+            "additionalProperties": false,
+            "required": [
+                "operations",
+                "idempotencyKey"
+            ],
+            "properties": {
+                "operations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BatchDebitOperation"
+                    },
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "description": "Debit operations to execute"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Unique key covering the entire batch"
+                }
+            }
+        },
+        "BatchDebitOperation": {
+            "type": "object",
+            "description": "A single debit operation in a batch",
+            "additionalProperties": false,
+            "required": [
+                "walletId",
+                "currencyDefinitionId",
+                "amount",
+                "transactionType"
+            ],
+            "properties": {
+                "walletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Source wallet ID"
+                },
+                "currencyDefinitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Currency to debit"
+                },
+                "amount": {
+                    "type": "number",
+                    "format": "double",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "description": "Amount to debit (must be positive)"
+                },
+                "transactionType": {
+                    "$ref": "#/$defs/TransactionType",
+                    "description": "Sink transaction type (burn, vendor_purchase, fee, etc.)"
+                },
+                "referenceType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "What triggered this transaction"
+                },
+                "referenceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Reference entity ID"
+                },
+                "allowNegative": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Override negative balance allowance for this transaction"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention."
+                }
+            }
+        },
+        "TransactionType": {
+            "type": "string",
+            "description": "Classification of the currency transaction",
+            "enum": [
+                "mint",
+                "quest_reward",
+                "loot_drop",
+                "vendor_sale",
+                "autogain",
+                "refund",
+                "conversion_credit",
+                "burn",
+                "vendor_purchase",
+                "fee",
+                "expiration",
+                "cap_overflow",
+                "conversion_debit",
+                "transfer",
+                "trade",
+                "gift",
+                "escrow_deposit",
+                "escrow_release",
+                "escrow_refund"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _BatchDebitCurrency_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BatchDebitResponse",
+    "$defs": {
+        "BatchDebitResponse": {
+            "type": "object",
+            "description": "Results of batch debit operations",
+            "additionalProperties": false,
+            "required": [
+                "results"
+            ],
+            "properties": {
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BatchDebitResult"
+                    },
+                    "description": "Results for each operation"
+                }
+            }
+        },
+        "BatchDebitResult": {
+            "type": "object",
+            "description": "Result of a single debit in a batch",
+            "additionalProperties": false,
+            "required": [
+                "index",
+                "success"
+            ],
+            "properties": {
+                "index": {
+                    "type": "integer",
+                    "description": "Index in the operations array"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether the operation succeeded"
+                },
+                "transaction": {
+                    "$ref": "#/$defs/CurrencyTransactionRecord",
+                    "nullable": true,
+                    "description": "Transaction record if successful"
+                },
+                "error": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error code if failed"
+                }
+            }
+        },
+        "CurrencyTransactionRecord": {
+            "type": "object",
+            "description": "Immutable record of a currency transaction",
+            "additionalProperties": false,
+            "required": [
+                "transactionId",
+                "currencyDefinitionId",
+                "amount",
+                "transactionType",
+                "idempotencyKey",
+                "timestamp"
+            ],
+            "properties": {
+                "transactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique transaction identifier"
+                },
+                "sourceWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Source wallet (null for faucets)"
+                },
+                "targetWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Target wallet (null for sinks)"
+                },
+                "currencyDefinitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Currency definition ID"
+                },
+                "amount": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Transaction amount (always positive)"
+                },
+                "transactionType": {
+                    "$ref": "#/$defs/TransactionType",
+                    "description": "Transaction classification"
+                },
+                "referenceType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "What triggered this transaction"
+                },
+                "referenceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Reference entity ID"
+                },
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Associated escrow ID"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Idempotency key"
+                },
+                "timestamp": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When transaction occurred"
+                },
+                "sourceBalanceBefore": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Source balance before transaction"
+                },
+                "sourceBalanceAfter": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Source balance after transaction"
+                },
+                "targetBalanceBefore": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Target balance before transaction"
+                },
+                "targetBalanceAfter": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Target balance after transaction"
+                },
+                "autogainPeriodsApplied": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Number of autogain periods applied"
+                },
+                "overflowAmountLost": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Amount lost to cap overflow"
+                },
+                "earnCapAmountLimited": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Amount limited by earn cap"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Free-form metadata. No Bannou plugin reads specific keys from this field by convention."
+                }
+            }
+        },
+        "TransactionType": {
+            "type": "string",
+            "description": "Classification of the currency transaction",
+            "enum": [
+                "mint",
+                "quest_reward",
+                "loot_drop",
+                "vendor_sale",
+                "autogain",
+                "refund",
+                "conversion_credit",
+                "burn",
+                "vendor_purchase",
+                "fee",
+                "expiration",
+                "cap_overflow",
+                "conversion_debit",
+                "transfer",
+                "trade",
+                "gift",
+                "escrow_deposit",
+                "escrow_release",
+                "escrow_refund"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _BatchDebitCurrency_Info = """
+{
+    "summary": "Debit multiple wallets in one call",
+    "description": "Debits currency from multiple wallets in one call. Each operation is independent;\nfailures do not rollback others. For atomic multi-wallet operations, use lib-escrow.\n",
+    "tags": [
+        "Balance"
+    ],
+    "deprecated": false,
+    "operationId": "batchDebitCurrency"
+}
+""";
+
+    /// <summary>Returns endpoint information for BatchDebitCurrency</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/currency/batch-debit/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BatchDebitCurrency_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Currency",
+            "POST",
+            "/currency/batch-debit",
+            _BatchDebitCurrency_Info));
+
+    /// <summary>Returns request schema for BatchDebitCurrency</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/currency/batch-debit/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BatchDebitCurrency_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Currency",
+            "POST",
+            "/currency/batch-debit",
+            "request-schema",
+            _BatchDebitCurrency_RequestSchema));
+
+    /// <summary>Returns response schema for BatchDebitCurrency</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/currency/batch-debit/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BatchDebitCurrency_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Currency",
+            "POST",
+            "/currency/batch-debit",
+            "response-schema",
+            _BatchDebitCurrency_ResponseSchema));
+
+    /// <summary>Returns full schema for BatchDebitCurrency</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/currency/batch-debit/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BatchDebitCurrency_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Currency",
+            "POST",
+            "/currency/batch-debit",
+            _BatchDebitCurrency_Info,
+            _BatchDebitCurrency_RequestSchema,
+            _BatchDebitCurrency_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for CalculateConversion
 
     private static readonly string _CalculateConversion_RequestSchema = """
@@ -4942,7 +5246,9 @@ public partial class CurrencyController
                 "fromAmount": {
                     "type": "number",
                     "format": "double",
-                    "description": "Amount to convert"
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "description": "Amount to convert (must be positive)"
                 }
             }
         }
@@ -4962,7 +5268,8 @@ public partial class CurrencyController
             "required": [
                 "toAmount",
                 "effectiveRate",
-                "baseCurrency"
+                "baseCurrency",
+                "conversionPath"
             ],
             "properties": {
                 "toAmount": {
@@ -5108,10 +5415,13 @@ public partial class CurrencyController
                 "fromAmount": {
                     "type": "number",
                     "format": "double",
-                    "description": "Amount to convert"
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "description": "Amount to convert (must be positive)"
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 128,
                     "description": "Unique key for idempotency"
                 }
@@ -5209,6 +5519,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "What triggered this transaction"
                 },
@@ -5226,6 +5537,8 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Idempotency key"
                 },
                 "timestamp": {
@@ -5522,7 +5835,9 @@ public partial class CurrencyController
                 "exchangeRateToBase": {
                     "type": "number",
                     "format": "double",
-                    "description": "New exchange rate to base currency"
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "description": "New exchange rate to base currency (must be positive)"
                 }
             }
         }
@@ -5973,6 +6288,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "What triggered this transaction"
                 },
@@ -5990,6 +6306,8 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Idempotency key"
                 },
                 "timestamp": {
@@ -6292,6 +6610,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "What triggered this transaction"
                 },
@@ -6309,6 +6628,8 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Idempotency key"
                 },
                 "timestamp": {
@@ -6466,6 +6787,8 @@ public partial class CurrencyController
             "properties": {
                 "referenceType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Reference type"
                 },
                 "referenceId": {
@@ -6547,6 +6870,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "What triggered this transaction"
                 },
@@ -6564,6 +6888,8 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Idempotency key"
                 },
                 "timestamp": {
@@ -7057,6 +7383,8 @@ public partial class CurrencyController
                 "amount": {
                     "type": "number",
                     "format": "double",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
                     "description": "Amount to debit for escrow"
                 },
                 "escrowId": {
@@ -7066,6 +7394,7 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 128,
                     "description": "Idempotency key"
                 }
@@ -7146,6 +7475,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "What triggered this transaction"
                 },
@@ -7163,6 +7493,8 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Idempotency key"
                 },
                 "timestamp": {
@@ -7334,6 +7666,8 @@ public partial class CurrencyController
                 "amount": {
                     "type": "number",
                     "format": "double",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
                     "description": "Amount to credit"
                 },
                 "escrowId": {
@@ -7343,6 +7677,7 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 128,
                     "description": "Idempotency key"
                 }
@@ -7423,6 +7758,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "What triggered this transaction"
                 },
@@ -7440,6 +7776,8 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Idempotency key"
                 },
                 "timestamp": {
@@ -7611,6 +7949,8 @@ public partial class CurrencyController
                 "amount": {
                     "type": "number",
                     "format": "double",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
                     "description": "Amount to refund"
                 },
                 "escrowId": {
@@ -7620,6 +7960,7 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 128,
                     "description": "Idempotency key"
                 }
@@ -7700,6 +8041,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "What triggered this transaction"
                 },
@@ -7717,6 +8059,8 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Idempotency key"
                 },
                 "timestamp": {
@@ -7888,6 +8232,8 @@ public partial class CurrencyController
                 "amount": {
                     "type": "number",
                     "format": "double",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
                     "description": "Amount to reserve"
                 },
                 "expiresAt": {
@@ -7897,6 +8243,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Reference type (e.g. dining, hotel, gas)"
                 },
@@ -7908,6 +8255,7 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 128,
                     "description": "Idempotency key"
                 }
@@ -7986,6 +8334,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Reference type"
                 },
@@ -8102,10 +8451,13 @@ public partial class CurrencyController
                 "captureAmount": {
                     "type": "number",
                     "format": "double",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
                     "description": "Final amount to debit (may be less than hold amount)"
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 128,
                     "description": "Idempotency key"
                 }
@@ -8201,6 +8553,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Reference type"
                 },
@@ -8280,6 +8633,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "What triggered this transaction"
                 },
@@ -8297,6 +8651,8 @@ public partial class CurrencyController
                 },
                 "idempotencyKey": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Idempotency key"
                 },
                 "timestamp": {
@@ -8531,6 +8887,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Reference type"
                 },
@@ -8717,6 +9074,7 @@ public partial class CurrencyController
                 },
                 "referenceType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Reference type"
                 },

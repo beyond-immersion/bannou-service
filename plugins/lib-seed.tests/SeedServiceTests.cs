@@ -88,11 +88,11 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Default configuration
         Configuration.DefaultMaxSeedsPerOwner = 3;
         Configuration.MaxSeedTypesPerGameService = 50;
-        Configuration.BondSharedGrowthMultiplier = 1.5;
+        Configuration.BondSharedGrowthMultiplier = 1.5f;
         Configuration.CapabilityRecomputeDebounceMs = 5000;
         Configuration.GrowthDecayEnabled = false;
-        Configuration.GrowthDecayRatePerDay = 0.01;
-        Configuration.BondStrengthGrowthRate = 0.1;
+        Configuration.GrowthDecayRatePerDay = 0.01f;
+        Configuration.BondStrengthGrowthRate = 0.1f;
         Configuration.DefaultQueryPageSize = 100;
     }
 
@@ -102,6 +102,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         _mockStateStoreFactory.Object,
         _mockLockProvider.Object,
         _mockLogger.Object,
+        new NullTelemetryProvider(),
         Configuration,
         _mockEventConsumer.Object,
         _mockGameServiceClient.Object,
@@ -117,7 +118,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             DisplayName = "Guardian",
             Description = "A guardian seed type",
             MaxPerOwner = maxPerOwner,
-            AllowedOwnerTypes = new List<string> { "account", "character" },
+            AllowedOwnerTypes = new List<EntityType> { EntityType.Account, EntityType.Character },
             GrowthPhases = new List<GrowthPhaseDefinition>
         {
             new GrowthPhaseDefinition { PhaseCode = "nascent", DisplayName = "Nascent", MinTotalGrowth = 0 },
@@ -135,7 +136,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     private SeedModel CreateTestSeed(
         Guid? seedId = null,
         Guid? ownerId = null,
-        string ownerType = "character",
+        EntityType ownerType = EntityType.Character,
         string seedTypeCode = "guardian",
         Guid? gameServiceId = null,
         SeedStatus status = SeedStatus.Dormant) => new SeedModel
@@ -227,7 +228,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         var request = new CreateSeedRequest
         {
             OwnerId = _testOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             SeedTypeCode = "guardian",
             GameServiceId = _testGameServiceId,
             DisplayName = "My Guardian"
@@ -246,7 +247,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         Assert.NotNull(savedSeed);
         Assert.Equal(_testOwnerId, savedSeed.OwnerId);
-        Assert.Equal("character", savedSeed.OwnerType);
+        Assert.Equal(EntityType.Character, savedSeed.OwnerType);
 
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "seed.created",
@@ -266,7 +267,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         var request = new CreateSeedRequest
         {
             OwnerId = _testOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             SeedTypeCode = "nonexistent",
             GameServiceId = _testGameServiceId
         };
@@ -293,7 +294,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         var request = new CreateSeedRequest
         {
             OwnerId = _testOwnerId,
-            OwnerType = "invalid_type",
+            OwnerType = EntityType.Realm,
             SeedTypeCode = "guardian",
             GameServiceId = _testGameServiceId
         };
@@ -322,7 +323,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         var request = new CreateSeedRequest
         {
             OwnerId = _testOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             SeedTypeCode = "guardian",
             GameServiceId = _testGameServiceId
         };
@@ -872,7 +873,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             DisplayName = "Guardian",
             Description = "A guardian seed type",
             MaxPerOwner = 3,
-            AllowedOwnerTypes = new List<string> { "character" },
+            AllowedOwnerTypes = new List<EntityType> { EntityType.Character },
             GrowthPhases = new List<GrowthPhaseDefinition>
             {
                 new GrowthPhaseDefinition { PhaseCode = "nascent", DisplayName = "Nascent", MinTotalGrowth = 0 }
@@ -912,7 +913,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             DisplayName = "Guardian",
             Description = "A guardian seed type",
             MaxPerOwner = 3,
-            AllowedOwnerTypes = new List<string> { "character" },
+            AllowedOwnerTypes = new List<EntityType> { EntityType.Character },
             GrowthPhases = new List<GrowthPhaseDefinition>
             {
                 new GrowthPhaseDefinition { PhaseCode = "nascent", DisplayName = "Nascent", MinTotalGrowth = 0 }
@@ -947,7 +948,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             DisplayName = "New Type",
             Description = "Another type",
             MaxPerOwner = 3,
-            AllowedOwnerTypes = new List<string> { "character" },
+            AllowedOwnerTypes = new List<EntityType> { EntityType.Character },
             GrowthPhases = new List<GrowthPhaseDefinition>
             {
                 new GrowthPhaseDefinition { PhaseCode = "nascent", DisplayName = "Nascent", MinTotalGrowth = 0 }
@@ -1157,7 +1158,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     {
         // Arrange: global disabled, type enabled
         Configuration.GrowthDecayEnabled = false;
-        Configuration.GrowthDecayRatePerDay = 0.01;
+        Configuration.GrowthDecayRatePerDay = 0.01f;
         var seedType = CreateTestSeedType();
         seedType.GrowthDecayEnabled = true;
         seedType.GrowthDecayRatePerDay = 0.05f;
@@ -1175,7 +1176,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     {
         // Arrange: global enabled, type explicitly disabled
         Configuration.GrowthDecayEnabled = true;
-        Configuration.GrowthDecayRatePerDay = 0.01;
+        Configuration.GrowthDecayRatePerDay = 0.01f;
         var seedType = CreateTestSeedType();
         seedType.GrowthDecayEnabled = false;
         seedType.GrowthDecayRatePerDay = null;
@@ -1192,7 +1193,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     {
         // Arrange: type has no overrides, global config used
         Configuration.GrowthDecayEnabled = true;
-        Configuration.GrowthDecayRatePerDay = 0.02;
+        Configuration.GrowthDecayRatePerDay = 0.02f;
         var seedType = CreateTestSeedType();
         seedType.GrowthDecayEnabled = null;
         seedType.GrowthDecayRatePerDay = null;
@@ -1210,7 +1211,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     {
         // Arrange: null seed type (defensive path)
         Configuration.GrowthDecayEnabled = true;
-        Configuration.GrowthDecayRatePerDay = 0.03;
+        Configuration.GrowthDecayRatePerDay = 0.03f;
 
         // Act
         var (enabled, rate) = SeedService.ResolveDecayConfig(null, Configuration);
@@ -1225,7 +1226,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     {
         // Arrange: type has only rate override, enabled falls back to global
         Configuration.GrowthDecayEnabled = true;
-        Configuration.GrowthDecayRatePerDay = 0.01;
+        Configuration.GrowthDecayRatePerDay = 0.01f;
         var seedType = CreateTestSeedType();
         seedType.GrowthDecayEnabled = null;
         seedType.GrowthDecayRatePerDay = 0.1f;
@@ -2027,7 +2028,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         var request = new CreateSeedRequest
         {
             OwnerId = _testOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             SeedTypeCode = "guardian",
             GameServiceId = _testGameServiceId
         };
@@ -2049,7 +2050,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         var request = new CreateSeedRequest
         {
             OwnerId = _testOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             SeedTypeCode = "guardian",
             GameServiceId = Guid.NewGuid()
         };
@@ -2082,7 +2083,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         var request = new CreateSeedRequest
         {
             OwnerId = _testOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             SeedTypeCode = "guardian",
             GameServiceId = _testGameServiceId,
             Metadata = metadata
@@ -2113,7 +2114,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         var request = new CreateSeedRequest
         {
             OwnerId = _testOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             SeedTypeCode = "guardian",
             GameServiceId = _testGameServiceId
         };
@@ -2139,7 +2140,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             new GetSeedsByOwnerRequest
             {
                 OwnerId = _testOwnerId,
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 IncludeArchived = false
             }, CancellationToken.None);
 
@@ -2159,7 +2160,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             new GetSeedsByOwnerRequest
             {
                 OwnerId = _testOwnerId,
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 SeedTypeCode = "guardian",
                 IncludeArchived = false
             }, CancellationToken.None);
@@ -2181,7 +2182,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             new GetSeedsByOwnerRequest
             {
                 OwnerId = _testOwnerId,
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 IncludeArchived = true
             }, CancellationToken.None);
 
@@ -2222,7 +2223,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             new ListSeedsRequest
             {
                 SeedTypeCode = "guardian",
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 GameServiceId = _testGameServiceId,
                 GrowthPhase = "nascent",
                 Status = SeedStatus.Active,
@@ -3145,7 +3146,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         Assert.Equal(5, response.MaxPerOwner);
 
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "seed-type.updated",
+            "seed.type.updated",
             It.Is<SeedTypeUpdatedEvent>(e =>
                 e.ChangedFields.Contains("displayName") && e.ChangedFields.Contains("maxPerOwner")),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -3298,7 +3299,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     }
 
     [Fact]
-    public async Task DeprecateSeedType_AlreadyDeprecated_ReturnsConflict()
+    public async Task DeprecateSeedType_AlreadyDeprecated_ReturnsOk()
     {
         var service = CreateService();
         var seedType = CreateTestSeedType();
@@ -3308,11 +3309,13 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .Setup(s => s.GetAsync($"type:{_testGameServiceId}:guardian", It.IsAny<CancellationToken>()))
             .ReturnsAsync(seedType);
 
-        var (status, _) = await service.DeprecateSeedTypeAsync(
+        // Idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
+        var (status, response) = await service.DeprecateSeedTypeAsync(
             new DeprecateSeedTypeRequest { SeedTypeCode = "guardian", GameServiceId = _testGameServiceId },
             CancellationToken.None);
 
-        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     #endregion
@@ -3368,7 +3371,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     }
 
     [Fact]
-    public async Task UndeprecateSeedType_NotDeprecated_ReturnsConflict()
+    public async Task UndeprecateSeedType_NotDeprecated_ReturnsOk()
     {
         var service = CreateService();
         var seedType = CreateTestSeedType();
@@ -3378,11 +3381,13 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .Setup(s => s.GetAsync($"type:{_testGameServiceId}:guardian", It.IsAny<CancellationToken>()))
             .ReturnsAsync(seedType);
 
-        var (status, _) = await service.UndeprecateSeedTypeAsync(
+        // Idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
+        var (status, response) = await service.UndeprecateSeedTypeAsync(
             new UndeprecateSeedTypeRequest { SeedTypeCode = "guardian", GameServiceId = _testGameServiceId },
             CancellationToken.None);
 
-        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     #endregion
@@ -3412,7 +3417,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             $"type:{_testGameServiceId}:guardian", It.IsAny<CancellationToken>()), Times.Once);
 
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "seed-type.deleted",
+            "seed.type.deleted",
             It.Is<SeedTypeDeletedEvent>(e => e.SeedTypeCode == "guardian"),
             It.IsAny<CancellationToken>()), Times.Once);
     }

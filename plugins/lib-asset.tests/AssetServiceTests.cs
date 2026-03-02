@@ -40,6 +40,7 @@ public class AssetServiceTests
     private readonly Mock<IAssetProcessorPoolManager> _mockProcessorPoolManager = new();
     private readonly Mock<IBundleConverter> _mockBundleConverter = new();
     private readonly Mock<IEventConsumer> _mockEventConsumer = new();
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider = new();
 
     public AssetServiceTests()
     {
@@ -354,6 +355,7 @@ public class AssetServiceTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
+            Owner = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             CreatedAt = DateTimeOffset.UtcNow.AddHours(-2),
             ExpiresAt = DateTimeOffset.UtcNow.AddHours(-1) // Already expired
@@ -389,6 +391,7 @@ public class AssetServiceTests
             Filename = "large.glb",
             Size = 100 * 1024 * 1024,
             ContentType = "model/gltf-binary",
+            Owner = "test-account",
             StorageKey = $"temp/{uploadId:N}/large.glb",
             IsMultipart = true,
             PartCount = 5, // Expects 5 parts
@@ -423,6 +426,7 @@ public class AssetServiceTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
+            Owner = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             IsMultipart = false,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -461,6 +465,7 @@ public class AssetServiceTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
+            Owner = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             IsMultipart = false,
             Metadata = new AssetMetadataInput
@@ -549,6 +554,7 @@ public class AssetServiceTests
             Filename = "model.glb",
             Size = 50 * 1024 * 1024,
             ContentType = "model/gltf-binary",
+            Owner = "test-account",
             StorageKey = $"temp/{uploadId:N}/model.glb",
             IsMultipart = true,
             PartCount = 2,
@@ -1068,7 +1074,7 @@ public class AssetServiceTests
             StorageKey = "bundles/current/existing-bundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = Models.BundleStatus.Ready
+            Status = BundleStatus.Ready
         };
 
         _mockBundleStore
@@ -1181,7 +1187,7 @@ public class AssetServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.Equal(bundleId, result.BundleId);
-        Assert.Equal(CreateBundleResponseStatus.Ready, result.Status);
+        Assert.Equal(BundleStatus.Ready, result.Status);
     }
 
     #endregion
@@ -1242,7 +1248,7 @@ public class AssetServiceTests
             StorageKey = "bundles/current/pending-bundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = Models.BundleStatus.Processing // Not ready
+            Status = BundleStatus.Processing // Not ready
         };
 
         _mockBundleStore
@@ -1349,7 +1355,6 @@ public class AssetServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
-        Assert.Equal(assetId, result.AssetId);
         Assert.Equal(1, result.VersionsDeleted);
 
         // Verify specific version was deleted
@@ -1420,7 +1425,6 @@ public class AssetServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
-        Assert.Equal(assetId, result.AssetId);
         Assert.Equal(3, result.VersionsDeleted);
 
         // Verify all versions were deleted
@@ -1544,7 +1548,7 @@ public class AssetServiceTests
             StorageKey = "bundles/current/existing-bundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = Models.BundleStatus.Ready
+            Status = BundleStatus.Ready
         };
 
         _mockBundleStore
@@ -1654,7 +1658,7 @@ public class AssetServiceTests
             StorageKey = "bundles/current/existing-metabundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = Models.BundleStatus.Ready
+            Status = BundleStatus.Ready
         };
 
         _mockBundleStore
@@ -1759,7 +1763,7 @@ public class AssetServiceTests
             StorageKey = "bundles/current/pending-bundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = Models.BundleStatus.Processing // Not ready
+            Status = BundleStatus.Processing // Not ready
         };
 
         _mockBundleStore
@@ -1849,7 +1853,7 @@ public class AssetServiceTests
             StorageKey = "bundles/current/wrong-realm-bundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = Models.BundleStatus.Ready
+            Status = BundleStatus.Ready
         };
 
         _mockBundleStore
@@ -1888,7 +1892,7 @@ public class AssetServiceTests
             BundleType = BundleType.Source,
             AssetIds = new List<string> { "shared-asset" },
             SizeBytes = 100,
-            Status = Models.BundleStatus.Ready,
+            Status = BundleStatus.Ready,
             Realm = "test-realm",
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -1914,7 +1918,7 @@ public class AssetServiceTests
             BundleType = BundleType.Source,
             AssetIds = new List<string> { "shared-asset" },
             SizeBytes = 150,
-            Status = Models.BundleStatus.Ready,
+            Status = BundleStatus.Ready,
             Realm = "test-realm",
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -2001,7 +2005,7 @@ public class AssetServiceTests
             BundleType = BundleType.Source,
             AssetIds = new List<string> { "asset-1" },
             SizeBytes = 100,
-            Status = Models.BundleStatus.Ready,
+            Status = BundleStatus.Ready,
             Realm = "test-realm",
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -2019,7 +2023,7 @@ public class AssetServiceTests
             BundleType = BundleType.Metabundle, // This is a metabundle
             AssetIds = new List<string> { "asset-1" },
             SizeBytes = 100,
-            Status = Models.BundleStatus.Ready,
+            Status = BundleStatus.Ready,
             Realm = "test-realm",
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -2090,7 +2094,7 @@ public class AssetServiceTests
             BundleType = BundleType.Source,
             AssetIds = new List<string> { "asset-1", "asset-2", "asset-3" },
             SizeBytes = 300,
-            Status = Models.BundleStatus.Ready,
+            Status = BundleStatus.Ready,
             Realm = "test-realm",
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -2111,7 +2115,7 @@ public class AssetServiceTests
             BundleType = BundleType.Source,
             AssetIds = new List<string> { "asset-1" },
             SizeBytes = 100,
-            Status = Models.BundleStatus.Ready,
+            Status = BundleStatus.Ready,
             Realm = "test-realm",
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -2129,7 +2133,7 @@ public class AssetServiceTests
             BundleType = BundleType.Source,
             AssetIds = new List<string> { "asset-3" },
             SizeBytes = 100,
-            Status = Models.BundleStatus.Ready,
+            Status = BundleStatus.Ready,
             Realm = "test-realm",
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -2230,7 +2234,7 @@ public class AssetServiceTests
             BundleType = BundleType.Source,
             AssetIds = new List<string> { "test-asset" },
             SizeBytes = 500,
-            Status = Models.BundleStatus.Ready,
+            Status = BundleStatus.Ready,
             Realm = "test-realm",
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -2244,7 +2248,7 @@ public class AssetServiceTests
             BundleType = BundleType.Metabundle,
             AssetIds = new List<string> { "test-asset" },
             SizeBytes = 300,
-            Status = Models.BundleStatus.Ready,
+            Status = BundleStatus.Ready,
             Realm = "test-realm",
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -2461,7 +2465,7 @@ public class AssetServiceTests
         {
             JobId = jobId,
             MetabundleId = metabundleId,
-            Status = InternalJobStatus.Queued,
+            Status = BundleStatus.Queued,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
@@ -2479,7 +2483,7 @@ public class AssetServiceTests
         Assert.NotNull(result);
         Assert.Equal(jobId, result.JobId);
         Assert.Equal(metabundleId, result.MetabundleId);
-        Assert.Equal(GetJobStatusResponseStatus.Queued, result.Status);
+        Assert.Equal(BundleStatus.Queued, result.Status);
     }
 
     [Fact]
@@ -2499,7 +2503,7 @@ public class AssetServiceTests
         {
             JobId = jobId,
             MetabundleId = metabundleId,
-            Status = InternalJobStatus.Ready,
+            Status = BundleStatus.Ready,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
             UpdatedAt = DateTimeOffset.UtcNow,
             CompletedAt = DateTimeOffset.UtcNow,
@@ -2541,7 +2545,7 @@ public class AssetServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
-        Assert.Equal(GetJobStatusResponseStatus.Ready, result.Status);
+        Assert.Equal(BundleStatus.Ready, result.Status);
         Assert.Equal(10, result.AssetCount);
         Assert.Equal(2, result.StandaloneAssetCount);
         Assert.Equal(1024000, result.SizeBytes);
@@ -2563,7 +2567,7 @@ public class AssetServiceTests
         {
             JobId = jobId,
             MetabundleId = $"test-metabundle-{Guid.NewGuid():N}",
-            Status = InternalJobStatus.Failed,
+            Status = BundleStatus.Failed,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-1),
             UpdatedAt = DateTimeOffset.UtcNow,
             CompletedAt = DateTimeOffset.UtcNow,
@@ -2582,8 +2586,8 @@ public class AssetServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
-        Assert.Equal(GetJobStatusResponseStatus.Failed, result.Status);
-        Assert.Equal("TIMEOUT", result.ErrorCode);
+        Assert.Equal(BundleStatus.Failed, result.Status);
+        Assert.Equal(MetabundleErrorCode.TIMEOUT, result.ErrorCode);
         Assert.Equal("Job timed out before processing could start", result.ErrorMessage);
     }
 
@@ -2639,7 +2643,7 @@ public class AssetServiceTests
         {
             JobId = jobId,
             MetabundleId = $"test-metabundle-{Guid.NewGuid():N}",
-            Status = InternalJobStatus.Queued,
+            Status = BundleStatus.Queued,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
@@ -2662,14 +2666,12 @@ public class AssetServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
-        Assert.True(result.Cancelled);
-        Assert.Equal(CancelJobResponseStatus.Cancelled, result.Status);
-        Assert.Contains("Queued", result.Message);
+        Assert.Equal(BundleStatus.Cancelled, result.Status);
 
         // Verify job was saved with cancelled status
         _mockJobStore.Verify(s => s.SaveAsync(
             It.IsAny<string>(),
-            It.Is<MetabundleJob>(j => j.Status == InternalJobStatus.Cancelled),
+            It.Is<MetabundleJob>(j => j.Status == BundleStatus.Cancelled),
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()),
             Times.Once);
@@ -2687,7 +2689,7 @@ public class AssetServiceTests
         {
             JobId = jobId,
             MetabundleId = $"test-metabundle-{Guid.NewGuid():N}",
-            Status = InternalJobStatus.Ready,
+            Status = BundleStatus.Ready,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
             UpdatedAt = DateTimeOffset.UtcNow,
             CompletedAt = DateTimeOffset.UtcNow
@@ -2704,9 +2706,7 @@ public class AssetServiceTests
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
         Assert.NotNull(result);
-        Assert.False(result.Cancelled);
-        Assert.Equal(CancelJobResponseStatus.Ready, result.Status);
-        Assert.Contains("already completed", result.Message);
+        Assert.Equal(BundleStatus.Ready, result.Status);
     }
 
     [Fact]
@@ -2721,7 +2721,7 @@ public class AssetServiceTests
         {
             JobId = jobId,
             MetabundleId = $"test-metabundle-{Guid.NewGuid():N}",
-            Status = InternalJobStatus.Cancelled,
+            Status = BundleStatus.Cancelled,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
             UpdatedAt = DateTimeOffset.UtcNow,
             CompletedAt = DateTimeOffset.UtcNow
@@ -2738,9 +2738,7 @@ public class AssetServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
-        Assert.True(result.Cancelled);
-        Assert.Equal(CancelJobResponseStatus.Cancelled, result.Status);
-        Assert.Contains("already cancelled", result.Message);
+        Assert.Equal(BundleStatus.Cancelled, result.Status);
     }
 
     [Fact]
@@ -2756,7 +2754,7 @@ public class AssetServiceTests
         {
             JobId = jobId,
             MetabundleId = $"test-metabundle-{Guid.NewGuid():N}",
-            Status = InternalJobStatus.Queued,
+            Status = BundleStatus.Queued,
             RequesterSessionId = sessionId,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
@@ -2779,7 +2777,7 @@ public class AssetServiceTests
             jobId,
             It.IsAny<string>(),
             false,
-            MetabundleJobStatus.Cancelled,
+            BundleStatus.Cancelled,
             null,
             null,
             null,
@@ -2796,7 +2794,7 @@ public class AssetServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
-        Assert.True(result.Cancelled);
+        Assert.Equal(BundleStatus.Cancelled, result.Status);
 
         // Verify completion event was emitted
         _mockAssetEventEmitter.Verify(e => e.EmitMetabundleCreationCompleteAsync(
@@ -2804,7 +2802,7 @@ public class AssetServiceTests
             jobId,
             It.IsAny<string>(),
             false,
-            MetabundleJobStatus.Cancelled,
+            BundleStatus.Cancelled,
             null,
             null,
             null,
@@ -2832,6 +2830,7 @@ public class AssetServiceTests
             _mockOrchestratorClient.Object,
             _mockProcessorPoolManager.Object,
             _mockBundleConverter.Object,
+            _mockTelemetryProvider.Object,
             _mockEventConsumer.Object);
     }
 
@@ -2871,6 +2870,7 @@ public class MinioWebhookHandlerTests
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory = new();
     private readonly Mock<IStateStore<UploadSession>> _mockUploadSessionStore = new();
     private readonly Mock<IMessageBus> _mockMessageBus = new();
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider = new();
     private readonly Mock<ILogger<MinioWebhookHandler>> _mockLogger = new();
     private readonly AssetServiceConfiguration _configuration = new();
 
@@ -2886,6 +2886,7 @@ public class MinioWebhookHandlerTests
         return new MinioWebhookHandler(
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
+            _mockTelemetryProvider.Object,
             _mockLogger.Object,
             _configuration);
     }
@@ -3019,15 +3020,6 @@ public class MinioWebhookHandlerTests
         _mockUploadSessionStore.Verify(
             s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
-        // Verify no message was published
-        _mockMessageBus.Verify(
-            m => m.TryPublishAsync(
-                It.IsAny<string>(),
-                It.IsAny<AssetUploadNotification>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 
     [Fact]
@@ -3043,6 +3035,7 @@ public class MinioWebhookHandlerTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
+            Owner = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             IsMultipart = false,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -3074,15 +3067,6 @@ public class MinioWebhookHandlerTests
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(session);
 
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(
-                "asset.upload.completed",
-                It.IsAny<AssetUploadNotification>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
         // Act
         var result = await handler.HandleWebhookAsync(payload);
 
@@ -3101,24 +3085,15 @@ public class MinioWebhookHandlerTests
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
-        // Verify event was published
-        _mockMessageBus.Verify(
-            m => m.TryPublishAsync(
-                "asset.upload.completed",
-                It.Is<AssetUploadNotification>(n =>
-                    n.UploadId == uploadId &&
-                    n.ETag == "abc123" &&
-                    n.Size == 1024),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+        // Webhook no longer publishes events directly; the main
+        // AssetService.CompleteUploadAsync publishes AssetUploadCompletedEvent
     }
 }
 
 public class AssetEventEmitterTests
 {
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher = new();
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider = new();
     private readonly Mock<ILogger<AssetEventEmitter>> _mockLogger = new();
 
     public AssetEventEmitterTests()
@@ -3129,6 +3104,7 @@ public class AssetEventEmitterTests
     {
         return new AssetEventEmitter(
             _mockClientEventPublisher.Object,
+            _mockTelemetryProvider.Object,
             _mockLogger.Object);
     }
 

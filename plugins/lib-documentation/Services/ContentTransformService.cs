@@ -32,6 +32,7 @@ public partial class ContentTransformService : IContentTransformService
     /// </summary>
     public ContentTransformService(ILogger<ContentTransformService> logger)
     {
+        ArgumentNullException.ThrowIfNull(logger, nameof(logger));
         _logger = logger;
 
         _yamlDeserializer = new DeserializerBuilder()
@@ -128,16 +129,17 @@ public partial class ContentTransformService : IContentTransformService
     }
 
     /// <inheritdoc />
-    public string DetermineCategory(
+    public DocumentCategory DetermineCategory(
         string filePath,
         DocumentFrontmatter? frontmatter,
-        IDictionary<string, string>? categoryMapping,
-        string defaultCategory)
+        IDictionary<string, DocumentCategory>? categoryMapping,
+        DocumentCategory defaultCategory)
     {
-        // Priority 1: Frontmatter category
-        if (!string.IsNullOrWhiteSpace(frontmatter?.Category))
+        // Priority 1: Frontmatter category (parse user-supplied string from git YAML to enum)
+        if (!string.IsNullOrWhiteSpace(frontmatter?.Category)
+            && Enum.TryParse<DocumentCategory>(frontmatter.Category.Replace("-", ""), ignoreCase: true, out var frontmatterCategory))
         {
-            return frontmatter.Category;
+            return frontmatterCategory;
         }
 
         // Priority 2: Path prefix matching via category mapping
@@ -151,7 +153,7 @@ public partial class ContentTransformService : IContentTransformService
                 .OrderByDescending(kvp => kvp.Key.Length)
                 .FirstOrDefault();
 
-            if (!string.IsNullOrEmpty(matchedCategory.Value))
+            if (!string.IsNullOrEmpty(matchedCategory.Key))
             {
                 return matchedCategory.Value;
             }
@@ -164,11 +166,10 @@ public partial class ContentTransformService : IContentTransformService
             var firstDir = directory.Replace('\\', '/').Split('/').FirstOrDefault();
             if (!string.IsNullOrEmpty(firstDir))
             {
-                // Try to map common directory names to categories
                 var inferredCategory = InferCategoryFromDirectory(firstDir);
-                if (!string.IsNullOrEmpty(inferredCategory))
+                if (inferredCategory.HasValue)
                 {
-                    return inferredCategory;
+                    return inferredCategory.Value;
                 }
             }
         }
@@ -181,8 +182,8 @@ public partial class ContentTransformService : IContentTransformService
     public TransformedDocument TransformFile(
         string filePath,
         string content,
-        IDictionary<string, string>? categoryMapping,
-        string defaultCategory)
+        IDictionary<string, DocumentCategory>? categoryMapping,
+        DocumentCategory defaultCategory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
@@ -410,32 +411,40 @@ public partial class ContentTransformService : IContentTransformService
         return text.Trim();
     }
 
-    private static string? InferCategoryFromDirectory(string directoryName)
+    private static DocumentCategory? InferCategoryFromDirectory(string directoryName)
     {
-        // Map common directory names to categories
-        var mappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        // Map common directory names to DocumentCategory enum values
+        var mappings = new Dictionary<string, DocumentCategory>(StringComparer.OrdinalIgnoreCase)
         {
-            { "guides", "Guide" },
-            { "guide", "Guide" },
-            { "tutorials", "Tutorial" },
-            { "tutorial", "Tutorial" },
-            { "api", "Reference" },
-            { "reference", "Reference" },
-            { "concepts", "Concept" },
-            { "concept", "Concept" },
-            { "examples", "Example" },
-            { "example", "Example" },
-            { "faq", "Troubleshooting" },
-            { "troubleshooting", "Troubleshooting" },
-            { "architecture", "Architecture" },
-            { "design", "Architecture" },
-            { "getting-started", "Guide" },
-            { "quickstart", "Guide" },
-            { "overview", "Concept" },
-            { "howto", "Guide" },
-            { "how-to", "Guide" },
-            { "recipes", "Example" },
-            { "cookbook", "Example" }
+            { "guides", DocumentCategory.GettingStarted },
+            { "guide", DocumentCategory.GettingStarted },
+            { "tutorials", DocumentCategory.Tutorials },
+            { "tutorial", DocumentCategory.Tutorials },
+            { "api", DocumentCategory.ApiReference },
+            { "reference", DocumentCategory.ApiReference },
+            { "concepts", DocumentCategory.Other },
+            { "concept", DocumentCategory.Other },
+            { "examples", DocumentCategory.Tutorials },
+            { "example", DocumentCategory.Tutorials },
+            { "faq", DocumentCategory.Troubleshooting },
+            { "troubleshooting", DocumentCategory.Troubleshooting },
+            { "architecture", DocumentCategory.Architecture },
+            { "design", DocumentCategory.Architecture },
+            { "getting-started", DocumentCategory.GettingStarted },
+            { "quickstart", DocumentCategory.GettingStarted },
+            { "overview", DocumentCategory.Other },
+            { "howto", DocumentCategory.GettingStarted },
+            { "how-to", DocumentCategory.GettingStarted },
+            { "recipes", DocumentCategory.Tutorials },
+            { "cookbook", DocumentCategory.Tutorials },
+            { "deployment", DocumentCategory.Deployment },
+            { "deploy", DocumentCategory.Deployment },
+            { "game-systems", DocumentCategory.GameSystems },
+            { "world-lore", DocumentCategory.WorldLore },
+            { "lore", DocumentCategory.WorldLore },
+            { "npc", DocumentCategory.NpcAi },
+            { "npc-ai", DocumentCategory.NpcAi },
+            { "ai", DocumentCategory.NpcAi }
         };
 
         return mappings.TryGetValue(directoryName, out var category) ? category : null;

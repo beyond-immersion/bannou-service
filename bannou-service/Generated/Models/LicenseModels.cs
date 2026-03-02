@@ -278,10 +278,11 @@ public partial class CreateBoardTemplateRequest
     /// Owner types allowed to create boards from this template. Each must map to a supported container owner type (e.g., character, account, location, guild).
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("allowedOwnerTypes")]
+    // TODO(system.text.json): Add string enum item converter
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.MinLength(1)]
-    public System.Collections.Generic.ICollection<string> AllowedOwnerTypes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    public System.Collections.Generic.ICollection<EntityType> AllowedOwnerTypes { get; set; } = new System.Collections.ObjectModel.Collection<EntityType>();
 
 }
 
@@ -339,8 +340,9 @@ public partial class UpdateBoardTemplateRequest
     /// Updated allowed owner types. Narrowing checks for existing boards with removed types.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("allowedOwnerTypes")]
+    // TODO(system.text.json): Add string enum item converter
     [System.ComponentModel.DataAnnotations.MinLength(1)]
-    public System.Collections.Generic.ICollection<string>? AllowedOwnerTypes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<EntityType>? AllowedOwnerTypes { get; set; } = default!;
 
 }
 
@@ -469,9 +471,10 @@ public partial class BoardTemplateResponse
     /// Owner types allowed to create boards from this template
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("allowedOwnerTypes")]
+    // TODO(system.text.json): Add string enum item converter
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> AllowedOwnerTypes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    public System.Collections.Generic.ICollection<EntityType> AllowedOwnerTypes { get; set; } = new System.Collections.ObjectModel.Collection<EntityType>();
 
     /// <summary>
     /// Whether the template is active (can create new board instances)
@@ -883,7 +886,8 @@ public partial class CreateBoardRequest
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// ID of the entity that owns this board
@@ -964,7 +968,8 @@ public partial class ListBoardsByOwnerRequest
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Entity to list boards for
@@ -1003,7 +1008,8 @@ public partial class BoardResponse
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Entity that owns this board
@@ -1252,7 +1258,8 @@ public partial class BoardStateResponse
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// ID of the entity that owns this board
@@ -1313,7 +1320,8 @@ public partial class CloneBoardRequest
     [System.Text.Json.Serialization.JsonPropertyName("targetOwnerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string TargetOwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType TargetOwnerType { get; set; } = default!;
 
     /// <summary>
     /// ID of the target entity
@@ -1360,7 +1368,8 @@ public partial class CloneBoardResponse
     [System.Text.Json.Serialization.JsonPropertyName("targetOwnerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string TargetOwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType TargetOwnerType { get; set; } = default!;
 
     /// <summary>
     /// ID of the entity the board was cloned to
@@ -1399,7 +1408,8 @@ public partial class CleanupByOwnerRequest
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// ID of the entity whose boards should be cleaned up
@@ -1424,7 +1434,8 @@ public partial class CleanupByOwnerResponse
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// ID of the entity that was cleaned up

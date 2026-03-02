@@ -209,7 +209,7 @@ All endpoints use POST-only pattern for zero-copy WebSocket routing.
 
 ```yaml
 # schemas/git-api.yaml
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Bannou Git Service API
   version: 1.0.0

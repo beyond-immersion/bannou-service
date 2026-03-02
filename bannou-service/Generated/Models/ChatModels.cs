@@ -1259,6 +1259,65 @@ public partial class MuteParticipantRequest
 }
 
 /// <summary>
+/// Request to unmute a participant in a chat room
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UnmuteParticipantRequest
+{
+
+    /// <summary>
+    /// Room containing the muted participant
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Session ID of participant to unmute
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetSessionId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to change a participant's role in a chat room
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ChangeParticipantRoleRequest
+{
+
+    /// <summary>
+    /// Room containing the participant
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Session ID of participant whose role will change
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetSessionId { get; set; } = default!;
+
+    /// <summary>
+    /// New role to assign to the participant
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("newRole")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ChatParticipantRole NewRole { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Message content discriminated by the room message format. Exactly one content field group must be set, matching the room type format.
 /// <br/>
 /// </summary>

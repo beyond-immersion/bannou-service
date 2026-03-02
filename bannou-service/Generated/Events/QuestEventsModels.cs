@@ -83,12 +83,15 @@ public partial class QuestAcceptedEvent
     [System.Text.Json.Serialization.JsonPropertyName("questorCharacterIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
     public System.Collections.Generic.ICollection<System.Guid> QuestorCharacterIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
     /// Game service ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid GameServiceId { get; set; } = default!;
 
 }
@@ -128,6 +131,8 @@ public partial class QuestObjectiveProgressedEvent
     /// Quest code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("questCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string QuestCode { get; set; } = default!;
 
     /// <summary>
@@ -142,12 +147,14 @@ public partial class QuestObjectiveProgressedEvent
     /// Current progress
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int CurrentCount { get; set; } = default!;
 
     /// <summary>
     /// Required for completion
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requiredCount")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int RequiredCount { get; set; } = default!;
 
     /// <summary>
@@ -193,6 +200,8 @@ public partial class QuestCompletedEvent
     /// Quest definition ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DefinitionId { get; set; } = default!;
 
     /// <summary>
@@ -209,12 +218,15 @@ public partial class QuestCompletedEvent
     [System.Text.Json.Serialization.JsonPropertyName("questorCharacterIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
     public System.Collections.Generic.ICollection<System.Guid> QuestorCharacterIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
     /// Game service ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid GameServiceId { get; set; } = default!;
 
 }
@@ -262,13 +274,16 @@ public partial class QuestFailedEvent
     /// Characters who failed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("questorCharacterIds")]
-    public System.Collections.Generic.ICollection<System.Guid> QuestorCharacterIds { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    public System.Collections.Generic.ICollection<System.Guid> QuestorCharacterIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
     /// Failure reason
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Reason { get; set; } = default!;
 

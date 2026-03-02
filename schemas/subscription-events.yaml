@@ -1,8 +1,8 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Subscription Service Events
   description: |
-    Event models for Subscription service RabbitMQ pub/sub via MassTransit.
+    Event models for Subscription service RabbitMQ pub/sub via lib-messaging.
     Publishes subscription state change events consumed by Auth and GameSession services.
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
@@ -58,9 +58,8 @@ components:
           nullable: true  # NRT: Optional property MUST be nullable
           description: Display name of the service
         action:
-          type: string
-          enum: [created, updated, cancelled, expired, renewed]
-          description: What action triggered this event
+          $ref: 'subscription-api.yaml#/components/schemas/SubscriptionAction'
+          description: The action that triggered this subscription change
         isActive:
           type: boolean
           description: Whether the subscription is currently active
@@ -69,13 +68,3 @@ components:
           format: date-time
           nullable: true
           description: When the subscription expires (if applicable)
-        previousValues:
-          type: object
-          nullable: true  # NRT: Optional property MUST be nullable
-          additionalProperties: false
-          description: Previous values for updated fields (for update action)
-        newValues:
-          type: object
-          nullable: true  # NRT: Optional property MUST be nullable
-          additionalProperties: false
-          description: New values for updated fields (for update action)

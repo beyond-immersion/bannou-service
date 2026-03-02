@@ -26,28 +26,25 @@ namespace BeyondImmersion.BannouService.Realm;
 /// </remarks>
 public partial class RealmService
 {
-    // This partial class declaration exists to signal that the models below
-    // are owned by and used exclusively by this service. The models themselves
-    // are defined at namespace level as internal classes.
 }
 
-// ============================================================================
-// INTERNAL DATA MODELS
-// ============================================================================
-// Add your internal data models below. Examples:
-//
-// /// <summary>
-// /// Internal storage model for [entity].
-// /// </summary>
-// internal class RealmStorageModel
-// {
-//     public Guid Id { get; set; }
-//     public string Name { get; set; } = string.Empty;
-//     public DateTimeOffset CreatedAt { get; set; }
-// }
-//
-// /// <summary>
-// /// Cache entry for [purpose].
-// /// </summary>
-// internal record RealmCacheEntry(Guid Id, string Data, DateTimeOffset CachedAt);
-// ============================================================================
+/// <summary>
+/// Internal storage model for realm data.
+/// </summary>
+internal class RealmModel
+{
+    public Guid RealmId { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public Guid GameServiceId { get; set; }
+    public string? Description { get; set; }
+    public string? Category { get; set; }
+    public bool IsActive { get; set; } = true;
+    public bool IsSystemType { get; set; }
+    public bool IsDeprecated { get; set; }
+    public DateTimeOffset? DeprecatedAt { get; set; }
+    public string? DeprecationReason { get; set; }
+    public object? Metadata { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}

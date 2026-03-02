@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Actor Service Events
   version: 1.0.0
@@ -18,27 +18,27 @@ info:
 
   x-event-publications:
     # Actor template lifecycle events (auto-generated from x-lifecycle)
-  - topic: actor-template.created
+  - topic: actor.template.created
     event: ActorTemplateCreatedEvent
     description: Published when an actor template is created
-  - topic: actor-template.updated
+  - topic: actor.template.updated
     event: ActorTemplateUpdatedEvent
     description: Published when an actor template is updated
-  - topic: actor-template.deleted
+  - topic: actor.template.deleted
     event: ActorTemplateDeletedEvent
     description: Published when an actor template is deleted
     # Actor instance lifecycle events (auto-generated from x-lifecycle)
-  - topic: actor-instance.created
+  - topic: actor.instance.created
     event: ActorInstanceCreatedEvent
     description: Published when an actor instance is created (control plane record)
-  - topic: actor-instance.deleted
+  - topic: actor.instance.deleted
     event: ActorInstanceDeletedEvent
     description: Published when an actor instance is stopped and removed
     # Custom actor instance events
-  - topic: actor-instance.started
+  - topic: actor.instance.started
     event: ActorInstanceStartedEvent
     description: Published when an actor begins running its behavior loop
-  - topic: actor-instance.state-persisted
+  - topic: actor.instance.state-persisted
     event: ActorStatePersistedEvent
     description: Published on periodic state auto-save to Redis
   - topic: actor.instance.character-bound
@@ -61,7 +61,7 @@ info:
     event: ActorEncounterEndedEvent
     description: Published when an encounter finishes
     # Character state update (behavioral output)
-  - topic: character.state_update
+  - topic: character.state-update
     event: CharacterStateUpdateEvent
     description: Published per-tick with actor feelings/goals for character display
     # Pool node events (from pool nodes to control plane)
@@ -97,7 +97,7 @@ info:
   - topic: actor.instance.completed
     event: ActorCompletedEvent
     handler: HandleActorCompleted
-  - topic: actor-template.updated
+  - topic: actor.template.updated
     event: ActorTemplateUpdatedEvent
     handler: HandleActorTemplateUpdated
 
@@ -106,6 +106,7 @@ servers: []
 paths: {}
 
 x-lifecycle:
+  topic_prefix: actor
   ActorTemplate:
     model:
       templateId:

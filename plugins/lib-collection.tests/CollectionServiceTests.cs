@@ -7,8 +7,10 @@ using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Telemetry;
 using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
@@ -31,11 +33,19 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     private readonly Mock<IQueryableStateStore<CollectionInstanceModel>> _mockCollectionStore;
     private readonly Mock<IQueryableStateStore<AreaContentConfigModel>> _mockAreaContentStore;
     private readonly Mock<IStateStore<CollectionCacheModel>> _mockCollectionCache;
+    private readonly Mock<ICacheableStateStore<CollectionCacheModel>> _mockCacheableCollectionCache;
 
     // Client mocks
     private readonly Mock<IInventoryClient> _mockInventoryClient;
     private readonly Mock<IItemClient> _mockItemClient;
     private readonly Mock<IGameServiceClient> _mockGameServiceClient;
+    private readonly Mock<IResourceClient> _mockResourceClient;
+
+    // Telemetry mock
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+
+    // Entity session registry mock
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
 
     // Lock response mock
     private readonly Mock<ILockResponse> _mockLockResponse;
@@ -63,11 +73,19 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockCollectionStore = new Mock<IQueryableStateStore<CollectionInstanceModel>>();
         _mockAreaContentStore = new Mock<IQueryableStateStore<AreaContentConfigModel>>();
         _mockCollectionCache = new Mock<IStateStore<CollectionCacheModel>>();
+        _mockCacheableCollectionCache = new Mock<ICacheableStateStore<CollectionCacheModel>>();
 
         // Initialize client mocks
         _mockInventoryClient = new Mock<IInventoryClient>();
         _mockItemClient = new Mock<IItemClient>();
         _mockGameServiceClient = new Mock<IGameServiceClient>();
+        _mockResourceClient = new Mock<IResourceClient>();
+
+        // Initialize telemetry mock
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+
+        // Initialize entity session registry mock
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
 
         // Wire up state store factory
         _mockStateStoreFactory
@@ -82,6 +100,9 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockStateStoreFactory
             .Setup(f => f.GetStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache))
             .Returns(_mockCollectionCache.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetCacheableStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache))
+            .Returns(_mockCacheableCollectionCache.Object);
 
         // Default save behavior
         _mockTemplateStore
@@ -151,6 +172,9 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockItemClient.Object,
         _mockGameServiceClient.Object,
         _mockLockProvider.Object,
+        _mockResourceClient.Object,
+        _mockTelemetryProvider.Object,
+        _mockEntitySessionRegistry.Object,
         Enumerable.Empty<ICollectionUnlockListener>());
 
     private static EntryTemplateModel CreateTestTemplate(
@@ -184,7 +208,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     private static CollectionInstanceModel CreateTestCollection(
         Guid? collectionId = null,
         Guid? ownerId = null,
-        string ownerType = "character",
+        EntityType ownerType = EntityType.Character,
         string collectionType = "bestiary",
         Guid? gameServiceId = null,
         Guid? containerId = null)
@@ -246,7 +270,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Collection exists by owner key
         _mockCollectionStore
             .Setup(s => s.GetAsync(
-                $"col:{collection.OwnerId}:{collection.OwnerType}:{collection.GameServiceId}:{collection.CollectionType}",
+                $"col:{collection.OwnerId}:{collection.OwnerType.ToString().ToLowerInvariant()}:{collection.GameServiceId}:{collection.CollectionType}",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(collection);
 
@@ -370,7 +394,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             Times.Exactly(2));
 
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("collection-entry-template.created", It.IsAny<CollectionEntryTemplateCreatedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("collection.entry-template.created", It.IsAny<CollectionEntryTemplateCreatedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -566,7 +590,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         Assert.NotNull(response.UpdatedAt);
 
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("collection-entry-template.updated", It.IsAny<CollectionEntryTemplateUpdatedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("collection.entry-template.updated", It.IsAny<CollectionEntryTemplateUpdatedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -594,7 +618,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         Assert.NotNull(response);
 
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("collection-entry-template.updated", It.IsAny<CollectionEntryTemplateUpdatedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("collection.entry-template.updated", It.IsAny<CollectionEntryTemplateUpdatedEvent>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -653,7 +677,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             Times.Once);
 
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("collection-entry-template.deleted", It.IsAny<CollectionEntryTemplateDeletedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("collection.entry-template.deleted", It.IsAny<CollectionEntryTemplateDeletedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -727,7 +751,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var request = new CreateCollectionRequest
         {
             OwnerId = TestOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             CollectionType = "bestiary",
             GameServiceId = TestGameServiceId
         };
@@ -739,7 +763,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(TestOwnerId, response.OwnerId);
-        Assert.Equal("character", response.OwnerType);
+        Assert.Equal(EntityType.Character, response.OwnerType);
         Assert.Equal("bestiary", response.CollectionType);
         Assert.Equal(TestContainerId, response.ContainerId);
         Assert.Equal(0, response.EntryCount);
@@ -770,12 +794,12 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     [Fact]
     public async Task CreateCollection_InvalidOwnerType_ReturnsBadRequest()
     {
-        // Arrange
+        // Arrange - EntityType.System has no ContainerOwnerType mapping
         var service = CreateService();
         var request = new CreateCollectionRequest
         {
             OwnerId = TestOwnerId,
-            OwnerType = "invalid:type",
+            OwnerType = EntityType.System,
             CollectionType = "bestiary",
             GameServiceId = TestGameServiceId
         };
@@ -791,12 +815,12 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     [Fact]
     public async Task CreateCollection_UnmappableOwnerType_ReturnsBadRequest()
     {
-        // Arrange - "npc" is valid syntax but has no ContainerOwnerType mapping
+        // Arrange - EntityType.Monster is a valid enum value but has no ContainerOwnerType mapping
         var service = CreateService();
         var request = new CreateCollectionRequest
         {
             OwnerId = TestOwnerId,
-            OwnerType = "npc",
+            OwnerType = EntityType.Monster,
             CollectionType = "bestiary",
             GameServiceId = TestGameServiceId
         };
@@ -828,7 +852,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var request = new CreateCollectionRequest
         {
             OwnerId = TestOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             CollectionType = "bestiary",
             GameServiceId = TestGameServiceId
         };
@@ -861,7 +885,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var request = new CreateCollectionRequest
         {
             OwnerId = TestOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             CollectionType = "scene_archive",
             GameServiceId = TestGameServiceId
         };
@@ -999,7 +1023,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var request = new ListCollectionsRequest
         {
             OwnerId = TestOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             GameServiceId = TestGameServiceId
         };
 
@@ -1029,7 +1053,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var request = new GrantEntryRequest
         {
             OwnerId = TestOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             GameServiceId = TestGameServiceId,
             CollectionType = "bestiary",
             EntryCode = "boss_dragon"
@@ -1101,7 +1125,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var request = new GrantEntryRequest
         {
             OwnerId = TestOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             GameServiceId = TestGameServiceId,
             CollectionType = "bestiary",
             EntryCode = "boss_dragon"
@@ -1131,7 +1155,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var request = new GrantEntryRequest
         {
             OwnerId = TestOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             GameServiceId = TestGameServiceId,
             CollectionType = "bestiary",
             EntryCode = "nonexistent_code"
@@ -1189,7 +1213,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var request = new GrantEntryRequest
         {
             OwnerId = TestOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             GameServiceId = TestGameServiceId,
             CollectionType = "bestiary",
             EntryCode = "boss_dragon"
@@ -1258,7 +1282,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var request = new GrantEntryRequest
         {
             OwnerId = TestOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             GameServiceId = TestGameServiceId,
             CollectionType = "bestiary",
             EntryCode = "boss_dragon"
@@ -1312,7 +1336,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var request = new GrantEntryRequest
         {
             OwnerId = TestOwnerId,
-            OwnerType = "character",
+            OwnerType = EntityType.Character,
             GameServiceId = TestGameServiceId,
             CollectionType = "bestiary",
             EntryCode = "boss_dragon"
@@ -1364,7 +1388,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             new HasEntryRequest
             {
                 OwnerId = TestOwnerId,
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 GameServiceId = TestGameServiceId,
                 CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
@@ -1389,7 +1413,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             new HasEntryRequest
             {
                 OwnerId = Guid.NewGuid(),
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 GameServiceId = TestGameServiceId,
                 CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
@@ -1446,7 +1470,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             new GetCompletionStatsRequest
             {
                 OwnerId = TestOwnerId,
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 GameServiceId = TestGameServiceId,
                 CollectionType = "bestiary"
             },
@@ -1486,7 +1510,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             new GetCompletionStatsRequest
             {
                 OwnerId = Guid.NewGuid(),
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 GameServiceId = TestGameServiceId,
                 CollectionType = "bestiary"
             },
@@ -1629,7 +1653,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             new SelectContentForAreaRequest
             {
                 OwnerId = TestOwnerId,
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 GameServiceId = TestGameServiceId,
                 CollectionType = "music_library",
                 AreaCode = "unknown_area"
@@ -1672,7 +1696,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             new SelectContentForAreaRequest
             {
                 OwnerId = TestOwnerId,
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 GameServiceId = TestGameServiceId,
                 CollectionType = "music_library",
                 AreaCode = "enchanted_forest"
@@ -1738,7 +1762,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             new SelectContentForAreaRequest
             {
                 OwnerId = TestOwnerId,
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 GameServiceId = TestGameServiceId,
                 CollectionType = "music_library",
                 AreaCode = "enchanted_forest"
@@ -2019,12 +2043,12 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     #region Event Handler Tests
 
     [Fact]
-    public async Task HandleCharacterDeleted_CleansUpCharacterOwnedCollections()
+    public async Task CleanupByCharacter_CleansUpCharacterOwnedCollections()
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var collection1 = CreateTestCollection(collectionId: Guid.NewGuid(), ownerId: characterId, ownerType: "character");
-        var collection2 = CreateTestCollection(collectionId: Guid.NewGuid(), ownerId: characterId, ownerType: "character",
+        var collection1 = CreateTestCollection(collectionId: Guid.NewGuid(), ownerId: characterId, ownerType: EntityType.Character);
+        var collection2 = CreateTestCollection(collectionId: Guid.NewGuid(), ownerId: characterId, ownerType: EntityType.Character,
             collectionType: "music_library");
 
         _mockCollectionStore
@@ -2038,7 +2062,13 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var service = CreateService();
 
         // Act
-        await service.HandleCharacterDeletedAsync(new CharacterDeletedEvent { CharacterId = characterId });
+        var (status, response) = await service.CleanupByCharacterAsync(
+            new CleanupByCharacterRequest { CharacterId = characterId },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
 
         // Assert - both containers deleted
         _mockInventoryClient.Verify(
@@ -2061,7 +2091,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     {
         // Arrange
         var accountId = Guid.NewGuid();
-        var collection = CreateTestCollection(collectionId: Guid.NewGuid(), ownerId: accountId, ownerType: "account");
+        var collection = CreateTestCollection(collectionId: Guid.NewGuid(), ownerId: accountId, ownerType: EntityType.Account);
 
         _mockCollectionStore
             .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<CollectionInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
@@ -2090,7 +2120,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     }
 
     [Fact]
-    public async Task HandleCharacterDeleted_NoCollections_LogsAndReturns()
+    public async Task CleanupByCharacter_NoCollections_ReturnsZeroDeleted()
     {
         // Arrange - no collections for this character
         var characterId = Guid.NewGuid();
@@ -2101,7 +2131,14 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var service = CreateService();
 
         // Act
-        await service.HandleCharacterDeletedAsync(new CharacterDeletedEvent { CharacterId = characterId });
+        var (status, response) = await service.CleanupByCharacterAsync(
+            new CleanupByCharacterRequest { CharacterId = characterId },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.DeletedCount);
 
         // Assert - no delete operations performed
         _mockInventoryClient.Verify(
@@ -2120,7 +2157,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     public async Task GrantEntry_PublishesUnlockedEventWithOwnerType()
     {
         // Arrange
-        var collection = CreateTestCollection(ownerType: "account");
+        var collection = CreateTestCollection(ownerType: EntityType.Account);
         var template = CreateTestTemplate();
 
         _mockCollectionStore
@@ -2168,7 +2205,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             new GrantEntryRequest
             {
                 OwnerId = TestOwnerId,
-                OwnerType = "account",
+                OwnerType = EntityType.Account,
                 GameServiceId = TestGameServiceId,
                 CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
@@ -2178,7 +2215,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(capturedEvent);
-        Assert.Equal("account", capturedEvent.OwnerType);
+        Assert.Equal(EntityType.Account, capturedEvent.OwnerType);
         Assert.Equal(TestOwnerId, capturedEvent.OwnerId);
         Assert.Equal("boss_dragon", capturedEvent.EntryCode);
     }
@@ -2237,7 +2274,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             new GrantEntryRequest
             {
                 OwnerId = TestOwnerId,
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 GameServiceId = TestGameServiceId,
                 CollectionType = "bestiary",
                 EntryCode = "entry_two"
@@ -2307,7 +2344,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             new GrantEntryRequest
             {
                 OwnerId = TestOwnerId,
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 GameServiceId = TestGameServiceId,
                 CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
@@ -2445,13 +2482,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         // Assert - verify the underlying Register<TEvent> interface method is called
         // (RegisterHandler is an extension method that delegates to Register)
-        _mockEventConsumer.Verify(
-            ec => ec.Register<CharacterDeletedEvent>(
-                "character.deleted",
-                It.IsAny<string>(),
-                It.IsAny<Func<IServiceProvider, CharacterDeletedEvent, Task>>()),
-            Times.Once);
-
+        // Note: Character cleanup uses lib-resource (x-references), not event subscription, per FOUNDATION TENETS
         _mockEventConsumer.Verify(
             ec => ec.Register<AccountDeletedEvent>(
                 "account.deleted",

@@ -24,79 +24,79 @@ public sealed class MatchmakingEventSubscriptions
     }
 
     /// <summary>
-    /// Subscribe to <see cref="MatchConfirmedEvent"/> events.
+    /// Subscribe to <see cref="MatchConfirmedClientEvent"/> events.
     /// Sent to all match participants when all players have accepted.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnMatchConfirmed(Action<MatchConfirmedEvent> handler)
+    public IEventSubscription OnMatchConfirmed(Action<MatchConfirmedClientEvent> handler)
     {
-        return _client.OnEvent<MatchConfirmedEvent>(handler);
+        return _client.OnEvent<MatchConfirmedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="MatchDeclinedEvent"/> events.
+    /// Subscribe to <see cref="MatchDeclinedClientEvent"/> events.
     /// Sent to all match participants when someone declines.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnMatchDeclined(Action<MatchDeclinedEvent> handler)
+    public IEventSubscription OnMatchDeclined(Action<MatchDeclinedClientEvent> handler)
     {
-        return _client.OnEvent<MatchDeclinedEvent>(handler);
+        return _client.OnEvent<MatchDeclinedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="MatchFoundEvent"/> events.
+    /// Subscribe to <see cref="MatchFoundClientEvent"/> events.
     /// Sent to all matched players when a match is formed.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnMatchFound(Action<MatchFoundEvent> handler)
+    public IEventSubscription OnMatchFound(Action<MatchFoundClientEvent> handler)
     {
-        return _client.OnEvent<MatchFoundEvent>(handler);
+        return _client.OnEvent<MatchFoundClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="MatchPlayerAcceptedEvent"/> events.
+    /// Subscribe to <see cref="MatchPlayerAcceptedClientEvent"/> events.
     /// Sent to all match participants when a player accepts.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnMatchPlayerAccepted(Action<MatchPlayerAcceptedEvent> handler)
+    public IEventSubscription OnMatchPlayerAccepted(Action<MatchPlayerAcceptedClientEvent> handler)
     {
-        return _client.OnEvent<MatchPlayerAcceptedEvent>(handler);
+        return _client.OnEvent<MatchPlayerAcceptedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="MatchmakingCancelledEvent"/> events.
+    /// Subscribe to <see cref="MatchmakingCancelledClientEvent"/> events.
     /// Sent when matchmaking is cancelled for any reason.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnMatchmakingCancelled(Action<MatchmakingCancelledEvent> handler)
+    public IEventSubscription OnMatchmakingCancelled(Action<MatchmakingCancelledClientEvent> handler)
     {
-        return _client.OnEvent<MatchmakingCancelledEvent>(handler);
+        return _client.OnEvent<MatchmakingCancelledClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="MatchmakingStatusUpdateEvent"/> events.
+    /// Subscribe to <see cref="MatchmakingStatusUpdateClientEvent"/> events.
     /// Periodic status update sent to players in queue.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnMatchmakingStatusUpdate(Action<MatchmakingStatusUpdateEvent> handler)
+    public IEventSubscription OnMatchmakingStatusUpdate(Action<MatchmakingStatusUpdateClientEvent> handler)
     {
-        return _client.OnEvent<MatchmakingStatusUpdateEvent>(handler);
+        return _client.OnEvent<MatchmakingStatusUpdateClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="QueueJoinedEvent"/> events.
+    /// Subscribe to <see cref="QueueJoinedClientEvent"/> events.
     /// Sent to the player when they successfully join a matchmaking queue.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnQueueJoined(Action<QueueJoinedEvent> handler)
+    public IEventSubscription OnQueueJoined(Action<QueueJoinedClientEvent> handler)
     {
-        return _client.OnEvent<QueueJoinedEvent>(handler);
+        return _client.OnEvent<QueueJoinedClientEvent>(handler);
     }
 }

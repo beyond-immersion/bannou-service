@@ -31,7 +31,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createDeityAsync(
+  async divineCreateDeityAsync(
     request: Schemas['CreateDeityRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getDeityAsync(
+  async divineGetDeityAsync(
     request: Schemas['GetDeityRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getDeityByCodeAsync(
+  async divineGetDeityByCodeAsync(
     request: Schemas['GetDeityByCodeRequest'],
     channel: number = 0,
     timeout?: number
@@ -91,7 +91,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listDeitiesAsync(
+  async divineListDeitiesAsync(
     request: Schemas['ListDeitiesRequest'],
     channel: number = 0,
     timeout?: number
@@ -111,7 +111,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateDeityAsync(
+  async divineUpdateDeityAsync(
     request: Schemas['UpdateDeityRequest'],
     channel: number = 0,
     timeout?: number
@@ -131,7 +131,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async activateDeityAsync(
+  async divineActivateDeityAsync(
     request: Schemas['ActivateDeityRequest'],
     channel: number = 0,
     timeout?: number
@@ -151,7 +151,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deactivateDeityAsync(
+  async divineDeactivateDeityAsync(
     request: Schemas['DeactivateDeityRequest'],
     channel: number = 0,
     timeout?: number
@@ -170,7 +170,7 @@ export class DivineProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async deleteDeityEventAsync(
+  async divineDeleteDeityEventAsync(
     request: Schemas['DeleteDeityRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -188,7 +188,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getDivinityBalanceAsync(
+  async divineGetDivinityBalanceAsync(
     request: Schemas['GetDivinityBalanceRequest'],
     channel: number = 0,
     timeout?: number
@@ -206,7 +206,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async creditDivinityAsync(
+  async divineCreditDivinityAsync(
     request: Schemas['CreditDivinityRequest'],
     channel: number = 0,
     timeout?: number
@@ -224,7 +224,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async debitDivinityAsync(
+  async divineDebitDivinityAsync(
     request: Schemas['DebitDivinityRequest'],
     channel: number = 0,
     timeout?: number
@@ -242,7 +242,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getDivinityHistoryAsync(
+  async divineGetDivinityHistoryAsync(
     request: Schemas['GetDivinityHistoryRequest'],
     channel: number = 0,
     timeout?: number
@@ -260,7 +260,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async grantBlessingAsync(
+  async divineGrantBlessingAsync(
     request: Schemas['GrantBlessingRequest'],
     channel: number = 0,
     timeout?: number
@@ -280,7 +280,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async revokeBlessingAsync(
+  async divineRevokeBlessingAsync(
     request: Schemas['RevokeBlessingRequest'],
     channel: number = 0,
     timeout?: number
@@ -300,7 +300,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listBlessingsByEntityAsync(
+  async divineListBlessingsByEntityAsync(
     request: Schemas['ListBlessingsByEntityRequest'],
     channel: number = 0,
     timeout?: number
@@ -318,7 +318,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listBlessingsByDeityAsync(
+  async divineListBlessingsByDeityAsync(
     request: Schemas['ListBlessingsByDeityRequest'],
     channel: number = 0,
     timeout?: number
@@ -336,7 +336,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getBlessingAsync(
+  async divineGetBlessingAsync(
     request: Schemas['GetBlessingRequest'],
     channel: number = 0,
     timeout?: number
@@ -356,7 +356,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async registerFollowerAsync(
+  async divineRegisterFollowerAsync(
     request: Schemas['RegisterFollowerRequest'],
     channel: number = 0,
     timeout?: number
@@ -375,7 +375,7 @@ export class DivineProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async unregisterFollowerEventAsync(
+  async divineUnregisterFollowerEventAsync(
     request: Schemas['UnregisterFollowerRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -393,7 +393,7 @@ export class DivineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getFollowersAsync(
+  async divineGetFollowersAsync(
     request: Schemas['GetFollowersRequest'],
     channel: number = 0,
     timeout?: number
@@ -410,7 +410,7 @@ export class DivineProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async cleanupByCharacterEventAsync(
+  async divineCleanupByCharacterEventAsync(
     request: Schemas['CleanupByCharacterRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -427,7 +427,7 @@ export class DivineProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async cleanupByGameServiceEventAsync(
+  async divineCleanupByGameServiceEventAsync(
     request: Schemas['CleanupByGameServiceRequest'],
     channel: number = 0
   ): Promise<void> {

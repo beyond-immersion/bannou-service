@@ -109,25 +109,25 @@ public partial class SpeciesCreatedEvent : BaseServiceEvent
     /// Average lifespan in years for this species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("baseLifespan")]
-    public int BaseLifespan { get; set; } = default!;
+    public int? BaseLifespan { get; set; } = default!;
 
     /// <summary>
     /// Age at which members of this species reach maturity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maturityAge")]
-    public int MaturityAge { get; set; } = default!;
+    public int? MaturityAge { get; set; } = default!;
 
     /// <summary>
     /// Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
-    public object TraitModifiers { get; set; } = default!;
+    public object? TraitModifiers { get; set; } = default!;
 
     /// <summary>
     /// IDs of realms where this species can exist
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmIds")]
-    public System.Collections.Generic.ICollection<System.Guid> RealmIds { get; set; } = default!;
+    public System.Collections.Generic.ICollection<System.Guid>? RealmIds { get; set; } = default!;
 
     /// <summary>
     /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
@@ -232,25 +232,25 @@ public partial class SpeciesUpdatedEvent : BaseServiceEvent
     /// Average lifespan in years for this species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("baseLifespan")]
-    public int BaseLifespan { get; set; } = default!;
+    public int? BaseLifespan { get; set; } = default!;
 
     /// <summary>
     /// Age at which members of this species reach maturity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maturityAge")]
-    public int MaturityAge { get; set; } = default!;
+    public int? MaturityAge { get; set; } = default!;
 
     /// <summary>
     /// Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
-    public object TraitModifiers { get; set; } = default!;
+    public object? TraitModifiers { get; set; } = default!;
 
     /// <summary>
     /// IDs of realms where this species can exist
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmIds")]
-    public System.Collections.Generic.ICollection<System.Guid> RealmIds { get; set; } = default!;
+    public System.Collections.Generic.ICollection<System.Guid>? RealmIds { get; set; } = default!;
 
     /// <summary>
     /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
@@ -363,25 +363,25 @@ public partial class SpeciesDeletedEvent : BaseServiceEvent
     /// Average lifespan in years for this species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("baseLifespan")]
-    public int BaseLifespan { get; set; } = default!;
+    public int? BaseLifespan { get; set; } = default!;
 
     /// <summary>
     /// Age at which members of this species reach maturity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maturityAge")]
-    public int MaturityAge { get; set; } = default!;
+    public int? MaturityAge { get; set; } = default!;
 
     /// <summary>
     /// Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
-    public object TraitModifiers { get; set; } = default!;
+    public object? TraitModifiers { get; set; } = default!;
 
     /// <summary>
     /// IDs of realms where this species can exist
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmIds")]
-    public System.Collections.Generic.ICollection<System.Guid> RealmIds { get; set; } = default!;
+    public System.Collections.Generic.ICollection<System.Guid>? RealmIds { get; set; } = default!;
 
     /// <summary>
     /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.

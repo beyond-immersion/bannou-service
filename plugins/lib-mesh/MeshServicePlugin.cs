@@ -28,10 +28,9 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
         services.AddSingleton<IMeshInstanceIdentifier>(sp =>
         {
             var meshConfig = sp.GetRequiredService<MeshServiceConfiguration>();
-            if (!string.IsNullOrEmpty(meshConfig.InstanceId)
-                && Guid.TryParse(meshConfig.InstanceId, out var configuredId))
+            if (meshConfig.InstanceId.HasValue)
             {
-                return new DefaultMeshInstanceIdentifier(configuredId);
+                return new DefaultMeshInstanceIdentifier(meshConfig.InstanceId.Value);
             }
 
             var appConfig = sp.GetRequiredService<IServiceConfiguration>();

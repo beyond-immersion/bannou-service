@@ -86,7 +86,7 @@ public class PeerRoutingTestHandler : BaseHttpTestHandler
                     return TestResult.Failed("Capability response is null");
 
                 // Note: The HTTP endpoint returns ClientCapabilitiesResponse which may not have peerGuid.
-                // peerGuid is in the WebSocket capability manifest event (CapabilityManifestEvent).
+                // peerGuid is in the WebSocket capability manifest event (CapabilityManifestClientEvent).
                 //
                 // PAIN POINT: HTTP endpoint doesn't expose peerGuid - only WebSocket does.
                 // For internal services that want to query their peerGuid via HTTP, we'd need
@@ -95,7 +95,7 @@ public class PeerRoutingTestHandler : BaseHttpTestHandler
                 return TestResult.Successful(
                     $"Capability manifest retrieved. SessionId: {response.SessionId}, " +
                     $"Capabilities: {response.Capabilities?.Count ?? 0}. " +
-                    "NOTE: peerGuid is only in WebSocket CapabilityManifestEvent, not HTTP response.");
+                    "NOTE: peerGuid is only in WebSocket CapabilityManifestClientEvent, not HTTP response.");
             }
             catch (ApiException ex) when (ex.StatusCode == 401 || ex.StatusCode == 404)
             {

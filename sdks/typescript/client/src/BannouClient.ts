@@ -1048,12 +1048,12 @@ export class BannouClient implements IBannouClient {
       }
 
       // Handle capability manifest specially
-      if (eventName === 'connect.capability_manifest') {
+      if (eventName === 'connect.capability-manifest') {
         this.handleCapabilityManifest(payloadJson);
       }
 
       // Handle disconnect notification specially
-      if (eventName === 'connect.disconnect_notification') {
+      if (eventName === 'connect.disconnect-notification') {
         this.handleDisconnectNotification(payloadJson);
       }
 

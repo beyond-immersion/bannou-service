@@ -113,7 +113,7 @@ Declare your extension's layer in the API schema using `x-service-layer`:
 
 ```yaml
 # schemas/reputation-api.yaml
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Reputation Extension API
   version: 1.0.0
@@ -1055,7 +1055,7 @@ This tutorial builds a **Reputation** extension step by step. We chose Reputatio
 Create `schemas/reputation-api.yaml`:
 
 ```yaml
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Reputation Extension API
   version: 1.0.0

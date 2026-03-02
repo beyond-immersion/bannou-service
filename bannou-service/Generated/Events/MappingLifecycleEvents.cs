@@ -32,19 +32,19 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published to mapping-channel.created when a mappingchannel is created
+/// Published to mapping.channel.created when a mappingchannel is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MappingChannelCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: mapping-channel.created
+    /// Event type identifier: mapping.channel.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "mapping-channel.created";
+    public override string EventName { get; set; } = "mapping.channel.created";
 
     /// <summary>
     /// Unique identifier for the channel (region+kind)
@@ -122,19 +122,19 @@ public partial class MappingChannelCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to mapping-channel.updated when a mappingchannel is updated
+/// Published to mapping.channel.updated when a mappingchannel is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MappingChannelUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: mapping-channel.updated
+    /// Event type identifier: mapping.channel.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "mapping-channel.updated";
+    public override string EventName { get; set; } = "mapping.channel.updated";
 
     /// <summary>
     /// Unique identifier for the channel (region+kind)
@@ -220,19 +220,19 @@ public partial class MappingChannelUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to mapping-channel.deleted when a mappingchannel is deleted
+/// Published to mapping.channel.deleted when a mappingchannel is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MappingChannelDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: mapping-channel.deleted
+    /// Event type identifier: mapping.channel.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "mapping-channel.deleted";
+    public override string EventName { get; set; } = "mapping.channel.deleted";
 
     /// <summary>
     /// Unique identifier for the channel (region+kind)

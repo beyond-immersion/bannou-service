@@ -31,7 +31,7 @@ export class AssetsProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async requestUploadAsync(
+  async assetRequestUploadAsync(
     request: Schemas['UploadRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class AssetsProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async completeUploadAsync(
+  async assetCompleteUploadAsync(
     request: Schemas['CompleteUploadRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class AssetsProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getAssetAsync(
+  async assetGetAssetAsync(
     request: Schemas['GetAssetRequest'],
     channel: number = 0,
     timeout?: number
@@ -91,7 +91,7 @@ export class AssetsProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listAssetVersionsAsync(
+  async assetListAssetVersionsAsync(
     request: Schemas['ListVersionsRequest'],
     channel: number = 0,
     timeout?: number
@@ -111,7 +111,7 @@ export class AssetsProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async searchAssetsAsync(
+  async assetSearchAssetsAsync(
     request: Schemas['AssetSearchRequest'],
     channel: number = 0,
     timeout?: number
@@ -131,7 +131,7 @@ export class AssetsProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async bulkGetAssetsAsync(
+  async assetBulkGetAssetsAsync(
     request: Schemas['BulkGetAssetsRequest'],
     channel: number = 0,
     timeout?: number

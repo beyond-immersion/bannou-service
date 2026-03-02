@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.SaveLoad;
 using BeyondImmersion.BannouService.Testing;
 using System.Text;
@@ -62,7 +63,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 Category = SaveCategory.MANUAL_SAVE,
                 MaxVersions = 5
@@ -81,7 +82,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -100,7 +101,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 Category = SaveCategory.MANUAL_SAVE
             });
@@ -110,7 +111,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             };
 
@@ -121,7 +122,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -143,7 +144,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = Guid.NewGuid(),
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = $"nonexistent-{Guid.NewGuid()}"
             });
         }, 404, "Get non-existent slot");
@@ -161,7 +162,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 {
                     GameId = TEST_GAME_ID,
                     OwnerId = ownerId,
-                    OwnerType = OwnerType.ACCOUNT,
+                    OwnerType = EntityType.Account,
                     SlotName = $"list-test-{i}",
                     Category = SaveCategory.MANUAL_SAVE
                 });
@@ -172,7 +173,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT
+                OwnerType = EntityType.Account
             });
 
             // Clean up
@@ -182,7 +183,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 {
                     GameId = TEST_GAME_ID,
                     OwnerId = ownerId,
-                    OwnerType = OwnerType.ACCOUNT,
+                    OwnerType = EntityType.Account,
                     SlotName = $"list-test-{i}"
                 });
             }
@@ -207,7 +208,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = oldName,
                 Category = SaveCategory.MANUAL_SAVE
             });
@@ -217,7 +218,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = oldName,
                 NewSlotName = newName
             });
@@ -227,7 +228,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = newName
             });
 
@@ -252,7 +253,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 Category = SaveCategory.MANUAL_SAVE
             });
@@ -262,7 +263,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -293,7 +294,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 Category = SaveCategory.MANUAL_SAVE,
                 Data = testDataBytes
@@ -307,7 +308,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -316,7 +317,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -345,7 +346,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 Category = SaveCategory.AUTO_SAVE,
                 Data = testDataBytes
@@ -359,7 +360,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -368,7 +369,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -391,7 +392,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = Guid.NewGuid(),
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = $"nonexistent-{Guid.NewGuid()}"
             });
         }, 404, "Load from non-existent slot");
@@ -411,7 +412,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 {
                     GameId = TEST_GAME_ID,
                     OwnerId = ownerId,
-                    OwnerType = OwnerType.ACCOUNT,
+                    OwnerType = EntityType.Account,
                     SlotName = slotName,
                     Category = SaveCategory.MANUAL_SAVE,
                     Data = data
@@ -422,7 +423,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             var versionsResponse = await saveLoadClient.ListVersionsAsync(new ListVersionsRequest
             {
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -431,7 +432,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -458,7 +459,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 {
                     GameId = TEST_GAME_ID,
                     OwnerId = ownerId,
-                    OwnerType = OwnerType.ACCOUNT,
+                    OwnerType = EntityType.Account,
                     SlotName = slotName,
                     Category = SaveCategory.MANUAL_SAVE,
                     Data = data
@@ -468,7 +469,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             var response = await saveLoadClient.ListVersionsAsync(new ListVersionsRequest
             {
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -477,7 +478,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -501,7 +502,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 Category = SaveCategory.MANUAL_SAVE,
                 Data = data
@@ -511,7 +512,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             var pinResponse = await saveLoadClient.PinVersionAsync(new PinVersionRequest
             {
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 VersionNumber = saveResponse?.VersionNumber ?? 1,
                 CheckpointName = "Boss Fight"
@@ -522,7 +523,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -548,7 +549,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 Category = SaveCategory.MANUAL_SAVE,
                 Data = data,
@@ -559,7 +560,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             var unpinResponse = await saveLoadClient.UnpinVersionAsync(new UnpinVersionRequest
             {
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 VersionNumber = saveResponse?.VersionNumber ?? 1
             });
@@ -569,7 +570,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -595,7 +596,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 Category = SaveCategory.MANUAL_SAVE,
                 Data = data1
@@ -606,7 +607,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 Category = SaveCategory.MANUAL_SAVE,
                 Data = data2
@@ -616,7 +617,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             var deleteResponse = await saveLoadClient.DeleteVersionAsync(new DeleteVersionRequest
             {
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 VersionNumber = 1
             });
@@ -626,7 +627,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -652,7 +653,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 Category = SaveCategory.MANUAL_SAVE,
                 Data = data1
@@ -663,7 +664,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 Category = SaveCategory.MANUAL_SAVE,
                 Data = data2
@@ -674,7 +675,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 VersionNumber = 1
             });
@@ -684,7 +685,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -713,7 +714,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = "query-test",
                 Category = SaveCategory.MANUAL_SAVE
             });
@@ -722,7 +723,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             var response = await saveLoadClient.QuerySavesAsync(new QuerySavesRequest
             {
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT
+                OwnerType = EntityType.Account
             });
 
             // Clean up
@@ -730,7 +731,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = "query-test"
             });
 
@@ -758,7 +759,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 Category = SaveCategory.MANUAL_SAVE,
                 Data = baseData
@@ -774,7 +775,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 BaseVersion = baseResponse.VersionNumber,
                 Delta = deltaBytes,
@@ -786,7 +787,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -795,7 +796,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -829,7 +830,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName,
                 Category = SaveCategory.MANUAL_SAVE,
                 Data = testData
@@ -840,7 +841,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -849,7 +850,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
+                OwnerType = EntityType.Account,
                 SlotName = slotName
             });
 
@@ -880,7 +881,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 {
                     GameId = TEST_GAME_ID,
                     OwnerId = ownerId,
-                    OwnerType = OwnerType.ACCOUNT,
+                    OwnerType = EntityType.Account,
                     SlotName = $"bulk-{i}",
                     Category = SaveCategory.MANUAL_SAVE
                 });

@@ -21,7 +21,6 @@ Hierarchical location management (L2 GameFoundation) for the Arcadia game world.
 | lib-state (`IStateStoreFactory`) | MySQL persistence for locations, code indexes, realm indexes, parent indexes |
 | lib-state (`IDistributedLockProvider`) | Distributed locks for concurrent index modifications |
 | lib-messaging (`IMessageBus`) | Publishing location lifecycle events; error event publishing |
-| lib-messaging (`IEventConsumer`) | Event handler registration (partial class pattern, no handlers) |
 | lib-realm (`IRealmClient`) | Realm existence validation on creation; realm code resolution during seed |
 | lib-resource (`IResourceClient`) | Reference tracking checks before deletion; cleanup coordination |
 | lib-contract (`IContractClient`) | Territory clause type registration during plugin startup (hard dependency — fail-fast per FOUNDATION TENETS) |
@@ -33,9 +32,22 @@ Hierarchical location management (L2 GameFoundation) for the Arcadia game world.
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-realm | Calls `ListRootLocationsAsync`, `GetLocationDescendantsAsync`, `TransferLocationToRealmAsync`, `SetLocationParentAsync` via `ILocationClient` during realm merge |
+| lib-faction | Calls `LocationExistsAsync` via `ILocationClient` for territory claim location validation |
 | lib-character-encounter | Stores `LocationId` as optional encounter context (stores reference but does not call `ILocationClient`) |
 
 **Contract Integration**: Location registers a `territory_constraint` clause type with Contract during plugin startup. Contract service will call `/location/validate-territory` via `IServiceNavigator` when evaluating territory constraint clauses. This enables Contract to validate territorial boundaries without a direct dependency on Location (SERVICE_HIERARCHY compliant: L2 Location registers with L1 Contract).
+
+---
+
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `LocationType` | C (System State) | Service-specific enum (`CONTINENT`, `REGION`, `CITY`, `DISTRICT`, `BUILDING`, `ROOM`, `LANDMARK`, `OTHER`) | Finite set of structural categories defining the role of a location in the containment hierarchy. System-owned; adding new location types requires schema changes because they affect hierarchy semantics |
+| `BoundsPrecision` | C (System State) | Service-specific enum (`exact`, `approximate`, `none`) | Finite set of system-owned precision levels for spatial bounds data quality |
+| `CoordinateMode` | C (System State) | Service-specific enum (`inherit`, `local`, `portal`) | Finite set of system-owned modes describing how a location's coordinate system relates to its parent |
+| `TerritoryMode` | C (System State) | Service-specific enum (`exclusive`, `inclusive`) | Finite set of two system-owned validation modes for territory constraint checking |
+| `entityType` (entity presence) | B (Content Code) | Opaque string | Entity type for presence tracking (e.g., "character", "actor", "npc", "player"). Described as opaque string in the schema; game-configurable to support arbitrary entity type classifications without schema changes |
 
 ---
 
@@ -74,6 +86,17 @@ Hierarchical location management (L2 GameFoundation) for the Arcadia game world.
 | `location.entity-arrived` | `LocationEntityArrivedEvent` | Entity presence reported at a new location (not on TTL refresh) |
 | `location.entity-departed` | `LocationEntityDepartedEvent` | Entity presence cleared or moved to a different location |
 
+### Client Events (WebSocket Push)
+
+**Routing**: Uses `IEntitySessionRegistry.PublishToEntitySessionsAsync("location", locationId, event, ct)` to push to all WebSocket sessions observing a location. The `"location"` entity type is registered by Gardener when a player's character enters a location (via `location.entity-arrived` / `location.entity-departed` event subscriptions).
+
+| Client Event | Trigger | Key Fields |
+|-------------|---------|------------|
+| `LocationPresenceChangedEvent` | Entity arrived/departed | `locationId`, `realmId`, `entityType`, `entityId`, `changeType` (Arrived/Departed) |
+| `LocationUpdatedClientEvent` | Location properties changed | `locationId`, `realmId`, `name`, `locationType`, `changedFields[]`, `description?`, `isDeprecated?` |
+
+Schema: `schemas/location-client-events.yaml`
+
 ### Consumed Events
 
 This plugin does not consume external events.
@@ -93,6 +116,8 @@ This plugin does not consume external events.
 | `EntityPresenceCleanupIntervalSeconds` | `LOCATION_ENTITY_PRESENCE_CLEANUP_INTERVAL_SECONDS` | `60` | Interval between background cleanup cycles for expired set members |
 | `EntityPresenceCleanupStartupDelaySeconds` | `LOCATION_ENTITY_PRESENCE_CLEANUP_STARTUP_DELAY_SECONDS` | `15` | Delay before entity presence cleanup worker starts processing |
 | `MaxEntitiesPerLocationQuery` | `LOCATION_MAX_ENTITIES_PER_LOCATION_QUERY` | `100` | Maximum entities returned by list-entities-at-location (pagination cap) |
+| `ContextCacheTtlSeconds` | `LOCATION_CONTEXT_CACHE_TTL_SECONDS` | `10` | TTL for location context cache entries used by variable provider |
+| `ContextNearbyPoisLimit` | `LOCATION_CONTEXT_NEARBY_POIS_LIMIT` | `50` | Maximum nearby POIs to include in location context data |
 
 ---
 
@@ -101,15 +126,19 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<LocationService>` | Scoped | Structured logging |
-| `LocationServiceConfiguration` | Singleton | All 9 config properties |
+| `LocationServiceConfiguration` | Singleton | All 11 config properties |
 | `IStateStoreFactory` | Singleton | State store access |
 | `IDistributedLockProvider` | Singleton | Distributed locks for index concurrency |
 | `IMessageBus` | Scoped | Event publishing and error events |
-| `IEventConsumer` | Scoped | Event handler registration |
 | `IRealmClient` | Scoped | Realm validation |
 | `IResourceClient` | Scoped | Reference tracking checks before deletion |
+| `ITelemetryProvider` | Singleton | Distributed tracing spans for async helpers |
+| `IEntitySessionRegistry` | Singleton | Entity-to-session resolution for client event delivery |
+| `ILocationDataCache` | Singleton | ConcurrentDictionary cache for location context provider data |
 
 Service lifetime is **Scoped** (per-request).
+
+**Variable Provider**: `LocationContextProviderFactory` implements `IVariableProviderFactory` providing the `${location.*}` namespace to Actor (L2) via the Variable Provider Factory pattern. Variables: `zone` (location code), `name`, `region` (nearest REGION ancestor code), `type` (LocationType), `depth`, `realm` (realm code), `nearby_pois` (sibling location codes), `entity_count` (entities at current location). Data loaded via `ILocationDataCache` which caches pre-resolved context per character with configurable TTL.
 
 **Background Services**:
 - `EntityPresenceCleanupWorker` — Periodically cleans up stale members from location-entities sets. When an entity's presence TTL expires, the entity-location key is removed by Redis automatically, but the entity remains in the location's entity set. This worker evicts those stale set members using the `location-entities:__index__` index set for discovery.
@@ -138,7 +167,7 @@ Service lifetime is **Scoped** (per-request).
 - **UpdateLocation** (`/location/update`): Partial update for name, description, locationType, bounds, boundsPrecision, coordinateMode, localOrigin, metadata. Tracks `changedFields`. Does not allow parent or code changes (use separate endpoints). Publishes `location.updated`.
 - **SetLocationParent** (`/location/set-parent`): Circular reference detection via `IsDescendantOfAsync` (max 20 depth). Validates new parent is in same realm. Updates old parent's child index, new parent's child index, root-locations index. Cascading depth update for all descendants via `UpdateDescendantDepthsAsync`. Publishes update event.
 - **RemoveLocationParent** (`/location/remove-parent`): Makes location a root (depth=0). Updates parent index and root-locations index. Cascading depth update for descendants.
-- **DeleteLocation** (`/location/delete`): Requires no child locations (Conflict if children exist). Checks external references via `IResourceClient` - if references exist, executes cleanup callbacks before proceeding (returns Conflict if cleanup fails). Removes from all indexes. Publishes `location.deleted`. Does NOT require deprecation first (unlike species/relationship types).
+- **DeleteLocation** (`/location/delete`): Requires deprecation first (BadRequest if not deprecated, per Category A IMPLEMENTATION TENETS). Requires no child locations (Conflict if children exist). Checks external references via `IResourceClient` - if references exist, executes cleanup callbacks before proceeding (returns Conflict if cleanup fails). Removes from all indexes. Publishes `location.deleted`.
 - **DeprecateLocation** (`/location/deprecate`): Sets `IsDeprecated=true` with timestamp and reason. Location remains queryable. Publishes update event.
 - **UndeprecateLocation** (`/location/undeprecate`): Restores deprecated location. Returns BadRequest if not deprecated.
 - **TransferLocationToRealm** (`/location/transfer-realm`): Moves a location to a different realm. Validates target realm exists and is active via `IRealmClient`. Checks code uniqueness in target realm (returns 409 Conflict on collision). Removes from all source realm indexes (code, realm, parent, root), clears parent (becomes root, depth 0), saves with new realm ID, adds to target realm indexes. Idempotent (no-op if already in target realm). Publishes `location.updated` with changed fields: `realmId`, `parentLocationId`, `depth`. Invalidates cache. Used by Realm merge for tree migration — caller is responsible for re-parenting descendants after transfer.
@@ -147,9 +176,9 @@ Service lifetime is **Scoped** (per-request).
 ### Entity Presence Operations (4 endpoints)
 
 - **ReportEntityPosition** (`/location/report-entity-position`): Reports an entity's current location. Validates location exists, saves ephemeral presence with configurable TTL (`EntityPresenceTtlSeconds`, default 30s). Detects location changes via caller-hint (`previousLocationId`) fast path or atomic GETSET fallback. On actual location change: updates entity sets (removes from old location set, adds to new), maintains index set, publishes `location.entity-arrived` and `location.entity-departed` events. TTL refreshes are silent (no events).
-- **GetEntityLocation** (`/location/get-entity-location`): Returns current location for an entity by type+ID. Reads from presence store; returns `Found=false` if TTL expired or never reported.
+- **GetEntityLocation** (`/location/get-entity-location`): Returns current location for an entity by type+ID. Reads from presence store; returns null `LocationId` if TTL expired or never reported.
 - **ListEntitiesAtLocation** (`/location/list-entities-at-location`): Lists entities at a specific location. Reads from Redis Set, optionally filters by `entityType`, paginates with `offset`/`limit` (capped by `MaxEntitiesPerLocationQuery`, default 100). Hydrates each member from presence store, skipping stale entries. Returns `EntityPresenceEntry` objects with entity details and `reportedAt` timestamps.
-- **ClearEntityPosition** (`/location/clear-entity-position`): Explicitly removes an entity's presence. Deletes presence key, removes from location's entity set, publishes `location.entity-departed`. Returns `Cleared=false` if entity had no active presence.
+- **ClearEntityPosition** (`/location/clear-entity-position`): Explicitly removes an entity's presence. Deletes presence key, removes from location's entity set, publishes `location.entity-departed`. Returns null `PreviousLocationId` if entity had no active presence.
 
 ---
 
@@ -246,13 +275,13 @@ State Store Layout
 
 ## Stubs & Unimplemented Features
 
-None. All features are fully implemented.
+None. All endpoints and the `${location.*}` variable provider are fully implemented.
 
 ---
 
 ## Potential Extensions
 
-None currently identified.
+1. ~~**Client events for entity presence changes**~~: **IMPLEMENTED** (2026-03-01) - Two client events added via Entity Session Registry: `LocationPresenceChangedEvent` (entity arrived/departed with `PresenceChangeType` discriminator) and `LocationUpdatedClientEvent` (location property changes with `changedFields` list). Published alongside existing service events. Gardener subscribes to `location.entity-arrived` / `location.entity-departed` to register/unregister session→location bindings. See [#499](https://github.com/beyond-immersion/bannou-service/issues/499).
 
 ---
 
@@ -260,19 +289,19 @@ None currently identified.
 
 ### Bugs
 
-1. ~~**T4 Violation: Graceful degradation for L1 dependency**~~: **FIXED** (2026-02-08) - Changed `GetService<IContractClient>()` to `GetRequiredService<IContractClient>()` and removed null-check early return. Added `ServiceProvider ?? throw` guard. Removed catch-all exception handlers — only 409 Conflict (idempotent) is caught. Contract (L1) is guaranteed available when Location (L2) runs; failures now crash startup as expected per FOUNDATION TENETS.
+None currently identified.
 
 ### Intentional Quirks
 
-1. **Delete doesn't require deprecation**: Unlike species and relationship types, locations can be hard-deleted without first being deprecated. However, they cannot be deleted if they have child locations.
+1. ~~**Delete doesn't require deprecation**~~: **FIXED** (2026-02-26) - Location is Category A per IMPLEMENTATION TENETS (T31). `DeleteLocationAsync` now rejects with `BadRequest` if the location is not deprecated first. Locations must be deprecated before deletion, matching the pattern used by Species, Realm, and Relationship Type.
 
 2. **Realm validation only at creation and transfer**: `CreateLocation` and `TransferLocationToRealm` validate realm existence via `IRealmClient`. Subsequent operations (update, set-parent) do not re-validate the realm.
 
-3. **Seed update doesn't publish events**: When updating existing locations during seed with `updateExisting=true`, no `location.updated` event is published. The update uses direct `SaveAsync` bypassing the normal event publishing path.
+3. ~~**Seed update doesn't publish events**~~: **FIXED** (2026-02-25) - Seed updates now track changed fields, update the Redis cache via `PopulateLocationCacheAsync`, and publish `location.updated` events via `PublishLocationUpdatedEventAsync`. Only publishes when fields actually changed (no-change updates are silent). Matches the pattern used by `UpdateLocationAsync`.
 
-4. **ListLocationsByParent returns NotFound for missing parent**: If the parent location doesn't exist, returns NotFound. Other list operations (ListByRealm, ListRoot) return empty lists for missing realms/indexes. Inconsistent behavior.
+4. **ListLocationsByParent returns NotFound for missing parent**: If the parent location doesn't exist, returns NotFound. Other list operations (ListByRealm, ListRoot) return empty lists for missing realms/indexes. This is structurally necessary, not just a validation choice: `ListLocationsByParentAsync` must load the parent entity to obtain its `RealmId` for constructing the `parent-index:{realmId}:{parentId}` key. Without the parent, the index key cannot be built. In contrast, `ListLocationsByRealmAsync` and `ListRootLocationsAsync` receive the `RealmId` directly in the request and build their index keys without entity lookups.
 
-5. **Undeprecate returns BadRequest not Conflict**: Unlike `DeprecateLocation` which returns Conflict when already deprecated, `UndeprecateLocation` returns BadRequest when not deprecated. Inconsistent error status pattern.
+5. ~~**Undeprecate returns BadRequest not Conflict**~~: **FIXED** (2026-02-26) - Both `DeprecateLocationAsync` and `UndeprecateLocationAsync` are now idempotent per IMPLEMENTATION TENETS (T31). Deprecating an already-deprecated location returns OK with current state. Undeprecating a non-deprecated location returns OK with current state. No events published and no state changes on idempotent calls.
 
 6. **Delete blocks when lib-resource unavailable**: `DeleteLocation` returns `ServiceUnavailable` (503) if `IResourceClient` is not reachable when checking external references. This fail-closed behavior protects referential integrity but means location deletion depends on lib-resource availability.
 
@@ -287,13 +316,16 @@ None currently identified.
 ### Design Considerations
 
 1. **Location-bound contracts** ([#274](https://github.com/beyond-immersion/bannou-service/issues/274)): Adding `boundContractIds` to the location model would enable territory-bound agreements with inheritance semantics (child locations inherit parent's effective contracts). This would allow querying "what contracts apply at this location?" by walking the ancestor chain, enabling game-layer territory rule enforcement without Contract (L1) depending on Location (L2). Design questions: should contracts be directly bound to locations or mediated by a separate binding table? What are the inheritance semantics (simple merge vs priority/override)? Is this a Location concern (L2) or a game rules concern (L4)?
+<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/274 -->
 
 2. **Ground containers** ([#164](https://github.com/beyond-immersion/bannou-service/issues/164), [#274](https://github.com/beyond-immersion/bannou-service/issues/274)): Location-owned "ground" containers for items dropped or lost in the game world. Would add a `groundContainerId` and `groundContainerCreationPolicy` (on-demand, explicit, inherit-parent, disabled) to the location model. Cross-cutting with lib-inventory — Inventory provides the container/item mechanics, Location provides the spatial anchor. Design questions: on-demand creation vs explicit seeding, TTL/capacity/cleanup policies per location type, hierarchy-aware drop behavior (walking up the tree to find nearest location with ground container).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/164 -->
 
 ---
 
 ## Work Tracking
 
-- **2026-02-12**: Issue [#406](https://github.com/beyond-immersion/bannou-service/issues/406) - Added entity presence tracking: 4 new endpoints (report-entity-position, get-entity-location, list-entities-at-location, clear-entity-position), Redis-backed ephemeral storage with TTL, background cleanup worker, arrived/departed events. Prerequisite for #145.
-- **2026-02-12**: Issue [#165](https://github.com/beyond-immersion/bannou-service/issues/165) - Added optional spatial coordinates (BoundingBox3D bounds, BoundsPrecision, CoordinateMode, Position3D localOrigin) to locations. Added `/location/query/by-position` endpoint for spatial-to-location lookup. Shared Position3D/BoundingBox3D types added to common-api.yaml.
-- **T4 Violation: Graceful degradation for L1 dependency** (Bugs #1): COMPLETED (2026-02-08) - Changed to `GetRequiredService` with fail-fast behavior
+- **2026-03-01**: Issue [#499](https://github.com/beyond-immersion/bannou-service/issues/499) - Added client events for entity presence changes. Created `schemas/location-client-events.yaml` with `LocationPresenceChangedEvent` and `LocationUpdatedClientEvent`. Added `PresenceChangeType` enum to location API schema. Integrated `IEntitySessionRegistry` into `LocationService` for client event publishing alongside existing service events. Added Gardener event subscriptions for `location.entity-arrived` / `location.entity-departed` to manage location→session entity registry bindings.
+- **2026-02-26**: Audit fix — T31 deprecation lifecycle compliance. Three changes: (1) `DeprecateLocationAsync` now returns OK when already deprecated (idempotent), (2) `UndeprecateLocationAsync` now returns OK when not deprecated (idempotent), (3) `DeleteLocationAsync` now requires deprecation before deletion (Category A). Previously: deprecation returned Conflict, undeprecation returned BadRequest, and delete had no deprecation guard.
+- **2026-02-25**: Audit fix — `SeedLocationsAsync` now publishes `location.updated` events and updates Redis cache when updating existing locations with `updateExisting=true`. Previously used direct `SaveAsync` bypassing both event publishing and cache population (FOUNDATION TENETS violation).
+- **2026-02-12**: Issue [#145](https://github.com/beyond-immersion/bannou-service/issues/145) - Implemented `LocationContextProviderFactory` (`IVariableProviderFactory`) providing `${location.*}` namespace to Actor behavior system. Includes `LocationDataCache` (ConcurrentDictionary with configurable TTL) and `LocationContextProvider` resolving zone, name, region, type, depth, realm, nearby POIs, and entity count.

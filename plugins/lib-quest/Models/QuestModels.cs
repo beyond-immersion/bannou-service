@@ -60,8 +60,14 @@ internal class QuestDefinitionModel
     /// <summary>Game service this quest belongs to.</summary>
     public Guid GameServiceId { get; set; }
 
-    /// <summary>Whether deprecated.</summary>
-    public bool Deprecated { get; set; }
+    /// <summary>Whether this quest definition is deprecated.</summary>
+    public bool IsDeprecated { get; set; }
+
+    /// <summary>When the quest definition was deprecated.</summary>
+    public DateTimeOffset? DeprecatedAt { get; set; }
+
+    /// <summary>Reason for deprecation.</summary>
+    public string? DeprecationReason { get; set; }
 
     /// <summary>Creation timestamp.</summary>
     public DateTimeOffset CreatedAt { get; set; }
@@ -137,12 +143,35 @@ internal class PrerequisiteDefinitionModel
 }
 
 /// <summary>
+/// Internal result for a failed prerequisite check.
+/// Used only within CheckPrerequisitesAsync for counting and logging failures.
+/// Not exposed in API responses (T8: errors return null payload).
+/// </summary>
+internal class PrerequisiteFailure
+{
+    /// <summary>Type of prerequisite that failed.</summary>
+    public PrerequisiteType Type { get; set; }
+
+    /// <summary>Code identifying the prerequisite (quest code, currency code, etc.).</summary>
+    public string? Code { get; set; }
+
+    /// <summary>Human-readable failure reason for logging.</summary>
+    public string? Reason { get; set; }
+
+    /// <summary>Current value as string for logging.</summary>
+    public string? CurrentValue { get; set; }
+
+    /// <summary>Required value as string for logging.</summary>
+    public string? RequiredValue { get; set; }
+}
+
+/// <summary>
 /// Internal model for reward definitions.
 /// </summary>
 internal class RewardDefinitionModel
 {
     /// <summary>Type of reward.</summary>
-    public RewardDefinitionType Type { get; set; }
+    public RewardType Type { get; set; }
 
     /// <summary>Currency code for CURRENCY rewards.</summary>
     public string? CurrencyCode { get; set; }
@@ -275,19 +304,4 @@ internal class CooldownEntry
 
     /// <summary>When cooldown expires.</summary>
     public DateTimeOffset ExpiresAt { get; set; }
-}
-
-/// <summary>
-/// Idempotency tracking record.
-/// </summary>
-internal class IdempotencyRecord
-{
-    /// <summary>Idempotency key.</summary>
-    public string Key { get; set; } = string.Empty;
-
-    /// <summary>Created timestamp.</summary>
-    public DateTimeOffset CreatedAt { get; set; }
-
-    /// <summary>Cached response ID if applicable.</summary>
-    public Guid? ResponseId { get; set; }
 }

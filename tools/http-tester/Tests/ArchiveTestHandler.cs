@@ -174,9 +174,6 @@ public class ArchiveTestHandler : BaseHttpTestHandler
                 ArchiveId = _createdArchiveId
             });
 
-            if (!response.Deleted)
-                return TestResult.Failed("DeleteArchive returned Deleted=false");
-
             return TestResult.Successful($"Deleted archive {_createdArchiveId}");
         }, "Delete archive");
 

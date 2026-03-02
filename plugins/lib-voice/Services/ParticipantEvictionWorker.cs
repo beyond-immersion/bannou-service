@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
@@ -6,6 +7,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Voice.Services;
 
@@ -33,6 +35,7 @@ public class ParticipantEvictionWorker : BackgroundService
     private readonly ISipEndpointRegistry _endpointRegistry;
     private readonly ILogger<ParticipantEvictionWorker> _logger;
     private readonly VoiceServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Interval between eviction cycles, from configuration.
@@ -50,12 +53,15 @@ public class ParticipantEvictionWorker : BackgroundService
         IServiceProvider serviceProvider,
         ISipEndpointRegistry endpointRegistry,
         ILogger<ParticipantEvictionWorker> logger,
-        VoiceServiceConfiguration configuration)
+        VoiceServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _endpointRegistry = endpointRegistry;
         _logger = logger;
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -65,6 +71,7 @@ public class ParticipantEvictionWorker : BackgroundService
     /// <param name="stoppingToken">Cancellation token for graceful shutdown.</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ParticipantEvictionWorker.ExecuteAsync");
         _logger.LogInformation(
             "Participant eviction worker starting, interval: {Interval}s, heartbeat timeout: {Timeout}s, grace period: {Grace}s, consent timeout: {Consent}s",
             _configuration.ParticipantEvictionCheckIntervalSeconds,
@@ -131,6 +138,7 @@ public class ParticipantEvictionWorker : BackgroundService
     /// </summary>
     internal async Task ProcessEvictionCycleAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ParticipantEvictionWorker.ProcessEvictionCycleAsync");
         var trackedRoomIds = _endpointRegistry.GetAllTrackedRoomIds();
 
         if (trackedRoomIds.Count == 0)
@@ -224,6 +232,7 @@ public class ParticipantEvictionWorker : BackgroundService
         IStateStore<VoiceRoomData> roomStore,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ParticipantEvictionWorker.EvictStaleParticipantsAsync");
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
         var staleParticipants = participants
             .Where(p => now - p.LastHeartbeat > heartbeatTimeout)
@@ -248,13 +257,13 @@ public class ParticipantEvictionWorker : BackgroundService
 
             var remainingCount = await _endpointRegistry.GetParticipantCountAsync(roomId, cancellationToken);
 
-            // Publish participant left service event
-            await messageBus.TryPublishAsync("voice.participant.left", new VoiceParticipantLeftEvent
+            // Publish peer left service event
+            await messageBus.TryPublishAsync("voice.peer.left", new VoicePeerLeftEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 RoomId = roomId,
-                ParticipantSessionId = stale.SessionId,
+                PeerSessionId = stale.SessionId,
                 RemainingCount = remainingCount
             });
 
@@ -262,7 +271,7 @@ public class ParticipantEvictionWorker : BackgroundService
             var remainingParticipants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
             if (remainingParticipants.Count > 0)
             {
-                var peerLeftEvent = new VoicePeerLeftEvent
+                var peerLeftEvent = new VoicePeerLeftClientEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = now,
@@ -287,7 +296,7 @@ public class ParticipantEvictionWorker : BackgroundService
                     ServiceId = "voice"
                 }, cancellationToken);
             }
-            catch (Exception ex)
+            catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to clear voice permission state for evicted session {SessionId}", stale.SessionId);
             }
@@ -331,6 +340,7 @@ public class ParticipantEvictionWorker : BackgroundService
         IStateStoreFactory stateStoreFactory,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ParticipantEvictionWorker.DeleteEmptyRoomAsync");
         _logger.LogInformation("Auto-deleting empty room {RoomId} after grace period", roomId);
 
         // Stop any in-progress broadcast
@@ -376,6 +386,7 @@ public class ParticipantEvictionWorker : BackgroundService
         IStateStore<VoiceRoomData> roomStore,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ParticipantEvictionWorker.AutoDeclineConsentAsync");
         _logger.LogInformation("Auto-declining broadcast consent for room {RoomId} due to timeout", roomId);
 
         roomData.BroadcastState = BroadcastConsentState.Inactive;
@@ -399,14 +410,14 @@ public class ParticipantEvictionWorker : BackgroundService
                     NewState = "in_room"
                 }, cancellationToken);
             }
-            catch (Exception ex)
+            catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to restore voice:in_room state for session {SessionId}", sessionId);
             }
         }
 
         // Publish declined service event
-        await messageBus.TryPublishAsync("voice.room.broadcast.declined", new VoiceRoomBroadcastDeclinedEvent
+        await messageBus.TryPublishAsync("voice.broadcast.declined", new VoiceBroadcastDeclinedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -417,7 +428,7 @@ public class ParticipantEvictionWorker : BackgroundService
         // Publish client event
         if (participantSessionIds.Count > 0)
         {
-            var updateEvent = new VoiceBroadcastConsentUpdateEvent
+            var updateEvent = new VoiceBroadcastConsentUpdateClientEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -448,6 +459,7 @@ public class ParticipantEvictionWorker : BackgroundService
         IStateStore<VoiceRoomData> roomStore,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ParticipantEvictionWorker.StopBroadcastFromWorkerAsync");
         var previousState = roomData.BroadcastState;
         roomData.BroadcastState = BroadcastConsentState.Inactive;
         roomData.BroadcastConsentedSessions.Clear();
@@ -456,7 +468,7 @@ public class ParticipantEvictionWorker : BackgroundService
         await roomStore.SaveAsync($"voice:room:{roomId}", roomData, cancellationToken: cancellationToken);
 
         // Publish stopped service event
-        await messageBus.TryPublishAsync("voice.room.broadcast.stopped", new VoiceRoomBroadcastStoppedEvent
+        await messageBus.TryPublishAsync("voice.broadcast.stopped", new VoiceBroadcastStoppedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -482,7 +494,7 @@ public class ParticipantEvictionWorker : BackgroundService
                         NewState = "in_room"
                     }, cancellationToken);
                 }
-                catch (Exception ex)
+                catch (ApiException ex)
                 {
                     _logger.LogWarning(ex, "Failed to restore voice:in_room state for session {SessionId}", sessionId);
                 }
@@ -491,7 +503,7 @@ public class ParticipantEvictionWorker : BackgroundService
 
         if (participantSessionIds.Count > 0)
         {
-            var updateEvent = new VoiceBroadcastConsentUpdateEvent
+            var updateEvent = new VoiceBroadcastConsentUpdateClientEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,

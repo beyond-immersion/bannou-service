@@ -2,9 +2,6 @@ using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
 
-// Alias to resolve naming conflict with Orchestrator.TestResult
-using TestResult = BeyondImmersion.BannouService.Testing.TestResult;
-
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
 /// <summary>
@@ -314,19 +311,12 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
                 var response = await orchestratorClient.ShouldRestartServiceAsync(request);
 
                 // Verify required fields are present
-                if (string.IsNullOrEmpty(response.ServiceName))
-                    return TestResult.Failed("Response missing serviceName");
-
-                if (string.IsNullOrEmpty(response.CurrentStatus))
-                    return TestResult.Failed("Response missing currentStatus");
-
                 if (string.IsNullOrEmpty(response.Reason))
                     return TestResult.Failed("Response missing reason");
 
                 // Bannou should report as running/healthy since we're testing against it
-                var acceptableStatuses = new[] { "running", "healthy", "available", "up" };
-                var statusLower = response.CurrentStatus.ToLower();
-                if (!acceptableStatuses.Any(s => statusLower.Contains(s)) && !response.ShouldRestart)
+                var acceptableStatuses = new[] { InstanceHealthStatus.Healthy };
+                if (response.CurrentStatus.HasValue && !acceptableStatuses.Contains(response.CurrentStatus.Value) && !response.ShouldRestart)
                 {
                     // If status isn't healthy but shouldRestart is false, that's suspicious
                     return TestResult.Failed(
@@ -335,7 +325,7 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
                 }
 
                 return TestResult.Successful(
-                    $"Should restart '{response.ServiceName}': {response.ShouldRestart}, " +
+                    $"Should restart 'bannou': {response.ShouldRestart}, " +
                     $"status={response.CurrentStatus}, reason={response.Reason}");
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
@@ -402,7 +392,7 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
                     return TestResult.Failed("Container status missing timestamp");
 
                 // Verify the container is actually running (since we're testing against it)
-                if (response.Status != ContainerStatusStatus.Running)
+                if (response.Status != ContainerStatusType.Running)
                 {
                     return TestResult.Failed($"Container 'bannou' status is {response.Status}, expected Running");
                 }
@@ -440,7 +430,7 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
                 var response = await orchestratorClient.GetContainerStatusAsync(new GetContainerStatusRequest { AppName = unknownContainer });
 
                 // If we get here, check if status indicates not found
-                if (response.Status == ContainerStatusStatus.Stopped)
+                if (response.Status == ContainerStatusType.Stopped)
                 {
                     return TestResult.Successful("Unknown container correctly returned stopped status");
                 }
@@ -706,7 +696,7 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
                 {
                     // This is the expected behavior - deploy should fail for unavailable backend
                     return TestResult.Successful(
-                        $"Deploy correctly failed for unavailable backend Portainer: {response.Message}");
+                        $"Deploy correctly failed for unavailable backend Portainer: {string.Join(", ", response.Warnings ?? Array.Empty<string>())}");
                 }
 
                 // Deploy succeeded when it shouldn't have
@@ -754,14 +744,15 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
             {
                 var response = await orchestratorClient.CleanAsync(request);
 
-                if (!response.Success)
+                var hasErrors = response.Errors != null && response.Errors.Count > 0;
+                if (hasErrors)
                 {
                     // Clean failing is acceptable if there's nothing to clean
-                    return TestResult.Successful($"Clean completed (nothing to clean or not supported): {response.Message}");
+                    return TestResult.Successful($"Clean completed with errors (nothing to clean or not supported): {string.Join(", ", response.Errors!)}");
                 }
 
                 return TestResult.Successful(
-                    $"Clean operation: success={response.Success}, " +
+                    $"Clean operation: " +
                     $"reclaimedMB={response.ReclaimedSpaceMb}, " +
                     $"removedImages={response.RemovedImages}");
             }

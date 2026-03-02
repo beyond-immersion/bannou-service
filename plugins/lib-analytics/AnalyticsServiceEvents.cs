@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 
 namespace BeyondImmersion.BannouService.Analytics;
@@ -75,6 +76,7 @@ public partial class AnalyticsService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleGameActionPerformedAsync");
             var gameServiceId = await ResolveGameServiceIdForSessionAsync(evt.SessionId, CancellationToken.None);
             if (!gameServiceId.HasValue)
             {
@@ -129,6 +131,7 @@ public partial class AnalyticsService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleGameSessionCreatedAsync");
             var gameServiceId = await ResolveGameServiceIdAsync(evt.GameType.ToString(), CancellationToken.None);
             if (!gameServiceId.HasValue)
             {
@@ -211,6 +214,7 @@ public partial class AnalyticsService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleGameSessionDeletedAsync");
             await RemoveGameSessionMappingAsync(evt.SessionId, CancellationToken.None);
 
             var gameServiceId = await ResolveGameServiceIdAsync(evt.GameType.ToString(), CancellationToken.None);
@@ -294,6 +298,7 @@ public partial class AnalyticsService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleCharacterParticipationRecordedAsync");
             _logger.LogDebug(
                 "Buffering character participation recorded event for character {CharacterId}",
                 evt.CharacterId);
@@ -348,6 +353,7 @@ public partial class AnalyticsService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleCharacterBackstoryCreatedAsync");
             _logger.LogDebug(
                 "Buffering character backstory created event for character {CharacterId}",
                 evt.CharacterId);
@@ -400,6 +406,7 @@ public partial class AnalyticsService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleCharacterBackstoryUpdatedAsync");
             _logger.LogDebug(
                 "Buffering character backstory updated event for character {CharacterId}",
                 evt.CharacterId);
@@ -457,6 +464,7 @@ public partial class AnalyticsService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleRealmParticipationRecordedAsync");
             _logger.LogDebug(
                 "Buffering realm participation recorded event for realm {RealmId}",
                 evt.RealmId);
@@ -511,6 +519,7 @@ public partial class AnalyticsService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleRealmLoreCreatedAsync");
             _logger.LogDebug(
                 "Buffering realm lore created event for realm {RealmId}",
                 evt.RealmId);
@@ -563,6 +572,7 @@ public partial class AnalyticsService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleRealmLoreUpdatedAsync");
             _logger.LogDebug(
                 "Buffering realm lore updated event for realm {RealmId}",
                 evt.RealmId);
@@ -621,6 +631,7 @@ public partial class AnalyticsService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleCharacterUpdatedForCacheInvalidationAsync");
             var cacheKey = $"{CHARACTER_REALM_CACHE_PREFIX}:{evt.CharacterId}";
             var store = _stateStoreFactory.GetStore<CharacterRealmCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
             await store.DeleteAsync(cacheKey, CancellationToken.None);
@@ -647,6 +658,7 @@ public partial class AnalyticsService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleRealmUpdatedForCacheInvalidationAsync");
             var cacheKey = $"{REALM_GAME_SERVICE_CACHE_PREFIX}:{evt.RealmId}";
             var store = _stateStoreFactory.GetStore<RealmGameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
             await store.DeleteAsync(cacheKey, CancellationToken.None);

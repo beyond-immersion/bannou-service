@@ -119,6 +119,22 @@ The full morality pipeline requires five integration points to be complete: (1) 
 |-------------|---------|
 | `cache:{characterId}` | Distributed lock for obligation cache rebuild operations (serializes concurrent rebuilds) |
 
+### Type Field Classification
+
+Every polymorphic "type" or "kind" field in the Obligation domain falls into one of three categories:
+
+| Field | Model(s) | Cat | Values / Source | Rationale |
+|-------|----------|-----|-----------------|-----------|
+| `targetEntityType` | `ObligationEntry`, `ViolationRecordModel`, events | A | `$ref: common-api.yaml#/components/schemas/EntityType` | Identifies what kind of entity is the target of an obligation or violation. Standard Bannou `EntityType` enum. |
+| `violationType` | `ObligationEntry`, `ViolationRecordModel`, `ActionMappingModel`, events | B | `"theft"`, `"assault"`, `"fence_stolen_goods"`, `"contract_breach"`, ... | Violation type codes from contract behavioral clauses. Opaque string; games define their own violation vocabularies via contract templates without schema changes. |
+| `actionTag` | `ActionMappingModel`, cost query request | B | `"steal"`, `"attack_friendly"`, `"sell_contraband"`, ... | GOAP action tags mapped to violation types. Opaque string; games define their own action vocabularies without schema changes. |
+| `clauseCode` | `ObligationEntry` | B | `"no_theft"`, `"no_assault"`, `"trade_honestly"`, ... | Contract behavioral clause codes. Opaque string defined per contract template. |
+| `contractRole` | `ObligationEntry` | B | `"member"`, `"officer"`, `"master"`, ... | Role within the contract that bears the obligation. Opaque string defined per contract template party role. |
+| `trigger` | `ObligationCacheRebuiltEvent` | B | `"contract_activated"`, `"contract_completed"`, `"manual_rebuild"`, ... | Reason the cache was rebuilt. Opaque string; new trigger reasons can be added as integration points grow. |
+| `NormResolutionMode` | Configuration | C | `PerfectKnowledge`, `UncertaintySimulation` | Finite modes controlling norm resolution fallback when Hearsay is unavailable. Service-owned enum (`NormResolutionMode`). |
+
+**Category key**: **A** = Entity Reference (`EntityType` enum), **B** = Content Code (opaque string, game-configurable), **C** = System State (service-owned enum, finite).
+
 ---
 
 ## Events

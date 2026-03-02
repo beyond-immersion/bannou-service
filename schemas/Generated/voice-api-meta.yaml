@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Bannou Voice Service API
   description: |
@@ -18,8 +18,8 @@ info:
     1. Any in-room participant requests broadcast consent via /voice/room/broadcast/request
     2. All participants receive VoiceBroadcastConsentRequestEvent
     3. Each participant responds via /voice/room/broadcast/consent
-    4. If all consent, voice.room.broadcast.approved is published
-    5. If any decline or timeout, voice.room.broadcast.declined is published
+    4. If all consent, voice.broadcast.approved is published
+    5. If any decline or timeout, voice.broadcast.declined is published
 
     **Dual Room Modes**:
     - **Persistent**: Created via API, explicit delete required unless autoCleanup=true
@@ -73,33 +73,37 @@ paths:
         \        \"sessionId\"\n            ],\n            \"properties\": {\n                \"sessionId\": {\n        \
         \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Session ID this voice room is associated with\"\n                },\n                \"preferredTier\": {\n  \
-        \                  \"$ref\": \"#/$defs/VoiceTier\",\n                    \"description\": \"Preferred voice tier (defaults
-        to p2p)\"\n                },\n                \"maxParticipants\": {\n                    \"type\": \"integer\",\n\
-        \                    \"minimum\": 2,\n                    \"maximum\": 100,\n                    \"default\": 6,\n\
-        \                    \"description\": \"Maximum participants before tier upgrade\"\n                },\n         \
-        \       \"codec\": {\n                    \"$ref\": \"#/$defs/VoiceCodec\",\n                    \"description\":
-        \"Preferred audio codec (defaults to opus)\"\n                },\n                \"autoCleanup\": {\n           \
-        \         \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"\
-        If true, room auto-deletes when empty after grace period\"\n                },\n                \"password\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optional room password for access control\"\n                }\n            }\n        },\n        \"VoiceTier\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"p2p\",\n                \"scaled\"\
-        \n            ],\n            \"description\": \"Voice communication tier:\\n- p2p: Direct peer-to-peer connections
-        (up to 6 participants)\\n- scaled: RTP server-mediated communication (unlimited participants)\\n\"\n        },\n \
-        \       \"VoiceCodec\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"opus\",\n\
-        \                \"g711\",\n                \"g722\"\n            ],\n            \"description\": \"Audio codec for
-        voice communication\"\n        }\n    }\n}"
+        \                  \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/VoiceTier\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Preferred voice tier (defaults to P2P)\"\n                },\n                \"maxParticipants\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 2,\n                    \"maximum\"\
+        : 100,\n                    \"default\": 6,\n                    \"description\": \"Maximum participants before tier
+        upgrade\"\n                },\n                \"codec\": {\n                    \"allOf\": [\n                  \
+        \      {\n                            \"$ref\": \"#/$defs/VoiceCodec\"\n                        }\n              \
+        \      ],\n                    \"nullable\": true,\n                    \"description\": \"Preferred audio codec (defaults
+        to Opus)\"\n                },\n                \"autoCleanup\": {\n                    \"type\": \"boolean\",\n \
+        \                   \"default\": false,\n                    \"description\": \"If true, room auto-deletes when empty
+        after grace period\"\n                },\n                \"password\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional room password for access
+        control\"\n                }\n            }\n        },\n        \"VoiceTier\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"P2P\",\n                \"Scaled\"\n            ],\n            \"description\"\
+        : \"Voice communication tier:\\n- P2P: Direct peer-to-peer connections (up to 6 participants)\\n- Scaled: RTP server-mediated
+        communication (unlimited participants)\\n\"\n        },\n        \"VoiceCodec\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"Opus\",\n                \"G711\",\n                \"G722\"\n     \
+        \       ],\n            \"description\": \"Audio codec for voice communication\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/VoiceRoomResponse\"\
         ,\n    \"$defs\": {\n        \"VoiceRoomResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Voice room details\",\n            \"required\": [\n                \"roomId\"\
-        ,\n                \"sessionId\",\n                \"tier\",\n                \"createdAt\"\n            ],\n    \
-        \        \"properties\": {\n                \"roomId\": {\n                    \"type\": \"string\",\n           \
-        \         \"format\": \"uuid\",\n                    \"description\": \"Unique voice room identifier\"\n         \
-        \       },\n                \"sessionId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Associated session ID\"\n                },\n                \"\
-        tier\": {\n                    \"$ref\": \"#/$defs/VoiceTier\",\n                    \"description\": \"Current voice
-        tier\"\n                },\n                \"codec\": {\n                    \"$ref\": \"#/$defs/VoiceCodec\",\n\
-        \                    \"description\": \"Active audio codec\"\n                },\n                \"maxParticipants\"\
+        ,\n                \"sessionId\",\n                \"tier\",\n                \"codec\",\n                \"maxParticipants\"\
+        ,\n                \"currentParticipants\",\n                \"participants\",\n                \"createdAt\",\n \
+        \               \"autoCleanup\",\n                \"isPasswordProtected\",\n                \"broadcastState\"\n \
+        \           ],\n            \"properties\": {\n                \"roomId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique voice room identifier\"\
+        \n                },\n                \"sessionId\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"uuid\",\n                    \"description\": \"Associated session ID\"\n                },\n\
+        \                \"tier\": {\n                    \"$ref\": \"#/$defs/VoiceTier\",\n                    \"description\"\
+        : \"Current voice tier\"\n                },\n                \"codec\": {\n                    \"$ref\": \"#/$defs/VoiceCodec\"\
+        ,\n                    \"description\": \"Active audio codec\"\n                },\n                \"maxParticipants\"\
         : {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum participants before
         tier upgrade\"\n                },\n                \"currentParticipants\": {\n                    \"type\": \"integer\"\
         ,\n                    \"description\": \"Current number of participants\"\n                },\n                \"\
@@ -112,30 +116,29 @@ paths:
         tier)\"\n                },\n                \"autoCleanup\": {\n                    \"type\": \"boolean\",\n    \
         \                \"description\": \"Whether the room auto-deletes when empty\"\n                },\n             \
         \   \"isPasswordProtected\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
-        Whether the room requires a password to join\"\n                },\n                \"isBroadcasting\": {\n      \
-        \              \"type\": \"boolean\",\n                    \"description\": \"Whether the room is currently broadcasting
-        (Approved state)\"\n                },\n                \"broadcastState\": {\n                    \"$ref\": \"#/$defs/BroadcastConsentState\"\
-        ,\n                    \"description\": \"Current broadcast consent state\"\n                }\n            }\n  \
-        \      },\n        \"VoiceTier\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"\
-        p2p\",\n                \"scaled\"\n            ],\n            \"description\": \"Voice communication tier:\\n- p2p:
-        Direct peer-to-peer connections (up to 6 participants)\\n- scaled: RTP server-mediated communication (unlimited participants)\\\
-        n\"\n        },\n        \"VoiceCodec\": {\n            \"type\": \"string\",\n            \"enum\": [\n         \
-        \       \"opus\",\n                \"g711\",\n                \"g722\"\n            ],\n            \"description\"\
-        : \"Audio codec for voice communication\"\n        },\n        \"VoiceParticipant\": {\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"description\": \"Participant in a voice room\",\n \
-        \           \"required\": [\n                \"sessionId\",\n                \"joinedAt\"\n            ],\n      \
-        \      \"properties\": {\n                \"sessionId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID (unique participant
-        identifier)\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Display name\"\n                },\n\
-        \                \"joinedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When the participant joined\"\n                },\n                \"isMuted\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether participant is muted\"\n                }\n            }\n        },\n        \"BroadcastConsentState\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Inactive\",\n                \"\
-        Pending\",\n                \"Approved\"\n            ],\n            \"description\": \"Current state of broadcast
-        consent for a room. Inactive: No broadcast request pending. Pending: Consent request sent, awaiting all responses.
-        Approved: All participants consented. Voice treats this as terminal.\\n\"\n        }\n    }\n}"
+        Whether the room requires a password to join\"\n                },\n                \"broadcastState\": {\n      \
+        \              \"$ref\": \"#/$defs/BroadcastConsentState\",\n                    \"description\": \"Current broadcast
+        consent state\"\n                }\n            }\n        },\n        \"VoiceTier\": {\n            \"type\": \"\
+        string\",\n            \"enum\": [\n                \"P2P\",\n                \"Scaled\"\n            ],\n       \
+        \     \"description\": \"Voice communication tier:\\n- P2P: Direct peer-to-peer connections (up to 6 participants)\\
+        n- Scaled: RTP server-mediated communication (unlimited participants)\\n\"\n        },\n        \"VoiceCodec\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"Opus\",\n                \"G711\",\n\
+        \                \"G722\"\n            ],\n            \"description\": \"Audio codec for voice communication\"\n\
+        \        },\n        \"VoiceParticipant\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Participant in a voice room\",\n            \"required\": [\n           \
+        \     \"sessionId\",\n                \"joinedAt\"\n            ],\n            \"properties\": {\n              \
+        \  \"sessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n      \
+        \              \"description\": \"WebSocket session ID (unique participant identifier)\"\n                },\n   \
+        \             \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Display name\"\n                },\n                \"joinedAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the participant joined\"\n                },\n                \"isMuted\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether participant
+        is muted\"\n                }\n            }\n        },\n        \"BroadcastConsentState\": {\n            \"type\"\
+        : \"string\",\n            \"enum\": [\n                \"Inactive\",\n                \"Pending\",\n            \
+        \    \"Approved\"\n            ],\n            \"description\": \"Current state of broadcast consent for a room. Inactive:
+        No broadcast request pending. Pending: Consent request sent, awaiting all responses. Approved: All participants consented.
+        Voice treats this as terminal.\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new voice room\",\n    \"description\": \"Creates a new voice
         room associated with a session. Any service can call this.\\nReturns room ID and initial configuration.\\n\",\n  \
         \  \"tags\": [\n        \"Voice Rooms\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createVoiceRoom\"\
@@ -175,14 +178,16 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/VoiceRoomResponse\"\
         ,\n    \"$defs\": {\n        \"VoiceRoomResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Voice room details\",\n            \"required\": [\n                \"roomId\"\
-        ,\n                \"sessionId\",\n                \"tier\",\n                \"createdAt\"\n            ],\n    \
-        \        \"properties\": {\n                \"roomId\": {\n                    \"type\": \"string\",\n           \
-        \         \"format\": \"uuid\",\n                    \"description\": \"Unique voice room identifier\"\n         \
-        \       },\n                \"sessionId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Associated session ID\"\n                },\n                \"\
-        tier\": {\n                    \"$ref\": \"#/$defs/VoiceTier\",\n                    \"description\": \"Current voice
-        tier\"\n                },\n                \"codec\": {\n                    \"$ref\": \"#/$defs/VoiceCodec\",\n\
-        \                    \"description\": \"Active audio codec\"\n                },\n                \"maxParticipants\"\
+        ,\n                \"sessionId\",\n                \"tier\",\n                \"codec\",\n                \"maxParticipants\"\
+        ,\n                \"currentParticipants\",\n                \"participants\",\n                \"createdAt\",\n \
+        \               \"autoCleanup\",\n                \"isPasswordProtected\",\n                \"broadcastState\"\n \
+        \           ],\n            \"properties\": {\n                \"roomId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique voice room identifier\"\
+        \n                },\n                \"sessionId\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"uuid\",\n                    \"description\": \"Associated session ID\"\n                },\n\
+        \                \"tier\": {\n                    \"$ref\": \"#/$defs/VoiceTier\",\n                    \"description\"\
+        : \"Current voice tier\"\n                },\n                \"codec\": {\n                    \"$ref\": \"#/$defs/VoiceCodec\"\
+        ,\n                    \"description\": \"Active audio codec\"\n                },\n                \"maxParticipants\"\
         : {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum participants before
         tier upgrade\"\n                },\n                \"currentParticipants\": {\n                    \"type\": \"integer\"\
         ,\n                    \"description\": \"Current number of participants\"\n                },\n                \"\
@@ -195,30 +200,29 @@ paths:
         tier)\"\n                },\n                \"autoCleanup\": {\n                    \"type\": \"boolean\",\n    \
         \                \"description\": \"Whether the room auto-deletes when empty\"\n                },\n             \
         \   \"isPasswordProtected\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
-        Whether the room requires a password to join\"\n                },\n                \"isBroadcasting\": {\n      \
-        \              \"type\": \"boolean\",\n                    \"description\": \"Whether the room is currently broadcasting
-        (Approved state)\"\n                },\n                \"broadcastState\": {\n                    \"$ref\": \"#/$defs/BroadcastConsentState\"\
-        ,\n                    \"description\": \"Current broadcast consent state\"\n                }\n            }\n  \
-        \      },\n        \"VoiceTier\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"\
-        p2p\",\n                \"scaled\"\n            ],\n            \"description\": \"Voice communication tier:\\n- p2p:
-        Direct peer-to-peer connections (up to 6 participants)\\n- scaled: RTP server-mediated communication (unlimited participants)\\\
-        n\"\n        },\n        \"VoiceCodec\": {\n            \"type\": \"string\",\n            \"enum\": [\n         \
-        \       \"opus\",\n                \"g711\",\n                \"g722\"\n            ],\n            \"description\"\
-        : \"Audio codec for voice communication\"\n        },\n        \"VoiceParticipant\": {\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"description\": \"Participant in a voice room\",\n \
-        \           \"required\": [\n                \"sessionId\",\n                \"joinedAt\"\n            ],\n      \
-        \      \"properties\": {\n                \"sessionId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID (unique participant
-        identifier)\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Display name\"\n                },\n\
-        \                \"joinedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When the participant joined\"\n                },\n                \"isMuted\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether participant is muted\"\n                }\n            }\n        },\n        \"BroadcastConsentState\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Inactive\",\n                \"\
-        Pending\",\n                \"Approved\"\n            ],\n            \"description\": \"Current state of broadcast
-        consent for a room. Inactive: No broadcast request pending. Pending: Consent request sent, awaiting all responses.
-        Approved: All participants consented. Voice treats this as terminal.\\n\"\n        }\n    }\n}"
+        Whether the room requires a password to join\"\n                },\n                \"broadcastState\": {\n      \
+        \              \"$ref\": \"#/$defs/BroadcastConsentState\",\n                    \"description\": \"Current broadcast
+        consent state\"\n                }\n            }\n        },\n        \"VoiceTier\": {\n            \"type\": \"\
+        string\",\n            \"enum\": [\n                \"P2P\",\n                \"Scaled\"\n            ],\n       \
+        \     \"description\": \"Voice communication tier:\\n- P2P: Direct peer-to-peer connections (up to 6 participants)\\
+        n- Scaled: RTP server-mediated communication (unlimited participants)\\n\"\n        },\n        \"VoiceCodec\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"Opus\",\n                \"G711\",\n\
+        \                \"G722\"\n            ],\n            \"description\": \"Audio codec for voice communication\"\n\
+        \        },\n        \"VoiceParticipant\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Participant in a voice room\",\n            \"required\": [\n           \
+        \     \"sessionId\",\n                \"joinedAt\"\n            ],\n            \"properties\": {\n              \
+        \  \"sessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n      \
+        \              \"description\": \"WebSocket session ID (unique participant identifier)\"\n                },\n   \
+        \             \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Display name\"\n                },\n                \"joinedAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the participant joined\"\n                },\n                \"isMuted\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether participant
+        is muted\"\n                }\n            }\n        },\n        \"BroadcastConsentState\": {\n            \"type\"\
+        : \"string\",\n            \"enum\": [\n                \"Inactive\",\n                \"Pending\",\n            \
+        \    \"Approved\"\n            ],\n            \"description\": \"Current state of broadcast consent for a room. Inactive:
+        No broadcast request pending. Pending: Consent request sent, awaiting all responses. Approved: All participants consented.
+        Voice treats this as terminal.\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get voice room details\",\n    \"description\": \"Retrieves current state
         of a voice room including participant list.\\n\",\n    \"tags\": [\n        \"Voice Rooms\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"getVoiceRoom\"\n}"
@@ -263,70 +267,71 @@ paths:
         \                    \"description\": \"WebSocket session ID (unique participant identifier)\"\n                },\n\
         \                \"sipEndpoint\": {\n                    \"$ref\": \"#/$defs/SipEndpoint\",\n                    \"\
         description\": \"Participant's SIP endpoint details\"\n                },\n                \"displayName\": {\n  \
-        \                  \"type\": \"string\",\n                    \"maxLength\": 50,\n                    \"description\"\
-        : \"Display name for UI\"\n                },\n                \"password\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Room password (required if room
-        is password-protected)\"\n                }\n            }\n        },\n        \"SipEndpoint\": {\n            \"\
+        \                  \"type\": \"string\",\n                    \"maxLength\": 50,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Display name for UI\"\n                },\n                \"password\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Room password (required if room is password-protected)\"\n                }\n            }\n        },\n     \
+        \   \"SipEndpoint\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
+        \    \"description\": \"SIP/WebRTC endpoint details for a participant\",\n            \"required\": [\n          \
+        \      \"sdpOffer\"\n            ],\n            \"properties\": {\n                \"sdpOffer\": {\n            \
+        \        \"type\": \"string\",\n                    \"description\": \"SDP offer for WebRTC negotiation\"\n      \
+        \          },\n                \"iceCandidates\": {\n                    \"type\": \"array\",\n                  \
+        \  \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n         \
+        \           },\n                    \"description\": \"ICE candidates for NAT traversal\"\n                },\n  \
+        \              \"publicIp\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Public IP address if known\"\n                },\n                \"port\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"UDP port for RTP\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/JoinVoiceRoomResponse\"\
+        ,\n    \"$defs\": {\n        \"JoinVoiceRoomResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response after joining a voice room\",\n            \"required\": [\n   \
+        \             \"roomId\",\n                \"tier\",\n                \"codec\",\n                \"peers\",\n   \
+        \             \"stunServers\",\n                \"broadcastState\"\n            ],\n            \"properties\": {\n\
+        \                \"roomId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Voice room ID\"\n                },\n                \"tier\": {\n     \
+        \               \"$ref\": \"#/$defs/VoiceTier\",\n                    \"description\": \"Current voice tier\"\n  \
+        \              },\n                \"codec\": {\n                    \"$ref\": \"#/$defs/VoiceCodec\",\n         \
+        \           \"description\": \"Codec to use\"\n                },\n                \"peers\": {\n                \
+        \    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/VoicePeer\"\
+        \n                    },\n                    \"description\": \"Current peers to connect to (P2P mode only)\"\n \
+        \               },\n                \"rtpServerUri\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"RTP server URI (scaled mode only)\"\n        \
+        \        },\n                \"stunServers\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"STUN server URIs for NAT traversal\"\n                },\n                \"tierUpgradePending\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"True if room is about to upgrade to scaled tier\"\n                },\n                \"broadcastState\": {\n\
+        \                    \"$ref\": \"#/$defs/BroadcastConsentState\",\n                    \"description\": \"Current
+        broadcast consent state\"\n                }\n            }\n        },\n        \"VoiceTier\": {\n            \"\
+        type\": \"string\",\n            \"enum\": [\n                \"P2P\",\n                \"Scaled\"\n            ],\n\
+        \            \"description\": \"Voice communication tier:\\n- P2P: Direct peer-to-peer connections (up to 6 participants)\\
+        n- Scaled: RTP server-mediated communication (unlimited participants)\\n\"\n        },\n        \"VoiceCodec\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"Opus\",\n                \"G711\",\n\
+        \                \"G722\"\n            ],\n            \"description\": \"Audio codec for voice communication\"\n\
+        \        },\n        \"VoicePeer\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"Peer endpoint details for P2P connection\",\n            \"required\": [\n       \
+        \         \"sessionId\",\n                \"sipEndpoint\"\n            ],\n            \"properties\": {\n       \
+        \         \"sessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"WebSocket session ID for this peer (ephemeral identifier)\"\n            \
+        \    },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Display name\"\n                },\n                \"sipEndpoint\"\
+        : {\n                    \"$ref\": \"#/$defs/SipEndpoint\",\n                    \"description\": \"Peer's SIP endpoint
+        for direct connection\"\n                }\n            }\n        },\n        \"SipEndpoint\": {\n            \"\
         type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"SIP/WebRTC endpoint
         details for a participant\",\n            \"required\": [\n                \"sdpOffer\"\n            ],\n        \
         \    \"properties\": {\n                \"sdpOffer\": {\n                    \"type\": \"string\",\n             \
         \       \"description\": \"SDP offer for WebRTC negotiation\"\n                },\n                \"iceCandidates\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"string\"\n                    },\n                    \"description\": \"ICE candidates for NAT traversal\"\n\
-        \                },\n                \"publicIp\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Public IP address if known\"\n                },\n\
-        \                \"port\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"UDP port for RTP\"\n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/JoinVoiceRoomResponse\"\
-        ,\n    \"$defs\": {\n        \"JoinVoiceRoomResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response after joining a voice room\",\n            \"required\": [\n   \
-        \             \"roomId\",\n                \"tier\"\n            ],\n            \"properties\": {\n             \
-        \   \"roomId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n        \
-        \            \"description\": \"Voice room ID\"\n                },\n                \"tier\": {\n               \
-        \     \"$ref\": \"#/$defs/VoiceTier\",\n                    \"description\": \"Current voice tier\"\n            \
-        \    },\n                \"codec\": {\n                    \"$ref\": \"#/$defs/VoiceCodec\",\n                   \
-        \ \"description\": \"Codec to use\"\n                },\n                \"peers\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/VoicePeer\"\n        \
-        \            },\n                    \"description\": \"Current peers to connect to (P2P mode only)\"\n          \
-        \      },\n                \"rtpServerUri\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"RTP server URI (scaled mode only)\"\n                },\n\
-        \                \"stunServers\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"STUN
-        server URIs for NAT traversal\"\n                },\n                \"tierUpgradePending\": {\n                 \
-        \   \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"True if
-        room is about to upgrade to scaled tier\"\n                },\n                \"isBroadcasting\": {\n           \
-        \         \"type\": \"boolean\",\n                    \"description\": \"Whether the room is currently broadcasting
-        (Approved state)\"\n                },\n                \"broadcastState\": {\n                    \"$ref\": \"#/$defs/BroadcastConsentState\"\
-        ,\n                    \"description\": \"Current broadcast consent state\"\n                }\n            }\n  \
-        \      },\n        \"VoiceTier\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"\
-        p2p\",\n                \"scaled\"\n            ],\n            \"description\": \"Voice communication tier:\\n- p2p:
-        Direct peer-to-peer connections (up to 6 participants)\\n- scaled: RTP server-mediated communication (unlimited participants)\\\
-        n\"\n        },\n        \"VoiceCodec\": {\n            \"type\": \"string\",\n            \"enum\": [\n         \
-        \       \"opus\",\n                \"g711\",\n                \"g722\"\n            ],\n            \"description\"\
-        : \"Audio codec for voice communication\"\n        },\n        \"VoicePeer\": {\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"description\": \"Peer endpoint details for P2P connection\"\
-        ,\n            \"required\": [\n                \"sessionId\",\n                \"sipEndpoint\"\n            ],\n\
-        \            \"properties\": {\n                \"sessionId\": {\n                    \"type\": \"string\",\n    \
-        \                \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID for this peer
-        (ephemeral identifier)\"\n                },\n                \"displayName\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Display name\"\n      \
-        \          },\n                \"sipEndpoint\": {\n                    \"$ref\": \"#/$defs/SipEndpoint\",\n      \
-        \              \"description\": \"Peer's SIP endpoint for direct connection\"\n                }\n            }\n\
-        \        },\n        \"SipEndpoint\": {\n            \"type\": \"object\",\n            \"additionalProperties\":
-        false,\n            \"description\": \"SIP/WebRTC endpoint details for a participant\",\n            \"required\"\
-        : [\n                \"sdpOffer\"\n            ],\n            \"properties\": {\n                \"sdpOffer\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"SDP offer for WebRTC negotiation\"\
-        \n                },\n                \"iceCandidates\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"type\": \"string\"\n                    },\n                   \
-        \ \"description\": \"ICE candidates for NAT traversal\"\n                },\n                \"publicIp\": {\n   \
-        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Public IP address if known\"\n                },\n                \"port\": {\n                    \"type\": \"\
-        integer\",\n                    \"nullable\": true,\n                    \"description\": \"UDP port for RTP\"\n \
-        \               }\n            }\n        },\n        \"BroadcastConsentState\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"Inactive\",\n                \"Pending\",\n                \"Approved\"\
-        \n            ],\n            \"description\": \"Current state of broadcast consent for a room. Inactive: No broadcast
-        request pending. Pending: Consent request sent, awaiting all responses. Approved: All participants consented. Voice
-        treats this as terminal.\\n\"\n        }\n    }\n}"
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        ICE candidates for NAT traversal\"\n                },\n                \"publicIp\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Public IP address if
+        known\"\n                },\n                \"port\": {\n                    \"type\": \"integer\",\n           \
+        \         \"nullable\": true,\n                    \"description\": \"UDP port for RTP\"\n                }\n    \
+        \        }\n        },\n        \"BroadcastConsentState\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"Inactive\",\n                \"Pending\",\n                \"Approved\"\n            ],\n \
+        \           \"description\": \"Current state of broadcast consent for a room. Inactive: No broadcast request pending.
+        Pending: Consent request sent, awaiting all responses. Approved: All participants consented. Voice treats this as
+        terminal.\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Join voice room and register SIP endpoint\",\n    \"description\": \"Registers
         a participant in the voice room. If AdHocRoomsEnabled and room\\ndoesn't exist, auto-creates it.\\nReturns connection
         info and current peer list for P2P mode,\\nor RTP server details for scaled mode.\\n\",\n    \"tags\": [\n       \
@@ -388,9 +393,12 @@ paths:
         : false,\n            \"description\": \"Request to delete a voice room\",\n            \"required\": [\n        \
         \        \"roomId\"\n            ],\n            \"properties\": {\n                \"roomId\": {\n              \
         \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Voice
-        room ID to delete\"\n                },\n                \"reason\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Reason for deletion\"\n                }\n            }\n        }\n    }\n\
-        }"
+        room ID to delete\"\n                },\n                \"reason\": {\n                    \"$ref\": \"#/$defs/VoiceRoomDeletedReason\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Reason for deletion (defaults to
+        Manual if not specified)\"\n                }\n            }\n        },\n        \"VoiceRoomDeletedReason\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"Manual\",\n                \"Empty\"\
+        ,\n                \"Error\"\n            ],\n            \"description\": \"Reason a voice room was deleted\"\n \
+        \       }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Delete voice room\",\n    \"description\": \"Deletes a voice room and notifies
         all participants.\\n\",\n    \"tags\": [\n        \"Voice Rooms\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -475,9 +483,10 @@ paths:
         \            \"format\": \"uuid\",\n                    \"description\": \"Session ID of the peer whose offer we're
         answering\"\n                },\n                \"sdpAnswer\": {\n                    \"type\": \"string\",\n   \
         \                 \"description\": \"SDP answer generated by this client's WebRTC stack\"\n                },\n  \
-        \              \"iceCandidates\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"ICE
-        candidates for NAT traversal (can be trickled later)\"\n                }\n            }\n        }\n    }\n}"
+        \              \"iceCandidates\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
+        \            \"description\": \"ICE candidates for NAT traversal (can be trickled later)\"\n                }\n  \
+        \          }\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Send SDP answer to complete WebRTC handshake\",\n    \"description\": \"\
         Called by clients after receiving a VoicePeerJoinedEvent containing an SDP offer.\\nThe client generates an SDP answer
@@ -495,7 +504,7 @@ paths:
         broadcast request is denied.
 
         This endpoint is the ONLY way to initiate voice room broadcasting.
-        lib-stream subscribes to the resulting approval/decline events.
+        lib-broadcast subscribes to the resulting approval/decline events.
       operationId: requestBroadcastConsent
       tags:
       - Voice Broadcasting
@@ -531,31 +540,32 @@ paths:
         from auth context)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BroadcastConsentStatus\"\
         ,\n    \"$defs\": {\n        \"BroadcastConsentStatus\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Current broadcast consent status for a voice room\",\n            \"properties\"\
-        : {\n                \"roomId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Voice room ID\"\n                },\n                \"state\": {\n\
-        \                    \"$ref\": \"#/$defs/BroadcastConsentState\",\n                    \"description\": \"Current
-        broadcast consent state\"\n                },\n                \"requestedBySessionId\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Who initiated the broadcast request (null if inactive)\"\n                },\n   \
-        \             \"consentedSessionIds\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n               \
-        \     },\n                    \"description\": \"Sessions that have consented so far\"\n                },\n     \
-        \           \"pendingSessionIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n                   \
-        \ },\n                    \"description\": \"Sessions that haven't responded yet\"\n                },\n         \
-        \       \"rtpAudioEndpoint\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"RTP audio endpoint for the room's mixed audio output. Only populated when
-        room is in scaled tier. Provided to lib-stream so it can connect its RTMP output to the voice room's audio.\\n\"\n\
-        \                }\n            }\n        },\n        \"BroadcastConsentState\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"Inactive\",\n                \"Pending\",\n                \"Approved\"\
-        \n            ],\n            \"description\": \"Current state of broadcast consent for a room. Inactive: No broadcast
-        request pending. Pending: Consent request sent, awaiting all responses. Approved: All participants consented. Voice
-        treats this as terminal.\\n\"\n        }\n    }\n}"
+        : false,\n            \"description\": \"Current broadcast consent status for a voice room\",\n            \"required\"\
+        : [\n                \"roomId\",\n                \"state\",\n                \"consentedSessionIds\",\n         \
+        \       \"pendingSessionIds\"\n            ],\n            \"properties\": {\n                \"roomId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Voice room ID\"\n                },\n                \"state\": {\n                    \"$ref\": \"#/$defs/BroadcastConsentState\"\
+        ,\n                    \"description\": \"Current broadcast consent state\"\n                },\n                \"\
+        requestedBySessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Who initiated the broadcast request
+        (null if inactive)\"\n                },\n                \"consentedSessionIds\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\",\n                  \
+        \      \"format\": \"uuid\"\n                    },\n                    \"description\": \"Sessions that have consented
+        so far\"\n                },\n                \"pendingSessionIds\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
+        : \"uuid\"\n                    },\n                    \"description\": \"Sessions that haven't responded yet\"\n\
+        \                },\n                \"rtpAudioEndpoint\": {\n                    \"type\": \"string\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"RTP audio endpoint for the room's mixed audio
+        output. Only populated when room is in scaled tier. Provided to lib-broadcast so it can connect its RTMP output to
+        the voice room's audio.\\n\"\n                }\n            }\n        },\n        \"BroadcastConsentState\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"Inactive\",\n                \"Pending\"\
+        ,\n                \"Approved\"\n            ],\n            \"description\": \"Current state of broadcast consent
+        for a room. Inactive: No broadcast request pending. Pending: Consent request sent, awaiting all responses. Approved:
+        All participants consented. Voice treats this as terminal.\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Request broadcast consent from all room participants\",\n    \"description\"\
         : \"Initiates the broadcast consent flow. All current room participants receive a VoiceBroadcastConsentRequestEvent.
         Broadcasting only starts after all participants consent. If ANY participant declines, the broadcast request is denied.\\
-        nThis endpoint is the ONLY way to initiate voice room broadcasting. lib-stream subscribes to the resulting approval/decline
+        nThis endpoint is the ONLY way to initiate voice room broadcasting. lib-broadcast subscribes to the resulting approval/decline
         events.\\n\",\n    \"tags\": [\n        \"Voice Broadcasting\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"requestBroadcastConsent\"\n}"
   /voice/room/broadcast/consent:
@@ -564,8 +574,8 @@ paths:
       description: >
         Called by each participant to consent or decline broadcasting.
         When all participants consent, lib-voice publishes
-        voice.room.broadcast.approved. If any participant declines,
-        lib-voice publishes voice.room.broadcast.declined.
+        voice.broadcast.approved. If any participant declines,
+        lib-voice publishes voice.broadcast.declined.
       operationId: respondBroadcastConsent
       tags:
       - Voice Broadcasting
@@ -600,38 +610,39 @@ paths:
         : \"True if participant consents to broadcasting\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BroadcastConsentStatus\"\
         ,\n    \"$defs\": {\n        \"BroadcastConsentStatus\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Current broadcast consent status for a voice room\",\n            \"properties\"\
-        : {\n                \"roomId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Voice room ID\"\n                },\n                \"state\": {\n\
-        \                    \"$ref\": \"#/$defs/BroadcastConsentState\",\n                    \"description\": \"Current
-        broadcast consent state\"\n                },\n                \"requestedBySessionId\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Who initiated the broadcast request (null if inactive)\"\n                },\n   \
-        \             \"consentedSessionIds\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n               \
-        \     },\n                    \"description\": \"Sessions that have consented so far\"\n                },\n     \
-        \           \"pendingSessionIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n                   \
-        \ },\n                    \"description\": \"Sessions that haven't responded yet\"\n                },\n         \
-        \       \"rtpAudioEndpoint\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"RTP audio endpoint for the room's mixed audio output. Only populated when
-        room is in scaled tier. Provided to lib-stream so it can connect its RTMP output to the voice room's audio.\\n\"\n\
-        \                }\n            }\n        },\n        \"BroadcastConsentState\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"Inactive\",\n                \"Pending\",\n                \"Approved\"\
-        \n            ],\n            \"description\": \"Current state of broadcast consent for a room. Inactive: No broadcast
-        request pending. Pending: Consent request sent, awaiting all responses. Approved: All participants consented. Voice
-        treats this as terminal.\\n\"\n        }\n    }\n}"
+        : false,\n            \"description\": \"Current broadcast consent status for a voice room\",\n            \"required\"\
+        : [\n                \"roomId\",\n                \"state\",\n                \"consentedSessionIds\",\n         \
+        \       \"pendingSessionIds\"\n            ],\n            \"properties\": {\n                \"roomId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Voice room ID\"\n                },\n                \"state\": {\n                    \"$ref\": \"#/$defs/BroadcastConsentState\"\
+        ,\n                    \"description\": \"Current broadcast consent state\"\n                },\n                \"\
+        requestedBySessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Who initiated the broadcast request
+        (null if inactive)\"\n                },\n                \"consentedSessionIds\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\",\n                  \
+        \      \"format\": \"uuid\"\n                    },\n                    \"description\": \"Sessions that have consented
+        so far\"\n                },\n                \"pendingSessionIds\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
+        : \"uuid\"\n                    },\n                    \"description\": \"Sessions that haven't responded yet\"\n\
+        \                },\n                \"rtpAudioEndpoint\": {\n                    \"type\": \"string\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"RTP audio endpoint for the room's mixed audio
+        output. Only populated when room is in scaled tier. Provided to lib-broadcast so it can connect its RTMP output to
+        the voice room's audio.\\n\"\n                }\n            }\n        },\n        \"BroadcastConsentState\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"Inactive\",\n                \"Pending\"\
+        ,\n                \"Approved\"\n            ],\n            \"description\": \"Current state of broadcast consent
+        for a room. Inactive: No broadcast request pending. Pending: Consent request sent, awaiting all responses. Approved:
+        All participants consented. Voice treats this as terminal.\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Respond to a broadcast consent request\",\n    \"description\": \"Called
-        by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.room.broadcast.approved.
-        If any participant declines, lib-voice publishes voice.room.broadcast.declined.\\n\",\n    \"tags\": [\n        \"\
-        Voice Broadcasting\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"respondBroadcastConsent\"\n}"
+        by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.broadcast.approved.
+        If any participant declines, lib-voice publishes voice.broadcast.declined.\\n\",\n    \"tags\": [\n        \"Voice
+        Broadcasting\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"respondBroadcastConsent\"\n}"
   /voice/room/broadcast/stop:
     post:
       summary: Stop broadcasting from a voice room
       description: >
         Any participant can stop an active broadcast at any time.
         This is equivalent to revoking consent. Publishes
-        voice.room.broadcast.stopped with reason ConsentRevoked.
+        voice.broadcast.stopped with reason ConsentRevoked.
       operationId: stopBroadcast
       tags:
       - Voice Broadcasting
@@ -661,7 +672,7 @@ paths:
         \       }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Stop broadcasting from a voice room\",\n    \"description\": \"Any participant
-        can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.room.broadcast.stopped
+        can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.broadcast.stopped
         with reason ConsentRevoked.\\n\",\n    \"tags\": [\n        \"Voice Broadcasting\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"stopBroadcast\"\n}"
   /voice/room/broadcast/status:
@@ -700,27 +711,28 @@ paths:
         description\": \"Voice room ID\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BroadcastConsentStatus\"\
         ,\n    \"$defs\": {\n        \"BroadcastConsentStatus\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Current broadcast consent status for a voice room\",\n            \"properties\"\
-        : {\n                \"roomId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Voice room ID\"\n                },\n                \"state\": {\n\
-        \                    \"$ref\": \"#/$defs/BroadcastConsentState\",\n                    \"description\": \"Current
-        broadcast consent state\"\n                },\n                \"requestedBySessionId\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Who initiated the broadcast request (null if inactive)\"\n                },\n   \
-        \             \"consentedSessionIds\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n               \
-        \     },\n                    \"description\": \"Sessions that have consented so far\"\n                },\n     \
-        \           \"pendingSessionIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n                   \
-        \ },\n                    \"description\": \"Sessions that haven't responded yet\"\n                },\n         \
-        \       \"rtpAudioEndpoint\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"RTP audio endpoint for the room's mixed audio output. Only populated when
-        room is in scaled tier. Provided to lib-stream so it can connect its RTMP output to the voice room's audio.\\n\"\n\
-        \                }\n            }\n        },\n        \"BroadcastConsentState\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"Inactive\",\n                \"Pending\",\n                \"Approved\"\
-        \n            ],\n            \"description\": \"Current state of broadcast consent for a room. Inactive: No broadcast
-        request pending. Pending: Consent request sent, awaiting all responses. Approved: All participants consented. Voice
-        treats this as terminal.\\n\"\n        }\n    }\n}"
+        : false,\n            \"description\": \"Current broadcast consent status for a voice room\",\n            \"required\"\
+        : [\n                \"roomId\",\n                \"state\",\n                \"consentedSessionIds\",\n         \
+        \       \"pendingSessionIds\"\n            ],\n            \"properties\": {\n                \"roomId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Voice room ID\"\n                },\n                \"state\": {\n                    \"$ref\": \"#/$defs/BroadcastConsentState\"\
+        ,\n                    \"description\": \"Current broadcast consent state\"\n                },\n                \"\
+        requestedBySessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Who initiated the broadcast request
+        (null if inactive)\"\n                },\n                \"consentedSessionIds\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\",\n                  \
+        \      \"format\": \"uuid\"\n                    },\n                    \"description\": \"Sessions that have consented
+        so far\"\n                },\n                \"pendingSessionIds\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
+        : \"uuid\"\n                    },\n                    \"description\": \"Sessions that haven't responded yet\"\n\
+        \                },\n                \"rtpAudioEndpoint\": {\n                    \"type\": \"string\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"RTP audio endpoint for the room's mixed audio
+        output. Only populated when room is in scaled tier. Provided to lib-broadcast so it can connect its RTMP output to
+        the voice room's audio.\\n\"\n                }\n            }\n        },\n        \"BroadcastConsentState\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"Inactive\",\n                \"Pending\"\
+        ,\n                \"Approved\"\n            ],\n            \"description\": \"Current state of broadcast consent
+        for a room. Inactive: No broadcast request pending. Pending: Consent request sent, awaiting all responses. Approved:
+        All participants consented. Voice treats this as terminal.\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get broadcast status for a voice room\",\n    \"description\": \"Returns
         the current broadcast state: whether consent is pending, active, or inactive.\\n\",\n    \"tags\": [\n        \"Voice
         Broadcasting\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getBroadcastStatus\"\n}"
@@ -729,18 +741,18 @@ components:
     VoiceTier:
       type: string
       enum:
-      - p2p
-      - scaled
+      - P2P
+      - Scaled
       description: |
         Voice communication tier:
-        - p2p: Direct peer-to-peer connections (up to 6 participants)
-        - scaled: RTP server-mediated communication (unlimited participants)
+        - P2P: Direct peer-to-peer connections (up to 6 participants)
+        - Scaled: RTP server-mediated communication (unlimited participants)
     VoiceCodec:
       type: string
       enum:
-      - opus
-      - g711
-      - g722
+      - Opus
+      - G711
+      - G722
       description: Audio codec for voice communication
     BroadcastConsentState:
       type: string
@@ -768,6 +780,61 @@ components:
       - Manual
       - Error
       description: Reason broadcasting was stopped
+    VoicePeerInfo:
+      type: object
+      additionalProperties: false
+      description: Peer connection information for P2P voice
+      required:
+      - peerSessionId
+      - sdpOffer
+      properties:
+        peerSessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID for this peer
+        displayName:
+          type: string
+          nullable: true
+          description: Peer's display name
+        sdpOffer:
+          type: string
+          description: SDP offer for WebRTC negotiation
+        iceCandidates:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: ICE candidates for NAT traversal
+        isMuted:
+          type: boolean
+          default: false
+          description: Whether peer is currently muted
+    SipCredentials:
+      type: object
+      additionalProperties: false
+      description: |
+        SIP credentials for authenticating with the Kamailio SIP proxy in scaled tier mode.
+        These credentials are dynamically generated per-user per-room and should be used
+        for SIP REGISTER and subsequent INVITE requests.
+      required:
+      - username
+      - password
+      - domain
+      properties:
+        username:
+          type: string
+          description: SIP username (typically sessionId or a hash-derived identifier)
+        password:
+          type: string
+          description: SIP password (dynamically generated, short-lived)
+        domain:
+          type: string
+          description: SIP domain/realm for authentication (e.g., "voice.bannou.local")
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When these credentials expire (clients should re-authenticate before this)
     CreateVoiceRoomRequest:
       type: object
       additionalProperties: false
@@ -780,8 +847,10 @@ components:
           format: uuid
           description: Session ID this voice room is associated with
         preferredTier:
-          $ref: '#/components/schemas/VoiceTier'
-          description: Preferred voice tier (defaults to p2p)
+          allOf:
+          - $ref: '#/components/schemas/VoiceTier'
+          nullable: true
+          description: Preferred voice tier (defaults to P2P)
         maxParticipants:
           type: integer
           minimum: 2
@@ -789,8 +858,10 @@ components:
           default: 6
           description: Maximum participants before tier upgrade
         codec:
-          $ref: '#/components/schemas/VoiceCodec'
-          description: Preferred audio codec (defaults to opus)
+          allOf:
+          - $ref: '#/components/schemas/VoiceCodec'
+          nullable: true
+          description: Preferred audio codec (defaults to Opus)
         autoCleanup:
           type: boolean
           default: false
@@ -833,6 +904,7 @@ components:
         displayName:
           type: string
           maxLength: 50
+          nullable: true
           description: Display name for UI
         password:
           type: string
@@ -866,8 +938,9 @@ components:
           format: uuid
           description: Voice room ID to delete
         reason:
-          type: string
-          description: Reason for deletion
+          $ref: '#/components/schemas/VoiceRoomDeletedReason'
+          nullable: true
+          description: Reason for deletion (defaults to Manual if not specified)
     PeerHeartbeatRequest:
       type: object
       additionalProperties: false
@@ -913,6 +986,7 @@ components:
           description: SDP answer generated by this client's WebRTC stack
         iceCandidates:
           type: array
+          nullable: true
           items:
             type: string
           description: ICE candidates for NAT traversal (can be trickled later)
@@ -987,7 +1061,14 @@ components:
       - roomId
       - sessionId
       - tier
+      - codec
+      - maxParticipants
+      - currentParticipants
+      - participants
       - createdAt
+      - autoCleanup
+      - isPasswordProtected
+      - broadcastState
       properties:
         roomId:
           type: string
@@ -1028,9 +1109,6 @@ components:
         isPasswordProtected:
           type: boolean
           description: Whether the room requires a password to join
-        isBroadcasting:
-          type: boolean
-          description: Whether the room is currently broadcasting (Approved state)
         broadcastState:
           $ref: '#/components/schemas/BroadcastConsentState'
           description: Current broadcast consent state
@@ -1041,6 +1119,10 @@ components:
       required:
       - roomId
       - tier
+      - codec
+      - peers
+      - stunServers
+      - broadcastState
       properties:
         roomId:
           type: string
@@ -1070,9 +1152,6 @@ components:
           type: boolean
           default: false
           description: True if room is about to upgrade to scaled tier
-        isBroadcasting:
-          type: boolean
-          description: Whether the room is currently broadcasting (Approved state)
         broadcastState:
           $ref: '#/components/schemas/BroadcastConsentState'
           description: Current broadcast consent state
@@ -1080,6 +1159,11 @@ components:
       type: object
       additionalProperties: false
       description: Current broadcast consent status for a voice room
+      required:
+      - roomId
+      - state
+      - consentedSessionIds
+      - pendingSessionIds
       properties:
         roomId:
           type: string
@@ -1110,7 +1194,7 @@ components:
           nullable: true
           description: >
             RTP audio endpoint for the room's mixed audio output. Only populated
-            when room is in scaled tier. Provided to lib-stream so it can connect
+            when room is in scaled tier. Provided to lib-broadcast so it can connect
             its RTMP output to the voice room's audio.
     SipEndpoint:
       type: object
@@ -1124,6 +1208,7 @@ components:
           description: SDP offer for WebRTC negotiation
         iceCandidates:
           type: array
+          nullable: true
           items:
             type: string
           description: ICE candidates for NAT traversal

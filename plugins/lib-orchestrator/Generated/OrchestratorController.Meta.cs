@@ -89,12 +89,7 @@ public partial class OrchestratorController
                     "description": "Component name (redis, rabbitmq, placement)"
                 },
                 "status": {
-                    "type": "string",
-                    "enum": [
-                        "healthy",
-                        "degraded",
-                        "unavailable"
-                    ],
+                    "$ref": "#/$defs/ComponentHealthStatus",
                     "description": "Component health status"
                 },
                 "lastSeen": {
@@ -110,9 +105,19 @@ public partial class OrchestratorController
                 "metrics": {
                     "type": "object",
                     "additionalProperties": true,
+                    "nullable": true,
                     "description": "Component-specific metrics reported by the service. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
+        },
+        "ComponentHealthStatus": {
+            "type": "string",
+            "enum": [
+                "healthy",
+                "degraded",
+                "unavailable"
+            ],
+            "description": "Health status for an individual infrastructure component"
         }
     }
 }
@@ -250,14 +255,14 @@ public partial class OrchestratorController
                 "healthyServices": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/ServiceHealthStatus"
+                        "$ref": "#/$defs/ServiceHealthEntry"
                     },
                     "description": "Services with recent heartbeats (status healthy/degraded)"
                 },
                 "unhealthyServices": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/ServiceHealthStatus"
+                        "$ref": "#/$defs/ServiceHealthEntry"
                     },
                     "description": "Services with expired heartbeats or unhealthy status"
                 }
@@ -272,10 +277,10 @@ public partial class OrchestratorController
                 "deployed_only"
             ]
         },
-        "ServiceHealthStatus": {
+        "ServiceHealthEntry": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Service health status from heartbeat monitoring.\nUses ServiceHeartbeatEvent schema from common-events.yaml.\n",
+            "description": "Individual service health entry from heartbeat monitoring. Uses InstanceHealthStatus enum from common-api.yaml for status classification.",
             "required": [
                 "serviceId",
                 "appId",
@@ -292,8 +297,8 @@ public partial class OrchestratorController
                     "description": "App-id for mesh routing (e.g., \"bannou\", \"npc-pool-01\")"
                 },
                 "status": {
-                    "type": "string",
-                    "description": "Service status from heartbeat"
+                    "type": "object",
+                    "description": "Instance health status from heartbeat"
                 },
                 "lastSeen": {
                     "type": "string",
@@ -301,9 +306,9 @@ public partial class OrchestratorController
                     "description": "Last heartbeat timestamp"
                 },
                 "capacity": {
-                    "description": "Current capacity metrics including load and available slots",
                     "$ref": "#/$defs/Capacity",
-                    "nullable": true
+                    "nullable": true,
+                    "description": "Current capacity metrics including load and available slots"
                 },
                 "metadata": {
                     "type": "object",
@@ -418,15 +423,19 @@ public partial class OrchestratorController
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Optional environment variable updates"
                 },
                 "force": {
                     "type": "boolean",
-                    "description": "Force restart even if healthy (default false)"
+                    "default": false,
+                    "description": "Force restart even if healthy"
                 },
                 "timeout": {
                     "type": "integer",
-                    "description": "Timeout for service to become healthy (seconds, default 120)"
+                    "default": 120,
+                    "minimum": 1,
+                    "description": "Timeout in seconds for service to become healthy after restart"
                 }
             }
         }
@@ -444,34 +453,22 @@ public partial class OrchestratorController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "success",
-                "serviceName",
                 "duration"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Restart success status"
-                },
-                "serviceName": {
-                    "type": "string",
-                    "description": "Service that was restarted"
-                },
                 "duration": {
                     "type": "string",
                     "description": "Time taken to restart and become healthy"
                 },
                 "previousStatus": {
-                    "type": "string",
-                    "description": "Service status before restart"
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Instance health status before restart"
                 },
                 "currentStatus": {
-                    "type": "string",
-                    "description": "Service status after restart"
-                },
-                "message": {
-                    "type": "string",
-                    "description": "Restart result message"
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Instance health status after restart"
                 }
             }
         }
@@ -567,8 +564,6 @@ public partial class OrchestratorController
             "additionalProperties": false,
             "required": [
                 "shouldRestart",
-                "serviceName",
-                "currentStatus",
                 "reason"
             ],
             "properties": {
@@ -576,18 +571,16 @@ public partial class OrchestratorController
                     "type": "boolean",
                     "description": "Whether restart is recommended"
                 },
-                "serviceName": {
-                    "type": "string",
-                    "description": "Service being evaluated"
-                },
                 "currentStatus": {
-                    "type": "string",
-                    "description": "Current service health status"
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Current instance health status (null if service never seen)"
                 },
                 "lastSeen": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Last heartbeat timestamp"
+                    "nullable": true,
+                    "description": "Last heartbeat timestamp (null if service never seen)"
                 },
                 "degradedDuration": {
                     "type": "string",
@@ -712,7 +705,8 @@ public partial class OrchestratorController
                 },
                 "activeBackend": {
                     "$ref": "#/$defs/BackendType",
-                    "description": "Currently active backend (if environment deployed)"
+                    "nullable": true,
+                    "description": "Currently active backend (null if no environment deployed)"
                 }
             }
         },
@@ -740,21 +734,25 @@ public partial class OrchestratorController
                 },
                 "version": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Backend version (e.g., \"1.28.0\" for Docker)"
                 },
                 "endpoint": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Backend API endpoint (if applicable)"
                 },
                 "capabilities": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Supported capabilities for this backend:\n- live-topology: Can change service distribution without restart\n- scaling: Can scale services horizontally\n- rolling-update: Supports rolling deployments\n- secrets: Native secrets management\n- volumes: Persistent volume support\n- networks: Custom network creation\n"
+                    "description": "Supported capabilities for this backend (live-topology, scaling, rolling-update, secrets, volumes, networks)"
                 },
                 "error": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Error message if detection failed"
                 }
             }
@@ -767,7 +765,7 @@ public partial class OrchestratorController
                 "swarm",
                 "compose"
             ],
-            "description": "Container orchestration backend type.\ nPriority order: kubernetes > portainer > swarm > compose\n"
+            "description": "Container orchestration backend type.\nPriority order: kubernetes > portainer > swarm > compose\n"
         }
     }
 }
@@ -838,17 +836,21 @@ public partial class OrchestratorController
             "description": "Request to list available presets (empty body allowed)",
             "properties": {
                 "category": {
-                    "type": "string",
-                    "enum": [
-                        "development",
-                        "testing",
-                        "production",
-                        "custom"
-                    ],
+                    "$ref": "#/$defs/PresetCategory",
                     "description": "Optional filter by category",
                     "nullable": true
                 }
             }
+        },
+        "PresetCategory": {
+            "type": "string",
+            "enum": [
+                "development",
+                "testing",
+                "production",
+                "custom"
+            ],
+            "description": "Category classification for deployment presets"
         }
     }
 }
@@ -876,7 +878,8 @@ public partial class OrchestratorController
                 },
                 "activePreset": {
                     "type": "string",
-                    "description": "Currently active preset name (if any)"
+                    "nullable": true,
+                    "description": "Currently active preset name (null if no preset active)"
                 }
             }
         },
@@ -899,14 +902,9 @@ public partial class OrchestratorController
                     "description": "Human-readable preset description"
                 },
                 "category": {
-                    "type": "string",
-                    "enum": [
-                        "development",
-                        "testing",
-                        "production",
-                        "custom"
-                    ],
-                    "description": "Preset category"
+                    "$ref": "#/$defs/PresetCategory",
+                    "nullable": true,
+                    "description": "Preset category (null if uncategorized)"
                 },
                 "topology": {
                     "$ref": "#/$defs/ServiceTopology",
@@ -917,14 +915,16 @@ public partial class OrchestratorController
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Default environment variables for this preset"
                 },
                 "requiredBackends": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/BackendType"
                     },
-                    "description": "Backends that support this preset (empty = all)"
+                    "description": "Backends that support this preset (null or empty = all)"
                 },
                 "builtIn": {
                     "type": "boolean",
@@ -932,9 +932,20 @@ public partial class OrchestratorController
                 },
                 "filePath": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Path to preset configuration file"
                 }
             }
+        },
+        "PresetCategory": {
+            "type": "string",
+            "enum": [
+                "development",
+                "testing",
+                "production",
+                "custom"
+            ],
+            "description": "Category classification for deployment presets"
         },
         "ServiceTopology": {
             "description": "Service distribution topology defining which services run on which nodes",
@@ -953,6 +964,7 @@ public partial class OrchestratorController
                 },
                 "infrastructure": {
                     "$ref": "#/$defs/InfrastructureConfig",
+                    "nullable": true,
                     "description": "Infrastructure service configuration"
                 }
             }
@@ -971,32 +983,29 @@ public partial class OrchestratorController
                 },
                 "layers": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
-                        "type": "string",
-                        "enum": [
-                            "AppFoundation",
-                            "GameFoundation",
-                            "AppFeatures",
-                            "GameFeatures",
-                            "Extensions"
-                        ]
+                        "$ref": "#/$defs/ServiceLayerType"
                     },
-                    "description": "Service layers to enable on this node. Listed layers are enabled,\nunlisted layers are disabled. When omitted, layer enablement is\ninherited from the container's environment.\nIndividual services in the 'services' list override layer settings.\n"
+                    "description": "Service layers to enable on this node. Listed layers are enabled, unlisted are disabled. When null, inherited from container environment."
                 },
                 "services": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Individual services to enable on this node.\nWhen used with 'layers', these act as overrides for services\noutside the enabled layers.\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\ nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\n"
+                    "description": "Individual services to enable on this node. Acts as overrides for services outside enabled layers."
                 },
                 "replicas": {
                     "type": "integer",
                     "default": 1,
+                    "minimum": 1,
                     "description": "Number of replicas for this node"
                 },
                 "resources": {
                     "$ref": "#/$defs/ResourceLimits",
+                    "nullable": true,
                     "description": "Resource limits and requests for this node"
                 },
                 "environment": {
@@ -1004,6 +1013,7 @@ public partial class OrchestratorController
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Node-specific environment overrides"
                 },
                 "meshEnabled": {
@@ -1013,9 +1023,21 @@ public partial class OrchestratorController
                 },
                 "appId": {
                     "type": "string",
-                    "description": "App-id override for mesh routing (default derives from node name)"
+                    "nullable": true,
+                    "description": "App-id override for mesh routing (null derives from node name)"
                 }
             }
+        },
+        "ServiceLayerType": {
+            "type": "string",
+            "enum": [
+                "AppFoundation",
+                "GameFoundation",
+                "AppFeatures",
+                "GameFeatures",
+                "Extensions"
+            ],
+            "description": "Service hierarchy layer type for topology node configuration"
         },
         "ResourceLimits": {
             "type": "object",
@@ -1024,18 +1046,22 @@ public partial class OrchestratorController
             "properties": {
                 "cpuLimit": {
                     "type": "string",
+                    "nullable": true,
                     "description": "CPU limit (e.g., \"0.5\", \"2\")"
                 },
                 "memoryLimit": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Memory limit (e.g., \"512m\", \"2g\")"
                 },
                 "cpuRequest": {
                     "type": "string",
+                    "nullable": true,
                     "description": "CPU request (Kubernetes)"
                 },
                 "memoryRequest": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Memory request (Kubernetes)"
                 }
             }
@@ -1047,18 +1073,22 @@ public partial class OrchestratorController
             "properties": {
                 "redis": {
                     "$ref": "#/$defs/InfraServiceConfig",
+                    "nullable": true,
                     "description": "Redis configuration"
                 },
                 "rabbitmq": {
                     "$ref": "#/$defs/InfraServiceConfig",
+                    "nullable": true,
                     "description": "RabbitMQ configuration"
                 },
                 "mysql": {
                     "$ref": "#/$defs/InfraServiceConfig",
+                    "nullable": true,
                     "description": "MySQL configuration"
                 },
                 "ingress": {
                     "$ref": "#/$defs/IngressConfig",
+                    "nullable": true,
                     "description": "Ingress/reverse proxy configuration"
                 }
             }
@@ -1075,10 +1105,12 @@ public partial class OrchestratorController
                 },
                 "image": {
                     "type": "string",
-                    "description": "Docker image override"
+                    "nullable": true,
+                    "description": "Docker image override (null uses default)"
                 },
                 "resources": {
                     "$ref": "#/$defs/ResourceLimits",
+                    "nullable": true,
                     "description": "Resource limits and requests"
                 },
                 "environment": {
@@ -1086,10 +1118,12 @@ public partial class OrchestratorController
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Environment variables for this service"
                 },
                 "volumes": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -1108,19 +1142,14 @@ public partial class OrchestratorController
                     "description": "Whether ingress is enabled"
                 },
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "openresty",
-                        "nginx",
-                        "traefik",
-                        "none"
-                    ],
+                    "$ref": "#/$defs/IngressType",
                     "default": "openresty",
-                    "description": "Type of ingress/reverse proxy to use"
+                    "description": "Type of ingress or reverse proxy to use"
                 },
                 "ports": {
-                    "description": "Port configuration for HTTP and HTTPS traffic",
-                    "$ref": "#/$defs/Ports"
+                    "$ref": "#/$defs/Ports",
+                    "nullable": true,
+                    "description": "Port configuration for HTTP and HTTPS traffic"
                 },
                 "ssl": {
                     "type": "boolean",
@@ -1128,6 +1157,16 @@ public partial class OrchestratorController
                     "description": "Whether SSL/TLS is enabled"
                 }
             }
+        },
+        "IngressType": {
+            "type": "string",
+            "enum": [
+                "openresty",
+                "nginx",
+                "traefik",
+                "none"
+            ],
+            "description": "Type of ingress or reverse proxy to use"
         },
         "Ports": {
             "type": "object",
@@ -1137,11 +1176,15 @@ public partial class OrchestratorController
                 "http": {
                     "type": "integer",
                     "default": 80,
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "HTTP port number"
                 },
                 "https": {
                     "type": "integer",
                     "default": 443,
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "HTTPS port number"
                 }
             }
@@ -1263,6 +1306,7 @@ public partial class OrchestratorController
                 "timeout": {
                     "type": "integer",
                     "default": 300,
+                    "minimum": 1,
                     "description": "Deployment timeout in seconds"
                 },
                 "waitForHealthy": {
@@ -1294,6 +1338,7 @@ public partial class OrchestratorController
                 },
                 "infrastructure": {
                     "$ref": "#/$defs/InfrastructureConfig",
+                    "nullable": true,
                     "description": "Infrastructure service configuration"
                 }
             }
@@ -1312,32 +1357,29 @@ public partial class OrchestratorController
                 },
                 "layers": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
-                        "type": "string",
-                        "enum": [
-                            "AppFoundation",
-                            "GameFoundation",
-                            "AppFeatures",
-                            "GameFeatures",
-                            "Extensions"
-                        ]
+                        "$ref": "#/$defs/ServiceLayerType"
                     },
-                    "description": "Service layers to enable on this node. Listed layers are enabled,\nunlisted layers are disabled. When omitted, layer enablement is\ninherited from the container's environment.\nIndividual services in the 'services' list override layer settings.\n"
+                    "description": "Service layers to enable on this node. Listed layers are enabled, unlisted are disabled. When null, inherited from container environment."
                 },
                 "services": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Individual services to enable on this node.\nWhen used with 'layers', these act as overrides for services\noutside the enabled layers.\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\ nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\n"
+                    "description": "Individual services to enable on this node. Acts as overrides for services outside enabled layers."
                 },
                 "replicas": {
                     "type": "integer",
                     "default": 1,
+                    "minimum": 1,
                     "description": "Number of replicas for this node"
                 },
                 "resources": {
                     "$ref": "#/$defs/ResourceLimits",
+                    "nullable": true,
                     "description": "Resource limits and requests for this node"
                 },
                 "environment": {
@@ -1345,6 +1387,7 @@ public partial class OrchestratorController
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Node-specific environment overrides"
                 },
                 "meshEnabled": {
@@ -1354,9 +1397,21 @@ public partial class OrchestratorController
                 },
                 "appId": {
                     "type": "string",
-                    "description": "App-id override for mesh routing (default derives from node name)"
+                    "nullable": true,
+                    "description": "App-id override for mesh routing (null derives from node name)"
                 }
             }
+        },
+        "ServiceLayerType": {
+            "type": "string",
+            "enum": [
+                "AppFoundation",
+                "GameFoundation",
+                "AppFeatures",
+                "GameFeatures",
+                "Extensions"
+            ],
+            "description": "Service hierarchy layer type for topology node configuration"
         },
         "ResourceLimits": {
             "type": "object",
@@ -1365,18 +1420,22 @@ public partial class OrchestratorController
             "properties": {
                 "cpuLimit": {
                     "type": "string",
+                    "nullable": true,
                     "description": "CPU limit (e.g., \"0.5\", \"2\")"
                 },
                 "memoryLimit": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Memory limit (e.g., \"512m\", \"2g\")"
                 },
                 "cpuRequest": {
                     "type": "string",
+                    "nullable": true,
                     "description": "CPU request (Kubernetes)"
                 },
                 "memoryRequest": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Memory request (Kubernetes)"
                 }
             }
@@ -1388,18 +1447,22 @@ public partial class OrchestratorController
             "properties": {
                 "redis": {
                     "$ref": "#/$defs/InfraServiceConfig",
+                    "nullable": true,
                     "description": "Redis configuration"
                 },
                 "rabbitmq": {
                     "$ref": "#/$defs/InfraServiceConfig",
+                    "nullable": true,
                     "description": "RabbitMQ configuration"
                 },
                 "mysql": {
                     "$ref": "#/$defs/InfraServiceConfig",
+                    "nullable": true,
                     "description": "MySQL configuration"
                 },
                 "ingress": {
                     "$ref": "#/$defs/IngressConfig",
+                    "nullable": true,
                     "description": "Ingress/reverse proxy configuration"
                 }
             }
@@ -1416,10 +1479,12 @@ public partial class OrchestratorController
                 },
                 "image": {
                     "type": "string",
-                    "description": "Docker image override"
+                    "nullable": true,
+                    "description": "Docker image override (null uses default)"
                 },
                 "resources": {
                     "$ref": "#/$defs/ResourceLimits",
+                    "nullable": true,
                     "description": "Resource limits and requests"
                 },
                 "environment": {
@@ -1427,10 +1492,12 @@ public partial class OrchestratorController
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Environment variables for this service"
                 },
                 "volumes": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -1449,19 +1516,14 @@ public partial class OrchestratorController
                     "description": "Whether ingress is enabled"
                 },
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "openresty",
-                        "nginx",
-                        "traefik",
-                        "none"
-                    ],
+                    "$ref": "#/$defs/IngressType",
                     "default": "openresty",
-                    "description": "Type of ingress/reverse proxy to use"
+                    "description": "Type of ingress or reverse proxy to use"
                 },
                 "ports": {
-                    "description": "Port configuration for HTTP and HTTPS traffic",
-                    "$ref": "#/$defs/Ports"
+                    "$ref": "#/$defs/Ports",
+                    "nullable": true,
+                    "description": "Port configuration for HTTP and HTTPS traffic"
                 },
                 "ssl": {
                     "type": "boolean",
@@ -1469,6 +1531,16 @@ public partial class OrchestratorController
                     "description": "Whether SSL/TLS is enabled"
                 }
             }
+        },
+        "IngressType": {
+            "type": "string",
+            "enum": [
+                "openresty",
+                "nginx",
+                "traefik",
+                "none"
+            ],
+            "description": "Type of ingress or reverse proxy to use"
         },
         "Ports": {
             "type": "object",
@@ -1478,11 +1550,15 @@ public partial class OrchestratorController
                 "http": {
                     "type": "integer",
                     "default": 80,
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "HTTP port number"
                 },
                 "https": {
                     "type": "integer",
                     "default": 443,
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "HTTPS port number"
                 }
             }
@@ -1528,7 +1604,7 @@ public partial class OrchestratorController
             "properties": {
                 "success": {
                     "type": "boolean",
-                    "description": "Whether all nodes were deployed successfully (false indicates partial failure)"
+                    "description": "Whether the deployment completed successfully without errors"
                 },
                 "deploymentId": {
                     "type": "string",
@@ -1540,6 +1616,7 @@ public partial class OrchestratorController
                 },
                 "preset": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Preset used (if applicable)"
                 },
                 "duration": {
@@ -1548,10 +1625,12 @@ public partial class OrchestratorController
                 },
                 "topology": {
                     "$ref": "#/$defs/ServiceTopology",
+                    "nullable": true,
                     "description": "Final applied topology"
                 },
                 "services": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/DeployedService"
                     },
@@ -1559,14 +1638,11 @@ public partial class OrchestratorController
                 },
                 "warnings": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
                     "description": "Non-fatal warnings during deployment"
-                },
-                "message": {
-                    "type": "string",
-                    "description": "Human-readable deployment summary"
                 }
             }
         },
@@ -1597,6 +1673,7 @@ public partial class OrchestratorController
                 },
                 "infrastructure": {
                     "$ref": "#/$defs/InfrastructureConfig",
+                    "nullable": true,
                     "description": "Infrastructure service configuration"
                 }
             }
@@ -1615,32 +1692,29 @@ public partial class OrchestratorController
                 },
                 "layers": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
-                        "type": "string",
-                        "enum": [
-                            "AppFoundation",
-                            "GameFoundation",
-                            "AppFeatures",
-                            "GameFeatures",
-                            "Extensions"
-                        ]
+                        "$ref": "#/$defs/ServiceLayerType"
                     },
-                    "description": "Service layers to enable on this node. Listed layers are enabled,\nunlisted layers are disabled. When omitted, layer enablement is\ninherited from the container's environment.\nIndividual services in the 'services' list override layer settings.\n"
+                    "description": "Service layers to enable on this node. Listed layers are enabled, unlisted are disabled. When null, inherited from container environment."
                 },
                 "services": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Individual services to enable on this node.\nWhen used with 'layers', these act as overrides for services\noutside the enabled layers.\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\ nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\n"
+                    "description": "Individual services to enable on this node. Acts as overrides for services outside enabled layers."
                 },
                 "replicas": {
                     "type": "integer",
                     "default": 1,
+                    "minimum": 1,
                     "description": "Number of replicas for this node"
                 },
                 "resources": {
                     "$ref": "#/$defs/ResourceLimits",
+                    "nullable": true,
                     "description": "Resource limits and requests for this node"
                 },
                 "environment": {
@@ -1648,6 +1722,7 @@ public partial class OrchestratorController
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Node-specific environment overrides"
                 },
                 "meshEnabled": {
@@ -1657,9 +1732,21 @@ public partial class OrchestratorController
                 },
                 "appId": {
                     "type": "string",
-                    "description": "App-id override for mesh routing (default derives from node name)"
+                    "nullable": true,
+                    "description": "App-id override for mesh routing (null derives from node name)"
                 }
             }
+        },
+        "ServiceLayerType": {
+            "type": "string",
+            "enum": [
+                "AppFoundation",
+                "GameFoundation",
+                "AppFeatures",
+                "GameFeatures",
+                "Extensions"
+            ],
+            "description": "Service hierarchy layer type for topology node configuration"
         },
         "ResourceLimits": {
             "type": "object",
@@ -1668,18 +1755,22 @@ public partial class OrchestratorController
             "properties": {
                 "cpuLimit": {
                     "type": "string",
+                    "nullable": true,
                     "description": "CPU limit (e.g., \"0.5\", \"2\")"
                 },
                 "memoryLimit": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Memory limit (e.g., \"512m\", \"2g\")"
                 },
                 "cpuRequest": {
                     "type": "string",
+                    "nullable": true,
                     "description": "CPU request (Kubernetes)"
                 },
                 "memoryRequest": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Memory request (Kubernetes)"
                 }
             }
@@ -1691,18 +1782,22 @@ public partial class OrchestratorController
             "properties": {
                 "redis": {
                     "$ref": "#/$defs/InfraServiceConfig",
+                    "nullable": true,
                     "description": "Redis configuration"
                 },
                 "rabbitmq": {
                     "$ref": "#/$defs/InfraServiceConfig",
+                    "nullable": true,
                     "description": "RabbitMQ configuration"
                 },
                 "mysql": {
                     "$ref": "#/$defs/InfraServiceConfig",
+                    "nullable": true,
                     "description": "MySQL configuration"
                 },
                 "ingress": {
                     "$ref": "#/$defs/IngressConfig",
+                    "nullable": true,
                     "description": "Ingress/reverse proxy configuration"
                 }
             }
@@ -1719,10 +1814,12 @@ public partial class OrchestratorController
                 },
                 "image": {
                     "type": "string",
-                    "description": "Docker image override"
+                    "nullable": true,
+                    "description": "Docker image override (null uses default)"
                 },
                 "resources": {
                     "$ref": "#/$defs/ResourceLimits",
+                    "nullable": true,
                     "description": "Resource limits and requests"
                 },
                 "environment": {
@@ -1730,10 +1827,12 @@ public partial class OrchestratorController
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Environment variables for this service"
                 },
                 "volumes": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -1752,19 +1851,14 @@ public partial class OrchestratorController
                     "description": "Whether ingress is enabled"
                 },
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "openresty",
-                        "nginx",
-                        "traefik",
-                        "none"
-                    ],
+                    "$ref": "#/$defs/IngressType",
                     "default": "openresty",
-                    "description": "Type of ingress/reverse proxy to use"
+                    "description": "Type of ingress or reverse proxy to use"
                 },
                 "ports": {
-                    "description": "Port configuration for HTTP and HTTPS traffic",
-                    "$ref": "#/$defs/Ports"
+                    "$ref": "#/$defs/Ports",
+                    "nullable": true,
+                    "description": "Port configuration for HTTP and HTTPS traffic"
                 },
                 "ssl": {
                     "type": "boolean",
@@ -1772,6 +1866,16 @@ public partial class OrchestratorController
                     "description": "Whether SSL/TLS is enabled"
                 }
             }
+        },
+        "IngressType": {
+            "type": "string",
+            "enum": [
+                "openresty",
+                "nginx",
+                "traefik",
+                "none"
+            ],
+            "description": "Type of ingress or reverse proxy to use"
         },
         "Ports": {
             "type": "object",
@@ -1781,11 +1885,15 @@ public partial class OrchestratorController
                 "http": {
                     "type": "integer",
                     "default": 80,
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "HTTP port number"
                 },
                 "https": {
                     "type": "integer",
                     "default": 443,
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "HTTPS port number"
                 }
             }
@@ -1805,14 +1913,7 @@ public partial class OrchestratorController
                     "description": "Service name"
                 },
                 "status": {
-                    "type": "string",
-                    "enum": [
-                        "starting",
-                        "running",
-                        "healthy",
-                        "unhealthy",
-                        "stopped"
-                    ],
+                    "$ref": "#/$defs/DeployedServiceStatus",
                     "description": "Current status of the deployed service"
                 },
                 "node": {
@@ -1821,20 +1922,34 @@ public partial class OrchestratorController
                 },
                 "containerId": {
                     "type": "string",
-                    "description": "Container ID (Compose/Swarm)"
+                    "nullable": true,
+                    "description": "Container ID (Compose/Swarm, null for Kubernetes)"
                 },
                 "podName": {
                     "type": "string",
-                    "description": "Pod name (Kubernetes)"
+                    "nullable": true,
+                    "description": "Pod name (Kubernetes, null for Compose/Swarm)"
                 },
                 "endpoints": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
                     "description": "Exposed endpoints"
                 }
             }
+        },
+        "DeployedServiceStatus": {
+            "type": "string",
+            "enum": [
+                "starting",
+                "running",
+                "healthy",
+                "unhealthy",
+                "stopped"
+            ],
+            "description": "Current status of a deployed service instance"
         }
     }
 }
@@ -2063,38 +2178,46 @@ public partial class OrchestratorController
                 },
                 "deploymentId": {
                     "type": "string",
-                    "description": "Current deployment identifier"
+                    "nullable": true,
+                    "description": "Current deployment identifier (null if not deployed)"
                 },
                 "backend": {
                     "$ref": "#/$defs/BackendType",
-                    "description": "Container orchestration backend in use"
+                    "nullable": true,
+                    "description": "Container orchestration backend in use (null if not deployed)"
                 },
                 "preset": {
                     "type": "string",
-                    "description": "Active preset name"
+                    "nullable": true,
+                    "description": "Active preset name (null if no preset active)"
                 },
                 "topology": {
                     "$ref": "#/$defs/ServiceTopology",
-                    "description": "Current topology configuration"
+                    "nullable": true,
+                    "description": "Current topology configuration (null if not deployed)"
                 },
                 "services": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/DeployedService"
                     },
-                    "description": "All deployed services with status"
+                    "description": "All deployed services with status (null if not deployed)"
                 },
                 "infrastructure": {
                     "$ref": "#/$defs/InfrastructureHealthResponse",
-                    "description": "Infrastructure component health"
+                    "nullable": true,
+                    "description": "Infrastructure component health (null if not checked)"
                 },
                 "resources": {
                     "$ref": "#/$defs/ResourceUsage",
-                    "description": "Overall resource usage"
+                    "nullable": true,
+                    "description": "Overall resource usage (null if not collected)"
                 },
                 "uptime": {
                     "type": "string",
-                    "description": "Time since deployment"
+                    "nullable": true,
+                    "description": "Time since deployment (null if not deployed)"
                 }
             }
         },
@@ -2125,6 +2248,7 @@ public partial class OrchestratorController
                 },
                 "infrastructure": {
                     "$ref": "#/$defs/InfrastructureConfig",
+                    "nullable": true,
                     "description": "Infrastructure service configuration"
                 }
             }
@@ -2143,32 +2267,29 @@ public partial class OrchestratorController
                 },
                 "layers": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
-                        "type": "string",
-                        "enum": [
-                            "AppFoundation",
-                            "GameFoundation",
-                            "AppFeatures",
-                            "GameFeatures",
-                            "Extensions"
-                        ]
+                        "$ref": "#/$defs/ServiceLayerType"
                     },
-                    "description": "Service layers to enable on this node. Listed layers are enabled,\nunlisted layers are disabled. When omitted, layer enablement is\ninherited from the container's environment.\nIndividual services in the 'services' list override layer settings.\n"
+                    "description": "Service layers to enable on this node. Listed layers are enabled, unlisted are disabled. When null, inherited from container environment."
                 },
                 "services": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Individual services to enable on this node.\nWhen used with 'layers', these act as overrides for services\noutside the enabled layers.\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\ nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\n"
+                    "description": "Individual services to enable on this node. Acts as overrides for services outside enabled layers."
                 },
                 "replicas": {
                     "type": "integer",
                     "default": 1,
+                    "minimum": 1,
                     "description": "Number of replicas for this node"
                 },
                 "resources": {
                     "$ref": "#/$defs/ResourceLimits",
+                    "nullable": true,
                     "description": "Resource limits and requests for this node"
                 },
                 "environment": {
@@ -2176,6 +2297,7 @@ public partial class OrchestratorController
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Node-specific environment overrides"
                 },
                 "meshEnabled": {
@@ -2185,9 +2307,21 @@ public partial class OrchestratorController
                 },
                 "appId": {
                     "type": "string",
-                    "description": "App-id override for mesh routing (default derives from node name)"
+                    "nullable": true,
+                    "description": "App-id override for mesh routing (null derives from node name)"
                 }
             }
+        },
+        "ServiceLayerType": {
+            "type": "string",
+            "enum": [
+                "AppFoundation",
+                "GameFoundation",
+                "AppFeatures",
+                "GameFeatures",
+                "Extensions"
+            ],
+            "description": "Service hierarchy layer type for topology node configuration"
         },
         "ResourceLimits": {
             "type": "object",
@@ -2196,18 +2330,22 @@ public partial class OrchestratorController
             "properties": {
                 "cpuLimit": {
                     "type": "string",
+                    "nullable": true,
                     "description": "CPU limit (e.g., \"0.5\", \"2\")"
                 },
                 "memoryLimit": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Memory limit (e.g., \"512m\", \"2g\")"
                 },
                 "cpuRequest": {
                     "type": "string",
+                    "nullable": true,
                     "description": "CPU request (Kubernetes)"
                 },
                 "memoryRequest": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Memory request (Kubernetes)"
                 }
             }
@@ -2219,18 +2357,22 @@ public partial class OrchestratorController
             "properties": {
                 "redis": {
                     "$ref": "#/$defs/InfraServiceConfig",
+                    "nullable": true,
                     "description": "Redis configuration"
                 },
                 "rabbitmq": {
                     "$ref": "#/$defs/InfraServiceConfig",
+                    "nullable": true,
                     "description": "RabbitMQ configuration"
                 },
                 "mysql": {
                     "$ref": "#/$defs/InfraServiceConfig",
+                    "nullable": true,
                     "description": "MySQL configuration"
                 },
                 "ingress": {
                     "$ref": "#/$defs/IngressConfig",
+                    "nullable": true,
                     "description": "Ingress/reverse proxy configuration"
                 }
             }
@@ -2247,10 +2389,12 @@ public partial class OrchestratorController
                 },
                 "image": {
                     "type": "string",
-                    "description": "Docker image override"
+                    "nullable": true,
+                    "description": "Docker image override (null uses default)"
                 },
                 "resources": {
                     "$ref": "#/$defs/ResourceLimits",
+                    "nullable": true,
                     "description": "Resource limits and requests"
                 },
                 "environment": {
@@ -2258,10 +2402,12 @@ public partial class OrchestratorController
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Environment variables for this service"
                 },
                 "volumes": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -2280,19 +2426,14 @@ public partial class OrchestratorController
                     "description": "Whether ingress is enabled"
                 },
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "openresty",
-                        "nginx",
-                        "traefik",
-                        "none"
-                    ],
+                    "$ref": "#/$defs/IngressType",
                     "default": "openresty",
-                    "description": "Type of ingress/reverse proxy to use"
+                    "description": "Type of ingress or reverse proxy to use"
                 },
                 "ports": {
-                    "description": "Port configuration for HTTP and HTTPS traffic",
-                    "$ref": "#/$defs/Ports"
+                    "$ref": "#/$defs/Ports",
+                    "nullable": true,
+                    "description": "Port configuration for HTTP and HTTPS traffic"
                 },
                 "ssl": {
                     "type": "boolean",
@@ -2300,6 +2441,16 @@ public partial class OrchestratorController
                     "description": "Whether SSL/TLS is enabled"
                 }
             }
+        },
+        "IngressType": {
+            "type": "string",
+            "enum": [
+                "openresty",
+                "nginx",
+                "traefik",
+                "none"
+            ],
+            "description": "Type of ingress or reverse proxy to use"
         },
         "Ports": {
             "type": "object",
@@ -2309,11 +2460,15 @@ public partial class OrchestratorController
                 "http": {
                     "type": "integer",
                     "default": 80,
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "HTTP port number"
                 },
                 "https": {
                     "type": "integer",
                     "default": 443,
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "HTTPS port number"
                 }
             }
@@ -2333,14 +2488,7 @@ public partial class OrchestratorController
                     "description": "Service name"
                 },
                 "status": {
-                    "type": "string",
-                    "enum": [
-                        "starting",
-                        "running",
-                        "healthy",
-                        "unhealthy",
-                        "stopped"
-                    ],
+                    "$ref": "#/$defs/DeployedServiceStatus",
                     "description": "Current status of the deployed service"
                 },
                 "node": {
@@ -2349,20 +2497,34 @@ public partial class OrchestratorController
                 },
                 "containerId": {
                     "type": "string",
-                    "description": "Container ID (Compose/Swarm)"
+                    "nullable": true,
+                    "description": "Container ID (Compose/Swarm, null for Kubernetes)"
                 },
                 "podName": {
                     "type": "string",
-                    "description": "Pod name (Kubernetes)"
+                    "nullable": true,
+                    "description": "Pod name (Kubernetes, null for Compose/Swarm)"
                 },
                 "endpoints": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
                     "description": "Exposed endpoints"
                 }
             }
+        },
+        "DeployedServiceStatus": {
+            "type": "string",
+            "enum": [
+                "starting",
+                "running",
+                "healthy",
+                "unhealthy",
+                "stopped"
+            ],
+            "description": "Current status of a deployed service instance"
         },
         "InfrastructureHealthResponse": {
             "description": "Response containing overall infrastructure health status and individual component details",
@@ -2407,12 +2569,7 @@ public partial class OrchestratorController
                     "description": "Component name (redis, rabbitmq, placement)"
                 },
                 "status": {
-                    "type": "string",
-                    "enum": [
-                        "healthy",
-                        "degraded",
-                        "unavailable"
-                    ],
+                    "$ref": "#/$defs/ComponentHealthStatus",
                     "description": "Component health status"
                 },
                 "lastSeen": {
@@ -2428,9 +2585,19 @@ public partial class OrchestratorController
                 "metrics": {
                     "type": "object",
                     "additionalProperties": true,
+                    "nullable": true,
                     "description": "Component-specific metrics reported by the service. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
+        },
+        "ComponentHealthStatus": {
+            "type": "string",
+            "enum": [
+                "healthy",
+                "degraded",
+                "unavailable"
+            ],
+            "description": "Health status for an individual infrastructure component"
         },
         "ResourceUsage": {
             "description": "System resource utilization metrics including CPU, memory, disk, and network",
@@ -2548,6 +2715,7 @@ public partial class OrchestratorController
                 "timeout": {
                     "type": "integer",
                     "default": 60,
+                    "minimum": 1,
                     "description": "Graceful shutdown timeout in seconds"
                 },
                 "removeVolumes": {
@@ -2586,24 +2754,20 @@ public partial class OrchestratorController
     "$ref": "#/$defs/TeardownResponse",
     "$defs": {
         "TeardownResponse": {
-            "description": "Result of an environment teardown including removed resources and any errors",
+            "description": "Result of an environment teardown including removed resources and any errors. Check errors array for partial failures.",
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "success",
                 "duration"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether all containers were torn down successfully (false indicates partial failure)"
-                },
                 "duration": {
                     "type": "string",
                     "description": "Time taken to complete teardown"
                 },
                 "stoppedContainers": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -2611,6 +2775,7 @@ public partial class OrchestratorController
                 },
                 "removedVolumes": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -2618,6 +2783,7 @@ public partial class OrchestratorController
                 },
                 "removedNetworks": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -2625,6 +2791,7 @@ public partial class OrchestratorController
                 },
                 "removedInfrastructure": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -2632,14 +2799,11 @@ public partial class OrchestratorController
                 },
                 "errors": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
                     "description": "Non-fatal errors during teardown"
-                },
-                "message": {
-                    "type": "string",
-                    "description": "Human-readable teardown summary"
                 }
             }
         }
@@ -2762,17 +2926,10 @@ public partial class OrchestratorController
     "$ref": "#/$defs/CleanResponse",
     "$defs": {
         "CleanResponse": {
-            "description": "Result of a cleanup operation including reclaimed space and removed resource counts",
+            "description": "Result of a cleanup operation including reclaimed space and removed resource counts. Check errors array for partial failures.",
             "type": "object",
             "additionalProperties": false,
-            "required": [
-                "success"
-            ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether all requested cleanup operations completed (false indicates partial failure)"
-                },
                 "reclaimedSpaceMb": {
                     "type": "integer",
                     "description": "Disk space reclaimed (MB)"
@@ -2795,14 +2952,11 @@ public partial class OrchestratorController
                 },
                 "errors": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
                     "description": "Non-fatal errors during cleanup"
-                },
-                "message": {
-                    "type": "string",
-                    "description": "Human-readable cleanup summary"
                 }
             }
         }
@@ -2897,6 +3051,7 @@ public partial class OrchestratorController
                 "tail": {
                     "type": "integer",
                     "default": 100,
+                    "minimum": 1,
                     "description": "Number of lines from end of logs"
                 },
                 "follow": {
@@ -2925,11 +3080,13 @@ public partial class OrchestratorController
             "properties": {
                 "service": {
                     "type": "string",
-                    "description": "Service name (if queried by service)"
+                    "nullable": true,
+                    "description": "Service name (null if queried by container)"
                 },
                 "container": {
                     "type": "string",
-                    "description": "Container ID/name"
+                    "nullable": true,
+                    "description": "Container ID/name (null if queried by service)"
                 },
                 "logs": {
                     "type": "array",
@@ -2959,11 +3116,8 @@ public partial class OrchestratorController
                     "description": "When this log entry was recorded"
                 },
                 "stream": {
-                    "type": "string",
-                    "enum": [
-                        "stdout",
-                        "stderr"
-                    ],
+                    "$ref": "#/$defs/LogStreamType",
+                    "nullable": true,
                     "description": "Output stream type (stdout or stderr)"
                 },
                 "message": {
@@ -2971,6 +3125,14 @@ public partial class OrchestratorController
                     "description": "Log message content"
                 }
             }
+        },
+        "LogStreamType": {
+            "type": "string",
+            "enum": [
+                "stdout",
+                "stderr"
+            ],
+            "description": "Output stream type for log entries"
         }
     }
 }
@@ -3058,6 +3220,7 @@ public partial class OrchestratorController
                 "timeout": {
                     "type": "integer",
                     "default": 120,
+                    "minimum": 1,
                     "description": "Timeout for topology update"
                 }
             }
@@ -3071,22 +3234,17 @@ public partial class OrchestratorController
             ],
             "properties": {
                 "action": {
-                    "type": "string",
-                    "enum": [
-                        "add-node",
-                        "remove-node",
-                        "move-service",
-                        "scale",
-                        "update-env"
-                    ],
+                    "$ref": "#/$defs/TopologyChangeAction",
                     "description": "Type of topology change"
                 },
                 "nodeName": {
                     "type": "string",
-                    "description": "Target node name"
+                    "nullable": true,
+                    "description": "Target node name (null for actions that don't target a specific node)"
                 },
                 "services": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -3094,6 +3252,7 @@ public partial class OrchestratorController
                 },
                 "replicas": {
                     "type": "integer",
+                    "nullable": true,
                     "description": "New replica count (for scale action)"
                 },
                 "environment": {
@@ -3101,13 +3260,26 @@ public partial class OrchestratorController
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Environment updates (for update-env action)"
                 },
                 "nodeConfig": {
                     "$ref": "#/$defs/TopologyNode",
+                    "nullable": true,
                     "description": "Full node config (for add-node action)"
                 }
             }
+        },
+        "TopologyChangeAction": {
+            "type": "string",
+            "enum": [
+                "add-node",
+                "remove-node",
+                "move-service",
+                "scale",
+                "update-env"
+            ],
+            "description": "Type of topology modification to apply"
         },
         "TopologyNode": {
             "description": "A container or pod in the service topology with its assigned services and configuration",
@@ -3123,32 +3295,29 @@ public partial class OrchestratorController
                 },
                 "layers": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
-                        "type": "string",
-                        "enum": [
-                            "AppFoundation",
-                            "GameFoundation",
-                            "AppFeatures",
-                            "GameFeatures",
-                            "Extensions"
-                        ]
+                        "$ref": "#/$defs/ServiceLayerType"
                     },
-                    "description": "Service layers to enable on this node. Listed layers are enabled,\nunlisted layers are disabled. When omitted, layer enablement is\ninherited from the container's environment.\nIndividual services in the 'services' list override layer settings.\n"
+                    "description": "Service layers to enable on this node. Listed layers are enabled, unlisted are disabled. When null, inherited from container environment."
                 },
                 "services": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Individual services to enable on this node.\nWhen used with 'layers', these act as overrides for services\noutside the enabled layers.\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\ nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\n"
+                    "description": "Individual services to enable on this node. Acts as overrides for services outside enabled layers."
                 },
                 "replicas": {
                     "type": "integer",
                     "default": 1,
+                    "minimum": 1,
                     "description": "Number of replicas for this node"
                 },
                 "resources": {
                     "$ref": "#/$defs/ResourceLimits",
+                    "nullable": true,
                     "description": "Resource limits and requests for this node"
                 },
                 "environment": {
@@ -3156,6 +3325,7 @@ public partial class OrchestratorController
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Node-specific environment overrides"
                 },
                 "meshEnabled": {
@@ -3165,9 +3335,21 @@ public partial class OrchestratorController
                 },
                 "appId": {
                     "type": "string",
-                    "description": "App-id override for mesh routing (default derives from node name)"
+                    "nullable": true,
+                    "description": "App-id override for mesh routing (null derives from node name)"
                 }
             }
+        },
+        "ServiceLayerType": {
+            "type": "string",
+            "enum": [
+                "AppFoundation",
+                "GameFoundation",
+                "AppFeatures",
+                "GameFeatures",
+                "Extensions"
+            ],
+            "description": "Service hierarchy layer type for topology node configuration"
         },
         "ResourceLimits": {
             "type": "object",
@@ -3176,18 +3358,22 @@ public partial class OrchestratorController
             "properties": {
                 "cpuLimit": {
                     "type": "string",
+                    "nullable": true,
                     "description": "CPU limit (e.g., \"0.5\", \"2\")"
                 },
                 "memoryLimit": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Memory limit (e.g., \"512m\", \"2g\")"
                 },
                 "cpuRequest": {
                     "type": "string",
+                    "nullable": true,
                     "description": "CPU request (Kubernetes)"
                 },
                 "memoryRequest": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Memory request (Kubernetes)"
                 }
             }
@@ -3211,18 +3397,13 @@ public partial class OrchestratorController
     "$ref": "#/$defs/TopologyUpdateResponse",
     "$defs": {
         "TopologyUpdateResponse": {
-            "description": "Result of a topology update including applied changes and the new topology state",
+            "description": "Result of a topology update including applied changes and the new topology state. Check individual appliedChanges for per-change success status.",
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "success",
                 "appliedChanges"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether all topology changes were applied successfully (false indicates partial failure)"
-                },
                 "appliedChanges": {
                     "type": "array",
                     "items": {
@@ -3232,49 +3413,50 @@ public partial class OrchestratorController
                 },
                 "topology": {
                     "$ref": "#/$defs/ServiceTopology",
+                    "nullable": true,
                     "description": "New topology after changes"
                 },
                 "duration": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Time taken to apply topology changes"
                 },
                 "warnings": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
                     "description": "Non-fatal warnings during topology update"
-                },
-                "message": {
-                    "type": "string",
-                    "description": "Human-readable update summary"
                 }
             }
         },
         "AppliedChange": {
-            "description": "Details of a single topology change that was applied, including success status",
+            "description": "Details of a single topology change that was applied",
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "action",
-                "success"
+                "success",
+                "action"
             ],
             "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether this specific change was applied successfully"
+                },
                 "action": {
                     "type": "string",
                     "description": "Type of topology change that was applied"
                 },
                 "target": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Node or service affected"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether this specific change was applied successfully"
                 },
                 "error": {
                     "type": "string",
-                    "description": "Error message if failed"
+                    "nullable": true,
+                    "description": "Error message if failed (null on success)"
                 }
             }
         },
@@ -3295,6 +3477,7 @@ public partial class OrchestratorController
                 },
                 "infrastructure": {
                     "$ref": "#/$defs/InfrastructureConfig",
+                    "nullable": true,
                     "description": "Infrastructure service configuration"
                 }
             }
@@ -3313,32 +3496,29 @@ public partial class OrchestratorController
                 },
                 "layers": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
-                        "type": "string",
-                        "enum": [
-                            "AppFoundation",
-                            "GameFoundation",
-                            "AppFeatures",
-                            "GameFeatures",
-                            "Extensions"
-                        ]
+                        "$ref": "#/$defs/ServiceLayerType"
                     },
-                    "description": "Service layers to enable on this node. Listed layers are enabled,\nunlisted layers are disabled. When omitted, layer enablement is\ninherited from the container's environment.\nIndividual services in the 'services' list override layer settings.\n"
+                    "description": "Service layers to enable on this node. Listed layers are enabled, unlisted are disabled. When null, inherited from container environment."
                 },
                 "services": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Individual services to enable on this node.\nWhen used with 'layers', these act as overrides for services\noutside the enabled layers.\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\ nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\n"
+                    "description": "Individual services to enable on this node. Acts as overrides for services outside enabled layers."
                 },
                 "replicas": {
                     "type": "integer",
                     "default": 1,
+                    "minimum": 1,
                     "description": "Number of replicas for this node"
                 },
                 "resources": {
                     "$ref": "#/$defs/ResourceLimits",
+                    "nullable": true,
                     "description": "Resource limits and requests for this node"
                 },
                 "environment": {
@@ -3346,6 +3526,7 @@ public partial class OrchestratorController
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Node-specific environment overrides"
                 },
                 "meshEnabled": {
@@ -3355,9 +3536,21 @@ public partial class OrchestratorController
                 },
                 "appId": {
                     "type": "string",
-                    "description": "App-id override for mesh routing (default derives from node name)"
+                    "nullable": true,
+                    "description": "App-id override for mesh routing (null derives from node name)"
                 }
             }
+        },
+        "ServiceLayerType": {
+            "type": "string",
+            "enum": [
+                "AppFoundation",
+                "GameFoundation",
+                "AppFeatures",
+                "GameFeatures",
+                "Extensions"
+            ],
+            "description": "Service hierarchy layer type for topology node configuration"
         },
         "ResourceLimits": {
             "type": "object",
@@ -3366,18 +3559,22 @@ public partial class OrchestratorController
             "properties": {
                 "cpuLimit": {
                     "type": "string",
+                    "nullable": true,
                     "description": "CPU limit (e.g., \"0.5\", \"2\")"
                 },
                 "memoryLimit": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Memory limit (e.g., \"512m\", \"2g\")"
                 },
                 "cpuRequest": {
                     "type": "string",
+                    "nullable": true,
                     "description": "CPU request (Kubernetes)"
                 },
                 "memoryRequest": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Memory request (Kubernetes)"
                 }
             }
@@ -3389,18 +3586,22 @@ public partial class OrchestratorController
             "properties": {
                 "redis": {
                     "$ref": "#/$defs/InfraServiceConfig",
+                    "nullable": true,
                     "description": "Redis configuration"
                 },
                 "rabbitmq": {
                     "$ref": "#/$defs/InfraServiceConfig",
+                    "nullable": true,
                     "description": "RabbitMQ configuration"
                 },
                 "mysql": {
                     "$ref": "#/$defs/InfraServiceConfig",
+                    "nullable": true,
                     "description": "MySQL configuration"
                 },
                 "ingress": {
                     "$ref": "#/$defs/IngressConfig",
+                    "nullable": true,
                     "description": "Ingress/reverse proxy configuration"
                 }
             }
@@ -3417,10 +3618,12 @@ public partial class OrchestratorController
                 },
                 "image": {
                     "type": "string",
-                    "description": "Docker image override"
+                    "nullable": true,
+                    "description": "Docker image override (null uses default)"
                 },
                 "resources": {
                     "$ref": "#/$defs/ResourceLimits",
+                    "nullable": true,
                     "description": "Resource limits and requests"
                 },
                 "environment": {
@@ -3428,10 +3631,12 @@ public partial class OrchestratorController
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Environment variables for this service"
                 },
                 "volumes": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -3450,19 +3655,14 @@ public partial class OrchestratorController
                     "description": "Whether ingress is enabled"
                 },
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "openresty",
-                        "nginx",
-                        "traefik",
-                        "none"
-                    ],
+                    "$ref": "#/$defs/IngressType",
                     "default": "openresty",
-                    "description": "Type of ingress/reverse proxy to use"
+                    "description": "Type of ingress or reverse proxy to use"
                 },
                 "ports": {
-                    "description": "Port configuration for HTTP and HTTPS traffic",
-                    "$ref": "#/$defs/Ports"
+                    "$ref": "#/$defs/Ports",
+                    "nullable": true,
+                    "description": "Port configuration for HTTP and HTTPS traffic"
                 },
                 "ssl": {
                     "type": "boolean",
@@ -3470,6 +3670,16 @@ public partial class OrchestratorController
                     "description": "Whether SSL/TLS is enabled"
                 }
             }
+        },
+        "IngressType": {
+            "type": "string",
+            "enum": [
+                "openresty",
+                "nginx",
+                "traefik",
+                "none"
+            ],
+            "description": "Type of ingress or reverse proxy to use"
         },
         "Ports": {
             "type": "object",
@@ -3479,11 +3689,15 @@ public partial class OrchestratorController
                 "http": {
                     "type": "integer",
                     "default": 80,
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "HTTP port number"
                 },
                 "https": {
                     "type": "integer",
                     "default": 443,
+                    "minimum": 1,
+                    "maximum": 65535,
                     "description": "HTTPS port number"
                 }
             }
@@ -3571,11 +3785,13 @@ public partial class OrchestratorController
                 },
                 "priority": {
                     "$ref": "#/$defs/RestartPriority",
+                    "nullable": true,
                     "description": "Urgency level for the restart"
                 },
                 "shutdownGracePeriod": {
                     "type": "integer",
                     "default": 30,
+                    "minimum": 1,
                     "description": "Seconds to allow graceful shutdown before force-kill"
                 }
             }
@@ -3603,40 +3819,37 @@ public partial class OrchestratorController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "accepted",
-                "appName"
+                "accepted"
             ],
             "properties": {
                 "accepted": {
                     "type": "boolean",
-                    "description": "Whether the restart request was accepted"
-                },
-                "appName": {
-                    "type": "string",
-                    "description": "Container that will be restarted"
+                    "description": "Whether the restart request was accepted (may be queued)"
                 },
                 "scheduledFor": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "When restart is scheduled (may be queued)"
+                    "nullable": true,
+                    "description": "When restart is scheduled (null if immediate)"
                 },
                 "currentInstances": {
                     "type": "integer",
                     "description": "Number of running instances"
                 },
                 "restartStrategy": {
-                    "type": "string",
-                    "enum": [
-                        "rolling",
-                        "simultaneous"
-                    ],
+                    "$ref": "#/$defs/RestartStrategy",
+                    "nullable": true,
                     "description": "How restart will be performed"
-                },
-                "message": {
-                    "type": "string",
-                    "description": "Additional information"
                 }
             }
+        },
+        "RestartStrategy": {
+            "type": "string",
+            "enum": [
+                "rolling",
+                "simultaneous"
+            ],
+            "description": "Strategy for performing container restarts"
         }
     }
 }
@@ -3739,14 +3952,7 @@ public partial class OrchestratorController
                     "description": "Container's app-id for mesh routing"
                 },
                 "status": {
-                    "type": "string",
-                    "enum": [
-                        "running",
-                        "starting",
-                        "stopping",
-                        "stopped",
-                        "unhealthy"
-                    ],
+                    "$ref": "#/$defs/ContainerStatusType",
                     "description": "Current container status"
                 },
                 "timestamp": {
@@ -3760,6 +3966,7 @@ public partial class OrchestratorController
                 },
                 "plugins": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -3768,7 +3975,8 @@ public partial class OrchestratorController
                 "lastRestart": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "When container was last restarted"
+                    "nullable": true,
+                    "description": "When container was last restarted (null if never restarted)"
                 },
                 "restartCount": {
                     "type": "integer",
@@ -3776,23 +3984,37 @@ public partial class OrchestratorController
                 },
                 "restartHistory": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/RestartHistoryEntry"
                     },
                     "description": "Recent restart history"
                 },
                 "healthChecks": {
-                    "description": "Health check configuration and current health status results",
-                    "$ref": "#/$defs/HealthChecks"
+                    "$ref": "#/$defs/HealthChecks",
+                    "nullable": true,
+                    "description": "Health check configuration and current health status results"
                 },
                 "labels": {
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Container labels for metadata and management"
                 }
             }
+        },
+        "ContainerStatusType": {
+            "type": "string",
+            "enum": [
+                "running",
+                "starting",
+                "stopping",
+                "stopped",
+                "unhealthy"
+            ],
+            "description": "Current runtime status of a container"
         },
         "RestartHistoryEntry": {
             "description": "Record of a past container restart including reason, timing, and outcome",
@@ -3814,10 +4036,12 @@ public partial class OrchestratorController
                 },
                 "priority": {
                     "$ref": "#/$defs/RestartPriority",
+                    "nullable": true,
                     "description": "Priority level used for the restart"
                 },
                 "duration": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Time taken to restart"
                 },
                 "success": {
@@ -3826,7 +4050,8 @@ public partial class OrchestratorController
                 },
                 "error": {
                     "type": "string",
-                    "description": "Error message if restart failed"
+                    "nullable": true,
+                    "description": "Error message if restart failed (null on success)"
                 }
             }
         },
@@ -3847,11 +4072,13 @@ public partial class OrchestratorController
                 "lastCheck": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "When the last health check was performed"
+                    "nullable": true,
+                    "description": "When the last health check was performed (null if no checks yet)"
                 },
                 "status": {
-                    "type": "string",
-                    "description": "Result of the last health check"
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Result of the last health check (null if no checks performed yet)"
                 },
                 "consecutiveFailures": {
                     "type": "integer",
@@ -3923,7 +4150,7 @@ public partial class OrchestratorController
     "$ref": "#/$defs/ConfigRollbackRequest",
     "$defs": {
         "ConfigRollbackRequest": {
-            "description": "Request to rollback configuration to the previous version",
+            "description": "Request to rollback configuration to a previous version. If targetVersion is omitted, rolls back to version N-1.",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -3934,6 +4161,12 @@ public partial class OrchestratorController
                     "type": "string",
                     "description": "Why rollback is needed (for auditing)",
                     "example": "auth.jwt_secret broke authentication"
+                },
+                "targetVersion": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 1,
+                    "description": "Specific historical version to rollback to. If omitted, defaults to the previous version (currentVersion - 1)."
                 }
             }
         }
@@ -3965,14 +4198,11 @@ public partial class OrchestratorController
                 },
                 "changedKeys": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
                     "description": "Keys that were reverted"
-                },
-                "message": {
-                    "type": "string",
-                    "description": "Human-readable rollback summary"
                 }
             }
         }
@@ -3982,8 +4212,8 @@ public partial class OrchestratorController
 
     private static readonly string _RollbackConfiguration_Info = """
 {
-    "summary": "Rollback to previous configuration",
-    "description": "Quickly rollback to the previous configuration without waiting for CI.\nSwaps currentConfig with previousConfig and publishes ConfigurationChangedEvent\ nwith the reverted keys so services can request restart.\n\n**Note**: This is a quick fix. GitHub secrets should still be corrected\nto prevent re-breaking on next orchestrator deploy.\n",
+    "summary": "Rollback to a previous configuration version",
+    "description": "Rollback to a previous configuration version. If targetVersion is specified,\nrolls back to that specific version. Otherwise rolls back to version N-1.\nCreates a new version (N+1) containing the restored config to preserve audit trail.\n\n**Note**: This is a quick fix. GitHub secrets should still be corrected\nto prevent re-breaking on next orchestrator deploy.\n",
     "tags": [],
     "deprecated": false,
     "operationId": "RollbackConfiguration"
@@ -4088,10 +4318,11 @@ public partial class OrchestratorController
                 },
                 "keyPrefixes": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Configuration key prefixes present (e.g., \"auth\", \"database\")"
+                    "description": "Configuration key prefixes present (e.g., \"auth\", \"database\"). Null if not requested."
                 }
             }
         }
@@ -4173,11 +4404,13 @@ public partial class OrchestratorController
                 "priority": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Request priority (higher = more urgent)"
                 },
                 "timeoutSeconds": {
                     "type": "integer",
                     "default": 300,
+                    "minimum": 1,
                     "description": "How long the lease is valid for"
                 },
                 "metadata": {
@@ -4312,6 +4545,7 @@ public partial class OrchestratorController
                 "metrics": {
                     "type": "object",
                     "additionalProperties": true,
+                    "nullable": true,
                     "description": "Client-provided processing metrics (duration, items processed, etc.). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
@@ -4330,13 +4564,9 @@ public partial class OrchestratorController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "released"
+                "processorId"
             ],
             "properties": {
-                "released": {
-                    "type": "boolean",
-                    "description": "Whether the processor was successfully released"
-                },
                 "processorId": {
                     "type": "string",
                     "description": "ID of the released processor"
@@ -4439,17 +4669,12 @@ public partial class OrchestratorController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "poolType",
                 "totalInstances",
                 "availableInstances",
                 "busyInstances",
                 "utilization"
             ],
             "properties": {
-                "poolType": {
-                    "type": "string",
-                    "description": "Pool type"
-                },
                 "totalInstances": {
                     "type": "integer",
                     "description": "Total processor instances in the pool"
@@ -4486,7 +4711,8 @@ public partial class OrchestratorController
                 },
                 "recentMetrics": {
                     "$ref": "#/$defs/PoolMetrics",
-                    "description": "Recent processing statistics"
+                    "nullable": true,
+                    "description": "Recent processing statistics (null if metrics not requested)"
                 }
             }
         },
@@ -4510,7 +4736,8 @@ public partial class OrchestratorController
                 "lastScaleEvent": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "When the pool was last scaled"
+                    "nullable": true,
+                    "description": "When the pool was last scaled (null if never scaled)"
                 }
             }
         }
@@ -4616,15 +4843,10 @@ public partial class OrchestratorController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "poolType",
                 "previousInstances",
                 "currentInstances"
             ],
             "properties": {
-                "poolType": {
-                    "type": "string",
-                    "description": "Pool type that was scaled"
-                },
                 "previousInstances": {
                     "type": "integer",
                     "description": "Instance count before scaling"
@@ -4640,10 +4862,6 @@ public partial class OrchestratorController
                 "scaledDown": {
                     "type": "integer",
                     "description": "Number of instances removed"
-                },
-                "message": {
-                    "type": "string",
-                    "description": "Status message"
                 }
             }
         }
@@ -4743,14 +4961,9 @@ public partial class OrchestratorController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "poolType",
                 "instancesRemoved"
             ],
             "properties": {
-                "poolType": {
-                    "type": "string",
-                    "description": "Pool type that was cleaned up"
-                },
                 "instancesRemoved": {
                     "type": "integer",
                     "description": "Number of idle instances removed"
@@ -4758,10 +4971,6 @@ public partial class OrchestratorController
                 "currentInstances": {
                     "type": "integer",
                     "description": "Instance count after cleanup"
-                },
-                "message": {
-                    "type": "string",
-                    "description": "Status message"
                 }
             }
         }

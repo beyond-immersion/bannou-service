@@ -35,7 +35,8 @@ public class VoiceServicePlugin : StandardServicePlugin<IVoiceService>
             var config = sp.GetRequiredService<VoiceServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<RtpEngineClient>>();
             var messageBus = sp.GetRequiredService<IMessageBus>();
-            return new RtpEngineClient(config.RtpEngineHost, config.RtpEnginePort, logger, messageBus, timeoutSeconds: config.RtpEngineTimeoutSeconds);
+            var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+            return new RtpEngineClient(config.RtpEngineHost, config.RtpEnginePort, logger, messageBus, telemetryProvider, timeoutSeconds: config.RtpEngineTimeoutSeconds);
         });
         Logger?.LogDebug("Registered Voice scaled tier services (ScaledTierCoordinator, RtpEngineClient)");
 

@@ -31,7 +31,7 @@ export class ObligationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async setActionMappingAsync(
+  async obligationSetActionMappingAsync(
     request: Schemas['SetActionMappingRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class ObligationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listActionMappingsAsync(
+  async obligationListActionMappingsAsync(
     request: Schemas['ListActionMappingsRequest'],
     channel: number = 0,
     timeout?: number
@@ -66,7 +66,7 @@ export class ObligationProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async deleteActionMappingEventAsync(
+  async obligationDeleteActionMappingEventAsync(
     request: Schemas['DeleteActionMappingRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -84,7 +84,7 @@ export class ObligationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryViolationsAsync(
+  async obligationQueryViolationsAsync(
     request: Schemas['QueryViolationsRequest'],
     channel: number = 0,
     timeout?: number
@@ -102,7 +102,7 @@ export class ObligationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async invalidateCacheAsync(
+  async obligationInvalidateCacheAsync(
     request: Schemas['InvalidateCacheRequest'],
     channel: number = 0,
     timeout?: number
@@ -120,7 +120,7 @@ export class ObligationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCompressDataAsync(
+  async obligationGetCompressDataAsync(
     request: Schemas['GetCompressDataRequest'],
     channel: number = 0,
     timeout?: number
@@ -140,7 +140,7 @@ export class ObligationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async cleanupByCharacterAsync(
+  async obligationCleanupByCharacterAsync(
     request: Schemas['CleanupByCharacterRequest'],
     channel: number = 0,
     timeout?: number

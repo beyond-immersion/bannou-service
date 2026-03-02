@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Chat Service Events
   description: |
@@ -19,7 +19,7 @@ info:
     - contract.terminated: Governing contract terminated early
     - contract.expired: Governing contract reached natural expiration
 
-    **Topic Naming**: Uses {entity}.{action} format with hyphenated entity names (chat-participant.joined).
+    **Topic Naming**: Uses {prefix}.{entity}.{action} format with topic_prefix "chat" (chat.participant.joined).
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
     1. Read docs/reference/SCHEMA-RULES.md
@@ -42,66 +42,73 @@ info:
       handler: HandleContractExpired
   x-event-publications:
     # Chat room lifecycle events (auto-generated from x-lifecycle)
-    - topic: chat-room.created
+    - topic: chat.room.created
       event: ChatRoomCreatedEvent
       description: Published when a new chat room is created
-    - topic: chat-room.updated
+    - topic: chat.room.updated
       event: ChatRoomUpdatedEvent
       description: Published when a chat room is updated
-    - topic: chat-room.deleted
+    - topic: chat.room.deleted
       event: ChatRoomDeletedEvent
       description: Published when a chat room is deleted
 
     # Chat room type lifecycle events (auto-generated from x-lifecycle)
-    - topic: chat-room-type.created
+    - topic: chat.room-type.created
       event: ChatRoomTypeCreatedEvent
       description: Published when a new room type is registered
-    - topic: chat-room-type.updated
+    - topic: chat.room-type.updated
       event: ChatRoomTypeUpdatedEvent
       description: Published when a room type is updated
-    - topic: chat-room-type.deleted
+    - topic: chat.room-type.deleted
       event: ChatRoomTypeDeletedEvent
       description: Published when a room type is deleted
 
     # Participant events
-    - topic: chat-participant.joined
+    - topic: chat.participant.joined
       event: ChatParticipantJoinedEvent
       description: Published when a participant joins a chat room
-    - topic: chat-participant.left
+    - topic: chat.participant.left
       event: ChatParticipantLeftEvent
       description: Published when a participant leaves a chat room
-    - topic: chat-participant.kicked
+    - topic: chat.participant.kicked
       event: ChatParticipantKickedEvent
       description: Published when a participant is kicked from a chat room
-    - topic: chat-participant.banned
+    - topic: chat.participant.banned
       event: ChatParticipantBannedEvent
       description: Published when a participant is banned from a chat room
-    - topic: chat-participant.muted
+    - topic: chat.participant.muted
       event: ChatParticipantMutedEvent
       description: Published when a participant is muted in a chat room
-    - topic: chat-participant.unmuted
+    - topic: chat.participant.unmuted
       event: ChatParticipantUnmutedEvent
       description: Published when a participant is unmuted in a chat room
+    - topic: chat.participant.role-changed
+      event: ChatParticipantRoleChangedEvent
+      description: Published when a participant's role changes (manual or automatic promotion)
+    - topic: chat.participant.unbanned
+      event: ChatParticipantUnbannedEvent
+      description: Published when a participant is unbanned from a chat room
 
     # Message events
-    - topic: chat-message.sent
+    - topic: chat.message.sent
       event: ChatMessageSentEvent
       description: Published when a message is sent (metadata only, no text content for privacy)
-    - topic: chat-message.deleted
+    - topic: chat.message.deleted
       event: ChatMessageDeletedEvent
       description: Published when a message is deleted from a chat room
 
     # Room state events
-    - topic: chat-room.locked
+    - topic: chat.room.locked
       event: ChatRoomLockedEvent
       description: Published when a chat room is locked (contract-triggered or manual)
-    - topic: chat-room.archived
+    - topic: chat.room.archived
       event: ChatRoomArchivedEvent
       description: Published when a chat room is archived via Resource
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/chat-lifecycle-events.yaml
 x-lifecycle:
+  topic_prefix: chat
   ChatRoom:
     model:
       roomId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the chat room" }
@@ -365,6 +372,78 @@ components:
           type: string
           format: uuid
           description: Connect session ID of the moderator who removed the mute
+
+    ChatParticipantRoleChangedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a participant's role changes (manual or automatic owner-leave promotion)
+      required:
+        - eventId
+        - timestamp
+        - roomId
+        - participantSessionId
+        - oldRole
+        - newRole
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the role change occurred
+        roomId:
+          type: string
+          format: uuid
+          description: Room where the role change occurred
+        participantSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the participant whose role changed
+        oldRole:
+          $ref: 'chat-api.yaml#/components/schemas/ChatParticipantRole'
+          description: Previous role
+        newRole:
+          $ref: 'chat-api.yaml#/components/schemas/ChatParticipantRole'
+          description: New role
+        changedBySessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Session ID of who changed the role (null for automatic promotion)
+
+    ChatParticipantUnbannedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a participant is unbanned from a chat room
+      required:
+        - eventId
+        - timestamp
+        - roomId
+        - targetSessionId
+        - unbannedBySessionId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the unban occurred
+        roomId:
+          type: string
+          format: uuid
+          description: Room the participant was unbanned from
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the unbanned participant
+        unbannedBySessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the moderator who removed the ban
 
     # =========================================================================
     # Message Events

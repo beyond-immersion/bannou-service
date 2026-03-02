@@ -1209,18 +1209,18 @@ public class ContractTestHandler : BaseHttpTestHandler
             var walletA = await currencyClient.CreateWalletAsync(new CreateWalletRequest
             {
                 OwnerId = charA.CharacterId,
-                OwnerType = WalletOwnerType.Character
+                OwnerType = EntityType.Character
             });
             var walletB = await currencyClient.CreateWalletAsync(new CreateWalletRequest
             {
                 OwnerId = charB.CharacterId,
-                OwnerType = WalletOwnerType.Character
+                OwnerType = EntityType.Character
             });
             var feeOwnerId = Guid.NewGuid();
             var feeWallet = await currencyClient.CreateWalletAsync(new CreateWalletRequest
             {
                 OwnerId = feeOwnerId,
-                OwnerType = WalletOwnerType.System
+                OwnerType = EntityType.System
             });
 
             // Step 3: Credit wallet A with funds

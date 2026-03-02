@@ -1268,7 +1268,7 @@ public sealed class ActorRunner : IActorRunner
 
         var evt = new CharacterStateUpdateEvent
         {
-            EventName = "character.state_update",
+            EventName = "character.state-update",
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             CharacterId = CharacterId.Value,
@@ -1298,13 +1298,13 @@ public sealed class ActorRunner : IActorRunner
                 _logger.LogWarning(ex, "Actor {ActorId} failed to send state update to {AppId}, falling back to pub/sub",
                     ActorId, targetAppId);
                 // Fall back to pub/sub
-                await _messageBus.TryPublishAsync("character.state_update", evt, cancellationToken: ct);
+                await _messageBus.TryPublishAsync("character.state-update", evt, cancellationToken: ct);
             }
         }
         else
         {
             // No source app-id yet, use pub/sub fallback
-            await _messageBus.TryPublishAsync("character.state_update", evt, cancellationToken: ct);
+            await _messageBus.TryPublishAsync("character.state-update", evt, cancellationToken: ct);
             _logger.LogDebug("Actor {ActorId} published state update via pub/sub for character {CharacterId} (no source app-id)",
                 ActorId, CharacterId);
         }

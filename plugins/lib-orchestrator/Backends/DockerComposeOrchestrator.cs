@@ -1,23 +1,18 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Orchestrator;
+using BeyondImmersion.BannouService.Services;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-// Type aliases to shadow Docker.DotNet types with our Orchestrator types
-using BackendType = BeyondImmersion.BannouService.Orchestrator.BackendType;
-using ContainerRestartRequest = BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequest;
-using ContainerRestartResponse = BeyondImmersion.BannouService.Orchestrator.ContainerRestartResponse;
-using ContainerRestartResponseRestartStrategy = BeyondImmersion.BannouService.Orchestrator.ContainerRestartResponseRestartStrategy;
+// Docker.DotNet.Models.ContainerStatus collides with our ContainerStatus
 using ContainerStatus = BeyondImmersion.BannouService.Orchestrator.ContainerStatus;
-using ContainerStatusStatus = BeyondImmersion.BannouService.Orchestrator.ContainerStatusStatus;
-using RestartHistoryEntry = BeyondImmersion.BannouService.Orchestrator.RestartHistoryEntry;
-using RestartPriority = BeyondImmersion.BannouService.Orchestrator.RestartPriority;
 
 namespace LibOrchestrator.Backends;
 
@@ -60,6 +55,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     private readonly string _logsVolumeName;
 
     private readonly AppConfiguration _appConfiguration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Cached discovered network (lazy initialized)
     private string? _discoveredNetwork;
@@ -68,11 +64,13 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     private Dictionary<string, string>? _discoveredInfrastructureHosts;
     private bool _infrastructureDiscoveryAttempted;
 
-    public DockerComposeOrchestrator(OrchestratorServiceConfiguration config, AppConfiguration appConfiguration, ILogger<DockerComposeOrchestrator> logger)
+    public DockerComposeOrchestrator(OrchestratorServiceConfiguration config, AppConfiguration appConfiguration, ILogger<DockerComposeOrchestrator> logger, ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _configuration = config;
         _appConfiguration = appConfiguration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         // Create Docker client using default configuration
         // Linux: unix:///var/run/docker.sock
@@ -133,6 +131,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// </summary>
     private async Task<string?> DiscoverDockerNetworkAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.DiscoverDockerNetworkAsync");
         // Return cached result if we've already discovered the network
         if (_networkDiscoveryAttempted)
         {
@@ -215,6 +214,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         string targetNetwork,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.DiscoverInfrastructureHostsAsync");
         if (_infrastructureDiscoveryAttempted && _discoveredInfrastructureHosts != null)
         {
             return _discoveredInfrastructureHosts;
@@ -283,6 +283,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         string targetNetwork,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.FindContainerFullNameByServiceAsync");
         try
         {
             var containers = await _client.Containers.ListContainersAsync(
@@ -321,6 +322,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<(bool Available, string Message)> CheckAvailabilityAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.CheckAvailabilityAsync");
         try
         {
             await _client.System.PingAsync(cancellationToken);
@@ -336,6 +338,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<ContainerStatus> GetContainerStatusAsync(string appName, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.GetContainerStatusAsync");
         _logger.LogDebug("Getting container status for app: {AppName}", appName);
 
         var container = await FindContainerByAppNameAsync(appName, cancellationToken);
@@ -344,7 +347,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             return new ContainerStatus
             {
                 AppName = appName,
-                Status = ContainerStatusStatus.Stopped,
+                Status = ContainerStatusType.Stopped,
                 Timestamp = DateTimeOffset.UtcNow,
                 Instances = 0
             };
@@ -359,6 +362,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         ContainerRestartRequest request,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.RestartContainerAsync");
         _logger.LogInformation(
             "Restarting container for app: {AppName}, Priority: {Priority}, Reason: {Reason}",
             appName,
@@ -372,9 +376,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             {
                 return new ContainerRestartResponse
                 {
-                    Accepted = false,
-                    AppName = appName,
-                    Message = $"No container found with app-id '{appName}'"
+                    Accepted = false
                 };
             }
 
@@ -403,11 +405,9 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             return new ContainerRestartResponse
             {
                 Accepted = true,
-                AppName = appName,
                 ScheduledFor = DateTimeOffset.UtcNow,
                 CurrentInstances = 1,
-                RestartStrategy = ContainerRestartResponseRestartStrategy.Simultaneous,
-                Message = $"Container {container.ID[..12]} restarted successfully"
+                RestartStrategy = RestartStrategy.Simultaneous
             };
         }
         catch (DockerApiException ex)
@@ -415,9 +415,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             _logger.LogError(ex, "Docker API error restarting container for {AppName}", appName);
             return new ContainerRestartResponse
             {
-                Accepted = false,
-                AppName = appName,
-                Message = $"Docker API error: {ex.Message}"
+                Accepted = false
             };
         }
         catch (Exception ex)
@@ -425,9 +423,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             _logger.LogError(ex, "Error restarting container for {AppName}", appName);
             return new ContainerRestartResponse
             {
-                Accepted = false,
-                AppName = appName,
-                Message = $"Error: {ex.Message}"
+                Accepted = false
             };
         }
     }
@@ -435,6 +431,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<IReadOnlyList<ContainerStatus>> ListContainersAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.ListContainersAsync");
         _logger.LogDebug("Listing all containers");
 
         try
@@ -501,6 +498,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         DateTimeOffset? since = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.GetContainerLogsAsync");
         _logger.LogDebug("Getting logs for app: {AppName}, tail: {Tail}", appName, tail);
 
         try
@@ -542,6 +540,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         string appName,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.FindContainerByAppNameAsync");
         // Try Bannou app-id label
         var containers = await _client.Containers.ListContainersAsync(
             new ContainersListParameters
@@ -609,13 +608,13 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         var dockerState = container.State.ToLowerInvariant();
         var status = dockerState switch
         {
-            "running" => ContainerStatusStatus.Running,
-            "restarting" => ContainerStatusStatus.Starting,
-            "exited" => ContainerStatusStatus.Stopped,
-            "dead" => ContainerStatusStatus.Unhealthy,
-            "created" => ContainerStatusStatus.Stopped,
-            "paused" => ContainerStatusStatus.Stopping,
-            _ => ContainerStatusStatus.Unhealthy
+            "running" => ContainerStatusType.Running,
+            "restarting" => ContainerStatusType.Starting,
+            "exited" => ContainerStatusType.Stopped,
+            "dead" => ContainerStatusType.Unhealthy,
+            "created" => ContainerStatusType.Stopped,
+            "paused" => ContainerStatusType.Stopping,
+            _ => ContainerStatusType.Unhealthy
         };
 
         return new ContainerStatus
@@ -623,7 +622,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             AppName = appName,
             Status = status,
             Timestamp = DateTimeOffset.UtcNow,
-            Instances = status == ContainerStatusStatus.Running ? 1 : 0,
+            Instances = status == ContainerStatusType.Running ? 1 : 0,
             RestartHistory = new List<RestartHistoryEntry>(),
             Labels = container.Labels ?? new Dictionary<string, string>()
         };
@@ -652,7 +651,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             var stderrContent = await stderrReader.ReadToEndAsync(cancellationToken);
             if (!string.IsNullOrEmpty(stderrContent))
             {
-                content += "\n[STDERR]\n" + stderrContent;
+                content += "\nstderr:\n" + stderrContent;
             }
         }
 
@@ -666,6 +665,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         Dictionary<string, string>? environment = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.DeployServiceAsync");
         _logger.LogInformation(
             "Deploying service: {ServiceName} with app-id: {AppId}",
             serviceName, appId);
@@ -887,6 +887,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// </summary>
     private async Task CleanupExistingContainerAsync(string containerName, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.CleanupExistingContainerAsync");
         var existingContainers = await _client.Containers.ListContainersAsync(
             new Docker.DotNet.Models.ContainersListParameters
             {
@@ -923,6 +924,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         bool removeVolumes = false,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.TeardownServiceAsync");
         _logger.LogInformation(
             "Tearing down service: {AppName}, removeVolumes: {RemoveVolumes}",
             appName, removeVolumes);
@@ -1002,6 +1004,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         int replicas,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.ScaleServiceAsync");
         await Task.CompletedTask;
         _logger.LogWarning(
             "Scale operation not supported in Docker Compose mode for {AppName}. Use Docker Swarm for scaling.",
@@ -1022,6 +1025,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<IReadOnlyList<string>> ListInfrastructureServicesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.ListInfrastructureServicesAsync");
         _logger.LogDebug("Listing infrastructure services (Docker Compose mode)");
 
         try
@@ -1067,6 +1071,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<PruneResult> PruneNetworksAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.PruneNetworksAsync");
         _logger.LogInformation("Pruning unused networks");
 
         try
@@ -1107,6 +1112,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<PruneResult> PruneVolumesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.PruneVolumesAsync");
         _logger.LogInformation("Pruning unused volumes");
 
         try
@@ -1149,6 +1155,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<PruneResult> PruneImagesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerComposeOrchestrator.PruneImagesAsync");
         _logger.LogInformation("Pruning dangling images");
 
         try

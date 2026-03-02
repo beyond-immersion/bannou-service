@@ -31,7 +31,7 @@ export class CharacterEncounterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getEncounterTypeAsync(
+  async characterEncounterGetEncounterTypeAsync(
     request: Schemas['GetEncounterTypeRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class CharacterEncounterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listEncounterTypesAsync(
+  async characterEncounterListEncounterTypesAsync(
     request: Schemas['ListEncounterTypesRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class CharacterEncounterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryByCharacterAsync(
+  async characterEncounterQueryByCharacterAsync(
     request: Schemas['QueryByCharacterRequest'],
     channel: number = 0,
     timeout?: number
@@ -85,7 +85,7 @@ export class CharacterEncounterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryBetweenAsync(
+  async characterEncounterQueryBetweenAsync(
     request: Schemas['QueryBetweenRequest'],
     channel: number = 0,
     timeout?: number
@@ -103,7 +103,7 @@ export class CharacterEncounterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryByLocationAsync(
+  async characterEncounterQueryByLocationAsync(
     request: Schemas['QueryByLocationRequest'],
     channel: number = 0,
     timeout?: number
@@ -121,7 +121,7 @@ export class CharacterEncounterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async hasMetAsync(
+  async characterEncounterHasMetAsync(
     request: Schemas['HasMetRequest'],
     channel: number = 0,
     timeout?: number
@@ -141,7 +141,7 @@ export class CharacterEncounterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSentimentAsync(
+  async characterEncounterGetSentimentAsync(
     request: Schemas['GetSentimentRequest'],
     channel: number = 0,
     timeout?: number
@@ -161,7 +161,7 @@ export class CharacterEncounterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getPerspectiveAsync(
+  async characterEncounterGetPerspectiveAsync(
     request: Schemas['GetPerspectiveRequest'],
     channel: number = 0,
     timeout?: number
@@ -179,7 +179,7 @@ export class CharacterEncounterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCompressDataAsync(
+  async characterEncounterGetCompressDataAsync(
     request: Schemas['GetCompressDataRequest'],
     channel: number = 0,
     timeout?: number

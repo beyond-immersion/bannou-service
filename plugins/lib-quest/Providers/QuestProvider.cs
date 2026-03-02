@@ -1,7 +1,7 @@
 // =============================================================================
 // Quest Variable Provider
 // Provides quest data for ABML expressions via ${quest.*} paths.
-// Owned by lib-quest per service hierarchy (L4).
+// Owned by lib-quest per service hierarchy (L2 GameFoundation).
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;

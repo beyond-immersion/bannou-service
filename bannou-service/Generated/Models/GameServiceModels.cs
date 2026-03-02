@@ -119,6 +119,12 @@ public partial class CreateServiceRequest
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = true;
 
+    /// <summary>
+    /// Whether GameSession should auto-create lobby sessions and publish join shortcuts for this game service on player connect. When false, entry is managed by higher-layer orchestration (e.g., Gardener).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("autoLobbyEnabled")]
+    public bool AutoLobbyEnabled { get; set; } = false;
+
 }
 
 /// <summary>
@@ -155,6 +161,12 @@ public partial class UpdateServiceRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool? IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// New auto-lobby enabled status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("autoLobbyEnabled")]
+    public bool? AutoLobbyEnabled { get; set; } = default!;
 
 }
 
@@ -223,6 +235,12 @@ public partial class ServiceInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// Whether GameSession auto-creates lobby sessions and publishes join shortcuts for this game service on player connect
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("autoLobbyEnabled")]
+    public bool AutoLobbyEnabled { get; set; } = default!;
 
     /// <summary>
     /// When the service was created

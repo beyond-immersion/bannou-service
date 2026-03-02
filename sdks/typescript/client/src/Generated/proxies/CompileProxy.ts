@@ -31,7 +31,7 @@ export class CompileProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async compileAbmlBehaviorAsync(
+  async behaviorCompileAbmlBehaviorAsync(
     request: Schemas['CompileBehaviorRequest'],
     channel: number = 0,
     timeout?: number

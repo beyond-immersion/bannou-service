@@ -28,7 +28,7 @@ namespace BeyondImmersion.Bannou.Client.Voice;
 /// </para>
 /// <para>
 /// <b>Automatic Tier Transition:</b><br/>
-/// When 6+ participants join, the server sends a <see cref="VoiceTierUpgradeEvent"/>.
+/// When 6+ participants join, the server sends a <see cref="VoiceTierUpgradeClientEvent"/>.
 /// This manager automatically:
 /// <list type="bullet">
 ///   <item>Closes all P2P connections</item>
@@ -52,7 +52,7 @@ public sealed class VoiceRoomManager : IDisposable
     private bool _disposed;
 
     private Guid? _currentRoomId;
-    private VoiceTier _currentTier = VoiceTier.P2p;
+    private VoiceTier _currentTier = VoiceTier.P2P;
     private IReadOnlyList<string> _stunServers = Array.Empty<string>();
 
     // Scaled tier connection (null when in P2P mode)
@@ -211,12 +211,12 @@ public sealed class VoiceRoomManager : IDisposable
         _scaledConnectionFactory = scaledConnectionFactory ?? CreateDefaultScaledConnection;
 
         // Subscribe to voice events
-        _client.OnEvent("voice.room_state", HandleRoomState);
-        _client.OnEvent("voice.peer_joined", HandlePeerJoined);
-        _client.OnEvent("voice.peer_left", HandlePeerLeft);
-        _client.OnEvent("voice.peer_updated", HandlePeerUpdated);
-        _client.OnEvent("voice.tier_upgrade", HandleTierUpgrade);
-        _client.OnEvent("voice.room_closed", HandleRoomClosed);
+        _client.OnEvent("voice.room.state", HandleRoomState);
+        _client.OnEvent("voice.peer.joined", HandlePeerJoined);
+        _client.OnEvent("voice.peer.left", HandlePeerLeft);
+        _client.OnEvent("voice.peer.updated", HandlePeerUpdated);
+        _client.OnEvent("voice.tier-upgrade", HandleTierUpgrade);
+        _client.OnEvent("voice.room.closed", HandleRoomClosed);
     }
 
     private static IScaledVoiceConnection CreateDefaultScaledConnection(Guid roomId)
@@ -255,7 +255,7 @@ public sealed class VoiceRoomManager : IDisposable
             // Scaled mode: send to RTP server
             _scaledConnection.SendAudioFrame(pcmSamples, sampleRate, channels);
         }
-        else if (_currentTier == VoiceTier.P2p)
+        else if (_currentTier == VoiceTier.P2P)
         {
             // P2P mode: send to all peers
             foreach (var peer in _peers.Values)
@@ -306,7 +306,7 @@ public sealed class VoiceRoomManager : IDisposable
         await CloseAllPeersAsync();
         await CloseScaledConnectionAsync();
         _currentRoomId = null;
-        _currentTier = VoiceTier.P2p;
+        _currentTier = VoiceTier.P2P;
     }
 
     private async Task CloseScaledConnectionAsync()
@@ -338,12 +338,12 @@ public sealed class VoiceRoomManager : IDisposable
                     _disposed = true;
 
                     // Unsubscribe from events
-                    _client.RemoveEventHandler("voice.room_state");
-                    _client.RemoveEventHandler("voice.peer_joined");
-                    _client.RemoveEventHandler("voice.peer_left");
-                    _client.RemoveEventHandler("voice.peer_updated");
-                    _client.RemoveEventHandler("voice.tier_upgrade");
-                    _client.RemoveEventHandler("voice.room_closed");
+                    _client.RemoveEventHandler("voice.room.state");
+                    _client.RemoveEventHandler("voice.peer.joined");
+                    _client.RemoveEventHandler("voice.peer.left");
+                    _client.RemoveEventHandler("voice.peer.updated");
+                    _client.RemoveEventHandler("voice.tier-upgrade");
+                    _client.RemoveEventHandler("voice.room.closed");
 
                     // Close all P2P peers
                     foreach (var peer in _peers.Values)
@@ -366,7 +366,7 @@ public sealed class VoiceRoomManager : IDisposable
     {
         try
         {
-            var evt = BannouJson.Deserialize<VoiceRoomStateEvent>(json);
+            var evt = BannouJson.Deserialize<VoiceRoomStateClientEvent>(json);
             if (evt == null) return;
 
             _currentRoomId = evt.RoomId;
@@ -374,7 +374,7 @@ public sealed class VoiceRoomManager : IDisposable
             _stunServers = evt.StunServers?.ToList() ?? new List<string>();
 
             // If P2P mode, connect to all existing peers
-            if (evt.Tier == VoiceTier.P2p)
+            if (evt.Tier == VoiceTier.P2P)
             {
                 foreach (var peerInfo in evt.Peers)
                 {
@@ -392,10 +392,10 @@ public sealed class VoiceRoomManager : IDisposable
     {
         try
         {
-            var evt = BannouJson.Deserialize<VoicePeerJoinedEvent>(json);
+            var evt = BannouJson.Deserialize<VoicePeerJoinedClientEvent>(json);
             if (evt == null || evt.RoomId != _currentRoomId) return;
 
-            if (_currentTier == VoiceTier.P2p)
+            if (_currentTier == VoiceTier.P2P)
             {
                 _ = ConnectToPeerAsync(evt.Peer);
             }
@@ -412,7 +412,7 @@ public sealed class VoiceRoomManager : IDisposable
     {
         try
         {
-            var evt = BannouJson.Deserialize<VoicePeerLeftEvent>(json);
+            var evt = BannouJson.Deserialize<VoicePeerLeftClientEvent>(json);
             if (evt == null || evt.RoomId != _currentRoomId) return;
 
             if (_peers.TryRemove(evt.PeerSessionId, out var peer))
@@ -432,7 +432,7 @@ public sealed class VoiceRoomManager : IDisposable
     {
         try
         {
-            var evt = BannouJson.Deserialize<VoicePeerUpdatedEvent>(json);
+            var evt = BannouJson.Deserialize<VoicePeerUpdatedClientEvent>(json);
             if (evt == null || evt.RoomId != _currentRoomId) return;
 
             // Add any new ICE candidates from the peer
@@ -454,7 +454,7 @@ public sealed class VoiceRoomManager : IDisposable
     {
         try
         {
-            var evt = BannouJson.Deserialize<VoiceTierUpgradeEvent>(json);
+            var evt = BannouJson.Deserialize<VoiceTierUpgradeClientEvent>(json);
             if (evt == null || evt.RoomId != _currentRoomId) return;
 
             _currentTier = VoiceTier.Scaled;
@@ -477,7 +477,7 @@ public sealed class VoiceRoomManager : IDisposable
         }
     }
 
-    private async Task TransitionToScaledTierAsync(VoiceTierUpgradeEvent evt)
+    private async Task TransitionToScaledTierAsync(VoiceTierUpgradeClientEvent evt)
     {
         if (!_currentRoomId.HasValue || evt.SipCredentials == null)
         {
@@ -551,13 +551,13 @@ public sealed class VoiceRoomManager : IDisposable
     {
         try
         {
-            var evt = BannouJson.Deserialize<VoiceRoomClosedEvent>(json);
+            var evt = BannouJson.Deserialize<VoiceRoomClosedClientEvent>(json);
             if (evt == null || evt.RoomId != _currentRoomId) return;
 
             _ = CloseAllPeersAsync();
             _ = CloseScaledConnectionAsync();
             _currentRoomId = null;
-            _currentTier = VoiceTier.P2p;
+            _currentTier = VoiceTier.P2P;
 
             OnRoomClosed?.Invoke(evt.Reason.ToString());
         }

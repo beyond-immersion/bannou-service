@@ -56,7 +56,7 @@ public interface IGitSyncService
     /// </summary>
     /// <param name="localPath">The local repository path.</param>
     /// <returns>The commit hash, or null if the repository doesn't exist.</returns>
-    string? GetHeadCommit(string localPath);
+    Task<string?> GetHeadCommitAsync(string localPath);
 
     /// <summary>
     /// Reads the content of a file from the repository.

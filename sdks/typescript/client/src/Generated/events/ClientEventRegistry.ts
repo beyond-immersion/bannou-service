@@ -30,7 +30,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'asset.bundle.creation.complete',
     {
       eventName: 'asset.bundle.creation.complete',
-      typeName: 'BundleCreationCompleteEvent',
+      typeName: 'BundleCreationCompleteClientEvent',
       service: 'asset',
     },
   ],
@@ -38,7 +38,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'asset.bundle.validation.complete',
     {
       eventName: 'asset.bundle.validation.complete',
-      typeName: 'BundleValidationCompleteEvent',
+      typeName: 'BundleValidationCompleteClientEvent',
       service: 'asset',
     },
   ],
@@ -46,7 +46,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'asset.bundle.validation.failed',
     {
       eventName: 'asset.bundle.validation.failed',
-      typeName: 'BundleValidationFailedEvent',
+      typeName: 'BundleValidationFailedClientEvent',
       service: 'asset',
     },
   ],
@@ -54,7 +54,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'asset.metabundle.creation.complete',
     {
       eventName: 'asset.metabundle.creation.complete',
-      typeName: 'MetabundleCreationCompleteEvent',
+      typeName: 'MetabundleCreationCompleteClientEvent',
       service: 'asset',
     },
   ],
@@ -62,7 +62,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'asset.processing.complete',
     {
       eventName: 'asset.processing.complete',
-      typeName: 'AssetProcessingCompleteEvent',
+      typeName: 'AssetProcessingCompleteClientEvent',
       service: 'asset',
     },
   ],
@@ -70,261 +70,503 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'asset.processing.failed',
     {
       eventName: 'asset.processing.failed',
-      typeName: 'AssetProcessingFailedEvent',
+      typeName: 'AssetProcessingFailedClientEvent',
       service: 'asset',
     },
   ],
-  ['asset.ready', { eventName: 'asset.ready', typeName: 'AssetReadyEvent', service: 'asset' }],
   [
-    'asset.upload.complete',
-    { eventName: 'asset.upload.complete', typeName: 'AssetUploadCompleteEvent', service: 'asset' },
+    'asset.ready',
+    { eventName: 'asset.ready', typeName: 'AssetReadyClientEvent', service: 'asset' },
   ],
   [
-    'chat.message_deleted',
+    'asset.upload.complete',
     {
-      eventName: 'chat.message_deleted',
+      eventName: 'asset.upload.complete',
+      typeName: 'AssetUploadCompleteClientEvent',
+      service: 'asset',
+    },
+  ],
+  [
+    'auth.device-login',
+    { eventName: 'auth.device-login', typeName: 'AuthDeviceLoginClientEvent', service: 'auth' },
+  ],
+  [
+    'auth.external-account-linked',
+    {
+      eventName: 'auth.external-account-linked',
+      typeName: 'AuthExternalAccountLinkedClientEvent',
+      service: 'auth',
+    },
+  ],
+  [
+    'auth.mfa-disabled',
+    { eventName: 'auth.mfa-disabled', typeName: 'AuthMfaDisabledClientEvent', service: 'auth' },
+  ],
+  [
+    'auth.mfa-enabled',
+    { eventName: 'auth.mfa-enabled', typeName: 'AuthMfaEnabledClientEvent', service: 'auth' },
+  ],
+  [
+    'auth.password-changed',
+    {
+      eventName: 'auth.password-changed',
+      typeName: 'AuthPasswordChangedClientEvent',
+      service: 'auth',
+    },
+  ],
+  [
+    'auth.session-terminated',
+    {
+      eventName: 'auth.session-terminated',
+      typeName: 'AuthSessionTerminatedClientEvent',
+      service: 'auth',
+    },
+  ],
+  [
+    'auth.suspicious-login',
+    {
+      eventName: 'auth.suspicious-login',
+      typeName: 'AuthSuspiciousLoginClientEvent',
+      service: 'auth',
+    },
+  ],
+  [
+    'character.realm-transferred',
+    {
+      eventName: 'character.realm-transferred',
+      typeName: 'CharacterRealmTransferredClientEvent',
+      service: 'character',
+    },
+  ],
+  [
+    'character.updated',
+    {
+      eventName: 'character.updated',
+      typeName: 'CharacterUpdatedClientEvent',
+      service: 'character',
+    },
+  ],
+  [
+    'chat.message.deleted',
+    {
+      eventName: 'chat.message.deleted',
       typeName: 'ChatMessageDeletedClientEvent',
       service: 'chat',
     },
   ],
   [
-    'chat.message_pinned',
-    { eventName: 'chat.message_pinned', typeName: 'ChatMessagePinnedEvent', service: 'chat' },
+    'chat.message.pinned',
+    { eventName: 'chat.message.pinned', typeName: 'ChatMessagePinnedClientEvent', service: 'chat' },
   ],
   [
-    'chat.message_received',
-    { eventName: 'chat.message_received', typeName: 'ChatMessageReceivedEvent', service: 'chat' },
-  ],
-  [
-    'chat.participant_banned',
+    'chat.message.received',
     {
-      eventName: 'chat.participant_banned',
+      eventName: 'chat.message.received',
+      typeName: 'ChatMessageReceivedClientEvent',
+      service: 'chat',
+    },
+  ],
+  [
+    'chat.participant.banned',
+    {
+      eventName: 'chat.participant.banned',
       typeName: 'ChatParticipantBannedClientEvent',
       service: 'chat',
     },
   ],
   [
-    'chat.participant_joined',
+    'chat.participant.joined',
     {
-      eventName: 'chat.participant_joined',
+      eventName: 'chat.participant.joined',
       typeName: 'ChatParticipantJoinedClientEvent',
       service: 'chat',
     },
   ],
   [
-    'chat.participant_kicked',
+    'chat.participant.kicked',
     {
-      eventName: 'chat.participant_kicked',
+      eventName: 'chat.participant.kicked',
       typeName: 'ChatParticipantKickedClientEvent',
       service: 'chat',
     },
   ],
   [
-    'chat.participant_left',
+    'chat.participant.left',
     {
-      eventName: 'chat.participant_left',
+      eventName: 'chat.participant.left',
       typeName: 'ChatParticipantLeftClientEvent',
       service: 'chat',
     },
   ],
   [
-    'chat.participant_muted',
+    'chat.participant.muted',
     {
-      eventName: 'chat.participant_muted',
+      eventName: 'chat.participant.muted',
       typeName: 'ChatParticipantMutedClientEvent',
       service: 'chat',
     },
   ],
   [
-    'chat.participant_unmuted',
+    'chat.participant.role-changed',
     {
-      eventName: 'chat.participant_unmuted',
+      eventName: 'chat.participant.role-changed',
+      typeName: 'ChatParticipantRoleChangedClientEvent',
+      service: 'chat',
+    },
+  ],
+  [
+    'chat.participant.unbanned',
+    {
+      eventName: 'chat.participant.unbanned',
+      typeName: 'ChatParticipantUnbannedClientEvent',
+      service: 'chat',
+    },
+  ],
+  [
+    'chat.participant.unmuted',
+    {
+      eventName: 'chat.participant.unmuted',
       typeName: 'ChatParticipantUnmutedClientEvent',
       service: 'chat',
     },
   ],
   [
-    'chat.room_deleted',
-    { eventName: 'chat.room_deleted', typeName: 'ChatRoomDeletedClientEvent', service: 'chat' },
+    'chat.room.deleted',
+    { eventName: 'chat.room.deleted', typeName: 'ChatRoomDeletedClientEvent', service: 'chat' },
   ],
   [
-    'chat.room_locked',
-    { eventName: 'chat.room_locked', typeName: 'ChatRoomLockedClientEvent', service: 'chat' },
+    'chat.room.locked',
+    { eventName: 'chat.room.locked', typeName: 'ChatRoomLockedClientEvent', service: 'chat' },
   ],
   [
-    'chat.typing_started',
-    { eventName: 'chat.typing_started', typeName: 'ChatTypingStartedClientEvent', service: 'chat' },
+    'chat.room.updated',
+    { eventName: 'chat.room.updated', typeName: 'ChatRoomUpdatedClientEvent', service: 'chat' },
   ],
   [
-    'chat.typing_stopped',
-    { eventName: 'chat.typing_stopped', typeName: 'ChatTypingStoppedClientEvent', service: 'chat' },
+    'chat.typing-started',
+    { eventName: 'chat.typing-started', typeName: 'ChatTypingStartedClientEvent', service: 'chat' },
   ],
   [
-    'connect.capability_manifest',
+    'chat.typing-stopped',
+    { eventName: 'chat.typing-stopped', typeName: 'ChatTypingStoppedClientEvent', service: 'chat' },
+  ],
+  [
+    'collection.discovery.advanced',
     {
-      eventName: 'connect.capability_manifest',
-      typeName: 'CapabilityManifestEvent',
+      eventName: 'collection.discovery.advanced',
+      typeName: 'CollectionDiscoveryAdvancedClientEvent',
+      service: 'collection',
+    },
+  ],
+  [
+    'collection.entry.unlocked',
+    {
+      eventName: 'collection.entry.unlocked',
+      typeName: 'CollectionEntryUnlockedClientEvent',
+      service: 'collection',
+    },
+  ],
+  [
+    'collection.milestone-reached',
+    {
+      eventName: 'collection.milestone-reached',
+      typeName: 'CollectionMilestoneReachedClientEvent',
+      service: 'collection',
+    },
+  ],
+  [
+    'connect.capability-manifest',
+    {
+      eventName: 'connect.capability-manifest',
+      typeName: 'CapabilityManifestClientEvent',
       service: 'common',
     },
   ],
   [
-    'connect.disconnect_notification',
+    'connect.disconnect-notification',
     {
-      eventName: 'connect.disconnect_notification',
-      typeName: 'DisconnectNotificationEvent',
+      eventName: 'connect.disconnect-notification',
+      typeName: 'DisconnectNotificationClientEvent',
       service: 'common',
     },
   ],
   [
-    'game_session.action_result',
+    'currency.balance.changed',
     {
-      eventName: 'game_session.action_result',
-      typeName: 'GameActionResultEvent',
+      eventName: 'currency.balance.changed',
+      typeName: 'CurrencyBalanceChangedClientEvent',
+      service: 'currency',
+    },
+  ],
+  [
+    'currency.wallet.frozen',
+    {
+      eventName: 'currency.wallet.frozen',
+      typeName: 'CurrencyWalletFrozenClientEvent',
+      service: 'currency',
+    },
+  ],
+  [
+    'currency.wallet.unfrozen',
+    {
+      eventName: 'currency.wallet.unfrozen',
+      typeName: 'CurrencyWalletUnfrozenClientEvent',
+      service: 'currency',
+    },
+  ],
+  [
+    'game-session.action-result',
+    {
+      eventName: 'game-session.action-result',
+      typeName: 'GameActionResultClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game_session.chat_received',
+    'game-session.chat-received',
     {
-      eventName: 'game_session.chat_received',
-      typeName: 'SessionChatReceivedEvent',
+      eventName: 'game-session.chat-received',
+      typeName: 'SessionChatReceivedClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game_session.player_joined',
+    'game-session.player-joined',
     {
-      eventName: 'game_session.player_joined',
-      typeName: 'PlayerJoinedEvent',
+      eventName: 'game-session.player-joined',
+      typeName: 'PlayerJoinedClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game_session.player_kicked',
+    'game-session.player-kicked',
     {
-      eventName: 'game_session.player_kicked',
-      typeName: 'PlayerKickedEvent',
+      eventName: 'game-session.player-kicked',
+      typeName: 'PlayerKickedClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game_session.player_left',
-    { eventName: 'game_session.player_left', typeName: 'PlayerLeftEvent', service: 'game-session' },
-  ],
-  [
-    'game_session.state_changed',
+    'game-session.player-left',
     {
-      eventName: 'game_session.state_changed',
-      typeName: 'SessionStateChangedEvent',
+      eventName: 'game-session.player-left',
+      typeName: 'PlayerLeftClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game_session.state_updated',
+    'game-session.session-cancelled',
     {
-      eventName: 'game_session.state_updated',
-      typeName: 'GameStateUpdatedEvent',
+      eventName: 'game-session.session-cancelled',
+      typeName: 'SessionCancelledClientEvent',
       service: 'game-session',
     },
+  ],
+  [
+    'game-session.state-changed',
+    {
+      eventName: 'game-session.state-changed',
+      typeName: 'SessionStateChangedClientEvent',
+      service: 'game-session',
+    },
+  ],
+  [
+    'game-session.state-updated',
+    {
+      eventName: 'game-session.state-updated',
+      typeName: 'GameStateUpdatedClientEvent',
+      service: 'game-session',
+    },
+  ],
+  [
+    'inventory.container.full',
+    {
+      eventName: 'inventory.container.full',
+      typeName: 'InventoryContainerFullClientEvent',
+      service: 'inventory',
+    },
+  ],
+  [
+    'inventory.item.changed',
+    {
+      eventName: 'inventory.item.changed',
+      typeName: 'InventoryItemChangedClientEvent',
+      service: 'inventory',
+    },
+  ],
+  [
+    'inventory.item.transferred',
+    {
+      eventName: 'inventory.item.transferred',
+      typeName: 'InventoryItemTransferredClientEvent',
+      service: 'inventory',
+    },
+  ],
+  [
+    'location.presence-changed',
+    {
+      eventName: 'location.presence-changed',
+      typeName: 'LocationPresenceChangedClientEvent',
+      service: 'location',
+    },
+  ],
+  [
+    'location.updated',
+    { eventName: 'location.updated', typeName: 'LocationUpdatedClientEvent', service: 'location' },
   ],
   [
     'matchmaking.cancelled',
     {
       eventName: 'matchmaking.cancelled',
-      typeName: 'MatchmakingCancelledEvent',
+      typeName: 'MatchmakingCancelledClientEvent',
       service: 'matchmaking',
     },
   ],
   [
-    'matchmaking.match_confirmed',
+    'matchmaking.match-confirmed',
     {
-      eventName: 'matchmaking.match_confirmed',
-      typeName: 'MatchConfirmedEvent',
+      eventName: 'matchmaking.match-confirmed',
+      typeName: 'MatchConfirmedClientEvent',
       service: 'matchmaking',
     },
   ],
   [
-    'matchmaking.match_declined',
+    'matchmaking.match-declined',
     {
-      eventName: 'matchmaking.match_declined',
-      typeName: 'MatchDeclinedEvent',
+      eventName: 'matchmaking.match-declined',
+      typeName: 'MatchDeclinedClientEvent',
       service: 'matchmaking',
     },
   ],
   [
-    'matchmaking.match_found',
-    { eventName: 'matchmaking.match_found', typeName: 'MatchFoundEvent', service: 'matchmaking' },
-  ],
-  [
-    'matchmaking.player_accepted',
+    'matchmaking.match-found',
     {
-      eventName: 'matchmaking.player_accepted',
-      typeName: 'MatchPlayerAcceptedEvent',
+      eventName: 'matchmaking.match-found',
+      typeName: 'MatchFoundClientEvent',
       service: 'matchmaking',
     },
   ],
   [
-    'matchmaking.queue_joined',
-    { eventName: 'matchmaking.queue_joined', typeName: 'QueueJoinedEvent', service: 'matchmaking' },
-  ],
-  [
-    'matchmaking.status_update',
+    'matchmaking.player-accepted',
     {
-      eventName: 'matchmaking.status_update',
-      typeName: 'MatchmakingStatusUpdateEvent',
+      eventName: 'matchmaking.player-accepted',
+      typeName: 'MatchPlayerAcceptedClientEvent',
       service: 'matchmaking',
     },
   ],
-  ['system.error', { eventName: 'system.error', typeName: 'SystemErrorEvent', service: 'common' }],
+  [
+    'matchmaking.queue.joined',
+    {
+      eventName: 'matchmaking.queue.joined',
+      typeName: 'QueueJoinedClientEvent',
+      service: 'matchmaking',
+    },
+  ],
+  [
+    'matchmaking.status-update',
+    {
+      eventName: 'matchmaking.status-update',
+      typeName: 'MatchmakingStatusUpdateClientEvent',
+      service: 'matchmaking',
+    },
+  ],
+  [
+    'status.effect-changed',
+    {
+      eventName: 'status.effect-changed',
+      typeName: 'StatusEffectChangedClientEvent',
+      service: 'status',
+    },
+  ],
+  [
+    'subscription.status-changed',
+    {
+      eventName: 'subscription.status-changed',
+      typeName: 'SubscriptionStatusChangedClientEvent',
+      service: 'subscription',
+    },
+  ],
+  [
+    'system.error',
+    { eventName: 'system.error', typeName: 'SystemErrorClientEvent', service: 'common' },
+  ],
   [
     'system.notification',
-    { eventName: 'system.notification', typeName: 'SystemNotificationEvent', service: 'common' },
+    {
+      eventName: 'system.notification',
+      typeName: 'SystemNotificationClientEvent',
+      service: 'common',
+    },
   ],
   [
-    'voice.broadcast_consent_request',
+    'transit.connection.status-changed',
     {
-      eventName: 'voice.broadcast_consent_request',
-      typeName: 'VoiceBroadcastConsentRequestEvent',
+      eventName: 'transit.connection.status-changed',
+      typeName: 'TransitConnectionStatusChangedClientEvent',
+      service: 'transit',
+    },
+  ],
+  [
+    'transit.discovery.revealed',
+    {
+      eventName: 'transit.discovery.revealed',
+      typeName: 'TransitDiscoveryRevealedClientEvent',
+      service: 'transit',
+    },
+  ],
+  [
+    'transit.journey.updated',
+    {
+      eventName: 'transit.journey.updated',
+      typeName: 'TransitJourneyUpdatedClientEvent',
+      service: 'transit',
+    },
+  ],
+  [
+    'voice.broadcast.consent-request',
+    {
+      eventName: 'voice.broadcast.consent-request',
+      typeName: 'VoiceBroadcastConsentRequestClientEvent',
       service: 'voice',
     },
   ],
   [
-    'voice.broadcast_consent_update',
+    'voice.broadcast.consent-update',
     {
-      eventName: 'voice.broadcast_consent_update',
-      typeName: 'VoiceBroadcastConsentUpdateEvent',
+      eventName: 'voice.broadcast.consent-update',
+      typeName: 'VoiceBroadcastConsentUpdateClientEvent',
       service: 'voice',
     },
   ],
   [
-    'voice.peer_joined',
-    { eventName: 'voice.peer_joined', typeName: 'VoicePeerJoinedEvent', service: 'voice' },
+    'voice.peer.joined',
+    { eventName: 'voice.peer.joined', typeName: 'VoicePeerJoinedClientEvent', service: 'voice' },
   ],
   [
-    'voice.peer_left',
-    { eventName: 'voice.peer_left', typeName: 'VoicePeerLeftEvent', service: 'voice' },
+    'voice.peer.left',
+    { eventName: 'voice.peer.left', typeName: 'VoicePeerLeftClientEvent', service: 'voice' },
   ],
   [
-    'voice.peer_updated',
-    { eventName: 'voice.peer_updated', typeName: 'VoicePeerUpdatedEvent', service: 'voice' },
+    'voice.peer.updated',
+    { eventName: 'voice.peer.updated', typeName: 'VoicePeerUpdatedClientEvent', service: 'voice' },
   ],
   [
-    'voice.room_closed',
-    { eventName: 'voice.room_closed', typeName: 'VoiceRoomClosedEvent', service: 'voice' },
+    'voice.room.closed',
+    { eventName: 'voice.room.closed', typeName: 'VoiceRoomClosedClientEvent', service: 'voice' },
   ],
   [
-    'voice.room_state',
-    { eventName: 'voice.room_state', typeName: 'VoiceRoomStateEvent', service: 'voice' },
+    'voice.room.state',
+    { eventName: 'voice.room.state', typeName: 'VoiceRoomStateClientEvent', service: 'voice' },
   ],
   [
-    'voice.tier_upgrade',
-    { eventName: 'voice.tier_upgrade', typeName: 'VoiceTierUpgradeEvent', service: 'voice' },
+    'voice.tier-upgrade',
+    { eventName: 'voice.tier-upgrade', typeName: 'VoiceTierUpgradeClientEvent', service: 'voice' },
   ],
   [
-    'worldstate.time_sync',
+    'worldstate.time-sync',
     {
-      eventName: 'worldstate.time_sync',
-      typeName: 'WorldstateTimeSyncEvent',
+      eventName: 'worldstate.time-sync',
+      typeName: 'WorldstateTimeSyncClientEvent',
       service: 'worldstate',
     },
   ],

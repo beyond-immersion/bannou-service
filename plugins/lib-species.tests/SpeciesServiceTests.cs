@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
@@ -13,6 +14,7 @@ using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using Resource = BeyondImmersion.BannouService.Resource;
 
 namespace BeyondImmersion.BannouService.Species.Tests;
 
@@ -26,10 +28,12 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
     private readonly Mock<IStateStore<SpeciesModel>> _mockSpeciesStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IStateStore<List<Guid>>> _mockListStore;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<SpeciesService>> _mockLogger;
     private readonly Mock<ICharacterClient> _mockCharacterClient;
     private readonly Mock<IRealmClient> _mockRealmClient;
+    private readonly Mock<IResourceClient> _mockResourceClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     private const string STATE_STORE = "species-statestore";
@@ -40,10 +44,12 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         _mockSpeciesStore = new Mock<IStateStore<SpeciesModel>>();
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockListStore = new Mock<IStateStore<List<Guid>>>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<SpeciesService>>();
         _mockCharacterClient = new Mock<ICharacterClient>();
         _mockRealmClient = new Mock<IRealmClient>();
+        _mockResourceClient = new Mock<IResourceClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup default factory returns
@@ -56,6 +62,11 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         _mockStateStoreFactory
             .Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
             .Returns(_mockListStore.Object);
+
+        // Setup lock provider to always succeed
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Mock.Of<ILockResponse>());
 
         // Default realm validation to pass (realm exists and is active)
         _mockRealmClient
@@ -70,17 +81,25 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         _mockCharacterClient
             .Setup(c => c.GetCharactersByRealmAsync(It.IsAny<GetCharactersByRealmRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterListResponse { Characters = new List<CharacterResponse>(), TotalCount = 0 });
+
+        // Default resource check to pass (no external references)
+        _mockResourceClient
+            .Setup(r => r.CheckReferencesAsync(It.IsAny<Resource.CheckReferencesRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Resource.CheckReferencesResponse { ResourceType = "species", RefCount = 0 });
     }
 
     private SpeciesService CreateService()
     {
         return new SpeciesService(
             _mockStateStoreFactory.Object,
+            _mockLockProvider.Object,
             _mockMessageBus.Object,
             _mockLogger.Object,
+            new NullTelemetryProvider(),
             Configuration,
             _mockCharacterClient.Object,
             _mockRealmClient.Object,
+            _mockResourceClient.Object,
             _mockEventConsumer.Object);
     }
 
@@ -793,7 +812,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         var request = new DeprecateSpeciesRequest
         {
             SpeciesId = speciesId,
-            Reason = "No longer used"
+            DeprecationReason = "No longer used"
         };
 
         // Act
@@ -844,6 +863,694 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.False(response.IsDeprecated);
+    }
+
+    #endregion
+
+    #region Merge Tests
+
+    [Fact]
+    public async Task MergeSpeciesAsync_ValidSourceAndTarget_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var sourceModel = CreateTestSpeciesModel(sourceId, "SOURCE", "Source Species");
+        sourceModel.IsDeprecated = true;
+        sourceModel.DeprecatedAt = DateTimeOffset.UtcNow.AddDays(-1);
+        var targetModel = CreateTestSpeciesModel(targetId, "TARGET", "Target Species");
+
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{sourceId}", It.IsAny<CancellationToken>())).ReturnsAsync(sourceModel);
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{targetId}", It.IsAny<CancellationToken>())).ReturnsAsync(targetModel);
+        _mockCharacterClient.Setup(c => c.ListCharactersAsync(It.IsAny<ListCharactersRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterListResponse { Characters = new List<CharacterResponse>(), TotalCount = 0 });
+
+        // Act
+        var (status, response) = await service.MergeSpeciesAsync(
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.CharactersMigrated);
+        Assert.False(response.SourceDeleted);
+        Assert.Null(response.FailedEntityIds);
+    }
+
+    [Fact]
+    public async Task MergeSpeciesAsync_NonExistentSource_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{sourceId}", It.IsAny<CancellationToken>())).ReturnsAsync((SpeciesModel?)null);
+
+        // Act
+        var (status, _) = await service.MergeSpeciesAsync(
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task MergeSpeciesAsync_NonDeprecatedSource_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var sourceModel = CreateTestSpeciesModel(sourceId, "SOURCE", "Source Species");
+
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{sourceId}", It.IsAny<CancellationToken>())).ReturnsAsync(sourceModel);
+
+        // Act
+        var (status, _) = await service.MergeSpeciesAsync(
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task MergeSpeciesAsync_NonExistentTarget_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var sourceModel = CreateTestSpeciesModel(sourceId, "SOURCE", "Source Species");
+        sourceModel.IsDeprecated = true;
+
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{sourceId}", It.IsAny<CancellationToken>())).ReturnsAsync(sourceModel);
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{targetId}", It.IsAny<CancellationToken>())).ReturnsAsync((SpeciesModel?)null);
+
+        // Act
+        var (status, _) = await service.MergeSpeciesAsync(
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task MergeSpeciesAsync_DeprecatedTarget_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var sourceModel = CreateTestSpeciesModel(sourceId, "SOURCE", "Source Species");
+        sourceModel.IsDeprecated = true;
+        var targetModel = CreateTestSpeciesModel(targetId, "TARGET", "Target Species");
+        targetModel.IsDeprecated = true;
+
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{sourceId}", It.IsAny<CancellationToken>())).ReturnsAsync(sourceModel);
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{targetId}", It.IsAny<CancellationToken>())).ReturnsAsync(targetModel);
+
+        // Act
+        var (status, _) = await service.MergeSpeciesAsync(
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task MergeSpeciesAsync_WithCharacters_MigratesAndReturnsCount()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var sourceModel = CreateTestSpeciesModel(sourceId, "SOURCE", "Source Species");
+        sourceModel.IsDeprecated = true;
+        var targetModel = CreateTestSpeciesModel(targetId, "TARGET", "Target Species");
+
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{sourceId}", It.IsAny<CancellationToken>())).ReturnsAsync(sourceModel);
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{targetId}", It.IsAny<CancellationToken>())).ReturnsAsync(targetModel);
+        _mockCharacterClient.Setup(c => c.ListCharactersAsync(
+                It.Is<ListCharactersRequest>(r => r.SpeciesId == sourceId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterListResponse
+            {
+                Characters = new List<CharacterResponse> { new() { CharacterId = characterId } },
+                TotalCount = 1,
+                HasNextPage = false
+            });
+        _mockCharacterClient.Setup(c => c.UpdateCharacterAsync(It.IsAny<UpdateCharacterRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterResponse { CharacterId = characterId });
+
+        // Act
+        var (status, response) = await service.MergeSpeciesAsync(
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.CharactersMigrated);
+        _mockCharacterClient.Verify(c => c.UpdateCharacterAsync(
+            It.Is<UpdateCharacterRequest>(r => r.CharacterId == characterId && r.SpeciesId == targetId),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task MergeSpeciesAsync_FailedMigrations_PopulatesFailedEntityIds()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var failedCharId = Guid.NewGuid();
+        var sourceModel = CreateTestSpeciesModel(sourceId, "SOURCE", "Source Species");
+        sourceModel.IsDeprecated = true;
+        var targetModel = CreateTestSpeciesModel(targetId, "TARGET", "Target Species");
+
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{sourceId}", It.IsAny<CancellationToken>())).ReturnsAsync(sourceModel);
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{targetId}", It.IsAny<CancellationToken>())).ReturnsAsync(targetModel);
+        _mockCharacterClient.Setup(c => c.ListCharactersAsync(
+                It.Is<ListCharactersRequest>(r => r.SpeciesId == sourceId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterListResponse
+            {
+                Characters = new List<CharacterResponse> { new() { CharacterId = failedCharId } },
+                TotalCount = 1,
+                HasNextPage = false
+            });
+        _mockCharacterClient.Setup(c => c.UpdateCharacterAsync(It.IsAny<UpdateCharacterRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Character update failed", 500, null, null, null));
+
+        // Act
+        var (status, response) = await service.MergeSpeciesAsync(
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.CharactersMigrated);
+        Assert.NotNull(response.FailedEntityIds);
+        Assert.Contains(failedCharId, response.FailedEntityIds);
+    }
+
+    [Fact]
+    public async Task MergeSpeciesAsync_DeleteAfterMerge_DeletesSource()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var sourceModel = CreateTestSpeciesModel(sourceId, "SOURCE", "Source Species");
+        sourceModel.IsDeprecated = true;
+        var targetModel = CreateTestSpeciesModel(targetId, "TARGET", "Target Species");
+
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{sourceId}", It.IsAny<CancellationToken>())).ReturnsAsync(sourceModel);
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{targetId}", It.IsAny<CancellationToken>())).ReturnsAsync(targetModel);
+        _mockCharacterClient.Setup(c => c.ListCharactersAsync(It.IsAny<ListCharactersRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterListResponse { Characters = new List<CharacterResponse>(), TotalCount = 0 });
+        _mockListStore.Setup(s => s.GetAsync("all-species", It.IsAny<CancellationToken>())).ReturnsAsync(new List<Guid> { sourceId });
+        _mockSpeciesStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockStringStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.MergeSpeciesAsync(
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId, DeleteAfterMerge = true });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.SourceDeleted);
+    }
+
+    [Fact]
+    public async Task MergeSpeciesAsync_DeleteAfterMergeWithFailures_SkipsDelete()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var failedCharId = Guid.NewGuid();
+        var sourceModel = CreateTestSpeciesModel(sourceId, "SOURCE", "Source Species");
+        sourceModel.IsDeprecated = true;
+        var targetModel = CreateTestSpeciesModel(targetId, "TARGET", "Target Species");
+
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{sourceId}", It.IsAny<CancellationToken>())).ReturnsAsync(sourceModel);
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{targetId}", It.IsAny<CancellationToken>())).ReturnsAsync(targetModel);
+        _mockCharacterClient.Setup(c => c.ListCharactersAsync(
+                It.Is<ListCharactersRequest>(r => r.SpeciesId == sourceId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterListResponse
+            {
+                Characters = new List<CharacterResponse> { new() { CharacterId = failedCharId } },
+                TotalCount = 1,
+                HasNextPage = false
+            });
+        _mockCharacterClient.Setup(c => c.UpdateCharacterAsync(It.IsAny<UpdateCharacterRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Failed", 500, null, null, null));
+
+        // Act
+        var (status, response) = await service.MergeSpeciesAsync(
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId, DeleteAfterMerge = true });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.SourceDeleted);
+        Assert.NotNull(response.FailedEntityIds);
+        _mockSpeciesStore.Verify(s => s.DeleteAsync($"species:{sourceId}", It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task MergeSpeciesAsync_PublishesMergedEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var sourceModel = CreateTestSpeciesModel(sourceId, "SOURCE", "Source Species");
+        sourceModel.IsDeprecated = true;
+        var targetModel = CreateTestSpeciesModel(targetId, "TARGET", "Target Species");
+
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{sourceId}", It.IsAny<CancellationToken>())).ReturnsAsync(sourceModel);
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{targetId}", It.IsAny<CancellationToken>())).ReturnsAsync(targetModel);
+        _mockCharacterClient.Setup(c => c.ListCharactersAsync(It.IsAny<ListCharactersRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterListResponse { Characters = new List<CharacterResponse>(), TotalCount = 0 });
+
+        // Act
+        await service.MergeSpeciesAsync(
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+
+        // Assert
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "species.merged",
+            It.IsAny<SpeciesMergedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Seed Tests
+
+    [Fact]
+    public async Task SeedSpeciesAsync_NewSpecies_CreatesAndReturnsCount()
+    {
+        // Arrange
+        var service = CreateService();
+        SetupCreateSpeciesMocks(codeExists: false);
+
+        var request = new SeedSpeciesRequest
+        {
+            Species = new List<SeedSpecies>
+            {
+                new() { Code = "ELF", Name = "Elf", IsPlayable = true }
+            },
+            UpdateExisting = false
+        };
+
+        // Act
+        var (status, response) = await service.SeedSpeciesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.Created);
+        Assert.Equal(0, response.Skipped);
+        Assert.Equal(0, response.Updated);
+    }
+
+    [Fact]
+    public async Task SeedSpeciesAsync_ExistingSpecies_SkipsWhenUpdateExistingFalse()
+    {
+        // Arrange
+        var service = CreateService();
+
+        _mockStringStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Guid.NewGuid().ToString());
+
+        var request = new SeedSpeciesRequest
+        {
+            Species = new List<SeedSpecies>
+            {
+                new() { Code = "ELF", Name = "Elf", IsPlayable = true }
+            },
+            UpdateExisting = false
+        };
+
+        // Act
+        var (status, response) = await service.SeedSpeciesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.Created);
+        Assert.Equal(1, response.Skipped);
+    }
+
+    [Fact]
+    public async Task SeedSpeciesAsync_ExistingSpecies_UpdatesWhenUpdateExistingTrue()
+    {
+        // Arrange
+        var service = CreateService();
+        var existingId = Guid.NewGuid();
+        var existingModel = CreateTestSpeciesModel(existingId, "ELF", "Elf");
+
+        _mockStringStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingId.ToString());
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{existingId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingModel);
+
+        var request = new SeedSpeciesRequest
+        {
+            Species = new List<SeedSpecies>
+            {
+                new() { Code = "ELF", Name = "Updated Elf", IsPlayable = true }
+            },
+            UpdateExisting = true
+        };
+
+        // Act
+        var (status, response) = await service.SeedSpeciesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.Created);
+        Assert.Equal(1, response.Updated);
+    }
+
+    [Fact]
+    public async Task SeedSpeciesAsync_UnchangedExisting_SkipsWhenUpdateExistingTrue()
+    {
+        // Arrange
+        var service = CreateService();
+        var existingId = Guid.NewGuid();
+        var existingModel = CreateTestSpeciesModel(existingId, "ELF", "Elf");
+
+        _mockStringStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingId.ToString());
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{existingId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingModel);
+
+        var request = new SeedSpeciesRequest
+        {
+            Species = new List<SeedSpecies>
+            {
+                new() { Code = "ELF", Name = "Elf", IsPlayable = true }
+            },
+            UpdateExisting = true
+        };
+
+        // Act
+        var (status, response) = await service.SeedSpeciesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.Updated);
+        Assert.Equal(1, response.Skipped);
+    }
+
+    [Fact]
+    public async Task SeedSpeciesAsync_WithRealmCodes_ResolvesAndAssigns()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        SetupCreateSpeciesMocks(codeExists: false);
+
+        _mockRealmClient.Setup(r => r.GetRealmByCodeAsync(
+                It.Is<GetRealmByCodeRequest>(req => req.Code == "OMEGA"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RealmResponse { RealmId = realmId, Code = "OMEGA" });
+
+        SpeciesModel? savedModel = null;
+        _mockSpeciesStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SpeciesModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SpeciesModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag-1");
+
+        var request = new SeedSpeciesRequest
+        {
+            Species = new List<SeedSpecies>
+            {
+                new() { Code = "ELF", Name = "Elf", IsPlayable = true, RealmCodes = new List<string> { "OMEGA" } }
+            },
+            UpdateExisting = false
+        };
+
+        // Act
+        var (status, response) = await service.SeedSpeciesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedModel);
+        Assert.Contains(realmId, savedModel.RealmIds);
+    }
+
+    [Fact]
+    public async Task SeedSpeciesAsync_ErrorOnItem_CollectsErrorAndContinues()
+    {
+        // Arrange
+        var service = CreateService();
+        SetupCreateSpeciesMocks(codeExists: false);
+
+        // Override AFTER blanket setup so Moq's last-setup-wins applies
+        _mockStringStore.Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("BROKEN")), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("State store error"));
+
+        var request = new SeedSpeciesRequest
+        {
+            Species = new List<SeedSpecies>
+            {
+                new() { Code = "BROKEN", Name = "Broken", IsPlayable = true },
+                new() { Code = "GOOD", Name = "Good", IsPlayable = true }
+            },
+            UpdateExisting = false
+        };
+
+        // Act
+        var (status, response) = await service.SeedSpeciesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(response.Errors);
+        Assert.NotEmpty(response.Errors);
+    }
+
+    #endregion
+
+    #region Deprecation Lifecycle Tests
+
+    [Fact]
+    public async Task DeprecateSpeciesAsync_AlreadyDeprecated_ReturnsOKIdempotent()
+    {
+        // Arrange
+        var service = CreateService();
+        var speciesId = Guid.NewGuid();
+        var model = CreateTestSpeciesModel(speciesId, "TEST", "Test");
+        model.IsDeprecated = true;
+        model.DeprecatedAt = DateTimeOffset.UtcNow.AddDays(-1);
+
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{speciesId}", It.IsAny<CancellationToken>())).ReturnsAsync(model);
+
+        // Act
+        var (status, response) = await service.DeprecateSpeciesAsync(
+            new DeprecateSpeciesRequest { SpeciesId = speciesId, DeprecationReason = "reason" });
+
+        // Assert - returns OK without re-saving (idempotent per IMPLEMENTATION TENETS)
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        _mockSpeciesStore.Verify(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SpeciesModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UndeprecateSpeciesAsync_NotDeprecated_ReturnsOKIdempotent()
+    {
+        // Arrange
+        var service = CreateService();
+        var speciesId = Guid.NewGuid();
+        var model = CreateTestSpeciesModel(speciesId, "TEST", "Test");
+
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{speciesId}", It.IsAny<CancellationToken>())).ReturnsAsync(model);
+
+        // Act
+        var (status, response) = await service.UndeprecateSpeciesAsync(
+            new UndeprecateSpeciesRequest { SpeciesId = speciesId });
+
+        // Assert - returns OK without re-saving (idempotent per IMPLEMENTATION TENETS)
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        _mockSpeciesStore.Verify(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SpeciesModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteSpeciesAsync_NonDeprecatedSpecies_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var speciesId = Guid.NewGuid();
+        var model = CreateTestSpeciesModel(speciesId, "TEST", "Test");
+
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{speciesId}", It.IsAny<CancellationToken>())).ReturnsAsync(model);
+
+        // Act
+        var status = await service.DeleteSpeciesAsync(
+            new DeleteSpeciesRequest { SpeciesId = speciesId });
+
+        // Assert - must be deprecated before deletion (Category A per IMPLEMENTATION TENETS)
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task DeleteSpeciesAsync_WithCharacterReferences_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var speciesId = Guid.NewGuid();
+        var model = CreateTestSpeciesModel(speciesId, "TEST", "Test");
+        model.IsDeprecated = true;
+
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{speciesId}", It.IsAny<CancellationToken>())).ReturnsAsync(model);
+        _mockCharacterClient.Setup(c => c.ListCharactersAsync(
+                It.Is<ListCharactersRequest>(r => r.SpeciesId == speciesId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterListResponse { Characters = new List<CharacterResponse> { new() { CharacterId = Guid.NewGuid() } }, TotalCount = 1 });
+
+        // Act
+        var status = await service.DeleteSpeciesAsync(
+            new DeleteSpeciesRequest { SpeciesId = speciesId });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+    }
+
+    [Fact]
+    public async Task DeleteSpeciesAsync_PublishesDeletedEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var speciesId = Guid.NewGuid();
+        var model = CreateTestSpeciesModel(speciesId, "TEST", "Test");
+        model.IsDeprecated = true;
+
+        _mockSpeciesStore.Setup(s => s.GetAsync($"species:{speciesId}", It.IsAny<CancellationToken>())).ReturnsAsync(model);
+        _mockSpeciesStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockStringStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockListStore.Setup(s => s.GetAsync("all-species", It.IsAny<CancellationToken>())).ReturnsAsync(new List<Guid> { speciesId });
+
+        // Act
+        await service.DeleteSpeciesAsync(
+            new DeleteSpeciesRequest { SpeciesId = speciesId });
+
+        // Assert
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "species.deleted",
+            It.IsAny<SpeciesDeletedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ListSpeciesAsync_ExcludesDeprecatedByDefault()
+    {
+        // Arrange
+        var service = CreateService();
+        var activeId = Guid.NewGuid();
+        var deprecatedId = Guid.NewGuid();
+
+        var activeModel = CreateTestSpeciesModel(activeId, "ACTIVE", "Active");
+        var deprecatedModel = CreateTestSpeciesModel(deprecatedId, "DEPRECATED", "Deprecated");
+        deprecatedModel.IsDeprecated = true;
+
+        _mockListStore.Setup(s => s.GetAsync("all-species", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { activeId, deprecatedId });
+
+        _mockSpeciesStore.Setup(s => s.GetBulkAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, SpeciesModel>
+            {
+                [$"species:{activeId}"] = activeModel,
+                [$"species:{deprecatedId}"] = deprecatedModel
+            });
+
+        // Act
+        var (status, response) = await service.ListSpeciesAsync(
+            new ListSpeciesRequest { Page = 1, PageSize = 10 });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Species);
+        Assert.Equal("ACTIVE", response.Species.First().Code);
+    }
+
+    [Fact]
+    public async Task ListSpeciesAsync_IncludesDeprecatedWhenRequested()
+    {
+        // Arrange
+        var service = CreateService();
+        var activeId = Guid.NewGuid();
+        var deprecatedId = Guid.NewGuid();
+
+        var activeModel = CreateTestSpeciesModel(activeId, "ACTIVE", "Active");
+        var deprecatedModel = CreateTestSpeciesModel(deprecatedId, "DEPRECATED", "Deprecated");
+        deprecatedModel.IsDeprecated = true;
+
+        _mockListStore.Setup(s => s.GetAsync("all-species", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { activeId, deprecatedId });
+
+        _mockSpeciesStore.Setup(s => s.GetBulkAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, SpeciesModel>
+            {
+                [$"species:{activeId}"] = activeModel,
+                [$"species:{deprecatedId}"] = deprecatedModel
+            });
+
+        // Act
+        var (status, response) = await service.ListSpeciesAsync(
+            new ListSpeciesRequest { Page = 1, PageSize = 10, IncludeDeprecated = true });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Species.Count);
+    }
+
+    [Fact]
+    public async Task ListSpeciesByRealmAsync_ExcludesDeprecatedByDefault()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var activeId = Guid.NewGuid();
+        var deprecatedId = Guid.NewGuid();
+
+        var activeModel = CreateTestSpeciesModel(activeId, "ACTIVE", "Active");
+        activeModel.RealmIds = new List<Guid> { realmId };
+        var deprecatedModel = CreateTestSpeciesModel(deprecatedId, "DEPRECATED", "Deprecated");
+        deprecatedModel.IsDeprecated = true;
+        deprecatedModel.RealmIds = new List<Guid> { realmId };
+
+        _mockListStore.Setup(s => s.GetAsync($"realm-index:{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { activeId, deprecatedId });
+
+        _mockSpeciesStore.Setup(s => s.GetBulkAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, SpeciesModel>
+            {
+                [$"species:{activeId}"] = activeModel,
+                [$"species:{deprecatedId}"] = deprecatedModel
+            });
+
+        // Act
+        var (status, response) = await service.ListSpeciesByRealmAsync(
+            new ListSpeciesByRealmRequest { RealmId = realmId, Page = 1, PageSize = 10 });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Species);
+        Assert.Equal("ACTIVE", response.Species.First().Code);
     }
 
     #endregion

@@ -50,7 +50,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
 
         // Verify service event
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat-participant.joined", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat.participant.joined", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         ClearCallerSession();
@@ -218,7 +218,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
 
         // Verify service event
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat-participant.left", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat.participant.left", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         ClearCallerSession();
@@ -360,7 +360,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
 
         // Verify ban event published
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat-participant.banned", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat.participant.banned", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         ClearCallerSession();
@@ -374,7 +374,15 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
     public async Task UnbanParticipant_BanExists_DeletesBanAndReturnsOK()
     {
         var service = CreateService();
+        var modSession = Guid.NewGuid();
         var targetSession = Guid.NewGuid();
+        SetCallerSession(modSession);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var moderator = CreateTestParticipant(sessionId: modSession, role: ChatParticipantRole.Moderator);
+        SetupParticipants(TestRoomId, moderator);
 
         var ban = new ChatBanModel
         {
@@ -385,9 +393,6 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             BannedAt = DateTimeOffset.UtcNow.AddHours(-1),
         };
         SetupBan(TestRoomId, targetSession, ban);
-
-        var room = CreateTestRoom();
-        SetupRoomCache(room);
 
         var (status, response) = await service.UnbanParticipantAsync(new UnbanParticipantRequest
         {
@@ -406,6 +411,15 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
     public async Task UnbanParticipant_NoBan_ReturnsNotFound()
     {
         var service = CreateService();
+        var modSession = Guid.NewGuid();
+        SetCallerSession(modSession);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var moderator = CreateTestParticipant(sessionId: modSession, role: ChatParticipantRole.Moderator);
+        SetupParticipants(TestRoomId, moderator);
+
         MockBanStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ChatBanModel?)null);
@@ -460,7 +474,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
 
         // Verify mute event
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat-participant.muted", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat.participant.muted", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         ClearCallerSession();
@@ -519,6 +533,341 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(2, response.Participants.Count);
+
+        ClearCallerSession();
+    }
+
+    #endregion
+
+    #region LeaveRoom Owner Promotion
+
+    /// <summary>
+    /// Verifies that when the owner leaves, the oldest remaining member is promoted to owner.
+    /// </summary>
+    [Fact]
+    public async Task LeaveRoom_OwnerLeaves_PromotesOldestMemberToOwner()
+    {
+        var service = CreateService();
+        var ownerSessionId = Guid.NewGuid();
+        SetCallerSession(ownerSessionId);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var member1SessionId = Guid.NewGuid();
+        var member2SessionId = Guid.NewGuid();
+
+        var owner = CreateTestParticipant(sessionId: ownerSessionId, role: ChatParticipantRole.Owner);
+        owner.JoinedAt = DateTimeOffset.UtcNow.AddMinutes(-60);
+
+        var member1 = CreateTestParticipant(sessionId: member1SessionId, role: ChatParticipantRole.Member);
+        member1.JoinedAt = DateTimeOffset.UtcNow.AddMinutes(-30); // oldest remaining
+
+        var member2 = CreateTestParticipant(sessionId: member2SessionId, role: ChatParticipantRole.Member);
+        member2.JoinedAt = DateTimeOffset.UtcNow.AddMinutes(-10); // newest
+
+        var allParticipants = new Dictionary<string, ChatParticipantModel>
+        {
+            { ownerSessionId.ToString(), owner },
+            { member1SessionId.ToString(), member1 },
+            { member2SessionId.ToString(), member2 }
+        };
+
+        var remainingParticipants = new Dictionary<string, ChatParticipantModel>
+        {
+            { member1SessionId.ToString(), member1 },
+            { member2SessionId.ToString(), member2 }
+        };
+
+        // First call: initial lookup (all 3). Subsequent calls: after removal (2 remaining).
+        MockParticipantStore
+            .SetupSequence(s => s.HashGetAllAsync<ChatParticipantModel>(
+                TestRoomId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(allParticipants)
+            .ReturnsAsync(remainingParticipants)
+            .ReturnsAsync(remainingParticipants);
+
+        MockParticipantStore
+            .Setup(s => s.HashCountAsync(TestRoomId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(2L);
+
+        // Act
+        var (status, _) = await service.LeaveRoomAsync(new LeaveRoomRequest
+        {
+            RoomId = TestRoomId,
+        }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify member1 (oldest) was promoted by saving with Owner role
+        MockParticipantStore.Verify(s => s.HashSetAsync(
+            TestRoomId.ToString(),
+            member1SessionId.ToString(),
+            It.Is<ChatParticipantModel>(p => p.Role == ChatParticipantRole.Owner),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        ClearCallerSession();
+    }
+
+    /// <summary>
+    /// Verifies that when the owner leaves, a moderator is promoted before regular members.
+    /// </summary>
+    [Fact]
+    public async Task LeaveRoom_OwnerLeaves_PromotesModeratorOverOlderMember()
+    {
+        var service = CreateService();
+        var ownerSessionId = Guid.NewGuid();
+        SetCallerSession(ownerSessionId);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var memberSessionId = Guid.NewGuid();
+        var modSessionId = Guid.NewGuid();
+
+        var owner = CreateTestParticipant(sessionId: ownerSessionId, role: ChatParticipantRole.Owner);
+
+        var oldMember = CreateTestParticipant(sessionId: memberSessionId, role: ChatParticipantRole.Member);
+        oldMember.JoinedAt = DateTimeOffset.UtcNow.AddHours(-2); // older than moderator
+
+        var moderator = CreateTestParticipant(sessionId: modSessionId, role: ChatParticipantRole.Moderator);
+        moderator.JoinedAt = DateTimeOffset.UtcNow.AddMinutes(-10); // newer but higher role
+
+        var allParticipants = new Dictionary<string, ChatParticipantModel>
+        {
+            { ownerSessionId.ToString(), owner },
+            { memberSessionId.ToString(), oldMember },
+            { modSessionId.ToString(), moderator }
+        };
+
+        var remaining = new Dictionary<string, ChatParticipantModel>
+        {
+            { memberSessionId.ToString(), oldMember },
+            { modSessionId.ToString(), moderator }
+        };
+
+        MockParticipantStore
+            .SetupSequence(s => s.HashGetAllAsync<ChatParticipantModel>(
+                TestRoomId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(allParticipants)
+            .ReturnsAsync(remaining)
+            .ReturnsAsync(remaining);
+
+        MockParticipantStore
+            .Setup(s => s.HashCountAsync(TestRoomId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(2L);
+
+        // Act
+        var (status, _) = await service.LeaveRoomAsync(new LeaveRoomRequest
+        {
+            RoomId = TestRoomId,
+        }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Moderator promoted over older member
+        MockParticipantStore.Verify(s => s.HashSetAsync(
+            TestRoomId.ToString(),
+            modSessionId.ToString(),
+            It.Is<ChatParticipantModel>(p => p.Role == ChatParticipantRole.Owner),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        ClearCallerSession();
+    }
+
+    /// <summary>
+    /// Verifies that when the owner leaves and no other participants remain,
+    /// no promotion occurs (no HashSet call for promotion).
+    /// </summary>
+    [Fact]
+    public async Task LeaveRoom_OwnerLeaves_NoRemainingParticipants_NoPromotion()
+    {
+        var service = CreateService();
+        var ownerSessionId = Guid.NewGuid();
+        SetCallerSession(ownerSessionId);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var owner = CreateTestParticipant(sessionId: ownerSessionId, role: ChatParticipantRole.Owner);
+
+        var allParticipants = new Dictionary<string, ChatParticipantModel>
+        {
+            { ownerSessionId.ToString(), owner }
+        };
+
+        var empty = new Dictionary<string, ChatParticipantModel>();
+
+        MockParticipantStore
+            .SetupSequence(s => s.HashGetAllAsync<ChatParticipantModel>(
+                TestRoomId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(allParticipants)
+            .ReturnsAsync(empty)
+            .ReturnsAsync(empty);
+
+        MockParticipantStore
+            .Setup(s => s.HashCountAsync(TestRoomId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0L);
+
+        // Act
+        var (status, _) = await service.LeaveRoomAsync(new LeaveRoomRequest
+        {
+            RoomId = TestRoomId,
+        }, CancellationToken.None);
+
+        // Assert - no promotion save (only the delete for removal)
+        Assert.Equal(StatusCodes.OK, status);
+        MockParticipantStore.Verify(s => s.HashSetAsync(
+            It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<ChatParticipantModel>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+
+        ClearCallerSession();
+    }
+
+    #endregion
+
+    #region GetEffectiveMaxParticipants Tests (via JoinRoom)
+
+    /// <summary>
+    /// Verifies that room-level MaxParticipants override takes precedence over room type default.
+    /// </summary>
+    [Fact]
+    public async Task JoinRoom_RoomMaxOverride_UsesRoomMaxOverRoomTypeDefault()
+    {
+        var service = CreateService();
+        SetCallerSession(TestSessionId);
+
+        var roomType = CreateTestRoomType(defaultMaxParticipants: 100);
+        SetupRoomType(roomType);
+        SetupFindRoomTypeByCode(roomType);
+
+        // Room has explicit max of 5, overriding room type's 100
+        var room = CreateTestRoom(maxParticipants: 5);
+        SetupRoom(room);
+        SetupRoomCache(room);
+
+        // 5 participants already in room → room is full
+        var existing = Enumerable.Range(0, 5).Select(i =>
+        {
+            var p = CreateTestParticipant(sessionId: Guid.NewGuid());
+            return p;
+        }).ToArray();
+        SetupParticipants(TestRoomId, existing);
+
+        MockParticipantStore
+            .Setup(s => s.HashCountAsync(TestRoomId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(5L);
+
+        // Act - try to join full room
+        var (status, _) = await service.JoinRoomAsync(new JoinRoomRequest
+        {
+            RoomId = TestRoomId,
+            SenderType = "player",
+            SenderId = Guid.NewGuid(),
+            DisplayName = "NewPlayer",
+        }, CancellationToken.None);
+
+        // Assert - should be rejected because room is full at max 5 (room override)
+        Assert.Equal(StatusCodes.Conflict, status);
+
+        ClearCallerSession();
+    }
+
+    /// <summary>
+    /// Verifies that when room has no override, room type default is used.
+    /// </summary>
+    [Fact]
+    public async Task JoinRoom_NoRoomOverride_UsesRoomTypeDefault()
+    {
+        var service = CreateService();
+        SetCallerSession(TestSessionId);
+
+        var roomType = CreateTestRoomType(defaultMaxParticipants: 2);
+        SetupRoomType(roomType);
+        SetupFindRoomTypeByCode(roomType);
+
+        // Room has no MaxParticipants override → falls back to room type's 2
+        var room = CreateTestRoom(maxParticipants: null);
+        SetupRoom(room);
+        SetupRoomCache(room);
+
+        // 2 participants already in room → full per room type default
+        var existing = Enumerable.Range(0, 2).Select(i =>
+        {
+            var p = CreateTestParticipant(sessionId: Guid.NewGuid());
+            return p;
+        }).ToArray();
+        SetupParticipants(TestRoomId, existing);
+
+        MockParticipantStore
+            .Setup(s => s.HashCountAsync(TestRoomId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(2L);
+
+        // Act
+        var (status, _) = await service.JoinRoomAsync(new JoinRoomRequest
+        {
+            RoomId = TestRoomId,
+            SenderType = "player",
+            SenderId = Guid.NewGuid(),
+            DisplayName = "NewPlayer",
+        }, CancellationToken.None);
+
+        // Assert - full at room type default
+        Assert.Equal(StatusCodes.Conflict, status);
+
+        ClearCallerSession();
+    }
+
+    /// <summary>
+    /// Verifies that when both room and room type have no max, the global config default is used.
+    /// </summary>
+    [Fact]
+    public async Task JoinRoom_NoOverrides_UsesGlobalConfigDefault()
+    {
+        // Set global default to 3
+        Configuration.DefaultMaxParticipantsPerRoom = 3;
+
+        var service = CreateService();
+        SetCallerSession(TestSessionId);
+
+        var roomType = CreateTestRoomType(defaultMaxParticipants: null);
+        SetupRoomType(roomType);
+        SetupFindRoomTypeByCode(roomType);
+
+        // Room has no override, room type has no default → uses global config (3)
+        var room = CreateTestRoom(maxParticipants: null);
+        SetupRoom(room);
+        SetupRoomCache(room);
+
+        // 3 participants already → full
+        var existing = Enumerable.Range(0, 3).Select(i =>
+        {
+            var p = CreateTestParticipant(sessionId: Guid.NewGuid());
+            return p;
+        }).ToArray();
+        SetupParticipants(TestRoomId, existing);
+
+        MockParticipantStore
+            .Setup(s => s.HashCountAsync(TestRoomId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(3L);
+
+        // Act
+        var (status, _) = await service.JoinRoomAsync(new JoinRoomRequest
+        {
+            RoomId = TestRoomId,
+            SenderType = "player",
+            SenderId = Guid.NewGuid(),
+            DisplayName = "NewPlayer",
+        }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
 
         ClearCallerSession();
     }

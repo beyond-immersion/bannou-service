@@ -30,6 +30,8 @@ public static class StateStoreDefinitions
     // Achievement Service
     /// <summary>Achievement definitions</summary>
     public const string AchievementDefinition = "achievement-definition";
+    /// <summary>Distributed locks for achievement progress updates</summary>
+    public const string AchievementLock = "achievement-lock";
     /// <summary>Player achievement progress</summary>
     public const string AchievementProgress = "achievement-progress";
 
@@ -126,6 +128,8 @@ public static class StateStoreDefinitions
     public const string Connect = "connect-statestore";
 
     // Contract Service
+    /// <summary>Distributed locks for contract instance and index operations</summary>
+    public const string ContractLock = "contract-lock";
     /// <summary>Contract templates, instances, breaches, and indexes</summary>
     public const string Contract = "contract-statestore";
 
@@ -142,6 +146,8 @@ public static class StateStoreDefinitions
     public const string CurrencyHoldsCache = "currency-holds-cache";
     /// <summary>Idempotency key deduplication</summary>
     public const string CurrencyIdempotency = "currency-idempotency";
+    /// <summary>Distributed locks for wallet, balance, hold, and index operations</summary>
+    public const string CurrencyLock = "currency-lock";
     /// <summary>Immutable transaction history</summary>
     public const string CurrencyTransactions = "currency-transactions";
     /// <summary>Wallet ownership and status</summary>
@@ -194,10 +200,14 @@ public static class StateStoreDefinitions
     public const string FactionTerritory = "faction-territory-statestore";
 
     // GameService Service
+    /// <summary>Distributed locks for stub name uniqueness</summary>
+    public const string GameServiceLock = "game-service-lock";
     /// <summary>Game service registry</summary>
     public const string GameService = "game-service-statestore";
 
     // GameSession Service
+    /// <summary>Distributed locks for session lifecycle and reservation operations</summary>
+    public const string GameSessionLock = "game-session-lock";
     /// <summary>Game session state and history</summary>
     public const string GameSession = "game-session-statestore";
 
@@ -274,6 +284,8 @@ public static class StateStoreDefinitions
     public const string Mapping = "mapping-statestore";
 
     // Matchmaking Service
+    /// <summary>Distributed locks for match processing and queue index modifications</summary>
+    public const string MatchmakingLock = "matchmaking-lock";
     /// <summary>Matchmaking queue and ticket state</summary>
     public const string Matchmaking = "matchmaking-statestore";
 
@@ -314,12 +326,16 @@ public static class StateStoreDefinitions
     public const string OrchestratorConfig = "orchestrator-config";
     /// <summary>Service heartbeat tracking</summary>
     public const string OrchestratorHeartbeats = "orchestrator-heartbeats";
+    /// <summary>Distributed locks for pool management operations</summary>
+    public const string OrchestratorLock = "orchestrator-lock";
     /// <summary>Service-to-app-id routing tables</summary>
     public const string OrchestratorRoutings = "orchestrator-routings";
     /// <summary>Primary orchestrator state</summary>
     public const string Orchestrator = "orchestrator-statestore";
 
     // Permission Service
+    /// <summary>Distributed locks for session capability compilation</summary>
+    public const string PermissionLock = "permission-lock";
     /// <summary>Permission cache and session capabilities</summary>
     public const string Permission = "permission-statestore";
 
@@ -332,14 +348,14 @@ public static class StateStoreDefinitions
     public const string QuestDefinitionCache = "quest-definition-cache";
     /// <summary>Quest definitions with contract template IDs and metadata</summary>
     public const string QuestDefinition = "quest-definition-statestore";
-    /// <summary>Idempotency keys for accept/complete operations</summary>
-    public const string QuestIdempotency = "quest-idempotency";
     /// <summary>Quest instances with status and party information</summary>
     public const string QuestInstance = "quest-instance-statestore";
     /// <summary>Real-time objective progress tracking</summary>
     public const string QuestObjectiveProgress = "quest-objective-progress";
 
     // Realm Service
+    /// <summary>Distributed locks for realm merge operations</summary>
+    public const string RealmLock = "realm-lock";
     /// <summary>Realm definitions and configuration</summary>
     public const string Realm = "realm-statestore";
 
@@ -372,6 +388,8 @@ public static class StateStoreDefinitions
     // SaveLoad Service
     /// <summary>Recently accessed save data cache</summary>
     public const string SaveLoadCache = "save-load-cache";
+    /// <summary>Distributed locks for save slot operations</summary>
+    public const string SaveLoadLock = "save-load-lock";
     /// <summary>Pending save operations</summary>
     public const string SaveLoadPending = "save-load-pending";
     /// <summary>Registered save data schemas</summary>
@@ -400,6 +418,8 @@ public static class StateStoreDefinitions
     public const string SeedTypeDefinitions = "seed-type-definitions-statestore";
 
     // Species Service
+    /// <summary>Distributed locks for species mutations and merge operations</summary>
+    public const string SpeciesLock = "species-lock";
     /// <summary>Species definitions</summary>
     public const string Species = "species-statestore";
 
@@ -422,6 +442,8 @@ public static class StateStoreDefinitions
     public const string StatusTemplates = "status-templates";
 
     // Storyline Service
+    /// <summary>Distributed locks for scenario trigger operations</summary>
+    public const string StorylineLock = "storyline-lock";
     /// <summary>Plan index by realm for list queries</summary>
     public const string StorylinePlanIndex = "storyline-plan-index";
     /// <summary>Cached composed storyline plans (ephemeral, TTL from config)</summary>
@@ -440,16 +462,40 @@ public static class StateStoreDefinitions
     public const string StorylineScenarioIdempotency = "storyline-scenario-idempotency";
 
     // Subscription Service
+    /// <summary>Distributed locks for subscription mutations and index operations</summary>
+    public const string SubscriptionLock = "subscription-lock";
     /// <summary>User subscriptions to game services</summary>
     public const string Subscription = "subscription-statestore";
 
+    // Transit Service
+    /// <summary>Cached per-realm connection adjacency lists for Dijkstra route calculation</summary>
+    public const string TransitConnectionGraph = "transit-connection-graph";
+    /// <summary>Transit connections between locations (durable graph edges)</summary>
+    public const string TransitConnections = "transit-connections";
+    /// <summary>Per-entity connection discovery tracking (permanent world knowledge)</summary>
+    public const string TransitDiscovery = "transit-discovery";
+    /// <summary>Per-entity discovery set cache for fast route calculation filtering</summary>
+    public const string TransitDiscoveryCache = "transit-discovery-cache";
+    /// <summary>Active transit journeys (hot state, archived to MySQL by background worker)</summary>
+    public const string TransitJourneys = "transit-journeys";
+    /// <summary>Archived completed/abandoned journeys (historical record for Trade velocity, Analytics)</summary>
+    public const string TransitJourneysArchive = "transit-journeys-archive";
+    /// <summary>Distributed locks for journey state transitions and connection status updates</summary>
+    public const string TransitLock = "transit-lock";
+    /// <summary>Transit mode definitions (durable registry)</summary>
+    public const string TransitModes = "transit-modes";
+
     // Voice Service
+    /// <summary>Distributed locks for broadcast consent and room mutations</summary>
+    public const string VoiceLock = "voice-lock";
     /// <summary>Voice room and peer state</summary>
     public const string Voice = "voice-statestore";
 
     // Worldstate Service
     /// <summary>Calendar template definitions and per-realm worldstate configuration (durable, queryable)</summary>
     public const string WorldstateCalendar = "worldstate-calendar";
+    /// <summary>Distributed locks for clock advancement, ratio changes, and calendar mutations</summary>
+    public const string WorldstateLock = "worldstate-lock";
     /// <summary>Time ratio change history per realm for elapsed game-time computation (append-only, compacted)</summary>
     public const string WorldstateRatioHistory = "worldstate-ratio-history";
     /// <summary>Current game time per realm (hot reads, updated every ClockTickIntervalSeconds)</summary>
@@ -469,6 +515,7 @@ public static class StateStoreDefinitions
             [AccountLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "account:lock" },
             [Account] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "account_statestore" },
             [AchievementDefinition] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "ach:def" },
+            [AchievementLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "ach:lock" },
             [AchievementProgress] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "ach:prog" },
             [ActorAssignments] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "actor:assign" },
             [ActorInstances] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "actor:inst" },
@@ -503,6 +550,7 @@ public static class StateStoreDefinitions
             [CollectionInstances] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "collection_instances" },
             [CollectionLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "collection:lock" },
             [Connect] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "connect" },
+            [ContractLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "contract:lock" },
             [Contract] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "contract", EnableSearch = true },
             [CurrencyBalanceCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "currency:balance" },
             [CurrencyBalances] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_balances" },
@@ -510,6 +558,7 @@ public static class StateStoreDefinitions
             [CurrencyHolds] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_holds" },
             [CurrencyHoldsCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "currency:hold" },
             [CurrencyIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "currency:idemp" },
+            [CurrencyLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "currency:lock" },
             [CurrencyTransactions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_transactions" },
             [CurrencyWallets] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_wallets" },
             [DivineAttention] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "divine:attention" },
@@ -532,7 +581,9 @@ public static class StateStoreDefinitions
             [FactionNorm] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_norm_statestore" },
             [Faction] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_statestore" },
             [FactionTerritory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_territory_statestore" },
+            [GameServiceLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "game-service:lock" },
             [GameService] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_service_statestore" },
+            [GameSessionLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "game-session:lock" },
             [GameSession] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_session_statestore" },
             [GardenerGardenInstances] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "gardener:garden" },
             [GardenerLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "gardener:lock" },
@@ -563,6 +614,7 @@ public static class StateStoreDefinitions
             [LocationLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "location:lock" },
             [Location] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "location_statestore" },
             [Mapping] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mapping" },
+            [MatchmakingLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mm:lock" },
             [Matchmaking] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mm" },
             [MeshAppidIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mesh:appid" },
             [MeshCircuitBreaker] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mesh:cb" },
@@ -578,17 +630,19 @@ public static class StateStoreDefinitions
             [ObligationViolations] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "obligation_violations" },
             [OrchestratorConfig] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch:cfg" },
             [OrchestratorHeartbeats] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch:hb" },
+            [OrchestratorLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch:lock" },
             [OrchestratorRoutings] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch:rt" },
             [Orchestrator] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch" },
+            [PermissionLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "permission:lock" },
             [Permission] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "permission" },
             [QuestCharacterIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:char" },
             [QuestCooldown] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:cd" },
             [QuestDefinitionCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:def" },
             [QuestDefinition] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "quest_definition_statestore" },
-            [QuestIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:idem" },
             [QuestInstance] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "quest_instance_statestore" },
             [QuestObjectiveProgress] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:prog" },
             [RealmHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "realm_history_statestore" },
+            [RealmLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "realm:lock" },
             [Realm] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "realm_statestore" },
             [RelationshipLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "relationship:lock" },
             [Relationship] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "relationship_statestore" },
@@ -600,6 +654,7 @@ public static class StateStoreDefinitions
             [ResourceRefcounts] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:ref" },
             [ResourceSnapshots] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:snapshot" },
             [SaveLoadCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "saveload:cache" },
+            [SaveLoadLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "saveload:lock" },
             [SaveLoadPending] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "saveload:pending" },
             [SaveLoadSchemas] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "save_load_schemas" },
             [SaveLoadSlots] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "save_load_slots" },
@@ -611,6 +666,7 @@ public static class StateStoreDefinitions
             [SeedLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "seed:lock" },
             [Seed] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_statestore" },
             [SeedTypeDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_type_definitions_statestore" },
+            [SpeciesLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "species:lock" },
             [Species] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "species_statestore" },
             [StatusActiveCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "status:active" },
             [StatusContainers] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "status_containers" },
@@ -618,6 +674,7 @@ public static class StateStoreDefinitions
             [StatusLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "status:lock" },
             [StatusSeedEffectsCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "status:seed" },
             [StatusTemplates] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "status_templates" },
+            [StorylineLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:lock" },
             [StorylinePlanIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:idx" },
             [StorylinePlans] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:plan" },
             [StorylineScenarioActive] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:scenario:active" },
@@ -626,10 +683,21 @@ public static class StateStoreDefinitions
             [StorylineScenarioDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "storyline_scenario_definitions" },
             [StorylineScenarioExecutions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "storyline_scenario_executions" },
             [StorylineScenarioIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:scenario:idemp" },
+            [SubscriptionLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "subscription:lock" },
             [Subscription] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "subscription_statestore" },
             [TestSearch] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "test-search", EnableSearch = true },
+            [TransitConnectionGraph] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "transit:graph" },
+            [TransitConnections] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "transit_connections" },
+            [TransitDiscovery] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "transit_discovery" },
+            [TransitDiscoveryCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "transit:discovery" },
+            [TransitJourneys] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "transit:journey" },
+            [TransitJourneysArchive] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "transit_journeys_archive" },
+            [TransitLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "transit:lock" },
+            [TransitModes] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "transit_modes" },
+            [VoiceLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "voice:lock" },
             [Voice] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "voice" },
             [WorldstateCalendar] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "worldstate_calendar" },
+            [WorldstateLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "worldstate:lock" },
             [WorldstateRatioHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "worldstate_ratio_history" },
             [WorldstateRealmClock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "worldstate:clock" },
         };
@@ -647,6 +715,7 @@ public static class StateStoreDefinitions
             [AccountLock] = new StoreMetadata("Account", "Distributed locks for account email uniqueness during creation", "redis"),
             [Account] = new StoreMetadata("Account", "Persistent account data", "mysql"),
             [AchievementDefinition] = new StoreMetadata("Achievement", "Achievement definitions", "redis"),
+            [AchievementLock] = new StoreMetadata("Achievement", "Distributed locks for achievement progress updates", "redis"),
             [AchievementProgress] = new StoreMetadata("Achievement", "Player achievement progress", "redis"),
             [ActorAssignments] = new StoreMetadata("Actor", "Actor-to-node assignments", "redis"),
             [ActorInstances] = new StoreMetadata("Actor", "Active actor instance registry", "redis"),
@@ -681,6 +750,7 @@ public static class StateStoreDefinitions
             [CollectionInstances] = new StoreMetadata("Collection", "Per-owner collection containers linking entities to collection types", "mysql"),
             [CollectionLock] = new StoreMetadata("Collection", "Distributed locks for collection mutations and grant operations", "redis"),
             [Connect] = new StoreMetadata("Connect", "WebSocket session state", "redis"),
+            [ContractLock] = new StoreMetadata("Contract", "Distributed locks for contract instance and index operations", "redis"),
             [Contract] = new StoreMetadata("Contract", "Contract templates, instances, breaches, and indexes", "redis"),
             [CurrencyBalanceCache] = new StoreMetadata("Currency", "Real-time balance lookups (cached, refreshed on access)", "redis"),
             [CurrencyBalances] = new StoreMetadata("Currency", "Currency balance records per wallet", "mysql"),
@@ -688,6 +758,7 @@ public static class StateStoreDefinitions
             [CurrencyHolds] = new StoreMetadata("Currency", "Authorization hold records", "mysql"),
             [CurrencyHoldsCache] = new StoreMetadata("Currency", "Authorization hold state for pre-auth scenarios", "redis"),
             [CurrencyIdempotency] = new StoreMetadata("Currency", "Idempotency key deduplication", "redis"),
+            [CurrencyLock] = new StoreMetadata("Currency", "Distributed locks for wallet, balance, hold, and index operations", "redis"),
             [CurrencyTransactions] = new StoreMetadata("Currency", "Immutable transaction history", "mysql"),
             [CurrencyWallets] = new StoreMetadata("Currency", "Wallet ownership and status", "mysql"),
             [DivineAttention] = new StoreMetadata("Divine", "Active attention slot tracking per deity (ephemeral, high-frequency reads)", "redis"),
@@ -710,7 +781,9 @@ public static class StateStoreDefinitions
             [FactionNorm] = new StoreMetadata("Faction", "Behavioral norm definitions per faction (durable, queryable by violation type)", "mysql"),
             [Faction] = new StoreMetadata("Faction", "Faction entity records (durable, queryable by realm/game service/status)", "mysql"),
             [FactionTerritory] = new StoreMetadata("Faction", "Territory claim records linking factions to controlled locations", "mysql"),
+            [GameServiceLock] = new StoreMetadata("GameService", "Distributed locks for stub name uniqueness", "redis"),
             [GameService] = new StoreMetadata("GameService", "Game service registry", "mysql"),
+            [GameSessionLock] = new StoreMetadata("GameSession", "Distributed locks for session lifecycle and reservation operations", "redis"),
             [GameSession] = new StoreMetadata("GameSession", "Game session state and history", "mysql"),
             [GardenerGardenInstances] = new StoreMetadata("Gardener", "Active garden instance state per player (ephemeral, TTL-based)", "redis"),
             [GardenerLock] = new StoreMetadata("Gardener", "Distributed locks for garden orchestration and scenario mutations", "redis"),
@@ -741,6 +814,7 @@ public static class StateStoreDefinitions
             [LocationLock] = new StoreMetadata("Location", "Distributed locks for concurrent index modifications", "redis"),
             [Location] = new StoreMetadata("Location", "Location hierarchy and metadata", "mysql"),
             [Mapping] = new StoreMetadata("Mapping", "Spatial map data and channels", "redis"),
+            [MatchmakingLock] = new StoreMetadata("Matchmaking", "Distributed locks for match processing and queue index modifications", "redis"),
             [Matchmaking] = new StoreMetadata("Matchmaking", "Matchmaking queue and ticket state", "redis"),
             [MeshAppidIndex] = new StoreMetadata("Mesh", "App-ID to instance-ID mapping index", "redis"),
             [MeshCircuitBreaker] = new StoreMetadata("Mesh", "Distributed circuit breaker state for cross-instance failure tracking", "redis"),
@@ -756,17 +830,19 @@ public static class StateStoreDefinitions
             [ObligationViolations] = new StoreMetadata("Obligation", "Violation history records (durable, queryable by character/contract/type)", "mysql"),
             [OrchestratorConfig] = new StoreMetadata("Orchestrator", "Configuration version and metadata", "redis"),
             [OrchestratorHeartbeats] = new StoreMetadata("Orchestrator", "Service heartbeat tracking", "redis"),
+            [OrchestratorLock] = new StoreMetadata("Orchestrator", "Distributed locks for pool management operations", "redis"),
             [OrchestratorRoutings] = new StoreMetadata("Orchestrator", "Service-to-app-id routing tables", "redis"),
             [Orchestrator] = new StoreMetadata("Orchestrator", "Primary orchestrator state", "redis"),
+            [PermissionLock] = new StoreMetadata("Permission", "Distributed locks for session capability compilation", "redis"),
             [Permission] = new StoreMetadata("Permission", "Permission cache and session capabilities", "redis"),
             [QuestCharacterIndex] = new StoreMetadata("Quest", "Character to active quest instance mapping", "redis"),
             [QuestCooldown] = new StoreMetadata("Quest", "Per-character quest cooldown tracking", "redis"),
             [QuestDefinitionCache] = new StoreMetadata("Quest", "Quest definition read-through cache", "redis"),
             [QuestDefinition] = new StoreMetadata("Quest", "Quest definitions with contract template IDs and metadata", "mysql"),
-            [QuestIdempotency] = new StoreMetadata("Quest", "Idempotency keys for accept/complete operations", "redis"),
             [QuestInstance] = new StoreMetadata("Quest", "Quest instances with status and party information", "mysql"),
             [QuestObjectiveProgress] = new StoreMetadata("Quest", "Real-time objective progress tracking", "redis"),
             [RealmHistory] = new StoreMetadata("RealmHistory", "Realm historical events and lore", "mysql"),
+            [RealmLock] = new StoreMetadata("Realm", "Distributed locks for realm merge operations", "redis"),
             [Realm] = new StoreMetadata("Realm", "Realm definitions and configuration", "mysql"),
             [RelationshipLock] = new StoreMetadata("Relationship", "Distributed locks for composite uniqueness and index modifications", "redis"),
             [Relationship] = new StoreMetadata("Relationship", "Entity relationships", "mysql"),
@@ -778,6 +854,7 @@ public static class StateStoreDefinitions
             [ResourceRefcounts] = new StoreMetadata("Resource", "Reference counts and source tracking per resource", "redis"),
             [ResourceSnapshots] = new StoreMetadata("Resource", "Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption)", "redis"),
             [SaveLoadCache] = new StoreMetadata("SaveLoad", "Recently accessed save data cache", "redis"),
+            [SaveLoadLock] = new StoreMetadata("SaveLoad", "Distributed locks for save slot operations", "redis"),
             [SaveLoadPending] = new StoreMetadata("SaveLoad", "Pending save operations", "redis"),
             [SaveLoadSchemas] = new StoreMetadata("SaveLoad", "Registered save data schemas", "mysql"),
             [SaveLoadSlots] = new StoreMetadata("SaveLoad", "Save slot metadata and ownership", "mysql"),
@@ -789,6 +866,7 @@ public static class StateStoreDefinitions
             [SeedLock] = new StoreMetadata("Seed", "Distributed locks for seed modifications", "redis"),
             [Seed] = new StoreMetadata("Seed", "Seed entity records (durable, queryable by owner/type)", "mysql"),
             [SeedTypeDefinitions] = new StoreMetadata("Seed", "Registered seed type definitions (durable, admin-managed)", "mysql"),
+            [SpeciesLock] = new StoreMetadata("Species", "Distributed locks for species mutations and merge operations", "redis"),
             [Species] = new StoreMetadata("Species", "Species definitions", "mysql"),
             [StatusActiveCache] = new StoreMetadata("Status", "Active status cache per entity (fast lookup, rebuilt from instances on miss)", "redis"),
             [StatusContainers] = new StoreMetadata("Status", "Status container records mapping entities to inventory containers (durable)", "mysql"),
@@ -796,6 +874,7 @@ public static class StateStoreDefinitions
             [StatusLock] = new StoreMetadata("Status", "Distributed locks for status mutations and template updates", "redis"),
             [StatusSeedEffectsCache] = new StoreMetadata("Status", "Cached seed-derived effects per entity (invalidated on capability.updated events)", "redis"),
             [StatusTemplates] = new StoreMetadata("Status", "Status template definitions (durable, queryable by category/code/gameServiceId)", "mysql"),
+            [StorylineLock] = new StoreMetadata("Storyline", "Distributed locks for scenario trigger operations", "redis"),
             [StorylinePlanIndex] = new StoreMetadata("Storyline", "Plan index by realm for list queries", "redis"),
             [StorylinePlans] = new StoreMetadata("Storyline", "Cached composed storyline plans (ephemeral, TTL from config)", "redis"),
             [StorylineScenarioActive] = new StoreMetadata("Storyline", "Active scenario tracking per character (set membership)", "redis"),
@@ -804,10 +883,21 @@ public static class StateStoreDefinitions
             [StorylineScenarioDefinitions] = new StoreMetadata("Storyline", "Durable scenario template definitions with conditions and mutations", "mysql"),
             [StorylineScenarioExecutions] = new StoreMetadata("Storyline", "Scenario execution history with outcome tracking", "mysql"),
             [StorylineScenarioIdempotency] = new StoreMetadata("Storyline", "Scenario trigger idempotency keys for deduplication", "redis"),
+            [SubscriptionLock] = new StoreMetadata("Subscription", "Distributed locks for subscription mutations and index operations", "redis"),
             [Subscription] = new StoreMetadata("Subscription", "User subscriptions to game services", "mysql"),
             [TestSearch] = new StoreMetadata("State", "Test store with RedisSearch enabled", "redis"),
+            [TransitConnectionGraph] = new StoreMetadata("Transit", "Cached per-realm connection adjacency lists for Dijkstra route calculation", "redis"),
+            [TransitConnections] = new StoreMetadata("Transit", "Transit connections between locations (durable graph edges)", "mysql"),
+            [TransitDiscovery] = new StoreMetadata("Transit", "Per-entity connection discovery tracking (permanent world knowledge)", "mysql"),
+            [TransitDiscoveryCache] = new StoreMetadata("Transit", "Per-entity discovery set cache for fast route calculation filtering", "redis"),
+            [TransitJourneys] = new StoreMetadata("Transit", "Active transit journeys (hot state, archived to MySQL by background worker)", "redis"),
+            [TransitJourneysArchive] = new StoreMetadata("Transit", "Archived completed/abandoned journeys (historical record for Trade velocity, Analytics)", "mysql"),
+            [TransitLock] = new StoreMetadata("Transit", "Distributed locks for journey state transitions and connection status updates", "redis"),
+            [TransitModes] = new StoreMetadata("Transit", "Transit mode definitions (durable registry)", "mysql"),
+            [VoiceLock] = new StoreMetadata("Voice", "Distributed locks for broadcast consent and room mutations", "redis"),
             [Voice] = new StoreMetadata("Voice", "Voice room and peer state", "redis"),
             [WorldstateCalendar] = new StoreMetadata("Worldstate", "Calendar template definitions and per-realm worldstate configuration (durable, queryable)", "mysql"),
+            [WorldstateLock] = new StoreMetadata("Worldstate", "Distributed locks for clock advancement, ratio changes, and calendar mutations", "redis"),
             [WorldstateRatioHistory] = new StoreMetadata("Worldstate", "Time ratio change history per realm for elapsed game-time computation (append-only, compacted)", "mysql"),
             [WorldstateRealmClock] = new StoreMetadata("Worldstate", "Current game time per realm (hot reads, updated every ClockTickIntervalSeconds)", "redis"),
         };

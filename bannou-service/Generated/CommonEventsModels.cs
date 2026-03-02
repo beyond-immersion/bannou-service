@@ -23,6 +23,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -70,7 +71,7 @@ public partial class ServiceHeartbeatEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ServiceHeartbeatEventStatus Status { get; set; } = default!;
+    public InstanceHealthStatus Status { get; set; } = default!;
 
     /// <summary>
     /// Status of each service/plugin hosted by this instance
@@ -130,7 +131,7 @@ public partial class ServiceStatus
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ServiceStatusStatus Status { get; set; } = default!;
+    public ServiceHealthStatus Status { get; set; } = default!;
 
     /// <summary>
     /// Service API version
@@ -566,7 +567,7 @@ public partial class CharacterStateUpdateEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "character.state_update";
+    public override string EventName { get; set; } = "character.state-update";
 
     /// <summary>
     /// Character this update applies to
@@ -758,46 +759,6 @@ public partial class BehaviorCompositionChange
     public string? Reason { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ServiceHeartbeatEventStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
-    Healthy = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"degraded")]
-    Degraded = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"overloaded")]
-    Overloaded = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"shutting_down")]
-    Shutting_down = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"unavailable")]
-    Unavailable = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ServiceStatusStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
-    Healthy = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"degraded")]
-    Degraded = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"unavailable")]
-    Unavailable = 2,
-
-}
-#pragma warning restore CS1591
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

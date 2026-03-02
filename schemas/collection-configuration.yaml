@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Collection Service Configuration
   description: |
@@ -18,29 +18,36 @@ x-service-configuration:
       type: integer
       env: COLLECTION_MAX_COLLECTIONS_PER_OWNER
       default: 20
+      minimum: 1
       description: Maximum number of collections a single owner entity can have
     maxEntriesPerCollection:
       type: integer
       env: COLLECTION_MAX_ENTRIES_PER_COLLECTION
       default: 500
+      minimum: 1
       description: Maximum number of unlocked entries per collection instance
     lockTimeoutSeconds:
       type: integer
       env: COLLECTION_LOCK_TIMEOUT_SECONDS
       default: 30
+      minimum: 1
       description: Distributed lock TTL for collection mutations in seconds
     collectionCacheTtlSeconds:
       type: integer
       env: COLLECTION_CACHE_TTL_SECONDS
       default: 300
+      minimum: 0
       description: Redis TTL for collection state cache in seconds
     defaultPageSize:
       type: integer
       env: COLLECTION_DEFAULT_PAGE_SIZE
       default: 20
+      minimum: 1
+      maximum: 100
       description: Default page size for paginated queries
     maxConcurrencyRetries:
       type: integer
       env: COLLECTION_MAX_CONCURRENCY_RETRIES
       default: 3
+      minimum: 0
       description: Maximum retry attempts for optimistic concurrency conflicts

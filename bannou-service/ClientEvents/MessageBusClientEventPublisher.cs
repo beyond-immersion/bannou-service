@@ -193,7 +193,7 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
     /// <remarks>
     /// <para>
     /// NSwag generates derived event classes that shadow the base Event_name (string) property
-    /// with an enum property (e.g., CapabilityManifestEventEvent_name). When accessing Event_name
+    /// with an enum property (e.g., CapabilityManifestClientEventEvent_name). When accessing Event_name
     /// via the BaseClientEvent constraint, we get the base string property which may be unset.
     /// </para>
     /// <para>

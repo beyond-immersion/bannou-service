@@ -24,90 +24,90 @@ public sealed class VoiceEventSubscriptions
     }
 
     /// <summary>
-    /// Subscribe to <see cref="VoiceBroadcastConsentRequestEvent"/> events.
+    /// Subscribe to <see cref="VoiceBroadcastConsentRequestClientEvent"/> events.
     /// Sent to all room participants when someone requests broadcast consent. Each participant should respond via /voice/room/broadcast/consent.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoiceBroadcastConsentRequest(Action<VoiceBroadcastConsentRequestEvent> handler)
+    public IEventSubscription OnVoiceBroadcastConsentRequest(Action<VoiceBroadcastConsentRequestClientEvent> handler)
     {
-        return _client.OnEvent<VoiceBroadcastConsentRequestEvent>(handler);
+        return _client.OnEvent<VoiceBroadcastConsentRequestClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="VoiceBroadcastConsentUpdateEvent"/> events.
+    /// Subscribe to <see cref="VoiceBroadcastConsentUpdateClientEvent"/> events.
     /// Sent to all room participants when the broadcast consent state changes (someone consented, someone declined, broadcast started, broadcast stopped).
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoiceBroadcastConsentUpdate(Action<VoiceBroadcastConsentUpdateEvent> handler)
+    public IEventSubscription OnVoiceBroadcastConsentUpdate(Action<VoiceBroadcastConsentUpdateClientEvent> handler)
     {
-        return _client.OnEvent<VoiceBroadcastConsentUpdateEvent>(handler);
+        return _client.OnEvent<VoiceBroadcastConsentUpdateClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="VoicePeerJoinedEvent"/> events.
+    /// Subscribe to <see cref="VoicePeerJoinedClientEvent"/> events.
     /// Sent to existing room participants when a new peer joins.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoicePeerJoined(Action<VoicePeerJoinedEvent> handler)
+    public IEventSubscription OnVoicePeerJoined(Action<VoicePeerJoinedClientEvent> handler)
     {
-        return _client.OnEvent<VoicePeerJoinedEvent>(handler);
+        return _client.OnEvent<VoicePeerJoinedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="VoicePeerLeftEvent"/> events.
+    /// Subscribe to <see cref="VoicePeerLeftClientEvent"/> events.
     /// Sent to remaining room participants when a peer leaves.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoicePeerLeft(Action<VoicePeerLeftEvent> handler)
+    public IEventSubscription OnVoicePeerLeft(Action<VoicePeerLeftClientEvent> handler)
     {
-        return _client.OnEvent<VoicePeerLeftEvent>(handler);
+        return _client.OnEvent<VoicePeerLeftClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="VoicePeerUpdatedEvent"/> events.
+    /// Subscribe to <see cref="VoicePeerUpdatedClientEvent"/> events.
     /// Sent when a peer updates their SIP endpoint (e.g., ICE candidate change).
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoicePeerUpdated(Action<VoicePeerUpdatedEvent> handler)
+    public IEventSubscription OnVoicePeerUpdated(Action<VoicePeerUpdatedClientEvent> handler)
     {
-        return _client.OnEvent<VoicePeerUpdatedEvent>(handler);
+        return _client.OnEvent<VoicePeerUpdatedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="VoiceRoomClosedEvent"/> events.
+    /// Subscribe to <see cref="VoiceRoomClosedClientEvent"/> events.
     /// Sent to all room participants when the voice room is closed.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoiceRoomClosed(Action<VoiceRoomClosedEvent> handler)
+    public IEventSubscription OnVoiceRoomClosed(Action<VoiceRoomClosedClientEvent> handler)
     {
-        return _client.OnEvent<VoiceRoomClosedEvent>(handler);
+        return _client.OnEvent<VoiceRoomClosedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="VoiceRoomStateEvent"/> events.
+    /// Subscribe to <see cref="VoiceRoomStateClientEvent"/> events.
     /// Sent to a client when they join a voice room.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoiceRoomState(Action<VoiceRoomStateEvent> handler)
+    public IEventSubscription OnVoiceRoomState(Action<VoiceRoomStateClientEvent> handler)
     {
-        return _client.OnEvent<VoiceRoomStateEvent>(handler);
+        return _client.OnEvent<VoiceRoomStateClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="VoiceTierUpgradeEvent"/> events.
+    /// Subscribe to <see cref="VoiceTierUpgradeClientEvent"/> events.
     /// Sent to all room participants when the voice tier upgrades.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoiceTierUpgrade(Action<VoiceTierUpgradeEvent> handler)
+    public IEventSubscription OnVoiceTierUpgrade(Action<VoiceTierUpgradeClientEvent> handler)
     {
-        return _client.OnEvent<VoiceTierUpgradeEvent>(handler);
+        return _client.OnEvent<VoiceTierUpgradeClientEvent>(handler);
     }
 }

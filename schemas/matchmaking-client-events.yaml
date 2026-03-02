@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Matchmaking Client Events API
   description: |
@@ -28,7 +28,7 @@ components:
     # Queue Joined Event
     # ============================================
 
-    QueueJoinedEvent:
+    QueueJoinedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -47,7 +47,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "matchmaking.queue_joined"
+          default: "matchmaking.queue.joined"
           description: Fixed event type identifier
         ticketId:
           type: string
@@ -72,7 +72,7 @@ components:
     # Match Found Event
     # ============================================
 
-    MatchFoundEvent:
+    MatchFoundClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -94,7 +94,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "matchmaking.match_found"
+          default: "matchmaking.match-found"
           description: Fixed event type identifier
         matchId:
           type: string
@@ -136,7 +136,7 @@ components:
     # Match Accepted Events
     # ============================================
 
-    MatchPlayerAcceptedEvent:
+    MatchPlayerAcceptedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -155,7 +155,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "matchmaking.player_accepted"
+          default: "matchmaking.player-accepted"
           description: Fixed event type identifier
         matchId:
           type: string
@@ -172,7 +172,7 @@ components:
           default: false
           description: Whether all players have accepted
 
-    MatchConfirmedEvent:
+    MatchConfirmedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -190,7 +190,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "matchmaking.match_confirmed"
+          default: "matchmaking.match-confirmed"
           description: Fixed event type identifier
         matchId:
           type: string
@@ -213,7 +213,7 @@ components:
     # Cancellation Events
     # ============================================
 
-    MatchmakingCancelledEvent:
+    MatchmakingCancelledClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -257,7 +257,7 @@ components:
           default: true
           description: Whether the player can immediately requeue
 
-    MatchDeclinedEvent:
+    MatchDeclinedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -275,7 +275,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "matchmaking.match_declined"
+          default: "matchmaking.match-declined"
           description: Fixed event type identifier
         matchId:
           type: string
@@ -302,7 +302,7 @@ components:
     # Status Update Event
     # ============================================
 
-    MatchmakingStatusUpdateEvent:
+    MatchmakingStatusUpdateClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -321,7 +321,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "matchmaking.status_update"
+          default: "matchmaking.status-update"
           description: Fixed event type identifier
         ticketId:
           type: string

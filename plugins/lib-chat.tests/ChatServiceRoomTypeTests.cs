@@ -47,7 +47,7 @@ public class ChatServiceRoomTypeTests : ChatServiceTestBase
 
         // Verify event published
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat-room-type.created", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat.room-type.created", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

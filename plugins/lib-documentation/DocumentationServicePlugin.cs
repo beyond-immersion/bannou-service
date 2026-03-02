@@ -27,17 +27,19 @@ public class DocumentationServicePlugin : StandardServicePlugin<IDocumentationSe
             var config = sp.GetRequiredService<DocumentationServiceConfiguration>();
             var fallbackLogger = sp.GetRequiredService<ILogger<SearchIndexService>>();
 
+            var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+
             // Check if Redis Search is available
-            if (stateStoreFactory.SupportsSearch("documentation-statestore"))
+            if (stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation))
             {
                 logger.LogInformation("Using Redis Search (FT.*) for documentation full-text search");
                 var messageBus = sp.GetRequiredService<IMessageBus>();
-                return new RedisSearchIndexService(stateStoreFactory, logger, config, messageBus);
+                return new RedisSearchIndexService(stateStoreFactory, logger, config, messageBus, telemetryProvider);
             }
             else
             {
                 fallbackLogger.LogInformation("Redis Search not available, using in-memory search index");
-                return new SearchIndexService(stateStoreFactory, fallbackLogger, config);
+                return new SearchIndexService(stateStoreFactory, fallbackLogger, config, telemetryProvider);
             }
         });
 
@@ -52,6 +54,9 @@ public class DocumentationServicePlugin : StandardServicePlugin<IDocumentationSe
 
         // Register search index rebuild service (runs once on startup)
         services.AddHostedService<SearchIndexRebuildService>();
+
+        // Register trashcan purge service (periodic expired entry cleanup)
+        services.AddHostedService<TrashcanPurgeService>();
 
         Logger?.LogDebug("Service dependencies configured");
     }

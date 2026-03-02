@@ -96,6 +96,8 @@ Actor is L2 (GameFoundation) but needs data from L3/L4 services (personality, en
 | `QuestProviderFactory` | `quest` | lib-quest | L2 |
 | `SeedProviderFactory` | `seed` | lib-seed | L2 |
 | `LocationContextProviderFactory` | `location` | lib-location | L2 |
+| `TransitVariableProviderFactory` | `transit` | lib-transit | L2 |
+| `WorldProviderFactory` | `world` | lib-worldstate | L2 |
 
 **Character Brain vs Event Brain Data Access**
 
@@ -143,7 +145,7 @@ Is consistency critical (currency balance, item ownership)?
     NO  → Variable Provider Factory with appropriate cache TTL
 ```
 
-Current providers: personality, combat, backstory, encounters, obligations, faction, quest, seed, location (see Registered Provider Factories table above). The `world` provider namespace is defined in `variable-providers.yaml` (for `${world.*}` expressions) but lib-worldstate does not yet implement `IVariableProviderFactory`. Planned future providers ([#147](https://github.com/beyond-immersion/bannou-service/issues/147)): currency (30s TTL), inventory (1m TTL), relationships (5m TTL).
+Current providers: personality, combat, backstory, encounters, obligations, faction, quest, seed, location, transit, world (see Registered Provider Factories table above). Planned future providers ([#147](https://github.com/beyond-immersion/bannou-service/issues/147)): currency (30s TTL), inventory (1m TTL), relationships (5m TTL).
 
 **Anti-patterns**: Never access another plugin's state store directly. Never poll APIs in tight loops (use Variable Providers with cache). Never cache mutation-critical data beyond short TTLs.
 
@@ -174,6 +176,22 @@ ActorRunner executes a two-phase tick model: template-driven cognition first, th
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-puppetmaster | Calls `IActorClient.InjectPerceptionAsync` to inject perceptions into running actors; calls `IActorClient.ListActorsAsync` to enumerate actors for behavior cache invalidation after asset updates |
+| lib-director *(planned)* | Observes actor state via tap mechanism (perception streams, variable snapshots, GOAP plans); steers actors via `InjectPerception` and GOAP cost overrides via `IVariableProviderFactory`; drives actors by pausing ABML execution and issuing commands through the `IActionHandler` pipeline. See [DIRECTOR.md](DIRECTOR.md) |
+
+---
+
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `ActorDeploymentMode` | C (System State) | Service-specific enum (`bannou`, `pool-per-type`, `shared-pool`, `auto-scale`) | Finite set of system-owned deployment topologies controlling how actors are distributed across nodes |
+| `ActorStatus` | C (System State) | Service-specific enum (`pending`, `starting`, `running`, `paused`, `stopping`, `stopped`, `error`) | Finite actor lifecycle state machine; system-owned transitions |
+| `ActorExitReason` | C (System State) | Service-specific enum (`behavior_complete`, `error`, `timeout`, `external_stop`) | Finite set of system-owned reasons an actor stopped executing |
+| `PerceptionSourceType` | C (System State) | Service-specific enum (`character`, `npc`, `object`, `environment`, `coordinator`, `scheduled`, `message`, `service`) | Finite set of perception source categories; system-owned, determines processing priority |
+| `OptionsQueryType` | C (System State) | Service-specific enum (`combat`, `dialogue`, `exploration`, `social`, `custom`) | Finite set of well-known option categories for actor query interface |
+| `category` | B (Content Code) | Opaque string | Actor template category identifier (e.g., "npc-brain", "world-admin", "event-brain", "cron-cleanup"). Game-configurable, extensible without schema changes |
+| `encounterType` | B (Content Code) | Opaque string | Type of encounter managed by Event Brain actors (e.g., "combat", "conversation", "choreography"). Game-configurable, extensible without schema changes |
+| `poolType` | B (Content Code) | Opaque string | Pool node type identifier (e.g., "shared", "npc-brain", "event-coordinator", or custom category). Registered at runtime, extensible |
 
 ---
 
@@ -207,17 +225,17 @@ ActorRunner executes a two-phase tick model: template-driven cognition first, th
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `actor-template.created` | `ActorTemplateCreatedEvent` | Template created |
-| `actor-template.updated` | `ActorTemplateUpdatedEvent` | Template modified |
-| `actor-template.deleted` | `ActorTemplateDeletedEvent` | Template deleted |
-| `actor-instance.created` | `ActorInstanceCreatedEvent` | Actor spawned |
-| `actor-instance.started` | `ActorInstanceStartedEvent` | ActorRunner started behavior loop |
-| `actor-instance.deleted` | `ActorInstanceDeletedEvent` | Actor stopped |
-| `actor-instance.state-persisted` | `ActorStatePersistedEvent` | Periodic state save |
+| `actor.template.created` | `ActorTemplateCreatedEvent` | Template created |
+| `actor.template.updated` | `ActorTemplateUpdatedEvent` | Template modified |
+| `actor.template.deleted` | `ActorTemplateDeletedEvent` | Template deleted |
+| `actor.instance.created` | `ActorInstanceCreatedEvent` | Actor spawned |
+| `actor.instance.started` | `ActorInstanceStartedEvent` | ActorRunner started behavior loop |
+| `actor.instance.deleted` | `ActorInstanceDeletedEvent` | Actor stopped |
+| `actor.instance.state-persisted` | `ActorStatePersistedEvent` | Periodic state save |
 | `actor.encounter.started` | `ActorEncounterStartedEvent` | Encounter begun |
 | `actor.encounter.phase-changed` | `ActorEncounterPhaseChangedEvent` | Encounter phase transition |
 | `actor.encounter.ended` | `ActorEncounterEndedEvent` | Encounter finished |
-| `character.state_update` | `CharacterStateUpdateEvent` | Actor publishes feelings/goals to character |
+| `character.state-update` | `CharacterStateUpdateEvent` | Actor publishes feelings/goals to character |
 | `actor.pool-node.registered` | `PoolNodeRegisteredEvent` | Pool node came online |
 | `actor.pool-node.heartbeat` | `PoolNodeHeartbeatEvent` | Pool node health update |
 | `actor.pool-node.draining` | `PoolNodeDrainingEvent` | Pool node shutting down |
@@ -236,7 +254,7 @@ ActorRunner executes a two-phase tick model: template-driven cognition first, th
 | `actor.pool-node.draining` | `PoolNodeDrainingEvent` | Mark draining, track remaining (control plane only) |
 | `actor.instance.status-changed` | `ActorStatusChangedEvent` | Update assignment status (control plane only) |
 | `actor.instance.completed` | `ActorCompletedEvent` | Remove assignment (control plane only) |
-| `actor-template.updated` | `ActorTemplateUpdatedEvent` | Invalidate behavior cache and signal running actors when BehaviorRef changes |
+| `actor.template.updated` | `ActorTemplateUpdatedEvent` | Invalidate behavior cache and signal running actors when BehaviorRef changes |
 
 **Note**: `behavior.updated` handling was moved to lib-puppetmaster (L4) per issue #380. Puppetmaster owns the dynamic behavior cache and notifies running actors via `IActorClient`. Actor (L2) no longer subscribes to any L4 events.
 
@@ -371,16 +389,16 @@ Service lifetime is **Scoped** for ActorService. Multiple BackgroundServices for
 
 ### Template Management (5 endpoints)
 
-- **CreateActorTemplate** (`/actor/template/create`): Creates template with category, behaviorRef, autoSpawn config, tick interval, auto-save interval. Updates template index (optimistic concurrency). Publishes `actor-template.created`.
+- **CreateActorTemplate** (`/actor/template/create`): Creates template with category, behaviorRef, autoSpawn config, tick interval, auto-save interval. Updates template index (optimistic concurrency). Publishes `actor.template.created`.
 - **GetActorTemplate** (`/actor/template/get`): Lookup by template ID or category. Category lookup enables convention-based actor spawning.
 - **ListActorTemplates** (`/actor/template/list`): Loads all template IDs from index, fetches each. Optional category filter.
-- **UpdateActorTemplate** (`/actor/template/update`): Partial update with `changedFields` tracking. Publishes `actor-template.updated`.
-- **DeleteActorTemplate** (`/actor/template/delete`): Removes from index. Publishes `actor-template.deleted`.
+- **UpdateActorTemplate** (`/actor/template/update`): Partial update with `changedFields` tracking. Publishes `actor.template.updated`.
+- **DeleteActorTemplate** (`/actor/template/delete`): Removes from index. Publishes `actor.template.deleted`.
 
 ### Actor Lifecycle (6 endpoints)
 
-- **SpawnActor** (`/actor/spawn`): In bannou mode: creates ActorRunner locally, registers in ActorRegistry, starts behavior loop. In pool mode: acquires least-loaded node via ActorPoolManager, publishes SpawnActorCommand to node's command topic. Publishes `actor-instance.created`.
-- **StopActor** (`/actor/stop`): In bannou mode: stops local runner, removes from registry. In pool mode: publishes StopActorCommand to assigned node. Publishes `actor-instance.deleted`.
+- **SpawnActor** (`/actor/spawn`): In bannou mode: creates ActorRunner locally, registers in ActorRegistry, starts behavior loop. In pool mode: acquires least-loaded node via ActorPoolManager, publishes SpawnActorCommand to node's command topic. Publishes `actor.instance.created`.
+- **StopActor** (`/actor/stop`): In bannou mode: stops local runner, removes from registry. In pool mode: publishes StopActorCommand to assigned node. Publishes `actor.instance.deleted`.
 - **GetActor** (`/actor/get`): Returns actor state snapshot. If actor not running but matches an auto-spawn template (regex pattern), automatically spawns it (instantiate-on-access pattern).
 - **BindActorCharacter** (`/actor/bind-character`): Binds a running actor to a character, enabling character brain variable providers without relaunching. In bannou mode: calls `BindCharacterAsync` on the local ActorRunner directly. In pool mode: updates the actor assignment record with the new characterId, then publishes `BindActorCharacterCommand` to the assigned node's command topic. The ActorRunner sets the `CharacterId`, establishes a per-character RabbitMQ perception subscription, and publishes `ActorCharacterBoundEvent`. Returns `Conflict` if the actor is already bound to a character. Returns `NotFound` if the actor is not running. Also emits the bound event on `StartAsync` when spawned with an initial characterId.
 - **CleanupByCharacter** (`/actor/cleanup-by-character`): Called by lib-resource cleanup coordination when a character is deleted. Stops and removes all actors referencing the specified characterId. Returns count of actors cleaned up. Part of x-references cascade pattern.
@@ -491,7 +509,7 @@ ActorRunner Behavior Loop (Two-Phase Execution)
                 │    └── Execute flow: on_tick (preferred) or main
                 │
                 ├── 3. PublishStateUpdateIfNeededAsync()
-                │    └── If CharacterId set: publish character.state_update
+                │    └── If CharacterId set: publish character.state-update
                 │
                 ├── 4. PeriodicPersistence()
                 │    └── If AutoSaveInterval exceeded: save state snapshot
@@ -655,7 +673,13 @@ Actor State Model
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/393 -->
 6. **Additional variable providers (currency, inventory, relationships)**: Extend the Variable Provider Factory pattern with providers for currency balance (30s TTL), inventory contents (1m TTL), and relationship data (5m TTL).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-23:https://github.com/beyond-immersion/bannou-service/issues/147 -->
-7. **Worldstate variable provider**: `world` provider namespace is defined in `variable-providers.yaml` but lib-worldstate does not yet implement `IVariableProviderFactory` to provide `${world.*}` expressions (game time, calendar, season data).
+7. ~~**Worldstate variable provider**~~: **FIXED** (2026-03-02) — lib-worldstate now implements `WorldProviderFactory` providing 14 `${world.*}` variables (time, calendar, season, derived). See [WORLDSTATE.md](WORLDSTATE.md) Variable Provider section.
+
+8. **Director tap mechanism**: Actor publishes per-tick state snapshots (perceptions, variable provider outputs, GOAP plans, behavior position) to a `director.tap.{actorId}` RabbitMQ topic when a tap is active. Tap registration uses special perception types (`director_tap_start`/`director_tap_stop`) injected via `InjectPerception` that Actor recognizes as side-channel control signals (no-op for cognition, activate/deactivate tap publishing). Enables real-time developer observation without modifying the behavior loop. See [DIRECTOR.md](DIRECTOR.md) Tier 1.
+
+9. **ABML execution pause/resume for drive sessions**: The existing `paused` `ActorStatus` value (currently unused) would be activated by Director's drive mechanism. When a developer binds to an actor, the behavior loop pauses at the current checkpoint; the developer issues commands through the same `IActionHandler` pipeline that ABML bytecode uses. On release, the behavior loop resumes from `on_tick` with all developer-made state changes (feelings, goals, memories) preserved. Requires new endpoints or command types for pause/resume control. See [DIRECTOR.md](DIRECTOR.md) Tier 3.
+
+10. **External action handler pipeline access**: Expose the actor's `IActionHandler` pipeline to external callers (not just ABML bytecode execution) for developer-driven command execution during drive sessions. The developer issues the same action YAML syntax that ABML documents use (`call:`, `load_snapshot:`, `watch:`, `emit_perception:`, etc.) routed through the same handlers, producing identical results. This makes drive sessions simultaneously a production orchestration tool and an integration test for the entire actor action system. See [DIRECTOR.md](DIRECTOR.md) Tier 3.
 
 ---
 
@@ -687,7 +711,7 @@ Actor State Model
 
 8. **Single-threaded behavior loop by design**: Each ActorRunner runs its behavior loop on a single task (sequential: perceptions → behavior tick → state publish → persistence → sleep). CPU-intensive behaviors delay tick processing but do not block other actors. `GoapPlanTimeoutMs` (50ms default) is passed to the GOAP planner as a budget hint via the behavior scope — it is NOT enforced as a hard timeout by ActorRunner. If planning exceeds the budget, the tick runs long and the sleep phase is skipped to compensate. This design simplifies state management (no concurrent access to actor state) and matches the one-brain-per-NPC model.
 
-9. **State persistence is a periodic snapshot, not the real-time path**: Actor state is persisted to Redis every `AutoSaveIntervalSeconds` (60s default) to balance write load against recovery granularity. During normal operation, all state changes publish `character.state_update` events immediately (every tick, ~100ms), so game servers see real-time updates. On graceful shutdown, state is persisted immediately. In crash scenarios, up to 60 seconds of unpersisted snapshot data may be lost, but gameplay-visible state was already broadcast via events. Feelings/goals re-stabilize quickly after actor respawn, and critical game state (inventory, quests, combat outcomes) is managed by other services.
+9. **State persistence is a periodic snapshot, not the real-time path**: Actor state is persisted to Redis every `AutoSaveIntervalSeconds` (60s default) to balance write load against recovery granularity. During normal operation, all state changes publish `character.state-update` events immediately (every tick, ~100ms), so game servers see real-time updates. On graceful shutdown, state is persisted immediately. In crash scenarios, up to 60 seconds of unpersisted snapshot data may be lost, but gameplay-visible state was already broadcast via events. Feelings/goals re-stabilize quickly after actor respawn, and critical game state (inventory, quests, combat outcomes) is managed by other services.
 
 10. **Per-actor RabbitMQ subscription for perceptions**: Each actor with a `CharacterId` creates a dynamic RabbitMQ subscription via `SubscribeDynamicAsync` on topic `character.{characterId}.perceptions`. This subscription is established either at `StartAsync` (when spawned with a characterId) or at `BindCharacterAsync` (when binding at runtime). Game servers and other actors publish perceptions to these character-specific topics via the ABML `emit_perception:` action. At scale (100,000+ actors), this means 100,000+ RabbitMQ subscriptions. This is intentional: targeted per-character topics enable efficient perception routing without the actor needing to filter irrelevant perceptions from a shared topic. Pool mode distributes subscriptions across nodes (e.g., 10 nodes × 10,000 subscriptions each). The `InjectPerception` API provides a direct injection alternative for testing. Subscriptions are disposed on actor stop.
 

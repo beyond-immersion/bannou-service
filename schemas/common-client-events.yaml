@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Common Client Events API
   description: |
@@ -41,7 +41,7 @@ components:
         eventName:
           type: string
           description: |
-            Unique event type identifier (e.g., "connect.capability_manifest").
+            Unique event type identifier (e.g., "connect.capability-manifest").
             Must be in the generated ClientEventWhitelist or will be rejected.
             Convention: {service}.{event_name}
         eventId:
@@ -53,7 +53,7 @@ components:
           format: date-time
           description: When the event was generated (ISO 8601 format)
 
-    CapabilityManifestEvent:
+    CapabilityManifestClientEvent:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
@@ -70,7 +70,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "connect.capability_manifest"
+          default: "connect.capability-manifest"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -123,7 +123,7 @@ components:
           nullable: true
           description: Human-readable description
 
-    DisconnectNotificationEvent:
+    DisconnectNotificationClientEvent:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
@@ -138,7 +138,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "connect.disconnect_notification"
+          default: "connect.disconnect-notification"
           description: Fixed event type identifier
         reconnectionToken:
           type: string
@@ -161,7 +161,7 @@ components:
             - server_shutdown: Server is shutting down gracefully
             - forced_disconnect: Administrative disconnection
 
-    SystemErrorEvent:
+    SystemErrorClientEvent:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
@@ -211,7 +211,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "permission.session_capabilities"
+          default: "permission.session-capabilities"
           description: Fixed event type identifier (internal, not forwarded to client)
         sessionId:
           type: string
@@ -229,7 +229,7 @@ components:
           nullable: true
           description: Why capabilities were sent (e.g., "session_connected", "service_registered", "role_changed")
 
-    SystemNotificationEvent:
+    SystemNotificationClientEvent:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
@@ -292,7 +292,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "session.shortcut_published"
+          default: "session.shortcut-published"
           description: Fixed event type identifier.
         sessionId:
           type: string
@@ -325,7 +325,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "session.shortcut_revoked"
+          default: "session.shortcut-revoked"
           description: Fixed event type identifier.
         sessionId:
           type: string

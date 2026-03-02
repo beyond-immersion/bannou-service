@@ -30,7 +30,7 @@ public interface IScaledTierCoordinator
     /// <param name="sessionId">The WebSocket session ID (unique per connection).</param>
     /// <param name="roomId">The voice room ID.</param>
     /// <returns>SIP credentials for the participant.</returns>
-    SipCredentials GenerateSipCredentials(Guid sessionId, Guid roomId);
+    ScaledTierSipCredentials GenerateSipCredentials(Guid sessionId, Guid roomId);
 
     /// <summary>
     /// Builds the JoinVoiceRoomResponse for a participant joining a scaled tier room.
@@ -71,7 +71,7 @@ public interface IScaledTierCoordinator
 /// <summary>
 /// SIP credentials for a scaled tier voice participant.
 /// </summary>
-public class SipCredentials
+public class ScaledTierSipCredentials
 {
     /// <summary>
     /// SIP registrar hostname (e.g., sip.bannou.local).

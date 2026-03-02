@@ -1,9 +1,11 @@
+using BeyondImmersion.Bannou.Character.ClientEvents;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Resource;
@@ -34,6 +36,7 @@ public partial class CharacterService : ICharacterService
     private readonly IRelationshipClient _relationshipClient;
     private readonly IContractClient _contractClient;
     private readonly IResourceClient _resourceClient;
+    private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly ITelemetryProvider _telemetryProvider;
 
     // Key prefixes for realm-partitioned storage
@@ -69,6 +72,7 @@ public partial class CharacterService : ICharacterService
         IContractClient contractClient,
         IEventConsumer eventConsumer,
         IResourceClient resourceClient,
+        IEntitySessionRegistry entitySessionRegistry,
         ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
@@ -81,6 +85,7 @@ public partial class CharacterService : ICharacterService
         _relationshipClient = relationshipClient;
         _contractClient = contractClient;
         _resourceClient = resourceClient ?? throw new ArgumentNullException(nameof(resourceClient));
+        _entitySessionRegistry = entitySessionRegistry;
         _telemetryProvider = telemetryProvider;
 
         // Register event handlers via partial class (CharacterServiceEvents.cs)
@@ -270,6 +275,9 @@ public partial class CharacterService : ICharacterService
         if (changedFields.Count > 0)
         {
             await PublishCharacterUpdatedEventAsync(character, changedFields);
+
+            // Publish client event for real-time UI updates via Entity Session Registry
+            await PublishCharacterUpdatedClientEventAsync(character, changedFields, cancellationToken);
         }
 
         var response = MapToCharacterResponse(character);
@@ -509,6 +517,10 @@ public partial class CharacterService : ICharacterService
 
         // Publish character updated event
         await PublishCharacterUpdatedEventAsync(character, new List<string> { "realmId" });
+
+        // Publish realm transfer client event for UI context switch
+        await PublishCharacterRealmTransferredClientEventAsync(
+            body.CharacterId, previousRealmId, body.TargetRealmId, cancellationToken);
 
         var response = MapToCharacterResponse(character);
         return (StatusCodes.OK, response);
@@ -1287,6 +1299,7 @@ public partial class CharacterService : ICharacterService
     /// </summary>
     private async Task<(bool exists, bool isActive)> ValidateRealmAsync(Guid realmId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.ValidateRealmAsync");
         try
         {
             var response = await _realmClient.RealmExistsAsync(
@@ -1311,6 +1324,7 @@ public partial class CharacterService : ICharacterService
     /// </summary>
     private async Task<(bool exists, bool isInRealm)> ValidateSpeciesAsync(Guid speciesId, Guid realmId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.ValidateSpeciesAsync");
         try
         {
             var speciesResponse = await _speciesClient.GetSpeciesAsync(
@@ -1668,6 +1682,72 @@ public partial class CharacterService : ICharacterService
 
         await _messageBus.TryPublishAsync(CHARACTER_REALM_LEFT_TOPIC, eventModel);
         _logger.LogDebug("Published CharacterRealmLeftEvent for character: {CharacterId}", characterId);
+    }
+
+    /// <summary>
+    /// Publishes character updated client event to connected WebSocket sessions via Entity Session Registry.
+    /// Includes only the changed field values so the client can re-render without a full model fetch.
+    /// </summary>
+    private async Task PublishCharacterUpdatedClientEventAsync(
+        CharacterModel character, IEnumerable<string> changedFields, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.PublishCharacterUpdatedClientEventAsync");
+
+        var changedFieldsList = changedFields.ToList();
+        var clientEvent = new CharacterUpdatedClientEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            CharacterId = character.CharacterId,
+            ChangedFields = changedFieldsList
+        };
+
+        // Conditionally populate optional fields based on what changed
+        if (changedFieldsList.Contains("name"))
+        {
+            clientEvent.Name = character.Name;
+        }
+
+        if (changedFieldsList.Contains("status"))
+        {
+            clientEvent.Status = character.Status;
+        }
+
+        if (changedFieldsList.Contains("deathDate"))
+        {
+            clientEvent.DeathDate = character.DeathDate;
+        }
+
+        var sessionsNotified = await _entitySessionRegistry.PublishToEntitySessionsAsync(
+            "character", character.CharacterId, clientEvent, cancellationToken);
+
+        _logger.LogDebug("Published CharacterUpdatedClientEvent for character {CharacterId} to {SessionCount} session(s)",
+            character.CharacterId, sessionsNotified);
+    }
+
+    /// <summary>
+    /// Publishes character realm transferred client event to connected WebSocket sessions via Entity Session Registry.
+    /// Distinct from the updated client event because realm transfer requires a full UI context switch on the client.
+    /// </summary>
+    private async Task PublishCharacterRealmTransferredClientEventAsync(
+        Guid characterId, Guid previousRealmId, Guid newRealmId, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.PublishCharacterRealmTransferredClientEventAsync");
+
+        var clientEvent = new CharacterRealmTransferredClientEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            CharacterId = characterId,
+            PreviousRealmId = previousRealmId,
+            NewRealmId = newRealmId
+        };
+
+        var sessionsNotified = await _entitySessionRegistry.PublishToEntitySessionsAsync(
+            "character", characterId, clientEvent, cancellationToken);
+
+        _logger.LogDebug("Published CharacterRealmTransferredClientEvent for character {CharacterId} to {SessionCount} session(s)",
+            characterId, sessionsNotified);
     }
 
     #endregion

@@ -31,7 +31,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createEscrowAsync(
+  async escrowCreateEscrowAsync(
     request: Schemas['CreateEscrowRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getEscrowAsync(
+  async escrowGetEscrowAsync(
     request: Schemas['GetEscrowRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listEscrowsAsync(
+  async escrowListEscrowsAsync(
     request: Schemas['ListEscrowsRequest'],
     channel: number = 0,
     timeout?: number
@@ -91,7 +91,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async depositAsync(
+  async escrowDepositAsync(
     request: Schemas['DepositRequest'],
     channel: number = 0,
     timeout?: number
@@ -111,7 +111,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async validateDepositAsync(
+  async escrowValidateDepositAsync(
     request: Schemas['ValidateDepositRequest'],
     channel: number = 0,
     timeout?: number
@@ -129,7 +129,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getDepositStatusAsync(
+  async escrowGetDepositStatusAsync(
     request: Schemas['GetDepositStatusRequest'],
     channel: number = 0,
     timeout?: number
@@ -147,7 +147,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async recordConsentAsync(
+  async escrowRecordConsentAsync(
     request: Schemas['ConsentRequest'],
     channel: number = 0,
     timeout?: number
@@ -167,7 +167,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getConsentStatusAsync(
+  async escrowGetConsentStatusAsync(
     request: Schemas['GetConsentStatusRequest'],
     channel: number = 0,
     timeout?: number
@@ -185,7 +185,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async releaseAsync(
+  async escrowReleaseAsync(
     request: Schemas['ReleaseRequest'],
     channel: number = 0,
     timeout?: number
@@ -205,7 +205,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async refundAsync(
+  async escrowRefundAsync(
     request: Schemas['RefundRequest'],
     channel: number = 0,
     timeout?: number
@@ -225,7 +225,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async cancelAsync(
+  async escrowCancelAsync(
     request: Schemas['CancelRequest'],
     channel: number = 0,
     timeout?: number
@@ -245,7 +245,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async disputeAsync(
+  async escrowDisputeAsync(
     request: Schemas['DisputeRequest'],
     channel: number = 0,
     timeout?: number
@@ -265,7 +265,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async confirmReleaseAsync(
+  async escrowConfirmReleaseAsync(
     request: Schemas['ConfirmReleaseRequest'],
     channel: number = 0,
     timeout?: number
@@ -283,7 +283,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async confirmRefundAsync(
+  async escrowConfirmRefundAsync(
     request: Schemas['ConfirmRefundRequest'],
     channel: number = 0,
     timeout?: number
@@ -301,7 +301,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async resolveAsync(
+  async escrowResolveAsync(
     request: Schemas['ResolveRequest'],
     channel: number = 0,
     timeout?: number
@@ -321,7 +321,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async verifyConditionAsync(
+  async escrowVerifyConditionAsync(
     request: Schemas['VerifyConditionRequest'],
     channel: number = 0,
     timeout?: number
@@ -339,7 +339,7 @@ export class EscrowProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async reaffirmAsync(
+  async escrowReaffirmAsync(
     request: Schemas['ReaffirmRequest'],
     channel: number = 0,
     timeout?: number

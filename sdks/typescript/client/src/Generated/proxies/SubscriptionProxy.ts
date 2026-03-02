@@ -31,7 +31,7 @@ export class SubscriptionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getAccountSubscriptionsAsync(
+  async subscriptionGetAccountSubscriptionsAsync(
     request: Schemas['GetAccountSubscriptionsRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class SubscriptionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSubscriptionAsync(
+  async subscriptionGetSubscriptionAsync(
     request: Schemas['GetSubscriptionRequest'],
     channel: number = 0,
     timeout?: number
@@ -69,7 +69,7 @@ export class SubscriptionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async cancelSubscriptionAsync(
+  async subscriptionCancelSubscriptionAsync(
     request: Schemas['CancelSubscriptionRequest'],
     channel: number = 0,
     timeout?: number

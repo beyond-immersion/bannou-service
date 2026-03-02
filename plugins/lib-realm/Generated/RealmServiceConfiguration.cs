@@ -58,4 +58,30 @@ public class RealmServiceConfiguration : BaseServiceConfiguration
     [ConfigRange(Minimum = 1, Maximum = 100)]
     public int MergePageSize { get; set; } = 50;
 
+    /// <summary>
+    /// Number of retry attempts for ETag-based optimistic concurrency operations
+    /// Environment variable: REALM_OPTIMISTIC_RETRY_ATTEMPTS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
+    public int OptimisticRetryAttempts { get; set; } = 3;
+
+    /// <summary>
+    /// Timeout in seconds for distributed lock during realm merge operations
+    /// Environment variable: REALM_MERGE_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
+    public int MergeLockTimeoutSeconds { get; set; } = 120;
+
+    /// <summary>
+    /// When true, automatically initializes a worldstate realm clock after creating a new realm. If initialization fails, realm creation still succeeds (warning logged). Env var REALM_AUTO_INITIALIZE_WORLDSTATE_CLOCK.
+    /// Environment variable: REALM_AUTO_INITIALIZE_WORLDSTATE_CLOCK
+    /// </summary>
+    public bool AutoInitializeWorldstateClock { get; set; } = false;
+
+    /// <summary>
+    /// Default calendar template code passed to worldstate when auto-initializing realm clocks. Required when AutoInitializeWorldstateClock is true. Env var REALM_DEFAULT_CALENDAR_TEMPLATE_CODE.
+    /// Environment variable: REALM_DEFAULT_CALENDAR_TEMPLATE_CODE
+    /// </summary>
+    public string? DefaultCalendarTemplateCode { get; set; }
+
 }

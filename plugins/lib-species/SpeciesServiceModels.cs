@@ -31,23 +31,25 @@ public partial class SpeciesService
     // are defined at namespace level as internal classes.
 }
 
-// ============================================================================
-// INTERNAL DATA MODELS
-// ============================================================================
-// Add your internal data models below. Examples:
-//
-// /// <summary>
-// /// Internal storage model for [entity].
-// /// </summary>
-// internal class SpeciesStorageModel
-// {
-//     public Guid Id { get; set; }
-//     public string Name { get; set; } = string.Empty;
-//     public DateTimeOffset CreatedAt { get; set; }
-// }
-//
-// /// <summary>
-// /// Cache entry for [purpose].
-// /// </summary>
-// internal record SpeciesCacheEntry(Guid Id, string Data, DateTimeOffset CachedAt);
-// ============================================================================
+/// <summary>
+/// Internal storage model for species data.
+/// </summary>
+internal class SpeciesModel
+{
+    public Guid SpeciesId { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string? Category { get; set; }
+    public bool IsPlayable { get; set; } = true;
+    public int? BaseLifespan { get; set; }
+    public int? MaturityAge { get; set; }
+    public object? TraitModifiers { get; set; }
+    public List<Guid> RealmIds { get; set; } = new();
+    public object? Metadata { get; set; }
+    public bool IsDeprecated { get; set; }
+    public DateTimeOffset? DeprecatedAt { get; set; }
+    public string? DeprecationReason { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}

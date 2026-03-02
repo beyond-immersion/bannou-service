@@ -6,7 +6,9 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.Bannou.Behavior.Cognition;
 
@@ -31,6 +33,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
     private readonly ICognitionTemplateRegistry _registry;
     private readonly IActionHandlerRegistry? _handlerRegistry;
     private readonly ILogger<CognitionBuilder>? _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
 
     /// <summary>
     /// Creates a new cognition builder.
@@ -38,14 +41,17 @@ public sealed class CognitionBuilder : ICognitionBuilder
     /// <param name="registry">Template registry.</param>
     /// <param name="handlerRegistry">Optional action handler registry for pipeline execution.</param>
     /// <param name="logger">Optional logger.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     public CognitionBuilder(
         ICognitionTemplateRegistry registry,
         IActionHandlerRegistry? handlerRegistry = null,
-        ILogger<CognitionBuilder>? logger = null)
+        ILogger<CognitionBuilder>? logger = null,
+        ITelemetryProvider? telemetryProvider = null)
     {
         _registry = registry;
         _handlerRegistry = handlerRegistry;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -89,7 +95,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
             template.Id,
             overrides?.Overrides.Count ?? 0);
 
-        return new CognitionPipeline(template.Id, executableStages, _handlerRegistry);
+        return new CognitionPipeline(template.Id, executableStages, _handlerRegistry, _telemetryProvider);
     }
 
     /// <inheritdoc/>
@@ -412,7 +418,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
         }
     }
 
-    private static CognitionStage CreateStage(string name, List<MutableHandler> handlers)
+    private CognitionStage CreateStage(string name, List<MutableHandler> handlers)
     {
         var executableHandlers = handlers
             .Select(h => new CognitionHandler(
@@ -420,10 +426,11 @@ public sealed class CognitionBuilder : ICognitionBuilder
                 h.HandlerName,
                 h.Enabled,
                 h.Parameters,
-                h.DisableCondition))
+                h.DisableCondition,
+                _telemetryProvider))
             .ToList();
 
-        return new CognitionStage(name, executableHandlers);
+        return new CognitionStage(name, executableHandlers, _telemetryProvider);
     }
 
     /// <summary>
@@ -446,15 +453,18 @@ public sealed class CognitionBuilder : ICognitionBuilder
 internal sealed class CognitionPipeline : ICognitionPipeline
 {
     private readonly IActionHandlerRegistry? _handlerRegistry;
+    private readonly ITelemetryProvider? _telemetryProvider;
 
     public CognitionPipeline(
         string templateId,
         IReadOnlyList<ICognitionStage> stages,
-        IActionHandlerRegistry? handlerRegistry)
+        IActionHandlerRegistry? handlerRegistry,
+        ITelemetryProvider? telemetryProvider = null)
     {
         TemplateId = templateId;
         Stages = stages;
         _handlerRegistry = handlerRegistry;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -469,6 +479,7 @@ internal sealed class CognitionPipeline : ICognitionPipeline
         CognitionContext context,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "CognitionPipeline.ProcessAsync");
         return await ProcessBatchAsync([perception], context, ct);
     }
 
@@ -478,6 +489,7 @@ internal sealed class CognitionPipeline : ICognitionPipeline
         CognitionContext context,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "CognitionPipeline.ProcessBatchAsync");
 
         try
         {
@@ -516,10 +528,13 @@ internal sealed class CognitionPipeline : ICognitionPipeline
 /// </summary>
 internal sealed class CognitionStage : ICognitionStage
 {
-    public CognitionStage(string name, IReadOnlyList<ICognitionHandler> handlers)
+    private readonly ITelemetryProvider? _telemetryProvider;
+
+    public CognitionStage(string name, IReadOnlyList<ICognitionHandler> handlers, ITelemetryProvider? telemetryProvider = null)
     {
         Name = name;
         Handlers = handlers;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -531,6 +546,7 @@ internal sealed class CognitionStage : ICognitionStage
     /// <inheritdoc/>
     public async Task ExecuteAsync(CognitionContext context, CancellationToken ct)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "CognitionStage.ExecuteAsync");
         foreach (var handler in Handlers)
         {
             if (!handler.IsEnabled)
@@ -558,18 +574,22 @@ internal sealed class CognitionStage : ICognitionStage
 /// </summary>
 internal sealed class CognitionHandler : ICognitionHandler
 {
+    private readonly ITelemetryProvider? _telemetryProvider;
+
     public CognitionHandler(
         string id,
         string handlerName,
         bool isEnabled,
         IReadOnlyDictionary<string, object> parameters,
-        string? disableCondition = null)
+        string? disableCondition = null,
+        ITelemetryProvider? telemetryProvider = null)
     {
         Id = id;
         HandlerName = handlerName;
         IsEnabled = isEnabled;
         Parameters = parameters;
         DisableCondition = disableCondition;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -592,6 +612,7 @@ internal sealed class CognitionHandler : ICognitionHandler
     /// <inheritdoc/>
     public async Task ExecuteAsync(CognitionContext context, CancellationToken ct)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "CognitionHandler.ExecuteAsync");
         var handlerRegistry = context.HandlerRegistry;
         if (handlerRegistry == null)
         {

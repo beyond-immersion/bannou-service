@@ -38,6 +38,7 @@ public partial class MatchmakingService
     /// <param name="evt">The event data.</param>
     public async Task HandleSessionConnectedAsync(SessionConnectedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.HandleSessionConnectedAsync");
         // New connections don't require any matchmaking action
         // Players must explicitly join queues via the JoinMatchmaking endpoint
         _logger.LogDebug("Session {SessionId} connected, account {AccountId}",
@@ -52,6 +53,7 @@ public partial class MatchmakingService
     /// <param name="evt">The event data.</param>
     public async Task HandleSessionDisconnectedAsync(SessionDisconnectedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.HandleSessionDisconnectedAsync");
         // SessionDisconnectedEvent.AccountId is nullable Guid?
         if (!evt.AccountId.HasValue)
         {
@@ -107,6 +109,7 @@ public partial class MatchmakingService
     /// <param name="evt">The event data.</param>
     public async Task HandleSessionReconnectedAsync(SessionReconnectedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.HandleSessionReconnectedAsync");
         // SessionReconnectedEvent.AccountId is non-nullable Guid
         var accountId = evt.AccountId;
         _logger.LogInformation("Session {SessionId} reconnected for account {AccountId}, checking for pending match",
@@ -143,7 +146,7 @@ public partial class MatchmakingService
                         // Calculate remaining time to accept
                         var remainingSeconds = Math.Max(0, (int)(match.AcceptDeadline - DateTimeOffset.UtcNow).TotalSeconds);
 
-                        await _clientEventPublisher.PublishToSessionAsync(evt.SessionId.ToString(), new MatchFoundEvent
+                        await _clientEventPublisher.PublishToSessionAsync(evt.SessionId.ToString(), new MatchFoundClientEvent
                         {
                             EventId = Guid.NewGuid(),
                             Timestamp = DateTimeOffset.UtcNow,

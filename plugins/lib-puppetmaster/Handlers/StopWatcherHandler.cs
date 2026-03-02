@@ -6,6 +6,7 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Abml.Execution;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
@@ -34,18 +35,22 @@ public sealed class StopWatcherHandler : IActionHandler
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<StopWatcherHandler> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new stop watcher handler.
     /// </summary>
     /// <param name="scopeFactory">Service scope factory for resolving scoped dependencies.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public StopWatcherHandler(
         IServiceScopeFactory scopeFactory,
-        ILogger<StopWatcherHandler> logger)
+        ILogger<StopWatcherHandler> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -57,6 +62,7 @@ public sealed class StopWatcherHandler : IActionHandler
         AbmlExecutionContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "StopWatcherHandler.ExecuteAsync");
         var stopAction = (StopWatcherAction)action;
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
 

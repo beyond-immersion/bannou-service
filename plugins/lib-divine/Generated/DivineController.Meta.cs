@@ -2766,7 +2766,7 @@ public partial class DivineController
                     "description": "Entity receiving the blessing"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity receiving the blessing (e.g., character, account, deity)"
                 },
                 "tier": {
@@ -2835,7 +2835,7 @@ public partial class DivineController
                     "description": "Entity that received this blessing"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity that received this blessing"
                 },
                 "tier": {
@@ -3017,7 +3017,7 @@ public partial class DivineController
                     "description": "Entity that received this blessing"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity that received this blessing"
                 },
                 "tier": {
@@ -3152,7 +3152,7 @@ public partial class DivineController
                     "description": "Entity whose blessings to list"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity (e.g., character, account, deity)"
                 },
                 "page": {
@@ -3242,7 +3242,7 @@ public partial class DivineController
                     "description": "Entity that received this blessing"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity that received this blessing"
                 },
                 "tier": {
@@ -3463,7 +3463,7 @@ public partial class DivineController
                     "description": "Entity that received this blessing"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity that received this blessing"
                 },
                 "tier": {
@@ -3626,7 +3626,7 @@ public partial class DivineController
                     "description": "Entity that received this blessing"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity that received this blessing"
                 },
                 "tier": {

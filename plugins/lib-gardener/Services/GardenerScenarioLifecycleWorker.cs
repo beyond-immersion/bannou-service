@@ -33,6 +33,7 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<GardenerScenarioLifecycleWorker> _logger;
     private readonly GardenerServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Interval between lifecycle evaluation cycles, from configuration.
@@ -52,14 +53,17 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
     /// <param name="serviceProvider">Service provider for creating scopes to access scoped services.</param>
     /// <param name="logger">Logger for structured logging.</param>
     /// <param name="configuration">Service configuration with lifecycle settings.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public GardenerScenarioLifecycleWorker(
         IServiceProvider serviceProvider,
         ILogger<GardenerScenarioLifecycleWorker> logger,
-        GardenerServiceConfiguration configuration)
+        GardenerServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -133,6 +137,8 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
     /// </summary>
     private async Task ProcessLifecycleCycleAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerScenarioLifecycleWorker.ProcessLifecycleCycleAsync");
+
         using var scope = _serviceProvider.CreateScope();
         var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
         var lockProvider = scope.ServiceProvider.GetRequiredService<IDistributedLockProvider>();
@@ -207,6 +213,8 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
         IMessageBus messageBus,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerScenarioLifecycleWorker.ProcessScenarioLifecycleAsync");
+
         var scenarioKey = $"scenario:{accountId}";
         var scenario = await scenarioStore.GetAsync(scenarioKey, ct);
 
@@ -279,6 +287,8 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
         bool isTimeout,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerScenarioLifecycleWorker.ForceCompleteScenarioAsync");
+
         var lockOwner = $"lifecycle-{Guid.NewGuid():N}";
         await using var lockResult = await lockProvider.LockAsync(
             StateStoreDefinitions.GardenerLock,

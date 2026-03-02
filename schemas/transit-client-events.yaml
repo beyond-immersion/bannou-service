@@ -1,0 +1,152 @@
+openapi: 3.0.4
+info:
+  title: Transit Client Events
+  version: 1.0.0
+  description: Server-to-client WebSocket push events for the Transit service
+
+components:
+  schemas:
+    TransitJourneyUpdatedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: Journey state changed -- pushed to the traveling entity's bound session
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - journeyId
+        - entityId
+        - status
+        - currentLocationId
+        - destinationLocationId
+        - estimatedArrivalGameTime
+        - currentLegIndex
+        - remainingLegs
+        - primaryModeCode
+      properties:
+        eventName:
+          type: string
+          default: transit.journey.updated
+          description: Fixed event type identifier
+        journeyId:
+          type: string
+          format: uuid
+          description: The journey that changed state
+        entityId:
+          type: string
+          format: uuid
+          description: The traveling entity
+        status:
+          allOf:
+            - $ref: 'transit-api.yaml#/components/schemas/JourneyStatus'
+          description: Current journey status
+        currentLocationId:
+          type: string
+          format: uuid
+          description: Where the entity currently is
+        destinationLocationId:
+          type: string
+          format: uuid
+          description: Final destination of the journey
+        estimatedArrivalGameTime:
+          type: number
+          format: decimal
+          description: Estimated arrival in game-time units
+        currentLegIndex:
+          type: integer
+          description: Index of the current leg (0-based)
+        remainingLegs:
+          type: integer
+          description: Number of legs remaining in the journey
+        primaryModeCode:
+          type: string
+          description: Primary transit mode code for the journey
+
+    TransitDiscoveryRevealedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: A discoverable connection was revealed -- pushed to the discovering entity's session
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - connectionId
+        - fromLocationId
+        - toLocationId
+        - source
+      properties:
+        eventName:
+          type: string
+          default: transit.discovery.revealed
+          description: Fixed event type identifier
+        connectionId:
+          type: string
+          format: uuid
+          description: The connection that was discovered
+        fromLocationId:
+          type: string
+          format: uuid
+          description: Origin location of the discovered connection
+        toLocationId:
+          type: string
+          format: uuid
+          description: Destination location of the discovered connection
+        source:
+          type: string
+          description: How the connection was discovered (e.g., travel, guide, hearsay, map, quest_reward)
+        connectionName:
+          type: string
+          nullable: true
+          description: Human-readable connection name for UI display
+
+    TransitConnectionStatusChangedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: A connection's operational status changed -- pushed to sessions in the affected realm
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - connectionId
+        - fromLocationId
+        - toLocationId
+        - previousStatus
+        - newStatus
+        - reason
+      properties:
+        eventName:
+          type: string
+          default: transit.connection.status-changed
+          description: Fixed event type identifier
+        connectionId:
+          type: string
+          format: uuid
+          description: The connection whose status changed
+        fromLocationId:
+          type: string
+          format: uuid
+          description: Origin location of the connection
+        toLocationId:
+          type: string
+          format: uuid
+          description: Destination location of the connection
+        previousStatus:
+          allOf:
+            - $ref: 'transit-api.yaml#/components/schemas/ConnectionStatus'
+          description: Status before the change
+        newStatus:
+          allOf:
+            - $ref: 'transit-api.yaml#/components/schemas/ConnectionStatus'
+          description: Status after the change
+        reason:
+          type: string
+          description: Reason for the status change

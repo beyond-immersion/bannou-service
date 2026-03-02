@@ -8,6 +8,7 @@ using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Puppetmaster.Caching;
 using BeyondImmersion.BannouService.Puppetmaster.Providers;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 
@@ -47,18 +48,22 @@ public sealed class LoadSnapshotHandler : IActionHandler
 {
     private readonly IResourceSnapshotCache _cache;
     private readonly ILogger<LoadSnapshotHandler> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new load snapshot handler.
     /// </summary>
     /// <param name="cache">Resource snapshot cache.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public LoadSnapshotHandler(
         IResourceSnapshotCache cache,
-        ILogger<LoadSnapshotHandler> logger)
+        ILogger<LoadSnapshotHandler> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -70,6 +75,7 @@ public sealed class LoadSnapshotHandler : IActionHandler
         AbmlExecutionContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "LoadSnapshotHandler.ExecuteAsync");
         var loadAction = (LoadSnapshotAction)action;
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
 

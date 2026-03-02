@@ -36,6 +36,7 @@ public partial class AssetService
     /// <param name="evt">The job queued event.</param>
     internal async Task HandleMetabundleJobQueuedAsync(MetabundleJobQueuedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.HandleMetabundleJobQueuedAsync");
         var stopwatch = Stopwatch.StartNew();
         var cancellationToken = CancellationToken.None;
 
@@ -61,7 +62,7 @@ public partial class AssetService
             _logger.LogWarning("Metabundle job timed out before processing: JobId={JobId}, Age={AgeSeconds}s",
                 evt.JobId, jobAgeSeconds);
 
-            job.Status = InternalJobStatus.Failed;
+            job.Status = BundleStatus.Failed;
             job.UpdatedAt = DateTimeOffset.UtcNow;
             job.CompletedAt = DateTimeOffset.UtcNow;
             job.ErrorCode = MetabundleErrorCode.TIMEOUT;
@@ -75,7 +76,7 @@ public partial class AssetService
         }
 
         // Update status to Processing
-        job.Status = InternalJobStatus.Processing;
+        job.Status = BundleStatus.Processing;
         job.UpdatedAt = DateTimeOffset.UtcNow;
         await jobStore.SaveAsync(jobKey, job,
             new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
@@ -89,7 +90,7 @@ public partial class AssetService
             stopwatch.Stop();
 
             // Update job with result
-            job.Status = InternalJobStatus.Ready;
+            job.Status = BundleStatus.Ready;
             job.UpdatedAt = DateTimeOffset.UtcNow;
             job.CompletedAt = DateTimeOffset.UtcNow;
             job.ProcessingTimeMs = stopwatch.ElapsedMilliseconds;
@@ -110,7 +111,7 @@ public partial class AssetService
                 evt.JobId, evt.MetabundleId);
 
             // Update job with failure
-            job.Status = InternalJobStatus.Failed;
+            job.Status = BundleStatus.Failed;
             job.UpdatedAt = DateTimeOffset.UtcNow;
             job.CompletedAt = DateTimeOffset.UtcNow;
             job.ProcessingTimeMs = stopwatch.ElapsedMilliseconds;
@@ -131,6 +132,7 @@ public partial class AssetService
     /// </summary>
     private async Task<MetabundleJobResult> ProcessMetabundleJobAsync(MetabundleJob job, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.ProcessMetabundleJobAsync");
         if (job.Request == null)
         {
             throw new InvalidOperationException($"Job {job.JobId} has null Request - data corruption detected");
@@ -209,6 +211,7 @@ public partial class AssetService
             await using var writer = new StreamingBundleWriter(
                 uploadSession,
                 _storageProvider,
+                _telemetryProvider,
                 streamingOptions,
                 _logger);
 
@@ -353,7 +356,7 @@ public partial class AssetService
             Bucket = bucket,
             SizeBytes = bundleSize,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = Models.BundleStatus.Ready,
+            Status = BundleStatus.Ready,
             Owner = request.Owner,
             SourceBundles = sourceBundleRefs,
             StandaloneAssetIds = standaloneAssetIds.Count > 0 ? standaloneAssetIds : null,
@@ -414,6 +417,7 @@ public partial class AssetService
         int progress,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.UpdateJobProgressAsync");
         job.Progress = progress;
         job.UpdatedAt = DateTimeOffset.UtcNow;
         await jobStore.SaveAsync(jobKey, job,
@@ -424,15 +428,16 @@ public partial class AssetService
     /// <summary>
     /// Emits the job completion event to the requester's session (if available).
     /// </summary>
-    private async Task EmitJobCompletionEventAsync(MetabundleJob job, string? sessionId, CancellationToken cancellationToken)
+    private async Task EmitJobCompletionEventAsync(MetabundleJob job, Guid? sessionId, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrEmpty(sessionId))
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.EmitJobCompletionEventAsync");
+        if (sessionId == null)
         {
             _logger.LogDebug("No session ID for job completion event: JobId={JobId}", job.JobId);
             return;
         }
 
-        var success = job.Status == InternalJobStatus.Ready;
+        var success = job.Status == BundleStatus.Ready;
         Uri? downloadUrl = null;
 
         // Generate download URL for successful jobs
@@ -453,32 +458,18 @@ public partial class AssetService
             }
         }
 
-        // Map internal status to client event status
-        var clientStatus = job.Status switch
-        {
-            InternalJobStatus.Queued => MetabundleJobStatus.Queued,
-            InternalJobStatus.Processing => MetabundleJobStatus.Processing,
-            InternalJobStatus.Ready => MetabundleJobStatus.Ready,
-            InternalJobStatus.Failed => MetabundleJobStatus.Failed,
-            InternalJobStatus.Cancelled => MetabundleJobStatus.Cancelled,
-            _ => MetabundleJobStatus.Failed
-        };
-
-        // Error code is already typed per IMPLEMENTATION TENETS T25
-        var errorCode = job.ErrorCode;
-
         await _eventEmitter.EmitMetabundleCreationCompleteAsync(
-            sessionId,
+            sessionId.Value.ToString(),
             job.JobId,
             job.MetabundleId,
             success,
-            clientStatus,
+            job.Status,
             downloadUrl,
             job.Result?.SizeBytes,
             job.Result?.AssetCount,
             job.Result?.StandaloneAssetCount,
             job.ProcessingTimeMs,
-            errorCode,
+            job.ErrorCode,
             job.ErrorMessage,
             cancellationToken).ConfigureAwait(false);
     }

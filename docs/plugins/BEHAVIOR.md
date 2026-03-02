@@ -65,12 +65,12 @@ ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action 
 | `behavior.created` | `BehaviorCreatedEvent` | New behavior compiled and stored (lifecycle) |
 | `behavior.updated` | `BehaviorUpdatedEvent` | Behavior recompiled/updated (lifecycle) |
 | `behavior.deleted` | `BehaviorDeletedEvent` | Behavior deleted/invalidated (lifecycle) |
-| `behavior-bundle.created` | `BehaviorBundleCreatedEvent` | Bundle created (lifecycle) - **schema-defined but not yet published by code** |
-| `behavior-bundle.updated` | `BehaviorBundleUpdatedEvent` | Bundle updated (lifecycle) - **schema-defined but not yet published by code** |
-| `behavior-bundle.deleted` | `BehaviorBundleDeletedEvent` | Bundle deleted (lifecycle) - **schema-defined but not yet published by code** |
+| `behavior.bundle.created` | `BehaviorBundleCreatedEvent` | Bundle created (lifecycle) - **schema-defined but not yet published by code** |
+| `behavior.bundle.updated` | `BehaviorBundleUpdatedEvent` | Bundle updated (lifecycle) - **schema-defined but not yet published by code** |
+| `behavior.bundle.deleted` | `BehaviorBundleDeletedEvent` | Bundle deleted (lifecycle) - **schema-defined but not yet published by code** |
 | `behavior.compilation-failed` | `BehaviorCompilationFailedEvent` | ABML compilation fails (monitoring/alerting) |
 | `behavior.goap.plan-generated` | `GoapPlanGeneratedEvent` | GOAP planner generates new plan |
-| `character.cinematic_extension` | `CinematicExtensionAvailableEvent` | Cinematic extension available for injection at continuation point - **schema-defined but not yet published by code** |
+| `character.cinematic-extension` | `CinematicExtensionAvailableEvent` | Cinematic extension available for injection at continuation point - **schema-defined but not yet published by code** |
 
 ### Consumed Events
 

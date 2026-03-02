@@ -187,10 +187,10 @@ public partial class VoiceRoomTierUpgradedEvent
 }
 
 /// <summary>
-/// Published when a participant joins a room
+/// Published when a peer joins a room
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceParticipantJoinedEvent
+public partial class VoicePeerJoinedEvent
 {
 
     /// <summary>
@@ -218,15 +218,15 @@ public partial class VoiceParticipantJoinedEvent
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
-    /// WebSocket session ID of the participant who joined
+    /// WebSocket session ID of the peer who joined
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("participantSessionId")]
+    [System.Text.Json.Serialization.JsonPropertyName("peerSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ParticipantSessionId { get; set; } = default!;
+    public System.Guid PeerSessionId { get; set; } = default!;
 
     /// <summary>
-    /// Total participants after join
+    /// Total peers after join
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentCount")]
     public int CurrentCount { get; set; } = default!;
@@ -234,10 +234,10 @@ public partial class VoiceParticipantJoinedEvent
 }
 
 /// <summary>
-/// Published when a participant leaves a room
+/// Published when a peer leaves a room
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceParticipantLeftEvent
+public partial class VoicePeerLeftEvent
 {
 
     /// <summary>
@@ -265,15 +265,15 @@ public partial class VoiceParticipantLeftEvent
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
-    /// WebSocket session ID of the participant who left
+    /// WebSocket session ID of the peer who left
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("participantSessionId")]
+    [System.Text.Json.Serialization.JsonPropertyName("peerSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ParticipantSessionId { get; set; } = default!;
+    public System.Guid PeerSessionId { get; set; } = default!;
 
     /// <summary>
-    /// Participants remaining after departure
+    /// Peers remaining after departure
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("remainingCount")]
     public int RemainingCount { get; set; } = default!;
@@ -285,7 +285,7 @@ public partial class VoiceParticipantLeftEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceRoomBroadcastApprovedEvent
+public partial class VoiceBroadcastApprovedEvent
 {
 
     /// <summary>
@@ -330,7 +330,7 @@ public partial class VoiceRoomBroadcastApprovedEvent
 /// A participant declined broadcast consent
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceRoomBroadcastDeclinedEvent
+public partial class VoiceBroadcastDeclinedEvent
 {
 
     /// <summary>
@@ -369,7 +369,7 @@ public partial class VoiceRoomBroadcastDeclinedEvent
 /// Broadcasting stopped
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceRoomBroadcastStoppedEvent
+public partial class VoiceBroadcastStoppedEvent
 {
 
     /// <summary>

@@ -1,5 +1,7 @@
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Seed;
 
@@ -19,16 +21,21 @@ internal static class SeedEvolutionDispatcher
     /// <param name="listeners">Registered evolution listeners.</param>
     /// <param name="seedTypeCode">Seed type code for filtering.</param>
     /// <param name="notification">Growth notification to dispatch.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     /// <param name="logger">Logger for warning on listener failure.</param>
     /// <param name="ct">Cancellation token.</param>
     internal static async Task DispatchGrowthRecordedAsync(
         IReadOnlyList<ISeedEvolutionListener> listeners,
         string seedTypeCode,
         SeedGrowthNotification notification,
+        ITelemetryProvider telemetryProvider,
         ILogger logger,
         CancellationToken ct)
     {
         if (listeners.Count == 0) return;
+
+        using var activity = telemetryProvider.StartActivity(
+            "bannou.seed", "SeedEvolutionDispatcher.DispatchGrowthRecorded");
 
         foreach (var listener in listeners)
         {
@@ -54,16 +61,21 @@ internal static class SeedEvolutionDispatcher
     /// <param name="listeners">Registered evolution listeners.</param>
     /// <param name="seedTypeCode">Seed type code for filtering.</param>
     /// <param name="notification">Phase change notification to dispatch.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     /// <param name="logger">Logger for warning on listener failure.</param>
     /// <param name="ct">Cancellation token.</param>
     internal static async Task DispatchPhaseChangedAsync(
         IReadOnlyList<ISeedEvolutionListener> listeners,
         string seedTypeCode,
         SeedPhaseNotification notification,
+        ITelemetryProvider telemetryProvider,
         ILogger logger,
         CancellationToken ct)
     {
         if (listeners.Count == 0) return;
+
+        using var activity = telemetryProvider.StartActivity(
+            "bannou.seed", "SeedEvolutionDispatcher.DispatchPhaseChanged");
 
         foreach (var listener in listeners)
         {
@@ -89,16 +101,21 @@ internal static class SeedEvolutionDispatcher
     /// <param name="listeners">Registered evolution listeners.</param>
     /// <param name="seedTypeCode">Seed type code for filtering.</param>
     /// <param name="notification">Capability change notification to dispatch.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     /// <param name="logger">Logger for warning on listener failure.</param>
     /// <param name="ct">Cancellation token.</param>
     internal static async Task DispatchCapabilitiesChangedAsync(
         IReadOnlyList<ISeedEvolutionListener> listeners,
         string seedTypeCode,
         SeedCapabilityNotification notification,
+        ITelemetryProvider telemetryProvider,
         ILogger logger,
         CancellationToken ct)
     {
         if (listeners.Count == 0) return;
+
+        using var activity = telemetryProvider.StartActivity(
+            "bannou.seed", "SeedEvolutionDispatcher.DispatchCapabilitiesChanged");
 
         foreach (var listener in listeners)
         {

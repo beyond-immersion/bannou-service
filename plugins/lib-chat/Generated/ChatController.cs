@@ -248,6 +248,30 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> MuteParticipantAsync(MuteParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Unmute a participant
+    /// </summary>
+
+    /// <remarks>
+    /// Removes a mute from a participant, allowing them to send messages again. Caller must be Owner or Moderator.
+    /// </remarks>
+
+    /// <returns>Participant unmuted</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> UnmuteParticipantAsync(UnmuteParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Change a participant's role
+    /// </summary>
+
+    /// <remarks>
+    /// Changes a participant's role within a chat room. Only the room Owner can change roles. Cannot change own role or promote to Owner (ownership transfer happens automatically when the owner leaves via LeaveRoom).
+    /// </remarks>
+
+    /// <returns>Role changed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> ChangeParticipantRoleAsync(ChangeParticipantRoleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Send a message to a room
     /// </summary>
 
@@ -1299,6 +1323,102 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:chat/room/participant/mute",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Unmute a participant
+    /// </summary>
+    /// <remarks>
+    /// Removes a mute from a participant, allowing them to send messages again. Caller must be Owner or Moderator.
+    /// </remarks>
+    /// <returns>Participant unmuted</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("chat/room/participant/unmute")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> UnmuteParticipant([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UnmuteParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.UnmuteParticipant",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/room/participant/unmute");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.UnmuteParticipantAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/room/participant/unmute");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:chat/room/participant/unmute");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "chat",
+                "UnmuteParticipant",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:chat/room/participant/unmute",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Change a participant's role
+    /// </summary>
+    /// <remarks>
+    /// Changes a participant's role within a chat room. Only the room Owner can change roles. Cannot change own role or promote to Owner (ownership transfer happens automatically when the owner leaves via LeaveRoom).
+    /// </remarks>
+    /// <returns>Role changed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("chat/room/participant/change-role")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> ChangeParticipantRole([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ChangeParticipantRoleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.ChangeParticipantRole",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/room/participant/change-role");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ChangeParticipantRoleAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/room/participant/change-role");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:chat/room/participant/change-role");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "chat",
+                "ChangeParticipantRole",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:chat/room/participant/change-role",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

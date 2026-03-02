@@ -1,6 +1,7 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Puppetmaster.Caching;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.Puppetmaster.Providers;
 
@@ -11,14 +12,17 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Providers;
 public sealed class DynamicBehaviorProvider : IBehaviorDocumentProvider
 {
     private readonly IBehaviorDocumentCache _cache;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new dynamic behavior provider.
     /// </summary>
     /// <param name="cache">The behavior document cache.</param>
-    public DynamicBehaviorProvider(IBehaviorDocumentCache cache)
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
+    public DynamicBehaviorProvider(IBehaviorDocumentCache cache, ITelemetryProvider telemetryProvider)
     {
         _cache = cache;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
@@ -35,6 +39,7 @@ public sealed class DynamicBehaviorProvider : IBehaviorDocumentProvider
     /// <inheritdoc />
     public async Task<AbmlDocument?> GetDocumentAsync(string behaviorRef, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "DynamicBehaviorProvider.GetDocumentAsync");
         return await _cache.GetOrLoadAsync(behaviorRef, ct);
     }
 

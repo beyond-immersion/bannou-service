@@ -12,7 +12,7 @@
             In scaled mode (6+ participants), audio flows through a central RTP server instead
             of peer-to-peer connections. The client:
             <list type="number">
-              <item>Registers with Kamailio using SIP credentials from <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent"/></item>
+              <item>Registers with Kamailio using SIP credentials from <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeClientEvent"/></item>
               <item>Sends audio to RTPEngine, which mixes all participants</item>
               <item>Receives mixed audio from RTPEngine</item>
             </list>
@@ -64,8 +64,8 @@
             </list>
             </para>
             </summary>
-            <param name="sipCredentials">SIP credentials from <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent"/>.</param>
-            <param name="rtpServerUri">RTP server URI from <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent"/>.</param>
+            <param name="sipCredentials">SIP credentials from <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeClientEvent"/>.</param>
+            <param name="rtpServerUri">RTP server URI from <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeClientEvent"/>.</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>True if connection succeeded, false otherwise.</returns>
         </member>
@@ -187,11 +187,11 @@
             When these credentials expire. Null if no expiration.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Voice.SipConnectionCredentials.FromEvent(BeyondImmersion.Bannou.Voice.ClientEvents.SipCredentials,System.String)">
+        <member name="M:BeyondImmersion.Bannou.Client.Voice.SipConnectionCredentials.FromEvent(BeyondImmersion.BannouService.Voice.SipCredentials,System.String)">
             <summary>
             Creates credentials from the generated SipCredentials event model.
             </summary>
-            <param name="credentials">SipCredentials from <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent"/>.</param>
+            <param name="credentials">SipCredentials from <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeClientEvent"/>.</param>
             <param name="conferenceUri">Conference URI from room state.</param>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.Voice.ScaledVoiceConnectionState">
@@ -526,7 +526,7 @@
              <para>
              <b>Usage:</b><br/>
              <code>
-             // When VoiceTierUpgradeEvent is received:
+             // When VoiceTierUpgradeClientEvent is received:
              var connection = new ScaledVoiceConnection(roomId);
              connection.OnAudioFrameReceived += (samples, rate, channels) => PlayAudio(samples, rate, channels);
              connection.OnConnected += () => Console.WriteLine("Connected to voice conference!");
@@ -745,7 +745,7 @@
             <para>
             <b>Purpose:</b><br/>
             Handles the SIP REGISTER flow with Kamailio server using credentials
-            provided by the <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent"/>. Manages registration
+            provided by the <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeClientEvent"/>. Manages registration
             lifecycle including initial registration, re-registration, and de-registration.
             </para>
             <para>
@@ -827,7 +827,7 @@
             <summary>
             Registers with the SIP server using the provided credentials.
             </summary>
-            <param name="credentials">SIP credentials from VoiceTierUpgradeEvent.</param>
+            <param name="credentials">SIP credentials from VoiceTierUpgradeClientEvent.</param>
             <param name="localPort">Local port for SIP transport. 0 for auto-selection.</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>True if registration succeeded, false otherwise.</returns>
@@ -1055,7 +1055,7 @@
              </para>
              <para>
              <b>Automatic Tier Transition:</b><br/>
-             When 6+ participants join, the server sends a <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent"/>.
+             When 6+ participants join, the server sends a <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeClientEvent"/>.
              This manager automatically:
              <list type="bullet">
                <item>Closes all P2P connections</item>

@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Documentation Service Events
   description: |
@@ -32,21 +32,21 @@ info:
       event: DocumentationSearchedEvent
       description: Published when documentation is searched
     # Repository binding events
-    - topic: documentation.binding.created
+    - topic: documentation-binding.created
       event: DocumentationBindingCreatedEvent
       description: Published when a repository binding is created
-    - topic: documentation.binding.removed
+    - topic: documentation-binding.removed
       event: DocumentationBindingRemovedEvent
       description: Published when a repository binding is removed
     # Sync events
-    - topic: documentation.sync.started
+    - topic: documentation-sync.started
       event: DocumentationSyncStartedEvent
       description: Published when a repository sync starts
-    - topic: documentation.sync.completed
+    - topic: documentation-sync.completed
       event: DocumentationSyncCompletedEvent
       description: Published when a repository sync completes
     # Archive events
-    - topic: documentation.archive.created
+    - topic: documentation-archive.created
       event: DocumentationArchiveCreatedEvent
       description: Published when a documentation archive is created
 
@@ -75,7 +75,7 @@ x-lifecycle:
         required: true
         description: Human-readable title of the document
       category:
-        type: string
+        $ref: 'documentation-api.yaml#/components/schemas/DocumentCategory'
         required: true
         description: Category classification for the document
       tags:
@@ -282,10 +282,7 @@ components:
           format: uuid
           description: Unique identifier for this sync operation
         triggeredBy:
-          type: string
-          enum:
-            - manual
-            - scheduled
+          $ref: 'documentation-api.yaml#/components/schemas/SyncTrigger'
           description: How the sync was triggered (manual user action or scheduled job)
 
     DocumentationSyncCompletedEvent:
@@ -320,11 +317,7 @@ components:
           format: uuid
           description: Unique identifier for this sync operation
         status:
-          type: string
-          enum:
-            - success
-            - partial
-            - failed
+          $ref: 'documentation-api.yaml#/components/schemas/SyncStatus'
           description: Final status of the sync operation
         commitHash:
           type: string
@@ -380,7 +373,8 @@ components:
         bundleAssetId:
           type: string
           format: uuid
-          description: Asset ID of the archive bundle in the asset storage system
+          nullable: true
+          description: Asset ID of the archive bundle in the asset storage system (null if bundle creation failed)
         documentCount:
           type: integer
           nullable: true  # NRT: Optional property MUST be nullable

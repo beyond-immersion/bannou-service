@@ -23,14 +23,17 @@ namespace BeyondImmersion.BannouService.Faction.Providers;
 public sealed class FactionProviderFactory : IVariableProviderFactory
 {
     private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new faction provider factory.
     /// </summary>
     /// <param name="stateStoreFactory">State store factory for faction/membership data access.</param>
-    public FactionProviderFactory(IStateStoreFactory stateStoreFactory)
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
+    public FactionProviderFactory(IStateStoreFactory stateStoreFactory, ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -39,6 +42,7 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionProviderFactory.CreateAsync");
         if (!characterId.HasValue)
         {
             return FactionProvider.Empty;

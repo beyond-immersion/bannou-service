@@ -120,6 +120,16 @@ public partial interface IChatService : IBannouService
         Task<(StatusCodes, ChatRoomResponse?)> MuteParticipantAsync(MuteParticipantRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// UnmuteParticipant operation
+        /// </summary>
+        Task<(StatusCodes, ChatRoomResponse?)> UnmuteParticipantAsync(UnmuteParticipantRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ChangeParticipantRole operation
+        /// </summary>
+        Task<(StatusCodes, ChatRoomResponse?)> ChangeParticipantRoleAsync(ChangeParticipantRoleRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// SendMessage operation
         /// </summary>
         Task<(StatusCodes, ChatMessageResponse?)> SendMessageAsync(SendMessageRequest body, CancellationToken cancellationToken = default(CancellationToken));

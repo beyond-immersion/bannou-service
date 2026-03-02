@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Behavior Service Events Lifecycle Events
   description: "Auto-generated lifecycle event schemas for behavior service.\nDO NOT EDIT - This file is completely overwritten
@@ -134,7 +134,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to behavior-bundle.created when a behaviorbundle is created
+      description: Published to behavior.bundle.created when a behaviorbundle is created
       required:
       - eventName
       - eventId
@@ -146,8 +146,8 @@ components:
       properties:
         eventName:
           type: string
-          default: behavior-bundle.created
-          description: 'Event type identifier: behavior-bundle.created'
+          default: behavior.bundle.created
+          description: 'Event type identifier: behavior.bundle.created'
         bundleId: &id010
           type: string
           description: "Unique identifier for the behavior bundle"
@@ -177,7 +177,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to behavior-bundle.updated when a behaviorbundle is updated
+      description: Published to behavior.bundle.updated when a behaviorbundle is updated
       required:
       - eventName
       - eventId
@@ -190,8 +190,8 @@ components:
       properties:
         eventName:
           type: string
-          default: behavior-bundle.updated
-          description: 'Event type identifier: behavior-bundle.updated'
+          default: behavior.bundle.updated
+          description: 'Event type identifier: behavior.bundle.updated'
         bundleId: *id010
         name: *id011
         behaviorCount: *id012
@@ -208,7 +208,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to behavior-bundle.deleted when a behaviorbundle is deleted
+      description: Published to behavior.bundle.deleted when a behaviorbundle is deleted
       required:
       - eventName
       - eventId
@@ -220,8 +220,8 @@ components:
       properties:
         eventName:
           type: string
-          default: behavior-bundle.deleted
-          description: 'Event type identifier: behavior-bundle.deleted'
+          default: behavior.bundle.deleted
+          description: 'Event type identifier: behavior.bundle.deleted'
         bundleId: *id010
         name: *id011
         behaviorCount: *id012

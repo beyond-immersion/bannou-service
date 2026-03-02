@@ -31,7 +31,7 @@ export class RelationshipProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRelationshipAsync(
+  async relationshipGetRelationshipAsync(
     request: Schemas['GetRelationshipRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class RelationshipProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listRelationshipsByEntityAsync(
+  async relationshipListRelationshipsByEntityAsync(
     request: Schemas['ListRelationshipsByEntityRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class RelationshipProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRelationshipsBetweenAsync(
+  async relationshipGetRelationshipsBetweenAsync(
     request: Schemas['GetRelationshipsBetweenRequest'],
     channel: number = 0,
     timeout?: number
@@ -85,7 +85,7 @@ export class RelationshipProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listRelationshipsByTypeAsync(
+  async relationshipListRelationshipsByTypeAsync(
     request: Schemas['ListRelationshipsByTypeRequest'],
     channel: number = 0,
     timeout?: number
@@ -103,7 +103,7 @@ export class RelationshipProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async cleanupByEntityAsync(
+  async relationshipCleanupByEntityAsync(
     request: Schemas['CleanupByEntityRequest'],
     channel: number = 0,
     timeout?: number

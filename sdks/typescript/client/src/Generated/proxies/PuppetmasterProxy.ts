@@ -31,7 +31,7 @@ export class PuppetmasterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async startWatcherAsync(
+  async puppetmasterStartWatcherAsync(
     request: Schemas['StartWatcherRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class PuppetmasterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async stopWatcherAsync(
+  async puppetmasterStopWatcherAsync(
     request: Schemas['StopWatcherRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class PuppetmasterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async startWatchersForRealmAsync(
+  async puppetmasterStartWatchersForRealmAsync(
     request: Schemas['StartWatchersForRealmRequest'],
     channel: number = 0,
     timeout?: number

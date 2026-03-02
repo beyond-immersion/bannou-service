@@ -7,6 +7,7 @@ using BeyondImmersion.BannouService.CharacterPersonality.Caching;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.CharacterPersonality;
 
@@ -40,6 +41,7 @@ public partial class CharacterPersonalityService : IBannouService
     /// </summary>
     private async Task HandlePersonalityEvolvedAsync(PersonalityEvolvedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-personality", "CharacterPersonalityService.HandlePersonalityEvolvedAsync");
         _logger.LogDebug(
             "Received personality.evolved event for character {CharacterId}, invalidating cache",
             evt.CharacterId);
@@ -56,6 +58,7 @@ public partial class CharacterPersonalityService : IBannouService
     /// </summary>
     private async Task HandleCombatPreferencesEvolvedAsync(CombatPreferencesEvolvedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-personality", "CharacterPersonalityService.HandleCombatPreferencesEvolvedAsync");
         _logger.LogDebug(
             "Received combat-preferences.evolved event for character {CharacterId}, invalidating cache",
             evt.CharacterId);

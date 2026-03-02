@@ -5,6 +5,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -20,6 +21,7 @@ public sealed class LocationDataCache : ILocationDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<LocationDataCache> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ConcurrentDictionary<Guid, CachedEntry> _cache = new();
     private readonly TimeSpan _cacheTtl;
     private readonly int _nearbyPoisLimit;
@@ -30,10 +32,12 @@ public sealed class LocationDataCache : ILocationDataCache
     public LocationDataCache(
         IServiceScopeFactory scopeFactory,
         ILogger<LocationDataCache> logger,
-        LocationServiceConfiguration configuration)
+        LocationServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _cacheTtl = TimeSpan.FromSeconds(configuration.ContextCacheTtlSeconds);
         _nearbyPoisLimit = configuration.ContextNearbyPoisLimit;
     }
@@ -45,6 +49,9 @@ public sealed class LocationDataCache : ILocationDataCache
         Guid? locationId,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.location", "LocationDataCache.GetOrLoadLocationContext");
+
         // Check cache first (keyed by characterId for consistency)
         if (_cache.TryGetValue(characterId, out var cached) && !cached.IsExpired)
         {
@@ -81,7 +88,7 @@ public sealed class LocationDataCache : ILocationDataCache
                         EntityId = characterId
                     }, ct);
 
-                if (entityLocationResponse is null || !entityLocationResponse.Found || !entityLocationResponse.LocationId.HasValue)
+                if (entityLocationResponse is null || !entityLocationResponse.LocationId.HasValue)
                 {
                     _logger.LogDebug("Character {CharacterId} has no current location", characterId);
                     return null;

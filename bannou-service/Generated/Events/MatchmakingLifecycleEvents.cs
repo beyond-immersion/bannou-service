@@ -31,19 +31,19 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published to matchmaking-queue.created when a matchmakingqueue is created
+/// Published to matchmaking.queue.created when a matchmakingqueue is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MatchmakingQueueCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: matchmaking-queue.created
+    /// Event type identifier: matchmaking.queue.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking-queue.created";
+    public override string EventName { get; set; } = "matchmaking.queue.created";
 
     /// <summary>
     /// Unique identifier for the matchmaking queue
@@ -98,19 +98,19 @@ public partial class MatchmakingQueueCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to matchmaking-queue.updated when a matchmakingqueue is updated
+/// Published to matchmaking.queue.updated when a matchmakingqueue is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MatchmakingQueueUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: matchmaking-queue.updated
+    /// Event type identifier: matchmaking.queue.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking-queue.updated";
+    public override string EventName { get; set; } = "matchmaking.queue.updated";
 
     /// <summary>
     /// Unique identifier for the matchmaking queue
@@ -173,19 +173,19 @@ public partial class MatchmakingQueueUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to matchmaking-queue.deleted when a matchmakingqueue is deleted
+/// Published to matchmaking.queue.deleted when a matchmakingqueue is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MatchmakingQueueDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: matchmaking-queue.deleted
+    /// Event type identifier: matchmaking.queue.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking-queue.deleted";
+    public override string EventName { get; set; } = "matchmaking.queue.deleted";
 
     /// <summary>
     /// Unique identifier for the matchmaking queue

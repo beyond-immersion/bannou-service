@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
 
@@ -19,7 +20,7 @@ public interface IOrchestratorStateManager : IAsyncDisposable, IDisposable
     /// Get all service heartbeat data.
     /// Uses index-based pattern to avoid KEYS/SCAN operations.
     /// </summary>
-    Task<List<ServiceHealthStatus>> GetServiceHeartbeatsAsync();
+    Task<List<ServiceHealthEntry>> GetServiceHeartbeatsAsync();
 
     /// <summary>
     /// Check if state stores are connected and healthy.
@@ -29,7 +30,7 @@ public interface IOrchestratorStateManager : IAsyncDisposable, IDisposable
     /// <summary>
     /// Get specific service heartbeat by serviceId and appId.
     /// </summary>
-    Task<ServiceHealthStatus?> GetServiceHeartbeatAsync(string serviceId, string appId);
+    Task<ServiceHealthEntry?> GetServiceHeartbeatAsync(string serviceId, string appId);
 
     /// <summary>
     /// Write service heartbeat data.
@@ -84,6 +85,13 @@ public interface IOrchestratorStateManager : IAsyncDisposable, IDisposable
     Task<int> GetConfigVersionAsync();
 
     /// <summary>
+    /// Atomically increment and return the mappings version counter.
+    /// Stored in Redis for multi-instance safety (IMPLEMENTATION TENETS).
+    /// </summary>
+    /// <returns>The new version number after increment.</returns>
+    Task<int> IncrementMappingsVersionAsync();
+
+    /// <summary>
     /// Save the current configuration state as a new version.
     /// Stores deployment topology for potential rollback.
     /// </summary>
@@ -117,37 +125,84 @@ public interface IOrchestratorStateManager : IAsyncDisposable, IDisposable
     /// <returns>The new version number.</returns>
     Task<int> ClearCurrentConfigurationAsync();
 
-    #region Generic Storage Methods for Processing Pools
+    #region Processing Pool State Management
 
     /// <summary>
-    /// Get a list of items.
+    /// Gets available processors for the specified pool type.
     /// </summary>
-    Task<List<T>?> GetListAsync<T>(string key) where T : class;
+    /// <param name="poolType">Pool type identifier.</param>
+    Task<List<ProcessorInstance>?> GetAvailableProcessorsAsync(string poolType);
 
     /// <summary>
-    /// Set a list of items.
+    /// Sets available processors for the specified pool type.
     /// </summary>
-    Task SetListAsync<T>(string key, List<T> items) where T : class;
+    /// <param name="poolType">Pool type identifier.</param>
+    /// <param name="instances">List of available processor instances.</param>
+    Task SetAvailableProcessorsAsync(string poolType, List<ProcessorInstance> instances);
 
     /// <summary>
-    /// Get a hash (dictionary).
+    /// Gets all processor instances for the specified pool type.
     /// </summary>
-    Task<Dictionary<string, T>?> GetHashAsync<T>(string key) where T : class;
+    /// <param name="poolType">Pool type identifier.</param>
+    Task<List<ProcessorInstance>?> GetPoolInstancesAsync(string poolType);
 
     /// <summary>
-    /// Set a hash (dictionary).
+    /// Sets all processor instances for the specified pool type.
     /// </summary>
-    Task SetHashAsync<T>(string key, Dictionary<string, T> hash) where T : class;
+    /// <param name="poolType">Pool type identifier.</param>
+    /// <param name="instances">List of all processor instances.</param>
+    Task SetPoolInstancesAsync(string poolType, List<ProcessorInstance> instances);
 
     /// <summary>
-    /// Get a single value.
+    /// Gets active leases for the specified pool type.
     /// </summary>
-    Task<T?> GetValueAsync<T>(string key) where T : class;
+    /// <param name="poolType">Pool type identifier.</param>
+    Task<Dictionary<string, ProcessorLease>?> GetLeasesAsync(string poolType);
 
     /// <summary>
-    /// Set a single value.
+    /// Sets active leases for the specified pool type.
     /// </summary>
-    Task SetValueAsync<T>(string key, T value, TimeSpan? ttl = null) where T : class;
+    /// <param name="poolType">Pool type identifier.</param>
+    /// <param name="leases">Dictionary of lease ID to lease data.</param>
+    Task SetLeasesAsync(string poolType, Dictionary<string, ProcessorLease> leases);
+
+    /// <summary>
+    /// Gets pool configuration for the specified pool type.
+    /// </summary>
+    /// <param name="poolType">Pool type identifier.</param>
+    Task<PoolConfiguration?> GetPoolConfigurationAsync(string poolType);
+
+    /// <summary>
+    /// Sets pool configuration for the specified pool type.
+    /// </summary>
+    /// <param name="poolType">Pool type identifier.</param>
+    /// <param name="config">Pool configuration.</param>
+    Task SetPoolConfigurationAsync(string poolType, PoolConfiguration config);
+
+    /// <summary>
+    /// Gets pool metrics for the specified pool type.
+    /// </summary>
+    /// <param name="poolType">Pool type identifier.</param>
+    Task<PoolMetricsData?> GetPoolMetricsAsync(string poolType);
+
+    /// <summary>
+    /// Sets pool metrics for the specified pool type.
+    /// </summary>
+    /// <param name="poolType">Pool type identifier.</param>
+    /// <param name="metrics">Pool metrics data.</param>
+    /// <param name="ttl">Optional time-to-live for metrics expiry.</param>
+    Task SetPoolMetricsAsync(string poolType, PoolMetricsData metrics, TimeSpan? ttl = null);
+
+    /// <summary>
+    /// Gets the list of known pool types.
+    /// </summary>
+    Task<List<string>?> GetKnownPoolTypesAsync();
+
+    /// <summary>
+    /// Sets the list of known pool types.
+    /// </summary>
+    /// <param name="poolTypes">List of known pool type identifiers.</param>
+    Task SetKnownPoolTypesAsync(List<string> poolTypes);
 
     #endregion
 }
@@ -220,8 +275,8 @@ public class ServiceRouting
     /// <summary>Port the service is listening on.</summary>
     public int Port { get; set; } = 80;
 
-    /// <summary>Service health status.</summary>
-    public string Status { get; set; } = "unknown";
+    /// <summary>Service health status (null if no status known yet).</summary>
+    public ServiceHealthStatus? Status { get; set; }
 
     /// <summary>Last update timestamp.</summary>
     public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
@@ -234,7 +289,7 @@ public class ServiceRouting
 /// Instance health status stored in state store.
 /// Represents the aggregated health state of a bannou app instance.
 /// </summary>
-public class InstanceHealthStatus
+public class InstanceHealthState
 {
     /// <summary>Unique GUID identifying this bannou instance.</summary>
     public Guid InstanceId { get; set; }
@@ -243,7 +298,7 @@ public class InstanceHealthStatus
     public required string AppId { get; set; }
 
     /// <summary>Overall instance health status.</summary>
-    public required string Status { get; set; }
+    public required InstanceHealthStatus Status { get; set; }
 
     /// <summary>When the last heartbeat was received.</summary>
     public DateTimeOffset LastSeen { get; set; }

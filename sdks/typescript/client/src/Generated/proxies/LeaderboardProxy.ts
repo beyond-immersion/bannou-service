@@ -31,7 +31,7 @@ export class LeaderboardProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createLeaderboardDefinitionAsync(
+  async leaderboardCreateLeaderboardDefinitionAsync(
     request: Schemas['CreateLeaderboardDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class LeaderboardProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateLeaderboardDefinitionAsync(
+  async leaderboardUpdateLeaderboardDefinitionAsync(
     request: Schemas['UpdateLeaderboardDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -66,7 +66,7 @@ export class LeaderboardProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async deleteLeaderboardDefinitionEventAsync(
+  async leaderboardDeleteLeaderboardDefinitionEventAsync(
     request: Schemas['DeleteLeaderboardDefinitionRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -84,7 +84,7 @@ export class LeaderboardProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getEntityRankAsync(
+  async leaderboardGetEntityRankAsync(
     request: Schemas['GetEntityRankRequest'],
     channel: number = 0,
     timeout?: number
@@ -104,7 +104,7 @@ export class LeaderboardProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getTopRanksAsync(
+  async leaderboardGetTopRanksAsync(
     request: Schemas['GetTopRanksRequest'],
     channel: number = 0,
     timeout?: number
@@ -122,7 +122,7 @@ export class LeaderboardProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRanksAroundAsync(
+  async leaderboardGetRanksAroundAsync(
     request: Schemas['GetRanksAroundRequest'],
     channel: number = 0,
     timeout?: number
@@ -140,7 +140,7 @@ export class LeaderboardProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSeasonAsync(
+  async leaderboardGetSeasonAsync(
     request: Schemas['GetSeasonRequest'],
     channel: number = 0,
     timeout?: number

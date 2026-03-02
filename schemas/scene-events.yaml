@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Scene Service Events
   description: |
@@ -39,7 +39,7 @@ info:
       description: Published when a scene instance is removed from the game world
 
     # Checkout workflow events
-    - topic: scene.checked_out
+    - topic: scene.checked-out
       event: SceneCheckedOutEvent
       description: Published when a scene is locked for editing
     - topic: scene.committed
@@ -53,7 +53,7 @@ info:
       description: Published when a checkout lock expires due to TTL
 
     # Validation events
-    - topic: scene.validation_rules.updated
+    - topic: scene.validation-rules.updated
       event: SceneValidationRulesUpdatedEvent
       description: Published when validation rules are registered/updated
 

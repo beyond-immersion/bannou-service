@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
+using System.Diagnostics;
 using StorageModels = BeyondImmersion.BannouService.Storage;
 
 namespace BeyondImmersion.BannouService.Asset.Storage;
@@ -19,6 +20,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
     private readonly IMinioClient _minioClient;
     private readonly IAmazonS3 _s3Client;
     private readonly MinioStorageOptions _options;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<MinioStorageProvider> _logger;
     private readonly IMessageBus _messageBus;
 
@@ -81,12 +83,15 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         IMinioClient minioClient,
         IAmazonS3 s3Client,
         IOptions<MinioStorageOptions> options,
+        ITelemetryProvider telemetryProvider,
         ILogger<MinioStorageProvider> logger,
         IMessageBus messageBus)
     {
         _minioClient = minioClient;
         _s3Client = s3Client;
         _options = options.Value;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         _messageBus = messageBus;
     }
@@ -100,6 +105,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         TimeSpan expiration,
         IDictionary<string, string>? metadata = null)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.GenerateUploadUrlAsync");
         _logger.LogDebug("Generating upload URL for {Bucket}/{Key}, contentType={ContentType}, size={Size}",
             bucket, key, contentType, expectedSize);
 
@@ -175,6 +181,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         string? versionId = null,
         TimeSpan? expiration = null)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.GenerateDownloadUrlAsync");
         _logger.LogDebug("Generating download URL for {Bucket}/{Key}, versionId={VersionId}",
             bucket, key, versionId);
 
@@ -222,6 +229,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         int partCount,
         TimeSpan partUrlExpiration)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.InitiateMultipartUploadAsync");
         _logger.LogDebug("Initiating multipart upload for {Bucket}/{Key}, partCount={PartCount}",
             bucket, key, partCount);
 
@@ -265,6 +273,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         string uploadId,
         IList<StorageModels.StorageCompletedPart> parts)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.CompleteMultipartUploadAsync");
         _logger.LogDebug("Completing multipart upload for {Bucket}/{Key}, uploadId={UploadId}, parts={PartCount}",
             bucket, key, uploadId, parts.Count);
 
@@ -339,6 +348,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         string key,
         string uploadId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.AbortMultipartUploadAsync");
         _logger.LogDebug("Aborting multipart upload for {Bucket}/{Key}, uploadId={UploadId}",
             bucket, key, uploadId);
 
@@ -379,6 +389,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         string destKey,
         string? sourceVersionId = null)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.CopyObjectAsync");
         _logger.LogDebug("Copying object from {SrcBucket}/{SrcKey} to {DstBucket}/{DstKey}",
             sourceBucket, sourceKey, destBucket, destKey);
 
@@ -438,6 +449,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         string key,
         string? versionId = null)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.DeleteObjectAsync");
         _logger.LogDebug("Deleting object {Bucket}/{Key}, versionId={VersionId}",
             bucket, key, versionId);
 
@@ -454,10 +466,37 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
     }
 
     /// <inheritdoc />
+    public async Task<IList<StorageModels.ObjectSummary>> ListObjectsByPrefixAsync(
+        string bucket,
+        string prefix)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.ListObjectsByPrefixAsync");
+        _logger.LogDebug("Listing objects by prefix {Bucket}/{Prefix}", bucket, prefix);
+
+        var results = new List<StorageModels.ObjectSummary>();
+
+        var args = new ListObjectsArgs()
+            .WithBucket(bucket)
+            .WithPrefix(prefix)
+            .WithRecursive(true);
+
+        await foreach (var item in _minioClient.ListObjectsEnumAsync(args))
+        {
+            results.Add(new StorageModels.ObjectSummary(
+                item.Key,
+                (long)item.Size,
+                item.LastModifiedDateTime ?? DateTime.MinValue));
+        }
+
+        return results;
+    }
+
+    /// <inheritdoc />
     public async Task<IList<StorageModels.ObjectVersionInfo>> ListVersionsAsync(
         string bucket,
         string keyPrefix)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.ListVersionsAsync");
         _logger.LogDebug("Listing versions for {Bucket}/{KeyPrefix}", bucket, keyPrefix);
 
         var versions = new List<StorageModels.ObjectVersionInfo>();
@@ -480,7 +519,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
             // MinIO SDK v7 Item: IsDeleteMarker and StorageClass may not be available
             // MinIO uses "STANDARD" for all objects by default; tier transitions require ILM rules
             versions.Add(new StorageModels.ObjectVersionInfo(
-                item.VersionId ?? "null",
+                item.VersionId,
                 item.IsLatest,
                 item.LastModifiedDateTime ?? DateTime.MinValue,
                 (long)item.Size,
@@ -498,6 +537,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         string key,
         string? versionId = null)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.GetObjectMetadataAsync");
         _logger.LogDebug("Getting metadata for {Bucket}/{Key}, versionId={VersionId}",
             bucket, key, versionId);
 
@@ -528,6 +568,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         string key,
         string? versionId = null)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.ObjectExistsAsync");
         _logger.LogDebug("Checking if object exists: {Bucket}/{Key}, versionId={VersionId}",
             bucket, key, versionId);
 
@@ -578,6 +619,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         string key,
         string? versionId = null)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.GetObjectAsync");
         _logger.LogDebug("Getting object: {Bucket}/{Key}, versionId={VersionId}",
             bucket, key, versionId);
 
@@ -608,6 +650,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         string contentType,
         IDictionary<string, string>? metadata = null)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.PutObjectAsync");
         _logger.LogDebug("Putting object: {Bucket}/{Key}, contentType={ContentType}, size={Size}",
             bucket, key, contentType, contentLength);
 
@@ -660,6 +703,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         string contentType,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.InitiateServerMultipartUploadAsync");
         _logger.LogDebug(
             "Initiating server-side multipart upload: {Bucket}/{Key}, contentType={ContentType}",
             bucket, key, contentType);
@@ -711,6 +755,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         long contentLength,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.UploadPartAsync");
         _logger.LogDebug(
             "Uploading part {PartNumber} for {Bucket}/{Key}, size={Size}",
             partNumber, session.Bucket, session.Key, contentLength);
@@ -763,6 +808,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         IList<StorageModels.ServerUploadedPart> parts,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.CompleteServerMultipartUploadAsync");
         _logger.LogDebug(
             "Completing server-side multipart upload: {Bucket}/{Key}, parts={PartCount}",
             session.Bucket, session.Key, parts.Count);
@@ -827,6 +873,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         StorageModels.ServerMultipartUploadSession session,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.AbortServerMultipartUploadAsync");
         _logger.LogDebug(
             "Aborting server-side multipart upload: {Bucket}/{Key}, uploadId={UploadId}",
             session.Bucket, session.Key, session.UploadId);
@@ -863,6 +910,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         string? versionId = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.GetObjectStreamingAsync");
         _logger.LogDebug(
             "Getting object (streaming): {Bucket}/{Key}, versionId={VersionId}",
             bucket, key, versionId);

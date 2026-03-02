@@ -315,13 +315,13 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerStatus>> GetContainerStatusAsync(GetContainerStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Rollback to previous configuration
+    /// Rollback to a previous configuration version
     /// </summary>
 
     /// <remarks>
-    /// Quickly rollback to the previous configuration without waiting for CI.
-    /// <br/>Swaps currentConfig with previousConfig and publishes ConfigurationChangedEvent
-    /// <br/>with the reverted keys so services can request restart.
+    /// Rollback to a previous configuration version. If targetVersion is specified,
+    /// <br/>rolls back to that specific version. Otherwise rolls back to version N-1.
+    /// <br/>Creates a new version (N+1) containing the restored config to preserve audit trail.
     /// <br/>
     /// <br/>**Note**: This is a quick fix. GitHub secrets should still be corrected
     /// <br/>to prevent re-breaking on next orchestrator deploy.
@@ -1289,12 +1289,12 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     }
 
     /// <summary>
-    /// Rollback to previous configuration
+    /// Rollback to a previous configuration version
     /// </summary>
     /// <remarks>
-    /// Quickly rollback to the previous configuration without waiting for CI.
-    /// <br/>Swaps currentConfig with previousConfig and publishes ConfigurationChangedEvent
-    /// <br/>with the reverted keys so services can request restart.
+    /// Rollback to a previous configuration version. If targetVersion is specified,
+    /// <br/>rolls back to that specific version. Otherwise rolls back to version N-1.
+    /// <br/>Creates a new version (N+1) containing the restored config to preserve audit trail.
     /// <br/>
     /// <br/>**Note**: This is a quick fix. GitHub secrets should still be corrected
     /// <br/>to prevent re-breaking on next orchestrator deploy.

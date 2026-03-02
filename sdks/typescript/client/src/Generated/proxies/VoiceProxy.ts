@@ -30,7 +30,7 @@ export class VoiceProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async answerPeerEventAsync(
+  async voiceAnswerPeerEventAsync(
     request: Schemas['AnswerPeerRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -48,7 +48,7 @@ export class VoiceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async requestBroadcastConsentAsync(
+  async voiceRequestBroadcastConsentAsync(
     request: Schemas['BroadcastConsentRequest'],
     channel: number = 0,
     timeout?: number
@@ -66,7 +66,7 @@ export class VoiceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async respondBroadcastConsentAsync(
+  async voiceRespondBroadcastConsentAsync(
     request: Schemas['BroadcastConsentResponse'],
     channel: number = 0,
     timeout?: number
@@ -83,7 +83,7 @@ export class VoiceProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async stopBroadcastEventAsync(
+  async voiceStopBroadcastEventAsync(
     request: Schemas['StopBroadcastConsentRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -101,7 +101,7 @@ export class VoiceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getBroadcastStatusAsync(
+  async voiceGetBroadcastStatusAsync(
     request: Schemas['BroadcastStatusRequest'],
     channel: number = 0,
     timeout?: number

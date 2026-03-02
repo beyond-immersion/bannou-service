@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 // Note: InternalsVisibleTo attribute is in AssemblyInfo.cs
 
@@ -35,6 +36,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private readonly ICharacterClient _characterClient;
     private readonly IEncounterDataCache _encounterDataCache;
     private readonly IResourceClient _resourceClient;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Key prefixes for different data types
     private const string ENCOUNTER_KEY_PREFIX = "enc-";
@@ -76,7 +78,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         CharacterEncounterServiceConfiguration configuration,
         ICharacterClient characterClient,
         IEncounterDataCache encounterDataCache,
-        IResourceClient resourceClient)
+        IResourceClient resourceClient,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -85,6 +88,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _characterClient = characterClient;
         _encounterDataCache = encounterDataCache;
         _resourceClient = resourceClient;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     // ============================================================================
@@ -996,6 +1001,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         if (body.RememberedAs != null) perspective.RememberedAs = body.RememberedAs;
         perspective.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -1056,6 +1063,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         perspective.MemoryStrength = Math.Clamp(perspective.MemoryStrength + boost, 0f, 1f);
         perspective.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -1610,6 +1619,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task<EncounterTypeData> SeedBuiltInTypeAsync(IStateStore<EncounterTypeData> store, BuiltInEncounterType builtIn, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.SeedBuiltInTypeAsync");
         var data = new EncounterTypeData
         {
             TypeId = Guid.NewGuid(),
@@ -1628,6 +1638,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task EnsureBuiltInTypesSeededAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.EnsureBuiltInTypesSeededAsync");
         if (!_configuration.SeedBuiltInTypesOnStartup) return;
 
         var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
@@ -1644,6 +1655,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task<List<string>> GetAllTypeKeysAsync(IStateStore<EncounterTypeData> store, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.GetAllTypeKeysAsync");
         var keys = new List<string>();
 
         // Add built-in type keys
@@ -1669,6 +1681,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task<List<Guid>> GetCharacterPerspectiveIdsAsync(Guid characterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.GetCharacterPerspectiveIdsAsync");
         var indexStore = _stateStoreFactory.GetStore<CharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
         var index = await indexStore.GetAsync($"{CHAR_INDEX_PREFIX}{characterId}", cancellationToken);
         return index?.PerspectiveIds.ToList() ?? new List<Guid>();
@@ -1676,6 +1689,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task<List<Guid>> GetPairEncounterIdsAsync(Guid charA, Guid charB, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.GetPairEncounterIdsAsync");
         var pairKey = GetPairKey(charA, charB);
         var indexStore = _stateStoreFactory.GetStore<PairIndexData>(StateStoreDefinitions.CharacterEncounter);
         var index = await indexStore.GetAsync($"{PAIR_INDEX_PREFIX}{pairKey}", cancellationToken);
@@ -1684,6 +1698,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task<List<Guid>> GetLocationEncounterIdsAsync(Guid locationId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.GetLocationEncounterIdsAsync");
         var indexStore = _stateStoreFactory.GetStore<LocationIndexData>(StateStoreDefinitions.CharacterEncounter);
         var index = await indexStore.GetAsync($"{LOCATION_INDEX_PREFIX}{locationId}", cancellationToken);
         return index?.EncounterIds.ToList() ?? new List<Guid>();
@@ -1698,6 +1713,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         DateTimeOffset timestamp,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.IsDuplicateEncounterAsync");
         var toleranceMinutes = _configuration.DuplicateTimestampToleranceMinutes;
         var sortedParticipants = participantIds.OrderBy(id => id).ToList();
         var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
@@ -1754,6 +1770,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     /// </summary>
     private async Task<bool> ValidateCharactersExistAsync(List<Guid> characterIds, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.ValidateCharactersExistAsync");
         var validationTasks = characterIds.Select(async characterId =>
         {
             try
@@ -1774,6 +1791,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task AddToCharacterIndexAsync(Guid characterId, Guid perspectiveId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.AddToCharacterIndexAsync");
         var indexStore = _stateStoreFactory.GetStore<CharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{CHAR_INDEX_PREFIX}{characterId}";
 
@@ -1787,6 +1805,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             if (!index.PerspectiveIds.Contains(perspectiveId))
             {
                 index.PerspectiveIds.Add(perspectiveId);
+                // etag is null when key doesn't exist yet; empty string signals
+                // "create new" to TrySaveAsync (will never conflict on new entries)
                 var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
                 if (saveResult == null)
                 {
@@ -1811,6 +1831,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task AddToGlobalCharacterIndexAsync(Guid characterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.AddToGlobalCharacterIndexAsync");
         var globalIndexStore = _stateStoreFactory.GetStore<GlobalCharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
 
         for (var attempt = 0; attempt < 3; attempt++)
@@ -1821,6 +1842,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             if (!globalIndex.CharacterIds.Contains(characterId))
             {
                 globalIndex.CharacterIds.Add(characterId);
+                // etag is null when key doesn't exist yet; empty string signals
+                // "create new" to TrySaveAsync (will never conflict on new entries)
                 var saveResult = await globalIndexStore.TrySaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, etag ?? string.Empty, cancellationToken);
                 if (saveResult == null)
                 {
@@ -1837,6 +1860,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task RemoveFromCharacterIndexAsync(Guid characterId, Guid perspectiveId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromCharacterIndexAsync");
         var indexStore = _stateStoreFactory.GetStore<CharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{CHAR_INDEX_PREFIX}{characterId}";
 
@@ -1849,6 +1873,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             }
 
             index.PerspectiveIds.Remove(perspectiveId);
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -1872,6 +1898,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task RemoveFromGlobalCharacterIndexAsync(Guid characterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromGlobalCharacterIndexAsync");
         var globalIndexStore = _stateStoreFactory.GetStore<GlobalCharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
 
         for (var attempt = 0; attempt < 3; attempt++)
@@ -1883,6 +1910,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             }
 
             globalIndex.CharacterIds.Remove(characterId);
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await globalIndexStore.TrySaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -1898,6 +1927,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task AddToCustomTypeIndexAsync(string typeCode, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.AddToCustomTypeIndexAsync");
         var indexStore = _stateStoreFactory.GetStore<CustomTypeIndexData>(StateStoreDefinitions.CharacterEncounter);
 
         for (var attempt = 0; attempt < 3; attempt++)
@@ -1908,6 +1938,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             if (!index.TypeCodes.Contains(typeCode))
             {
                 index.TypeCodes.Add(typeCode);
+                // etag is null when key doesn't exist yet; empty string signals
+                // "create new" to TrySaveAsync (will never conflict on new entries)
                 var saveResult = await indexStore.TrySaveAsync(CUSTOM_TYPE_INDEX_KEY, index, etag ?? string.Empty, cancellationToken);
                 if (saveResult == null)
                 {
@@ -1924,6 +1956,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task RemoveFromCustomTypeIndexAsync(string typeCode, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromCustomTypeIndexAsync");
         var indexStore = _stateStoreFactory.GetStore<CustomTypeIndexData>(StateStoreDefinitions.CharacterEncounter);
 
         for (var attempt = 0; attempt < 3; attempt++)
@@ -1935,6 +1968,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             }
 
             index.TypeCodes.Remove(typeCode);
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await indexStore.TrySaveAsync(CUSTOM_TYPE_INDEX_KEY, index, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -1954,6 +1989,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     /// </summary>
     private async Task AddToTypeEncounterIndexAsync(string typeCode, Guid encounterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.AddToTypeEncounterIndexAsync");
         var indexStore = _stateStoreFactory.GetStore<TypeEncounterIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{TYPE_ENCOUNTER_INDEX_PREFIX}{typeCode}";
 
@@ -1965,6 +2001,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             if (!index.EncounterIds.Contains(encounterId))
             {
                 index.EncounterIds.Add(encounterId);
+                // etag is null when key doesn't exist yet; empty string signals
+                // "create new" to TrySaveAsync (will never conflict on new entries)
                 var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
                 if (saveResult == null)
                 {
@@ -1987,6 +2025,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     /// </summary>
     private async Task RemoveFromTypeEncounterIndexAsync(string typeCode, Guid encounterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromTypeEncounterIndexAsync");
         var indexStore = _stateStoreFactory.GetStore<TypeEncounterIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{TYPE_ENCOUNTER_INDEX_PREFIX}{typeCode}";
 
@@ -1999,6 +2038,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             }
 
             index.EncounterIds.Remove(encounterId);
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -2019,6 +2060,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     /// </summary>
     private async Task<int> GetTypeEncounterCountAsync(string typeCode, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.GetTypeEncounterCountAsync");
         var indexStore = _stateStoreFactory.GetStore<TypeEncounterIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{TYPE_ENCOUNTER_INDEX_PREFIX}{typeCode}";
         var index = await indexStore.GetAsync(key, cancellationToken);
@@ -2031,6 +2073,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     /// </summary>
     private async Task PruneCharacterEncountersIfNeededAsync(Guid characterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.PruneCharacterEncountersIfNeededAsync");
         var perspectiveIds = await GetCharacterPerspectiveIdsAsync(characterId, cancellationToken);
         if (perspectiveIds.Count <= _configuration.MaxEncountersPerCharacter)
         {
@@ -2104,6 +2147,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     /// </summary>
     private async Task PrunePairEncountersIfNeededAsync(List<Guid> participantIds, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.PrunePairEncountersIfNeededAsync");
         var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
 
         // Check each unique pair
@@ -2175,6 +2219,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task UpdatePairIndexesAsync(List<Guid> participantIds, Guid encounterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.UpdatePairIndexesAsync");
         var indexStore = _stateStoreFactory.GetStore<PairIndexData>(StateStoreDefinitions.CharacterEncounter);
 
         // Create pair indexes for each unique pair
@@ -2195,6 +2240,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     if (!index.EncounterIds.Contains(encounterId))
                     {
                         index.EncounterIds.Add(encounterId);
+                        // etag is null when key doesn't exist yet; empty string signals
+                        // "create new" to TrySaveAsync (will never conflict on new entries)
                         var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
                         if (saveResult == null)
                         {
@@ -2212,6 +2259,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task RemoveFromPairIndexesAsync(List<Guid> participantIds, Guid encounterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromPairIndexesAsync");
         var indexStore = _stateStoreFactory.GetStore<PairIndexData>(StateStoreDefinitions.CharacterEncounter);
 
         for (var i = 0; i < participantIds.Count; i++)
@@ -2230,6 +2278,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     }
 
                     index.EncounterIds.Remove(encounterId);
+                    // GetWithETagAsync returns non-null etag for existing records;
+                    // coalesce satisfies compiler's nullable analysis (will never execute)
                     var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
                     if (saveResult == null)
                     {
@@ -2246,6 +2296,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task AddToLocationIndexAsync(Guid locationId, Guid encounterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.AddToLocationIndexAsync");
         var indexStore = _stateStoreFactory.GetStore<LocationIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{LOCATION_INDEX_PREFIX}{locationId}";
 
@@ -2257,6 +2308,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             if (!index.EncounterIds.Contains(encounterId))
             {
                 index.EncounterIds.Add(encounterId);
+                // etag is null when key doesn't exist yet; empty string signals
+                // "create new" to TrySaveAsync (will never conflict on new entries)
                 var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
                 if (saveResult == null)
                 {
@@ -2275,6 +2328,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task RemoveFromLocationIndexAsync(Guid locationId, Guid encounterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromLocationIndexAsync");
         var indexStore = _stateStoreFactory.GetStore<LocationIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{LOCATION_INDEX_PREFIX}{locationId}";
 
@@ -2287,6 +2341,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             }
 
             index.EncounterIds.Remove(encounterId);
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -2308,6 +2364,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task AddToEncounterPerspectiveIndexAsync(Guid encounterId, Guid perspectiveId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.AddToEncounterPerspectiveIndexAsync");
         var indexStore = _stateStoreFactory.GetStore<EncounterPerspectiveIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{ENCOUNTER_PERSPECTIVE_INDEX_PREFIX}{encounterId}";
 
@@ -2319,6 +2376,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             if (!index.PerspectiveIds.Contains(perspectiveId))
             {
                 index.PerspectiveIds.Add(perspectiveId);
+                // etag is null when key doesn't exist yet; empty string signals
+                // "create new" to TrySaveAsync (will never conflict on new entries)
                 var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
                 if (saveResult == null)
                 {
@@ -2336,6 +2395,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task RemoveFromEncounterPerspectiveIndexAsync(Guid encounterId, Guid perspectiveId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromEncounterPerspectiveIndexAsync");
         var indexStore = _stateStoreFactory.GetStore<EncounterPerspectiveIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{ENCOUNTER_PERSPECTIVE_INDEX_PREFIX}{encounterId}";
 
@@ -2353,6 +2413,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 return;
             }
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -2369,6 +2431,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task DeleteEncounterPerspectiveIndexAsync(Guid encounterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.DeleteEncounterPerspectiveIndexAsync");
         var indexStore = _stateStoreFactory.GetStore<EncounterPerspectiveIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{ENCOUNTER_PERSPECTIVE_INDEX_PREFIX}{encounterId}";
         await indexStore.DeleteAsync(key, cancellationToken);
@@ -2376,6 +2439,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task<List<Guid>> GetEncounterPerspectiveIdsAsync(Guid encounterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.GetEncounterPerspectiveIdsAsync");
         var indexStore = _stateStoreFactory.GetStore<EncounterPerspectiveIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{ENCOUNTER_PERSPECTIVE_INDEX_PREFIX}{encounterId}";
         var index = await indexStore.GetAsync(key, cancellationToken);
@@ -2393,6 +2457,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         IEnumerable<Guid> perspectiveIds,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.BulkLoadPerspectivesWithDecayAsync");
         var idList = perspectiveIds.ToList();
         if (idList.Count == 0) return new List<PerspectiveData>();
 
@@ -2443,6 +2508,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         IEnumerable<Guid> encounterIds,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.BulkLoadEncountersAsync");
         var idList = encounterIds.ToList();
         if (idList.Count == 0) return new Dictionary<Guid, EncounterData>();
 
@@ -2472,6 +2538,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         IEnumerable<Guid> encounterIds,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.BulkLoadAllEncounterPerspectivesAsync");
         var idList = encounterIds.ToList();
         if (idList.Count == 0) return new Dictionary<Guid, List<EncounterPerspectiveModel>>();
 
@@ -2546,6 +2613,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task<List<EncounterPerspectiveModel>> GetEncounterPerspectivesAsync(Guid encounterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.GetEncounterPerspectivesAsync");
         // Try new index first for O(1) lookup
         var perspectiveIds = await GetEncounterPerspectiveIdsAsync(encounterId, cancellationToken);
 
@@ -2578,11 +2646,13 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task<PerspectiveData?> FindPerspectiveAsync(Guid encounterId, Guid characterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.FindPerspectiveAsync");
         return await FindPerspectiveByEncounterAndCharacterAsync(encounterId, characterId, cancellationToken);
     }
 
     private async Task<PerspectiveData?> FindPerspectiveByEncounterAndCharacterAsync(Guid encounterId, Guid characterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.FindPerspectiveByEncounterAndCharacterAsync");
         // Get character's perspective IDs and find the one for this encounter
         var perspectiveIds = await GetCharacterPerspectiveIdsAsync(characterId, cancellationToken);
         var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
@@ -2600,6 +2670,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task<int> DeleteEncounterPerspectivesAsync(Guid encounterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.DeleteEncounterPerspectivesAsync");
         var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
 
         // Try the new index first for O(1) lookup
@@ -2647,6 +2718,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task<PerspectiveData> ApplyLazyDecayAsync(IStateStore<PerspectiveData> store, PerspectiveData perspective, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.ApplyLazyDecayAsync");
         if (!_configuration.MemoryDecayEnabled || _configuration.MemoryDecayMode != MemoryDecayMode.Lazy)
             return perspective;
 
@@ -2667,6 +2739,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         freshPerspective.MemoryStrength = Math.Max(0, freshPerspective.MemoryStrength - decayAmount);
         freshPerspective.LastDecayedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var saveResult = await store.TrySaveAsync(perspectiveKey, freshPerspective, etag ?? string.Empty, cancellationToken);
         if (saveResult == null)
         {

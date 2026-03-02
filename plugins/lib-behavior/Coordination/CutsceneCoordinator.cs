@@ -6,8 +6,10 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Runtime;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Behavior.Coordination;
 
@@ -32,6 +34,7 @@ public sealed class CutsceneCoordinator : ICutsceneCoordinator, IDisposable
     private readonly Func<Guid, object?>? _behaviorDefaultResolver;
     private readonly ILogger<CutsceneCoordinator>? _logger;
     private readonly ILoggerFactory? _loggerFactory;
+    private readonly ITelemetryProvider? _telemetryProvider;
     private bool _disposed;
 
     /// <summary>
@@ -39,13 +42,16 @@ public sealed class CutsceneCoordinator : ICutsceneCoordinator, IDisposable
     /// </summary>
     /// <param name="behaviorDefaultResolver">Optional resolver for behavior defaults.</param>
     /// <param name="loggerFactory">Optional logger factory.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     public CutsceneCoordinator(
         Func<Guid, object?>? behaviorDefaultResolver = null,
-        ILoggerFactory? loggerFactory = null)
+        ILoggerFactory? loggerFactory = null,
+        ITelemetryProvider? telemetryProvider = null)
     {
         _behaviorDefaultResolver = behaviorDefaultResolver;
         _loggerFactory = loggerFactory;
         _logger = loggerFactory?.CreateLogger<CutsceneCoordinator>();
+        _telemetryProvider = telemetryProvider;
         _sessions = new ConcurrentDictionary<string, CutsceneSession>(StringComparer.OrdinalIgnoreCase);
     }
 
@@ -65,6 +71,7 @@ public sealed class CutsceneCoordinator : ICutsceneCoordinator, IDisposable
         CutsceneSessionOptions options,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "CutsceneCoordinator.CreateSessionAsync");
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentException.ThrowIfNullOrEmpty(sessionId);
         ArgumentException.ThrowIfNullOrEmpty(cinematicId);
@@ -80,7 +87,8 @@ public sealed class CutsceneCoordinator : ICutsceneCoordinator, IDisposable
             participants,
             options,
             _behaviorDefaultResolver,
-            _loggerFactory?.CreateLogger<CutsceneSession>());
+            _loggerFactory?.CreateLogger<CutsceneSession>(),
+            _telemetryProvider);
 
         if (!_sessions.TryAdd(sessionId, session))
         {
@@ -113,6 +121,7 @@ public sealed class CutsceneCoordinator : ICutsceneCoordinator, IDisposable
     /// <inheritdoc/>
     public async Task EndSessionAsync(string sessionId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "CutsceneCoordinator.EndSessionAsync");
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         if (!_sessions.TryRemove(sessionId, out var session))
@@ -120,19 +129,24 @@ public sealed class CutsceneCoordinator : ICutsceneCoordinator, IDisposable
             return;
         }
 
-        // Complete if still active
-        if (session.State != CutsceneSessionState.Completed &&
-            session.State != CutsceneSessionState.Aborted)
+        try
         {
-            await session.CompleteAsync(ct);
+            // Complete if still active
+            if (session.State != CutsceneSessionState.Completed &&
+                session.State != CutsceneSessionState.Aborted)
+            {
+                await session.CompleteAsync(ct);
+            }
+
+            _logger?.LogInformation(
+                "Ended cutscene session {SessionId}, duration: {Duration}ms",
+                sessionId,
+                (DateTime.UtcNow - session.StartedAt).TotalMilliseconds);
         }
-
-        session.Dispose();
-
-        _logger?.LogInformation(
-            "Ended cutscene session {SessionId}, duration: {Duration}ms",
-            sessionId,
-            (DateTime.UtcNow - session.StartedAt).TotalMilliseconds);
+        finally
+        {
+            session.Dispose();
+        }
     }
 
     /// <summary>

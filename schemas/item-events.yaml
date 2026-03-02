@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Item Service Events
   description: |
@@ -6,11 +6,11 @@ info:
     Lifecycle events are auto-generated from x-lifecycle definition.
 
     **Event Categories**:
-    - Template lifecycle: created, updated, deprecated
+    - Template lifecycle: created, updated (deprecation via changedFields)
     - Instance lifecycle: created, modified, destroyed
     - Binding events: bound, unbound
 
-    **Topic Naming**: Uses kebab-case for multi-word entities (item-template, item-instance).
+    **Topic Naming**: Uses `item.` prefix with dot-separated entity names (item.template, item.instance).
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
     1. Read docs/reference/SCHEMA-RULES.md
@@ -21,32 +21,29 @@ info:
   x-event-subscriptions: []
   x-event-publications:
     # Template lifecycle events (auto-generated from x-lifecycle)
-    - topic: item-template.created
+    - topic: item.template.created
       event: ItemTemplateCreatedEvent
       description: Published when a new item template is created
-    - topic: item-template.updated
+    - topic: item.template.updated
       event: ItemTemplateUpdatedEvent
-      description: Published when an item template is updated
-    - topic: item-template.deprecated
-      event: ItemTemplateDeprecatedEvent
-      description: Published when an item template is deprecated
+      description: Published when an item template is updated (including deprecation via changedFields)
 
     # Instance lifecycle events (auto-generated from x-lifecycle)
-    - topic: item-instance.created
+    - topic: item.instance.created
       event: ItemInstanceCreatedEvent
       description: Published when a new item instance is created
-    - topic: item-instance.modified
+    - topic: item.instance.modified
       event: ItemInstanceModifiedEvent
       description: Published when an item instance is modified (durability, stats, etc.)
-    - topic: item-instance.destroyed
+    - topic: item.instance.destroyed
       event: ItemInstanceDestroyedEvent
       description: Published when an item instance is destroyed
 
     # Binding events (non-lifecycle)
-    - topic: item-instance.bound
+    - topic: item.instance.bound
       event: ItemInstanceBoundEvent
       description: Published when an item is bound to a character (soulbound)
-    - topic: item-instance.unbound
+    - topic: item.instance.unbound
       event: ItemInstanceUnboundEvent
       description: Published when an item binding is removed (admin action, expiration)
 
@@ -66,8 +63,15 @@ info:
       event: ItemUseStepFailedEvent
       description: Published when a multi-step item use milestone fails
 
-# Lifecycle events auto-generated from this definition
+# Lifecycle events auto-generated from this definition.
+# Note: The generator produces standard Created/Updated/Deleted events for both entities.
+# Item uses custom event names for non-creation lifecycle states:
+#   - ItemTemplate: deprecation published via "updated" with changedFields (per IMPLEMENTATION TENETS)
+#   - ItemInstance: "modified" instead of "updated", "destroyed" instead of "deleted"
+# The custom events are defined in components/schemas below and listed in x-event-publications.
+# The auto-generated Updated/Deleted variants exist in Generated/ but are not published.
 x-lifecycle:
+  topic_prefix: item
   ItemTemplate:
     model:
       templateId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the item template" }
@@ -88,6 +92,7 @@ x-lifecycle:
       isActive: { type: boolean, required: true, description: "Whether template is currently active" }
       isDeprecated: { type: boolean, required: true, description: "Whether template is deprecated" }
       deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the template was deprecated" }
+      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
       migrationTargetId: { type: string, format: uuid, nullable: true, description: "Template ID to migrate existing instances to" }
       createdAt: { type: string, format: date-time, required: true, description: "When the template was created" }
       updatedAt: { type: string, format: date-time, nullable: true, description: "When the template was last modified" }
@@ -97,7 +102,7 @@ x-lifecycle:
     model:
       instanceId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for this item instance" }
       templateId: { type: string, format: uuid, required: true, description: "Reference to the item template" }
-      containerId: { type: string, format: uuid, required: true, description: "Container holding this item (ownership derived from container)" }
+      containerId: { type: string, format: uuid, nullable: true, description: "Container holding this item (ownership derived from container). Null when removed from all containers." }
       realmId: { type: string, format: uuid, required: true, description: "Realm this instance exists in" }
       quantity: { type: number, format: double, required: true, description: "Item quantity (1 for unique, integer for discrete, decimal for continuous)" }
       slotIndex: { type: integer, nullable: true, description: "Slot position in slot-based containers" }
@@ -122,75 +127,6 @@ components:
     # Custom Lifecycle Events (non-standard lifecycle states)
     # =========================================================================
 
-    ItemTemplateDeprecatedEvent:
-      type: object
-      description: Event published when an item template is deprecated (soft-disable with optional migration)
-      additionalProperties: false
-      required:
-      - eventId
-      - timestamp
-      - templateId
-      - code
-      - gameId
-      - name
-      - category
-      - rarity
-      - quantityModel
-      - scope
-      - isActive
-      - createdAt
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
-        templateId:
-          type: string
-          format: uuid
-          description: Deprecated template ID
-        code:
-          type: string
-          description: Item template code
-        gameId:
-          type: string
-          description: Game service ID
-        name:
-          type: string
-          description: Template display name
-        category:
-          $ref: 'item-api.yaml#/components/schemas/ItemCategory'
-          description: Item category
-        rarity:
-          $ref: 'item-api.yaml#/components/schemas/ItemRarity'
-          description: Item rarity tier
-        quantityModel:
-          $ref: 'item-api.yaml#/components/schemas/QuantityModel'
-          description: Quantity tracking model
-        scope:
-          $ref: 'item-api.yaml#/components/schemas/ItemScope'
-          description: Realm availability scope
-        isActive:
-          type: boolean
-          description: Whether template is still active
-        createdAt:
-          type: string
-          format: date-time
-          description: When the template was created
-        updatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the template was last modified
-        migrationTargetId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Template ID to migrate existing instances to
-
     ItemInstanceModifiedEvent:
       type: object
       description: Event published when an item instance is modified (durability, stats, name changes)
@@ -200,7 +136,6 @@ components:
       - timestamp
       - instanceId
       - templateId
-      - containerId
       - realmId
       - quantity
       - originType
@@ -225,7 +160,8 @@ components:
         containerId:
           type: string
           format: uuid
-          description: Container holding this item
+          nullable: true
+          description: Container holding this item. Null when item has been removed from all containers.
         realmId:
           type: string
           format: uuid
@@ -256,7 +192,6 @@ components:
       - timestamp
       - instanceId
       - templateId
-      - containerId
       - realmId
       - quantity
       - originType
@@ -281,7 +216,8 @@ components:
         containerId:
           type: string
           format: uuid
-          description: Container that held this item
+          nullable: true
+          description: Container that held this item. Null if item was not in a container at destruction.
         realmId:
           type: string
           format: uuid
@@ -394,8 +330,8 @@ components:
           format: uuid
           description: Character the item was previously bound to
         reason:
-          type: string
-          description: Reason for unbinding (admin, expiration, transfer_override)
+          $ref: 'item-api.yaml#/components/schemas/UnbindReason'
+          description: Reason for unbinding
         unboundBy:
           type: string
           format: uuid
@@ -499,15 +435,15 @@ components:
           format: uuid
           description: Unique identifier of the entity that used the item
         userType:
-          type: string
-          description: Type of user entity (e.g., character, account, actor)
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of user entity
         targetId:
           type: string
           format: uuid
           nullable: true
           description: Unique identifier of the target entity if item was used on a target
         targetType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Type of target entity when targetId is present
         usedAt:
@@ -552,8 +488,8 @@ components:
           format: uuid
           description: Unique identifier of the entity that attempted to use the item
         userType:
-          type: string
-          description: Type of user entity (e.g., character, account, actor)
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of user entity
         failedAt:
           type: string
           format: date-time
@@ -607,7 +543,7 @@ components:
           format: uuid
           description: User who completed the step
         userType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of user entity
         contractInstanceId:
           type: string
@@ -669,7 +605,7 @@ components:
           format: uuid
           description: User who attempted the step
         userType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of user entity
         contractInstanceId:
           type: string

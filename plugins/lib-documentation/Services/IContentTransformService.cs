@@ -35,12 +35,12 @@ public interface IContentTransformService
     /// <param name="frontmatter">The parsed frontmatter (may be null).</param>
     /// <param name="categoryMapping">Optional path-to-category mapping.</param>
     /// <param name="defaultCategory">The default category if no match is found.</param>
-    /// <returns>The determined category as a string.</returns>
-    string DetermineCategory(
+    /// <returns>The determined category.</returns>
+    DocumentCategory DetermineCategory(
         string filePath,
         DocumentFrontmatter? frontmatter,
-        IDictionary<string, string>? categoryMapping,
-        string defaultCategory);
+        IDictionary<string, DocumentCategory>? categoryMapping,
+        DocumentCategory defaultCategory);
 
     /// <summary>
     /// Transforms a markdown file into a document import model.
@@ -53,8 +53,8 @@ public interface IContentTransformService
     TransformedDocument TransformFile(
         string filePath,
         string content,
-        IDictionary<string, string>? categoryMapping,
-        string defaultCategory);
+        IDictionary<string, DocumentCategory>? categoryMapping,
+        DocumentCategory defaultCategory);
 
     /// <summary>
     /// Generates a voice-friendly summary from content.
@@ -113,7 +113,7 @@ public class TransformedDocument
     public string Title { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the document category.</summary>
-    public string Category { get; set; } = string.Empty;
+    public DocumentCategory Category { get; set; }
 
     /// <summary>Gets or sets the markdown content.</summary>
     public string Content { get; set; } = string.Empty;

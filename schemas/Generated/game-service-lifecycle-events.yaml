@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Game Service Events Lifecycle Events
   description: "Auto-generated lifecycle event schemas for game-service service.\nDO NOT EDIT - This file is completely overwritten
@@ -21,6 +21,7 @@ components:
       - stubName
       - displayName
       - isActive
+      - autoLobbyEnabled
       - createdAt
       properties:
         eventName:
@@ -44,11 +45,15 @@ components:
         isActive: &id005
           type: boolean
           description: Whether the game service is currently active
-        createdAt: &id006
+        autoLobbyEnabled: &id006
+          type: boolean
+          description: Whether GameSession auto-creates lobby sessions and publishes join shortcuts for this game 
+            service
+        createdAt: &id007
           type: string
           format: date-time
           description: When the service was created
-        updatedAt: &id007
+        updatedAt: &id008
           type: string
           format: date-time
           nullable: true
@@ -67,6 +72,7 @@ components:
       - stubName
       - displayName
       - isActive
+      - autoLobbyEnabled
       - createdAt
       - changedFields
       properties:
@@ -79,8 +85,9 @@ components:
         displayName: *id003
         description: *id004
         isActive: *id005
-        createdAt: *id006
-        updatedAt: *id007
+        autoLobbyEnabled: *id006
+        createdAt: *id007
+        updatedAt: *id008
         changedFields:
           type: array
           items:
@@ -100,6 +107,7 @@ components:
       - stubName
       - displayName
       - isActive
+      - autoLobbyEnabled
       - createdAt
       properties:
         eventName:
@@ -111,8 +119,9 @@ components:
         displayName: *id003
         description: *id004
         isActive: *id005
-        createdAt: *id006
-        updatedAt: *id007
+        autoLobbyEnabled: *id006
+        createdAt: *id007
+        updatedAt: *id008
         deletedReason:
           type: string
           nullable: true

@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Bannou Mapping Service API
   description: |
@@ -96,7 +96,7 @@ paths:
         : \"Configuration for non-authority publish alerts\",\n            \"properties\": {\n                \"enabled\"\
         : {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
         : \"Whether to emit warning events\"\n                },\n                \"alertTopic\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Custom topic for warnings (default map.warnings.unauthorized_publish)\"\
+        type\": \"string\",\n                    \"description\": \"Custom topic for warnings (default map.warnings.unauthorized-publish)\"\
         ,\n                    \"nullable\": true\n                },\n                \"includePayloadSummary\": {\n    \
         \                \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
         : \"Include truncated payload in warning for debugging\"\n                }\n            }\n        },\n        \"\
@@ -1991,7 +1991,7 @@ components:
           description: Whether to emit warning events
         alertTopic:
           type: string
-          description: Custom topic for warnings (default map.warnings.unauthorized_publish)
+          description: Custom topic for warnings (default map.warnings.unauthorized-publish)
           nullable: true
         includePayloadSummary:
           type: boolean

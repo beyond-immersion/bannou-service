@@ -28,6 +28,8 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     private readonly Mock<ISeedClient> _mockSeedClient;
     private readonly Mock<IGameSessionClient> _mockGameSessionClient;
     private readonly Mock<IServiceProvider> _mockServiceProvider;
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     // State stores
     private readonly Mock<IStateStore<GardenInstanceModel>> _mockGardenStore;
@@ -57,6 +59,8 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         _mockSeedClient = new Mock<ISeedClient>();
         _mockGameSessionClient = new Mock<IGameSessionClient>();
         _mockServiceProvider = new Mock<IServiceProvider>();
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         _mockGardenStore = new Mock<IStateStore<GardenInstanceModel>>();
         _mockPoiStore = new Mock<IStateStore<PoiModel>>();
@@ -146,14 +150,16 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         _mockEventConsumer.Object,
         _mockSeedClient.Object,
         _mockGameSessionClient.Object,
-        _mockServiceProvider.Object);
+        _mockServiceProvider.Object,
+        _mockEntitySessionRegistry.Object,
+        _mockTelemetryProvider.Object);
 
     private SeedResponse CreateTestSeedResponse(
         SeedStatus status = SeedStatus.Active, string? growthPhase = null) => new()
         {
             SeedId = _testSeedId,
             OwnerId = _testAccountId,
-            OwnerType = "account",
+            OwnerType = EntityType.Account,
             SeedTypeCode = "guardian",
             GrowthPhase = growthPhase ?? "nascent",
             Status = status,
@@ -1522,11 +1528,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         _mockSeedClient
             .Setup(c => c.GetSeedAsync(
                 It.Is<GetSeedRequest>(r => r.SeedId == _testSeedId), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new SeedResponse { SeedId = _testSeedId, OwnerId = _testAccountId, OwnerType = "account" });
+            .ReturnsAsync(new SeedResponse { SeedId = _testSeedId, OwnerId = _testAccountId, OwnerType = EntityType.Account });
         _mockSeedClient
             .Setup(c => c.GetSeedAsync(
                 It.Is<GetSeedRequest>(r => r.SeedId == partnerSeedId), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new SeedResponse { SeedId = partnerSeedId, OwnerId = partnerAccountId, OwnerType = "account" });
+            .ReturnsAsync(new SeedResponse { SeedId = partnerSeedId, OwnerId = partnerAccountId, OwnerType = EntityType.Account });
 
         var garden1 = CreateTestGarden(_testAccountId);
         var garden2 = CreateTestGarden(partnerAccountId);
@@ -1692,6 +1698,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var listener = new GardenerSeedEvolutionListener(
             mockStoreFactory.Object,
             Configuration,
+            Mock.Of<ITelemetryProvider>(),
             Mock.Of<ILogger<GardenerSeedEvolutionListener>>());
 
         Assert.Contains("guardian", listener.InterestedSeedTypes);
@@ -1701,7 +1708,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SeedId: _testSeedId,
                 SeedTypeCode: "guardian",
                 OwnerId: _testAccountId,
-                OwnerType: "account",
+                OwnerType: EntityType.Account,
                 DomainChanges: new List<DomainChange>(),
                 TotalGrowth: 10.0f,
                 CrossPollinated: false,
@@ -1738,6 +1745,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var listener = new GardenerSeedEvolutionListener(
             mockStoreFactory.Object,
             Configuration,
+            Mock.Of<ITelemetryProvider>(),
             Mock.Of<ILogger<GardenerSeedEvolutionListener>>());
 
         await listener.OnPhaseChangedAsync(
@@ -1745,7 +1753,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SeedId: _testSeedId,
                 SeedTypeCode: "guardian",
                 OwnerId: _testAccountId,
-                OwnerType: "account",
+                OwnerType: EntityType.Account,
                 PreviousPhase: "dormant",
                 NewPhase: "awakening",
                 TotalGrowth: 50.0f,
@@ -1765,6 +1773,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var listener = new GardenerSeedEvolutionListener(
             Mock.Of<IStateStoreFactory>(),
             Configuration,
+            Mock.Of<ITelemetryProvider>(),
             Mock.Of<ILogger<GardenerSeedEvolutionListener>>());
 
         Assert.Contains("custom-type", listener.InterestedSeedTypes);

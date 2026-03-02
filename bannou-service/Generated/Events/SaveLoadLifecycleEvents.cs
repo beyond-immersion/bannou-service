@@ -77,7 +77,7 @@ public partial class SaveSlotCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Slot name
@@ -199,7 +199,7 @@ public partial class SaveSlotUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Slot name
@@ -329,7 +329,7 @@ public partial class SaveSlotDeletedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Slot name

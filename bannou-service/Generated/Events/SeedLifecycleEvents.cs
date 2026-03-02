@@ -68,13 +68,14 @@ public partial class SeedCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Registered seed type code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -88,7 +89,7 @@ public partial class SeedCreatedEvent : BaseServiceEvent
     /// Current computed growth phase code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("growthPhase")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string GrowthPhase { get; set; } = default!;
 
@@ -102,7 +103,7 @@ public partial class SeedCreatedEvent : BaseServiceEvent
     /// Human-readable seed name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string DisplayName { get; set; } = default!;
 
@@ -160,13 +161,14 @@ public partial class SeedUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Registered seed type code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -180,7 +182,7 @@ public partial class SeedUpdatedEvent : BaseServiceEvent
     /// Current computed growth phase code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("growthPhase")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string GrowthPhase { get; set; } = default!;
 
@@ -194,7 +196,7 @@ public partial class SeedUpdatedEvent : BaseServiceEvent
     /// Human-readable seed name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string DisplayName { get; set; } = default!;
 
@@ -260,13 +262,14 @@ public partial class SeedDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Registered seed type code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -280,7 +283,7 @@ public partial class SeedDeletedEvent : BaseServiceEvent
     /// Current computed growth phase code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("growthPhase")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string GrowthPhase { get; set; } = default!;
 
@@ -294,7 +297,7 @@ public partial class SeedDeletedEvent : BaseServiceEvent
     /// Human-readable seed name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string DisplayName { get; set; } = default!;
 
@@ -322,25 +325,25 @@ public partial class SeedDeletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to seed-type.created when a seedtype is created
+/// Published to seed.type.created when a seedtype is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedTypeCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: seed-type.created
+    /// Event type identifier: seed.type.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "seed-type.created";
+    public override string EventName { get; set; } = "seed.type.created";
 
     /// <summary>
     /// Unique seed type code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -354,7 +357,7 @@ public partial class SeedTypeCreatedEvent : BaseServiceEvent
     /// Human-readable name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string DisplayName { get; set; } = default!;
 
@@ -362,7 +365,7 @@ public partial class SeedTypeCreatedEvent : BaseServiceEvent
     /// Description of what this seed type represents
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Description { get; set; } = default!;
 
@@ -411,25 +414,25 @@ public partial class SeedTypeCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to seed-type.updated when a seedtype is updated
+/// Published to seed.type.updated when a seedtype is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedTypeUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: seed-type.updated
+    /// Event type identifier: seed.type.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "seed-type.updated";
+    public override string EventName { get; set; } = "seed.type.updated";
 
     /// <summary>
     /// Unique seed type code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -443,7 +446,7 @@ public partial class SeedTypeUpdatedEvent : BaseServiceEvent
     /// Human-readable name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string DisplayName { get; set; } = default!;
 
@@ -451,7 +454,7 @@ public partial class SeedTypeUpdatedEvent : BaseServiceEvent
     /// Description of what this seed type represents
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Description { get; set; } = default!;
 
@@ -508,25 +511,25 @@ public partial class SeedTypeUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to seed-type.deleted when a seedtype is deleted
+/// Published to seed.type.deleted when a seedtype is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedTypeDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: seed-type.deleted
+    /// Event type identifier: seed.type.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "seed-type.deleted";
+    public override string EventName { get; set; } = "seed.type.deleted";
 
     /// <summary>
     /// Unique seed type code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -540,7 +543,7 @@ public partial class SeedTypeDeletedEvent : BaseServiceEvent
     /// Human-readable name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string DisplayName { get; set; } = default!;
 
@@ -548,7 +551,7 @@ public partial class SeedTypeDeletedEvent : BaseServiceEvent
     /// Description of what this seed type represents
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Description { get; set; } = default!;
 

@@ -31,7 +31,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createBoardTemplateAsync(
+  async licenseCreateBoardTemplateAsync(
     request: Schemas['CreateBoardTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getBoardTemplateAsync(
+  async licenseGetBoardTemplateAsync(
     request: Schemas['GetBoardTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listBoardTemplatesAsync(
+  async licenseListBoardTemplatesAsync(
     request: Schemas['ListBoardTemplatesRequest'],
     channel: number = 0,
     timeout?: number
@@ -85,7 +85,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateBoardTemplateAsync(
+  async licenseUpdateBoardTemplateAsync(
     request: Schemas['UpdateBoardTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -103,7 +103,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deleteBoardTemplateAsync(
+  async licenseDeleteBoardTemplateAsync(
     request: Schemas['DeleteBoardTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -121,7 +121,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async addLicenseDefinitionAsync(
+  async licenseAddLicenseDefinitionAsync(
     request: Schemas['AddLicenseDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -139,7 +139,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getLicenseDefinitionAsync(
+  async licenseGetLicenseDefinitionAsync(
     request: Schemas['GetLicenseDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -157,7 +157,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listLicenseDefinitionsAsync(
+  async licenseListLicenseDefinitionsAsync(
     request: Schemas['ListLicenseDefinitionsRequest'],
     channel: number = 0,
     timeout?: number
@@ -175,7 +175,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateLicenseDefinitionAsync(
+  async licenseUpdateLicenseDefinitionAsync(
     request: Schemas['UpdateLicenseDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -193,7 +193,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async removeLicenseDefinitionAsync(
+  async licenseRemoveLicenseDefinitionAsync(
     request: Schemas['RemoveLicenseDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -211,7 +211,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createBoardAsync(
+  async licenseCreateBoardAsync(
     request: Schemas['CreateBoardRequest'],
     channel: number = 0,
     timeout?: number
@@ -231,7 +231,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getBoardAsync(
+  async licenseGetBoardAsync(
     request: Schemas['GetBoardRequest'],
     channel: number = 0,
     timeout?: number
@@ -251,7 +251,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listBoardsByOwnerAsync(
+  async licenseListBoardsByOwnerAsync(
     request: Schemas['ListBoardsByOwnerRequest'],
     channel: number = 0,
     timeout?: number
@@ -269,7 +269,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deleteBoardAsync(
+  async licenseDeleteBoardAsync(
     request: Schemas['DeleteBoardRequest'],
     channel: number = 0,
     timeout?: number
@@ -289,7 +289,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async unlockLicenseAsync(
+  async licenseUnlockLicenseAsync(
     request: Schemas['UnlockLicenseRequest'],
     channel: number = 0,
     timeout?: number
@@ -307,7 +307,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async checkUnlockableAsync(
+  async licenseCheckUnlockableAsync(
     request: Schemas['CheckUnlockableRequest'],
     channel: number = 0,
     timeout?: number
@@ -325,7 +325,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getBoardStateAsync(
+  async licenseGetBoardStateAsync(
     request: Schemas['BoardStateRequest'],
     channel: number = 0,
     timeout?: number
@@ -345,7 +345,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async seedBoardTemplateAsync(
+  async licenseSeedBoardTemplateAsync(
     request: Schemas['SeedBoardTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -363,7 +363,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async cloneBoardAsync(
+  async licenseCloneBoardAsync(
     request: Schemas['CloneBoardRequest'],
     channel: number = 0,
     timeout?: number
@@ -383,7 +383,7 @@ export class LicenseProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async cleanupByOwnerAsync(
+  async licenseCleanupByOwnerAsync(
     request: Schemas['CleanupByOwnerRequest'],
     channel: number = 0,
     timeout?: number

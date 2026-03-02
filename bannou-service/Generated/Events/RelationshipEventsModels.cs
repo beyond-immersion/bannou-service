@@ -34,24 +34,16 @@ using System = global::System;
 /// Published when a relationship type merge operation completes, replacing N individual relationship.updated events with a single summary event
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RelationshipTypeMergedEvent
+public partial class RelationshipTypeMergedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the merge operation completed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "relationship.type.merged";
 
     /// <summary>
     /// ID of the deprecated source type that was merged

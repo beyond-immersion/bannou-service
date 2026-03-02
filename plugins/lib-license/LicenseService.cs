@@ -27,7 +27,7 @@ public static class LicenseTopics
     /// <summary>License unlock failed event topic.</summary>
     public const string LicenseUnlockFailed = "license.unlock-failed";
     /// <summary>License board cloned event topic.</summary>
-    public const string LicenseBoardCloned = "license-board.cloned";
+    public const string LicenseBoardCloned = "license.board.cloned";
 }
 
 /// <summary>
@@ -62,6 +62,7 @@ public partial class LicenseService : ILicenseService
     private readonly IGameServiceClient _gameServiceClient;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IResourceClient _resourceClient;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     #region State Store Accessors
 
@@ -88,7 +89,7 @@ public partial class LicenseService : ILicenseService
     private static string BuildTemplateKey(Guid boardTemplateId) => $"board-tpl:{boardTemplateId}";
     private static string BuildDefinitionKey(Guid boardTemplateId, string code) => $"lic-def:{boardTemplateId}:{code}";
     private static string BuildBoardKey(Guid boardId) => $"board:{boardId}";
-    private static string BuildBoardByOwnerKey(string ownerType, Guid ownerId, Guid boardTemplateId) => $"board-owner:{ownerType}:{ownerId}:{boardTemplateId}";
+    private static string BuildBoardByOwnerKey(EntityType ownerType, Guid ownerId, Guid boardTemplateId) => $"board-owner:{ownerType.ToString().ToLowerInvariant()}:{ownerId}:{boardTemplateId}";
     private static string BuildBoardCacheKey(Guid boardId) => $"cache:{boardId}";
     private static string BuildBoardLockKey(Guid boardId) => $"board:{boardId}";
     private static string BuildTemplateLockKey(Guid boardTemplateId) => $"tpl:{boardTemplateId}";
@@ -98,51 +99,29 @@ public partial class LicenseService : ILicenseService
     #region Owner Type Mapping
 
     /// <summary>
-    /// Maps an opaque owner type string to ContainerOwnerType for inventory operations.
-    /// Returns null if the owner type has no known mapping.
+    /// Maps an EntityType to ContainerOwnerType for inventory operations.
+    /// Returns null if the entity type has no known container mapping.
     /// </summary>
-    private static ContainerOwnerType? MapToContainerOwnerType(string ownerType) => ownerType switch
+    private static ContainerOwnerType? MapToContainerOwnerType(EntityType ownerType) => ownerType switch
     {
-        "character" => ContainerOwnerType.Character,
-        "account" => ContainerOwnerType.Account,
-        "location" => ContainerOwnerType.Location,
-        "guild" => ContainerOwnerType.Guild,
+        EntityType.Character => ContainerOwnerType.Character,
+        EntityType.Account => ContainerOwnerType.Account,
+        EntityType.Location => ContainerOwnerType.Location,
+        EntityType.Guild => ContainerOwnerType.Guild,
         _ => null
     };
 
     /// <summary>
-    /// Maps an opaque owner type string to WalletOwnerType for currency operations.
-    /// Returns null if the owner type has no known mapping.
+    /// Maps an EntityType to a wallet-compatible EntityType subset for currency operations.
+    /// Returns null if the entity type has no known wallet mapping.
     /// </summary>
-    private static WalletOwnerType? MapToWalletOwnerType(string ownerType) => ownerType switch
+    private static EntityType? MapToWalletOwnerType(EntityType ownerType) => ownerType switch
     {
-        "character" => WalletOwnerType.Character,
-        "account" => WalletOwnerType.Account,
-        "guild" => WalletOwnerType.Guild,
-        "npc" => WalletOwnerType.Npc,
+        EntityType.Character => EntityType.Character,
+        EntityType.Account => EntityType.Account,
+        EntityType.Guild => EntityType.Guild,
         _ => null
     };
-
-    /// <summary>
-    /// Maps an opaque owner type string to EntityType for contract parties.
-    /// Returns null if the owner type has no known mapping.
-    /// </summary>
-    private static EntityType? MapToEntityType(string ownerType) => ownerType switch
-    {
-        "character" => EntityType.Character,
-        "account" => EntityType.Account,
-        "realm" => EntityType.Realm,
-        "guild" => EntityType.Guild,
-        "location" => EntityType.Location,
-        "actor" => EntityType.Actor,
-        _ => null
-    };
-
-    /// <summary>
-    /// Validates that an owner type string does not contain the key separator character.
-    /// </summary>
-    private static bool IsValidOwnerType(string ownerType)
-        => !string.IsNullOrWhiteSpace(ownerType) && !ownerType.Contains(':');
 
     #endregion
 
@@ -161,6 +140,7 @@ public partial class LicenseService : ILicenseService
     /// <param name="gameServiceClient">Game service client for validation (L2 hard dependency).</param>
     /// <param name="lockProvider">Distributed lock provider (L0 hard dependency).</param>
     /// <param name="resourceClient">Resource client for reference tracking (L1 hard dependency).</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
     public LicenseService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -173,7 +153,8 @@ public partial class LicenseService : ILicenseService
         ICurrencyClient currencyClient,
         IGameServiceClient gameServiceClient,
         IDistributedLockProvider lockProvider,
-        IResourceClient resourceClient)
+        IResourceClient resourceClient,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -187,6 +168,7 @@ public partial class LicenseService : ILicenseService
         _gameServiceClient = gameServiceClient;
         _lockProvider = lockProvider;
         _resourceClient = resourceClient;
+        _telemetryProvider = telemetryProvider;
     }
 
     #region Adjacency Helper
@@ -278,6 +260,7 @@ public partial class LicenseService : ILicenseService
         IReadOnlyList<LicenseDefinitionModel> definitions,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.license", "LicenseService.LoadOrRebuildBoardCacheAsync");
         // Try cache first
         var cache = await BoardCache.GetAsync(BuildBoardCacheKey(board.BoardId), cancellationToken);
         if (cache != null)
@@ -423,7 +406,7 @@ public partial class LicenseService : ILicenseService
         _logger.LogInformation("Created board template {BoardTemplateId}", template.BoardTemplateId);
 
         await _messageBus.TryPublishAsync(
-            "license-board-template.created",
+            "license.board-template.created",
             new LicenseBoardTemplateCreatedEvent
             {
                 BoardTemplateId = template.BoardTemplateId,
@@ -545,7 +528,7 @@ public partial class LicenseService : ILicenseService
         _logger.LogInformation("Updated board template {BoardTemplateId}", template.BoardTemplateId);
 
         await _messageBus.TryPublishAsync(
-            "license-board-template.updated",
+            "license.board-template.updated",
             new LicenseBoardTemplateUpdatedEvent
             {
                 BoardTemplateId = template.BoardTemplateId,
@@ -612,7 +595,7 @@ public partial class LicenseService : ILicenseService
         _logger.LogInformation("Deleted board template {BoardTemplateId}", body.BoardTemplateId);
 
         await _messageBus.TryPublishAsync(
-            "license-board-template.deleted",
+            "license.board-template.deleted",
             new LicenseBoardTemplateDeletedEvent
             {
                 BoardTemplateId = template.BoardTemplateId,
@@ -901,13 +884,6 @@ public partial class LicenseService : ILicenseService
             "Creating board for owner {OwnerType}:{OwnerId} from template {BoardTemplateId}",
             body.OwnerType, body.OwnerId, body.BoardTemplateId);
 
-        // Validate ownerType format (no key separator characters)
-        if (!IsValidOwnerType(body.OwnerType))
-        {
-            _logger.LogWarning("Invalid owner type format: {OwnerType}", body.OwnerType);
-            return (StatusCodes.BadRequest, null);
-        }
-
         // Validate board template exists and is active
         var template = await BoardTemplateStore.GetAsync(
             BuildTemplateKey(body.BoardTemplateId),
@@ -950,7 +926,7 @@ public partial class LicenseService : ILicenseService
         // Owner-type-aware validation and realm context resolution
         Guid? resolvedRealmId = body.RealmId;
 
-        if (body.OwnerType == "character")
+        if (body.OwnerType == EntityType.Character)
         {
             // For character owners: validate character exists and resolve realm
             try
@@ -1051,7 +1027,7 @@ public partial class LicenseService : ILicenseService
 
         // Register resource reference with lib-resource for cleanup coordination
         // Day-one: only character owners get reference tracking
-        if (board.OwnerType == "character")
+        if (board.OwnerType == EntityType.Character)
         {
             await RegisterCharacterReferenceAsync(
                 board.BoardId.ToString(),
@@ -1064,7 +1040,7 @@ public partial class LicenseService : ILicenseService
             board.BoardId, board.OwnerType, board.OwnerId, board.ContainerId);
 
         await _messageBus.TryPublishAsync(
-            "license-board.created",
+            "license.board.created",
             new LicenseBoardCreatedEvent
             {
                 BoardId = board.BoardId,
@@ -1148,7 +1124,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // Unregister resource reference before deletion (day-one: character only)
-        if (board.OwnerType == "character")
+        if (board.OwnerType == EntityType.Character)
         {
             await UnregisterCharacterReferenceAsync(
                 board.BoardId.ToString(),
@@ -1181,7 +1157,7 @@ public partial class LicenseService : ILicenseService
             board.BoardId, board.OwnerType, board.OwnerId);
 
         await _messageBus.TryPublishAsync(
-            "license-board.deleted",
+            "license.board.deleted",
             new LicenseBoardDeletedEvent
             {
                 BoardId = board.BoardId,
@@ -1345,7 +1321,7 @@ public partial class LicenseService : ILicenseService
 
         // 10. Contract lifecycle — LP deduction via prebound API execution
         // If this fails, compensate by destroying the item created in step 9
-        var licenseeEntityType = MapToEntityType(board.OwnerType) ?? EntityType.Custom;
+        var licenseeEntityType = board.OwnerType;
 
         Guid contractInstanceId;
         try
@@ -1376,7 +1352,7 @@ public partial class LicenseService : ILicenseService
             // 10b. Set template values for prebound API execution
             var templateValues = new Dictionary<string, string>
             {
-                ["ownerType"] = board.OwnerType,
+                ["ownerType"] = board.OwnerType.ToString(),
                 ["ownerId"] = board.OwnerId.ToString(),
                 ["boardId"] = body.BoardId.ToString(),
                 ["lpCost"] = definition.LpCost.ToString(),
@@ -1543,6 +1519,7 @@ public partial class LicenseService : ILicenseService
     private async Task CompensateItemCreationAsync(
         Guid itemInstanceId, Guid boardId, string licenseCode, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.license", "LicenseService.CompensateItemCreationAsync");
         try
         {
             await _itemClient.DestroyItemInstanceAsync(
@@ -1571,9 +1548,10 @@ public partial class LicenseService : ILicenseService
     /// Publishes a license.unlock-failed event.
     /// </summary>
     private async Task PublishUnlockFailedAsync(
-        Guid boardId, string ownerType, Guid ownerId, string licenseCode,
+        Guid boardId, EntityType ownerType, Guid ownerId, string licenseCode,
         UnlockFailureReason reason, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.license", "LicenseService.PublishUnlockFailedAsync");
         await _messageBus.TryPublishAsync(
             LicenseTopics.LicenseUnlockFailed,
             new LicenseUnlockFailedEvent
@@ -1916,7 +1894,7 @@ public partial class LicenseService : ILicenseService
     /// Reads unlock state from the source board, creates a new board for the target owner,
     /// and bulk-creates item instances for all unlocked licenses. Skips contract execution
     /// entirely (admin tooling, not gameplay). Publishes both a lifecycle event and a
-    /// custom <c>license-board.cloned</c> event.
+    /// custom <c>license.board.cloned</c> event.
     /// </summary>
     /// <remarks>
     /// Implements saga compensation: if item creation fails mid-clone, the already-created
@@ -1957,14 +1935,7 @@ public partial class LicenseService : ILicenseService
             return (StatusCodes.NotFound, null);
         }
 
-        // 3. Validate target ownerType format
-        if (!IsValidOwnerType(body.TargetOwnerType))
-        {
-            _logger.LogWarning("Invalid target owner type format: {OwnerType}", body.TargetOwnerType);
-            return (StatusCodes.BadRequest, null);
-        }
-
-        // 4. Validate target ownerType is in template's allowedOwnerTypes
+        // 3. Validate target ownerType is in template's allowedOwnerTypes
         if (!template.AllowedOwnerTypes.Contains(body.TargetOwnerType))
         {
             _logger.LogWarning(
@@ -1981,7 +1952,7 @@ public partial class LicenseService : ILicenseService
         // 6. Resolve realm context
         Guid? resolvedRealmId = body.TargetRealmId;
 
-        if (body.TargetOwnerType == "character")
+        if (body.TargetOwnerType == EntityType.Character)
         {
             // For character owners: validate character exists and resolve realm
             try
@@ -2006,7 +1977,7 @@ public partial class LicenseService : ILicenseService
                 return (StatusCodes.NotFound, null);
             }
         }
-        else if (body.TargetOwnerType == "realm")
+        else if (body.TargetOwnerType == EntityType.Realm)
         {
             resolvedRealmId = body.TargetOwnerId;
         }
@@ -2194,7 +2165,7 @@ public partial class LicenseService : ILicenseService
             cancellationToken);
 
         // 15. Register character reference for cleanup coordination
-        if (newBoard.OwnerType == "character")
+        if (newBoard.OwnerType == EntityType.Character)
         {
             await RegisterCharacterReferenceAsync(
                 newBoard.BoardId.ToString(),
@@ -2202,9 +2173,9 @@ public partial class LicenseService : ILicenseService
                 cancellationToken);
         }
 
-        // 16. Publish license-board.created lifecycle event
+        // 16. Publish license.board.created lifecycle event
         await _messageBus.TryPublishAsync(
-            "license-board.created",
+            "license.board.created",
             new LicenseBoardCreatedEvent
             {
                 BoardId = newBoard.BoardId,
@@ -2218,7 +2189,7 @@ public partial class LicenseService : ILicenseService
             },
             cancellationToken: cancellationToken);
 
-        // 17. Publish license-board.cloned custom event
+        // 17. Publish license.board.cloned custom event
         await _messageBus.TryPublishAsync(
             LicenseTopics.LicenseBoardCloned,
             new LicenseBoardClonedEvent

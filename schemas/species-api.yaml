@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Bannou Species Service API
   description: |
@@ -256,8 +256,6 @@ paths:
                 $ref: '#/components/schemas/SpeciesResponse'
         '404':
           description: Species not found
-        '409':
-          description: Species is already deprecated
 
   /species/undeprecate:
     post:
@@ -286,8 +284,6 @@ paths:
                 $ref: '#/components/schemas/SpeciesResponse'
         '404':
           description: Species not found
-        '400':
-          description: Species is not deprecated
 
   /species/merge:
     post:
@@ -488,6 +484,10 @@ components:
           type: boolean
           nullable: true
           description: Filter by playable status
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated species in results
         page:
           type: integer
           minimum: 1
@@ -636,11 +636,11 @@ components:
           type: string
           format: uuid
           description: ID of the species to deprecate
-        reason:
+        deprecationReason:
           type: string
           maxLength: 500
           nullable: true
-          description: Optional reason for deprecation (for audit purposes)
+          description: Audit reason for deprecation, explaining why this species is being phased out
 
     UndeprecateSpeciesRequest:
       description: Request to restore a deprecated species to active status
@@ -736,16 +736,23 @@ components:
       properties:
         code:
           type: string
-          description: Unique code for the species
+          minLength: 1
+          maxLength: 50
+          pattern: '^[A-Z][A-Z0-9_]*$'
+          description: Unique code for the species (e.g., "HUMAN", "ELF")
         name:
           type: string
-          description: Display name
+          minLength: 1
+          maxLength: 100
+          description: Display name for the species
         description:
           type: string
+          maxLength: 1000
           nullable: true
           description: Description of the species (null if not provided)
         category:
           type: string
+          maxLength: 50
           nullable: true
           description: Category for grouping (null if not categorized)
         isPlayable:
@@ -873,12 +880,6 @@ components:
         totalCount:
           type: integer
           description: Total number of species matching the query (for pagination)
-        page:
-          type: integer
-          description: Current page number
-        pageSize:
-          type: integer
-          description: Number of items per page
 
     SeedSpeciesResponse:
       description: Summary of a bulk species seeding operation with counts and errors
@@ -910,22 +911,19 @@ components:
       type: object
       additionalProperties: false
       required:
-      - sourceSpeciesId
-      - targetSpeciesId
       - charactersMigrated
       - sourceDeleted
       properties:
-        sourceSpeciesId:
-          type: string
-          format: uuid
-          description: ID of the deprecated species that was merged from
-        targetSpeciesId:
-          type: string
-          format: uuid
-          description: ID of the species that characters were merged into
         charactersMigrated:
           type: integer
-          description: Number of characters updated to use the target species
+          description: Number of characters successfully migrated to the target species
         sourceDeleted:
           type: boolean
-          description: Whether the source species was hard-deleted after merge
+          description: Whether the source species was hard-deleted after merge (skipped on partial failure)
+        failedEntityIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Character IDs that failed migration, null if no failures occurred

@@ -10,7 +10,7 @@ namespace BeyondImmersion.Bannou.Client.Voice.Services;
 /// <para>
 /// <b>Purpose:</b><br/>
 /// Handles the SIP REGISTER flow with Kamailio server using credentials
-/// provided by the <see cref="VoiceTierUpgradeEvent"/>. Manages registration
+/// provided by the <see cref="VoiceTierUpgradeClientEvent"/>. Manages registration
 /// lifecycle including initial registration, re-registration, and de-registration.
 /// </para>
 /// <para>
@@ -119,7 +119,7 @@ public class SipRegistrationHelper : IDisposable
     /// <summary>
     /// Registers with the SIP server using the provided credentials.
     /// </summary>
-    /// <param name="credentials">SIP credentials from VoiceTierUpgradeEvent.</param>
+    /// <param name="credentials">SIP credentials from VoiceTierUpgradeClientEvent.</param>
     /// <param name="localPort">Local port for SIP transport. 0 for auto-selection.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if registration succeeded, false otherwise.</returns>

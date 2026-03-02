@@ -5,7 +5,7 @@
 > **Author**: Lysander (design) + Claude (analysis)
 > **Category**: Cross-cutting mechanic (behavioral, not plugin)
 > **Related Services**: Item (L2), Inventory (L2), Location (L2), Actor (L2), Character-History (L4), Character-Encounter (L4), Character-Personality (L4), Agency (L4), Collection (L2), Seed (L2)
-> **Related Plans**: [DEATH-AND-PLOT-ARMOR.md](DEATH-AND-PLOT-ARMOR.md), [CINEMATIC-SYSTEM.md](../plans/CINEMATIC-SYSTEM.md)
+> **Related Plans**: [DEATH-AND-PLOT-ARMOR.md](DEATH-AND-PLOT-ARMOR.md), [CINEMATIC-SYSTEM.md](../plans/CINEMATIC-SYSTEM.md), [LOGOS-RESONANCE-ITEMS.md](LOGOS-RESONANCE-ITEMS.md)
 > **Related Docs**: [ORCHESTRATION-PATTERNS.md](../reference/ORCHESTRATION-PATTERNS.md), [VISION.md](../reference/VISION.md)
 > **Related Issues**: [#164](https://github.com/beyond-immersion/bannou-service/issues/164) (Item Removal/Drop Behavior), [#274](https://github.com/beyond-immersion/bannou-service/issues/274) (Location ground containers)
 > **Related arcadia-kb**: Underworld and Soul Currency System, Dungeon System

@@ -1,6 +1,8 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -30,6 +32,7 @@ public class SteamAchievementSync : IPlatformAchievementSync
     private readonly IAccountClient _accountClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<SteamAchievementSync> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <inheritdoc />
     public Platform Platform => Platform.Steam;
@@ -54,17 +57,21 @@ public class SteamAchievementSync : IPlatformAchievementSync
         AchievementServiceConfiguration configuration,
         IAccountClient accountClient,
         IHttpClientFactory httpClientFactory,
-        ILogger<SteamAchievementSync> logger)
+        ILogger<SteamAchievementSync> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _accountClient = accountClient ?? throw new ArgumentNullException(nameof(accountClient));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
     public async Task<bool> IsLinkedAsync(Guid accountId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "SteamAchievementSync.IsLinkedAsync");
         _logger.LogDebug("Checking Steam link status for account {AccountId}", accountId);
 
         try
@@ -102,6 +109,7 @@ public class SteamAchievementSync : IPlatformAchievementSync
     /// <inheritdoc />
     public async Task<string?> GetExternalIdAsync(Guid accountId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "SteamAchievementSync.GetExternalIdAsync");
         _logger.LogDebug("Getting Steam ID for account {AccountId}", accountId);
 
         try
@@ -160,6 +168,7 @@ public class SteamAchievementSync : IPlatformAchievementSync
         string platformAchievementId,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "SteamAchievementSync.UnlockAsync");
         _logger.LogInformation(
             "Unlocking Steam achievement {AchievementId} for user {SteamId}",
             platformAchievementId,
@@ -230,6 +239,7 @@ public class SteamAchievementSync : IPlatformAchievementSync
         int target,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "SteamAchievementSync.SetProgressAsync");
         _logger.LogInformation(
             "Setting Steam progress {Current}/{Target} for stat {StatId} for user {SteamId}",
             current,
@@ -337,6 +347,7 @@ public class SteamAchievementSync : IPlatformAchievementSync
         FormUrlEncodedContent content,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "SteamAchievementSync.CallSteamApiAsync");
         using var httpClient = _httpClientFactory.CreateClient("SteamApi");
 
         // Build the full URL

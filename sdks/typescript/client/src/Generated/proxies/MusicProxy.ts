@@ -31,7 +31,7 @@ export class MusicProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async generateCompositionAsync(
+  async musicGenerateCompositionAsync(
     request: Schemas['GenerateCompositionRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class MusicProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async validateMidiJsonAsync(
+  async musicValidateMidiJsonAsync(
     request: Schemas['ValidateMidiJsonRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class MusicProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getStyleAsync(
+  async musicGetStyleAsync(
     request: Schemas['GetStyleRequest'],
     channel: number = 0,
     timeout?: number
@@ -87,7 +87,7 @@ export class MusicProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listStylesAsync(
+  async musicListStylesAsync(
     request: Schemas['ListStylesRequest'],
     channel: number = 0,
     timeout?: number
@@ -107,7 +107,7 @@ export class MusicProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async generateProgressionAsync(
+  async musicGenerateProgressionAsync(
     request: Schemas['GenerateProgressionRequest'],
     channel: number = 0,
     timeout?: number
@@ -125,7 +125,7 @@ export class MusicProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async generateMelodyAsync(
+  async musicGenerateMelodyAsync(
     request: Schemas['GenerateMelodyRequest'],
     channel: number = 0,
     timeout?: number
@@ -143,7 +143,7 @@ export class MusicProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async applyVoiceLeadingAsync(
+  async musicApplyVoiceLeadingAsync(
     request: Schemas['VoiceLeadRequest'],
     channel: number = 0,
     timeout?: number

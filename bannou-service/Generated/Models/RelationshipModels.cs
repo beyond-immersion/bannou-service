@@ -336,10 +336,10 @@ public partial class EndRelationshipRequest
     public System.Guid RelationshipId { get; set; } = default!;
 
     /// <summary>
-    /// In-game timestamp when relationship ended (defaults to now)
+    /// In-game timestamp when relationship ended (null defaults to now)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endedAt")]
-    public System.DateTimeOffset EndedAt { get; set; } = default!;
+    public System.DateTimeOffset? EndedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for ending the relationship
@@ -377,7 +377,7 @@ public partial class CleanupByEntityRequest
 }
 
 /// <summary>
-/// Response summarizing the results of a cascading relationship cleanup operation
+/// Response summarizing the results of a cascading relationship cleanup operation. HTTP 200 confirms success.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CleanupByEntityResponse
@@ -394,12 +394,6 @@ public partial class CleanupByEntityResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("alreadyEnded")]
     public int AlreadyEnded { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the cleanup completed without errors
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
 }
 
@@ -924,40 +918,47 @@ public partial class SeedRelationshipType
     /// Unique code for the relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[A-Z][A-Z0-9_]*$")]
     public string Code { get; set; } = default!;
 
     /// <summary>
     /// Display name for the relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
     /// <summary>
     /// Human-readable description of the relationship type (null if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Category for grouping relationship types (null if not categorized)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string? Category { get; set; } = default!;
 
     /// <summary>
     /// Code of the parent type (resolved during seeding) (null for root types)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeCode")]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string? ParentTypeCode { get; set; } = default!;
 
     /// <summary>
     /// Code of the inverse relationship (null if not applicable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeCode")]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string? InverseTypeCode { get; set; } = default!;
 
     /// <summary>
@@ -1132,10 +1133,10 @@ public partial class MatchesHierarchyResponse
     public bool Matches { get; set; } = default!;
 
     /// <summary>
-    /// Number of levels between the types (0 if same, -1 if no match)
+    /// Number of levels between the types (0 if same type, null if no match)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("depth")]
-    public int Depth { get; set; } = default!;
+    public int? Depth { get; set; } = default!;
 
 }
 
@@ -1182,22 +1183,6 @@ public partial class MergeRelationshipTypeResponse
 {
 
     /// <summary>
-    /// ID of the deprecated type that was merged from
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sourceTypeId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SourceTypeId { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the type that relationships were merged into
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("targetTypeId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TargetTypeId { get; set; } = default!;
-
-    /// <summary>
     /// Number of relationships successfully updated to use the target type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipsMigrated")]
@@ -1216,10 +1201,10 @@ public partial class MergeRelationshipTypeResponse
     public bool SourceDeleted { get; set; } = default!;
 
     /// <summary>
-    /// Details of individual migration failures (limited to first 100)
+    /// Details of individual migration failures (limited to first 100), null when no failures
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("migrationErrors")]
-    public System.Collections.Generic.ICollection<MigrationError> MigrationErrors { get; set; } = default!;
+    public System.Collections.Generic.ICollection<MigrationError>? MigrationErrors { get; set; } = default!;
 
 }
 

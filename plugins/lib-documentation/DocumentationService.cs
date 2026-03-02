@@ -10,7 +10,9 @@ using Markdig;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO.Compression;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,18 +34,19 @@ public partial class DocumentationService : IDocumentationService
     private readonly IGitSyncService _gitSyncService;
     private readonly IContentTransformService _contentTransformService;
     private readonly IDistributedLockProvider _lockProvider;
-    private readonly IAssetClient _assetClient;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Event topics following QUALITY TENETS: {entity}.{action} pattern
     private const string DOCUMENT_CREATED_TOPIC = "document.created";
     private const string DOCUMENT_UPDATED_TOPIC = "document.updated";
     private const string DOCUMENT_DELETED_TOPIC = "document.deleted";
-    private const string BINDING_CREATED_TOPIC = "documentation.binding.created";
-    private const string BINDING_REMOVED_TOPIC = "documentation.binding.removed";
-    private const string SYNC_STARTED_TOPIC = "documentation.sync.started";
-    private const string SYNC_COMPLETED_TOPIC = "documentation.sync.completed";
-    private const string ARCHIVE_CREATED_TOPIC = "documentation.archive.created";
+    private const string BINDING_CREATED_TOPIC = "documentation-binding.created";
+    private const string BINDING_REMOVED_TOPIC = "documentation-binding.removed";
+    private const string SYNC_STARTED_TOPIC = "documentation-sync.started";
+    private const string SYNC_COMPLETED_TOPIC = "documentation-sync.completed";
+    private const string ARCHIVE_CREATED_TOPIC = "documentation-archive.created";
 
     // State store key prefixes per plan specification
     // NOTE: DOC_KEY_PREFIX is empty because the store already prefixes with "doc:" via KeyPrefix
@@ -57,6 +60,7 @@ public partial class DocumentationService : IDocumentationService
     private const string ARCHIVE_KEY_PREFIX = "archive:";
     private const string SYNC_LOCK_PREFIX = "repo-sync:";
     private const string ALL_NAMESPACES_KEY = "all-namespaces";
+    private const string NAMESPACE_LAST_UPDATED_PREFIX = "ns-last-updated:";
 
     // Static search result cache shared across scoped instances (performance optimization, not authoritative state)
     private static readonly SearchResultCache _searchCache = new();
@@ -74,9 +78,23 @@ public partial class DocumentationService : IDocumentationService
         IGitSyncService gitSyncService,
         IContentTransformService contentTransformService,
         IDistributedLockProvider lockProvider,
-        IAssetClient assetClient,
-        IHttpClientFactory httpClientFactory)
+        IServiceProvider serviceProvider,
+        IHttpClientFactory httpClientFactory,
+        ITelemetryProvider telemetryProvider)
     {
+        ArgumentNullException.ThrowIfNull(stateStoreFactory, nameof(stateStoreFactory));
+        ArgumentNullException.ThrowIfNull(messageBus, nameof(messageBus));
+        ArgumentNullException.ThrowIfNull(logger, nameof(logger));
+        ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ArgumentNullException.ThrowIfNull(searchIndexService, nameof(searchIndexService));
+        ArgumentNullException.ThrowIfNull(gitSyncService, nameof(gitSyncService));
+        ArgumentNullException.ThrowIfNull(contentTransformService, nameof(contentTransformService));
+        ArgumentNullException.ThrowIfNull(lockProvider, nameof(lockProvider));
+        ArgumentNullException.ThrowIfNull(serviceProvider, nameof(serviceProvider));
+        ArgumentNullException.ThrowIfNull(httpClientFactory, nameof(httpClientFactory));
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _logger = logger;
@@ -85,8 +103,9 @@ public partial class DocumentationService : IDocumentationService
         _gitSyncService = gitSyncService;
         _contentTransformService = contentTransformService;
         _lockProvider = lockProvider;
-        _assetClient = assetClient;
+        _serviceProvider = serviceProvider;
         _httpClientFactory = httpClientFactory;
+        _telemetryProvider = telemetryProvider;
 
         // Register event handlers via partial class (minimal event subscriptions per schema)
         RegisterEventConsumers(eventConsumer);
@@ -103,6 +122,7 @@ public partial class DocumentationService : IDocumentationService
     /// <returns>Tuple of status code and HTML string content.</returns>
     public async Task<(StatusCodes, string?)> ViewDocumentBySlugAsync(string slug, string? ns = "bannou", CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.ViewDocumentBySlugAsync");
         var namespaceId = ns ?? "bannou";
         _logger.LogDebug("ViewDocumentBySlug: slug={Slug}, namespace={Namespace}", slug, namespaceId);
         // Look up document ID from slug index
@@ -160,7 +180,7 @@ public partial class DocumentationService : IDocumentationService
 <body>
     <h1>{System.Web.HttpUtility.HtmlEncode(storedDoc.Title)}</h1>
     <div class=""meta"">
-        <span>Category: {System.Web.HttpUtility.HtmlEncode(storedDoc.Category)}</span> |
+        <span>Category: {System.Web.HttpUtility.HtmlEncode(storedDoc.Category.ToString())}</span> |
         <span>Updated: {storedDoc.UpdatedAt:yyyy-MM-dd HH:mm}</span>
     </div>
     {(string.IsNullOrEmpty(storedDoc.Summary) ? "" : $"<p><em>{System.Web.HttpUtility.HtmlEncode(storedDoc.Summary)}</em></p>")}
@@ -198,7 +218,7 @@ public partial class DocumentationService : IDocumentationService
 
         // Perform natural language query using search index
         // Pass category as string for filtering (or null if default enum value)
-        var categoryFilter = body.Category == default ? null : body.Category.ToString();
+        var categoryFilter = body.Category;
         var searchResults = await _searchIndexService.QueryAsync(
             namespaceId,
             body.Query,
@@ -222,7 +242,7 @@ public partial class DocumentationService : IDocumentationService
                     DocumentId = doc.DocumentId,
                     Slug = doc.Slug,
                     Title = doc.Title,
-                    Category = ParseDocumentCategory(doc.Category),
+                    Category = doc.Category,
                     Summary = doc.Summary,
                     VoiceSummary = doc.VoiceSummary,
                     RelevanceScore = (float)result.RelevanceScore
@@ -240,9 +260,7 @@ public partial class DocumentationService : IDocumentationService
         return (StatusCodes.OK, new QueryDocumentationResponse
         {
             Results = results,
-            TotalResults = results.Count,
-            Query = body.Query,
-            Namespace = namespaceId
+            TotalResults = results.Count
         });
     }
 
@@ -258,7 +276,7 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-        if ((!body.DocumentId.HasValue || body.DocumentId.Value == Guid.Empty) && string.IsNullOrWhiteSpace(body.Slug))
+        if (!body.DocumentId.HasValue && string.IsNullOrWhiteSpace(body.Slug))
         {
             _logger.LogWarning("GetDocument failed: Either DocumentId or Slug is required");
             return (StatusCodes.BadRequest, null);
@@ -270,8 +288,13 @@ public partial class DocumentationService : IDocumentationService
         var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
         // Resolve document ID from slug if provided
-        if (body.DocumentId.HasValue && body.DocumentId.Value != Guid.Empty)
+        if (body.DocumentId.HasValue)
         {
+            if (body.DocumentId.Value == Guid.Empty)
+            {
+                _logger.LogWarning("GetDocument failed: DocumentId cannot be Guid.Empty");
+                return (StatusCodes.BadRequest, null);
+            }
             documentId = body.DocumentId.Value;
         }
         else
@@ -302,7 +325,7 @@ public partial class DocumentationService : IDocumentationService
             Namespace = storedDoc.Namespace,
             Slug = storedDoc.Slug,
             Title = storedDoc.Title,
-            Category = ParseDocumentCategory(storedDoc.Category),
+            Category = storedDoc.Category,
             Summary = storedDoc.Summary,
             VoiceSummary = storedDoc.VoiceSummary,
             Tags = storedDoc.Tags,
@@ -337,8 +360,8 @@ public partial class DocumentationService : IDocumentationService
         {
             Document = doc,
             ContentFormat = body.IncludeContent
-                ? (body.RenderHtml ? GetDocumentResponseContentFormat.Html : GetDocumentResponseContentFormat.Markdown)
-                : GetDocumentResponseContentFormat.None
+                ? (body.RenderHtml ? ContentFormat.Html : ContentFormat.Markdown)
+                : ContentFormat.None
         };
 
         // Include related documents if requested
@@ -375,10 +398,10 @@ public partial class DocumentationService : IDocumentationService
 
         var namespaceId = body.Namespace;
         var maxResults = Math.Min(body.MaxResults, _configuration.MaxSearchResults);
-        var categoryFilter = body.Category == default ? null : body.Category.ToString();
+        var categoryFilter = body.Category;
 
         // Check search cache
-        var cacheKey = SearchResultCache.BuildKey(namespaceId, body.SearchTerm, categoryFilter, maxResults);
+        var cacheKey = SearchResultCache.BuildKey(namespaceId, body.SearchTerm, categoryFilter?.ToString(), maxResults);
         if (_configuration.SearchCacheTtlSeconds > 0 &&
             _searchCache.TryGet(cacheKey, out var cachedResponse))
         {
@@ -408,7 +431,7 @@ public partial class DocumentationService : IDocumentationService
                     DocumentId = doc.DocumentId,
                     Slug = doc.Slug,
                     Title = doc.Title,
-                    Category = ParseDocumentCategory(doc.Category),
+                    Category = doc.Category,
                     Summary = doc.Summary,
                     VoiceSummary = doc.VoiceSummary,
                     RelevanceScore = (float)result.RelevanceScore,
@@ -428,9 +451,9 @@ public partial class DocumentationService : IDocumentationService
         // Apply sorting based on request
         IEnumerable<(DocumentResult Result, DateTimeOffset CreatedAt)> sortedResults = body.SortBy switch
         {
-            SearchDocumentationRequestSortBy.Relevance => resultsWithMetadata, // Already sorted by relevance from search engine
-            SearchDocumentationRequestSortBy.Recency => resultsWithMetadata.OrderByDescending(r => r.CreatedAt),
-            SearchDocumentationRequestSortBy.Alphabetical => resultsWithMetadata.OrderBy(r => r.Result.Title, StringComparer.OrdinalIgnoreCase),
+            SearchSortBy.Relevance => resultsWithMetadata, // Already sorted by relevance from search engine
+            SearchSortBy.Recency => resultsWithMetadata.OrderByDescending(r => r.CreatedAt),
+            SearchSortBy.Alphabetical => resultsWithMetadata.OrderBy(r => r.Result.Title, StringComparer.OrdinalIgnoreCase),
             _ => resultsWithMetadata
         };
 
@@ -445,9 +468,7 @@ public partial class DocumentationService : IDocumentationService
         var response = new SearchDocumentationResponse
         {
             Results = finalResults,
-            TotalResults = finalResults.Count,
-            SearchTerm = body.SearchTerm,
-            Namespace = namespaceId
+            TotalResults = finalResults.Count
         };
 
         // Cache results
@@ -479,7 +500,7 @@ public partial class DocumentationService : IDocumentationService
 
         // If filtering by tags or sorting, we need to fetch all documents first, then filter/sort/paginate
         // Otherwise, use the optimized path
-        var categoryFilter = body.Category == default ? null : body.Category.ToString();
+        var categoryFilter = body.Category;
         var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
         // Fetch more documents if we need to filter/sort (configurable max to prevent memory issues)
@@ -507,7 +528,7 @@ public partial class DocumentationService : IDocumentationService
                         DocumentId = doc.DocumentId,
                         Slug = doc.Slug,
                         Title = doc.Title,
-                        Category = ParseDocumentCategory(doc.Category),
+                        Category = doc.Category,
                         Summary = doc.Summary,
                         VoiceSummary = doc.VoiceSummary,
                         Tags = doc.Tags
@@ -521,10 +542,10 @@ public partial class DocumentationService : IDocumentationService
         {
             documentsWithMetadata = body.TagsMatch switch
             {
-                ListDocumentsRequestTagsMatch.All => documentsWithMetadata
+                TagMatchMode.All => documentsWithMetadata
                     .Where(d => requestedTags.All(t => d.Doc.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)))
                     .ToList(),
-                ListDocumentsRequestTagsMatch.Any => documentsWithMetadata
+                TagMatchMode.Any => documentsWithMetadata
                     .Where(d => requestedTags.Any(t => d.Doc.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)))
                     .ToList(),
                 _ => documentsWithMetadata
@@ -534,13 +555,13 @@ public partial class DocumentationService : IDocumentationService
         // Apply sorting
         IEnumerable<(DocumentSummary Summary, StoredDocument Doc)> sortedDocuments = body.SortBy switch
         {
-            ListSortField.CreatedAt => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+            ListSortField.CreatedAt => body.SortOrder == SortOrder.Asc
                 ? documentsWithMetadata.OrderBy(d => d.Doc.CreatedAt)
                 : documentsWithMetadata.OrderByDescending(d => d.Doc.CreatedAt),
-            ListSortField.UpdatedAt => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+            ListSortField.UpdatedAt => body.SortOrder == SortOrder.Asc
                 ? documentsWithMetadata.OrderBy(d => d.Doc.UpdatedAt)
                 : documentsWithMetadata.OrderByDescending(d => d.Doc.UpdatedAt),
-            ListSortField.Title => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+            ListSortField.Title => body.SortOrder == SortOrder.Asc
                 ? documentsWithMetadata.OrderBy(d => d.Doc.Title, StringComparer.OrdinalIgnoreCase)
                 : documentsWithMetadata.OrderByDescending(d => d.Doc.Title, StringComparer.OrdinalIgnoreCase),
             _ => documentsWithMetadata // Default: no additional sorting
@@ -564,10 +585,7 @@ public partial class DocumentationService : IDocumentationService
         {
             Documents = documents,
             TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize,
-            TotalPages = totalPages,
-            Namespace = namespaceId
+            TotalPages = totalPages
         });
     }
 
@@ -577,6 +595,11 @@ public partial class DocumentationService : IDocumentationService
         _logger.LogDebug("SuggestRelatedTopics: namespace={Namespace}, source={SourceValue}", body.Namespace, body.SourceValue);
         var namespaceId = body.Namespace;
         var maxSuggestions = body.MaxSuggestions;
+
+        if (string.IsNullOrEmpty(body.SourceValue))
+        {
+            return (StatusCodes.BadRequest, null);
+        }
 
         // Get related document IDs from search index
         var relatedIds = await _searchIndexService.GetRelatedSuggestionsAsync(
@@ -600,7 +623,7 @@ public partial class DocumentationService : IDocumentationService
                     DocumentId = doc.DocumentId,
                     Slug = doc.Slug,
                     Title = doc.Title,
-                    Category = ParseDocumentCategory(doc.Category),
+                    Category = doc.Category,
                     RelevanceReason = DetermineRelevanceReason(body.SuggestionSource, body.SourceValue, doc)
                 });
             }
@@ -680,7 +703,7 @@ public partial class DocumentationService : IDocumentationService
             Namespace = namespaceId,
             Slug = slug,
             Title = body.Title,
-            Category = body.Category.ToString(),
+            Category = body.Category,
             Content = body.Content,
             Summary = body.Summary,
             VoiceSummary = TruncateVoiceSummary(body.VoiceSummary),
@@ -703,6 +726,9 @@ public partial class DocumentationService : IDocumentationService
 
         // Add to namespace document list
         await AddDocumentToNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
+
+        // Track namespace last-updated timestamp
+        await UpdateNamespaceLastUpdatedAsync(namespaceId, now, cancellationToken);
 
         // Index for search
         _searchIndexService.IndexDocument(
@@ -734,12 +760,6 @@ public partial class DocumentationService : IDocumentationService
         _logger.LogDebug("UpdateDocument: namespace={Namespace}, documentId={DocumentId}", body.Namespace, body.DocumentId);
         var namespaceId = body.Namespace;
         var documentId = body.DocumentId;
-
-        if (documentId == Guid.Empty)
-        {
-            _logger.LogWarning("UpdateDocument requires documentId");
-            return (StatusCodes.BadRequest, null);
-        }
 
         // Check if namespace is bound to a repository (403 for manual modifications)
         var binding = await GetBindingForNamespaceAsync(namespaceId, cancellationToken);
@@ -786,9 +806,9 @@ public partial class DocumentationService : IDocumentationService
             changedFields.Add("title");
         }
 
-        if (body.Category.HasValue && body.Category.Value.ToString() != storedDoc.Category)
+        if (body.Category.HasValue && body.Category.Value != storedDoc.Category)
         {
-            storedDoc.Category = body.Category.Value.ToString();
+            storedDoc.Category = body.Category.Value;
             changedFields.Add("category");
         }
 
@@ -840,6 +860,9 @@ public partial class DocumentationService : IDocumentationService
         // Save updated document
         await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
 
+        // Track namespace last-updated timestamp
+        await UpdateNamespaceLastUpdatedAsync(namespaceId, now, cancellationToken);
+
         // Update slug index if changed
         if (changedFields.Contains("slug"))
         {
@@ -887,7 +910,7 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-        if ((!body.DocumentId.HasValue || body.DocumentId.Value == Guid.Empty) && string.IsNullOrWhiteSpace(body.Slug))
+        if (!body.DocumentId.HasValue && string.IsNullOrWhiteSpace(body.Slug))
         {
             _logger.LogWarning("DeleteDocument failed: Either DocumentId or Slug is required");
             return (StatusCodes.BadRequest, null);
@@ -908,8 +931,13 @@ public partial class DocumentationService : IDocumentationService
         var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
         // Resolve document ID from slug if provided
-        if (body.DocumentId.HasValue && body.DocumentId.Value != Guid.Empty)
+        if (body.DocumentId.HasValue)
         {
+            if (body.DocumentId.Value == Guid.Empty)
+            {
+                _logger.LogWarning("DeleteDocument failed: DocumentId cannot be Guid.Empty");
+                return (StatusCodes.BadRequest, null);
+            }
             documentId = body.DocumentId.Value;
         }
         else
@@ -1033,6 +1061,9 @@ public partial class DocumentationService : IDocumentationService
         // Add back to namespace document list
         await AddDocumentToNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
 
+        // Track namespace last-updated timestamp
+        await UpdateNamespaceLastUpdatedAsync(namespaceId, now, cancellationToken);
+
         // Re-index for search
         _searchIndexService.IndexDocument(
             namespaceId,
@@ -1084,10 +1115,10 @@ public partial class DocumentationService : IDocumentationService
 
                 var changedFields = new List<string>();
 
-                // Apply category update if specified (non-default value)
-                if (body.Category != default)
+                // Apply category update if specified
+                if (body.Category != null)
                 {
-                    storedDoc.Category = body.Category.ToString();
+                    storedDoc.Category = body.Category.Value;
                     changedFields.Add("category");
                 }
 
@@ -1143,6 +1174,12 @@ public partial class DocumentationService : IDocumentationService
                 batchCounter = 0;
                 await Task.Yield();
             }
+        }
+
+        // Track namespace last-updated timestamp once for the batch
+        if (succeeded.Count > 0)
+        {
+            await UpdateNamespaceLastUpdatedAsync(namespaceId, now, cancellationToken);
         }
 
         _logger.LogInformation("BulkUpdate in namespace {Namespace}: {Succeeded} succeeded, {Failed} failed",
@@ -1284,22 +1321,22 @@ public partial class DocumentationService : IDocumentationService
                     // Handle conflict based on policy
                     switch (body.OnConflict)
                     {
-                        case ImportDocumentationRequestOnConflict.Skip:
+                        case ConflictResolution.Skip:
                             skipped++;
                             continue;
 
-                        case ImportDocumentationRequestOnConflict.Fail:
+                        case ConflictResolution.Fail:
                             failed.Add(new ImportFailure { Slug = importDoc.Slug, Error = "Document already exists" });
                             continue;
 
-                        case ImportDocumentationRequestOnConflict.Update:
+                        case ConflictResolution.Update:
                             // Update existing document
                             var existingDocKey = $"{DOC_KEY_PREFIX}{namespaceId}:{existingDocId}";
                             var existingDoc = await docStore.GetAsync(existingDocKey, cancellationToken);
                             if (existingDoc != null)
                             {
                                 existingDoc.Title = importDoc.Title;
-                                existingDoc.Category = importDoc.Category.ToString();
+                                existingDoc.Category = importDoc.Category;
                                 existingDoc.Content = importDoc.Content;
                                 existingDoc.Summary = importDoc.Summary;
                                 existingDoc.VoiceSummary = TruncateVoiceSummary(importDoc.VoiceSummary);
@@ -1325,7 +1362,7 @@ public partial class DocumentationService : IDocumentationService
                     Namespace = namespaceId,
                     Slug = importDoc.Slug,
                     Title = importDoc.Title,
-                    Category = importDoc.Category.ToString(),
+                    Category = importDoc.Category,
                     Content = importDoc.Content,
                     Summary = importDoc.Summary,
                     VoiceSummary = TruncateVoiceSummary(importDoc.VoiceSummary),
@@ -1352,6 +1389,12 @@ public partial class DocumentationService : IDocumentationService
             {
                 failed.Add(new ImportFailure { Slug = importDoc.Slug, Error = ex.Message });
             }
+        }
+
+        // Track namespace last-updated timestamp once for the import batch
+        if (created > 0 || updated > 0)
+        {
+            await UpdateNamespaceLastUpdatedAsync(namespaceId, now, cancellationToken);
         }
 
         _logger.LogInformation("Import in namespace {Namespace}: {Created} created, {Updated} updated, {Skipped} skipped, {Failed} failed",
@@ -1420,7 +1463,7 @@ public partial class DocumentationService : IDocumentationService
                     DocumentId = trashedDoc.Document.DocumentId,
                     Slug = trashedDoc.Document.Slug,
                     Title = trashedDoc.Document.Title,
-                    Category = ParseDocumentCategory(trashedDoc.Document.Category),
+                    Category = trashedDoc.Document.Category,
                     DeletedAt = trashedDoc.DeletedAt,
                     ExpiresAt = trashedDoc.ExpiresAt
                 });
@@ -1525,9 +1568,7 @@ public partial class DocumentationService : IDocumentationService
     {
         _logger.LogDebug("GetNamespaceStats: namespace={Namespace}", body.Namespace);
         var namespaceId = body.Namespace;
-        var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
-        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
         // Get stats from search index
         var searchStats = await _searchIndexService.GetNamespaceStatsAsync(namespaceId, cancellationToken);
@@ -1538,31 +1579,20 @@ public partial class DocumentationService : IDocumentationService
 
         // Calculate total content size (approximate from document count)
         // In production, this could be tracked more precisely
-        var estimatedContentSize = searchStats.TotalDocuments * 10000; // ~10KB average per document
+        var estimatedContentSize = searchStats.TotalDocuments * _configuration.EstimatedBytesPerDocument;
 
-        // Find last updated document
-        var lastUpdated = DateTimeOffset.MinValue;
-        var docListKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-        var docIds = await guidSetStore.GetAsync(docListKey, cancellationToken) ?? [];
+        // Read last updated timestamp from dedicated key (maintained by mutation paths)
+        var lastUpdatedStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+        var lastUpdatedKey = $"{NAMESPACE_LAST_UPDATED_PREFIX}{namespaceId}";
+        var lastUpdatedStr = await lastUpdatedStore.GetAsync(lastUpdatedKey, cancellationToken);
+        DateTimeOffset? lastUpdated = lastUpdatedStr != null && DateTimeOffset.TryParse(lastUpdatedStr, out var parsed)
+            ? parsed
+            : null;
 
-        if (docIds.Count > 0)
-        {
-            // Sample recent documents to find last updated (configurable sample size)
-            foreach (var docId in docIds.Take(_configuration.StatsSampleSize))
-            {
-                var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
-                var doc = await docStore.GetAsync(docKey, cancellationToken);
-                if (doc != null && doc.UpdatedAt > lastUpdated)
-                {
-                    lastUpdated = doc.UpdatedAt;
-                }
-            }
-        }
-
-        // Convert category counts from string keys to proper format
-        var categoryCounts = searchStats.DocumentsByCategory.ToDictionary(
-            kvp => kvp.Key,
-            kvp => kvp.Value);
+        // Convert DocumentsByCategory to typed CategoryCount array
+        var categoryCounts = searchStats.DocumentsByCategory
+            .Select(kvp => new CategoryCount { Category = kvp.Key, Count = kvp.Value })
+            .ToList();
 
         _logger.LogDebug("GetNamespaceStats for {Namespace}: {DocumentCount} documents, {TrashcanCount} in trashcan",
             namespaceId, searchStats.TotalDocuments, trashedDocIds.Count);
@@ -1574,11 +1604,24 @@ public partial class DocumentationService : IDocumentationService
             CategoryCounts = categoryCounts,
             TrashcanCount = trashedDocIds.Count,
             TotalContentSizeBytes = estimatedContentSize,
-            LastUpdated = lastUpdated == DateTimeOffset.MinValue ? DateTimeOffset.UtcNow : lastUpdated
+            LastUpdated = lastUpdated
         });
     }
 
     #region Helper Methods
+
+    /// <summary>
+    /// Updates the namespace last-updated timestamp when a document is created, updated, or recovered.
+    /// Uses a dedicated key per namespace for O(1) reads instead of sampling document records.
+    /// Stores as ISO 8601 string since DateTimeOffset is a value type incompatible with IStateStoreFactory.
+    /// </summary>
+    private async Task UpdateNamespaceLastUpdatedAsync(string namespaceId, DateTimeOffset updatedAt, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.UpdateNamespaceLastUpdatedAsync");
+        var store = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+        var key = $"{NAMESPACE_LAST_UPDATED_PREFIX}{namespaceId}";
+        await store.SaveAsync(key, updatedAt.ToString("O"), cancellationToken: cancellationToken);
+    }
 
     /// <summary>
     /// Adds a document ID to the namespace document list for pagination support.
@@ -1586,6 +1629,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task AddDocumentToNamespaceIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.AddDocumentToNamespaceIndexAsync");
         var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var indexKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
 
@@ -1639,6 +1683,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task RemoveDocumentFromNamespaceIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.RemoveDocumentFromNamespaceIndexAsync");
         var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var indexKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
 
@@ -1671,6 +1716,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task AddDocumentToTrashcanIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.AddDocumentToTrashcanIndexAsync");
         var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var trashListKey = $"ns-trash:{namespaceId}";
 
@@ -1704,6 +1750,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task RemoveDocumentFromTrashcanIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.RemoveDocumentFromTrashcanIndexAsync");
         var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var trashListKey = $"ns-trash:{namespaceId}";
 
@@ -1753,17 +1800,6 @@ public partial class DocumentationService : IDocumentationService
     /// <summary>
     /// Parses a string category value to DocumentCategory enum.
     /// </summary>
-    private static DocumentCategory ParseDocumentCategory(string? category)
-    {
-        if (string.IsNullOrEmpty(category))
-        {
-            return DocumentCategory.Other;
-        }
-
-        return Enum.TryParse<DocumentCategory>(category, ignoreCase: true, out var result)
-            ? result
-            : DocumentCategory.Other;
-    }
 
     /// <summary>
     /// Markdig pipeline configured for safe HTML rendering with common extensions.
@@ -1798,6 +1834,21 @@ public partial class DocumentationService : IDocumentationService
             SuggestionSource.Category => $"In category '{doc.Category}'",
             _ => "Related content"
         };
+    }
+
+    /// <summary>
+    /// Computes a SHA256 hex digest of the given content for incremental sync comparison.
+    /// Returns null for null/empty content.
+    /// </summary>
+    private static string? ComputeContentHash(string? content)
+    {
+        if (string.IsNullOrEmpty(content))
+        {
+            return null;
+        }
+
+        var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(content));
+        return Convert.ToHexString(hashBytes);
     }
 
     /// <summary>
@@ -1841,6 +1892,7 @@ public partial class DocumentationService : IDocumentationService
         RelatedDepth depth,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetRelatedDocumentSummariesAsync");
         var summaries = new List<DocumentSummary>();
         var maxRelated = depth == RelatedDepth.Extended
             ? _configuration.MaxRelatedDocumentsExtended
@@ -1859,7 +1911,7 @@ public partial class DocumentationService : IDocumentationService
                     DocumentId = doc.DocumentId,
                     Slug = doc.Slug,
                     Title = doc.Title,
-                    Category = ParseDocumentCategory(doc.Category),
+                    Category = doc.Category,
                     Summary = doc.Summary,
                     VoiceSummary = doc.VoiceSummary,
                     Tags = doc.Tags
@@ -1879,6 +1931,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task PublishDocumentCreatedEventAsync(StoredDocument doc, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.PublishDocumentCreatedEventAsync");
         try
         {
             var eventModel = new DocumentCreatedEvent
@@ -1910,6 +1963,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task PublishDocumentUpdatedEventAsync(StoredDocument doc, IEnumerable<string> changedFields, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.PublishDocumentUpdatedEventAsync");
         try
         {
             var eventModel = new DocumentUpdatedEvent
@@ -1942,6 +1996,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task PublishDocumentDeletedEventAsync(StoredDocument doc, string? reason, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.PublishDocumentDeletedEventAsync");
         try
         {
             var eventModel = new DocumentDeletedEvent
@@ -1982,6 +2037,7 @@ public partial class DocumentationService : IDocumentationService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.PublishQueryAnalyticsEventAsync");
             var eventModel = new DocumentationQueriedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -2000,7 +2056,6 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to publish DocumentationQueriedEvent");
-            // Non-critical - don't propagate
         }
     }
 
@@ -2015,6 +2070,7 @@ public partial class DocumentationService : IDocumentationService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.PublishSearchAnalyticsEventAsync");
             var eventModel = new DocumentationSearchedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -2031,7 +2087,6 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to publish DocumentationSearchedEvent");
-            // Non-critical - don't propagate
         }
     }
 
@@ -2073,7 +2128,7 @@ public partial class DocumentationService : IDocumentationService
             FilePatterns = body.FilePatterns?.ToList() ?? ["**/*.md"],
             ExcludePatterns = body.ExcludePatterns?.ToList() ?? [".git/**", ".obsidian/**", "node_modules/**"],
             CategoryMapping = body.CategoryMapping?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? [],
-            DefaultCategory = body.DefaultCategory.ToString(),
+            DefaultCategory = body.DefaultCategory,
             ArchiveEnabled = body.ArchiveEnabled,
             ArchiveOnSync = body.ArchiveOnSync,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -2170,7 +2225,7 @@ public partial class DocumentationService : IDocumentationService
 
         return (StatusCodes.OK, new SyncRepositoryResponse
         {
-            SyncId = result.SyncId,
+            SyncId = result.SyncId ?? throw new InvalidOperationException("Sync result must have a SyncId"),
             Status = MapSyncStatus(result.Status),
             CommitHash = result.CommitHash,
             DocumentsCreated = result.DocumentsCreated,
@@ -2201,7 +2256,7 @@ public partial class DocumentationService : IDocumentationService
         {
             response.LastSync = new SyncInfo
             {
-                SyncId = Guid.Empty, // Not tracked per-sync currently
+                SyncId = null, // Not tracked per-sync currently
                 Status = binding.Status == Models.BindingStatusInternal.Error ? SyncStatus.Failed : SyncStatus.Success,
                 TriggeredBy = SyncTrigger.Scheduled,
                 StartedAt = binding.LastSyncAt.Value,
@@ -2284,9 +2339,9 @@ public partial class DocumentationService : IDocumentationService
             binding.CategoryMapping = body.CategoryMapping.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
-        if (body.DefaultCategory != default)
+        if (body.DefaultCategory != null)
         {
-            binding.DefaultCategory = body.DefaultCategory.ToString();
+            binding.DefaultCategory = body.DefaultCategory.Value;
         }
 
         binding.ArchiveEnabled = body.ArchiveEnabled;
@@ -2338,36 +2393,41 @@ public partial class DocumentationService : IDocumentationService
             CommitHash = await GetCurrentCommitHashForNamespaceAsync(body.Namespace, cancellationToken)
         };
 
-        // Upload the bundle to Asset Service
-        try
+        // Upload the bundle to Asset Service (L3→L3 soft dependency, graceful degradation)
+        var assetClient = _serviceProvider.GetService<IAssetClient>();
+        if (assetClient == null)
         {
-            var uploadResponse = await _assetClient.RequestBundleUploadAsync(new BundleUploadRequest
-            {
-                Owner = body.Owner,
-                Filename = $"docs-{body.Namespace}-{archiveId:N}.bannou",
-                Size = bundleData.Length
-            }, cancellationToken);
-
-            // Upload to pre-signed URL
-            using var httpClient = _httpClientFactory.CreateClient();
-            using var content = new ByteArrayContent(bundleData);
-            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-            var uploadResult = await httpClient.PutAsync(uploadResponse.UploadUrl.ToString(), content, cancellationToken);
-
-            if (uploadResult.IsSuccessStatusCode)
-            {
-                archive.BundleAssetId = uploadResponse.UploadId;
-                _logger.LogInformation("Archive bundle uploaded to Asset Service: {BundleId}", archive.BundleAssetId);
-            }
-            else
-            {
-                _logger.LogWarning("Failed to upload archive bundle to Asset Service: {StatusCode}", uploadResult.StatusCode);
-            }
+            _logger.LogDebug("Asset service not enabled, archive stored without bundle upload");
         }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Asset Service integration failed, archive stored without bundle upload");
-        }
+        else try
+            {
+                var uploadResponse = await assetClient.RequestBundleUploadAsync(new BundleUploadRequest
+                {
+                    Owner = body.Owner,
+                    Filename = $"docs-{body.Namespace}-{archiveId:N}.bannou",
+                    Size = bundleData.Length
+                }, cancellationToken);
+
+                // Upload to pre-signed URL
+                using var httpClient = _httpClientFactory.CreateClient();
+                using var content = new ByteArrayContent(bundleData);
+                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                var uploadResult = await httpClient.PutAsync(uploadResponse.UploadUrl.ToString(), content, cancellationToken);
+
+                if (uploadResult.IsSuccessStatusCode)
+                {
+                    archive.BundleAssetId = uploadResponse.UploadId;
+                    _logger.LogInformation("Archive bundle uploaded to Asset Service: {BundleId}", archive.BundleAssetId);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to upload archive bundle to Asset Service: {StatusCode}", uploadResult.StatusCode);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Asset Service integration failed, archive stored without bundle upload");
+            }
 
         // Save archive record to state store
         await SaveArchiveAsync(archive, cancellationToken);
@@ -2379,6 +2439,7 @@ public partial class DocumentationService : IDocumentationService
         {
             ArchiveId = archiveId,
             Namespace = body.Namespace,
+            BundleAssetId = archive.BundleAssetId,
             DocumentCount = documents.Count,
             SizeBytes = bundleData.Length,
             CreatedAt = archive.CreatedAt
@@ -2427,12 +2488,6 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, RestoreArchiveResponse?)> RestoreDocumentationArchiveAsync(RestoreArchiveRequest body, CancellationToken cancellationToken = default)
     {
 
-        if (body.ArchiveId == Guid.Empty)
-        {
-            _logger.LogWarning("RestoreArchive failed: archiveId is required");
-            return (StatusCodes.BadRequest, null);
-        }
-
         // Get archive metadata
         var archive = await GetArchiveByIdAsync(body.ArchiveId, cancellationToken);
         if (archive == null)
@@ -2454,13 +2509,21 @@ public partial class DocumentationService : IDocumentationService
         int documentsRestored = 0;
 
         // Download and restore from bundle if we have one
-        if (archive.BundleAssetId != Guid.Empty)
+        if (archive.BundleAssetId.HasValue)
         {
+            // Asset service is L3→L3 soft dependency, graceful degradation required
+            var assetClient = _serviceProvider.GetService<IAssetClient>();
+            if (assetClient == null)
+            {
+                _logger.LogDebug("Asset service not enabled, cannot restore archive bundle");
+                return (StatusCodes.NotFound, null);
+            }
+
             try
             {
-                var bundleResponse = await _assetClient.GetBundleAsync(new GetBundleRequest
+                var bundleResponse = await assetClient.GetBundleAsync(new GetBundleRequest
                 {
-                    BundleId = archive.BundleAssetId.ToString()
+                    BundleId = archive.BundleAssetId.Value.ToString()
                 }, cancellationToken);
 
                 if (bundleResponse.DownloadUrl != null)
@@ -2472,7 +2535,7 @@ public partial class DocumentationService : IDocumentationService
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
             {
-                _logger.LogWarning("Archive bundle {BundleId} not found in Asset Service", archive.BundleAssetId);
+                _logger.LogWarning("Archive bundle {BundleId} not found in Asset Service", archive.BundleAssetId.Value);
                 return (StatusCodes.NotFound, null);
             }
         }
@@ -2493,12 +2556,6 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, DeleteArchiveResponse?)> DeleteDocumentationArchiveAsync(DeleteArchiveRequest body, CancellationToken cancellationToken = default)
     {
 
-        if (body.ArchiveId == Guid.Empty)
-        {
-            _logger.LogWarning("DeleteArchive failed: archiveId is required");
-            return (StatusCodes.BadRequest, null);
-        }
-
         // Get archive metadata
         var archive = await GetArchiveByIdAsync(body.ArchiveId, cancellationToken);
         if (archive == null)
@@ -2515,10 +2572,7 @@ public partial class DocumentationService : IDocumentationService
         // Note: We don't delete the bundle from Asset Service as it may be used for other purposes
         // or the Asset Service may have its own retention policies
 
-        return (StatusCodes.OK, new DeleteArchiveResponse
-        {
-            Deleted = true
-        });
+        return (StatusCodes.OK, new DeleteArchiveResponse());
     }
 
     #region Repository Binding Helpers
@@ -2528,6 +2582,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     internal async Task<Models.RepositoryBinding?> GetBindingForNamespaceAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetBindingForNamespaceAsync");
         var bindingKey = $"{BINDING_KEY_PREFIX}{namespaceId}";
         var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(StateStoreDefinitions.Documentation);
         return await bindingStore.GetAsync(bindingKey, cancellationToken);
@@ -2538,6 +2593,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task SaveBindingAsync(Models.RepositoryBinding binding, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.SaveBindingAsync");
         var bindingKey = $"{BINDING_KEY_PREFIX}{binding.Namespace}";
         var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(StateStoreDefinitions.Documentation);
         await bindingStore.SaveAsync(bindingKey, binding, cancellationToken: cancellationToken);
@@ -2564,6 +2620,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<int> DeleteAllNamespaceDocumentsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.DeleteAllNamespaceDocumentsAsync");
         var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
         var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
@@ -2609,6 +2666,7 @@ public partial class DocumentationService : IDocumentationService
         SyncTrigger trigger,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.ExecuteSyncAsync");
         var syncId = Guid.NewGuid();
         var startedAt = DateTimeOffset.UtcNow;
         var lockResourceId = $"{SYNC_LOCK_PREFIX}{binding.Namespace}";
@@ -2692,6 +2750,7 @@ public partial class DocumentationService : IDocumentationService
 
             var documentsCreated = 0;
             var documentsUpdated = 0;
+            var documentsSkipped = 0;
             var processedSlugs = new HashSet<string>();
 
             // Process each matching file
@@ -2727,9 +2786,16 @@ public partial class DocumentationService : IDocumentationService
 
                     if (existingDocId.HasValue)
                     {
-                        // Update existing document
-                        await UpdateDocumentFromTransformAsync(binding.Namespace, existingDocId.Value, transformed, cancellationToken);
-                        documentsUpdated++;
+                        // Update existing document (skips write if content unchanged)
+                        var wasUpdated = await UpdateDocumentFromTransformAsync(binding.Namespace, existingDocId.Value, transformed, cancellationToken);
+                        if (wasUpdated)
+                        {
+                            documentsUpdated++;
+                        }
+                        else
+                        {
+                            documentsSkipped++;
+                        }
                     }
                     else
                     {
@@ -2742,6 +2808,12 @@ public partial class DocumentationService : IDocumentationService
                 {
                     _logger.LogWarning(ex, "Failed to process file {FilePath}", filePath);
                 }
+            }
+
+            // Track namespace last-updated timestamp once for the sync batch
+            if (documentsCreated > 0 || documentsUpdated > 0)
+            {
+                await UpdateNamespaceLastUpdatedAsync(binding.Namespace, DateTimeOffset.UtcNow, cancellationToken);
             }
 
             // Delete orphan documents (documents not in processed slugs)
@@ -2771,8 +2843,8 @@ public partial class DocumentationService : IDocumentationService
 
             await TryPublishSyncCompletedEventAsync(binding, syncId, successResult, cancellationToken);
 
-            _logger.LogInformation("Sync completed for namespace {Namespace}: {Created} created, {Updated} updated, {Deleted} deleted",
-                binding.Namespace, documentsCreated, documentsUpdated, documentsDeleted);
+            _logger.LogInformation("Sync completed for namespace {Namespace}: {Created} created, {Updated} updated, {Deleted} deleted, {Skipped} unchanged",
+                binding.Namespace, documentsCreated, documentsUpdated, documentsDeleted, documentsSkipped);
 
             return successResult;
         }
@@ -2795,6 +2867,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<Guid?> GetDocumentIdBySlugAsync(string namespaceId, string slug, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetDocumentIdBySlugAsync");
         var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{slug}";
         var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
         var docIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
@@ -2815,6 +2888,7 @@ public partial class DocumentationService : IDocumentationService
         TransformedDocument transformed,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.CreateDocumentFromTransformAsync");
         var documentId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
 
@@ -2832,7 +2906,8 @@ public partial class DocumentationService : IDocumentationService
             RelatedDocuments = [],
             Metadata = transformed.Metadata,
             CreatedAt = now,
-            UpdatedAt = now
+            UpdatedAt = now,
+            ContentHash = ComputeContentHash(transformed.Content)
         };
 
         // Store document
@@ -2864,21 +2939,36 @@ public partial class DocumentationService : IDocumentationService
     }
 
     /// <summary>
-    /// Updates a document from a transformed file.
+    /// Updates a document from a transformed file. Returns true if the document was
+    /// actually modified, false if content was unchanged and the update was skipped.
     /// </summary>
-    private async Task UpdateDocumentFromTransformAsync(
+    private async Task<bool> UpdateDocumentFromTransformAsync(
         string namespaceId,
         Guid documentId,
         TransformedDocument transformed,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.UpdateDocumentFromTransformAsync");
         var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
         var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
         var existingDoc = await docStore.GetAsync(docKey, cancellationToken);
 
         if (existingDoc == null)
         {
-            return;
+            return false;
+        }
+
+        // Incremental sync: skip write if content is unchanged
+        var newHash = ComputeContentHash(transformed.Content);
+        if (existingDoc.ContentHash != null
+            && existingDoc.ContentHash == newHash
+            && existingDoc.Title == transformed.Title
+            && existingDoc.Category == transformed.Category
+            && existingDoc.Summary == transformed.Summary
+            && existingDoc.VoiceSummary == transformed.VoiceSummary
+            && TagsEqual(existingDoc.Tags, transformed.Tags))
+        {
+            return false;
         }
 
         existingDoc.Title = transformed.Title;
@@ -2889,6 +2979,7 @@ public partial class DocumentationService : IDocumentationService
         existingDoc.Tags = transformed.Tags;
         existingDoc.Metadata = transformed.Metadata;
         existingDoc.UpdatedAt = DateTimeOffset.UtcNow;
+        existingDoc.ContentHash = newHash;
 
         await docStore.SaveAsync(docKey, existingDoc, cancellationToken: cancellationToken);
 
@@ -2901,6 +2992,19 @@ public partial class DocumentationService : IDocumentationService
             existingDoc.Content,
             existingDoc.Category,
             existingDoc.Tags);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Compares two tag lists for equality (order-insensitive).
+    /// </summary>
+    private static bool TagsEqual(List<string>? a, List<string>? b)
+    {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        if (a.Count != b.Count) return false;
+        return a.OrderBy(t => t, StringComparer.Ordinal).SequenceEqual(b.OrderBy(t => t, StringComparer.Ordinal));
     }
 
     /// <summary>
@@ -2908,6 +3012,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<int> GetNamespaceDocumentCountAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetNamespaceDocumentCountAsync");
         var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
         var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
@@ -2923,6 +3028,7 @@ public partial class DocumentationService : IDocumentationService
         HashSet<string> processedSlugs,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.DeleteOrphanDocumentsAsync");
         var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
         var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
@@ -3059,6 +3165,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task TryPublishBindingCreatedEventAsync(Models.RepositoryBinding binding, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.TryPublishBindingCreatedEventAsync");
         try
         {
             var eventModel = new DocumentationBindingCreatedEvent
@@ -3083,6 +3190,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task TryPublishBindingRemovedEventAsync(Models.RepositoryBinding binding, int documentsDeleted, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.TryPublishBindingRemovedEventAsync");
         try
         {
             var eventModel = new DocumentationBindingRemovedEvent
@@ -3106,13 +3214,14 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task TryPublishSyncStartedEventAsync(Models.RepositoryBinding binding, Guid syncId, SyncTrigger trigger, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.TryPublishSyncStartedEventAsync");
         try
         {
             var triggeredBy = trigger switch
             {
-                SyncTrigger.Manual => DocumentationSyncStartedEventTriggeredBy.Manual,
-                SyncTrigger.Scheduled => DocumentationSyncStartedEventTriggeredBy.Scheduled,
-                _ => DocumentationSyncStartedEventTriggeredBy.Manual
+                SyncTrigger.Manual => SyncTrigger.Manual,
+                SyncTrigger.Scheduled => SyncTrigger.Scheduled,
+                _ => SyncTrigger.Manual
             };
             var eventModel = new DocumentationSyncStartedEvent
             {
@@ -3136,14 +3245,15 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task TryPublishSyncCompletedEventAsync(Models.RepositoryBinding binding, Guid syncId, Models.SyncResult result, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.TryPublishSyncCompletedEventAsync");
         try
         {
             var status = result.Status switch
             {
-                Models.SyncStatusInternal.Success => DocumentationSyncCompletedEventStatus.Success,
-                Models.SyncStatusInternal.Partial => DocumentationSyncCompletedEventStatus.Partial,
-                Models.SyncStatusInternal.Failed => DocumentationSyncCompletedEventStatus.Failed,
-                _ => DocumentationSyncCompletedEventStatus.Failed
+                Models.SyncStatusInternal.Success => SyncStatus.Success,
+                Models.SyncStatusInternal.Partial => SyncStatus.Partial,
+                Models.SyncStatusInternal.Failed => SyncStatus.Failed,
+                _ => SyncStatus.Failed
             };
             var eventModel = new DocumentationSyncCompletedEvent
             {
@@ -3177,6 +3287,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<List<StoredDocument>> GetAllNamespaceDocumentsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetAllNamespaceDocumentsAsync");
         var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
         var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
@@ -3207,6 +3318,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<byte[]> CreateArchiveBundleAsync(string namespaceId, List<StoredDocument> documents, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.CreateArchiveBundleAsync");
         // Filter out documents with null/empty Content - this is a data integrity issue
         var validDocuments = new List<StoredDocument>();
         foreach (var doc in documents)
@@ -3267,6 +3379,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<string?> GetCurrentCommitHashForNamespaceAsync(string namespaceId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetCurrentCommitHashForNamespaceAsync");
         var binding = await GetBindingForNamespaceAsync(namespaceId, cancellationToken);
         return binding?.LastCommitHash;
     }
@@ -3276,6 +3389,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task SaveArchiveAsync(Models.DocumentationArchive archive, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.SaveArchiveAsync");
         var archiveKey = $"{ARCHIVE_KEY_PREFIX}{archive.ArchiveId}";
         var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(StateStoreDefinitions.Documentation);
         await archiveStore.SaveAsync(archiveKey, archive, cancellationToken: cancellationToken);
@@ -3316,6 +3430,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<List<Models.DocumentationArchive>> GetArchivesForNamespaceAsync(string namespaceId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetArchivesForNamespaceAsync");
         var listKey = $"{ARCHIVE_KEY_PREFIX}list:{namespaceId}";
         var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var archiveIds = await listStore.GetAsync(listKey, cancellationToken);
@@ -3346,6 +3461,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<Models.DocumentationArchive?> GetArchiveByIdAsync(Guid archiveId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetArchiveByIdAsync");
         var archiveKey = $"{ARCHIVE_KEY_PREFIX}{archiveId}";
         var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(StateStoreDefinitions.Documentation);
         return await archiveStore.GetAsync(archiveKey, cancellationToken);
@@ -3356,6 +3472,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<int> RestoreFromBundleAsync(string namespaceId, byte[] bundleData, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.RestoreFromBundleAsync");
         // Decompress and deserialize the bundle
         using var input = new MemoryStream(bundleData);
         using var gzip = new GZipStream(input, CompressionMode.Decompress);
@@ -3418,6 +3535,12 @@ public partial class DocumentationService : IDocumentationService
 
         await docsStore.SaveAsync(docsKey, docIds, cancellationToken: cancellationToken);
 
+        // Track namespace last-updated timestamp once for the restore batch
+        if (bundle.Documents.Count > 0)
+        {
+            await UpdateNamespaceLastUpdatedAsync(namespaceId, DateTimeOffset.UtcNow, cancellationToken);
+        }
+
         return bundle.Documents.Count;
     }
 
@@ -3426,6 +3549,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task DeleteArchiveAsync(Models.DocumentationArchive archive, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.DeleteArchiveAsync");
         var archiveKey = $"{ARCHIVE_KEY_PREFIX}{archive.ArchiveId}";
         var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(StateStoreDefinitions.Documentation);
         await archiveStore.DeleteAsync(archiveKey, cancellationToken);
@@ -3446,6 +3570,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task TryPublishArchiveCreatedEventAsync(Models.DocumentationArchive archive, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.TryPublishArchiveCreatedEventAsync");
         try
         {
             var eventModel = new DocumentationArchiveCreatedEvent
@@ -3492,7 +3617,7 @@ public partial class DocumentationService : IDocumentationService
         public string Slug { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
+        public DocumentCategory Category { get; set; }
         public string? Summary { get; set; }
         public string? VoiceSummary { get; set; }
         public List<string>? Tags { get; set; }
@@ -3510,7 +3635,7 @@ public partial class DocumentationService : IDocumentationService
         public string Namespace { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
+        public DocumentCategory Category { get; set; }
         public string? Content { get; set; }
         public string? Summary { get; set; }
         public string? VoiceSummary { get; set; }
@@ -3519,6 +3644,9 @@ public partial class DocumentationService : IDocumentationService
         public object? Metadata { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
+
+        /// <summary>SHA256 hex digest of Content for incremental sync optimization.</summary>
+        public string? ContentHash { get; set; }
     }
 
     /// <summary>

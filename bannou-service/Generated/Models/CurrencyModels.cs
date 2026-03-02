@@ -80,38 +80,6 @@ public enum CurrencyPrecision
 #pragma warning restore CS1591
 
 /// <summary>
-/// Type of entity that owns a wallet
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum WalletOwnerType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"account")]
-    Account = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"character")]
-    Character = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"npc")]
-    Npc = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"guild")]
-    Guild = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"faction")]
-    Faction = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"location")]
-    Location = 5,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"system")]
-    System = 6,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Current status of a wallet
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -415,11 +383,11 @@ public partial class CreateCurrencyDefinitionRequest
     public double? PerWalletCap { get; set; } = default!;
 
     /// <summary>
-    /// What happens when credit exceeds wallet cap
+    /// What happens when credit exceeds wallet cap (null defaults to reject)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("capOverflowBehavior")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CapOverflowBehavior CapOverflowBehavior { get; set; } = default!;
+    public CapOverflowBehavior? CapOverflowBehavior { get; set; } = default!;
 
     /// <summary>
     /// Maximum total supply across all wallets (null for unlimited)
@@ -443,6 +411,7 @@ public partial class CreateCurrencyDefinitionRequest
     /// When earn caps reset (UTC time string, e.g. '00:00:00')
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("earnCapResetTime")]
+    [System.ComponentModel.DataAnnotations.StringLength(20)]
     public string? EarnCapResetTime { get; set; } = default!;
 
     /// <summary>
@@ -452,11 +421,11 @@ public partial class CreateCurrencyDefinitionRequest
     public bool AutogainEnabled { get; set; } = false;
 
     /// <summary>
-    /// How autogain is calculated (simple flat or compound percentage)
+    /// How autogain is calculated (simple flat or compound percentage, null when autogainEnabled is false)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autogainMode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AutogainMode AutogainMode { get; set; } = default!;
+    public AutogainMode? AutogainMode { get; set; } = default!;
 
     /// <summary>
     /// Autogain amount per interval (flat for simple, rate for compound)
@@ -468,6 +437,7 @@ public partial class CreateCurrencyDefinitionRequest
     /// ISO 8601 duration between autogain applications (e.g. PT5M, PT1H)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autogainInterval")]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string? AutogainInterval { get; set; } = default!;
 
     /// <summary>
@@ -499,6 +469,7 @@ public partial class CreateCurrencyDefinitionRequest
     /// Duration until expiration after earning (for duration_from_earn policy)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("expirationDuration")]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string? ExpirationDuration { get; set; } = default!;
 
     /// <summary>
@@ -520,11 +491,11 @@ public partial class CreateCurrencyDefinitionRequest
     public System.Guid? LinkedItemTemplateId { get; set; } = default!;
 
     /// <summary>
-    /// How the item linkage works
+    /// How the item linkage works (null when linkedToItem is false)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("linkageMode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemLinkageMode LinkageMode { get; set; } = default!;
+    public ItemLinkageMode? LinkageMode { get; set; } = default!;
 
     /// <summary>
     /// Whether this is the base currency for its scope
@@ -548,6 +519,7 @@ public partial class CreateCurrencyDefinitionRequest
     /// Format string for display (e.g. '{amount} gold', '${amount}')
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayFormat")]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string? DisplayFormat { get; set; } = default!;
 
 }
@@ -569,6 +541,7 @@ public partial class GetCurrencyDefinitionRequest
     /// Currency code (provide this or definitionId)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.StringLength(32)]
     public string? Code { get; set; } = default!;
 
 }
@@ -680,6 +653,13 @@ public partial class UpdateCurrencyDefinitionRequest
     public double? WeeklyEarnCap { get; set; } = default!;
 
     /// <summary>
+    /// New earn cap reset time (e.g. "14:00:00" for 2pm UTC)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("earnCapResetTime")]
+    [System.ComponentModel.DataAnnotations.StringLength(20)]
+    public string? EarnCapResetTime { get; set; } = default!;
+
+    /// <summary>
     /// Enable/disable autogain
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autogainEnabled")]
@@ -702,6 +682,7 @@ public partial class UpdateCurrencyDefinitionRequest
     /// New autogain interval
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autogainInterval")]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string? AutogainInterval { get; set; } = default!;
 
     /// <summary>
@@ -726,6 +707,7 @@ public partial class UpdateCurrencyDefinitionRequest
     /// New display format
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayFormat")]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string? DisplayFormat { get; set; } = default!;
 
     /// <summary>
@@ -1024,7 +1006,7 @@ public partial class CreateWalletRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public WalletOwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Realm ID for realm-scoped wallets (null for global)
@@ -1058,7 +1040,7 @@ public partial class GetWalletRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public WalletOwnerType? OwnerType { get; set; } = default!;
+    public EntityType? OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Realm ID (required if using ownerId lookup)
@@ -1090,7 +1072,7 @@ public partial class GetOrCreateWalletRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public WalletOwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Realm ID for realm-scoped wallets
@@ -1119,9 +1101,9 @@ public partial class FreezeWalletRequest
     /// Reason for freezing
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
     public string Reason { get; set; } = default!;
 
 }
@@ -1198,7 +1180,7 @@ public partial class WalletResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public WalletOwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Realm ID
@@ -1448,6 +1430,8 @@ public partial class GetBalanceResponse
     /// Currency code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currencyCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string CurrencyCode { get; set; } = default!;
 
     /// <summary>
@@ -1702,6 +1686,7 @@ public partial class CreditCurrencyRequest
     /// Amount to credit (must be positive)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double Amount { get; set; } = default!;
 
     /// <summary>
@@ -1717,6 +1702,7 @@ public partial class CreditCurrencyRequest
     /// What triggered this transaction (quest, admin, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("referenceType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? ReferenceType { get; set; } = default!;
 
     /// <summary>
@@ -1729,9 +1715,9 @@ public partial class CreditCurrencyRequest
     /// Unique key to prevent duplicate processing
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string IdempotencyKey { get; set; } = default!;
 
     /// <summary>
@@ -1822,6 +1808,7 @@ public partial class DebitCurrencyRequest
     /// Amount to debit (must be positive)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double Amount { get; set; } = default!;
 
     /// <summary>
@@ -1837,6 +1824,7 @@ public partial class DebitCurrencyRequest
     /// What triggered this transaction
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("referenceType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? ReferenceType { get; set; } = default!;
 
     /// <summary>
@@ -1849,9 +1837,9 @@ public partial class DebitCurrencyRequest
     /// Unique key to prevent duplicate processing
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string IdempotencyKey { get; set; } = default!;
 
     /// <summary>
@@ -1926,6 +1914,7 @@ public partial class TransferCurrencyRequest
     /// Amount to transfer (must be positive)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double Amount { get; set; } = default!;
 
     /// <summary>
@@ -1941,6 +1930,7 @@ public partial class TransferCurrencyRequest
     /// What triggered this transfer
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("referenceType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? ReferenceType { get; set; } = default!;
 
     /// <summary>
@@ -1953,9 +1943,9 @@ public partial class TransferCurrencyRequest
     /// Unique key to prevent duplicate processing
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string IdempotencyKey { get; set; } = default!;
 
     /// <summary>
@@ -2028,9 +2018,9 @@ public partial class BatchCreditRequest
     /// Unique key covering the entire batch
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string IdempotencyKey { get; set; } = default!;
 
 }
@@ -2059,9 +2049,10 @@ public partial class BatchCreditOperation
     public System.Guid CurrencyDefinitionId { get; set; } = default!;
 
     /// <summary>
-    /// Amount to credit
+    /// Amount to credit (must be positive)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double Amount { get; set; } = default!;
 
     /// <summary>
@@ -2077,6 +2068,7 @@ public partial class BatchCreditOperation
     /// Reference type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("referenceType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? ReferenceType { get; set; } = default!;
 
     /// <summary>
@@ -2109,6 +2101,150 @@ public partial class BatchCreditResponse
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BatchCreditResult
+{
+
+    /// <summary>
+    /// Index in the operations array
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("index")]
+    public int Index { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the operation succeeded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// Transaction record if successful
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transaction")]
+    public CurrencyTransactionRecord? Transaction { get; set; } = default!;
+
+    /// <summary>
+    /// Error code if failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("error")]
+    public string? Error { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to debit multiple wallets
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BatchDebitRequest
+{
+
+    /// <summary>
+    /// Debit operations to execute
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("operations")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
+    public System.Collections.Generic.ICollection<BatchDebitOperation> Operations { get; set; } = new System.Collections.ObjectModel.Collection<BatchDebitOperation>();
+
+    /// <summary>
+    /// Unique key covering the entire batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
+    public string IdempotencyKey { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A single debit operation in a batch
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BatchDebitOperation
+{
+
+    /// <summary>
+    /// Source wallet ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("walletId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid WalletId { get; set; } = default!;
+
+    /// <summary>
+    /// Currency to debit
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currencyDefinitionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CurrencyDefinitionId { get; set; } = default!;
+
+    /// <summary>
+    /// Amount to debit (must be positive)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
+    public double Amount { get; set; } = default!;
+
+    /// <summary>
+    /// Sink transaction type (burn, vendor_purchase, fee, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public TransactionType TransactionType { get; set; } = default!;
+
+    /// <summary>
+    /// What triggered this transaction
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("referenceType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? ReferenceType { get; set; } = default!;
+
+    /// <summary>
+    /// Reference entity ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("referenceId")]
+    public System.Guid? ReferenceId { get; set; } = default!;
+
+    /// <summary>
+    /// Override negative balance allowance for this transaction
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allowNegative")]
+    public bool? AllowNegative { get; set; } = default!;
+
+    /// <summary>
+    /// Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Results of batch debit operations
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BatchDebitResponse
+{
+
+    /// <summary>
+    /// Results for each operation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("results")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<BatchDebitResult> Results { get; set; } = new System.Collections.ObjectModel.Collection<BatchDebitResult>();
+
+}
+
+/// <summary>
+/// Result of a single debit in a batch
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BatchDebitResult
 {
 
     /// <summary>
@@ -2191,6 +2327,7 @@ public partial class CurrencyTransactionRecord
     /// What triggered this transaction
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("referenceType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? ReferenceType { get; set; } = default!;
 
     /// <summary>
@@ -2209,8 +2346,9 @@ public partial class CurrencyTransactionRecord
     /// Idempotency key
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string IdempotencyKey { get; set; } = default!;
 
     /// <summary>
@@ -2295,9 +2433,10 @@ public partial class CalculateConversionRequest
     public System.Guid ToCurrencyId { get; set; } = default!;
 
     /// <summary>
-    /// Amount to convert
+    /// Amount to convert (must be positive)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fromAmount")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double FromAmount { get; set; } = default!;
 
 }
@@ -2325,7 +2464,9 @@ public partial class CalculateConversionResponse
     /// Steps in the conversion
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("conversionPath")]
-    public System.Collections.Generic.ICollection<ConversionStep> ConversionPath { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ConversionStep> ConversionPath { get; set; } = new System.Collections.ObjectModel.Collection<ConversionStep>();
 
     /// <summary>
     /// Base currency used for conversion
@@ -2400,18 +2541,19 @@ public partial class ExecuteConversionRequest
     public System.Guid ToCurrencyId { get; set; } = default!;
 
     /// <summary>
-    /// Amount to convert
+    /// Amount to convert (must be positive)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fromAmount")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double FromAmount { get; set; } = default!;
 
     /// <summary>
     /// Unique key for idempotency
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string IdempotencyKey { get; set; } = default!;
 
 }
@@ -2541,9 +2683,10 @@ public partial class UpdateExchangeRateRequest
     public System.Guid CurrencyDefinitionId { get; set; } = default!;
 
     /// <summary>
-    /// New exchange rate to base currency
+    /// New exchange rate to base currency (must be positive)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("exchangeRateToBase")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double ExchangeRateToBase { get; set; } = default!;
 
 }
@@ -2695,8 +2838,9 @@ public partial class GetTransactionsByReferenceRequest
     /// Reference type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("referenceType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string ReferenceType { get; set; } = default!;
 
     /// <summary>
@@ -2936,6 +3080,7 @@ public partial class EscrowDepositRequest
     /// Amount to debit for escrow
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double Amount { get; set; } = default!;
 
     /// <summary>
@@ -2950,9 +3095,9 @@ public partial class EscrowDepositRequest
     /// Idempotency key
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string IdempotencyKey { get; set; } = default!;
 
 }
@@ -3007,6 +3152,7 @@ public partial class EscrowReleaseRequest
     /// Amount to credit
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double Amount { get; set; } = default!;
 
     /// <summary>
@@ -3021,9 +3167,9 @@ public partial class EscrowReleaseRequest
     /// Idempotency key
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string IdempotencyKey { get; set; } = default!;
 
 }
@@ -3078,6 +3224,7 @@ public partial class EscrowRefundRequest
     /// Amount to refund
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double Amount { get; set; } = default!;
 
     /// <summary>
@@ -3092,9 +3239,9 @@ public partial class EscrowRefundRequest
     /// Idempotency key
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string IdempotencyKey { get; set; } = default!;
 
 }
@@ -3149,6 +3296,7 @@ public partial class CreateHoldRequest
     /// Amount to reserve
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double Amount { get; set; } = default!;
 
     /// <summary>
@@ -3163,6 +3311,7 @@ public partial class CreateHoldRequest
     /// Reference type (e.g. dining, hotel, gas)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("referenceType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? ReferenceType { get; set; } = default!;
 
     /// <summary>
@@ -3175,9 +3324,9 @@ public partial class CreateHoldRequest
     /// Idempotency key
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string IdempotencyKey { get; set; } = default!;
 
 }
@@ -3201,15 +3350,16 @@ public partial class CaptureHoldRequest
     /// Final amount to debit (may be less than hold amount)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("captureAmount")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double CaptureAmount { get; set; } = default!;
 
     /// <summary>
     /// Idempotency key
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string IdempotencyKey { get; set; } = default!;
 
 }
@@ -3368,6 +3518,7 @@ public partial class HoldRecord
     /// Reference type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("referenceType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? ReferenceType { get; set; } = default!;
 
     /// <summary>

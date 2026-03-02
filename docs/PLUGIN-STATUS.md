@@ -1,6 +1,6 @@
 # Plugin Production Readiness Status
 
-> **Last Updated**: 2026-02-22
+> **Last Updated**: 2026-03-02
 > **Scope**: All Bannou service plugins
 
 ---
@@ -53,29 +53,29 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Contract](#contract-status) | L1 | 98% | 0 | L3-hardened. All 25 endpoints, 0 stubs. Expiration, payment schedules, clause execution all done. Only extensions remain. |
 | [Permission](#permission-status) | L1 | 95% | 0 | L3-hardened RBAC. Heartbeat-driven session TTL, distributed locks, in-memory cache removed. 27 tests. Feature-complete. |
 | [Resource](#resource-status) | L1 | 93% | 0 | Feature-complete lifecycle management. Reference tracking, cleanup, compression all done. |
-| [Actor](#actor-status) | L2 | 65% | 0 | Solid core architecture. Auto-scale stubbed, many production features TODO. |
-| [Character](#character-status) | L2 | 90% | 0 | All 12 endpoints done. Smart field tracking, resource compression. Only batch ops pending. |
-| [Collection](#collection-status) | L2 | 78% | 4 | All 20 endpoints done. 4 bugs: grant bypasses limits, cleanup missing events, update ignores fields. |
-| [Currency](#currency-status) | L2 | 78% | 0 | Core economy solid. 8 stubs: hold expiration, currency expiration, analytics, pruning. |
-| [Game Service](#game-service-status) | L2 | 93% | 0 | Minimal, feature-complete registry. All 5 endpoints done. Only metadata validation remains. |
-| [Game Session](#game-session-status) | L2 | 72% | 0 | Core lobby/matchmade flows work. L2→L3 Voice violation, 3 stubs, 7 design considerations. |
-| [Inventory](#inventory-status) | L2 | 80% | 0 | Core container ops work. Grid collision, weight propagation, RemoveItem cleanup stubbed. |
-| [Item](#item-status) | L2 | 88% | 0 | Dual-model system complete. "Itemize Anything" pattern works. Deprecation cascade pending. |
-| [Location](#location-status) | L2 | 92% | 0 | All 24 endpoints done. Hierarchical management, spatial queries, presence tracking. No gaps. |
-| [Quest](#quest-status) | L2 | 85% | 0 | Well-architected over Contract. Prerequisites, rewards, caching all done. Extensions only. |
-| [Realm](#realm-status) | L2 | 95% | 0 | Fully feature-complete. Complex merge, deprecation, resource integration. No remaining gaps. |
-| [Relationship](#relationship-status) | L2 | 90% | 0 | All 21 endpoints done. Bidirectional enforcement, type taxonomy, soft-delete. Index scaling gaps. |
-| [Seed](#seed-status) | L2 | 88% | 0 | All 24 endpoints done. Growth, bonds, capabilities, decay worker. Archive cleanup needed. |
+| [Actor](#actor-status) | L2 | 90% | 2 | L3-hardened. Two-phase tick, dynamic character binding, pool mode, ~80 telemetry spans. 2 T29 bugs. Auto-scale stubbed. |
+| [Character](#character-status) | L2 | 97% | 0 | L3-hardened. All 12 endpoints, schema NRT, telemetry spans, client events, MySQL JSON queries. Only extensions remain. |
+| [Collection](#collection-status) | L2 | 93% | 0 | Production-hardened. All 20 endpoints, global first-unlock, client events, ETag concurrency, lib-resource cleanup. 0 bugs, 0 stubs. Only design extensions remain (#475, #476). |
+| [Currency](#currency-status) | L2 | 85% | 0 | Production-hardened (7 bugs fixed, T25/T30 compliant). 8 stubs remain: hold expiration, currency expiration, analytics, pruning. |
+| [Game Service](#game-service-status) | L2 | 100% | 0 | Production-hardened registry. All 5 endpoints done. T9/T21/T26/T28/T30 compliant. Resource cleanup on delete. |
+| [Game Session](#game-session-status) | L2 | 92% | 0 | Production-hardened. Voice removed, lifecycle events live, T25/T26/T30 compliant. Distributed locks. |
+| [Inventory](#inventory-status) | L2 | 85% | 0 | Production-hardened (T8/T25/T26/T29/T30 compliant, 93 tests). 4 stubs remain: grid collision, weight propagation, equipment slots, RemoveItem cleanup. |
+| [Item](#item-status) | L2 | 92% | 0 | Production-hardened (T7/T8/T25/T29/T30 compliant, 70 tests). Dual-model + Itemize Anything. Decay system pending (#407). |
+| [Location](#location-status) | L2 | 97% | 0 | All 24 endpoints done. Hierarchical management, spatial queries, presence tracking, ${location.*} variable provider. Hardened to L3. |
+| [Quest](#quest-status) | L2 | 95% | 0 | Production-hardened (T9/T25/T26/T30 compliant, 46 tests). Orchestration over Contract. Prerequisites, rewards, caching done. Extensions only. |
+| [Realm](#realm-status) | L2 | 100% | 0 | Production-hardened (T5/T6/T7/T8/T9/T21/T30/T31 compliant). ETag concurrency, distributed merge lock, telemetry spans, event coverage. |
+| [Relationship](#relationship-status) | L2 | 95% | 0 | All 21 endpoints done. Hardened: telemetry, constructor caching, deprecation lifecycle, sentinel elimination. Variable Provider Factory pending (#147). |
+| [Seed](#seed-status) | L2 | 95% | 0 | Production-hardened (T6/T26/T30 compliant). Constructor caching, telemetry spans, sentinel elimination, schema validation. Archive cleanup needed. |
 | [Species](#species-status) | L2 | 92% | 0 | All 13 endpoints done. Missing distributed locks on concurrent operations. |
-| [Subscription](#subscription-status) | L2 | 88% | 0 | All 7 endpoints + expiration worker. Concurrency gaps and index cleanup needed. |
-| [Transit](#transit-status) | L2 | 0% | 0 | Pre-implementation. Geographic connectivity graph, transit modes, and declarative journey tracking spec. No schema, no code. |
-| [Worldstate](#worldstate-status) | L2 | 0% | 0 | Pre-implementation. Per-realm game clock, calendar system, and temporal event broadcasting spec. No schema, no code. |
-| [Orchestrator](#orchestrator-status) | L3 | 58% | 0 | Compose backend works. 3/4 backends stubbed. Pool auto-scale/idle timeout missing. |
-| [Asset](#asset-status) | L3 | 82% | 1 | Upload/download pipeline works. 2/3 processors stubbed, cleanup tasks missing. |
-| [Documentation](#documentation-status) | L3 | 85% | 0 | All 27 endpoints done. Full-text search, git sync, archive. Semantic search pending. |
-| [Voice](#voice-status) | L3 | 87% | 0 | P2P + SFU tiers work. WebRTC signaling, broadcast consent. Single RTP server limitation. |
+| [Subscription](#subscription-status) | L2 | 95% | 0 | L3-hardened. Distributed locks, telemetry spans, constructor caching, type safety, worker delegation. 33 tests, 0 warnings. |
+| [Transit](#transit-status) | L2 | 95% | 0 | Fully implemented. All 33 endpoints, 8 state stores, 2 background workers, variable provider, DI cost enrichment. Only extensions remain. |
+| [Worldstate](#worldstate-status) | L2 | 95% | 0 | Fully implemented. All 18 endpoints, clock worker, variable provider, client events, cross-node cache invalidation. Only extensions remain. |
+| [Orchestrator](#orchestrator-status) | L3 | 70% | 0 | L3-hardened. Lease expiry enforcement, multi-version rollback, log timestamp fix, dead config cleanup done. Compose backend solid. 3/4 backends stubbed. Pool auto-scale, idle timeout missing (#550). |
+| [Asset](#asset-status) | L3 | 92% | 0 | L3-hardened. Schema/enum consolidation, background workers (bundle cleanup, ZIP cache), transactional indexes, all events published. 117 tests. |
+| [Documentation](#documentation-status) | L3 | 92% | 0 | All 27 endpoints done. Full-text search, git sync, archive. Full TENET audit complete. Semantic search pending. |
+| [Voice](#voice-status) | L3 | 95% | 0 | L3-hardened. Full TENET audit (2 rounds): NRT-compliant schemas, distributed locks on all read-modify-write paths (6 methods), T7/T8/T9/T16/T21/T25 compliant, dead code removed. 89 tests. |
 | [Website](#website-status) | L3 | 5% | 0 | Complete stub. All 14 endpoints return NotImplemented. No state stores, no logic. |
-| [Broadcast](#broadcast-status) | L3 | 0% | 0 | Pre-implementation. Aspirational streaming platform integration spec. No schema, no code. |
+| [Broadcast](#broadcast-status) | L3 | 0% | 0 | Pre-implementation. Deep dive L3-audited: x-lifecycle events, Redis tracking IDs, camera API endpoints, nullable configs, codec enums, worker intervals, T15 webhook exception. No schema, no code. |
 | [Agency](#agency-status) | L4 | 0% | 0 | Pre-implementation. Guardian spirit progressive agency and UX manifest engine spec. No schema, no code. |
 | [Achievement](#achievement-status) | L4 | 75% | 1 | Core CRUD + auto-unlock work. Xbox/PS stubs, rarity calc broken, dead code. |
 | [Analytics](#analytics-status) | L4 | 82% | 0 | Robust pipeline. Glicko-2 ratings, event ingestion, summaries. Rating decay missing. |
@@ -549,27 +549,25 @@ gh issue list --search "Character:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [COLLECTION.md](plugins/COLLECTION.md)
 
-### Production Readiness: 78%
+### Production Readiness: 93%
 
-All 20 endpoints implemented with working integration with lib-inventory and lib-item for the "items in inventories" pattern, DI-based unlock listener dispatch to Seed, and area content selection with weighted random themes. However, the plugin has 4 active bugs (template update ignoring fields, list ignoring request pageSize, grant bypassing max-collections limit, cleanup not publishing delete events) and 1 stub (isFirstGlobal always false). These bugs affect data integrity and schema contract adherence.
+Production-hardened. All 20 endpoints implemented with working integration with lib-inventory and lib-item for the "items in inventories" pattern, DI-based unlock listener dispatch (Seed, Faction), area content selection with weighted random themes, global first-unlock tracking via Redis SADD, real-time client events via IEntitySessionRegistry, ETag-based optimistic concurrency on cache updates, lib-resource cleanup for character-owned collections, and distributed locking on all mutation paths. All previously reported bugs fixed (grant limit bypass, cleanup events, template update fields, list pageSize). Cache invalidation bounded by TTL (intentional quirk). Only two design extensions remain: expiring/seasonal collections (#475) and collection sharing/trading (#476).
 
-### Bug Count: 4
+### Bug Count: 0
+
+No known bugs. 4 previously reported bugs all fixed in prior audits.
 
 ### Top 3 Bugs
 
-| # | Bug | Description | Issue |
-|---|-----|-------------|-------|
-| 1 | **GrantEntryAsync bypasses MaxCollectionsPerOwner** | When auto-creating a collection during grant, the max-collections check is skipped, allowing unlimited collections via the grant path. | No issue |
-| 2 | **Cleanup handlers don't publish collection.deleted** | Cascading deletions triggered by character.deleted / account.deleted never publish collection.deleted events, causing downstream consumers to miss cleanup signals. | No issue |
-| 3 | **UpdateEntryTemplateAsync ignores fields** | `hideWhenLocked` and `discoveryLevels` fields are defined on the update request but never processed, making them immutable after creation despite the API contract. | No issue |
+*(None -- 4 fixed in prior audits)*
 
 ### Top 3 Enhancements
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Global first-unlock tracking** | `isFirstGlobal` field on unlock events is always false. Requires a global set of unlocked entry codes per game service. Important for achievement triggers. | No issue |
-| 2 | **Client events for real-time unlock notifications** | Define collection-client-events.yaml to push unlock and milestone events to connected WebSocket clients. | No issue |
-| 3 | **Event-driven entry template cache invalidation** | When templates are updated or deleted, existing collection caches are not invalidated, serving stale data until TTL expires. | No issue |
+| 1 | **Expiring/seasonal collections** | Support time-limited collection types that expire or rotate on a schedule. Requires design decisions on temporal mechanics and Worldstate integration. | [#475](https://github.com/beyond-immersion/bannou-service/issues/475) |
+| 2 | **Collection sharing/trading** | Allow owners to share or trade unlocked entries between collections. Requires design decisions on ownership transfer and Escrow integration. | [#476](https://github.com/beyond-immersion/bannou-service/issues/476) |
+| 3 | *(No further enhancements identified)* | | |
 
 ### GH Issues
 
@@ -583,17 +581,17 @@ gh issue list --search "Collection:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [CURRENCY.md](plugins/CURRENCY.md)
 
-### Production Readiness: 78%
+### Production Readiness: 85%
 
-Core currency operations are comprehensive and production-hardened: definitions, wallets, balance operations (credit/debit/transfer with idempotency and distributed locks), authorization holds (reserve/capture/release), exchange rate conversions with compensating transactions, and escrow integration endpoints all work. The autogain background worker is functional. However, 8 stubs represent significant gaps: both analytics endpoints return all zeros, currency expiration and hold expiration have no enforcement mechanism, global supply cap is not checked, item linkage is not enforced, EarnCapResetTime is ignored, and transaction retention cleanup only filters at query time (never deletes).
+Core currency operations are comprehensive and production-hardened after a thorough audit (2026-02-24): 7 bugs fixed (autogain race condition, metadata drop, sentinel values, TOCTOU, index failures), full T25 type safety (no Guid.Parse/ToString in helpers), T30 telemetry on all 25 async methods, schema NRT + validation compliance, dead code/config removed. Definitions, wallets, balance operations (credit/debit/transfer with idempotency and distributed locks), authorization holds (reserve/capture/release), exchange rate conversions, and escrow integration endpoints all work. The 8 remaining stubs are the gap to 100%: analytics endpoints return zeros, currency/hold expiration have no enforcement, global supply cap unchecked, item linkage unenforced, EarnCapResetTime ignored, transaction retention never deletes.
 
 ### Bug Count: 0
 
-No known bugs.
+7 bugs found and fixed during 2026-02-24 audit. No known remaining bugs.
 
 ### Top 3 Bugs
 
-*(None)*
+*(None -- 7 fixed on 2026-02-24)*
 
 ### Top 3 Enhancements
 
@@ -615,9 +613,9 @@ gh issue list --search "Currency:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [GAME-SERVICE.md](plugins/GAME-SERVICE.md)
 
-### Production Readiness: 93%
+### Production Readiness: 100%
 
-Minimal, feature-complete registry with all 5 CRUD endpoints fully implemented. No stubs, no bugs. Pagination was added (2026-01-31). The only remaining items are speculative extensions (metadata schema validation, service versioning) and minor design considerations (single-key list pattern, no concurrency control on updates, misleading event handler comment). All acceptable given the service's low write frequency and small data volume.
+Production-hardened registry with all 5 CRUD endpoints fully implemented and all tenet violations resolved. L3 hardening pass (2026-02-24) addressed: T26 (Guid.Empty sentinels removed), T30 (telemetry spans on all async helpers), T9 (distributed lock on stub name uniqueness), T21 (retry count moved to config, dead code removed), T28 (lib-resource cleanup on delete with 409 Conflict). x-resource-lifecycle declared in schema. Deep dive updated with 5 previously missing dependents. Only speculative extensions remain (metadata validation, service versioning).
 
 ### Bug Count: 0
 
@@ -647,9 +645,9 @@ gh issue list --search "Game Service:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [GAME-SESSION.md](plugins/GAME-SESSION.md)
 
-### Production Readiness: 72%
+### Production Readiness: 92%
 
-Core lobby and matchmade session flows work end-to-end with subscription-driven shortcut publishing, reservation cleanup, voice integration, and horizontal scaling by game. However, the plugin has a critical L2-to-L3 hierarchy violation (depends on Voice), 3 stubs (actions endpoint echo-only, missing lifecycle events, no player-in-session validation for actions), 7 design considerations including inline event models not in schema and a single-key session list that won't scale, and several chat quirks (messages from non-members, silent whisper failures).
+Production-hardened. Core lobby and matchmade session flows work end-to-end with subscription-driven shortcut publishing, reservation cleanup, and horizontal scaling by game. Voice hierarchy violation (L2→L3) fully removed — voice fields stripped from schema, models, and service code. Lifecycle events (`game-session.updated`, `game-session.deleted`) now published at all mutation points. All event models defined in schema (SessionCancelled client/server events). T25 type safety (enums, Guids throughout), T26 no sentinel values (nullable Guid returns), T30 telemetry spans on all async methods, T7 error handling (re-throw after rollback, TryPublishErrorAsync), T9 distributed locks on session-list and lobby creation races. Remaining gaps: actions endpoint is echo-only (no real processing), chat allows messages from non-members, single-key session list won't scale past ~1000 sessions.
 
 ### Bug Count: 0
 
@@ -663,9 +661,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Fix Voice hierarchy violation** | GameSession (L2) depends directly on Voice (L3). Voice should subscribe to game-session events and create rooms reactively, inverting the dependency to the correct direction. | No issue |
-| 2 | **Publish lifecycle events** | `game-session.updated` and `game-session.deleted` event topics are defined with constants but never published anywhere, leaving downstream consumers with no update/delete signals. | [#224](https://github.com/beyond-immersion/bannou-service/issues/224) |
-| 3 | **Inline event models not in schema** | `SessionCancelledClientEvent` and `SessionCancelledServerEvent` are defined as internal classes in source code rather than in schema files, violating schema-first tenets. | No issue |
+| 1 | **Actions endpoint processing** | `PerformGameSessionAction` echoes back the action type without any real processing logic. Needs game-specific action handlers or delegation to a configurable action pipeline. | No issue |
+| 2 | **Session list scalability** | All session IDs stored in a single Redis key (`game-session:sessions`). Read-modify-write under lock works for small counts but won't scale past ~1000 sessions. Needs Redis set or per-game partitioning. | No issue |
+| 3 | **Chat non-member validation** | `SendChatMessage` does not validate that the sender is actually a member of the session before publishing the message. | No issue |
 
 ### GH Issues
 
@@ -679,9 +677,9 @@ gh issue list --search "Game Session:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [INVENTORY.md](plugins/INVENTORY.md)
 
-### Production Readiness: 80%
+### Production Readiness: 85%
 
-Container lifecycle management, item placement, stack operations (split/merge), transfer with tradeable/bound validation, and multi-constraint-model support (slot, weight, volumetric, unlimited) are all functional with distributed locking and cache-through patterns. However, four tracked stubs represent meaningful gaps: grid constraint is only approximated by slot count (no true collision detection), nested container weight propagation is not implemented, equipment slot specialization has no validation logic, and RemoveItem does not clear the item's ContainerId. Additionally, 8 design considerations note performance issues (N+1 query patterns, serial deletion, in-memory pagination) and lack of event consumption from lib-item.
+Production-hardened with comprehensive tenet compliance. All 16 endpoints functional with distributed locking, cache-through patterns, and multi-constraint-model support (slot, weight, volumetric, grid, unlimited). L3 hardening pass applied: T8 filler removal from 7 response schemas, T26 sentinel fix (Guid.Empty -> null), T29 metadata disclaimers, T30 telemetry spans on all 8 async helpers, NRT compliance, event schema `additionalProperties: false`, x-lifecycle model completion, and validation keywords throughout. 93 unit tests (24 added). Four tracked stubs remain: grid collision approximation (#196), nested weight propagation (#226), equipment slot validation (#226), and RemoveItem cleanup (#164). 8 design considerations note performance issues (N+1 queries, serial deletion, in-memory pagination) and lack of lib-item event consumption.
 
 ### Bug Count: 0
 
@@ -711,9 +709,9 @@ gh issue list --search "Inventory:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [ITEM.md](plugins/ITEM.md)
 
-### Production Readiness: 88%
+### Production Readiness: 92%
 
-The dual-model item system (templates + instances) is fully operational with robust CRUD, cache read-through patterns, quantity model enforcement, soulbound types, and the "Itemize Anything" contract-delegation pattern (ephemeral, session, and lifecycle bindings). The `/item/use` and `/item/use-step` endpoints enable arbitrary item behaviors via Contract service prebound APIs. Bulk loading optimizations are in place. Only minor gaps remain: deprecation without instance cascade, no template deletion, and a few design considerations around container index validation and post-fetch filtering.
+Production-hardened (T7/T8/T25/T29/T30 compliant, 70 tests). The dual-model item system (templates + instances) is fully operational with robust CRUD, cache read-through patterns, quantity model enforcement, soulbound types, and the "Itemize Anything" contract-delegation pattern (ephemeral, session, and lifecycle bindings). The `/item/use` and `/item/use-step` endpoints enable arbitrary item behaviors via Contract service prebound APIs. Bulk loading optimizations are in place. Schema enums for EntityType, DestroyReason, UnbindReason replace former string fields. Telemetry spans on all 24 async helper methods. Filler properties removed from responses. Only minor gaps remain: deprecation without instance cascade, item decay/expiration ([#407](https://github.com/beyond-immersion/bannou-service/issues/407)), and post-fetch filtering on list queries.
 
 ### Bug Count: 0
 
@@ -727,9 +725,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Template migration on deprecation** | When deprecating with `migrationTargetId`, existing instances are not automatically upgraded to the new template. Admin must manage instances manually. | No issue |
-| 2 | **Affix system** | Random or crafted modifiers (prefixes/suffixes) applied to item instances for equipment variation. Critical for RPG itemization depth. | No issue |
-| 3 | **Durability repair** | Endpoint to restore item durability with configurable repair costs. Needed for the economy/crafting loop. | No issue |
+| 1 | **Item Decay/Expiration** | Time-based item lifecycle (template-level decay config, instance `expiresAt`, background worker). Dependency for lib-status. | [#407](https://github.com/beyond-immersion/bannou-service/issues/407) |
+| 2 | **Template migration on deprecation** | When deprecating with `migrationTargetId`, existing instances are not automatically upgraded to the new template. Admin must manage instances manually. | No issue |
+| 3 | **Item Sockets** | Socket, linking, and gem placement system for item instances. Future L4 plugin. | [#430](https://github.com/beyond-immersion/bannou-service/issues/430) |
 
 ### GH Issues
 
@@ -743,9 +741,9 @@ gh issue list --search "Item:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [LOCATION.md](plugins/LOCATION.md)
 
-### Production Readiness: 92%
+### Production Readiness: 97%
 
-All 24 endpoints are fully implemented with no stubs. Hierarchical location management with circular reference prevention, cascading depth updates, code-based lookups, bulk seeding with two-pass parent resolution, territory constraint validation for Contract integration, realm transfer, and deprecation lifecycle. Recent additions include spatial coordinates with AABB queries (`/location/query/by-position`) and entity presence tracking with TTL-based ephemeral Redis storage, a background cleanup worker, and arrived/departed events. No bugs, no stubs, no design considerations, and no pending extensions.
+All 24 endpoints are fully implemented with no stubs. Hierarchical location management with circular reference prevention, cascading depth updates, code-based lookups, bulk seeding with two-pass parent resolution, territory constraint validation for Contract integration, realm transfer, and deprecation lifecycle. Includes spatial coordinates with AABB queries (`/location/query/by-position`), entity presence tracking with TTL-based ephemeral Redis storage, a background cleanup worker, arrived/departed events, and a `${location.*}` variable provider for Actor behavior system. Hardened: T30 telemetry spans on all async helpers, T7 compliant error handling (no duplicate try-catch), T8 filler properties removed, T9 lock failures throw instead of silently returning, NRT-compliant schema with validation keywords, x-resource-lifecycle declared.
 
 ### Bug Count: 0
 
@@ -775,9 +773,9 @@ gh issue list --search "Location:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [QUEST.md](plugins/QUEST.md)
 
-### Production Readiness: 85%
+### Production Readiness: 95%
 
-Well-architected orchestration layer over Contract with all previously-stubbed core features now implemented: full prerequisite validation (built-in L2 + dynamic L4 via IPrerequisiteProviderFactory), reward distribution via Contract prebound APIs, configurable quest data caching with event-driven invalidation, and Variable Provider Factory integration for Actor ABML expressions. All known bugs are fixed. The remaining gaps are pure extensions (quest chains, dynamic objectives, shared party progress) that are nice-to-haves rather than production blockers.
+Production-hardened orchestration layer over Contract. Full prerequisite validation (built-in L2 + dynamic L4 via IPrerequisiteProviderFactory), reward distribution via Contract prebound APIs, configurable quest data caching with event-driven invalidation, and Variable Provider Factory integration for Actor ABML expressions. Hardened to L3: schema fixes (consolidated RewardType enum, NRT-compliant events, validation keywords on all integer fields, dead types removed), code fixes (T9 ETag concurrency on CharacterIndex writes, T25 enum-typed PrerequisiteValidationMode, T26 nullable Guid for QuestGiverCharacterId, T30 telemetry spans on all async helpers, T21 DefaultRewardContainerMaxSlots wired to config), and 46 passing unit tests including contract event handler coverage. The remaining gaps are pure extensions (quest chains, dynamic objectives, shared party progress).
 
 ### Bug Count: 0
 
@@ -807,9 +805,9 @@ gh issue list --search "Quest:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [REALM.md](plugins/REALM.md)
 
-### Production Readiness: 95%
+### Production Readiness: 100%
 
-Fully feature-complete with no stubs, no bugs, and no outstanding design considerations. All 12 endpoints are implemented including the complex three-phase merge operation (species, locations root-first, characters) with configurable page size, continue-on-failure policy, and optional post-merge deletion. Safe deletion via lib-resource integration is complete. Deprecation lifecycle with undeprecate reversal path works. Ten intentional quirks are well-documented. All prior potential extensions and design considerations have been resolved and closed.
+Production-hardened with comprehensive tenet compliance. All 12 endpoints implemented including complex three-phase merge with distributed locking. ETag-based optimistic concurrency on Update/Deprecate/Undeprecate. Distributed lock on Merge with deterministic key ordering. Full telemetry span coverage (10 async methods). Seed updates now publish events with changedFields tracking. T31 deprecation lifecycle fully compliant (BadRequest for non-deprecated delete, mandatory reason, idempotent operations). Redundant error handling removed per T7. Three typed state stores resolved in constructor per T6. Two new configuration properties (OptimisticRetryAttempts, MergeLockTimeoutSeconds) replace hardcoded values per T21. No stubs, no bugs, no outstanding design considerations.
 
 ### Bug Count: 0
 
@@ -839,9 +837,9 @@ gh issue list --search "Realm:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [RELATIONSHIP.md](plugins/RELATIONSHIP.md)
 
-### Production Readiness: 90%
+### Production Readiness: 95%
 
-Feature-complete with no stubs, no bugs, and all 21 endpoints fully implemented. Bidirectional uniqueness enforcement, hierarchical type taxonomy with merge and seed operations, soft-deletion with recreation, and lib-resource cleanup integration. The only gaps are potential extensions (relationship strength/weight, type constraints) and design considerations around in-memory filtering scalability and index cleanup, none of which block production use.
+Feature-complete with no stubs, no bugs, and all 21 endpoints fully implemented. Bidirectional uniqueness enforcement, hierarchical type taxonomy with merge and seed operations, soft-deletion with recreation, and lib-resource cleanup integration. Hardened: telemetry spans on all async helpers, constructor-cached state store references, deprecation lifecycle compliance (BadRequest for non-deprecated delete, creation guard against deprecated types), sentinel value elimination (nullable Depth/EndedAt), filler property removal from responses, and error event publishing in seed loop. Remaining work: Variable Provider Factory for ABML `${relationship.*}` expressions (#147) and optional type constraint enforcement (#338).
 
 ### Bug Count: 0
 
@@ -855,9 +853,8 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **In-memory filtering before pagination** | All list operations load the full index and bulk-fetch all models before filtering and paginating in memory. For entities with thousands of relationships, this loads everything into memory. | [#341](https://github.com/beyond-immersion/bannou-service/issues/341) |
-| 2 | **No index cleanup** | Entity and type indexes accumulate relationship IDs indefinitely (both active and ended), growing large over time and requiring filtering on every query. | [#342](https://github.com/beyond-immersion/bannou-service/issues/342) |
-| 3 | **Relationship strength/weight** | Numeric field for weighted relationship graphs -- important for NPC behavior systems that need weighted social networks for the living world vision. | [#335](https://github.com/beyond-immersion/bannou-service/issues/335) |
+| 1 | **Variable Provider Factory** | Implement `RelationshipProviderFactory` (`IVariableProviderFactory`) for ABML `${relationship.*}` variable namespace -- enables NPC behavior system access to relationship data. | [#147](https://github.com/beyond-immersion/bannou-service/issues/147) |
+| 2 | **Type constraints** | Define which entity types can participate in each relationship type (e.g., PARENT only between characters, not guilds). | [#338](https://github.com/beyond-immersion/bannou-service/issues/338) |
 
 ### GH Issues
 
@@ -871,9 +868,9 @@ gh issue list --search "Relationship:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [SEED.md](plugins/SEED.md)
 
-### Production Readiness: 88%
+### Production Readiness: 95%
 
-Thoroughly implemented foundational primitive with no stubs and no bugs. All 24 endpoints are functional: seed CRUD with exclusive activation, growth recording with bond multipliers and cross-pollination, capability manifests with three fidelity formulas and debounced caching, typed definitions with deprecation lifecycle, bonds with ordered distributed locks and confirmation flow, and a background decay worker with per-type override support. The Collection-to-Seed growth pipeline works via ICollectionUnlockListener DI pattern, and Actor integration is complete via SeedProviderFactory. Remaining work is confined to extensions and design considerations.
+Production-hardened foundational primitive with no stubs and no bugs. All 24 endpoints are functional: seed CRUD with exclusive activation, growth recording with bond multipliers and cross-pollination, capability manifests with three fidelity formulas and debounced caching, typed definitions with deprecation lifecycle, bonds with ordered distributed locks and confirmation flow, and a background decay worker with per-type override support. The Collection-to-Seed growth pipeline works via ICollectionUnlockListener DI pattern (rewritten to use ISeedClient mesh call), and Actor integration is complete via SeedProviderFactory. Hardened: constructor-cached state stores (T6), telemetry spans on all async methods (T30), Guid.Empty sentinel eliminated for cross-game types (T26), schema validation (additionalProperties, minLength, minimum/maximum, minItems, nullable $ref wrappers, required deprecation reason). Remaining work is confined to extensions and design considerations.
 
 ### Bug Count: 0
 
@@ -889,7 +886,7 @@ No known bugs.
 |---|-------------|-------------|-------|
 | 1 | **No cleanup of associated data on archive** | Archived seeds retain growth data, capability cache, and bond data indefinitely. Needs cleanup strategy -- immediate deletion, background retention worker, or lib-resource compression integration. | [#366](https://github.com/beyond-immersion/bannou-service/issues/366) |
 | 2 | **Bond dissolution endpoint** | No endpoint exists to dissolve or break a bond, despite the `BondPermanent` flag implying some bonds should be dissolvable. Needed for pair system (twin spirits). | [#362](https://github.com/beyond-immersion/bannou-service/issues/362) |
-| 3 | **Bond shared growth applied regardless of partner activity** | BondSharedGrowthMultiplier is applied even when the partner seed is dormant or archived, which may produce unintended growth acceleration. | [#367](https://github.com/beyond-immersion/bannou-service/issues/367) |
+| 3 | **Client events for guardian spirit progression** | Push seed phase/capability/growth/bond/activation events to connected clients via IClientEventPublisher using Entity Session Registry. | [#497](https://github.com/beyond-immersion/bannou-service/issues/497) |
 
 ### GH Issues
 
@@ -935,9 +932,9 @@ gh issue list --search "Species:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [SUBSCRIPTION.md](plugins/SUBSCRIPTION.md)
 
-### Production Readiness: 88%
+### Production Readiness: 95%
 
-Feature-complete with all 7 endpoints implemented and a background expiration worker with grace period, startup delay, and data integrity validation. No stubs, no bugs. However, three design considerations represent genuine production risks: no optimistic concurrency or distributed locks on subscription mutations (concurrent cancel+renew could produce inconsistent state), no locking on index read-modify-write operations (race conditions could lose index entries), and indefinite growth of account/service indexes with no cleanup mechanism. These concurrency gaps are more concerning here than in lower-frequency services because subscriptions have user-facing write operations.
+L3-hardened. All 7 endpoints + background expiration worker fully production-ready. Distributed locking on all mutating operations (T9), telemetry spans on all async methods (T30), constructor-cached state store references (T6), type-safe enum/Guid parameters throughout (T25), background worker delegates to service for consistent locking and event publishing. Schema NRT-compliant with validation keywords. 33 unit tests, 0 warnings. Only remaining concerns: account/service index indefinite growth, and no subscription deletion endpoint.
 
 ### Bug Count: 0
 
@@ -951,9 +948,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Concurrency control on subscription operations** | Update, cancel, renew, and expire all perform read-modify-write without distributed locks or ETag concurrency. Two simultaneous operations could produce inconsistent state. | No issue |
-| 2 | **Index cleanup for account and service indexes** | The expiration worker only cleans the global subscription-index. Account-subscriptions and service-subscriptions indexes grow indefinitely with cancelled/expired entries. | [#223](https://github.com/beyond-immersion/bannou-service/issues/223) |
-| 3 | **Subscription deletion endpoint** | No endpoint exists to permanently delete subscription records. Combined with the index cleanup gap, subscription data accumulates forever. | No issue |
+| 1 | **Index cleanup for account and service indexes** | The expiration worker only cleans the global subscription-index. Account-subscriptions and service-subscriptions indexes grow indefinitely with cancelled/expired entries. | [#223](https://github.com/beyond-immersion/bannou-service/issues/223) |
+| 2 | **Subscription deletion endpoint** | No endpoint exists to permanently delete subscription records. Combined with the index cleanup gap, subscription data accumulates forever. | No issue |
+| 3 | **Client events for real-time subscription status** | Push SubscriptionStatusChanged client event via IClientEventPublisher when subscriptions change state, especially important for background expiration. | [#500](https://github.com/beyond-immersion/bannou-service/issues/500) |
 
 ### GH Issues
 
@@ -967,75 +964,9 @@ gh issue list --search "Subscription:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [TRANSIT.md](plugins/TRANSIT.md)
 
-### Production Readiness: 0%
+### Production Readiness: 95%
 
-Aspirational/planned only. The deep dive explicitly states "No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for a geographic connectivity and movement primitive that completes Location's spatial model by adding **edges** (connections between locations) to Location's **nodes** (the hierarchical place tree). Three core capabilities: a **mode registry** (string-coded transit modes like walking, horseback, wagon, teleportation -- registered via API, not hardcoded), a **connectivity graph** (typed edges between locations with distance, terrain, seasonal availability, and mode compatibility), and **declarative journeys** (temporal travel tracking computed against Worldstate's game clock, with depart/advance/arrive driven by the game, not auto-simulated). Route calculation uses Dijkstra's algorithm over the connection graph filtered by mode compatibility. DI-based cost enrichment via `ITransitCostModifierProvider` enables L4 services (Disposition, Environment, Faction) to affect travel costs without hierarchy violations. Placed at L2 so Actor, Quest, Game Session, and Workshop can all compute travel times. Specifies 22 planned endpoints, 5 state stores (2 MySQL, 2 Redis, 1 MySQL archive), 10 published events, 2 consumed events, 2 background workers (seasonal connection, journey archival), 1 variable provider namespace (`${transit.*}`), and 7 design considerations. No endpoints, no generated code, no service implementation exists.
-
-### Bug Count: 0
-
-No implementation exists to have bugs.
-
-### Top 3 Bugs
-
-*(None -- pre-implementation)*
-
-### Top 3 Enhancements
-
-| # | Enhancement | Description | Issue |
-|---|-------------|-------------|-------|
-| 1 | **Core connectivity graph** | Create schemas, generate code, implement mode registry (CRUD with string codes), connection management (CRUD with terrain types, seasonal availability, bidirectionality), and connection graph caching in Redis for route calculation. | No issue |
-| 2 | **Route calculation engine** | Implement Dijkstra-based route calculation over connection graph with mode filtering, seasonal availability, multi-mode journeys, and DI-based cost enrichment via `ITransitCostModifierProvider` for L4 behavioral modifiers. | No issue |
-| 3 | **Variable provider (`${transit.*}`)** | Implement `TransitProviderFactory` for the `${transit.*}` ABML namespace, enabling NPC travel decisions in GOAP -- available modes, travel times to known locations, current journey status, and mode preference costs. | No issue |
-
-### GH Issues
-
-```bash
-gh issue list --search "Transit:" --state open
-```
-
----
-
-## Worldstate {#worldstate-status}
-
-**Layer**: L2 GameFoundation | **Deep Dive**: [WORLDSTATE.md](plugins/WORLDSTATE.md)
-
-### Production Readiness: 0%
-
-Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for a per-realm game clock, calendar system, and temporal event broadcasting service. Maps real-world time to configurable game-time progression (default 24:1 ratio: 1 real hour = 1 game day, ~2.6 real years = 1 saeculum). Provides calendar templates (configurable days, months, seasons, years as opaque strings), day-period cycles (dawn, morning, afternoon, evening, night), boundary event publishing at game-time transitions, piecewise time-ratio history for lazy evaluation, and the `${world.*}` variable namespace for ABML behavior expressions via the Variable Provider Factory pattern. Specifies 14 planned endpoints, 8 published events, 2 consumed events, 4 state stores, 11 configuration properties, 1 background worker, and a 5-phase implementation plan. Fills the "ghost clock" gap: dozens of existing services reference game time (`${world.time.period}` in ABML, `TimeOfDay` in Storyline, `inGameTime` in encounters, `seasonalAvailability` in trade routes) with no authoritative provider. No endpoints, no generated code, no service implementation exists.
-
-### Bug Count: 0
-
-No implementation exists to have bugs.
-
-### Top 3 Bugs
-
-*(None -- pre-implementation)*
-
-### Top 3 Enhancements
-
-| # | Enhancement | Description | Issue |
-|---|-------------|-------------|-------|
-| 1 | **Phase 1 - Calendar Infrastructure** | Create schemas, generate code, implement calendar template CRUD with structural validation (period coverage, season-month mapping, consistency checks). | No issue |
-| 2 | **Phase 2 - Realm Clock Core** | Implement clock advancement background worker, boundary detection, event publishing, Redis cache for hot reads, and downtime catch-up with configurable policy (advance vs pause). | No issue |
-| 3 | **Phase 4 - Variable Provider** | Implement `WorldProviderFactory` and `WorldProvider` for the `${world.*}` ABML namespace, filling the ghost clock gap referenced by ABML behaviors, Storyline, encounters, and trade routes. | No issue |
-
-### GH Issues
-
-```bash
-gh issue list --search "Worldstate:" --state open
-```
-
----
-
-## Orchestrator {#orchestrator-status}
-
-**Layer**: L3 AppFeatures | **Deep Dive**: [ORCHESTRATOR.md](plugins/ORCHESTRATOR.md)
-
-### Production Readiness: 58%
-
-The Docker Compose backend is functional and solid: preset-based deployment, live topology updates (add/remove/move/scale/update-env), service-to-app-id routing broadcasts consumed by Mesh, processing pool acquire/release with distributed locks, config versioning with rollback, health monitoring with source-filtered reports (control plane vs deployed vs all), container management (restart, status, logs), and infrastructure health checks. 25 configuration properties all wired. No bugs.
-
-However, 3 of 4 container backends are stubs (Swarm, Kubernetes, Portainer -- only Compose is implemented). Processing pool management is missing auto-scaling (thresholds stored but no trigger), idle timeout enforcement (config stored but no timer), lease expiry enforcement (lazy reclamation only on next acquire), and queue depth tracking (hardcoded 0). Design consideration #4 notes the scoped service TTL cache is structurally ineffective. Design consideration #5 notes `_lastKnownDeployment` is in-memory state that would diverge across instances.
+Fully implemented. All 33 endpoints complete with no stubs: mode management (8 endpoints with Category A deprecation lifecycle), connection management (7 endpoints with optimistic concurrency status transitions, seasonal availability, bulk seeding), journey lifecycle (12 endpoints with full state machine — preparing/in_transit/at_waypoint/arrived/interrupted/abandoned — including batch advance for NPC scale), route calculation (Dijkstra with multi-modal, seasonal, and discovery filtering), and connection discovery (3 endpoints with automatic reveal on travel). 8 state stores (3 MySQL: modes, connections, journeys-archive; 4 Redis: journeys, connection-graph, discovery-cache, discovery; 1 lock). 14 published events (7 journey lifecycle, 3 mode lifecycle, 3 connection lifecycle via x-lifecycle, 1 discovery), 1 consumed event (worldstate.season-changed), 3 client events via IEntitySessionRegistry. 2 background workers (Seasonal Connection Worker for auto open/close, Journey Archival Worker for Redis→MySQL migration with retention enforcement). Variable provider (`${transit.*}` namespace with 13+ variables for NPC GOAP travel decisions). DI enrichment interface (`ITransitCostModifierProvider`) defined in bannou-service for L4 cost modifiers with aggregation and clamping. Telemetry spans on all async methods. Distributed locks on all mutations. Resource cleanup callbacks for location and character deletion. 20 configuration properties all wired. 0 bugs, 4 intentional quirks documented.
 
 ### Bug Count: 0
 
@@ -1049,9 +980,77 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Processing pool auto-scaling** | Scale-up/down thresholds (`ScaleUpThreshold`, `ScaleDownThreshold`) are stored in pool config but no background service evaluates them. Pools cannot auto-scale -- only manual `ScalePool` API calls work. Critical for the 100k+ NPC target where actor pool demand is dynamic. | [#252](https://github.com/beyond-immersion/bannou-service/issues/252) (queue design) / [#318](https://github.com/beyond-immersion/bannou-service/issues/318) (actor auto-scale) |
+| 1 | **Caravan formations (Phase 2)** | Multiple entities traveling as a group with group speed = slowest member. Data model accommodates this via `entityType: "caravan"` and `partySize`, but Phase 2 needs `partyMembers` tracking, batch departure/advance, and party leader concept. | [#524](https://github.com/beyond-immersion/bannou-service/issues/524) |
+| 2 | **Fatigue and rest** | Long journeys accumulate fatigue with configurable thresholds. Auto-pause at next waypoint, rest duration based on mode and stamina. Creates natural stopping points at inns/camps. | [#527](https://github.com/beyond-immersion/bannou-service/issues/527) |
+| 3 | **Transit fares** | Monetary cost for certain modes/connections (ferries, toll roads, teleportation). Open design question: Transit stores fares and calls Currency (both L2), or fares are an L4 Trade overlay. | [#535](https://github.com/beyond-immersion/bannou-service/issues/535) |
+
+### GH Issues
+
+```bash
+gh issue list --search "Transit:" --state open
+```
+
+---
+
+## Worldstate {#worldstate-status}
+
+**Layer**: L2 GameFoundation | **Deep Dive**: [WORLDSTATE.md](plugins/WORLDSTATE.md)
+
+### Production Readiness: 95%
+
+Fully implemented. All 18 endpoints complete with no stubs: clock queries (4 endpoints including batch and elapsed game-time computation with piecewise integration over ratio history), client sync (1 endpoint for on-demand time sync via IEntitySessionRegistry), clock administration (3 endpoints — initialize, set ratio, advance with boundary event batching), calendar management (5 endpoints with structural validation — day period gap/overlap detection, month-season consistency, per-game-service limits), realm configuration (3 endpoints with partial update and distributed locking), and cleanup (2 endpoints via lib-resource callbacks for realm and game-service deletion). Background clock worker advances realm clocks every `ClockTickIntervalSeconds` (default 5s) with per-realm distributed locks, boundary event detection and publishing (hour/period/day/month/season/year), downtime catch-up with configurable policy (Advance/Pause), and `MaxCatchUpGameDays` safety cap. Variable provider (`WorldProviderFactory`) implements `IVariableProviderFactory` providing 14 `${world.*}` variables to Actor (L2) via in-memory TTL cache. Client events (`WorldstateTimeSyncEvent`) pushed to realm-bound sessions on period boundaries, ratio changes, and admin advances. 5 self-subscriptions for cross-node cache invalidation (calendar template, ratio, realm config, clock advance). 12 configuration properties all wired with validation. Reference registration with lib-resource for realm and game-service targets. Telemetry spans on all async methods. 0 bugs. Cross-service integration with lib-realm implemented (optional auto-initialize clock on realm creation).
+
+### Bug Count: 0
+
+No known bugs.
+
+### Top 3 Bugs
+
+*(None)*
+
+### Top 3 Enhancements
+
+| # | Enhancement | Description | Issue |
+|---|-------------|-------------|-------|
+| 1 | **Ratio history compaction** | Ratio history segments accumulate indefinitely. `RatioHistoryRetentionDays` config was planned but not implemented. Long-running servers could see unbounded growth. | [#529](https://github.com/beyond-immersion/bannou-service/issues/529) |
+| 2 | **Calendar events/holidays** | Named dates that repeat annually (harvest festival, winter solstice). Publishable as events when the date is reached. | [#538](https://github.com/beyond-immersion/bannou-service/issues/538) |
+| 3 | **Cross-service game-time migration** | Currency autogain (#433), Seed decay (#434), and Character-Encounter memory decay need transition from real-time to game-time via `GetElapsedGameTime`. | [#433](https://github.com/beyond-immersion/bannou-service/issues/433), [#434](https://github.com/beyond-immersion/bannou-service/issues/434) |
+
+### GH Issues
+
+```bash
+gh issue list --search "Worldstate:" --state open
+```
+
+---
+
+## Orchestrator {#orchestrator-status}
+
+**Layer**: L3 AppFeatures | **Deep Dive**: [ORCHESTRATOR.md](plugins/ORCHESTRATOR.md)
+
+### Production Readiness: 70%
+
+L3-hardened with two full audit passes (2026-03-02). The Docker Compose backend is functional and solid: preset-based deployment, live topology updates (add/remove/move/scale/update-env), service-to-app-id routing broadcasts consumed by Mesh, processing pool acquire/release with distributed locks, config versioning with multi-version rollback, health monitoring with source-filtered reports (control plane vs deployed vs all), container management (restart, status, logs), infrastructure health checks, and background lease expiry enforcement. 33 configuration properties all wired. No bugs.
+
+Schema hardened: events moved to orchestrator-events.yaml (schema-first), inline enums extracted to named schemas, NRT compliance (required arrays, nullable: true), T8 filler removal (success booleans, echoed fields, message strings), validation keywords added, health status enums unified in common-api.yaml (ServiceHealthStatus 3-value, InstanceHealthStatus 5-value). Code hardened: T30 telemetry spans on all 27 async methods across 6 files, T9 multi-instance safety (mappings version counter moved to Redis, in-memory routing-changed flag removed), T5 anonymous objects replaced with typed dictionaries, T26 sentinel string.Empty defaults fixed to nullable, T23 DisposeAsync compliance, T21 hardcoded tunables moved to configuration schema. Second audit pass (2026-03-02): lease expiry enforcement via background timer in ServiceHealthMonitor, multi-version rollback (targetVersion field), log timestamp parsing fix (continuation lines inherit preceding timestamp), dead config cleanup (CacheTtlMinutes removed), two design considerations resolved.
+
+Remaining functional gaps: 3 of 4 container backends are stubs (Swarm, Kubernetes, Portainer -- only Compose is implemented). Processing pool management is missing auto-scaling and idle timeout enforcement (#550), and queue depth tracking (hardcoded 0). New design extensions tracked: deploy validation (#551), blue-green deployment (#552), canary deployments (#553), priority queue (#554).
+
+### Bug Count: 0
+
+No known bugs.
+
+### Top 3 Bugs
+
+*(None)*
+
+### Top 3 Enhancements
+
+| # | Enhancement | Description | Issue |
+|---|-------------|-------------|-------|
+| 1 | **Processing pool auto-scaling + idle timeout** | Scale-up/down thresholds and idle timeout are stored in pool config but no background service evaluates them. Pools cannot auto-scale -- only manual `ScalePool` API calls work. Critical for the 100k+ NPC target where actor pool demand is dynamic. | [#550](https://github.com/beyond-immersion/bannou-service/issues/550) |
 | 2 | **Kubernetes/Swarm/Portainer backends** | Only Docker Compose is implemented. Swarm, Kubernetes, and Portainer backends are stubs (interface methods return NotImplemented or minimal responses). Required for any production deployment beyond single-machine dev. | No issue |
-| 3 | **Lease expiry enforcement** | Expired processor leases are only reclaimed lazily during the next `AcquireProcessorAsync` call. No background timer proactively scans for expired leases. Pools with no acquire traffic will hold expired leases indefinitely, wasting worker containers. | No issue |
+| 3 | **Blue-green / canary deployments** | No mechanism for zero-downtime deployments. Blue-green (deploy alongside, switch routing atomically) and canary (percentage-based traffic routing with health monitoring) are both tracked as design extensions. | [#552](https://github.com/beyond-immersion/bannou-service/issues/552) / [#553](https://github.com/beyond-immersion/bannou-service/issues/553) |
 
 ### GH Issues
 
@@ -1065,27 +1064,25 @@ gh issue list --search "Orchestrator:" --state open
 
 **Layer**: L3 AppFeatures | **Deep Dive**: [ASSET.md](plugins/ASSET.md)
 
-### Production Readiness: 82%
+### Production Readiness: 92%
 
-Comprehensive and fully functional upload/download pipeline with pre-signed URL generation, bundle management (creation, versioning, soft-delete, resolution), streaming metabundle assembly, and a working audio processor (FFmpeg). However, two of three content processors (texture and model) are minimal stubs, two cleanup background tasks are missing (deleted bundle purge, ZIP cache cleanup), and two schema-defined events are never emitted. Core asset storage and bundle workflow is production-ready.
+L3-hardened. Full upload/download pipeline with pre-signed URL generation, bundle management (creation, versioning, soft-delete, resolution, transactional index updates), streaming metabundle assembly, working audio processor (FFmpeg), and all 10 schema-declared events now emitted. Two background cleanup workers implemented (BundleCleanupWorker for expired soft-deleted bundles, ZipCacheCleanupWorker for expired ZIP cache entries). Schema hardened: enum consolidation (8 inline enums → 3 consolidated), NRT compliance, T8 filler removal, validation keywords. Code hardened: T26 sentinel elimination, T21 config extraction, defensive bundle resolution, key format consistency. 117 tests passing, 0 warnings. Remaining: texture/model processors are validation-only stubs, no CDN integration.
 
-### Bug Count: 1
+### Bug Count: 0
+
+No known bugs.
 
 ### Top 3 Bugs
 
-| # | Bug | Description | Issue |
-|---|-----|-------------|-------|
-| 1 | **Schema-code event mismatch** | `asset.processing.queued` and `asset.ready` events declared in `asset-events.yaml` are never published anywhere in service code, misleading downstream consumers. | [#227](https://github.com/beyond-immersion/bannou-service/issues/227) |
-| 2 | *(No further bugs)* | | |
-| 3 | | | |
+*(None)*
 
 ### Top 3 Enhancements
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
 | 1 | **Texture and Model Processors** | Both registered processors contain only validation logic with no actual format conversion or optimization. The AudioProcessor is the only fully functional processor. | [#227](https://github.com/beyond-immersion/bannou-service/issues/227) |
-| 2 | **Deleted bundle cleanup background task** | `DeletedBundleRetentionDays` is configurable but no background task purges soft-deleted bundles past retention, causing indefinite accumulation. | No issue |
-| 3 | **CDN integration** | Extend `StoragePublicEndpoint` rewriting to support CDN-fronted download URLs with cache invalidation, reducing direct MinIO load for frequently accessed assets. | No issue |
+| 2 | **CDN integration** | Extend `StoragePublicEndpoint` rewriting to support CDN-fronted download URLs with cache invalidation, reducing direct MinIO load for frequently accessed assets. | No issue |
+| 3 | **Content-addressable deduplication** | Asset IDs are SHA-256 derived. Could detect duplicate uploads and deduplicate storage while maintaining separate metadata records. | No issue |
 
 ### GH Issues
 
@@ -1099,9 +1096,9 @@ gh issue list --search "Asset:" --state open
 
 **Layer**: L3 AppFeatures | **Deep Dive**: [DOCUMENTATION.md](plugins/DOCUMENTATION.md)
 
-### Production Readiness: 85%
+### Production Readiness: 92%
 
-All 27 endpoints are implemented with working full-text search (Redis Search enabled), CRUD operations, repository binding with git sync, archive create/restore, trashcan with TTL, and two background services (index rebuild, sync scheduler). Functionally complete for its core knowledge base use case. Minor gaps remain: voice summary generation is simple text extraction rather than NLG, search index retains stale terms on document update, and the archive system has a reliability gap when the Asset Service is unavailable.
+All 27 endpoints are implemented with working full-text search (Redis Search enabled), CRUD operations, repository binding with git sync, archive create/restore, trashcan with TTL, and two background services (index rebuild, sync scheduler). Functionally complete for its core knowledge base use case. Full TENET compliance audit completed (2026-03-01): schemas consolidated (5 inline enums, 2 duplicated event enums, 7 T8 filler properties removed, NRT compliance, validation keywords), code hardened (T25 type safety for DocumentCategory enum, T26 nullable sentinels, T21 config extraction, T16 event topic naming, T4/T2 soft dependency for IAssetClient, T6 null guards, T10 fire-and-forget safety). Minor gaps remain: voice summary generation is simple text extraction rather than NLG, search index retains stale terms on document update, and the archive system has a reliability gap when the Asset Service is unavailable.
 
 ### Bug Count: 0
 
@@ -1131,9 +1128,9 @@ gh issue list --search "Documentation:" --state open
 
 **Layer**: L3 AppFeatures | **Deep Dive**: [VOICE.md](plugins/VOICE.md)
 
-### Production Readiness: 87%
+### Production Readiness: 95%
 
-Core voice room lifecycle, P2P mesh topology, scaled SFU with automatic tier upgrade, WebRTC SDP signaling, broadcast consent flow with full privacy enforcement, participant heartbeat eviction, and all 11 API endpoints are fully implemented with no bugs. Production-ready for its current scope. Remaining gaps are primarily around RTP server pool allocation (single-server only), unused RTPEngine publish/subscribe methods, SIP credential expiration not being enforced server-side, and dependency on future services (lib-broadcast, lib-showtime).
+L3-hardened with two rounds of full TENET audit. Core voice room lifecycle, P2P mesh topology, scaled SFU with automatic tier upgrade, WebRTC SDP signaling, broadcast consent flow, participant heartbeat eviction, and all 11 API endpoints are fully implemented with no bugs. All read-modify-write paths protected by distributed locks (6 methods: CreateVoiceRoom, JoinVoiceRoom ad-hoc, RequestBroadcastConsent, RespondBroadcastConsent, StopBroadcast, LeaveVoiceRoom/DeleteVoiceRoom broadcast-stop). Schema NRT-compliant, enum casing standardized (PascalCase), dead Kamailio client code fully deleted, filler properties removed (T8), exception handling narrowed to ApiException for inter-service calls (T7), state stores constructor-cached (T6), fire-and-forget uses CancellationToken.None (T9), event topics follow T16 naming, DeleteVoiceRoomRequest.reason uses proper enum type (T25). 89 unit tests passing including lock failure path coverage. Remaining gaps are primarily around RTP server pool allocation (single-server only), unused RTPEngine publish/subscribe methods, SIP credential expiration not being enforced server-side, and dependency on future services (lib-broadcast, lib-showtime).
 
 ### Bug Count: 0
 
@@ -2199,7 +2196,7 @@ gh issue list --search "Arbitration:" --state open
 
 ### Production Readiness: 0%
 
-Entirely pre-implementation. The deep dive explicitly states "No schema, no code" and "Everything is unimplemented." A detailed architectural specification for the privacy boundary between external streaming platforms (Twitch, YouTube) and internal Bannou services, with 20 planned endpoints across 6 groups, 8 published events, 4 consumed events, 6 state stores, 30 configuration properties, 6 background workers, and a 5-phase implementation plan.
+Pre-implementation. Deep dive L3-audited (2026-03-01): ~20 design violations against current tenets and schema rules resolved in-document. Key fixes: `x-lifecycle` for all CRUD lifecycle events (platform-link, platform-session, broadcast-output), Redis-backed tracking ID mapping (T9 multi-instance safety), camera events replaced with API endpoints (T27 no orphaned events), empty-string config defaults changed to `nullable: true` (T26), codec configs changed to enums enforcing LGPL compliance (T25/T18), 8 background worker intervals promoted to config properties (T21), webhook endpoints documented as justified T15 exception with `x-permissions: []` and `x-controller-only: true`, `SentimentPulse.pulseId` renamed to `eventId`, `x-service-layer: AppFeatures` added to Phase 1 checklist, `x-references` block specified for lib-resource cleanup, `associate` endpoint clarified as opaque GUID storage (no L4 validation), `IBroadcastCoordinator` redesigned as non-authoritative local process cache with Redis as source of truth, `TokenRefreshWorker` distributed lock resolved, 2 missing consumed events added (`voice.participant.muted`, `session.disconnected`), 5 client events designed. 22 planned endpoints across 6 groups, 38 configuration properties, 7 state stores, 6 background workers, 5-phase implementation plan. No schema, no generated code, no service implementation exists.
 
 ### Bug Count: 0
 
@@ -2213,9 +2210,9 @@ No implementation exists to have bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Platform Session Management (Phase 3)** | Implement Twitch EventSub/YouTube webhook handlers, sentiment processor for converting raw chat to anonymous sentiment pulses, and tracked viewer management. | No issue |
-| 2 | **Broadcast Management (Phase 4)** | Implement FFmpeg-based RTMP broadcast coordination with fallback cascade, health monitoring, and voice room consent integration. | No issue |
-| 3 | **Sentiment Processing Sophistication** | Upgrade from keyword/emoji matching to lightweight NLP for more nuanced sentiment categorization via the swappable `ISentimentProcessor` interface. | No issue |
+| 1 | **Phase 1: Schema & Generation** | Create all schema files (api, events with x-lifecycle, configuration with 38 properties, client-events with 5 events), define AudioCodec/VideoCodec enums, add x-references, generate service code. Foundation for all subsequent phases. | No issue |
+| 2 | **Phase 3: Platform Session Management** | Implement Twitch EventSub/YouTube webhook handlers (x-controller-only, HMAC validation), sentiment processor (keyword/emoji matching via ISentimentProcessor), Redis-backed tracked viewer mapping, sentiment batch publisher. | No issue |
+| 3 | **Phase 4: Output Management** | Implement IBroadcastCoordinator as per-instance process supervisor with Redis-authoritative state, startup reconciliation, fallback cascade, camera announce/retire API, voice mute event handling, health monitor with stale record detection. | No issue |
 
 ### GH Issues
 

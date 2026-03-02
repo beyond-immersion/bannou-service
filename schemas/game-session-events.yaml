@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Game Session Service Events
   description: |
@@ -45,6 +45,9 @@ info:
     - topic: game-session.player-left
       event: GameSessionPlayerLeftEvent
       description: Published when a player leaves a game session
+    - topic: game-session.cancelled
+      event: GameSessionCancelledEvent
+      description: Published when a matchmade session is cancelled due to reservation expiry
     - topic: game-session.action.performed
       event: GameSessionActionPerformedEvent
       description: Published when a game action is performed in a session
@@ -138,6 +141,32 @@ components:
           nullable: true  # NRT: Optional property MUST be nullable
           description: Reason for leaving/being kicked (if applicable)
 
+    GameSessionCancelledEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a matchmade session is cancelled due to reservation expiry
+      required:
+        - eventId
+        - timestamp
+        - sessionId
+        - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the session was cancelled
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the cancelled game session
+        reason:
+          type: string
+          description: Reason for cancellation
+
     GameSessionActionPerformedEvent:
       type: object
       additionalProperties: false
@@ -146,6 +175,7 @@ components:
         - eventId
         - timestamp
         - sessionId
+        - accountId
         - actionId
         - actionType
       properties:
@@ -161,6 +191,10 @@ components:
           type: string
           format: uuid
           description: ID of the game session
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID of the player who performed the action
         actionId:
           type: string
           format: uuid

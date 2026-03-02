@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: License Service Events Lifecycle Events
   description: "Auto-generated lifecycle event schemas for license service.\nDO NOT EDIT - This file is completely overwritten
@@ -12,7 +12,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to license-board-template.created when a licenseboardtemplate is created
+      description: Published to license.board-template.created when a licenseboardtemplate is created
       required:
       - eventName
       - eventId
@@ -29,8 +29,8 @@ components:
       properties:
         eventName:
           type: string
-          default: license-board-template.created
-          description: 'Event type identifier: license-board-template.created'
+          default: license.board-template.created
+          description: 'Event type identifier: license.board-template.created'
         boardTemplateId: &id001
           type: string
           format: uuid
@@ -72,7 +72,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to license-board-template.updated when a licenseboardtemplate is updated
+      description: Published to license.board-template.updated when a licenseboardtemplate is updated
       required:
       - eventName
       - eventId
@@ -90,8 +90,8 @@ components:
       properties:
         eventName:
           type: string
-          default: license-board-template.updated
-          description: 'Event type identifier: license-board-template.updated'
+          default: license.board-template.updated
+          description: 'Event type identifier: license.board-template.updated'
         boardTemplateId: *id001
         gameServiceId: *id002
         name: *id003
@@ -112,7 +112,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to license-board-template.deleted when a licenseboardtemplate is deleted
+      description: Published to license.board-template.deleted when a licenseboardtemplate is deleted
       required:
       - eventName
       - eventId
@@ -129,8 +129,8 @@ components:
       properties:
         eventName:
           type: string
-          default: license-board-template.deleted
-          description: 'Event type identifier: license-board-template.deleted'
+          default: license.board-template.deleted
+          description: 'Event type identifier: license.board-template.deleted'
         boardTemplateId: *id001
         gameServiceId: *id002
         name: *id003
@@ -150,7 +150,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to license-board.created when a licenseboard is created
+      description: Published to license.board.created when a licenseboard is created
       required:
       - eventName
       - eventId
@@ -165,14 +165,14 @@ components:
       properties:
         eventName:
           type: string
-          default: license-board.created
-          description: 'Event type identifier: license-board.created'
+          default: license.board.created
+          description: 'Event type identifier: license.board.created'
         boardId: &id011
           type: string
           format: uuid
           description: "Unique board instance identifier"
         ownerType: &id012
-          type: string
+          $ref: ../common-api.yaml#/components/schemas/EntityType
           description: "Type of entity that owns this board"
         ownerId: &id013
           type: string
@@ -204,7 +204,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to license-board.updated when a licenseboard is updated
+      description: Published to license.board.updated when a licenseboard is updated
       required:
       - eventName
       - eventId
@@ -220,8 +220,8 @@ components:
       properties:
         eventName:
           type: string
-          default: license-board.updated
-          description: 'Event type identifier: license-board.updated'
+          default: license.board.updated
+          description: 'Event type identifier: license.board.updated'
         boardId: *id011
         ownerType: *id012
         ownerId: *id013
@@ -240,7 +240,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to license-board.deleted when a licenseboard is deleted
+      description: Published to license.board.deleted when a licenseboard is deleted
       required:
       - eventName
       - eventId
@@ -255,8 +255,8 @@ components:
       properties:
         eventName:
           type: string
-          default: license-board.deleted
-          description: 'Event type identifier: license-board.deleted'
+          default: license.board.deleted
+          description: 'Event type identifier: license.board.deleted'
         boardId: *id011
         ownerType: *id012
         ownerId: *id013

@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Game Session Client Events API
   description: |
@@ -28,7 +28,7 @@ components:
     # Session Lifecycle Events
     # ============================================
 
-    SessionStateChangedEvent:
+    SessionStateChangedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -47,7 +47,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game_session.state_changed"
+          default: "game-session.state-changed"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -73,7 +73,7 @@ components:
     # Player Events
     # ============================================
 
-    PlayerJoinedEvent:
+    PlayerJoinedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -90,7 +90,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game_session.player_joined"
+          default: "game-session.player-joined"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -108,7 +108,7 @@ components:
           nullable: true  # NRT: Optional property MUST be nullable
           description: Maximum allowed players
 
-    PlayerLeftEvent:
+    PlayerLeftClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -125,7 +125,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game_session.player_left"
+          default: "game-session.player-left"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -149,7 +149,7 @@ components:
           nullable: true
           description: New session owner if ownership transferred
 
-    PlayerKickedEvent:
+    PlayerKickedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -168,7 +168,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game_session.player_kicked"
+          default: "game-session.player-kicked"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -191,11 +191,39 @@ components:
           nullable: true
           description: Reason provided for the kick
 
+    SessionCancelledClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to players who claimed their reservation when a matchmade session
+        is cancelled due to not enough players joining before reservation expiry.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - sessionId
+        - reason
+      properties:
+        eventName:
+          type: string
+          default: "game-session.session-cancelled"
+          description: Fixed event type identifier
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the cancelled game session
+        reason:
+          type: string
+          description: Reason for cancellation
+
     # ============================================
     # Chat Events
     # ============================================
 
-    SessionChatReceivedEvent:
+    SessionChatReceivedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -216,7 +244,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game_session.chat_received"
+          default: "game-session.chat-received"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -249,7 +277,7 @@ components:
     # Game State Events
     # ============================================
 
-    GameStateUpdatedEvent:
+    GameStateUpdatedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -267,7 +295,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game_session.state_updated"
+          default: "game-session.state-updated"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -291,7 +319,7 @@ components:
           nullable: true  # NRT: Optional property MUST be nullable
           description: Monotonically increasing sequence for ordering state updates
 
-    GameActionResultEvent:
+    GameActionResultClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -311,7 +339,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game_session.action_result"
+          default: "game-session.action-result"
           description: Fixed event type identifier
         sessionId:
           type: string

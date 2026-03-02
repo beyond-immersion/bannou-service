@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -12,6 +13,7 @@ namespace BeyondImmersion.BannouService.Asset.Processing;
 public sealed class ModelProcessor : IAssetProcessor
 {
     private readonly IAssetStorageProvider _storageProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<ModelProcessor> _logger;
     private readonly AssetServiceConfiguration _configuration;
 
@@ -43,10 +45,13 @@ public sealed class ModelProcessor : IAssetProcessor
     /// </summary>
     public ModelProcessor(
         IAssetStorageProvider storageProvider,
+        ITelemetryProvider telemetryProvider,
         ILogger<ModelProcessor> logger,
         AssetServiceConfiguration configuration)
     {
         _storageProvider = storageProvider;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         _configuration = configuration;
     }
@@ -71,6 +76,7 @@ public sealed class ModelProcessor : IAssetProcessor
         AssetProcessingContext context,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "ModelProcessor.ValidateAsync");
         await Task.CompletedTask;
         var warnings = new List<string>();
 
@@ -82,7 +88,7 @@ public sealed class ModelProcessor : IAssetProcessor
         {
             return AssetValidationResult.Invalid(
                 $"Unsupported model format: {context.ContentType} ({context.Filename})",
-                ProcessingErrorCode.UnsupportedFormat);
+                ProcessorError.UnsupportedFormat);
         }
 
         // Check file size limits
@@ -91,11 +97,11 @@ public sealed class ModelProcessor : IAssetProcessor
         {
             return AssetValidationResult.Invalid(
                 $"File size {context.SizeBytes} exceeds maximum {maxSizeBytes} bytes",
-                ProcessingErrorCode.FileTooLarge);
+                ProcessorError.FileTooLarge);
         }
 
         // Check for potentially problematic scenarios
-        if (context.SizeBytes > 50 * 1024 * 1024) // > 50MB
+        if (context.SizeBytes > _configuration.ModelLargeFileWarningThresholdMb * 1024L * 1024L)
         {
             warnings.Add("Large model file may take significant time to process");
         }
@@ -107,7 +113,7 @@ public sealed class ModelProcessor : IAssetProcessor
             {
                 return AssetValidationResult.Invalid(
                     "Binary file requires a supported model extension (.gltf, .glb, .obj, .fbx)",
-                    ProcessingErrorCode.MissingExtension);
+                    ProcessorError.MissingExtension);
             }
             warnings.Add("Content type detected from extension rather than MIME type");
         }
@@ -125,6 +131,7 @@ public sealed class ModelProcessor : IAssetProcessor
         AssetProcessingContext context,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "ModelProcessor.ProcessAsync");
         var stopwatch = Stopwatch.StartNew();
 
         try
@@ -146,9 +153,9 @@ public sealed class ModelProcessor : IAssetProcessor
             }
 
             // Get processing options
-            var optimizeMeshes = GetProcessingOption(context, "optimize_meshes", true);
-            var generateLods = GetProcessingOption(context, "generate_lods", true);
-            var lodLevels = GetProcessingOption(context, "lod_levels", 3);
+            var optimizeMeshes = GetProcessingOption(context, "optimize_meshes", _configuration.ModelOptimizeMeshesDefault);
+            var generateLods = GetProcessingOption(context, "generate_lods", _configuration.ModelGenerateLodsDefault);
+            var lodLevels = GetProcessingOption(context, "lod_levels", _configuration.ModelLodLevels);
 
             // Pass-through processing: copy asset unchanged to processed location.
             // Processing options are recorded in metadata for future implementation.
@@ -200,7 +207,7 @@ public sealed class ModelProcessor : IAssetProcessor
 
             return AssetProcessingResult.Failed(
                 ex.Message,
-                ProcessingErrorCode.ProcessingError,
+                ProcessorError.ProcessingError,
                 stopwatch.ElapsedMilliseconds);
         }
     }

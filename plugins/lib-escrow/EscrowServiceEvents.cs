@@ -33,6 +33,7 @@ public partial class EscrowService
     /// <param name="evt">The contract fulfilled event.</param>
     internal async Task HandleContractFulfilledAsync(ContractFulfilledEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.HandleContractFulfilledAsync");
         try
         {
             var escrows = await AgreementStore.QueryAsync(
@@ -63,6 +64,7 @@ public partial class EscrowService
     /// <param name="evt">The contract terminated event.</param>
     internal async Task HandleContractTerminatedAsync(ContractTerminatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.HandleContractTerminatedAsync");
         try
         {
             var escrows = await AgreementStore.QueryAsync(
@@ -92,6 +94,7 @@ public partial class EscrowService
     /// </summary>
     private async Task TransitionToFinalizingForContractAsync(Guid escrowId, Guid contractId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.TransitionToFinalizingForContractAsync");
         var agreementKey = GetAgreementKey(escrowId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
@@ -126,6 +129,8 @@ public partial class EscrowService
             agreementModel.LastValidatedAt = now;
             agreementModel.ValidationFailures = null;
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty);
             if (saveResult == null)
             {
@@ -186,6 +191,7 @@ public partial class EscrowService
     /// </summary>
     private async Task RefundForContractTerminationAsync(Guid escrowId, Guid contractId, string? reason)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.RefundForContractTerminationAsync");
         var agreementKey = GetAgreementKey(escrowId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
@@ -230,6 +236,8 @@ public partial class EscrowService
             agreementModel.CompletedAt = now;
             agreementModel.ResolutionNotes = refundReason;
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty);
             if (saveResult == null)
             {

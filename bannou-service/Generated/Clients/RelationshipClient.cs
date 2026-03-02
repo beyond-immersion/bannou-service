@@ -2038,12 +2038,6 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
                         throw new BeyondImmersion.Bannou.Core.ApiException("Relationship type not found", status_, responseText_, headers_, null);
                     }
                     else
-                    if (status_ == 409)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Relationship type is already deprecated", status_, responseText_, headers_, null);
-                    }
-                    else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
                         throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
@@ -2126,12 +2120,6 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
                             throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 400)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Relationship type is not deprecated", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 404)

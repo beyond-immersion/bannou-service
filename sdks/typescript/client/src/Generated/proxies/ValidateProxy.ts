@@ -31,7 +31,7 @@ export class ValidateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async validateAbmlAsync(
+  async behaviorValidateAbmlAsync(
     request: Schemas['ValidateAbmlRequest'],
     channel: number = 0,
     timeout?: number

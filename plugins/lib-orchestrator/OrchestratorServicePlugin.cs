@@ -16,6 +16,8 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
     public override string PluginName => "orchestrator";
     public override string DisplayName => "Orchestrator Service";
 
+    private ITelemetryProvider? _telemetryProvider;
+
     /// <summary>
     /// Validate that this plugin should be loaded based on environment configuration.
     /// CRITICAL: Orchestrator can ONLY run on the default "bannou" app-id.
@@ -74,6 +76,10 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
     {
         if (!OnValidatePlugin()) return true;
 
+        // Resolve telemetry provider for span instrumentation in lifecycle methods
+        _telemetryProvider = ServiceProvider?.GetRequiredService<ITelemetryProvider>();
+        using var activity = _telemetryProvider?.StartActivity("bannou.orchestrator", "OrchestratorServicePlugin.OnStartAsync");
+
         Logger?.LogInformation("Starting Orchestrator service");
 
         // Initialize state manager (uses IStateStoreFactory from lib-state)
@@ -117,11 +123,14 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
     /// </summary>
     private async Task InitializeDefaultServiceRoutesAsync(IOrchestratorStateManager stateManager)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.orchestrator", "OrchestratorServicePlugin.InitializeDefaultServiceRoutesAsync");
         try
         {
             var appConfig = ServiceProvider?.GetRequiredService<AppConfiguration>()
                 ?? throw new InvalidOperationException("AppConfiguration not available during route initialization");
             var defaultAppId = appConfig.EffectiveAppId;
+            var orchestratorConfig = ServiceProvider?.GetService<OrchestratorServiceConfiguration>();
+            var defaultPort = orchestratorConfig?.DefaultServicePort ?? 80;
             var routesInitialized = 0;
 
             foreach (var serviceName in KnownRoutableServices)
@@ -131,8 +140,8 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
                 {
                     AppId = defaultAppId,
                     Host = defaultAppId,
-                    Port = 80,
-                    Status = "healthy",
+                    Port = defaultPort,
+                    Status = ServiceHealthStatus.Healthy,
                     LastUpdated = DateTimeOffset.UtcNow
                 };
 
@@ -155,12 +164,14 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
     protected override async Task OnRunningAsync()
     {
         if (!OnValidatePlugin()) return;
+        using var activity = _telemetryProvider?.StartActivity("bannou.orchestrator", "OrchestratorServicePlugin.OnRunningAsync");
         await base.OnRunningAsync();
     }
 
     protected override async Task OnShutdownAsync()
     {
         if (!OnValidatePlugin()) return;
+        using var activity = _telemetryProvider?.StartActivity("bannou.orchestrator", "OrchestratorServicePlugin.OnShutdownAsync");
         await base.OnShutdownAsync();
     }
 }

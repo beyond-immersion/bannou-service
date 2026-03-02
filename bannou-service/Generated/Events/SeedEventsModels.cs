@@ -66,7 +66,7 @@ public partial class SeedGrowthUpdatedEvent
     /// Seed type code for consumer filtering
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -74,7 +74,7 @@ public partial class SeedGrowthUpdatedEvent
     /// The domain that changed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("domain")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Domain { get; set; } = default!;
 
@@ -139,7 +139,7 @@ public partial class SeedPhaseChangedEvent
     /// Seed type code for consumer filtering
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -147,7 +147,7 @@ public partial class SeedPhaseChangedEvent
     /// Phase code before transition
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousPhase")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string PreviousPhase { get; set; } = default!;
 
@@ -155,7 +155,7 @@ public partial class SeedPhaseChangedEvent
     /// Phase code after transition
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newPhase")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string NewPhase { get; set; } = default!;
 
@@ -211,7 +211,7 @@ public partial class SeedCapabilityUpdatedEvent
     /// Seed type code for consumer filtering
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -219,12 +219,14 @@ public partial class SeedCapabilityUpdatedEvent
     /// New manifest version number
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Version { get; set; } = default!;
 
     /// <summary>
     /// Number of unlocked capabilities in the new manifest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("capabilityCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int CapabilityCount { get; set; } = default!;
 
 }
@@ -274,13 +276,14 @@ public partial class SeedActivatedEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Seed type code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -337,13 +340,14 @@ public partial class SeedArchivedEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Seed type code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -384,7 +388,7 @@ public partial class SeedBondFormedEvent
     /// Seed type the bond connects
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -394,6 +398,7 @@ public partial class SeedBondFormedEvent
     [System.Text.Json.Serialization.JsonPropertyName("participantSeedIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(2)]
     public System.Collections.Generic.ICollection<System.Guid> ParticipantSeedIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
 }

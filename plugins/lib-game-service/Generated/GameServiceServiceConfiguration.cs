@@ -51,4 +51,11 @@ namespace BeyondImmersion.BannouService.GameService;
 public class GameServiceServiceConfiguration : BaseServiceConfiguration
 {
 
+    /// <summary>
+    /// Maximum number of optimistic concurrency retry attempts for service list mutations
+    /// Environment variable: GAME_SERVICE_SERVICE_LIST_RETRY_ATTEMPTS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
+    public int ServiceListRetryAttempts { get; set; } = 3;
+
 }

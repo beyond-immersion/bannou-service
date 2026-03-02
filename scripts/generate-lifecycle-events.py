@@ -32,9 +32,11 @@ Event Pattern:
 - DeletedEvent adds: deletedReason (string?)
 
 Topic Pattern:
-- {entity}.created (e.g., account.created)
-- {entity}.updated (e.g., account.updated)
-- {entity}.deleted (e.g., account.deleted)
+- Without topic_prefix: {entity}.{action} (Pattern A, e.g., account.created)
+- With topic_prefix: depends on entity name vs prefix:
+  - entity equals prefix -> {entity}.{action} (Pattern A, e.g., seed.created)
+  - entity starts with prefix -> {prefix}.{rest}.{action} (Pattern C, e.g., transit.connection.created)
+  - otherwise -> {prefix}.{entity}.{action} (Pattern C, e.g., worldstate.calendar-template.created)
 
 Resource Mapping (optional):
 - If resource_mapping is defined, x-resource-mapping is emitted on generated events
@@ -133,7 +135,7 @@ def read_lifecycle_definitions(events_file: Path) -> Tuple[Dict[str, Any], str]:
     return schema['x-lifecycle'], title
 
 
-def generate_events(entity: str, config: dict) -> Dict[str, Any]:
+def generate_events(entity: str, config: dict, topic_prefix: str = None) -> Dict[str, Any]:
     """
     Generate Created, Updated, Deleted event schemas for an entity.
 
@@ -147,6 +149,7 @@ def generate_events(entity: str, config: dict) -> Dict[str, Any]:
     Args:
         entity: Entity name in PascalCase (e.g., "Account")
         config: Configuration dict with 'model', optional 'sensitive', and optional 'resource_mapping' keys
+        topic_prefix: Optional service namespace prefix for Pattern C topics (e.g., "transit", "worldstate")
 
     Returns:
         Dict with three event schema definitions
@@ -166,7 +169,21 @@ def generate_events(entity: str, config: dict) -> Dict[str, Any]:
         raise ValueError(f"No primary key defined for {entity}. Mark one field with 'primary: true'")
 
     # Generate topic name (kebab-case for topic, used in eventName enum)
-    topic_base = to_kebab_case(entity)
+    entity_kebab = to_kebab_case(entity)
+    if topic_prefix:
+        if entity_kebab == topic_prefix:
+            # Pattern A: entity IS the service (e.g., entity=Seed, prefix=seed)
+            topic_base = entity_kebab
+        elif entity_kebab.startswith(f'{topic_prefix}-'):
+            # Pattern C: strip service prefix, replace hyphen with dot
+            # e.g., prefix=transit, entity=TransitConnection -> transit.connection
+            topic_base = f'{topic_prefix}.{entity_kebab[len(topic_prefix)+1:]}'
+        else:
+            # Pattern C: entity doesn't start with service name, prepend
+            # e.g., prefix=worldstate, entity=CalendarTemplate -> worldstate.calendar-template
+            topic_base = f'{topic_prefix}.{entity_kebab}'
+    else:
+        topic_base = entity_kebab
 
     # Build model properties (excluding sensitive fields)
     model_props = {}
@@ -293,18 +310,26 @@ def generate_lifecycle_events_file(
     Returns:
         List of entity names that had events generated
     """
+    # Extract topic_prefix configuration (not an entity definition)
+    topic_prefix = None
+    if isinstance(lifecycle_defs.get('topic_prefix'), str):
+        topic_prefix = lifecycle_defs['topic_prefix']
+
     # Build all event schemas
     all_schemas = {}
     generated_entities = []
 
     for entity_name, config in lifecycle_defs.items():
-        events = generate_events(entity_name, config)
+        # Skip configuration keys that aren't entity definitions
+        if entity_name == 'topic_prefix':
+            continue
+        events = generate_events(entity_name, config, topic_prefix=topic_prefix)
         all_schemas.update(events)
         generated_entities.append(entity_name)
 
     # Build the complete OpenAPI document
     doc = {
-        'openapi': '3.0.3',
+        'openapi': '3.0.4',
         'info': {
             'title': f'{service_title} Lifecycle Events',
             'description': (

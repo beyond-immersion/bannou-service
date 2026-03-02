@@ -158,6 +158,32 @@ public enum ItemHandling
 #pragma warning restore CS1591
 
 /// <summary>
+/// Type of item change within an inventory container, used as discriminator for client events
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum InventoryItemChangeType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"placed")]
+    Placed = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"removed")]
+    Removed = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"moved")]
+    Moved = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"stacked")]
+    Stacked = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"split")]
+    Split = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Request to create a new container
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -216,30 +242,35 @@ public partial class CreateContainerRequest
     /// Maximum slots for slot-based containers
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxSlots")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? MaxSlots { get; set; } = default!;
 
     /// <summary>
     /// Maximum weight capacity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxWeight")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double? MaxWeight { get; set; } = default!;
 
     /// <summary>
     /// Internal grid width for grid containers
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gridWidth")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? GridWidth { get; set; } = default!;
 
     /// <summary>
     /// Internal grid height for grid containers
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gridHeight")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? GridHeight { get; set; } = default!;
 
     /// <summary>
     /// Maximum volume for volumetric containers
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxVolume")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double? MaxVolume { get; set; } = default!;
 
     /// <summary>
@@ -258,12 +289,14 @@ public partial class CreateContainerRequest
     /// Maximum nesting depth (null uses global default)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxNestingDepth")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? MaxNestingDepth { get; set; } = default!;
 
     /// <summary>
     /// Empty container weight
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("selfWeight")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double SelfWeight { get; set; } = 0D;
 
     /// <summary>
@@ -277,24 +310,28 @@ public partial class CreateContainerRequest
     /// Slots used in slot-based parent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotCost")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int SlotCost { get; set; } = 1;
 
     /// <summary>
     /// Width footprint in grid-based parent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentGridWidth")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? ParentGridWidth { get; set; } = default!;
 
     /// <summary>
     /// Height footprint in grid-based parent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentGridHeight")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? ParentGridHeight { get; set; } = default!;
 
     /// <summary>
     /// Volume footprint in volumetric parent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentVolume")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double? ParentVolume { get; set; } = default!;
 
     /// <summary>
@@ -328,7 +365,7 @@ public partial class CreateContainerRequest
     public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific container data
+    /// Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -403,24 +440,28 @@ public partial class GetOrCreateContainerRequest
     /// Default max slots if creating
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxSlots")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? MaxSlots { get; set; } = default!;
 
     /// <summary>
     /// Default max weight if creating
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxWeight")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double? MaxWeight { get; set; } = default!;
 
     /// <summary>
     /// Default grid width if creating
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gridWidth")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? GridWidth { get; set; } = default!;
 
     /// <summary>
     /// Default grid height if creating
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gridHeight")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? GridHeight { get; set; } = default!;
 
     /// <summary>
@@ -494,30 +535,35 @@ public partial class UpdateContainerRequest
     /// New max slots
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxSlots")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? MaxSlots { get; set; } = default!;
 
     /// <summary>
     /// New max weight
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxWeight")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double? MaxWeight { get; set; } = default!;
 
     /// <summary>
     /// New grid width
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gridWidth")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? GridWidth { get; set; } = default!;
 
     /// <summary>
     /// New grid height
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gridHeight")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? GridHeight { get; set; } = default!;
 
     /// <summary>
     /// New max volume
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxVolume")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
     public double? MaxVolume { get; set; } = default!;
 
     /// <summary>
@@ -545,7 +591,7 @@ public partial class UpdateContainerRequest
     public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
-    /// New metadata
+    /// New game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -790,10 +836,10 @@ public partial class ContainerResponse
     /// Container tags
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific data
+    /// Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -918,28 +964,14 @@ public partial class ListContainersResponse
 }
 
 /// <summary>
-/// Response after deleting container
+/// Response after deleting container. HTTP 200 confirms deletion.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteContainerResponse
 {
 
     /// <summary>
-    /// Whether deletion succeeded
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deleted")]
-    public bool Deleted { get; set; } = default!;
-
-    /// <summary>
-    /// Deleted container ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
-
-    /// <summary>
-    /// Number of items handled
+    /// Number of items handled during deletion
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("itemsHandled")]
     public int ItemsHandled { get; set; } = default!;
@@ -973,18 +1005,21 @@ public partial class AddItemRequest
     /// Specific slot (auto-assign if null)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotIndex")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int? SlotIndex { get; set; } = default!;
 
     /// <summary>
     /// Grid X position
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotX")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int? SlotX { get; set; } = default!;
 
     /// <summary>
     /// Grid Y position
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotY")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int? SlotY { get; set; } = default!;
 
     /// <summary>
@@ -1002,33 +1037,11 @@ public partial class AddItemRequest
 }
 
 /// <summary>
-/// Response after adding item
+/// Response after adding item. HTTP 200 confirms placement.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AddItemResponse
 {
-
-    /// <summary>
-    /// Whether add succeeded
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
-    /// Added item ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid InstanceId { get; set; } = default!;
-
-    /// <summary>
-    /// Container ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
 
     /// <summary>
     /// Assigned slot
@@ -1074,28 +1087,14 @@ public partial class RemoveItemRequest
 }
 
 /// <summary>
-/// Response after removing item
+/// Response after removing item. HTTP 200 confirms removal.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RemoveItemResponse
 {
 
     /// <summary>
-    /// Whether remove succeeded
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
-    /// Removed item ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid InstanceId { get; set; } = default!;
-
-    /// <summary>
-    /// Container removed from
+    /// Container the item was removed from
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousContainerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1131,18 +1130,21 @@ public partial class MoveItemRequest
     /// Target slot
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetSlotIndex")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int? TargetSlotIndex { get; set; } = default!;
 
     /// <summary>
     /// Target grid X
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetSlotX")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int? TargetSlotX { get; set; } = default!;
 
     /// <summary>
     /// Target grid Y
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetSlotY")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int? TargetSlotY { get; set; } = default!;
 
     /// <summary>
@@ -1154,41 +1156,19 @@ public partial class MoveItemRequest
 }
 
 /// <summary>
-/// Response after moving item
+/// Response after moving item. HTTP 200 confirms move.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MoveItemResponse
 {
 
     /// <summary>
-    /// Whether move succeeded
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
-    /// Moved item ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid InstanceId { get; set; } = default!;
-
-    /// <summary>
-    /// Previous container
+    /// Container the item was moved from
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceContainerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SourceContainerId { get; set; } = default!;
-
-    /// <summary>
-    /// New container
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("targetContainerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TargetContainerId { get; set; } = default!;
 
     /// <summary>
     /// New slot
@@ -1242,20 +1222,14 @@ public partial class TransferItemRequest
 }
 
 /// <summary>
-/// Response after transfer
+/// Response after transfer. HTTP 200 confirms transfer.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TransferItemResponse
 {
 
     /// <summary>
-    /// Whether transfer succeeded
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
-    /// Transferred item ID
+    /// Transferred item ID (for partial transfers, this is the new split item)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1263,20 +1237,12 @@ public partial class TransferItemResponse
     public System.Guid InstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Previous container
+    /// Container the item was transferred from
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceContainerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SourceContainerId { get; set; } = default!;
-
-    /// <summary>
-    /// New container
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("targetContainerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TargetContainerId { get; set; } = default!;
 
     /// <summary>
     /// Amount transferred
@@ -1312,42 +1278,31 @@ public partial class SplitStackRequest
     /// Slot for new stack
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetSlotIndex")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int? TargetSlotIndex { get; set; } = default!;
 
     /// <summary>
     /// Grid X for new stack
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetSlotX")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int? TargetSlotX { get; set; } = default!;
 
     /// <summary>
     /// Grid Y for new stack
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetSlotY")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int? TargetSlotY { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Response after splitting
+/// Response after splitting. HTTP 200 confirms split.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SplitStackResponse
 {
-
-    /// <summary>
-    /// Whether split succeeded
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
-    /// Original stack ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("originalInstanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid OriginalInstanceId { get; set; } = default!;
 
     /// <summary>
     /// New stack ID
@@ -1397,25 +1352,11 @@ public partial class MergeStacksRequest
 }
 
 /// <summary>
-/// Response after merging
+/// Response after merging. HTTP 200 confirms merge.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MergeStacksResponse
 {
-
-    /// <summary>
-    /// Whether merge succeeded
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
-    /// Merged stack ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("targetInstanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TargetInstanceId { get; set; } = default!;
 
     /// <summary>
     /// New quantity
@@ -1495,13 +1436,14 @@ public partial class QueryItemsRequest
     /// Pagination offset
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Offset { get; set; } = 0;
 
     /// <summary>
     /// Max results
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
-    [System.ComponentModel.DataAnnotations.Range(int.MinValue, 200)]
+    [System.ComponentModel.DataAnnotations.Range(1, 200)]
     public int Limit { get; set; } = 50;
 
 }

@@ -20,11 +20,11 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 21 | Character encounter tracking service for memorable interacti... |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 12 | Historical event participation and backstory management for ... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 12 | Machine-readable personality traits for NPC behavior decisio... |
-| [Chat Service API](#chat) | `client.Chat` | 30 | Typed message channel service (L1 AppFoundation) providing u... |
-| [Collection Service API](#collection) | `client.Collection` | 20 | Universal content unlock and archive system for collectible ... |
+| [Chat Service API](#chat) | `client.Chat` | 32 | Typed message channel service (L1 AppFoundation) providing u... |
+| [Collection Service API](#collection) | `client.Collection` | 21 | Universal content unlock and archive system for collectible ... |
 | [Bannou Connect API](#connect) | `client.Connect` | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
-| [Currency Service API](#currency) | `client.Currency` | 32 | Multi-currency management service for game economies. |
+| [Currency Service API](#currency) | `client.Currency` | 33 | Multi-currency management service for game economies. |
 | [Bannou Divine Service API](#divine) | `client.Divine` | 22 | Pantheon management service (L4 GameFeatures) for deity enti... |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
 | [Escrow Service API](#escrow) | `client.Escrow` | 22 | Full-custody orchestration layer for multi-party asset excha... |
@@ -60,6 +60,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Storyline Composer API](#storyline) | `client.Storyline` | 15 | Seeded narrative generation from compressed archives using t... |
 | [Bannou Subscription Service API](#subscription) | `client.Subscription` | 7 | Manages user subscriptions to game services. Tracks which ac... |
 | [Bannou Telemetry Service API](#telemetry) | `client.Telemetry` | 2 | Unified observability plugin providing distributed tracing, ... |
+| [Transit Service API](#transit) | `client.Transit` | 33 | Geographic connectivity graph, transit mode registry, and jo... |
 | [Bannou Voice Service API](#voice) | `client.Voice` | 11 | Voice room coordination service. Internal service accessed b... |
 | [Bannou Website Service API](#website) | `client.Website` | 12 | Public-facing website service for registration, information,... |
 | [Worldstate Service API](#worldstate) | `client.Worldstate` | 18 | Per-realm game time authority, calendar system, and temporal... |
@@ -581,6 +582,8 @@ Typed message channel service (L1 AppFoundation) providing universal communicati
 | `BanparticipantAsync` | `BanParticipantRequest` | `ChatRoomResponse` | Ban a participant from the room |
 | `UnbanparticipantAsync` | `UnbanParticipantRequest` | `ChatRoomResponse` | Unban a participant |
 | `MuteparticipantAsync` | `MuteParticipantRequest` | `ChatRoomResponse` | Mute a participant |
+| `UnmuteparticipantAsync` | `UnmuteParticipantRequest` | `ChatRoomResponse` | Unmute a participant |
+| `ChangeparticipantroleAsync` | `ChangeParticipantRoleRequest` | `ChatRoomResponse` | Change a participant's role |
 | `SendmessageAsync` | `SendMessageRequest` | `ChatMessageResponse` | Send a message to a room |
 | `SendmessagebatchAsync` | `SendMessageBatchRequest` | `SendMessageBatchResponse` | Send multiple messages |
 | `GetMessagehistoryAsync` | `MessageHistoryRequest` | `MessageHistoryResponse` | Get message history |
@@ -646,6 +649,12 @@ Universal content unlock and archive system for collectible content.
 | `UpdateEntrytemplateAsync` | `UpdateEntryTemplateRequest` | `EntryTemplateResponse` | Update an entry template |
 | `DeleteEntrytemplateAsync` | `DeleteEntryTemplateRequest` | `EntryTemplateResponse` | Delete an entry template |
 | `SeedentrytemplatesAsync` | `SeedEntryTemplatesRequest` | `SeedEntryTemplatesResponse` | Bulk seed entry templates |
+
+### Resource Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Cleanup all collections for a deleted character |
 
 ---
 
@@ -802,6 +811,7 @@ Multi-currency management service for game economies.
 | `DebitcurrencyAsync` | `DebitCurrencyRequest` | `DebitCurrencyResponse` | Debit currency from a wallet (sink operation) |
 | `TransfercurrencyAsync` | `TransferCurrencyRequest` | `TransferCurrencyResponse` | Transfer currency between wallets |
 | `BatchcreditcurrencyAsync` | `BatchCreditRequest` | `BatchCreditResponse` | Credit multiple wallets in one call |
+| `BatchdebitcurrencyAsync` | `BatchDebitRequest` | `BatchDebitResponse` | Debit multiple wallets in one call |
 
 ### Conversion
 
@@ -1692,7 +1702,7 @@ Central intelligence for Bannou environment management and service orchestration
 | `UpdateTopologyAsync` | `TopologyUpdateRequest` | `TopologyUpdateResponse` | Update service topology without full redeploy |
 | `RequestcontainerrestartAsync` | `ContainerRestartRequestBody` | `ContainerRestartResponse` | Request container restart (self-service pattern) |
 | `GetContainerstatusAsync` | `GetContainerStatusRequest` | `ContainerStatus` | Get container health and restart history |
-| `RollbackconfigurationAsync` | `ConfigRollbackRequest` | `ConfigRollbackResponse` | Rollback to previous configuration |
+| `RollbackconfigurationAsync` | `ConfigRollbackRequest` | `ConfigRollbackResponse` | Rollback to a previous configuration version |
 | `GetConfigversionAsync` | `GetConfigVersionRequest` | `ConfigVersionResponse` | Get current configuration version and metadata |
 | `AcquireprocessorAsync` | `AcquireProcessorRequest` | `AcquireProcessorResponse` | Acquire a processor from a pool |
 | `ReleaseprocessorAsync` | `ReleaseProcessorRequest` | `ReleaseProcessorResponse` | Release a processor back to the pool |
@@ -2329,6 +2339,77 @@ Unified observability plugin providing distributed tracing, metrics, and log cor
 
 ---
 
+## Transit Service API {#transit}
+
+**Proxy**: `client.Transit` | **Version**: 1.0.0
+
+Geographic connectivity graph, transit mode registry, and journey tracking service (L2 GameFoundation). Provides edges (connections between locatio...
+
+### Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbylocationEventAsync` | `CleanupByLocationRequest` | *(fire-and-forget)* | Clean up transit data for a deleted location |
+| `CleanupbycharacterEventAsync` | `CleanupByCharacterRequest` | *(fire-and-forget)* | Clean up transit data for a deleted character |
+
+### Connection
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateConnectionAsync` | `CreateConnectionRequest` | `ConnectionResponse` | Create a connection between two locations |
+| `GetConnectionAsync` | `GetConnectionRequest` | `ConnectionResponse` | Get a connection by ID or code |
+| `QueryconnectionsAsync` | `QueryConnectionsRequest` | `QueryConnectionsResponse` | Query connections by location, terrain, mode, or status |
+| `UpdateConnectionAsync` | `UpdateConnectionRequest` | `ConnectionResponse` | Update a connection's properties |
+| `UpdateConnectionstatusAsync` | `UpdateConnectionStatusRequest` | `ConnectionResponse` | Transition a connection's operational status with optimistic concurrency |
+| `DeleteConnectionAsync` | `DeleteConnectionRequest` | `DeleteConnectionResponse` | Delete a connection between locations |
+| `BulkseedconnectionsAsync` | `BulkSeedConnectionsRequest` | `BulkSeedConnectionsResponse` | Seed connections from configuration |
+
+### Discovery
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RevealdiscoveryAsync` | `RevealDiscoveryRequest` | `RevealDiscoveryResponse` | Reveal a discoverable connection to an entity |
+| `ListDiscoveriesAsync` | `ListDiscoveriesRequest` | `ListDiscoveriesResponse` | List connections an entity has discovered |
+| `CheckdiscoveriesAsync` | `CheckDiscoveriesRequest` | `CheckDiscoveriesResponse` | Check if an entity has discovered specific connections |
+
+### Journey
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateJourneyAsync` | `CreateJourneyRequest` | `JourneyResponse` | Plan a journey (status preparing) |
+| `DepartjourneyAsync` | `DepartJourneyRequest` | `JourneyResponse` | Start a prepared journey |
+| `ResumejourneyAsync` | `ResumeJourneyRequest` | `JourneyResponse` | Resume an interrupted journey |
+| `AdvancejourneyAsync` | `AdvanceJourneyRequest` | `JourneyResponse` | Mark arrival at next waypoint |
+| `AdvancebatchjourneysAsync` | `AdvanceBatchRequest` | `AdvanceBatchResponse` | Advance multiple journeys in a single call |
+| `ArrivejourneyAsync` | `ArriveJourneyRequest` | `JourneyResponse` | Force-arrive a journey at destination |
+| `InterruptjourneyAsync` | `InterruptJourneyRequest` | `JourneyResponse` | Interrupt an active journey |
+| `AbandonjourneyAsync` | `AbandonJourneyRequest` | `JourneyResponse` | Abandon a journey |
+| `GetJourneyAsync` | `GetJourneyRequest` | `JourneyResponse` | Get a journey by ID |
+| `QueryjourneysbyconnectionAsync` | `QueryJourneysByConnectionRequest` | `ListJourneysResponse` | List active journeys on a specific connection |
+| `ListJourneysAsync` | `ListJourneysRequest` | `ListJourneysResponse` | List journeys for an entity or within a realm |
+| `QueryjourneyarchiveAsync` | `QueryJourneyArchiveRequest` | `ListJourneysResponse` | Query archived journeys from MySQL historical store |
+
+### Mode
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RegisterModeAsync` | `RegisterModeRequest` | `ModeResponse` | Register a new transit mode type |
+| `GetModeAsync` | `GetModeRequest` | `ModeResponse` | Get a transit mode by code |
+| `ListModesAsync` | `ListModesRequest` | `ListModesResponse` | List all registered transit modes |
+| `UpdateModeAsync` | `UpdateModeRequest` | `ModeResponse` | Update a transit mode's properties |
+| `DeprecatemodeAsync` | `DeprecateModeRequest` | `ModeResponse` | Deprecate a transit mode |
+| `UndeprecatemodeAsync` | `UndeprecateModeRequest` | `ModeResponse` | Reverse deprecation of a transit mode |
+| `DeleteModeAsync` | `DeleteModeRequest` | `DeleteModeResponse` | Delete a deprecated transit mode |
+| `CheckmodeavailabilityAsync` | `CheckModeAvailabilityRequest` | `CheckModeAvailabilityResponse` | Check which transit modes an entity can currently use |
+
+### Route
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CalculaterouteAsync` | `CalculateRouteRequest` | `CalculateRouteResponse` | Calculate route options between two locations |
+
+---
+
 ## Bannou Voice Service API {#voice}
 
 **Proxy**: `client.Voice` | **Version**: 2.0.0
@@ -2446,8 +2527,8 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 
 ## Summary
 
-- **Total services**: 54
-- **Total methods**: 848
+- **Total services**: 55
+- **Total methods**: 885
 
 ---
 

@@ -61,6 +61,19 @@ Generic save/load system (L4 GameFeatures) for game state persistence with polym
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `ownerType` | A (Entity Reference) | `EntityType` enum | Identifies what kind of entity owns a save slot (account, character, session, realm). All valid values are first-class Bannou entities. Recently migrated from a service-local `OwnerType` enum to the shared `EntityType` enum from `common-api.yaml`; the old enum has been removed. |
+| `category` | C (System State/Mode) | `SaveCategory` enum | Save behavior classification (`QUICK_SAVE`, `AUTO_SAVE`, `MANUAL_SAVE`, `CHECKPOINT`, `STATE_SNAPSHOT`). Determines retention policy, max versions, and cleanup behavior. Finite set of system-defined save modes. |
+| `compressionType` | C (System State/Mode) | `CompressionType` enum | Compression algorithm (`NONE`, `GZIP`, `BROTLI`). Technical configuration for how save data is stored. |
+| `conflictResolution` | C (System State/Mode) | `ConflictResolution` enum | Import conflict strategy (`SKIP`, `OVERWRITE`, `RENAME`, `FAIL`). Controls how slot name collisions are resolved during import. |
+| `deltaAlgorithm` | C (System State/Mode) | `DeltaAlgorithm` enum | Delta computation algorithm (`JSON_PATCH`, `BSDIFF`, `XDELTA`). Technical configuration for incremental save format. |
+| `previousState` / `newState` (on `CircuitBreakerStateChangedEvent`) | C (System State/Mode) | Inline enum (`CLOSED`, `OPEN`, `HALF_OPEN`) | Circuit breaker state machine transitions for the storage upload pipeline. |
+
+---
+
 ## Events
 
 ### Published Events

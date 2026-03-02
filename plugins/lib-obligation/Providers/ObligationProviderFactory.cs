@@ -19,15 +19,18 @@ namespace BeyondImmersion.BannouService.Obligation.Providers;
 public sealed class ObligationProviderFactory : IVariableProviderFactory
 {
     private readonly IStateStore<ObligationManifestModel> _cacheStore;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new obligation provider factory.
     /// </summary>
     /// <param name="stateStoreFactory">State store factory for accessing the obligation cache.</param>
-    public ObligationProviderFactory(IStateStoreFactory stateStoreFactory)
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
+    public ObligationProviderFactory(IStateStoreFactory stateStoreFactory, ITelemetryProvider telemetryProvider)
     {
         _cacheStore = stateStoreFactory.GetStore<ObligationManifestModel>(
             StateStoreDefinitions.ObligationCache);
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -36,6 +39,7 @@ public sealed class ObligationProviderFactory : IVariableProviderFactory
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.obligation", "ObligationProviderFactory.CreateAsync");
         if (!characterId.HasValue)
         {
             return ObligationProvider.Empty;

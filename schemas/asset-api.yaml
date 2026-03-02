@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Asset Service API
   version: 1.0.0
@@ -713,10 +713,11 @@ components:
 
     GameRealm:
       type: string
+      minLength: 1
       description: |
         Realm stub name (lowercase string identifier) that this asset belongs to.
         Use the realm's stub_name property (e.g., "realm-1", "realm-2") from the Realm service.
-        Use "shared" for assets that are available across all realms.
+        Null for assets that are available across all realms.
 
     ProcessingStatus:
       type: string
@@ -754,6 +755,145 @@ components:
 
     # NOTE: AssetIdStyle enum removed - validation style is configuration, not API
 
+    DeletionStatus:
+      type: string
+      enum:
+      - deleted
+      - permanently_deleted
+      description: |
+        Result of a deletion operation:
+        - deleted: Soft-deleted (within retention period, can be restored)
+        - permanently_deleted: Permanently removed (unrecoverable)
+
+    BundleSortField:
+      type: string
+      enum:
+      - created_at
+      - updated_at
+      - name
+      - size
+      description: Fields available for sorting bundle query results
+
+    SortOrder:
+      type: string
+      enum:
+      - asc
+      - desc
+      description: Sort direction for query results
+
+    StorageProvider:
+      type: string
+      enum:
+      - minio
+      - s3
+      - r2
+      - azure
+      - filesystem
+      description: Storage backend type for asset persistence
+
+    ProcessingMode:
+      type: string
+      enum:
+      - api
+      - worker
+      - both
+      description: |
+        Service mode for asset processing:
+        - api: Only handle API requests (no processing)
+        - worker: Only process queued jobs (no API)
+        - both: Handle API requests and process jobs
+
+    AudioOutputFormat:
+      type: string
+      enum:
+      - mp3
+      - opus
+      - aac
+      description: Default audio transcoding output format
+
+    ProcessingType:
+      type: string
+      enum:
+      - mipmaps
+      - lod_generation
+      - transcode
+      - compression
+      - validation
+      - behavior_compile
+      description: Type of processing to be performed on an asset
+
+    UploadErrorCode:
+      type: string
+      enum:
+      - VALIDATION_FAILED
+      - HASH_MISMATCH
+      - SIZE_EXCEEDED
+      - STORAGE_ERROR
+      - TIMEOUT
+      description: Error codes for asset upload failures
+
+    ProcessingErrorCode:
+      type: string
+      enum:
+      - PROCESSING_FAILED
+      - INVALID_FORMAT
+      - RESOURCE_EXHAUSTED
+      - TIMEOUT
+      - PROCESSOR_UNAVAILABLE
+      description: Error codes for asset processing failures
+
+    ValidationErrorCode:
+      type: string
+      enum:
+      - INVALID_ARCHIVE
+      - MISSING_MANIFEST
+      - INVALID_MANIFEST
+      - HASH_MISMATCH
+      - PATH_TRAVERSAL
+      - SIZE_EXCEEDED
+      - DUPLICATE_ASSET_ID
+      - MISSING_DEPENDENCY
+      description: Error codes for bundle validation failures
+
+    MetabundleErrorCode:
+      type: string
+      enum:
+      - SOURCE_BUNDLE_NOT_FOUND
+      - SOURCE_BUNDLE_NOT_READY
+      - STANDALONE_ASSET_NOT_FOUND
+      - STANDALONE_ASSET_NOT_READY
+      - REALM_MISMATCH
+      - ASSET_CONFLICT
+      - STORAGE_ERROR
+      - TIMEOUT
+      - CANCELLED
+      - INTERNAL_ERROR
+      description: Error codes for metabundle creation failures
+
+    ProcessingOutput:
+      type: object
+      additionalProperties: false
+      description: Information about a generated derivative asset from processing
+      required:
+        - outputType
+      properties:
+        outputType:
+          type: string
+          description: Type of output (e.g., "mipmap_level_1", "lod_2")
+        key:
+          type: string
+          nullable: true
+          description: Storage key for the output (service-to-service context)
+        assetId:
+          type: string
+          nullable: true
+          description: Asset identifier for the generated output (client context)
+        size:
+          type: integer
+          format: int64
+          nullable: true
+          description: Size of the output in bytes
+
     # ==========================================================================
     # Upload Request/Response
     # ==========================================================================
@@ -770,23 +910,30 @@ components:
       properties:
         owner:
           type: string
+          minLength: 1
           description: |
             Owner of this asset operation. NOT a session ID.
             For user-initiated uploads: the accountId (UUID format).
             For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
         filename:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Original filename with extension
         size:
           type: integer
           format: int64
+          minimum: 1
           description: File size in bytes
         contentType:
           type: string
+          minLength: 1
           description: MIME content type (e.g., image/png, model/gltf-binary)
         metadata:
-          $ref: '#/components/schemas/AssetMetadataInput'
-          description: Optional metadata for asset categorization
+          allOf:
+          - $ref: '#/components/schemas/AssetMetadataInput'
+          nullable: true
+          description: Optional metadata for asset categorization (null to skip)
 
     UploadResponse:
       description: Response containing pre-signed URL and configuration for uploading an asset
@@ -816,7 +963,8 @@ components:
           type: object
           additionalProperties:
             type: string
-          description: Headers the client must include when uploading to the pre-signed URL
+          nullable: true
+          description: Headers the client must include when uploading to the pre-signed URL (null if no special headers needed)
 
     CompleteUploadRequest:
       description: Request to finalize an upload and trigger asset processing
@@ -855,6 +1003,10 @@ components:
       description: Configuration for multipart uploads of large files
       type: object
       additionalProperties: false
+      required:
+      - required
+      - partSize
+      - maxParts
       properties:
         required:
           type: boolean
@@ -907,16 +1059,21 @@ components:
       description: User-provided metadata for asset categorization
       properties:
         assetType:
-          $ref: '#/components/schemas/AssetType'
-          description: Type classification for the asset
+          allOf:
+          - $ref: '#/components/schemas/AssetType'
+          nullable: true
+          description: Type classification for the asset (null to omit)
         realm:
-          $ref: '#/components/schemas/GameRealm'
-          description: Game realm the asset belongs to
+          allOf:
+          - $ref: '#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm the asset belongs to (null for unscoped)
         tags:
           type: array
           items:
             type: string
-          description: Searchable tags for the asset
+          nullable: true
+          description: Searchable tags for the asset (null to omit)
 
     AssetMetadata:
       type: object
@@ -957,8 +1114,10 @@ components:
           $ref: '#/components/schemas/AssetType'
           description: Type classification for the asset
         realm:
-          $ref: '#/components/schemas/GameRealm'
-          description: Game realm the asset belongs to
+          allOf:
+            - $ref: '#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm the asset belongs to. Null for cross-realm assets.
         tags:
           type: array
           items:
@@ -993,11 +1152,13 @@ components:
       properties:
         assetId:
           type: string
-          description: Asset identifier
+          minLength: 1
+          maxLength: 256
+          description: Asset identifier ({content-type-prefix}-{hash-prefix} format, e.g. application-f7a0c71edb19)
         version:
           type: string
-          default: latest
-          description: Version ID or 'latest'
+          nullable: true
+          description: Version ID to retrieve (null for latest version)
 
     AssetWithDownloadUrl:
       description: Asset metadata with optional pre-signed download URL
@@ -1054,7 +1215,9 @@ components:
       properties:
         assetId:
           type: string
-          description: Asset identifier to delete
+          minLength: 1
+          maxLength: 256
+          description: Asset identifier to delete ({content-type-prefix}-{hash-prefix} format)
         versionId:
           type: string
           nullable: true
@@ -1066,12 +1229,8 @@ components:
       type: object
       additionalProperties: false
       required:
-      - assetId
       - versionsDeleted
       properties:
-        assetId:
-          type: string
-          description: Deleted asset identifier
         versionsDeleted:
           type: integer
           description: Number of versions deleted
@@ -1089,14 +1248,18 @@ components:
       properties:
         assetId:
           type: string
-          description: Asset identifier to list versions for
+          minLength: 1
+          maxLength: 256
+          description: Asset identifier to list versions for ({content-type-prefix}-{hash-prefix} format)
         limit:
           type: integer
           default: 50
+          minimum: 1
           description: Maximum number of versions to return
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Number of versions to skip for pagination
 
     AssetVersionList:
@@ -1105,15 +1268,11 @@ components:
       additionalProperties: false
       # NRT: Response properties server always sets (Rule 4)
       required:
-      - assetId
       - versions
       - total
       - limit
       - offset
       properties:
-        assetId:
-          type: string
-          description: Asset identifier
         versions:
           type: array
           items:
@@ -1135,14 +1294,14 @@ components:
       additionalProperties: false
       # NRT: Response properties server always sets (Rule 4)
       required:
-      - versionId
       - createdAt
       - size
       - isArchived
       properties:
         versionId:
           type: string
-          description: Unique version identifier
+          nullable: true
+          description: Unique version identifier. Null when object storage versioning is not enabled.
         createdAt:
           type: string
           format: date-time
@@ -1186,10 +1345,12 @@ components:
         limit:
           type: integer
           default: 50
+          minimum: 1
           description: Maximum number of results to return
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Number of results to skip for pagination
 
     AssetSearchResult:
@@ -1239,6 +1400,8 @@ components:
             For service-initiated bundles: the service name (e.g., "orchestrator").
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
         version:
           type: string
@@ -1250,9 +1413,10 @@ components:
           nullable: true
           description: |
             Game realm this bundle belongs to.
-            Defaults to 'shared' if not specified.
+            Null for realm-agnostic bundles available across all realms.
         assetIds:
           type: array
+          minItems: 1
           items:
             type: string
           description: List of asset IDs to include in the bundle
@@ -1279,12 +1443,7 @@ components:
           type: string
           description: Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
         status:
-          type: string
-          enum:
-          - queued
-          - processing
-          - ready
-          - failed
+          $ref: '#/components/schemas/BundleStatus'
           description: Bundle creation status
         estimatedSize:
           type: integer
@@ -1300,6 +1459,8 @@ components:
       properties:
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier to retrieve
         format:
           $ref: '#/components/schemas/BundleFormat'
@@ -1546,12 +1707,7 @@ components:
             Use /bundles/job/status to poll for completion, or wait for
             MetabundleCreationCompleteEvent via WebSocket.
         status:
-          type: string
-          enum:
-          - queued
-          - processing
-          - ready
-          - failed
+          $ref: '#/components/schemas/BundleStatus'
           description: |
             Creation status.
             - queued: Job accepted for async processing (poll with jobId)
@@ -1576,9 +1732,10 @@ components:
           description: Total size in bytes
         sourceBundles:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/SourceBundleReference'
-          description: Provenance data for the metabundle
+          description: Provenance data for the metabundle (null when status is not ready)
         conflicts:
           type: array
           nullable: true
@@ -1621,13 +1778,7 @@ components:
           type: string
           description: Human-readable metabundle identifier being created
         status:
-          type: string
-          enum:
-          - queued
-          - processing
-          - ready
-          - failed
-          - cancelled
+          $ref: '#/components/schemas/BundleStatus'
           description: |
             Current job status.
             - queued: Waiting for processing resources
@@ -1666,7 +1817,8 @@ components:
             $ref: '#/components/schemas/SourceBundleReference'
           description: Provenance data (when ready)
         errorCode:
-          type: string
+          allOf:
+            - $ref: '#/components/schemas/MetabundleErrorCode'
           nullable: true
           description: Error code (when status is 'failed')
         errorMessage:
@@ -1707,29 +1859,15 @@ components:
       description: Result of job cancellation attempt
       required:
       - jobId
-      - cancelled
       - status
       properties:
         jobId:
           type: string
           format: uuid
           description: Job identifier
-        cancelled:
-          type: boolean
-          description: Whether the job was successfully cancelled
         status:
-          type: string
-          enum:
-          - queued
-          - processing
-          - ready
-          - failed
-          - cancelled
+          $ref: '#/components/schemas/BundleStatus'
           description: Current job status after cancellation attempt
-        message:
-          type: string
-          nullable: true
-          description: Additional context about the cancellation result
 
     # ==========================================================================
     # Bundle Resolution
@@ -1745,6 +1883,7 @@ components:
       properties:
         assetIds:
           type: array
+          minItems: 1
           items:
             type: string
           description: Platform asset IDs to resolve
@@ -1928,15 +2067,11 @@ components:
       additionalProperties: false
       description: Bundles containing the requested asset
       required:
-      - assetId
       - bundles
       - total
       - limit
       - offset
       properties:
-        assetId:
-          type: string
-          description: The queried asset ID
         bundles:
           type: array
           items:
@@ -1961,7 +2096,6 @@ components:
       - bundleType
       - version
       - assetCount
-      - realm
       properties:
         bundleId:
           type: string
@@ -1981,8 +2115,10 @@ components:
           nullable: true
           description: Bundle file size
         realm:
-          $ref: '#/components/schemas/GameRealm'
-          description: Game realm
+          allOf:
+            - $ref: '#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm. Null for cross-realm bundles.
         createdAt:
           type: string
           format: date-time
@@ -2002,6 +2138,8 @@ components:
       properties:
         assetIds:
           type: array
+          minItems: 1
+          maxItems: 100
           items:
             type: string
           description: Asset IDs to retrieve (max 100)
@@ -2036,16 +2174,18 @@ components:
     BundleStatus:
       type: string
       enum:
-      - pending
+      - queued
       - processing
       - ready
       - failed
+      - cancelled
       description: |
         Bundle processing status:
-        - pending: Bundle creation is pending/queued
+        - queued: Bundle creation is queued for processing
         - processing: Bundle is being processed
         - ready: Bundle is ready for download
         - failed: Bundle creation failed
+        - cancelled: Bundle creation was cancelled
 
     BundleLifecycle:
       type: string
@@ -2068,7 +2208,6 @@ components:
       - bundleType
       - version
       - metadataVersion
-      - realm
       - status
       - assetCount
       - createdAt
@@ -2098,8 +2237,10 @@ components:
           nullable: true
           description: Owner account ID or service name (null for system-owned bundles)
         realm:
-          $ref: '#/components/schemas/GameRealm'
-          description: Game realm this bundle belongs to
+          allOf:
+            - $ref: '#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm this bundle belongs to. Null for cross-realm bundles.
         tags:
           type: object
           additionalProperties:
@@ -2141,6 +2282,8 @@ components:
       properties:
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier to update
         name:
           type: string
@@ -2178,14 +2321,10 @@ components:
       additionalProperties: false
       description: Result of bundle update operation
       required:
-      - bundleId
       - version
       - previousVersion
       - changes
       properties:
-        bundleId:
-          type: string
-          description: Human-readable bundle identifier that was updated
         version:
           type: integer
           description: New version number after update
@@ -2211,6 +2350,8 @@ components:
       properties:
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier to delete
         permanent:
           type: boolean
@@ -2226,18 +2367,11 @@ components:
       additionalProperties: false
       description: Result of bundle deletion
       required:
-      - bundleId
       - status
       - deletedAt
       properties:
-        bundleId:
-          type: string
-          description: Human-readable bundle identifier that was deleted
         status:
-          type: string
-          enum:
-          - deleted
-          - permanently_deleted
+          $ref: '#/components/schemas/DeletionStatus'
           description: Deletion status
         deletedAt:
           type: string
@@ -2258,6 +2392,8 @@ components:
       properties:
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier to restore
         reason:
           type: string
@@ -2269,21 +2405,12 @@ components:
       additionalProperties: false
       description: Result of bundle restoration
       required:
-      - bundleId
       - status
-      - restoredAt
       - restoredFromVersion
       properties:
-        bundleId:
-          type: string
-          description: Human-readable bundle identifier that was restored
         status:
-          type: string
-          description: Current bundle status (should be "active")
-        restoredAt:
-          type: string
-          format: date-time
-          description: When the bundle was restored
+          $ref: '#/components/schemas/BundleLifecycle'
+          description: Current bundle lifecycle status after restoration (should be "active")
         restoredFromVersion:
           type: integer
           description: Version number the bundle was restored from
@@ -2345,19 +2472,13 @@ components:
           nullable: true
           description: Filter by bundle type (source or metabundle)
         sortField:
-          type: string
-          enum:
-          - created_at
-          - updated_at
-          - name
-          - size
+          allOf:
+          - $ref: '#/components/schemas/BundleSortField'
           nullable: true
           description: Field to sort by (default created_at)
         sortOrder:
-          type: string
-          enum:
-          - asc
-          - desc
+          allOf:
+          - $ref: '#/components/schemas/SortOrder'
           nullable: true
           description: Sort order (default desc)
         limit:
@@ -2407,14 +2528,18 @@ components:
       properties:
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier to get history for
         limit:
           type: integer
           default: 50
+          minimum: 1
           description: Maximum versions to return
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Pagination offset
 
     ListBundleVersionsResponse:

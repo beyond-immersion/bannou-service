@@ -31,7 +31,7 @@ export class SpeciesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSpeciesAsync(
+  async speciesGetSpeciesAsync(
     request: Schemas['GetSpeciesRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class SpeciesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSpeciesByCodeAsync(
+  async speciesGetSpeciesByCodeAsync(
     request: Schemas['GetSpeciesByCodeRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class SpeciesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listSpeciesAsync(
+  async speciesListSpeciesAsync(
     request: Schemas['ListSpeciesRequest'],
     channel: number = 0,
     timeout?: number
@@ -91,7 +91,7 @@ export class SpeciesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listSpeciesByRealmAsync(
+  async speciesListSpeciesByRealmAsync(
     request: Schemas['ListSpeciesByRealmRequest'],
     channel: number = 0,
     timeout?: number

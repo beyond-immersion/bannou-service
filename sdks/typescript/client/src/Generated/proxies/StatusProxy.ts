@@ -31,7 +31,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createStatusTemplateAsync(
+  async statusCreateStatusTemplateAsync(
     request: Schemas['CreateStatusTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getStatusTemplateAsync(
+  async statusGetStatusTemplateAsync(
     request: Schemas['GetStatusTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getStatusTemplateByCodeAsync(
+  async statusGetStatusTemplateByCodeAsync(
     request: Schemas['GetStatusTemplateByCodeRequest'],
     channel: number = 0,
     timeout?: number
@@ -85,7 +85,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listStatusTemplatesAsync(
+  async statusListStatusTemplatesAsync(
     request: Schemas['ListStatusTemplatesRequest'],
     channel: number = 0,
     timeout?: number
@@ -103,7 +103,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateStatusTemplateAsync(
+  async statusUpdateStatusTemplateAsync(
     request: Schemas['UpdateStatusTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -121,7 +121,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async seedStatusTemplatesAsync(
+  async statusSeedStatusTemplatesAsync(
     request: Schemas['SeedStatusTemplatesRequest'],
     channel: number = 0,
     timeout?: number
@@ -139,7 +139,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async grantStatusAsync(
+  async statusGrantStatusAsync(
     request: Schemas['GrantStatusRequest'],
     channel: number = 0,
     timeout?: number
@@ -159,7 +159,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async removeStatusAsync(
+  async statusRemoveStatusAsync(
     request: Schemas['RemoveStatusRequest'],
     channel: number = 0,
     timeout?: number
@@ -177,7 +177,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async removeBySourceAsync(
+  async statusRemoveBySourceAsync(
     request: Schemas['RemoveBySourceRequest'],
     channel: number = 0,
     timeout?: number
@@ -195,7 +195,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async removeByCategoryAsync(
+  async statusRemoveByCategoryAsync(
     request: Schemas['RemoveByCategoryRequest'],
     channel: number = 0,
     timeout?: number
@@ -213,7 +213,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async hasStatusAsync(
+  async statusHasStatusAsync(
     request: Schemas['HasStatusRequest'],
     channel: number = 0,
     timeout?: number
@@ -233,7 +233,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listStatusesAsync(
+  async statusListStatusesAsync(
     request: Schemas['ListStatusesRequest'],
     channel: number = 0,
     timeout?: number
@@ -253,7 +253,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getStatusAsync(
+  async statusGetStatusAsync(
     request: Schemas['GetStatusRequest'],
     channel: number = 0,
     timeout?: number
@@ -273,7 +273,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getEffectsAsync(
+  async statusGetEffectsAsync(
     request: Schemas['GetEffectsRequest'],
     channel: number = 0,
     timeout?: number
@@ -293,7 +293,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSeedEffectsAsync(
+  async statusGetSeedEffectsAsync(
     request: Schemas['GetSeedEffectsRequest'],
     channel: number = 0,
     timeout?: number
@@ -311,7 +311,7 @@ export class StatusProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async cleanupByOwnerAsync(
+  async statusCleanupByOwnerAsync(
     request: Schemas['CleanupByOwnerRequest'],
     channel: number = 0,
     timeout?: number

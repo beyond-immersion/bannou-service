@@ -240,6 +240,19 @@ public interface ICurrencyController : BeyondImmersion.BannouService.Controllers
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchCreditResponse>> BatchCreditCurrencyAsync(BatchCreditRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Debit multiple wallets in one call
+    /// </summary>
+
+    /// <remarks>
+    /// Debits currency from multiple wallets in one call. Each operation is independent;
+    /// <br/>failures do not rollback others. For atomic multi-wallet operations, use lib-escrow.
+    /// </remarks>
+
+    /// <returns>Batch debit processed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchDebitResponse>> BatchDebitCurrencyAsync(BatchDebitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Calculate conversion without executing
     /// </summary>
 
@@ -1274,6 +1287,55 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:currency/batch-credit",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Debit multiple wallets in one call
+    /// </summary>
+    /// <remarks>
+    /// Debits currency from multiple wallets in one call. Each operation is independent;
+    /// <br/>failures do not rollback others. For atomic multi-wallet operations, use lib-escrow.
+    /// </remarks>
+    /// <returns>Batch debit processed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("currency/batch-debit")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchDebitResponse>> BatchDebitCurrency([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BatchDebitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.BatchDebitCurrency",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/batch-debit");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.BatchDebitCurrencyAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:currency/batch-debit");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CurrencyController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:currency/batch-debit");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "currency",
+                "BatchDebitCurrency",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:currency/batch-debit",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

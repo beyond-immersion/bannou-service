@@ -18,6 +18,7 @@ public class CircuitBreakerTests
     private readonly Mock<IStateStoreFactory> _stateStoreFactoryMock;
     private readonly Mock<IMessageBus> _messageBusMock;
     private readonly Mock<ILogger<StorageCircuitBreaker>> _loggerMock;
+    private readonly Mock<ITelemetryProvider> _telemetryProviderMock;
     private readonly SaveLoadServiceConfiguration _configuration;
 
     public CircuitBreakerTests()
@@ -25,6 +26,7 @@ public class CircuitBreakerTests
         _stateStoreFactoryMock = new Mock<IStateStoreFactory>();
         _messageBusMock = new Mock<IMessageBus>();
         _loggerMock = new Mock<ILogger<StorageCircuitBreaker>>();
+        _telemetryProviderMock = new Mock<ITelemetryProvider>();
 
         _configuration = new SaveLoadServiceConfiguration();
 
@@ -77,6 +79,7 @@ public class CircuitBreakerTests
             _stateStoreFactoryMock.Object,
             _messageBusMock.Object,
             _configuration,
-            _loggerMock.Object);
+            _loggerMock.Object,
+            _telemetryProviderMock.Object);
     }
 }

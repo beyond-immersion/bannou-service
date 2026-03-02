@@ -193,12 +193,23 @@ await _messageBus.PublishAsync("account.created", new { AccountId = id });
 ```yaml
 EventName:
   type: object
+  additionalProperties: false
+  description: Event published when an entity action occurs
   required: [eventId, timestamp, entityId]
   properties:
-    eventId: { type: string, format: uuid }
-    timestamp: { type: string, format: date-time }
-    entityId: { type: string }
-    # ... entity-specific fields
+    eventId:
+      type: string
+      format: uuid
+      description: Unique event identifier
+    timestamp:
+      type: string
+      format: date-time
+      description: When the event occurred
+    entityId:
+      type: string
+      format: uuid
+      description: Entity this event pertains to
+    # ... entity-specific fields with descriptions
 ```
 
 ### Topic Naming Convention

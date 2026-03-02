@@ -152,7 +152,7 @@ public partial class CreateRealmRequest
     /// Category for grouping (e.g., "MAIN", "SPECIAL")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    [System.ComponentModel.DataAnnotations.StringLength(50)]
+    [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
     public string? Category { get; set; } = default!;
 
     /// <summary>
@@ -214,7 +214,7 @@ public partial class UpdateRealmRequest
     /// Category for grouping
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    [System.ComponentModel.DataAnnotations.StringLength(50)]
+    [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
     public string? Category { get; set; } = default!;
 
     /// <summary>
@@ -270,11 +270,13 @@ public partial class DeprecateRealmRequest
     public System.Guid RealmId { get; set; } = default!;
 
     /// <summary>
-    /// Optional reason for deprecation (for audit purposes)
+    /// Reason for deprecation (mandatory for Category A world-building definitions per FOUNDATION TENETS)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? Reason { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
+    public string Reason { get; set; } = default!;
 
 }
 
@@ -389,13 +391,17 @@ public partial class RealmsExistBatchResponse
     /// List of realm IDs that do not exist (empty if all exist)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("invalidRealmIds")]
-    public System.Collections.Generic.ICollection<System.Guid> InvalidRealmIds { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> InvalidRealmIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
     /// List of realm IDs that exist but are deprecated (empty if none deprecated)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedRealmIds")]
-    public System.Collections.Generic.ICollection<System.Guid> DeprecatedRealmIds { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> DeprecatedRealmIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
 }
 
@@ -430,19 +436,22 @@ public partial class SeedRealm
 {
 
     /// <summary>
-    /// Unique code for the realm
+    /// Unique code for the realm (e.g., "REALM_1", "REALM_2")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[A-Z][A-Z0-9_]*$")]
     public string Code { get; set; } = default!;
 
     /// <summary>
     /// Display name for the realm
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -457,12 +466,14 @@ public partial class SeedRealm
     /// Detailed description of the realm and its characteristics
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.StringLength(2000)]
     public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Category for grouping realms (e.g., "MAIN", "SPECIAL", "TEST")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
     public string? Category { get; set; } = default!;
 
     /// <summary>
@@ -709,22 +720,6 @@ public partial class MergeRealmsRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MergeRealmsResponse
 {
-
-    /// <summary>
-    /// ID of the source realm that was merged from
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sourceRealmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SourceRealmId { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the target realm that entities were merged into
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("targetRealmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TargetRealmId { get; set; } = default!;
 
     /// <summary>
     /// Number of species successfully added to target realm and removed from source

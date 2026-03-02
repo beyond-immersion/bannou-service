@@ -95,7 +95,7 @@ public partial class GrowthPhaseDefinition
     /// Machine-readable phase identifier (e.g., "nascent", "awakening").
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("phaseCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string PhaseCode { get; set; } = default!;
 
@@ -103,7 +103,7 @@ public partial class GrowthPhaseDefinition
     /// Human-readable phase label.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string DisplayName { get; set; } = default!;
 
@@ -111,19 +111,8 @@ public partial class GrowthPhaseDefinition
     /// Minimum total growth to enter this phase.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("minTotalGrowth")]
+    [System.ComponentModel.DataAnnotations.Range(0F, float.MaxValue)]
     public float MinTotalGrowth { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -138,7 +127,7 @@ public partial class CapabilityRule
     /// Unique capability identifier (e.g., "combat.stance").
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("capabilityCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string CapabilityCode { get; set; } = default!;
 
@@ -146,7 +135,7 @@ public partial class CapabilityRule
     /// Which growth domain this capability maps to.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("domain")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Domain { get; set; } = default!;
 
@@ -154,6 +143,7 @@ public partial class CapabilityRule
     /// Minimum domain depth to unlock this capability.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("unlockThreshold")]
+    [System.ComponentModel.DataAnnotations.Range(0F, float.MaxValue)]
     public float UnlockThreshold { get; set; } = default!;
 
     /// <summary>
@@ -161,21 +151,9 @@ public partial class CapabilityRule
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fidelityFormula")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string FidelityFormula { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -191,7 +169,7 @@ public partial class CollectionGrowthMapping
     /// Collection type code to match against (e.g., "bestiary", "music_library").
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string CollectionType { get; set; } = default!;
 
@@ -203,18 +181,6 @@ public partial class CollectionGrowthMapping
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.MinLength(1)]
     public System.Collections.Generic.ICollection<CollectionDomainMapping> DomainMappings { get; set; } = new System.Collections.ObjectModel.Collection<CollectionDomainMapping>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -231,7 +197,7 @@ public partial class CollectionDomainMapping
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tagPrefix")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string TagPrefix { get; set; } = default!;
 
@@ -239,6 +205,7 @@ public partial class CollectionDomainMapping
     /// Base growth amount to record when a tag matches this prefix.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("baseAmount")]
+    [System.ComponentModel.DataAnnotations.Range(0F, float.MaxValue)]
     public float BaseAmount { get; set; } = default!;
 
     /// <summary>
@@ -247,18 +214,6 @@ public partial class CollectionDomainMapping
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("discoveryBonusPerLevel")]
     public float? DiscoveryBonusPerLevel { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -278,19 +233,19 @@ public partial class CreateSeedRequest
     public System.Guid OwnerId { get; set; } = default!;
 
     /// <summary>
-    /// Entity type discriminator (e.g., "account", "actor", "realm", "character", "relationship").
-    /// <br/>
+    /// Owner entity type discriminator.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Registered seed type code (e.g., "guardian", "dungeon_core").
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -312,18 +267,6 @@ public partial class CreateSeedRequest
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -340,18 +283,6 @@ public partial class GetSeedRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SeedId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -376,7 +307,8 @@ public partial class GetSeedsByOwnerRequest
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Filter by seed type.
@@ -389,18 +321,6 @@ public partial class GetSeedsByOwnerRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("includeArchived")]
     public bool IncludeArchived { get; set; } = false;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -421,7 +341,8 @@ public partial class ListSeedsRequest
     /// Filter by owner type.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    public string? OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType? OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Filter by game service.
@@ -446,25 +367,15 @@ public partial class ListSeedsRequest
     /// Page number (1-based).
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
     /// <summary>
     /// Number of results per page.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
+    [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 50;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -495,18 +406,6 @@ public partial class UpdateSeedRequest
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -523,18 +422,6 @@ public partial class ActivateSeedRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SeedId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -553,18 +440,6 @@ public partial class ArchiveSeedRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SeedId { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -581,18 +456,6 @@ public partial class GetGrowthRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SeedId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -616,7 +479,7 @@ public partial class RecordGrowthRequest
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("domain")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Domain { get; set; } = default!;
 
@@ -624,13 +487,14 @@ public partial class RecordGrowthRequest
     /// Amount of growth to add.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    [System.ComponentModel.DataAnnotations.Range(0F, float.MaxValue)]
     public float Amount { get; set; } = default!;
 
     /// <summary>
     /// Identifier of the contributing service (e.g., "character-encounter").
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("source")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Source { get; set; } = default!;
 
@@ -639,18 +503,6 @@ public partial class RecordGrowthRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceEventId")]
     public System.Guid? SourceEventId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -675,27 +527,16 @@ public partial class RecordGrowthBatchRequest
     [System.Text.Json.Serialization.JsonPropertyName("entries")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
     public System.Collections.Generic.ICollection<GrowthEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<GrowthEntry>();
 
     /// <summary>
     /// Identifier of the contributing service.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("source")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Source { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -710,7 +551,7 @@ public partial class GrowthEntry
     /// Dot-separated domain path.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("domain")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Domain { get; set; } = default!;
 
@@ -718,19 +559,8 @@ public partial class GrowthEntry
     /// Growth amount to add.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    [System.ComponentModel.DataAnnotations.Range(0F, float.MaxValue)]
     public float Amount { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -749,18 +579,6 @@ public partial class GetGrowthPhaseRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SeedId { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -778,18 +596,6 @@ public partial class GetCapabilityManifestRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SeedId { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -803,7 +609,7 @@ public partial class RegisterSeedTypeRequest
     /// Unique code for this seed type (e.g., "guardian", "dungeon_core").
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -817,7 +623,7 @@ public partial class RegisterSeedTypeRequest
     /// Human-readable name.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string DisplayName { get; set; } = default!;
 
@@ -825,7 +631,7 @@ public partial class RegisterSeedTypeRequest
     /// Description of what this seed type represents.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Description { get; set; } = default!;
 
@@ -833,15 +639,18 @@ public partial class RegisterSeedTypeRequest
     /// Maximum seeds of this type per owner entity.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxPerOwner")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int MaxPerOwner { get; set; } = default!;
 
     /// <summary>
     /// Entity types that can own seeds of this type.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("allowedOwnerTypes")]
+    // TODO(system.text.json): Add string enum item converter
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> AllowedOwnerTypes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    public System.Collections.Generic.ICollection<EntityType> AllowedOwnerTypes { get; set; } = new System.Collections.ObjectModel.Collection<EntityType>();
 
     /// <summary>
     /// Ordered growth phase definitions with thresholds.
@@ -849,6 +658,7 @@ public partial class RegisterSeedTypeRequest
     [System.Text.Json.Serialization.JsonPropertyName("growthPhases")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
     public System.Collections.Generic.ICollection<GrowthPhaseDefinition> GrowthPhases { get; set; } = new System.Collections.ObjectModel.Collection<GrowthPhaseDefinition>();
 
     /// <summary>
@@ -856,6 +666,7 @@ public partial class RegisterSeedTypeRequest
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bondCardinality")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int BondCardinality { get; set; } = default!;
 
     /// <summary>
@@ -897,18 +708,6 @@ public partial class RegisterSeedTypeRequest
     [System.Text.Json.Serialization.JsonPropertyName("collectionGrowthMappings")]
     public System.Collections.Generic.ICollection<CollectionGrowthMapping>? CollectionGrowthMappings { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -922,7 +721,7 @@ public partial class GetSeedTypeRequest
     /// The seed type code.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -931,18 +730,6 @@ public partial class GetSeedTypeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
     public System.Guid? GameServiceId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -965,18 +752,6 @@ public partial class ListSeedTypesRequest
     [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
     public bool IncludeDeprecated { get; set; } = false;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -990,7 +765,7 @@ public partial class UpdateSeedTypeRequest
     /// The seed type to update.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -1056,18 +831,6 @@ public partial class UpdateSeedTypeRequest
     [System.Text.Json.Serialization.JsonPropertyName("collectionGrowthMappings")]
     public System.Collections.Generic.ICollection<CollectionGrowthMapping>? CollectionGrowthMappings { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1081,7 +844,7 @@ public partial class DeprecateSeedTypeRequest
     /// The seed type to deprecate.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -1095,8 +858,10 @@ public partial class DeprecateSeedTypeRequest
     /// Optional reason for deprecation (for audit purposes).
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? Reason { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
+    public string Reason { get; set; } = default!;
 
 }
 
@@ -1111,7 +876,7 @@ public partial class UndeprecateSeedTypeRequest
     /// The seed type to restore.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -1134,7 +899,7 @@ public partial class DeleteSeedTypeRequest
     /// The seed type to delete.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -1169,18 +934,6 @@ public partial class InitiateBondRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TargetSeedId { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1206,18 +959,6 @@ public partial class ConfirmBondRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ConfirmingSeedId { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1234,18 +975,6 @@ public partial class GetBondRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid BondId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1264,18 +993,6 @@ public partial class GetBondForSeedRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SeedId { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1292,18 +1009,6 @@ public partial class GetBondPartnersRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SeedId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1336,13 +1041,14 @@ public partial class SeedResponse
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Registered seed type code.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -1364,7 +1070,7 @@ public partial class SeedResponse
     /// Current computed growth phase code.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("growthPhase")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string GrowthPhase { get; set; } = default!;
 
@@ -1384,7 +1090,7 @@ public partial class SeedResponse
     /// Human-readable name.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string DisplayName { get; set; } = default!;
 
@@ -1396,18 +1102,6 @@ public partial class SeedResponse
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SeedStatus Status { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1430,19 +1124,8 @@ public partial class ListSeedsResponse
     /// Total matching seeds across all pages.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int TotalCount { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1476,18 +1159,6 @@ public partial class GrowthResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.IDictionary<string, float> Domains { get; set; } = new System.Collections.Generic.Dictionary<string, float>();
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1509,7 +1180,7 @@ public partial class GrowthPhaseResponse
     /// Current phase code.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("phaseCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string PhaseCode { get; set; } = default!;
 
@@ -1517,7 +1188,7 @@ public partial class GrowthPhaseResponse
     /// Current phase display name.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string DisplayName { get; set; } = default!;
 
@@ -1538,18 +1209,6 @@ public partial class GrowthPhaseResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nextPhaseThreshold")]
     public float? NextPhaseThreshold { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1572,7 +1231,7 @@ public partial class CapabilityManifestResponse
     /// The seed type for consumer interpretation.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -1588,6 +1247,7 @@ public partial class CapabilityManifestResponse
     /// Monotonically increasing version number.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Version { get; set; } = default!;
 
     /// <summary>
@@ -1597,18 +1257,6 @@ public partial class CapabilityManifestResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<Capability> Capabilities { get; set; } = new System.Collections.ObjectModel.Collection<Capability>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1624,7 +1272,7 @@ public partial class Capability
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("capabilityCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string CapabilityCode { get; set; } = default!;
 
@@ -1632,7 +1280,7 @@ public partial class Capability
     /// Growth domain this capability maps to.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("domain")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Domain { get; set; } = default!;
 
@@ -1641,6 +1289,7 @@ public partial class Capability
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fidelity")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
     public float Fidelity { get; set; } = default!;
 
     /// <summary>
@@ -1648,18 +1297,6 @@ public partial class Capability
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("unlocked")]
     public bool Unlocked { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1674,7 +1311,7 @@ public partial class SeedTypeResponse
     /// Unique type code.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -1688,7 +1325,7 @@ public partial class SeedTypeResponse
     /// Human-readable name.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string DisplayName { get; set; } = default!;
 
@@ -1696,7 +1333,7 @@ public partial class SeedTypeResponse
     /// Type description.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Description { get; set; } = default!;
 
@@ -1710,9 +1347,10 @@ public partial class SeedTypeResponse
     /// Allowed owner entity types.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("allowedOwnerTypes")]
+    // TODO(system.text.json): Add string enum item converter
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> AllowedOwnerTypes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    public System.Collections.Generic.ICollection<EntityType> AllowedOwnerTypes { get; set; } = new System.Collections.ObjectModel.Collection<EntityType>();
 
     /// <summary>
     /// Phase definitions with thresholds.
@@ -1782,18 +1420,6 @@ public partial class SeedTypeResponse
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string? DeprecationReason { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1810,18 +1436,6 @@ public partial class ListSeedTypesResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<SeedTypeResponse> SeedTypes { get; set; } = new System.Collections.ObjectModel.Collection<SeedTypeResponse>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1844,7 +1458,7 @@ public partial class BondResponse
     /// Seed type this bond connects.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -1854,6 +1468,7 @@ public partial class BondResponse
     [System.Text.Json.Serialization.JsonPropertyName("participants")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(2)]
     public System.Collections.Generic.ICollection<BondParticipant> Participants { get; set; } = new System.Collections.ObjectModel.Collection<BondParticipant>();
 
     /// <summary>
@@ -1877,25 +1492,15 @@ public partial class BondResponse
     /// Grows with shared growth. Consumer-interpreted.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bondStrength")]
+    [System.ComponentModel.DataAnnotations.Range(0F, float.MaxValue)]
     public float BondStrength { get; set; } = default!;
 
     /// <summary>
     /// Total accumulated shared growth.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sharedGrowth")]
+    [System.ComponentModel.DataAnnotations.Range(0F, float.MaxValue)]
     public float SharedGrowth { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -1928,18 +1533,6 @@ public partial class BondParticipant
     [System.Text.Json.Serialization.JsonPropertyName("role")]
     public string? Role { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -1964,18 +1557,6 @@ public partial class BondPartnersResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<PartnerSummary> Partners { get; set; } = new System.Collections.ObjectModel.Collection<PartnerSummary>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -2008,13 +1589,14 @@ public partial class PartnerSummary
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Partner's current growth phase.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("growthPhase")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string GrowthPhase { get; set; } = default!;
 
@@ -2026,18 +1608,6 @@ public partial class PartnerSummary
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SeedStatus Status { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 

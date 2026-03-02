@@ -58,12 +58,6 @@ public class OrchestratorServiceConfiguration : BaseServiceConfiguration
     public bool SecureWebsocket { get; set; } = true;
 
     /// <summary>
-    /// Cache TTL in minutes for orchestrator data
-    /// Environment variable: ORCHESTRATOR_CACHE_TTL_MINUTES
-    /// </summary>
-    public int CacheTtlMinutes { get; set; } = 5;
-
-    /// <summary>
     /// Default container orchestration backend when not specified in deploy request
     /// Environment variable: ORCHESTRATOR_DEFAULT_BACKEND
     /// </summary>
@@ -73,12 +67,14 @@ public class OrchestratorServiceConfiguration : BaseServiceConfiguration
     /// Service heartbeat timeout in seconds
     /// Environment variable: ORCHESTRATOR_HEARTBEAT_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int HeartbeatTimeoutSeconds { get; set; } = 90;
 
     /// <summary>
     /// Time in minutes before a service is marked as degraded
     /// Environment variable: ORCHESTRATOR_DEGRADATION_THRESHOLD_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int DegradationThresholdMinutes { get; set; } = 5;
 
     /// <summary>
@@ -97,7 +93,15 @@ public class OrchestratorServiceConfiguration : BaseServiceConfiguration
     /// Portainer endpoint ID
     /// Environment variable: ORCHESTRATOR_PORTAINER_ENDPOINT_ID
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int PortainerEndpointId { get; set; } = 1;
+
+    /// <summary>
+    /// HTTP request timeout in seconds for Portainer API calls
+    /// Environment variable: ORCHESTRATOR_PORTAINER_REQUEST_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int PortainerRequestTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// Docker image name for deployed Bannou containers
@@ -145,12 +149,14 @@ public class OrchestratorServiceConfiguration : BaseServiceConfiguration
     /// OpenResty port for cache invalidation calls
     /// Environment variable: ORCHESTRATOR_OPENRESTY_PORT
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 65535)]
     public int OpenRestyPort { get; set; } = 80;
 
     /// <summary>
     /// Timeout in seconds for OpenResty HTTP requests
     /// Environment variable: ORCHESTRATOR_OPENRESTY_REQUEST_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int OpenRestyRequestTimeoutSeconds { get; set; } = 5;
 
     /// <summary>
@@ -169,43 +175,99 @@ public class OrchestratorServiceConfiguration : BaseServiceConfiguration
     /// TTL in seconds for service heartbeat entries in state store
     /// Environment variable: ORCHESTRATOR_HEARTBEAT_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int HeartbeatTtlSeconds { get; set; } = 90;
 
     /// <summary>
     /// TTL in seconds for service routing entries in state store
     /// Environment variable: ORCHESTRATOR_ROUTING_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int RoutingTtlSeconds { get; set; } = 300;
 
     /// <summary>
     /// TTL in days for configuration history entries in state store
     /// Environment variable: ORCHESTRATOR_CONFIG_HISTORY_TTL_DAYS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int ConfigHistoryTtlDays { get; set; } = 30;
 
     /// <summary>
     /// Default timeout in seconds for container restart operations
     /// Environment variable: ORCHESTRATOR_RESTART_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int RestartTimeoutSeconds { get; set; } = 120;
 
     /// <summary>
     /// Interval in milliseconds between health checks during restart
     /// Environment variable: ORCHESTRATOR_HEALTH_CHECK_INTERVAL_MS
     /// </summary>
+    [ConfigRange(Minimum = 100)]
     public int HealthCheckIntervalMs { get; set; } = 2000;
 
     /// <summary>
     /// Default seconds to wait before killing a container during stop
     /// Environment variable: ORCHESTRATOR_DEFAULT_WAIT_BEFORE_KILL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int DefaultWaitBeforeKillSeconds { get; set; } = 30;
 
     /// <summary>
     /// Interval in seconds for polling container status during deploy
     /// Environment variable: ORCHESTRATOR_CONTAINER_STATUS_POLL_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int ContainerStatusPollIntervalSeconds { get; set; } = 2;
+
+    /// <summary>
+    /// Interval in seconds for publishing full service-to-appId mappings broadcast
+    /// Environment variable: ORCHESTRATOR_FULL_MAPPINGS_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int FullMappingsIntervalSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Hours since last heartbeat before a container is considered orphaned
+    /// Environment variable: ORCHESTRATOR_ORPHAN_CONTAINER_THRESHOLD_HOURS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int OrphanContainerThresholdHours { get; set; } = 24;
+
+    /// <summary>
+    /// Maximum number of retry attempts for state index update operations
+    /// Environment variable: ORCHESTRATOR_INDEX_UPDATE_MAX_RETRIES
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int IndexUpdateMaxRetries { get; set; } = 3;
+
+    /// <summary>
+    /// Default lease timeout in seconds for acquired processing pool instances
+    /// Environment variable: ORCHESTRATOR_DEFAULT_POOL_LEASE_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int DefaultPoolLeaseTimeoutSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Timeout in seconds for acquiring distributed locks on processing pool operations
+    /// Environment variable: ORCHESTRATOR_POOL_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int PoolLockTimeoutSeconds { get; set; } = 15;
+
+    /// <summary>
+    /// Interval in seconds for background timer that reclaims expired processing pool leases
+    /// Environment variable: ORCHESTRATOR_LEASE_CLEANUP_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10)]
+    public int LeaseCleanupIntervalSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Default HTTP port for discovered service instances used in health checks and mesh registration
+    /// Environment variable: ORCHESTRATOR_DEFAULT_SERVICE_PORT
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 65535)]
+    public int DefaultServicePort { get; set; } = 80;
 
     /// <summary>
     /// Redis connection string for orchestrator state.

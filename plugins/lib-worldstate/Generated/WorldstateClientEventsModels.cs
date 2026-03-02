@@ -32,17 +32,10 @@ namespace BeyondImmersion.Bannou.Worldstate.ClientEvents;
 using System = global::System;
 
 /// <summary>
-/// Published on period-changed boundaries, ratio changes, admin clock
-/// <br/>advancement, and on-demand via TriggerTimeSync endpoint. Contains a
-/// <br/>full game time snapshot so clients can render correct time-of-day,
-/// <br/>season, and calendar state, and interpolate between syncs using
-/// <br/>timeRatio. Routed via Entity Session Registry: query
-/// <br/>IEntitySessionRegistry.GetSessionsForEntityAsync("realm", realmId),
-/// <br/>publish via IClientEventPublisher.PublishToSessionsAsync.
-/// <br/>
+/// Published on period-changed boundaries, ratio changes, admin clock advancement, and on-demand via TriggerTimeSync. Contains a full game time snapshot for client time rendering and interpolation. Routed via Entity Session Registry.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class WorldstateTimeSyncEvent : BaseClientEvent
+public partial class WorldstateTimeSyncClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -51,7 +44,7 @@ public partial class WorldstateTimeSyncEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "worldstate.time_sync";
+    public override string EventName { get; set; } = "worldstate.time-sync";
 
     /// <summary>
     /// Realm this sync applies to
@@ -65,20 +58,23 @@ public partial class WorldstateTimeSyncEvent : BaseClientEvent
     /// Current game year (0-based from realm epoch)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("year")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Year { get; set; } = default!;
 
     /// <summary>
     /// 0-based index into calendar months
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("monthIndex")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int MonthIndex { get; set; } = default!;
 
     /// <summary>
     /// Month code from calendar template (e.g., "greenleaf")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("monthCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string MonthCode { get; set; } = default!;
 
     /// <summary>
@@ -113,8 +109,9 @@ public partial class WorldstateTimeSyncEvent : BaseClientEvent
     /// Current day period code (e.g., "dawn", "morning")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("period")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string Period { get; set; } = default!;
 
     /// <summary>
@@ -127,8 +124,9 @@ public partial class WorldstateTimeSyncEvent : BaseClientEvent
     /// Current season code (e.g., "spring")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("season")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string Season { get; set; } = default!;
 
     /// <summary>
@@ -161,6 +159,7 @@ public partial class WorldstateTimeSyncEvent : BaseClientEvent
     /// Period before transition (null on TriggerSync, RatioChanged, and AdminAdvance sync reasons)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousPeriod")]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
     public string? PreviousPeriod { get; set; } = default!;
 
     /// <summary>

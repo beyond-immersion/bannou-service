@@ -31,7 +31,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createSeedAsync(
+  async seedCreateSeedAsync(
     request: Schemas['CreateSeedRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSeedAsync(
+  async seedGetSeedAsync(
     request: Schemas['GetSeedRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSeedsByOwnerAsync(
+  async seedGetSeedsByOwnerAsync(
     request: Schemas['GetSeedsByOwnerRequest'],
     channel: number = 0,
     timeout?: number
@@ -91,7 +91,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listSeedsAsync(
+  async seedListSeedsAsync(
     request: Schemas['ListSeedsRequest'],
     channel: number = 0,
     timeout?: number
@@ -111,7 +111,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateSeedAsync(
+  async seedUpdateSeedAsync(
     request: Schemas['UpdateSeedRequest'],
     channel: number = 0,
     timeout?: number
@@ -131,7 +131,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async activateSeedAsync(
+  async seedActivateSeedAsync(
     request: Schemas['ActivateSeedRequest'],
     channel: number = 0,
     timeout?: number
@@ -151,7 +151,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async archiveSeedAsync(
+  async seedArchiveSeedAsync(
     request: Schemas['ArchiveSeedRequest'],
     channel: number = 0,
     timeout?: number
@@ -171,7 +171,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getGrowthAsync(
+  async seedGetGrowthAsync(
     request: Schemas['GetGrowthRequest'],
     channel: number = 0,
     timeout?: number
@@ -191,7 +191,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async recordGrowthAsync(
+  async seedRecordGrowthAsync(
     request: Schemas['RecordGrowthRequest'],
     channel: number = 0,
     timeout?: number
@@ -211,7 +211,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async recordGrowthBatchAsync(
+  async seedRecordGrowthBatchAsync(
     request: Schemas['RecordGrowthBatchRequest'],
     channel: number = 0,
     timeout?: number
@@ -231,7 +231,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getGrowthPhaseAsync(
+  async seedGetGrowthPhaseAsync(
     request: Schemas['GetGrowthPhaseRequest'],
     channel: number = 0,
     timeout?: number
@@ -249,7 +249,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCapabilityManifestAsync(
+  async seedGetCapabilityManifestAsync(
     request: Schemas['GetCapabilityManifestRequest'],
     channel: number = 0,
     timeout?: number
@@ -267,7 +267,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async registerSeedTypeAsync(
+  async seedRegisterSeedTypeAsync(
     request: Schemas['RegisterSeedTypeRequest'],
     channel: number = 0,
     timeout?: number
@@ -287,7 +287,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSeedTypeAsync(
+  async seedGetSeedTypeAsync(
     request: Schemas['GetSeedTypeRequest'],
     channel: number = 0,
     timeout?: number
@@ -307,7 +307,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listSeedTypesAsync(
+  async seedListSeedTypesAsync(
     request: Schemas['ListSeedTypesRequest'],
     channel: number = 0,
     timeout?: number
@@ -325,7 +325,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateSeedTypeAsync(
+  async seedUpdateSeedTypeAsync(
     request: Schemas['UpdateSeedTypeRequest'],
     channel: number = 0,
     timeout?: number
@@ -345,7 +345,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deprecateSeedTypeAsync(
+  async seedDeprecateSeedTypeAsync(
     request: Schemas['DeprecateSeedTypeRequest'],
     channel: number = 0,
     timeout?: number
@@ -363,7 +363,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async undeprecateSeedTypeAsync(
+  async seedUndeprecateSeedTypeAsync(
     request: Schemas['UndeprecateSeedTypeRequest'],
     channel: number = 0,
     timeout?: number
@@ -380,7 +380,7 @@ export class SeedProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async deleteSeedTypeEventAsync(
+  async seedDeleteSeedTypeEventAsync(
     request: Schemas['DeleteSeedTypeRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -398,7 +398,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async initiateBondAsync(
+  async seedInitiateBondAsync(
     request: Schemas['InitiateBondRequest'],
     channel: number = 0,
     timeout?: number
@@ -418,7 +418,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async confirmBondAsync(
+  async seedConfirmBondAsync(
     request: Schemas['ConfirmBondRequest'],
     channel: number = 0,
     timeout?: number
@@ -438,7 +438,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getBondAsync(
+  async seedGetBondAsync(
     request: Schemas['GetBondRequest'],
     channel: number = 0,
     timeout?: number
@@ -458,7 +458,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getBondForSeedAsync(
+  async seedGetBondForSeedAsync(
     request: Schemas['GetBondForSeedRequest'],
     channel: number = 0,
     timeout?: number
@@ -478,7 +478,7 @@ export class SeedProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getBondPartnersAsync(
+  async seedGetBondPartnersAsync(
     request: Schemas['GetBondPartnersRequest'],
     channel: number = 0,
     timeout?: number

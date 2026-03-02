@@ -66,6 +66,8 @@ public partial class EscrowService
                         ServiceConfirmedAt = agreementModel.ReleaseMode == ReleaseMode.PartyRequired ? now : null
                     }).ToList() ?? new List<ReleaseConfirmationModel>();
 
+                // GetWithETagAsync returns non-null etag for existing records;
+                // coalesce satisfies compiler's nullable analysis (will never execute)
                 var initiationSaveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
                 if (initiationSaveResult == null)
                 {
@@ -148,6 +150,8 @@ public partial class EscrowService
             agreementModel.CompletedAt = now;
             agreementModel.ResolutionNotes = body.Notes;
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -267,6 +271,8 @@ public partial class EscrowService
             agreementModel.CompletedAt = now;
             agreementModel.ResolutionNotes = body.Reason;
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -383,6 +389,8 @@ public partial class EscrowService
             agreementModel.CompletedAt = now;
             agreementModel.ResolutionNotes = body.Reason;
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -493,6 +501,8 @@ public partial class EscrowService
                 Notes = body.Reason
             });
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -646,6 +656,8 @@ public partial class EscrowService
             agreementModel.CompletedAt = now;
             agreementModel.ResolutionNotes = body.Notes;
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -783,6 +795,8 @@ public partial class EscrowService
                 agreementModel.Resolution = EscrowResolution.Released;
             }
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -912,6 +926,8 @@ public partial class EscrowService
                 agreementModel.Resolution = EscrowResolution.Refunded;
             }
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -1012,6 +1028,7 @@ public partial class EscrowService
     /// </summary>
     private async Task PublishReleasedEventAsync(EscrowAgreementModel agreementModel, DateTimeOffset timestamp, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.PublishReleasedEventAsync");
         var releaseEvent = new EscrowReleasedEvent
         {
             EventId = Guid.NewGuid(),
@@ -1034,6 +1051,7 @@ public partial class EscrowService
     /// </summary>
     private async Task PublishRefundedEventAsync(EscrowAgreementModel agreementModel, DateTimeOffset timestamp, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.PublishRefundedEventAsync");
         var refundEvent = new EscrowRefundedEvent
         {
             EventId = Guid.NewGuid(),

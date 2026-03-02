@@ -109,6 +109,19 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `caseType` | B (Content Code) | Opaque string | Game-configurable dispute types (dissolution, trade_dispute, succession_contest, criminal, property, etc.). Procedural templates are defined per case type by sovereign governance data. Extensible without schema changes. |
+| `entityType` (on petitioner/respondent) | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the type of party in a dispute (character, organization, faction). All valid values are first-class Bannou entities. |
+| `rulingType` | C (System State) | Service-specific enum | Finite set of ruling outcomes (petitioner_favored, respondent_favored, split, dismissed). System-owned; determines consequence execution logic. |
+| `evidenceType` | C (System State) | Service-specific enum | Finite set of evidence categories (testimony, document, witness, physical). System-owned; affects evidence relevance scoring. |
+| `status` (on case) | C (System State) | Service-specific enum | Finite set of case lifecycle states (filed, awaiting_arbiter, hearing, deliberation, ruled, appealed, closed). System-owned state machine managed via contract milestones. |
+| `arbiterSelectionMode` | C (System State) | Service-specific enum | Finite set of arbiter selection strategies (faction_leader, appointed_official, divine_arbiter, peer_panel). System-owned; determines how arbiters are assigned from governance data. |
+
+---
+
 ## Events
 
 ### Published Events

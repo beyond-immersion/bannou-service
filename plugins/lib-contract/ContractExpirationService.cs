@@ -256,6 +256,8 @@ public class ContractExpirationService : BackgroundService
         await contractService.PublishPaymentDueEventAsync(model, model.PaymentsDuePublished, ct);
 
         // Save with optimistic concurrency; if it fails, the next cycle will retry
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         model.UpdatedAt = now;
         await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, ct);
 

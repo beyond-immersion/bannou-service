@@ -31,7 +31,7 @@ export class CacheProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCachedBehaviorAsync(
+  async behaviorGetCachedBehaviorAsync(
     request: Schemas['GetCachedBehaviorRequest'],
     channel: number = 0,
     timeout?: number
@@ -48,7 +48,7 @@ export class CacheProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async invalidateCachedBehaviorEventAsync(
+  async behaviorInvalidateCachedBehaviorEventAsync(
     request: Schemas['InvalidateCacheRequest'],
     channel: number = 0
   ): Promise<void> {

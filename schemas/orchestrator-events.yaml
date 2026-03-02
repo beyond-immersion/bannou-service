@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Orchestrator Service Events
   description: |
@@ -10,7 +10,7 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
-  version: 1.0.0
+  version: 3.0.0
   x-event-subscriptions:
     # Service heartbeat from all bannou instances - used for deployment validation
     - topic: bannou.service-heartbeat
@@ -25,6 +25,22 @@ info:
     - topic: bannou.full-service-mappings
       event: FullServiceMappingsEvent
       description: Published to broadcast full service-to-appId mappings to mesh
+    # Deployment state change events
+    - topic: bannou.deployment-events
+      event: DeploymentEvent
+      description: Published when deployment state changes (started, completed, failed, topology-changed)
+    # Service restart events
+    - topic: bannou.service-lifecycle
+      event: ServiceRestartEvent
+      description: Published when a service is restarted
+    # Configuration change events
+    - topic: bannou.configuration-events
+      event: ConfigurationChangedEvent
+      description: Published when configuration or secrets change for self-service restart pattern
+    # Processor pool events
+    - topic: orchestrator.processor.released
+      event: ProcessorReleasedEvent
+      description: Published when a processor is released back to the pool for analytics tracking
 
 paths: {}
 
@@ -34,18 +50,174 @@ components:
     # Health Check Events
     # =========================================================================
     OrchestratorHealthPingEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
-      description: |
-        Simple health ping event published to verify pub/sub path is active.
-        Used by infrastructure health checks.
+      description: Simple health ping event published to verify pub/sub path is active. Used by infrastructure health checks.
       required:
+        - eventId
+        - timestamp
         - status
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was created
         status:
           type: string
           enum: [ok, degraded, checking]
           description: Current health status
           default: ok
+
+    # =========================================================================
+    # Deployment Events
+    # =========================================================================
+    DeploymentEvent:
+      type: object
+      additionalProperties: false
+      description: Published when deployment state changes. Topic bannou.deployment-events.
+      required:
+        - eventId
+        - timestamp
+        - action
+        - deploymentId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event occurred
+        action:
+          $ref: 'orchestrator-api.yaml#/components/schemas/DeploymentAction'
+          description: Type of deployment action that triggered this event
+        deploymentId:
+          type: string
+          description: Unique identifier for the deployment
+        preset:
+          type: string
+          nullable: true
+          description: Preset name used for deployment (if applicable)
+        backend:
+          $ref: 'orchestrator-api.yaml#/components/schemas/BackendType'
+          nullable: true
+          description: Container orchestration backend used
+        changes:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Summary of changes made
+        error:
+          type: string
+          nullable: true
+          description: Error message if failed
+
+    # =========================================================================
+    # Service Restart Events
+    # =========================================================================
+    ServiceRestartEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a service is restarted. Topic bannou.service-lifecycle.
+      required:
+        - eventId
+        - timestamp
+        - serviceName
+        - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event occurred
+        serviceName:
+          type: string
+          description: Name of the service that was restarted
+        reason:
+          type: string
+          description: Reason for the restart
+        forced:
+          type: boolean
+          description: Whether restart was forced without waiting for graceful shutdown
+        newEnvironment:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Environment variables updated during restart
+
+    # =========================================================================
+    # Configuration Change Events
+    # =========================================================================
+    ConfigurationChangedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when configuration or secrets change. All containers receive this via RabbitMQ. Plugins decide if they care based on changedKeys prefixes and request restart if needed. Topic bannou.configuration-events.
+      required:
+        - eventId
+        - timestamp
+        - configVersion
+        - changedKeys
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When this configuration change occurred
+        configVersion:
+          type: integer
+          description: Monotonically increasing version number
+        changedKeys:
+          type: array
+          items:
+            type: string
+          description: Configuration keys that changed (not values for security). Key prefixes indicate scope (auth.*, database.*, mesh.*, connect.*).
+
+    # =========================================================================
+    # Processor Pool Events
+    # =========================================================================
+    ProcessorReleasedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a processor is released back to the pool. Used by the Analytics service for pool utilization tracking. Topic orchestrator.processor.released.
+      required:
+        - eventId
+        - timestamp
+        - poolType
+        - processorId
+        - success
+        - leaseDurationMs
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the release occurred
+        poolType:
+          type: string
+          description: The pool type the processor belongs to (e.g., "actor-shared", "asset-image")
+        processorId:
+          type: string
+          description: Identifier of the processor that was released
+        success:
+          type: boolean
+          description: Whether the processing job completed successfully
+        leaseDurationMs:
+          type: integer
+          format: int64
+          description: How long the lease was held in milliseconds

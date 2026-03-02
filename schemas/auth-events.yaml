@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Auth Service Events
   description: |
@@ -154,7 +154,7 @@ components:
           description: ID of the account that logged in
         username:
           type: string
-          description: Username or email used for authentication
+          description: Display name of the authenticated account (never email; "(unknown)" if unavailable)
         sessionId:
           type: string
           format: uuid
@@ -180,7 +180,7 @@ components:
       properties:
         username:
           type: string
-          description: Username that was attempted
+          description: Display name of the account (never email; "(unknown)" if account not found)
         reason:
           $ref: 'auth-api.yaml#/components/schemas/AuthLoginFailedReason'
           description: Why the login attempt failed
@@ -188,7 +188,7 @@ components:
           type: string
           format: uuid
           nullable: true
-          description: Account ID if the username exists (null if unknown user)
+          description: Account ID if the account exists (null if unknown user)
         ipAddress:
           type: string
           nullable: true

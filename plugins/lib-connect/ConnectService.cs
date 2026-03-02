@@ -1009,7 +1009,7 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
                     _logger.LogInformation("WebSocket close requested for session {SessionId}", sessionId);
-                    // Don't close here - let the finally block handle sending disconnect_notification first
+                    // Don't close here - let the finally block handle sending disconnect-notification first
                     // The WebSocket is still in CloseReceived state and can send messages
                     break;
                 }
@@ -1178,7 +1178,7 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
                     {
                         var disconnectNotification = new
                         {
-                            eventName = "connect.disconnect_notification",
+                            eventName = "connect.disconnect-notification",
                             reconnectionToken = connectionState.ReconnectionToken,
                             expiresAt = connectionState.ReconnectionExpiresAt?.ToString("O"),
                             reconnectable = true,
@@ -1948,14 +1948,14 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
                 if (eventData.EventType == AuthEventType.Login)
                 {
                     // User logged in - Permission service will automatically recompile capabilities
-                    // and push updated connect.capability_manifest to client
+                    // and push updated connect.capability-manifest to client
                     _logger.LogDebug("Auth login event for session {SessionId} - capabilities will be updated by Permission service",
                         eventData.SessionId);
                 }
                 else if (eventData.EventType == AuthEventType.Logout)
                 {
                     // User logged out - Permission service will automatically recompile capabilities
-                    // and push updated connect.capability_manifest to client
+                    // and push updated connect.capability-manifest to client
                     _logger.LogDebug("Auth logout event for session {SessionId} - capabilities will be updated by Permission service",
                         eventData.SessionId);
 
@@ -2311,7 +2311,7 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
 
             // Handle SessionCapabilitiesEvent - extract permissions and send to client
             // Check both the EnumMember value and the C# enum name (JsonStringEnumConverter uses C# name)
-            if (eventName == "permission.session_capabilities" ||
+            if (eventName == "permission.session-capabilities" ||
                 eventName == "Permissions_session_capabilities")
             {
                 _logger.LogDebug("Handling SessionCapabilitiesEvent for session {SessionId}", sessionId);
@@ -2354,7 +2354,7 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
             }
 
             // Handle ShortcutPublishedEvent - add shortcut to session and update manifest
-            if (eventName == "session.shortcut_published" || eventName == "Session_shortcut_published")
+            if (eventName == "session.shortcut-published" || eventName == "Session_shortcut_published")
             {
                 _logger.LogDebug("Handling ShortcutPublishedEvent for session {SessionId}", sessionId);
                 await HandleShortcutPublishedAsync(sessionId, root);
@@ -2362,7 +2362,7 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
             }
 
             // Handle ShortcutRevokedEvent - remove shortcut(s) and update manifest
-            if (eventName == "session.shortcut_revoked" || eventName == "Session_shortcut_revoked")
+            if (eventName == "session.shortcut-revoked" || eventName == "Session_shortcut_revoked")
             {
                 _logger.LogDebug("Handling ShortcutRevokedEvent for session {SessionId}", sessionId);
                 await HandleShortcutRevokedAsync(sessionId, root);
@@ -2513,7 +2513,7 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
     /// </summary>
     private async Task SerializeAndSendManifestAsync(
         string sessionId,
-        CapabilityManifestEvent manifest,
+        CapabilityManifestClientEvent manifest,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.SerializeAndSendManifestAsync");
@@ -2630,7 +2630,7 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
             // Build typed manifest with conditional peerGuid inclusion
             // External mode: No peerGuid (clients cannot route to each other)
             // Relayed/Internal mode: Include peerGuid (enables peer-to-peer routing)
-            var capabilityManifest = new CapabilityManifestEvent
+            var capabilityManifest = new CapabilityManifestClientEvent
             {
                 SessionId = Guid.Parse(sessionId),
                 AvailableApis = availableApis,
@@ -3017,7 +3017,7 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
 
             availableApis.AddRange(BuildShortcutCapabilityEntries(connectionState));
 
-            var capabilityManifest = new CapabilityManifestEvent
+            var capabilityManifest = new CapabilityManifestClientEvent
             {
                 SessionId = Guid.Parse(sessionId),
                 AvailableApis = availableApis,

@@ -45,8 +45,9 @@ public class MinioStorageOptions
 
     /// <summary>
     /// Default expiration time for pre-signed URLs.
+    /// Wired from AssetServiceConfiguration.TokenTtlSeconds during service configuration.
     /// </summary>
-    public TimeSpan DefaultUrlExpiration { get; set; } = TimeSpan.FromHours(1);
+    public TimeSpan DefaultUrlExpiration { get; set; }
 
     /// <summary>
     /// Minimum part size for multipart uploads (5MB).

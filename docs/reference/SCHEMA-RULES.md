@@ -151,6 +151,7 @@ Defined in `{service}-events.yaml`, generates CRUD lifecycle events automaticall
 
 ```yaml
 x-lifecycle:
+  topic_prefix: myservice              # Optional: enables Pattern C namespaced topics
   EntityName:
     model:
       entityId: { type: string, format: uuid, primary: true, required: true }
@@ -162,6 +163,15 @@ x-lifecycle:
       resource_id_field: entityId          # Defaults to primary key field
       source_type: entity                  # Defaults to entity name in kebab-case
 ```
+
+**`topic_prefix`** controls how lifecycle event topics are derived (see [Topic Naming Convention](#topic-naming-convention)):
+- **Without `topic_prefix`**: Topics use Pattern A — `{entity-kebab}.{action}` (e.g., `account.created`)
+- **With `topic_prefix`**: Topics use Pattern C — the prefix becomes a dot-separated namespace:
+  - If entity-kebab equals the prefix: `{entity}.{action}` (Pattern A, e.g., `seed.created` with `topic_prefix: seed`)
+  - If entity-kebab starts with `{prefix}-`: strips and dot-separates (e.g., `transit.connection.created` from `TransitConnection` with `topic_prefix: transit`)
+  - Otherwise: prepends with dot (e.g., `worldstate.calendar-template.created` from `CalendarTemplate` with `topic_prefix: worldstate`)
+
+**When to use `topic_prefix`**: Required for multi-entity services (services with more than one entity type in `x-lifecycle`) and for any entity whose kebab-case name embeds the service name via hyphens (Pattern B is forbidden — see Topic Naming Convention).
 
 **Generated output** (`schemas/Generated/{service}-lifecycle-events.yaml`):
 - `EntityNameCreatedEvent` - Full entity data (sensitive fields excluded)
@@ -185,11 +195,27 @@ Defined on **event schema definitions** in `{service}-events.yaml`, declares how
 ```yaml
 PersonalityUpdatedEvent:
   type: object
+  additionalProperties: false
+  description: Published when character personality traits change
   x-resource-mapping:
     resource_type: character             # Type of resource this event affects
     resource_id_field: characterId       # JSON field containing resource ID
     source_type: character-personality   # Source type identifier for filtering
     is_deletion: false                   # Optional (inferred from event name ending in "Deleted")
+  required: [eventId, timestamp, characterId]
+  properties:
+    eventId:
+      type: string
+      format: uuid
+      description: Unique event identifier
+    timestamp:
+      type: string
+      format: date-time
+      description: When the event occurred
+    characterId:
+      type: string
+      format: uuid
+      description: Character whose personality was updated
 ```
 
 **Generated output**: `bannou-service/Generated/ResourceEventMappings.cs` - static class with `IReadOnlyList<ResourceEventMappingEntry>` used by Puppetmaster's watch system.
@@ -240,7 +266,7 @@ info:
 Defined at the **root level** of `{service}-api.yaml`, declares the service's position in the hierarchy per [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md). Controls plugin load order and enables safe cross-layer constructor injection.
 
 ```yaml
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Location Service API
   version: 1.0.0
@@ -359,12 +385,20 @@ Defined on **compression response schemas** (return type of `/get-compress-data`
 ```yaml
 CharacterPersonalityArchive:
   type: object
+  additionalProperties: false
   x-archive-type: true
+  description: Compressed archive of character personality data
   allOf:
     - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
+  required: [characterId]
   properties:
-    characterId: { type: string, format: uuid }
-    personality: { $ref: '#/components/schemas/PersonalityResponse' }
+    characterId:
+      type: string
+      format: uuid
+      description: Character this archive belongs to
+    personality:
+      $ref: '#/components/schemas/PersonalityResponse'
+      description: Personality trait snapshot
 ```
 
 **How template generation works**:
@@ -387,10 +421,20 @@ EncounterRecordedEvent:
   x-event-template:
     name: encounter_recorded    # Template name for ABML emit_event
     topic: encounter.recorded   # Event topic (RabbitMQ routing key)
-  required: [eventId, encounterId]
+  required: [eventId, timestamp, encounterId]
   properties:
-    eventId: { type: string, format: uuid }
-    encounterId: { type: string, format: uuid }
+    eventId:
+      type: string
+      format: uuid
+      description: Unique event identifier
+    timestamp:
+      type: string
+      format: date-time
+      description: When the event occurred
+    encounterId:
+      type: string
+      format: uuid
+      description: Encounter that was recorded
 ```
 
 **PayloadTemplate generation rules**:
@@ -441,14 +485,22 @@ Defined on **schema objects** in `{service}-client-events.yaml`, marks a schema 
 
 ```yaml
 MatchFoundEvent:
-  x-client-event: true
+  allOf:
+    - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
   type: object
   additionalProperties: false
-  required: [eventName, matchId]
+  x-client-event: true
+  description: Sent to clients when a match is found.
+  required: [eventName, eventId, timestamp, matchId]
   properties:
     eventName:
       type: string
-      default: match.found
+      default: "match.found"
+      description: Fixed event type identifier
+    matchId:
+      type: string
+      format: uuid
+      description: Identifier of the matched game
 ```
 
 **Used by generators**: `generate-client-event-groups.py` (groups events by service for typed subscription API), `generate-client-event-registry.py` (C# type→eventName mapping), `generate-client-event-registry-ts.py` (TypeScript registry), `generate-unreal-types.py` (Unreal Engine event types).
@@ -619,13 +671,14 @@ DefaultCompressionType:
 properties:
   status:
     $ref: 'actor-api.yaml#/components/schemas/ActorStatus'
+    description: Current actor status
 ```
 
 ---
 
 ## Validation Keywords
 
-OpenAPI 3.0.3 validation keywords generate `[ConfigX]` attributes in C#, validated at service startup.
+OpenAPI 3.0.4 validation keywords generate `[ConfigX]` attributes in C#, validated at service startup.
 
 | Keyword | Applies To | Schema Example | Generated Attribute |
 |---------|------------|----------------|---------------------|
@@ -706,61 +759,30 @@ x-service-configuration:
 
 ---
 
-## additionalProperties: true — Metadata Bag Rules (INVIOLABLE)
+## additionalProperties: true — Schema Validation Rule
 
-**`additionalProperties: true` MUST NEVER be used as a data contract between services.** This is a total schema-first violation. If Service A stores data that Service B reads by convention, that is an unschematized, ungenerated, unenforced verbal agreement. See [FOUNDATION.md Tenet 29](tenets/FOUNDATION.md#tenet-29-no-metadata-bag-contracts-inviolable) for the full rationale.
+**Full rules**: See [FOUNDATION.md Tenet 29](tenets/FOUNDATION.md#tenet-29-no-metadata-bag-contracts-inviolable) for the complete rationale, acceptable/unacceptable uses, correct patterns, and enforcement rules.
 
-### When `additionalProperties: true` IS Acceptable
+**Schema requirement**: Every property with `additionalProperties: true` MUST include a description stating: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention." If this description would be false, the data must be moved to the owning service's schema.
 
-Metadata bags exist for exactly two purposes:
-
-1. **Client-side display data**: Game clients store rendering hints, UI preferences, or display-only information (e.g., `mapIcon`, `ambientSoundFile`, `tooltipColor`). No Bannou plugin reads these by convention.
-
-2. **Game-specific implementation data**: Data that the game engine (not Bannou services) interprets at runtime (e.g., Unity physics parameters, Unreal material overrides). Opaque to all Bannou plugins.
-
-In both cases, the metadata is **opaque to all Bannou plugins**. No plugin's correctness depends on its structure. No plugin reads specific keys by convention.
-
-### When `additionalProperties: true` IS NOT Acceptable
-
-**NEVER** use metadata bags for:
-
-- **Cross-service data contracts**: "Put `biomeCode` in Location's metadata for Environment to read" — **NO**. Environment owns its own climate bindings.
-- **Convention-based keys**: Any pattern where documentation says "service X should look for key Y in service Z's metadata" — **NO**. Define Y in X's schema.
-- **Domain data storage in the wrong service**: Ecological data in Location, personality hints in Character, behavioral tags in Species — **NO**. The service that owns the domain concept owns the data.
-
-### The Correct Pattern
-
-When Service B (L4) needs data associated with Service A's (L2) entities:
+### Schema Pattern: Correct vs Forbidden
 
 ```yaml
-# CORRECT: Service B defines its own binding model in its own schema
+# CORRECT: Service B (L4) defines its own binding model in its own schema
 # environment-api.yaml
-paths:
-  /environment/climate-binding/create:
-    post:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateClimateBindingRequest'
+CreateClimateBindingRequest:
+  type: object
+  additionalProperties: false
+  required: [locationId, biomeCode]
+  properties:
+    locationId:
+      type: string
+      format: uuid
+      description: Location to bind (validated via ILocationClient)
+    biomeCode:
+      type: string
+      description: Climate template biome code
 
-components:
-  schemas:
-    CreateClimateBindingRequest:
-      type: object
-      additionalProperties: false
-      required: [locationId, biomeCode]
-      properties:
-        locationId:
-          type: string
-          format: uuid
-          description: Location to bind (validated via ILocationClient)
-        biomeCode:
-          type: string
-          description: Climate template biome code (validated against template registry)
-```
-
-```yaml
 # FORBIDDEN: Relying on metadata bag in another service's schema
 # location-api.yaml
 LocationResponse:
@@ -769,12 +791,6 @@ LocationResponse:
       type: object
       additionalProperties: true  # "Put biomeCode in here" — NEVER
 ```
-
-### Schema Validation Rule
-
-Every schema property with `additionalProperties: true` MUST include a description that explicitly states: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
-
-If this description would be false (because a plugin DOES read specific keys), the data must be moved to the owning service's schema.
 
 ---
 
@@ -812,7 +828,57 @@ Each `{service}-events.yaml` MUST contain ONLY canonical definitions for events 
 
 ### Topic Naming Convention
 
-**Pattern**: `{entity}.{action}` (kebab-case entity, lowercase action). Examples: `account.created`, `game-session.player-joined`. Infrastructure events use `bannou-` prefix.
+Event topics use **two patterns** depending on whether a service owns one entity type or multiple:
+
+**Pattern A — Single-entity**: `{entity}.{action}` (kebab-case entity, lowercase action). Used when the service name IS the entity, or the entity stands independently (no service prefix needed for disambiguation).
+
+```
+account.created              # account service, one entity type
+realm.merged                 # realm service, one entity type
+personality.evolved          # character-personality service, entity stands alone
+combat-preferences.updated   # character-personality service, entity stands alone
+encounter.recorded           # character-encounter service, entity stands alone
+game-session.player-joined   # game-session service, compound action
+subscription.updated         # subscription service, one entity type
+```
+
+**Pattern C — Multi-entity namespaced**: `{service}.{entity}.{action}` (dot-separated service namespace). Used when a service owns multiple entity types, providing a namespace prefix to group related events.
+
+```
+worldstate.calendar-template.created   # worldstate service, calendar-template entity
+worldstate.realm-config.deleted        # worldstate service, realm-config entity
+worldstate.hour-changed                # worldstate service, boundary action
+transit.connection.created             # transit service, connection entity
+transit.journey.departed               # transit service, journey entity
+divine.blessing.granted                # divine service, blessing entity
+actor.instance.character-bound         # actor service, instance entity
+contract.milestone.completed           # contract service, milestone entity
+gardener.scenario.started              # gardener service, scenario entity
+```
+
+**Choosing between A and C:**
+- If the service has ONE entity type (or entities that don't share the service name as prefix): use Pattern A
+- If the service has MULTIPLE entity types that need a shared namespace for grouping: use Pattern C
+- Infrastructure events use `bannou.` prefix (e.g., `bannou.service-heartbeat`)
+
+**FORBIDDEN — Hybrid B (service name embedded in entity via hyphens):**
+
+```
+# WRONG: service name baked into entity with hyphen
+transit-connection.created        # → use transit.connection.created
+actor-template.updated            # → use actor.template.updated
+chat-participant.joined           # → use chat.participant.joined
+inventory-container.full          # → use inventory.container.full
+
+# CORRECT Pattern A (no service prefix — entity stands alone)
+game-session.player-joined        # game-session IS the entity, not a prefix
+combat-preferences.evolved        # entity name independent of service name
+encounter.memory.faded            # encounter IS the entity, memory is sub-entity
+```
+
+**The litmus test**: If the topic entity starts with `{service-name}-{sub-entity}`, it's Pattern B and must become `{service-name}.{sub-entity}.{action}` (Pattern C). If the entity name does NOT embed the publishing service's name, it's Pattern A and is correct as-is.
+
+**All parts use kebab-case** (lowercase with hyphens for multi-word segments). No underscores in topic strings.
 
 ### Client Events vs Service Events
 
@@ -822,6 +888,168 @@ Each `{service}-events.yaml` MUST contain ONLY canonical definitions for events 
 | Client Events | `{service}-client-events.yaml` | `IClientEventPublisher.PublishToSessionAsync` |
 
 **Never use `IMessageBus` for client events** - it uses the wrong RabbitMQ exchange.
+
+### Client Event `eventName` Naming Rules
+
+Client event `eventName` values (the `default:` on the `eventName` property) follow the **same Pattern A / Pattern C rules** as server-side event topics:
+
+**Pattern C** (`service.entity.action`) — Use when:
+1. The service has **multiple API-backed entities** (distinct endpoint groups)
+2. The `eventName` describes something happening to a **specific entity**
+3. That entity has its own endpoint group in the service API (e.g., `/chat/participant/kick`)
+
+**Pattern A** (`service.compound-action`) — Use when:
+1. The service is effectively single-entity (all events are implicitly about the same thing)
+2. The qualifying word is **not** an API-backed entity (it's a state, process, or feature)
+3. The event is a notification/alert rather than an entity state change
+
+**The diagnostic test**: Does the word after the service dot correspond to an endpoint group in the API schema? If `/chat/message/send`, `/chat/message/delete` exist, then "message" is an entity → `chat.message.received` (Pattern C). If there's no `/auth/password/*` endpoint group, then "password" is a qualifier → `auth.password-changed` (Pattern A).
+
+**Examples by service:**
+
+| Service | Entity? | eventName | Pattern |
+|---------|---------|-----------|---------|
+| Chat | Room, Message, Participant = entities | `chat.message.received`, `chat.participant.joined`, `chat.room.updated` | C |
+| Chat | Typing = not an entity (no CRUD) | `chat.typing-started` | A |
+| Inventory | Item, Container = entities | `inventory.item.changed`, `inventory.container.full` | C |
+| Currency | Wallet, Balance = entities | `currency.wallet.frozen`, `currency.balance.changed` | C |
+| Voice | Room, Peer, Broadcast = entities | `voice.room.state`, `voice.peer.joined`, `voice.broadcast.consent-request` | C |
+| Voice | Tier = not an entity | `voice.tier-upgrade` | A |
+| Transit | Journey, Discovery, Connection = entities | `transit.journey.updated`, `transit.connection.status-changed` | C |
+| Collection | Entry, Discovery = entities | `collection.entry.unlocked`, `collection.discovery.advanced` | C |
+| Collection | Milestone = not an entity | `collection.milestone-reached` | A |
+| Asset | Bundle, Metabundle = entities | `asset.bundle.creation-complete`, `asset.metabundle.creation-complete` | C |
+| Asset | Primary asset actions | `asset.ready`, `asset.upload-complete` | A |
+| Auth | All compound actions | `auth.password-changed`, `auth.mfa-enabled`, `auth.suspicious-login` | A |
+| Game-session | Single entity (the session) | `game-session.state-changed`, `game-session.player-joined` | A |
+| Matchmaking | Queue = entity | `matchmaking.queue.joined` | C |
+| Matchmaking | Match = no CRUD endpoints | `matchmaking.match-found`, `matchmaking.player-accepted` | A |
+
+**The asset service is the exemplar** — it already uses both patterns correctly: `asset.bundle.creation-complete` (Pattern C, bundle has its own endpoints) alongside `asset.ready` (Pattern A, about the primary entity).
+
+### Custom Service Event Structure (Non-Lifecycle)
+
+Custom service events (events NOT generated by `x-lifecycle`) use a **flat structure** — they define `eventId` and `timestamp` inline. They do NOT use `allOf` with `BaseServiceEvent`.
+
+```yaml
+# In {service}-events.yaml — custom event (flat, no inheritance)
+ContractProposedEvent:
+  type: object
+  additionalProperties: false
+  description: Event published when a contract is proposed to parties
+  required:
+    - eventId
+    - timestamp
+    - contractId
+    - templateId
+  properties:
+    eventId:
+      type: string
+      format: uuid
+      description: Unique event identifier
+    timestamp:
+      type: string
+      format: date-time
+      description: When the event occurred
+    contractId:
+      type: string
+      format: uuid
+      description: Contract instance ID
+    templateId:
+      type: string
+      format: uuid
+      description: Source template ID
+```
+
+**Key rules**:
+- Define `eventId` (uuid) and `timestamp` (date-time) directly on each event
+- Use `additionalProperties: false`
+- Reference complex types via `$ref` to the service's `-api.yaml` (per mandatory type reuse)
+- Do NOT use `eventName` (that is for client events only)
+
+**Note**: `BaseServiceEvent` in `common-events.yaml` exists as a shared definition for the C# `IBannouEvent` interface, but custom service events do not compose it via `allOf` in their YAML definitions.
+
+### Client Event Inheritance Structure
+
+Client events (server→client WebSocket push) use `allOf` composition with `BaseClientEvent` from `common-client-events.yaml`:
+
+```yaml
+# In {service}-client-events.yaml — client event (allOf inheritance)
+ChatMessageReceivedEvent:
+  allOf:
+    - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+  type: object
+  additionalProperties: false
+  x-client-event: true
+  description: Sent to room participants when a new message is received.
+  required:
+    - eventName
+    - eventId
+    - timestamp
+    - roomId
+    - messageId
+  properties:
+    eventName:
+      type: string
+      default: "chat.message_received"
+      description: Fixed event type identifier
+    roomId:
+      type: string
+      format: uuid
+      description: Room the message was sent to
+    messageId:
+      type: string
+      format: uuid
+      description: Unique identifier for the message
+```
+
+**Key rules**:
+- Use `allOf` with `$ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'`
+- Add `x-client-event: true` (required for SDK generators to detect it)
+- Re-declare the `required` array including inherited fields (`eventName`, `eventId`, `timestamp`)
+- Do NOT re-declare `eventId` or `timestamp` properties (inherited from `BaseClientEvent`)
+- DO declare `eventName` with a `default:` value (the event's routing name, e.g., `"chat.message.received"`) — follows the same Pattern A/C rules as service event topics (see Client Event `eventName` Naming Rules above)
+- Add `x-internal: true` alongside `x-client-event: true` for infrastructure-only events not exposed to game SDKs
+
+**`BaseClientEvent` provides**: `eventName` (string), `eventId` (uuid), `timestamp` (date-time). All three are required.
+
+### State Store Definition Format
+
+State stores are defined in `schemas/state-stores.yaml` under the `x-state-stores:` extension key. Each entry declares a named store with its backend and ownership.
+
+```yaml
+x-state-stores:
+  auth-statestore:
+    backend: redis
+    prefix: auth
+    service: Auth
+    purpose: Session and token state (ephemeral)
+
+  chat-rooms:
+    backend: mysql
+    service: Chat
+    purpose: Chat room records (durable, queryable by type/session/status)
+
+  documentation-statestore:
+    backend: redis
+    prefix: doc
+    service: Documentation
+    purpose: Documentation content and metadata
+    enableSearch: true
+```
+
+**Entry key**: Kebab-case name (e.g., `auth-statestore`, `chat-rooms-cache`, `actor-pool-nodes`). This becomes the constant name in `StateStoreDefinitions.cs`.
+
+| Property | Required | Description |
+|----------|----------|-------------|
+| `backend` | Yes | `redis`, `mysql`, or `memory` |
+| `prefix` | Redis only | Redis key prefix (e.g., `auth`, `chat:room`, `actor:state`) |
+| `table` | MySQL only | Table name (defaults to entry key with underscores if omitted) |
+| `service` | Yes | Owning service name (PascalCase) |
+| `purpose` | Yes | Human-readable description |
+| `enableSearch` | No | Enable RedisSearch full-text indexing (redis only, default false) |
+
+**Generated output**: `bannou-service/Generated/StateStoreDefinitions.cs` — static class with string constants for each store name, plus `docs/GENERATED-STATE-STORES.md`.
 
 ---
 
@@ -847,23 +1075,11 @@ Violating this causes duplicate C# classes (`AuthMethods`, `AuthMethods2`, `Auth
 
 ### When NOT to Create Enums (Service Hierarchy Consideration)
 
-Do NOT define enums that enumerate services, resources, or entity types from other layers. This creates implicit coupling that defeats layer isolation.
+Do NOT define enums that enumerate services, resources, or entity types from other layers — use opaque `string` instead. **Test**: "Would adding a new service/entity type in a higher layer require modifying this enum?" If yes, use a string.
 
-```yaml
-# WRONG: L1 service enumerating L3/L4 services
-ResourceSourceType:
-  type: string
-  enum: [ACTOR, CHARACTER_ENCOUNTER, CONTRACT, SCENE, SAVE_DATA]
+**EntityType from common-api.yaml IS appropriate** for L2+ services referencing entity types within their own layer or lower. The hierarchy isolation exception ONLY applies when the enum would need to enumerate types from HIGHER layers (e.g., L1 enumerating L2+ types).
 
-# CORRECT: Opaque string identifiers
-resourceType:
-  type: string
-  description: Type of resource being referenced (caller provides)
-```
-
-**When enums ARE appropriate**: Values are within the service's own layer or lower, the enum represents a closed set the service owns, or it's in `common-api.yaml` for system-wide concepts.
-
-**Test**: "Would adding a new service/entity type in a higher layer require modifying this enum?" If yes, use a string.
+**Full decision tree**: See IMPLEMENTATION TENETS T14 for the authoritative three-category classification (Category A: entity references → EntityType, Category B: game content codes → string, Category C: system state → service-specific enum).
 
 ### Correct Pattern
 
@@ -871,15 +1087,21 @@ resourceType:
 # In account-api.yaml - DEFINE once
 AuthMethodInfo:
   type: object
+  additionalProperties: false
+  description: Linked authentication method details
+  required: [provider, linkedAt]
   properties:
     provider:
       $ref: '#/components/schemas/AuthProvider'
+      description: Authentication provider type
     linkedAt:
       type: string
       format: date-time
+      description: When this auth method was linked
 
 AuthProvider:
   type: string
+  description: Supported authentication providers
   enum: [email, google, discord, twitch, steam]
 
 # In account-events.yaml x-lifecycle - REFERENCE via $ref

@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Escrow Service API
   version: 1.0.0
@@ -2785,9 +2785,12 @@ components:
     EntityType:
       type: string
       description: |
-        Universal entity type identifier used across Bannou services.
-        Provides first-class support for various kinds of entities in analytics,
-        achievements, leaderboards, contracts, relationships, and other systems.
+        Universal entity type identifier for first-class Bannou entities.
+        Used for polymorphic entity references (ownerType, entityType, partyType).
+
+        NOT for game-configurable content type codes (use opaque strings) or
+        service-specific roles that include non-entity values (use service-specific enums).
+        See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
       enum:
       - system
       - account
@@ -2801,6 +2804,10 @@ components:
       - realm
       - item
       - monster
+      - relationship
+      - session
+      - deity
+      - dungeon
       - custom
       - other
 

@@ -31,7 +31,7 @@ export class CharacterHistoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getParticipationAsync(
+  async characterHistoryGetParticipationAsync(
     request: Schemas['GetParticipationRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class CharacterHistoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getEventParticipantsAsync(
+  async characterHistoryGetEventParticipantsAsync(
     request: Schemas['GetEventParticipantsRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class CharacterHistoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getBackstoryAsync(
+  async characterHistoryGetBackstoryAsync(
     request: Schemas['GetBackstoryRequest'],
     channel: number = 0,
     timeout?: number
@@ -87,7 +87,7 @@ export class CharacterHistoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCompressDataAsync(
+  async characterHistoryGetCompressDataAsync(
     request: Schemas['GetCompressDataRequest'],
     channel: number = 0,
     timeout?: number

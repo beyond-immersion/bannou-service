@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -17,6 +18,7 @@ public class RtpEngineClient : IRtpEngineClient
     private readonly IPEndPoint _endpoint;
     private readonly ILogger<RtpEngineClient> _logger;
     private readonly IMessageBus _messageBus;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly TimeSpan _timeout;
     private readonly object _sendLock = new();
     private long _cookieCounter;
@@ -35,6 +37,7 @@ public class RtpEngineClient : IRtpEngineClient
         int port,
         ILogger<RtpEngineClient> logger,
         IMessageBus messageBus,
+        ITelemetryProvider telemetryProvider,
         int timeoutSeconds)
     {
         if (string.IsNullOrEmpty(host))
@@ -45,6 +48,8 @@ public class RtpEngineClient : IRtpEngineClient
         _client = new UdpClient();
         _logger = logger;
         _messageBus = messageBus;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
         // Resolve hostname to IP address (IPAddress.Parse only handles numeric IPs)
@@ -75,6 +80,7 @@ public class RtpEngineClient : IRtpEngineClient
         string[]? flags = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "RtpEngineClient.OfferAsync");
         var command = new Dictionary<string, object>
         {
             ["command"] = "offer",
@@ -100,6 +106,7 @@ public class RtpEngineClient : IRtpEngineClient
         string sdp,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "RtpEngineClient.AnswerAsync");
         var command = new Dictionary<string, object>
         {
             ["command"] = "answer",
@@ -119,6 +126,7 @@ public class RtpEngineClient : IRtpEngineClient
         string fromTag,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "RtpEngineClient.DeleteAsync");
         var command = new Dictionary<string, object>
         {
             ["command"] = "delete",
@@ -137,6 +145,7 @@ public class RtpEngineClient : IRtpEngineClient
         string sdp,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "RtpEngineClient.PublishAsync");
         var command = new Dictionary<string, object>
         {
             ["command"] = "publish",
@@ -156,6 +165,7 @@ public class RtpEngineClient : IRtpEngineClient
         string subscriberLabel,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "RtpEngineClient.SubscribeRequestAsync");
         var command = new Dictionary<string, object>
         {
             ["command"] = "subscribe request",
@@ -173,6 +183,7 @@ public class RtpEngineClient : IRtpEngineClient
         string callId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "RtpEngineClient.QueryAsync");
         var command = new Dictionary<string, object>
         {
             ["command"] = "query",
@@ -186,6 +197,7 @@ public class RtpEngineClient : IRtpEngineClient
     /// <inheritdoc />
     public async Task<bool> IsHealthyAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "RtpEngineClient.IsHealthyAsync");
         try
         {
             var command = new Dictionary<string, object>
@@ -210,6 +222,7 @@ public class RtpEngineClient : IRtpEngineClient
         Dictionary<string, object> command,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "RtpEngineClient.SendCommandAsync");
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         // Generate unique cookie for this request
@@ -458,6 +471,7 @@ public class RtpEngineClient : IRtpEngineClient
 
     private async Task<T> ParseBencodeResponse<T>(string bencode) where T : RtpEngineBaseResponse, new()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "RtpEngineClient.ParseBencodeResponse");
         try
         {
             var dict = DecodeBencode(bencode);

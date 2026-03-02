@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.Status.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Contract;
@@ -7,6 +8,7 @@ using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -49,6 +51,8 @@ public partial class StatusService : IStatusService
     private readonly IGameServiceClient _gameServiceClient;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IEntitySessionRegistry _entitySessionRegistry;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     #region State Store Accessors
 
@@ -92,11 +96,11 @@ public partial class StatusService : IStatusService
     private static string TemplateCodeKey(Guid gameServiceId, string code) => $"tpl:{gameServiceId}:{code}";
     private static string InstanceIdKey(Guid instanceId) => $"inst:{instanceId}";
     private static string ContainerIdKey(Guid containerId) => $"ctr:{containerId}";
-    private static string ContainerEntityKey(Guid entityId, string entityType, Guid gameServiceId) =>
+    private static string ContainerEntityKey(Guid entityId, EntityType entityType, Guid gameServiceId) =>
         $"ctr:{entityId}:{entityType}:{gameServiceId}";
-    private static string ActiveCacheKey(Guid entityId, string entityType) => $"active:{entityId}:{entityType}";
-    private static string SeedEffectsCacheKey(Guid entityId, string entityType) => $"seed:{entityId}:{entityType}";
-    private static string EntityLockKey(string entityType, Guid entityId) => $"entity:{entityType}:{entityId}";
+    private static string ActiveCacheKey(Guid entityId, EntityType entityType) => $"active:{entityId}:{entityType}";
+    private static string SeedEffectsCacheKey(Guid entityId, EntityType entityType) => $"seed:{entityId}:{entityType}";
+    private static string EntityLockKey(EntityType entityType, Guid entityId) => $"entity:{entityType}:{entityId}";
 
     #endregion
 
@@ -114,7 +118,9 @@ public partial class StatusService : IStatusService
         IContractClient contractClient,
         IGameServiceClient gameServiceClient,
         IDistributedLockProvider lockProvider,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        IEntitySessionRegistry entitySessionRegistry,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -126,6 +132,8 @@ public partial class StatusService : IStatusService
         _gameServiceClient = gameServiceClient;
         _lockProvider = lockProvider;
         _serviceProvider = serviceProvider;
+        _entitySessionRegistry = entitySessionRegistry;
+        _telemetryProvider = telemetryProvider;
 
         RegisterEventConsumers(eventConsumer);
 
@@ -231,7 +239,7 @@ public partial class StatusService : IStatusService
 
         // Publish lifecycle event
         await _messageBus.TryPublishAsync(
-            "status-template.created",
+            "status.template.created",
             new StatusTemplateCreatedEvent
             {
                 StatusTemplateId = templateId,
@@ -414,7 +422,7 @@ public partial class StatusService : IStatusService
 
         // Publish lifecycle event
         await _messageBus.TryPublishAsync(
-            "status-template.updated",
+            "status.template.updated",
             new StatusTemplateUpdatedEvent
             {
                 StatusTemplateId = template.StatusTemplateId,
@@ -515,7 +523,7 @@ public partial class StatusService : IStatusService
             await TemplateStore.SaveAsync(codeKey, model, cancellationToken: cancellationToken);
 
             await _messageBus.TryPublishAsync(
-                "status-template.created",
+                "status.template.created",
                 new StatusTemplateCreatedEvent
                 {
                     StatusTemplateId = templateId,
@@ -1017,7 +1025,7 @@ public partial class StatusService : IStatusService
                 try
                 {
                     await _itemClient.DestroyItemInstanceAsync(
-                        new DestroyItemInstanceRequest { InstanceId = instance.ItemInstanceId, Reason = "status-cleanup" },
+                        new DestroyItemInstanceRequest { InstanceId = instance.ItemInstanceId, Reason = DestroyReason.Destroyed },
                         cancellationToken);
                 }
                 catch (ApiException ex)
@@ -1087,6 +1095,7 @@ public partial class StatusService : IStatusService
         List<StatusInstanceModel> existingInstances,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.HandleStackingAsync");
         var effectiveMaxStacks = Math.Min(template.MaxStacks, _configuration.MaxStacksPerStatus);
         var existing = existingInstances[0];
 
@@ -1123,6 +1132,23 @@ public partial class StatusService : IStatusService
                         NewStackCount = existing.StackCount
                     },
                     cancellationToken: cancellationToken);
+
+                // Push client event for duration refresh
+                await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
+                    new StatusEffectChangedClientEvent
+                    {
+                        EventName = "status.effect-changed",
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        ChangeType = StatusChangeType.Stacked,
+                        EntityId = body.EntityId,
+                        EntityType = body.EntityType,
+                        StatusTemplateCode = body.StatusTemplateCode,
+                        StatusInstanceId = existing.StatusInstanceId,
+                        Category = template.Category,
+                        StackCount = existing.StackCount,
+                        ExpiresAt = existing.ExpiresAt
+                    }, cancellationToken);
 
                 return (StatusCodes.OK, new GrantStatusResponse
                 {
@@ -1170,6 +1196,23 @@ public partial class StatusService : IStatusService
                     },
                     cancellationToken: cancellationToken);
 
+                // Push client event for stack increase
+                await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
+                    new StatusEffectChangedClientEvent
+                    {
+                        EventName = "status.effect-changed",
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        ChangeType = StatusChangeType.Stacked,
+                        EntityId = body.EntityId,
+                        EntityType = body.EntityType,
+                        StatusTemplateCode = body.StatusTemplateCode,
+                        StatusInstanceId = existing.StatusInstanceId,
+                        Category = template.Category,
+                        StackCount = existing.StackCount,
+                        ExpiresAt = existing.ExpiresAt
+                    }, cancellationToken);
+
                 return (StatusCodes.OK, new GrantStatusResponse
                 {
                     StatusInstanceId = existing.StatusInstanceId,
@@ -1208,6 +1251,7 @@ public partial class StatusService : IStatusService
         StatusTemplateModel template,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.CreateNewStatusInstanceAsync");
         // Get or create container for this entity
         var container = await GetOrCreateContainerAsync(
             body.EntityId, body.EntityType, body.GameServiceId, cancellationToken);
@@ -1273,7 +1317,7 @@ public partial class StatusService : IStatusService
                 try
                 {
                     await _itemClient.DestroyItemInstanceAsync(
-                        new DestroyItemInstanceRequest { InstanceId = itemInstanceId, Reason = "contract-compensation" },
+                        new DestroyItemInstanceRequest { InstanceId = itemInstanceId, Reason = DestroyReason.Destroyed },
                         cancellationToken);
                 }
                 catch (ApiException deleteEx)
@@ -1334,6 +1378,24 @@ public partial class StatusService : IStatusService
             },
             cancellationToken: cancellationToken);
 
+        // Push client event to sessions observing this entity
+        await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
+            new StatusEffectChangedClientEvent
+            {
+                EventName = "status.effect-changed",
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                ChangeType = StatusChangeType.Granted,
+                EntityId = body.EntityId,
+                EntityType = body.EntityType,
+                StatusTemplateCode = body.StatusTemplateCode,
+                StatusInstanceId = instanceId,
+                Category = template.Category,
+                StackCount = 1,
+                ExpiresAt = expiresAt,
+                SourceId = body.SourceId
+            }, cancellationToken);
+
         _logger.LogInformation(
             "Granted status {Code} to {EntityType} {EntityId} (instance {InstanceId})",
             body.StatusTemplateCode, body.EntityType, body.EntityId, instanceId);
@@ -1355,8 +1417,9 @@ public partial class StatusService : IStatusService
     /// Gets or creates an inventory container for an entity's status effects.
     /// </summary>
     private async Task<StatusContainerModel?> GetOrCreateContainerAsync(
-        Guid entityId, string entityType, Guid gameServiceId, CancellationToken cancellationToken)
+        Guid entityId, EntityType entityType, Guid gameServiceId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.GetOrCreateContainerAsync");
         var entityKey = ContainerEntityKey(entityId, entityType, gameServiceId);
         var existing = await ContainerStore.GetAsync(entityKey, cancellationToken);
         if (existing != null)
@@ -1413,11 +1476,12 @@ public partial class StatusService : IStatusService
     private async Task RemoveInstanceInternalAsync(
         StatusInstanceModel instance, StatusRemoveReason reason, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.RemoveInstanceInternalAsync");
         // Delete backing item
         try
         {
             await _itemClient.DestroyItemInstanceAsync(
-                new DestroyItemInstanceRequest { InstanceId = instance.ItemInstanceId, Reason = "status-removed" },
+                new DestroyItemInstanceRequest { InstanceId = instance.ItemInstanceId, Reason = DestroyReason.Destroyed },
                 cancellationToken);
         }
         catch (ApiException ex)
@@ -1470,6 +1534,23 @@ public partial class StatusService : IStatusService
                 Reason = reason
             },
             cancellationToken: cancellationToken);
+
+        // Push client event to sessions observing this entity
+        await PublishStatusClientEventAsync(instance.EntityType, instance.EntityId,
+            new StatusEffectChangedClientEvent
+            {
+                EventName = "status.effect-changed",
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ChangeType = reason == StatusRemoveReason.Cleansed
+                    ? StatusChangeType.Cleansed
+                    : StatusChangeType.Removed,
+                EntityId = instance.EntityId,
+                EntityType = instance.EntityType,
+                StatusTemplateCode = instance.StatusTemplateCode,
+                StatusInstanceId = instance.StatusInstanceId,
+                Category = instance.Category
+            }, cancellationToken);
     }
 
     /// <summary>
@@ -1498,12 +1579,30 @@ public partial class StatusService : IStatusService
     }
 
     /// <summary>
+    /// Publishes a status client event to all sessions observing the affected entity.
+    /// Uses the entity's own type for routing so sessions watching a character
+    /// receive status updates alongside inventory/collection changes.
+    /// </summary>
+    private async Task PublishStatusClientEventAsync(
+        EntityType entityType,
+        Guid entityId,
+        StatusEffectChangedClientEvent clientEvent,
+        CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.status", "StatusService.PublishStatusClientEventAsync");
+        await _entitySessionRegistry.PublishToEntitySessionsAsync(
+            entityType.ToString().ToLowerInvariant(), entityId, clientEvent, ct);
+    }
+
+    /// <summary>
     /// Gets the active status cache for an entity, building it from MySQL on cache miss.
     /// Filters out expired statuses during rebuild and publishes expiration events.
     /// </summary>
     private async Task<ActiveStatusCacheModel> GetOrBuildActiveCacheAsync(
-        Guid entityId, string entityType, CancellationToken cancellationToken)
+        Guid entityId, EntityType entityType, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.GetOrBuildActiveCacheAsync");
         var cacheKey = ActiveCacheKey(entityId, entityType);
         var cached = await ActiveCacheStore.GetAsync(cacheKey, cancellationToken);
         if (cached != null)
@@ -1544,6 +1643,21 @@ public partial class StatusService : IStatusService
                     },
                     cancellationToken: cancellationToken);
 
+                // Push client event for expiration
+                await PublishStatusClientEventAsync(instance.EntityType, instance.EntityId,
+                    new StatusEffectChangedClientEvent
+                    {
+                        EventName = "status.effect-changed",
+                        EventId = Guid.NewGuid(),
+                        Timestamp = now,
+                        ChangeType = StatusChangeType.Expired,
+                        EntityId = instance.EntityId,
+                        EntityType = instance.EntityType,
+                        StatusTemplateCode = instance.StatusTemplateCode,
+                        StatusInstanceId = instance.StatusInstanceId,
+                        Category = instance.Category
+                    }, cancellationToken);
+
                 // Remove expired instance (fire-and-forget the item deletion)
                 await InstanceStore.DeleteAsync(
                     InstanceIdKey(instance.StatusInstanceId), cancellationToken);
@@ -1581,8 +1695,9 @@ public partial class StatusService : IStatusService
     /// Gets the seed effects cache for an entity, building it from the Seed service on cache miss.
     /// </summary>
     private async Task<SeedEffectsCacheModel> GetOrBuildSeedEffectsCacheAsync(
-        Guid entityId, string entityType, CancellationToken cancellationToken)
+        Guid entityId, EntityType entityType, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.GetOrBuildSeedEffectsCacheAsync");
         var cacheKey = SeedEffectsCacheKey(entityId, entityType);
         var cached = await SeedEffectsCacheStore.GetAsync(cacheKey, cancellationToken);
         if (cached != null)
@@ -1653,8 +1768,9 @@ public partial class StatusService : IStatusService
     /// Invalidates the active status cache for an entity.
     /// </summary>
     private async Task InvalidateActiveCacheAsync(
-        Guid entityId, string entityType, CancellationToken cancellationToken)
+        Guid entityId, EntityType entityType, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.InvalidateActiveCacheAsync");
         try
         {
             await ActiveCacheStore.DeleteAsync(
@@ -1679,8 +1795,9 @@ public partial class StatusService : IStatusService
     /// Invalidates the seed effects cache for an entity.
     /// </summary>
     private async Task InvalidateSeedEffectsCacheAsync(
-        Guid entityId, string entityType, CancellationToken cancellationToken)
+        Guid entityId, EntityType entityType, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.InvalidateSeedEffectsCacheAsync");
         try
         {
             await SeedEffectsCacheStore.DeleteAsync(
@@ -1708,6 +1825,7 @@ public partial class StatusService : IStatusService
         GrantStatusRequest body, GrantFailureReason reason,
         Guid? existingStatusInstanceId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.PublishGrantFailedEventAsync");
         await _messageBus.TryPublishAsync(
             "status.grant-failed",
             new StatusGrantFailedEvent

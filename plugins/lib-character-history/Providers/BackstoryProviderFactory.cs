@@ -8,6 +8,7 @@ using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.CharacterHistory.Caching;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.CharacterHistory.Providers;
 
@@ -18,13 +19,16 @@ namespace BeyondImmersion.BannouService.CharacterHistory.Providers;
 public sealed class BackstoryProviderFactory : IVariableProviderFactory
 {
     private readonly IBackstoryCache _cache;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new backstory provider factory.
     /// </summary>
-    public BackstoryProviderFactory(IBackstoryCache cache)
+    public BackstoryProviderFactory(IBackstoryCache cache, ITelemetryProvider telemetryProvider)
     {
         _cache = cache;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -33,6 +37,7 @@ public sealed class BackstoryProviderFactory : IVariableProviderFactory
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-history", "BackstoryProviderFactory.CreateAsync");
         if (!characterId.HasValue)
         {
             return BackstoryProvider.Empty;

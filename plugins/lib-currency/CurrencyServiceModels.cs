@@ -32,6 +32,27 @@ public partial class CurrencyService
 }
 
 /// <summary>
+/// Shared state store key prefixes used by CurrencyService and CurrencyAutogainTaskService.
+/// </summary>
+internal static class CurrencyKeys
+{
+    internal const string DEF_PREFIX = "def:";
+    internal const string DEF_CODE_INDEX = "def-code:";
+    internal const string BASE_CURRENCY_INDEX = "base-currency:";
+    internal const string ALL_DEFS_KEY = "all-defs";
+    internal const string WALLET_PREFIX = "wallet:";
+    internal const string WALLET_OWNER_INDEX = "wallet-owner:";
+    internal const string BALANCE_PREFIX = "bal:";
+    internal const string BALANCE_WALLET_INDEX = "bal-wallet:";
+    internal const string BALANCE_CURRENCY_INDEX = "bal-currency:";
+    internal const string TX_PREFIX = "tx:";
+    internal const string TX_WALLET_INDEX = "tx-wallet:";
+    internal const string TX_REF_INDEX = "tx-ref:";
+    internal const string HOLD_PREFIX = "hold:";
+    internal const string HOLD_WALLET_INDEX = "hold-wallet:";
+}
+
+/// <summary>
 /// Internal model for currency definitions.
 /// Used by both CurrencyService and CurrencyAutogainTaskService.
 /// </summary>
@@ -84,7 +105,7 @@ internal class WalletModel
 {
     public Guid WalletId { get; set; }
     public Guid OwnerId { get; set; }
-    public WalletOwnerType OwnerType { get; set; } = WalletOwnerType.Account;
+    public EntityType OwnerType { get; set; } = EntityType.Account;
     public Guid? RealmId { get; set; }
     public WalletStatus Status { get; set; } = WalletStatus.Active;
     public string? FrozenReason { get; set; }
@@ -132,6 +153,7 @@ internal class TransactionModel
     public double? SourceBalanceAfter { get; set; }
     public double? TargetBalanceBefore { get; set; }
     public double? TargetBalanceAfter { get; set; }
+    public object? Metadata { get; set; }
 }
 
 /// <summary>

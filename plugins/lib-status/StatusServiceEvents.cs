@@ -40,6 +40,7 @@ public partial class StatusService
     /// <param name="evt">The seed capability updated event.</param>
     public async Task HandleSeedCapabilityUpdatedAsync(SeedCapabilityUpdatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.HandleSeedCapabilityUpdatedAsync");
         if (!_configuration.SeedEffectsEnabled)
         {
             return;

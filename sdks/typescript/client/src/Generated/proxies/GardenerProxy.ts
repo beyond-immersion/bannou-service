@@ -31,7 +31,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async enterGardenAsync(
+  async gardenerEnterGardenAsync(
     request: Schemas['EnterGardenRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getGardenStateAsync(
+  async gardenerGetGardenStateAsync(
     request: Schemas['GetGardenStateRequest'],
     channel: number = 0,
     timeout?: number
@@ -69,7 +69,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updatePositionAsync(
+  async gardenerUpdatePositionAsync(
     request: Schemas['UpdatePositionRequest'],
     channel: number = 0,
     timeout?: number
@@ -87,7 +87,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async leaveGardenAsync(
+  async gardenerLeaveGardenAsync(
     request: Schemas['LeaveGardenRequest'],
     channel: number = 0,
     timeout?: number
@@ -107,7 +107,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listPoisAsync(
+  async gardenerListPoisAsync(
     request: Schemas['ListPoisRequest'],
     channel: number = 0,
     timeout?: number
@@ -127,7 +127,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async interactWithPoiAsync(
+  async gardenerInteractWithPoiAsync(
     request: Schemas['InteractWithPoiRequest'],
     channel: number = 0,
     timeout?: number
@@ -145,7 +145,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async declinePoiAsync(
+  async gardenerDeclinePoiAsync(
     request: Schemas['DeclinePoiRequest'],
     channel: number = 0,
     timeout?: number
@@ -165,7 +165,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async enterScenarioAsync(
+  async gardenerEnterScenarioAsync(
     request: Schemas['EnterScenarioRequest'],
     channel: number = 0,
     timeout?: number
@@ -183,7 +183,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getScenarioStateAsync(
+  async gardenerGetScenarioStateAsync(
     request: Schemas['GetScenarioStateRequest'],
     channel: number = 0,
     timeout?: number
@@ -201,7 +201,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async completeScenarioAsync(
+  async gardenerCompleteScenarioAsync(
     request: Schemas['CompleteScenarioRequest'],
     channel: number = 0,
     timeout?: number
@@ -219,7 +219,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async abandonScenarioAsync(
+  async gardenerAbandonScenarioAsync(
     request: Schemas['AbandonScenarioRequest'],
     channel: number = 0,
     timeout?: number
@@ -237,7 +237,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async chainScenarioAsync(
+  async gardenerChainScenarioAsync(
     request: Schemas['ChainScenarioRequest'],
     channel: number = 0,
     timeout?: number
@@ -255,7 +255,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createTemplateAsync(
+  async gardenerCreateTemplateAsync(
     request: Schemas['CreateTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -273,7 +273,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getTemplateAsync(
+  async gardenerGetTemplateAsync(
     request: Schemas['GetTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -291,7 +291,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getTemplateByCodeAsync(
+  async gardenerGetTemplateByCodeAsync(
     request: Schemas['GetTemplateByCodeRequest'],
     channel: number = 0,
     timeout?: number
@@ -309,7 +309,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listTemplatesAsync(
+  async gardenerListTemplatesAsync(
     request: Schemas['ListTemplatesRequest'],
     channel: number = 0,
     timeout?: number
@@ -327,7 +327,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateTemplateAsync(
+  async gardenerUpdateTemplateAsync(
     request: Schemas['UpdateTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -345,7 +345,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deprecateTemplateAsync(
+  async gardenerDeprecateTemplateAsync(
     request: Schemas['DeprecateTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -363,7 +363,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deleteTemplateAsync(
+  async gardenerDeleteTemplateAsync(
     request: Schemas['DeleteTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -381,7 +381,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getPhaseConfigAsync(
+  async gardenerGetPhaseConfigAsync(
     request: Schemas['GetPhaseConfigRequest'],
     channel: number = 0,
     timeout?: number
@@ -399,7 +399,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updatePhaseConfigAsync(
+  async gardenerUpdatePhaseConfigAsync(
     request: Schemas['UpdatePhaseConfigRequest'],
     channel: number = 0,
     timeout?: number
@@ -417,7 +417,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getPhaseMetricsAsync(
+  async gardenerGetPhaseMetricsAsync(
     request: Schemas['GetPhaseMetricsRequest'],
     channel: number = 0,
     timeout?: number
@@ -435,7 +435,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async enterScenarioTogetherAsync(
+  async gardenerEnterScenarioTogetherAsync(
     request: Schemas['EnterTogetherRequest'],
     channel: number = 0,
     timeout?: number
@@ -453,7 +453,7 @@ export class GardenerProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSharedGardenStateAsync(
+  async gardenerGetSharedGardenStateAsync(
     request: Schemas['GetSharedGardenRequest'],
     channel: number = 0,
     timeout?: number

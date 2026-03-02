@@ -31,7 +31,7 @@ export class SessionsProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getGameSessionAsync(
+  async gameSessionGetGameSessionAsync(
     request: Schemas['GetGameSessionRequest'],
     channel: number = 0,
     timeout?: number
@@ -48,7 +48,7 @@ export class SessionsProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async leaveGameSessionEventAsync(
+  async gameSessionLeaveGameSessionEventAsync(
     request: Schemas['LeaveGameSessionRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -65,7 +65,7 @@ export class SessionsProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async sendChatMessageEventAsync(
+  async gameSessionSendChatMessageEventAsync(
     request: Schemas['ChatMessageRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -83,7 +83,7 @@ export class SessionsProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async performGameActionAsync(
+  async gameSessionPerformGameActionAsync(
     request: Schemas['GameActionRequest'],
     channel: number = 0,
     timeout?: number
@@ -102,7 +102,7 @@ export class SessionsProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async leaveGameSessionByIdEventAsync(
+  async gameSessionLeaveGameSessionByIdEventAsync(
     request: Schemas['LeaveGameSessionByIdRequest'],
     channel: number = 0
   ): Promise<void> {

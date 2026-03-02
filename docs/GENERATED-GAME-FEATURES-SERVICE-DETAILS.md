@@ -71,6 +71,16 @@ Machine-readable personality traits and combat preferences (L4 GameFeatures) for
 
 Recipe-based crafting orchestration service (L4 GameFeatures) for production workflows, item modification, and skill-gated crafting execution. A thin orchestration layer that composes existing Bannou primitives: lib-item for storage, lib-inventory for material consumption and output placement, lib-contract for multi-step session state machines, lib-currency for costs, and lib-affix for modifier operations on existing items. Game-agnostic: recipe types, proficiency domains, station types, tool categories, and quality formulas are all opaque strings defined per game at deployment time through recipe seeding. Internal-only, never internet-facing.
 
+## Director {#director}
+
+**Deep Dive**: [docs/plugins/DIRECTOR.md](plugins/DIRECTOR.md)
+
+Human-in-the-loop orchestration service (L4 GameFeatures) for developer-driven event coordination, actor observation, and player audience management. The Director is to the development team what Puppetmaster is to NPC behavior and Gardener is to player experience: an orchestration layer that coordinates major world events through existing service primitives, ensuring the right players witness the right moments. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item, Divine over Currency/Seed/Collection) that composes existing Bannou primitives to deliver live event management mechanics.
+
+Three control tiers define the developer's relationship to the actor system: **Observe** (tap into any actor's perception stream and cognitive state), **Steer** (inject perceptions and adjust GOAP priorities while actors run autonomously), and **Drive** (replace an actor's ABML cognition with human decision-making, issuing API calls through the same action handlers actors use). The developer never bypasses game rules -- every action goes through the same pipelines the autonomous system uses, simultaneously testing actor mechanisms while orchestrating live content.
+
+Game-agnostic: event categories, steering strategies, and broadcast coordination rules are configured through director configuration and event templates at deployment time. Internal-only, never internet-facing. All endpoints require the `developer` role.
+
 ## Disposition {#disposition}
 
 **Deep Dive**: [docs/plugins/DISPOSITION.md](plugins/DISPOSITION.md)
@@ -253,7 +263,7 @@ Time-based automated production service (L4 GameFeatures) for continuous backgro
 
 ## Summary
 
-- **Services in layer**: 41
+- **Services in layer**: 42
 - **Endpoints in layer**: 344
 
 ---

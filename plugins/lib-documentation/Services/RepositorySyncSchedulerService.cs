@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Documentation.Services;
 
@@ -16,6 +17,7 @@ public class RepositorySyncSchedulerService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<RepositorySyncSchedulerService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private const string BINDINGS_REGISTRY_KEY = "repo-bindings";
     private const string BINDING_KEY_PREFIX = "repo-binding:";
@@ -26,11 +28,18 @@ public class RepositorySyncSchedulerService : BackgroundService
     public RepositorySyncSchedulerService(
         IServiceProvider serviceProvider,
         ILogger<RepositorySyncSchedulerService> logger,
-        DocumentationServiceConfiguration configuration)
+        DocumentationServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
+        ArgumentNullException.ThrowIfNull(serviceProvider, nameof(serviceProvider));
+        ArgumentNullException.ThrowIfNull(logger, nameof(logger));
+        ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+
         _serviceProvider = serviceProvider;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -40,6 +49,7 @@ public class RepositorySyncSchedulerService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RepositorySyncSchedulerService.ExecuteAsync");
         // Check if scheduler is enabled
         if (!_configuration.SyncSchedulerEnabled)
         {
@@ -107,6 +117,7 @@ public class RepositorySyncSchedulerService : BackgroundService
     /// </summary>
     private async Task ProcessScheduledSyncsAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RepositorySyncSchedulerService.ProcessScheduledSyncsAsync");
         _logger.LogDebug("Checking for bindings that need sync");
 
         using var scope = _serviceProvider.CreateScope();
@@ -126,13 +137,13 @@ public class RepositorySyncSchedulerService : BackgroundService
         var bindingStore = stateStoreFactory.GetStore<RepositoryBinding>(StateStoreDefinitions.Documentation);
         var now = DateTimeOffset.UtcNow;
         var syncCount = 0;
-        var maxConcurrent = _configuration.MaxConcurrentSyncs;
+        var maxSyncsPerCycle = _configuration.MaxSyncsPerCycle;
 
         foreach (var namespaceId in bindingNamespaces)
         {
-            if (syncCount >= maxConcurrent)
+            if (syncCount >= maxSyncsPerCycle)
             {
-                _logger.LogDebug("Max concurrent syncs ({Max}) reached, remaining bindings will be processed next cycle", maxConcurrent);
+                _logger.LogDebug("Max syncs per cycle ({Max}) reached, remaining bindings will be processed next cycle", maxSyncsPerCycle);
                 break;
             }
 
@@ -228,6 +239,7 @@ public class RepositorySyncSchedulerService : BackgroundService
     /// </summary>
     private async Task CleanupStaleRepositoriesAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RepositorySyncSchedulerService.CleanupStaleRepositoriesAsync");
         var storagePath = _configuration.GitStoragePath;
         if (!Directory.Exists(storagePath))
         {
@@ -291,6 +303,7 @@ public class RepositorySyncSchedulerService : BackgroundService
     /// </summary>
     private async Task TryPublishErrorAsync(Exception ex, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RepositorySyncSchedulerService.TryPublishErrorAsync");
         try
         {
             using var errorScope = _serviceProvider.CreateScope();

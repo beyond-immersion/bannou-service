@@ -31,7 +31,7 @@ export class ClientCapabilitiesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getClientCapabilitiesAsync(
+  async connectGetClientCapabilitiesAsync(
     request: Schemas['GetClientCapabilitiesRequest'],
     channel: number = 0,
     timeout?: number

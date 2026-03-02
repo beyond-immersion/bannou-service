@@ -163,6 +163,7 @@ When lib-broadcast (L3) publishes `stream.audience.pulse` events, lib-showtime t
 | Dependent | Relationship |
 |-----------|-------------|
 | *(none yet)* | Showtime is a new L4 service with no current consumers. Future dependents: Gardener (streaming as a garden activity type), Achievement (subscribe to `showtime.milestone.reached` for streaming-related trophies), Leaderboard (subscribe to `showtime.session.ended` for streamer rankings) |
+| lib-director *(planned)* | During directed events, Director calls audience/hype endpoints to amplify event reach: `SetContentTags` to inject event-themed content tags, `InjectHypeEvent` to lower hype train trigger thresholds, `InjectAudienceEvent` to prime audience interest. Director also subscribes to `showtime.hype.completed` for post-event metrics. See [DIRECTOR.md](DIRECTOR.md) Broadcast & Showtime Integration |
 
 ---
 
@@ -525,6 +526,8 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 8. **Realm-specific manifestation**: In Omega (cyberpunk meta-dashboard), streaming is explicit -- players see audience stats, manage their stream, and compete with other streamers. In Arcadia, the same mechanics manifest as "performing for a crowd" -- a bard performing at a tavern, a gladiator entertaining an arena, a craftsman demonstrating mastery. The underlying system is identical; the UX presentation varies by realm. Additionally, audience members could manifest as visible NPCs in the game world (a crowd gathering to watch a gladiator fight in Arcadia, floating avatars in Omega). lib-showtime provides the mechanics; the client renders realm-appropriate UX.
 
 9. **Leaderboard integration**: Streamer rankings by follower count, total watch hours, peak hype level, world-first discoveries. Natural integration with the existing Leaderboard service.
+
+10. **Director-coordinated amplification**: During directed events, Director signals Showtime to adjust hype dynamics: lower trigger thresholds (events more likely to start hype trains), inject event-themed content tags (audience interest alignment), boost level advancement rates (faster escalation during climax). Showtime provides the existing endpoints; Director provides timing and context. Post-event, Director captures peak hype level and audience metrics for event analytics. See [DIRECTOR.md](DIRECTOR.md).
 
 ---
 

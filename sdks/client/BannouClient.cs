@@ -551,7 +551,7 @@ public partial class BannouClient : IBannouClient
     /// <summary>
     /// Registers a handler for server-pushed events.
     /// </summary>
-    /// <param name="eventType">Event type to handle (e.g., "capability_manifest")</param>
+    /// <param name="eventType">Event type to handle (e.g., "capability-manifest")</param>
     /// <param name="handler">Handler function receiving the JSON payload</param>
     public void OnEvent(string eventType, Action<string> handler)
     {
@@ -571,7 +571,7 @@ public partial class BannouClient : IBannouClient
     /// Subscribe to a typed event with automatic deserialization.
     /// The event type must be a generated client event class inheriting from <see cref="BaseClientEvent"/>.
     /// </summary>
-    /// <typeparam name="TEvent">Event type to subscribe to (e.g., ChatMessageReceivedEvent)</typeparam>
+    /// <typeparam name="TEvent">Event type to subscribe to (e.g., ChatMessageReceivedClientEvent)</typeparam>
     /// <param name="handler">Handler to invoke when event is received, with the deserialized event object</param>
     /// <returns>Subscription handle - call <see cref="IDisposable.Dispose"/> to unsubscribe</returns>
     /// <exception cref="ArgumentException">Thrown if TEvent is not a registered client event type</exception>
@@ -998,7 +998,7 @@ public partial class BannouClient : IBannouClient
             {
                 var eventName = eventNameElement.GetString();
 
-                if (eventName == "connect.capability_manifest")
+                if (eventName == "connect.capability-manifest")
                 {
                     HandleCapabilityManifest(root);
                 }

@@ -115,8 +115,12 @@ var result = await _service.GetAccountAsync(null);  // null is allowed by type s
 | Async methods | `{Action}Async` | `GetAccountAsync` |
 | Request models | `{Action}Request` | `CreateAccountRequest` |
 | Response models | `{Entity}Response` | `AccountResponse` |
-| Event models | `{Entity}{Action}Event` | `AccountCreatedEvent` |
-| Event topics | `{entity}.{action}` | `account.created`, `game-session.deleted`, `chat-room-type.updated` (entity uses hyphens for multi-word names; dot separates entity from action only) |
+| Event models (service) | `{Entity}{Action}Event` | `AccountCreatedEvent` |
+| Event models (client) | `{Entity}{Action}ClientEvent` | `CharacterUpdatedClientEvent` |
+| Event topics (single-entity) | `{entity}.{action}` | `account.created`, `game-session.player-joined`, `personality.evolved` (Pattern A: service has one entity type, or entity name is independent of service name) |
+| Event topics (multi-entity) | `{service}.{entity}.{action}` | `worldstate.calendar-template.created`, `transit.connection.created`, `divine.blessing.granted` (Pattern C: dot-separated service namespace for services with multiple entity types) |
+| Client event names (single-entity) | `{service}.{compound-action}` | `auth.password-changed`, `game-session.state-changed`, `chat.typing-started` (Pattern A: no real API entity in the middle) |
+| Client event names (multi-entity) | `{service}.{entity}.{action}` | `chat.message.received`, `inventory.item.changed`, `voice.peer.joined` (Pattern C: middle word is a real API-backed entity with its own endpoint group) |
 | State keys | `{entity-prefix}{id}` | `account-{guid}` |
 | Config properties | PascalCase + units | `TimeoutSeconds` |
 | Test methods | `UnitOfWork_State_Result` | `GetAccount_WhenExists_Returns` |
@@ -186,24 +190,9 @@ For `IAsyncDisposable`, same pattern with `await` in finally. `#pragma warning d
 
 ---
 
-## Quick Reference: Quality Violations
+## Quick Reference
 
-| Violation | Tenet | Fix |
-|-----------|-------|-----|
-| `[TAG]` prefix in logs | T10 | Remove brackets, use structured logging |
-| Emojis in log messages | T10 | Plain text only (scripts excepted) |
-| String interpolation in logs | T10 | Use message templates with placeholders |
-| Logging passwords/tokens | T10 | Redact or log length only |
-| HTTP fallback in tests | T12 | Remove fallback, fix root cause |
-| Changing test to pass with buggy impl | T12 | Keep test, fix implementation |
-| Using `null!` to test non-nullable params | T12 | Remove test - tests impossible scenario |
-| Adding null checks for NRT-protected params | T12 | Don't add - NRT provides compile-time safety |
-| Wrong naming pattern | T16 | Follow category-specific pattern |
-| Missing XML documentation | T19 | Add `<summary>`, `<param>`, `<returns>` |
-| Missing env var in config doc | T19 | Add environment variable to summary |
-| `#pragma warning disable` without exception | T22 | Fix the warning instead of suppressing |
-| Blanket GlobalSuppressions.cs | T22 | Remove file, fix warnings individually |
-| Suppressing CS8602/CS8603/CS8604 in non-generated | T22 | Fix the null safety issue |
+For the consolidated violations table covering all quality tenets, see [TENETS.md Quick Reference: Common Violations](../TENETS.md#quick-reference-common-violations).
 
 ---
 

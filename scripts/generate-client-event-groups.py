@@ -65,9 +65,11 @@ def get_method_name_from_event(event_name: str) -> str:
         PlayerJoinedEvent -> OnPlayerJoined
         VoiceRoomStateEvent -> OnRoomState (strips service prefix)
     """
-    # Remove 'Event' suffix
+    # Remove 'ClientEvent' or 'Event' suffix
     base = event_name
-    if base.endswith('Event'):
+    if base.endswith('ClientEvent'):
+        base = base[:-11]
+    elif base.endswith('Event'):
         base = base[:-5]
 
     return f"On{base}"

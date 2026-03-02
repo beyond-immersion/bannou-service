@@ -32,19 +32,19 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published to item-template.created when a itemtemplate is created
+/// Published to item.template.created when a itemtemplate is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ItemTemplateCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: item-template.created
+    /// Event type identifier: item.template.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "item-template.created";
+    public override string EventName { get; set; } = "item.template.created";
 
     /// <summary>
     /// Unique identifier for the item template
@@ -176,6 +176,12 @@ public partial class ItemTemplateCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
     public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Template ID to migrate existing instances to
@@ -200,19 +206,19 @@ public partial class ItemTemplateCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to item-template.updated when a itemtemplate is updated
+/// Published to item.template.updated when a itemtemplate is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ItemTemplateUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: item-template.updated
+    /// Event type identifier: item.template.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "item-template.updated";
+    public override string EventName { get; set; } = "item.template.updated";
 
     /// <summary>
     /// Unique identifier for the item template
@@ -344,6 +350,12 @@ public partial class ItemTemplateUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
     public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Template ID to migrate existing instances to
@@ -376,19 +388,19 @@ public partial class ItemTemplateUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to item-template.deleted when a itemtemplate is deleted
+/// Published to item.template.deleted when a itemtemplate is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ItemTemplateDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: item-template.deleted
+    /// Event type identifier: item.template.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "item-template.deleted";
+    public override string EventName { get; set; } = "item.template.deleted";
 
     /// <summary>
     /// Unique identifier for the item template
@@ -520,6 +532,12 @@ public partial class ItemTemplateDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
     public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Template ID to migrate existing instances to
@@ -550,19 +568,19 @@ public partial class ItemTemplateDeletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to item-instance.created when a iteminstance is created
+/// Published to item.instance.created when a iteminstance is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ItemInstanceCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: item-instance.created
+    /// Event type identifier: item.instance.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "item-instance.created";
+    public override string EventName { get; set; } = "item.instance.created";
 
     /// <summary>
     /// Unique identifier for this item instance
@@ -581,12 +599,10 @@ public partial class ItemInstanceCreatedEvent : BaseServiceEvent
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Container holding this item (ownership derived from container)
+    /// Container holding this item (ownership derived from container). Null when removed from all containers.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
+    public System.Guid? ContainerId { get; set; } = default!;
 
     /// <summary>
     /// Realm this instance exists in
@@ -682,19 +698,19 @@ public partial class ItemInstanceCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to item-instance.updated when a iteminstance is updated
+/// Published to item.instance.updated when a iteminstance is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ItemInstanceUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: item-instance.updated
+    /// Event type identifier: item.instance.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "item-instance.updated";
+    public override string EventName { get; set; } = "item.instance.updated";
 
     /// <summary>
     /// Unique identifier for this item instance
@@ -713,12 +729,10 @@ public partial class ItemInstanceUpdatedEvent : BaseServiceEvent
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Container holding this item (ownership derived from container)
+    /// Container holding this item (ownership derived from container). Null when removed from all containers.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
+    public System.Guid? ContainerId { get; set; } = default!;
 
     /// <summary>
     /// Realm this instance exists in
@@ -822,19 +836,19 @@ public partial class ItemInstanceUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to item-instance.deleted when a iteminstance is deleted
+/// Published to item.instance.deleted when a iteminstance is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ItemInstanceDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: item-instance.deleted
+    /// Event type identifier: item.instance.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "item-instance.deleted";
+    public override string EventName { get; set; } = "item.instance.deleted";
 
     /// <summary>
     /// Unique identifier for this item instance
@@ -853,12 +867,10 @@ public partial class ItemInstanceDeletedEvent : BaseServiceEvent
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Container holding this item (ownership derived from container)
+    /// Container holding this item (ownership derived from container). Null when removed from all containers.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
+    public System.Guid? ContainerId { get; set; } = default!;
 
     /// <summary>
     /// Realm this instance exists in

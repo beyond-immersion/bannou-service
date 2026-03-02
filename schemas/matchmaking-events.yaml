@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Matchmaking Service Events
   description: |
@@ -45,13 +45,13 @@ info:
       event: MatchmakingMatchDeclinedEvent
       description: Published when a player declines a match
     # Queue lifecycle events (auto-generated)
-    - topic: matchmaking.queue-created
+    - topic: matchmaking.queue.created
       event: MatchmakingQueueCreatedEvent
       description: Published when a new queue is created
-    - topic: matchmaking.queue-updated
+    - topic: matchmaking.queue.updated
       event: MatchmakingQueueUpdatedEvent
       description: Published when a queue configuration changes
-    - topic: matchmaking.queue-deleted
+    - topic: matchmaking.queue.deleted
       event: MatchmakingQueueDeletedEvent
       description: Published when a queue is deleted
     # Operational stats
@@ -61,6 +61,7 @@ info:
 
 # Lifecycle events auto-generated from this definition
 x-lifecycle:
+  topic_prefix: matchmaking
   MatchmakingQueue:
     model:
       queueId: { type: string, primary: true, required: true, description: "Unique identifier for the matchmaking queue" }

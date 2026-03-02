@@ -411,7 +411,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 var responseObj = JsonNode.Parse(responsePayload)?.AsObject();
                 var messageType = responseObj?["eventName"]?.GetValue<string>();
 
-                if (messageType == "connect.capability_manifest")
+                if (messageType == "connect.capability-manifest")
                 {
                     var availableApis = responseObj?["availableApis"]?.AsArray();
                     var apiCount = availableApis?.Count ?? 0;
@@ -434,7 +434,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 }
                 else
                 {
-                    Console.WriteLine($"❌ Expected capability_manifest but received '{messageType}'");
+                    Console.WriteLine($"❌ Expected capability-manifest but received '{messageType}'");
                     return false;
                 }
             }
@@ -922,7 +922,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
     /// 1. Connect with JWT authentication
     /// 2. Receive capability manifest
     /// 3. Initiate graceful close (client-side)
-    /// 4. Receive disconnect_notification with reconnection token
+    /// 4. Receive disconnect-notification with reconnection token
     /// 5. Reconnect using the reconnection token
     /// 6. Verify session is restored (receive capability manifest again)
     /// </summary>
@@ -974,11 +974,11 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             }
             Console.WriteLine($"✅ Received capability manifest with at least {endpoint}");
 
-            // Step 3: Initiate graceful close - server should send disconnect_notification first
+            // Step 3: Initiate graceful close - server should send disconnect-notification first
             Console.WriteLine("📋 Step 3: Initiating graceful close...");
             await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Testing reconnection", CancellationToken.None);
 
-            // The server should have sent us a disconnect_notification before closing
+            // The server should have sent us a disconnect-notification before closing
             // We need to receive any pending messages before the close completed
             // Note: In practice, the server sends the notification before accepting our close
             Console.WriteLine("   WebSocket gracefully closed");
@@ -988,7 +988,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         }
 
         // Alternative approach: Don't close from client side, let server handle the close
-        // and capture the disconnect_notification
+        // and capture the disconnect-notification
         Console.WriteLine("📋 Step 3 (revised): Connecting again and receiving disconnect notification...");
         using (var webSocket = new ClientWebSocket())
         {
@@ -1012,7 +1012,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                         ? Encoding.UTF8.GetString(receiveBuffer.Array!, 0, result.Count)
                         : TryParseAsJsonFromBinary(receiveBuffer.Array!, result.Count);
 
-                    if (payloadText?.Contains("capability_manifest") == true)
+                    if (payloadText?.Contains("capability-manifest") == true)
                     {
                         manifestReceived = true;
                         Console.WriteLine("✅ Received capability manifest");
@@ -1026,7 +1026,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 return false;
             }
 
-            // Now initiate close and try to capture disconnect_notification
+            // Now initiate close and try to capture disconnect-notification
             // The server should send it before completing the close
             Console.WriteLine("📋 Step 4: Closing connection to trigger disconnect notification...");
 
@@ -1042,7 +1042,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                     // Request close
                     await webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Testing reconnection", CancellationToken.None);
 
-                    // Now receive any final messages (should include disconnect_notification)
+                    // Now receive any final messages (should include disconnect-notification)
                     using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
                     while (!closeReceived && webSocket.State != WebSocketState.Closed)
                     {
@@ -1058,13 +1058,13 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                             var text = Encoding.UTF8.GetString(receiveBuffer.Array!, 0, result.Count);
                             Console.WriteLine($"   Received text message: {text[..Math.Min(100, text.Length)]}...");
 
-                            if (text.Contains("disconnect_notification"))
+                            if (text.Contains("disconnect-notification"))
                             {
                                 disconnectNotificationReceived = true;
                                 var notification = JsonNode.Parse(text)?.AsObject();
                                 reconnectionToken = notification?["reconnectionToken"]?.GetValue<string>();
                                 var expiresAt = notification?["expiresAt"]?.GetValue<string>();
-                                Console.WriteLine($"✅ Received disconnect_notification!");
+                                Console.WriteLine($"✅ Received disconnect-notification!");
                                 Console.WriteLine($"   Reconnection token: {reconnectionToken?[..Math.Min(20, reconnectionToken?.Length ?? 0)]}...");
                                 Console.WriteLine($"   Expires at: {expiresAt}");
                             }
@@ -1078,7 +1078,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
                 if (!disconnectNotificationReceived)
                 {
-                    Console.WriteLine("⚠️ Did not receive disconnect_notification before WebSocket closed");
+                    Console.WriteLine("⚠️ Did not receive disconnect-notification before WebSocket closed");
                     Console.WriteLine("   Check that BannouSessionManager is properly registered and state store is available");
                 }
             }
@@ -1089,7 +1089,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
         if (string.IsNullOrEmpty(reconnectionToken))
         {
-            Console.WriteLine("❌ FAIL: No reconnection token received - disconnect_notification was not sent");
+            Console.WriteLine("❌ FAIL: No reconnection token received - disconnect-notification was not sent");
             Console.WriteLine("   This indicates session management is not working (check BannouSessionManager registration)");
             return false;
         }
@@ -1426,7 +1426,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                     var payloadText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
 
                     // Check if this is a capability manifest
-                    if (payloadText.Contains("capability_manifest"))
+                    if (payloadText.Contains("capability-manifest"))
                     {
                         var manifest = JsonNode.Parse(payloadText)?.AsObject();
                         var availableApis = manifest?["availableApis"]?.AsArray();
@@ -1504,7 +1504,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 }
 
                 var type = manifest?["eventName"]?.GetValue<string>();
-                if (type != "connect.capability_manifest") continue;
+                if (type != "connect.capability-manifest") continue;
 
                 var availableApis = manifest?["availableApis"]?.AsArray();
                 if (availableApis == null || availableApis.Count == 0)
@@ -1608,9 +1608,9 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
                 // Verify this is a capability manifest
                 var type = manifest?["eventName"]?.GetValue<string>();
-                if (type != "connect.capability_manifest")
+                if (type != "connect.capability-manifest")
                 {
-                    Console.WriteLine($"⚠️ Received event type '{type}', waiting for connect.capability_manifest...");
+                    Console.WriteLine($"⚠️ Received event type '{type}', waiting for connect.capability-manifest...");
                     continue;
                 }
 
@@ -1671,7 +1671,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Waits for a Response message from the WebSocket, skipping any Event messages.
-    /// Event messages (like capability_manifest updates) can arrive asynchronously,
+    /// Event messages (like capability-manifest updates) can arrive asynchronously,
     /// so we need to filter for actual API responses.
     /// </summary>
     private static async Task<BinaryMessage?> WaitForResponseMessage(ClientWebSocket webSocket, TimeSpan timeout)
@@ -2160,7 +2160,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
                 // Verify this is a capability manifest
                 var type = manifest?["eventName"]?.GetValue<string>();
-                if (type != "connect.capability_manifest")
+                if (type != "connect.capability-manifest")
                 {
                     continue;
                 }

@@ -25,6 +25,18 @@ namespace BeyondImmersion.BannouService.Providers;
 /// <b>Distributed safety</b>: This is a pull-based registry (entity-based services query it on demand).
 /// All state lives in Redis (distributed). Safe for multi-node deployments per IMPLEMENTATION TENETS.
 /// </para>
+/// <para>
+/// <b>When to use this vs IClientEventPublisher directly:</b>
+/// <list type="bullet">
+/// <item>Use <see cref="PublishToEntitySessionsAsync{TEvent}"/> when you have an entity (type + ID) and
+/// want to reach all sessions observing that entity. This is the standard pattern for domain services
+/// (e.g., Inventory publishes to all sessions watching an owner's containers).</item>
+/// <item>Use <c>IClientEventPublisher.PublishToSessionAsync</c> directly only when you already have
+/// specific session IDs and do not need entity-to-session resolution (e.g., Connect service routing
+/// to a known session, or responding within a specific request context).</item>
+/// </list>
+/// Most services should use this interface, not IClientEventPublisher directly.
+/// </para>
 /// </remarks>
 public interface IEntitySessionRegistry
 {

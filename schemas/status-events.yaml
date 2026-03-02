@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Status Service Events
   description: |
@@ -34,13 +34,13 @@ info:
     #   handler: HandleItemExpired
   x-event-publications:
     # Status template lifecycle events (auto-generated from x-lifecycle)
-    - topic: status-template.created
+    - topic: status.template.created
       event: StatusTemplateCreatedEvent
       description: Published when a new status template is created
-    - topic: status-template.updated
+    - topic: status.template.updated
       event: StatusTemplateUpdatedEvent
       description: Published when a status template is updated
-    - topic: status-template.deleted
+    - topic: status.template.deleted
       event: StatusTemplateDeletedEvent
       description: Published when a status template is deleted
 
@@ -67,6 +67,7 @@ info:
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/status-lifecycle-events.yaml
 x-lifecycle:
+  topic_prefix: status
   StatusTemplate:
     model:
       statusTemplateId: { type: string, format: uuid, primary: true, required: true, description: "Unique status template identifier" }
@@ -121,7 +122,7 @@ components:
           format: uuid
           description: Entity that received the status effect
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         statusTemplateCode:
           type: string
@@ -176,7 +177,7 @@ components:
           format: uuid
           description: Entity that lost the status effect
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         statusTemplateCode:
           type: string
@@ -214,7 +215,7 @@ components:
           format: uuid
           description: Entity whose status expired
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         statusTemplateCode:
           type: string
@@ -251,7 +252,7 @@ components:
           format: uuid
           description: Entity whose status was stacked
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         statusTemplateCode:
           type: string
@@ -292,7 +293,7 @@ components:
           format: uuid
           description: Entity that was targeted
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         statusTemplateCode:
           type: string
@@ -332,7 +333,7 @@ components:
           format: uuid
           description: Entity that was cleansed
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         category:
           $ref: 'status-api.yaml#/components/schemas/StatusCategory'

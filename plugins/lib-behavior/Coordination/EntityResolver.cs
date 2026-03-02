@@ -4,7 +4,9 @@
 // =============================================================================
 
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.Bannou.Behavior.Coordination;
 
@@ -23,6 +25,7 @@ namespace BeyondImmersion.Bannou.Behavior.Coordination;
 public sealed class EntityResolver : IEntityResolver
 {
     private readonly ILogger<EntityResolver>? _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
 
     /// <summary>
     /// Special binding names that are resolved from context rather than explicit bindings.
@@ -40,9 +43,11 @@ public sealed class EntityResolver : IEntityResolver
     /// Creates a new entity resolver.
     /// </summary>
     /// <param name="logger">Optional logger.</param>
-    public EntityResolver(ILogger<EntityResolver>? logger = null)
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
+    public EntityResolver(ILogger<EntityResolver>? logger = null, ITelemetryProvider? telemetryProvider = null)
     {
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -52,6 +57,7 @@ public sealed class EntityResolver : IEntityResolver
         EntityResolutionContext? context = null,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "EntityResolver.ResolveAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(bindingName);
 
         // Yield to ensure proper async pattern per IMPLEMENTATION TENETS
@@ -83,6 +89,7 @@ public sealed class EntityResolver : IEntityResolver
         EntityResolutionContext? context = null,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "EntityResolver.ResolveManyAsync");
 
         // Yield to ensure proper async pattern per IMPLEMENTATION TENETS
         await Task.Yield();
