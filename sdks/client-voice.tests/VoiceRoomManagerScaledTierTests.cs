@@ -51,7 +51,7 @@ public class VoiceRoomManagerScaledTierTests
         using var manager = CreateManager();
 
         // Assert
-        Assert.Equal(VoiceTier.P2p, manager.CurrentTier);
+        Assert.Equal(VoiceTier.P2P, manager.CurrentTier);
     }
 
     [Fact]

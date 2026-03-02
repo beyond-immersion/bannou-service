@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Voice.ClientEvents;
+using BeyondImmersion.BannouService.Voice;
 
 namespace BeyondImmersion.Bannou.Client.Voice;
 

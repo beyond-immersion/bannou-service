@@ -201,7 +201,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             var result = response.Result;
             Console.WriteLine($"   Success: {result.Success}");
             Console.WriteLine($"   DeploymentId: {result.DeploymentId}");
-            Console.WriteLine($"   Message: {result.Message}");
+            Console.WriteLine($"   Warnings: {string.Join(", ", result.Warnings ?? Array.Empty<string>())}");
 
             if (result.Success)
             {
@@ -1427,7 +1427,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             var result = response.Result;
             Console.WriteLine($"   Success: {result.Success}");
-            Console.WriteLine($"   Message: {result.Message}");
+            Console.WriteLine($"   Warnings: {string.Join(", ", result.Warnings ?? Array.Empty<string>())}");
 
             if (result.Success)
             {
@@ -1487,7 +1487,8 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             }
 
             var cleanResult = response.Result;
-            Console.WriteLine($"   Clean response: Success={cleanResult.Success}");
+            var cleanHasErrors = cleanResult.Errors != null && cleanResult.Errors.Count > 0;
+            Console.WriteLine($"   Clean response: HasErrors={cleanHasErrors}");
 
             // Wait for mapping events to propagate
             await Task.Delay(2000);
@@ -1575,7 +1576,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             var result = response.Result;
             Console.WriteLine($"   Success: {result.Success}");
-            Console.WriteLine($"   Message: {result.Message}");
+            Console.WriteLine($"   Warnings: {string.Join(", ", result.Warnings ?? Array.Empty<string>())}");
 
             if (result.Success)
             {

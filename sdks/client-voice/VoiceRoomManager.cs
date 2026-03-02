@@ -52,7 +52,7 @@ public sealed class VoiceRoomManager : IDisposable
     private bool _disposed;
 
     private Guid? _currentRoomId;
-    private VoiceTier _currentTier = VoiceTier.P2p;
+    private VoiceTier _currentTier = VoiceTier.P2P;
     private IReadOnlyList<string> _stunServers = Array.Empty<string>();
 
     // Scaled tier connection (null when in P2P mode)
@@ -255,7 +255,7 @@ public sealed class VoiceRoomManager : IDisposable
             // Scaled mode: send to RTP server
             _scaledConnection.SendAudioFrame(pcmSamples, sampleRate, channels);
         }
-        else if (_currentTier == VoiceTier.P2p)
+        else if (_currentTier == VoiceTier.P2P)
         {
             // P2P mode: send to all peers
             foreach (var peer in _peers.Values)
@@ -306,7 +306,7 @@ public sealed class VoiceRoomManager : IDisposable
         await CloseAllPeersAsync();
         await CloseScaledConnectionAsync();
         _currentRoomId = null;
-        _currentTier = VoiceTier.P2p;
+        _currentTier = VoiceTier.P2P;
     }
 
     private async Task CloseScaledConnectionAsync()
@@ -374,7 +374,7 @@ public sealed class VoiceRoomManager : IDisposable
             _stunServers = evt.StunServers?.ToList() ?? new List<string>();
 
             // If P2P mode, connect to all existing peers
-            if (evt.Tier == VoiceTier.P2p)
+            if (evt.Tier == VoiceTier.P2P)
             {
                 foreach (var peerInfo in evt.Peers)
                 {
@@ -395,7 +395,7 @@ public sealed class VoiceRoomManager : IDisposable
             var evt = BannouJson.Deserialize<VoicePeerJoinedClientEvent>(json);
             if (evt == null || evt.RoomId != _currentRoomId) return;
 
-            if (_currentTier == VoiceTier.P2p)
+            if (_currentTier == VoiceTier.P2P)
             {
                 _ = ConnectToPeerAsync(evt.Peer);
             }
@@ -557,7 +557,7 @@ public sealed class VoiceRoomManager : IDisposable
             _ = CloseAllPeersAsync();
             _ = CloseScaledConnectionAsync();
             _currentRoomId = null;
-            _currentTier = VoiceTier.P2p;
+            _currentTier = VoiceTier.P2P;
 
             OnRoomClosed?.Invoke(evt.Reason.ToString());
         }

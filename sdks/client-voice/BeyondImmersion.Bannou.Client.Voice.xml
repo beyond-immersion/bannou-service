@@ -187,7 +187,7 @@
             When these credentials expire. Null if no expiration.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Voice.SipConnectionCredentials.FromEvent(BeyondImmersion.Bannou.Voice.ClientEvents.SipCredentials,System.String)">
+        <member name="M:BeyondImmersion.Bannou.Client.Voice.SipConnectionCredentials.FromEvent(BeyondImmersion.BannouService.Voice.SipCredentials,System.String)">
             <summary>
             Creates credentials from the generated SipCredentials event model.
             </summary>

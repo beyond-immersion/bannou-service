@@ -440,6 +440,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 - **Blue-green deployment**: Deploy new topology alongside old, switch routing atomically, then teardown old.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/552 -->
 - **Canary deployments**: Route percentage of traffic to new version, monitor health, then promote or rollback.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/553 -->
 - **Processing pool priority queue**: Currently FIFO; could use priority field from acquire requests.
 - **Lease expiry enforcement**: Background timer to reclaim expired leases and return processors to available pool.
 
