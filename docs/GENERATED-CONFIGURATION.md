@@ -913,6 +913,7 @@ Final ... |
 | `ORCHESTRATOR_INDEX_UPDATE_MAX_RETRIES` | int | `3` | Maximum number of retry attempts for state index update oper... |
 | `ORCHESTRATOR_KUBECONFIG_PATH` | string | **REQUIRED** | Path to kubeconfig file (null uses default ~/.kube/config) |
 | `ORCHESTRATOR_KUBERNETES_NAMESPACE` | string | `default` | Kubernetes namespace for deployments |
+| `ORCHESTRATOR_LEASE_CLEANUP_INTERVAL_SECONDS` | int | `60` | Interval in seconds for background timer that reclaims expir... |
 | `ORCHESTRATOR_LOGS_VOLUME` | string | `logs-data` | Docker volume name for logs |
 | `ORCHESTRATOR_OPENRESTY_HOST` | string | `openresty` | OpenResty hostname for cache invalidation calls |
 | `ORCHESTRATOR_OPENRESTY_PORT` | int | `80` | OpenResty port for cache invalidation calls |
@@ -1263,9 +1264,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 967
+- **Total properties**: 968
 - **Required (no default)**: 59
-- **Optional (has default)**: 908
+- **Optional (has default)**: 909
 
 ## Environment Variable Naming Convention
 

@@ -342,6 +342,12 @@ See the x-bannou-protocol extension for protocol details.
                 # Copy endpoint details
                 consolidated['paths'][path][method] = details
 
+                # Prefix operationId with service name for global uniqueness
+                if 'operationId' in details:
+                    parts = service_name.split('-')
+                    prefix = parts[0] + ''.join(p.capitalize() for p in parts[1:])
+                    details['operationId'] = f"{prefix}_{details['operationId']}"
+
                 # Collect required schemas
                 collect_required_schemas(details, all_schemas, required_schemas)
 

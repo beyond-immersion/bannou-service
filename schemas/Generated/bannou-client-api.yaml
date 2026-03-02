@@ -94,7 +94,7 @@ paths:
   /account/profile/update:
     post:
       summary: Update account profile
-      operationId: updateProfile
+      operationId: account_updateProfile
       tags:
       - Profile Management
       x-permissions:
@@ -118,7 +118,7 @@ paths:
   /account/password/update:
     post:
       summary: Update account password hash
-      operationId: updatePasswordHash
+      operationId: account_updatePasswordHash
       tags:
       - Account Management
       x-permissions:
@@ -142,7 +142,7 @@ paths:
         Sets or clears MFA-related fields (mfaEnabled, mfaSecret, mfaRecoveryCodes) atomically.
         Used by Auth service during MFA enable/disable flows. Auth owns the encryption logic;
         Account stores the opaque encrypted data.
-      operationId: updateMfa
+      operationId: account_updateMfa
       tags:
       - Account Management
       x-permissions:
@@ -164,7 +164,7 @@ paths:
   /account/verification/update:
     post:
       summary: Update email verification status
-      operationId: updateVerificationStatus
+      operationId: account_updateVerificationStatus
       tags:
       - Account Management
       x-permissions:
@@ -187,7 +187,7 @@ paths:
       description: |
         Create a new achievement with specified criteria and platform mappings.
         Developer-only endpoint.
-      operationId: createAchievementDefinition
+      operationId: achievement_createAchievementDefinition
       tags:
       - Definitions
       x-permissions:
@@ -213,7 +213,7 @@ paths:
       summary: List achievement definitions
       description: List achievements for a game service with optional platform 
         filtering.
-      operationId: listAchievementDefinitions
+      operationId: achievement_listAchievementDefinitions
       tags:
       - Definitions
       x-permissions:
@@ -238,7 +238,7 @@ paths:
       description: |
         Update properties of an existing achievement.
         Developer-only endpoint.
-      operationId: updateAchievementDefinition
+      operationId: achievement_updateAchievementDefinition
       tags:
       - Definitions
       x-permissions:
@@ -265,7 +265,7 @@ paths:
       description: |
         Delete an achievement. Earned instances are preserved in history.
         Developer-only endpoint.
-      operationId: deleteAchievementDefinition
+      operationId: achievement_deleteAchievementDefinition
       tags:
       - Definitions
       x-permissions:
@@ -287,7 +287,7 @@ paths:
       summary: Get entity's achievement progress
       description: Get progress for an entity across all achievements or a 
         specific one.
-      operationId: getAchievementProgress
+      operationId: achievement_getAchievementProgress
       tags:
       - Progress
       x-permissions:
@@ -310,7 +310,7 @@ paths:
     post:
       summary: List unlocked achievements
       description: Get all achievements unlocked by an entity.
-      operationId: listUnlockedAchievements
+      operationId: achievement_listUnlockedAchievements
       tags:
       - Progress
       x-permissions:
@@ -331,7 +331,7 @@ paths:
                 $ref: '#/components/schemas/ListUnlockedAchievementsResponse'
   /actor/template/create:
     post:
-      operationId: CreateActorTemplate
+      operationId: actor_CreateActorTemplate
       summary: Create an actor template (category definition)
       x-permissions:
       - role: developer
@@ -350,7 +350,7 @@ paths:
                 $ref: '#/components/schemas/ActorTemplateResponse'
   /actor/template/update:
     post:
-      operationId: UpdateActorTemplate
+      operationId: actor_UpdateActorTemplate
       summary: Update an actor template
       x-permissions:
       - role: developer
@@ -369,7 +369,7 @@ paths:
                 $ref: '#/components/schemas/ActorTemplateResponse'
   /actor/template/delete:
     post:
-      operationId: DeleteActorTemplate
+      operationId: actor_DeleteActorTemplate
       summary: Delete an actor template
       x-permissions:
       - role: developer
@@ -388,7 +388,7 @@ paths:
                 $ref: '#/components/schemas/DeleteActorTemplateResponse'
   /actor/spawn:
     post:
-      operationId: SpawnActor
+      operationId: actor_SpawnActor
       summary: Spawn a new actor from a template
       x-permissions:
       - role: developer
@@ -407,7 +407,7 @@ paths:
                 $ref: '#/components/schemas/ActorInstanceResponse'
   /actor/stop:
     post:
-      operationId: StopActor
+      operationId: actor_StopActor
       summary: Stop a running actor
       x-permissions:
       - role: developer
@@ -426,7 +426,7 @@ paths:
                 $ref: '#/components/schemas/StopActorResponse'
   /actor/bind-character:
     post:
-      operationId: BindActorCharacter
+      operationId: actor_BindActorCharacter
       summary: Bind an unbound actor to a character
       description: |
         Transitions an unbound (event-mode) actor to a bound (character-mode) actor.
@@ -450,7 +450,7 @@ paths:
                 $ref: '#/components/schemas/ActorInstanceResponse'
   /actor/cleanup-by-character:
     post:
-      operationId: CleanupByCharacter
+      operationId: actor_CleanupByCharacter
       summary: Cleanup actors referencing a deleted character
       description: |
         Called by lib-resource cleanup coordination when a character is deleted.
@@ -474,7 +474,7 @@ paths:
                 $ref: '#/components/schemas/CleanupByCharacterResponse'
   /actor/inject-perception:
     post:
-      operationId: InjectPerception
+      operationId: actor_InjectPerception
       summary: Inject a perception event into an actor's queue (testing)
       description: |
         Injects a perception event directly into the actor's perception queue
@@ -497,7 +497,7 @@ paths:
                 $ref: '#/components/schemas/InjectPerceptionResponse'
   /actor/encounter/start:
     post:
-      operationId: StartEncounter
+      operationId: actor_StartEncounter
       summary: Start an encounter managed by an Event Brain actor
       description: |
         Initializes an encounter with the specified participants. The Event Brain actor
@@ -520,7 +520,7 @@ paths:
                 $ref: '#/components/schemas/StartEncounterResponse'
   /actor/encounter/update-phase:
     post:
-      operationId: UpdateEncounterPhase
+      operationId: actor_UpdateEncounterPhase
       summary: Update the phase of an active encounter
       description: |
         Updates the phase of an encounter being managed by an Event Brain actor.
@@ -542,7 +542,7 @@ paths:
                 $ref: '#/components/schemas/UpdateEncounterPhaseResponse'
   /actor/encounter/end:
     post:
-      operationId: EndEncounter
+      operationId: actor_EndEncounter
       summary: End an active encounter
       description: |
         Ends an encounter being managed by an Event Brain actor. This clears the
@@ -568,7 +568,7 @@ paths:
       description: |
         Generate a pre-signed URL for uploading a new asset directly to storage.
         For large files (>50MB), returns multipart upload configuration.
-      operationId: requestUpload
+      operationId: asset_requestUpload
       tags:
       - Assets
       x-permissions:
@@ -600,7 +600,7 @@ paths:
         Called after the client has uploaded the file to the pre-signed URL.
         Triggers the asset processing pipeline (texture conversion, model validation, etc.)
         and emits completion events via WebSocket.
-      operationId: completeUpload
+      operationId: asset_completeUpload
       tags:
       - Assets
       x-permissions:
@@ -629,7 +629,7 @@ paths:
       description: |
         Retrieve asset metadata and generate a pre-signed download URL.
         Specify version to download a specific version, or omit for latest.
-      operationId: getAsset
+      operationId: asset_getAsset
       tags:
       - Assets
       x-permissions:
@@ -656,7 +656,7 @@ paths:
       description: |
         Retrieve version history for an asset with pagination.
         Includes version IDs, creation timestamps, and archive status.
-      operationId: listAssetVersions
+      operationId: asset_listAssetVersions
       tags:
       - Assets
       x-permissions:
@@ -683,7 +683,7 @@ paths:
       description: |
         Search assets using various filters with pagination.
         All filters are optional and combine with AND logic.
-      operationId: searchAssets
+      operationId: asset_searchAssets
       tags:
       - Assets
       x-permissions:
@@ -709,7 +709,7 @@ paths:
         Create a .bannou bundle containing multiple assets.
         For large bundles, processing is delegated to the processing pool.
         Completion notification sent via WebSocket event.
-      operationId: createBundle
+      operationId: asset_createBundle
       tags:
       - Bundles
       x-permissions:
@@ -742,7 +742,7 @@ paths:
       description: |
         Retrieve bundle metadata and generate a pre-signed download URL.
         Supports both native .bannou format and ZIP conversion (cached).
-      operationId: getBundle
+      operationId: asset_getBundle
       tags:
       - Bundles
       x-permissions:
@@ -769,7 +769,7 @@ paths:
       description: |
         Upload a pre-built bundle (.bannou or .zip format).
         After upload, the bundle undergoes validation before registration.
-      operationId: requestBundleUpload
+      operationId: asset_requestBundleUpload
       tags:
       - Bundles
       x-permissions:
@@ -801,7 +801,7 @@ paths:
         Assets are deduplicated by content hash. If the same asset ID exists in
         multiple source bundles with different content hashes, the request fails
         with conflict details.
-      operationId: createMetabundle
+      operationId: asset_createMetabundle
       tags:
       - Bundles
       x-permissions:
@@ -835,7 +835,7 @@ paths:
 
         Clients can either poll this endpoint or wait for the
         MetabundleCreationCompleteEvent via WebSocket for completion notification.
-      operationId: getJobStatus
+      operationId: asset_getJobStatus
       tags:
       - Bundles
       x-permissions:
@@ -865,7 +865,7 @@ paths:
 
         Successfully cancelled jobs will emit a MetabundleCreationCompleteEvent
         with status 'cancelled' via WebSocket.
-      operationId: cancelJob
+      operationId: asset_cancelJob
       tags:
       - Bundles
       x-permissions:
@@ -902,7 +902,7 @@ paths:
         4. Include standalone assets for any remaining unresolved IDs
 
         Returns pre-signed download URLs for all selected bundles and assets.
-      operationId: resolveBundles
+      operationId: asset_resolveBundles
       tags:
       - Bundles
       x-permissions:
@@ -930,7 +930,7 @@ paths:
         Query the reverse index to find all bundles (source and metabundle)
         that contain a specific asset ID. Useful for understanding asset
         distribution and debugging resolution issues.
-      operationId: queryBundlesByAsset
+      operationId: asset_queryBundlesByAsset
       tags:
       - Bundles
       x-permissions:
@@ -960,7 +960,7 @@ paths:
 
         Increments the bundle version and records the change in version history.
         Only the bundle owner or admin can update.
-      operationId: updateBundle
+      operationId: asset_updateBundle
       tags:
       - Bundles
       x-permissions:
@@ -996,7 +996,7 @@ paths:
         Use permanent=true for immediate, unrecoverable deletion (admin only).
 
         Only the bundle owner or admin can delete.
-      operationId: deleteBundle
+      operationId: asset_deleteBundle
       tags:
       - Bundles
       x-permissions:
@@ -1029,7 +1029,7 @@ paths:
         Can only restore bundles within their retention period.
 
         Only the bundle owner or admin can restore.
-      operationId: restoreBundle
+      operationId: asset_restoreBundle
       tags:
       - Bundles
       x-permissions:
@@ -1069,7 +1069,7 @@ paths:
         - Realm and bundle type filtering
 
         Supports pagination and sorting.
-      operationId: queryBundles
+      operationId: asset_queryBundles
       tags:
       - Bundles
       x-permissions:
@@ -1103,7 +1103,7 @@ paths:
         - Optional reason for the change
 
         The current version's full metadata snapshot is always included.
-      operationId: listBundleVersions
+      operationId: asset_listBundleVersions
       tags:
       - Bundles
       x-permissions:
@@ -1131,7 +1131,7 @@ paths:
         Retrieve metadata for multiple assets in a single request.
         Optionally includes pre-signed download URLs.
         Maximum 100 asset IDs per request.
-      operationId: bulkGetAssets
+      operationId: asset_bulkGetAssets
       tags:
       - Assets
       x-permissions:
@@ -1155,7 +1155,7 @@ paths:
   /auth/login:
     post:
       summary: Login with email/password
-      operationId: login
+      operationId: auth_login
       tags:
       - Authentication
       x-permissions:
@@ -1180,7 +1180,7 @@ paths:
   /auth/register:
     post:
       summary: Register new user account
-      operationId: register
+      operationId: auth_register
       tags:
       - Authentication
       x-permissions:
@@ -1211,7 +1211,7 @@ paths:
 
         **Note**: This endpoint uses GET with path parameters because it's a browser
         redirect flow, not a WebSocket-routed API call.
-      operationId: initOAuth
+      operationId: auth_initOAuth
       tags:
       - OAuth
       x-permissions:
@@ -1245,7 +1245,7 @@ paths:
 
         **Note**: This endpoint uses path parameters because the callback URL is registered
         with OAuth providers and cannot be changed without updating provider configurations.
-      operationId: completeOAuth
+      operationId: auth_completeOAuth
       tags:
       - OAuth
       x-permissions:
@@ -1276,7 +1276,7 @@ paths:
         Validates a Steam Session Ticket obtained from the game client via ISteamUser::GetAuthTicketForWebApi().
         The server validates the ticket with Steam's Web API and retrieves the SteamID from Steam's response.
         NEVER trust client-provided SteamID - it must come from Steam's authenticated response.
-      operationId: verifySteamAuth
+      operationId: auth_verifySteamAuth
       tags:
       - Steam
       x-permissions:
@@ -1301,7 +1301,7 @@ paths:
   /auth/refresh:
     post:
       summary: Refresh access token
-      operationId: refreshToken
+      operationId: auth_refreshToken
       tags:
       - Tokens
       x-permissions:
@@ -1330,7 +1330,7 @@ paths:
   /auth/validate:
     post:
       summary: Validate access token
-      operationId: validateToken
+      operationId: auth_validateToken
       tags:
       - Tokens
       x-permissions:
@@ -1357,7 +1357,7 @@ paths:
   /auth/logout:
     post:
       summary: Logout and invalidate tokens
-      operationId: logout
+      operationId: auth_logout
       tags:
       - Authentication
       x-permissions:
@@ -1381,7 +1381,7 @@ paths:
   /auth/sessions/list:
     post:
       summary: Get active sessions for account
-      operationId: getSessions
+      operationId: auth_getSessions
       tags:
       - Sessions
       x-permissions:
@@ -1404,7 +1404,7 @@ paths:
   /auth/sessions/terminate:
     post:
       summary: Terminate specific session
-      operationId: terminateSession
+      operationId: auth_terminateSession
       tags:
       - Sessions
       x-permissions:
@@ -1431,7 +1431,7 @@ paths:
   /auth/password/reset:
     post:
       summary: Request password reset
-      operationId: requestPasswordReset
+      operationId: auth_requestPasswordReset
       tags:
       - Password
       x-permissions:
@@ -1448,7 +1448,7 @@ paths:
   /auth/password/confirm:
     post:
       summary: Confirm password reset with token
-      operationId: confirmPasswordReset
+      operationId: auth_confirmPasswordReset
       tags:
       - Password
       x-permissions:
@@ -1469,7 +1469,7 @@ paths:
         Returns a list of available OAuth and authentication providers based on server configuration.
         Providers are only listed if their client credentials are configured.
         Steam authentication uses session tickets, not OAuth, but is included for completeness.
-      operationId: listProviders
+      operationId: auth_listProviders
       tags:
       - Authentication
       x-permissions:
@@ -1488,7 +1488,7 @@ paths:
         Generates a TOTP secret and 10 recovery codes. Returns an otpauth:// URI for QR
         code scanning and the recovery codes in plain text (shown only once). The setup is
         not active until confirmed via /auth/mfa/enable with a valid TOTP code.
-      operationId: setupMfa
+      operationId: auth_setupMfa
       tags:
       - MFA
       x-permissions:
@@ -1517,7 +1517,7 @@ paths:
         Verifies a TOTP code against the pending setup secret to prove the authenticator
         app is correctly configured. On success, persists MFA settings to the account and
         MFA is active for all subsequent password logins.
-      operationId: enableMfa
+      operationId: auth_enableMfa
       tags:
       - MFA
       x-permissions:
@@ -1550,7 +1550,7 @@ paths:
         Disables MFA for the authenticated account. Requires a valid TOTP code or
         recovery code to prevent unauthorized disable. Clears the TOTP secret and
         recovery codes from the account.
-      operationId: disableMfa
+      operationId: auth_disableMfa
       tags:
       - MFA
       x-permissions:
@@ -1584,7 +1584,7 @@ paths:
         recovery code. On success, returns full authentication tokens (same as a
         non-MFA login would). The challenge token is single-use and has a configurable
         TTL (default 5 minutes).
-      operationId: verifyMfa
+      operationId: auth_verifyMfa
       tags:
       - MFA
       x-permissions:
@@ -1612,7 +1612,7 @@ paths:
       description: |
         Compiles a YAML-based ABML behavior definition into executable behavior trees.
         Handles stackable behavior sets, cultural adaptations, and context variable resolution.
-      operationId: CompileAbmlBehavior
+      operationId: behavior_CompileAbmlBehavior
       tags:
       - ABML
       x-permissions:
@@ -1677,7 +1677,7 @@ paths:
       description: |
         Validates ABML YAML against schema and checks for semantic correctness.
         Includes context variable validation and service dependency checking.
-      operationId: ValidateAbml
+      operationId: behavior_ValidateAbml
       tags:
       - Validation
       x-permissions:
@@ -1706,7 +1706,7 @@ paths:
       description: |
         Retrieves a previously compiled behavior from the cache.
         Used for performance optimization in high-frequency behavior execution.
-      operationId: GetCachedBehavior
+      operationId: behavior_GetCachedBehavior
       tags:
       - Cache
       x-permissions:
@@ -1733,7 +1733,7 @@ paths:
       description: |
         Removes a behavior from the cache, forcing recompilation on next access.
         Used when behavior definitions are updated.
-      operationId: InvalidateCachedBehavior
+      operationId: behavior_InvalidateCachedBehavior
       tags:
       - Cache
       x-permissions:
@@ -1756,7 +1756,7 @@ paths:
       description: |
         Generates a GOAP plan to achieve a goal from the current world state.
         Uses A* search to find the optimal sequence of actions.
-      operationId: GenerateGoapPlan
+      operationId: behavior_GenerateGoapPlan
       tags:
       - GOAP
       x-permissions:
@@ -1783,7 +1783,7 @@ paths:
       description: |
         Validates an existing GOAP plan against the current world state.
         Returns whether the plan is still valid or needs replanning.
-      operationId: ValidateGoapPlan
+      operationId: behavior_ValidateGoapPlan
       tags:
       - GOAP
       x-permissions:
@@ -1807,7 +1807,7 @@ paths:
   /character/get:
     post:
       summary: Get character by ID
-      operationId: getCharacter
+      operationId: character_getCharacter
       tags:
       - Character Management
       x-permissions:
@@ -1831,7 +1831,7 @@ paths:
   /character/list:
     post:
       summary: List characters with filtering
-      operationId: listCharacters
+      operationId: character_listCharacters
       tags:
       - Character Management
       x-permissions:
@@ -1858,7 +1858,7 @@ paths:
         Retrieves a character with optional include flags for related data.
         Use this endpoint when you need aggregated character data from multiple services.
         Each included dataset is fetched from its respective service.
-      operationId: getEnrichedCharacter
+      operationId: character_getEnrichedCharacter
       tags:
       - Character Lookup
       x-permissions:
@@ -1882,7 +1882,7 @@ paths:
   /character/get-archive:
     post:
       summary: Get compressed archive data for a character
-      operationId: getCharacterArchive
+      operationId: character_getCharacterArchive
       tags:
       - Character Compression
       x-permissions:
@@ -1906,7 +1906,7 @@ paths:
   /character/by-realm:
     post:
       summary: Get all characters in a realm (primary query pattern)
-      operationId: getCharactersByRealm
+      operationId: character_getCharactersByRealm
       tags:
       - Character Lookup
       x-permissions:
@@ -1928,7 +1928,7 @@ paths:
   /character/get-compress-data:
     post:
       summary: Get character base data for compression
-      operationId: getCompressData
+      operationId: character_getCompressData
       tags:
       - Character Compression
       description: |
@@ -1957,7 +1957,7 @@ paths:
   /character-encounter/type/get:
     post:
       summary: Get encounter type by code
-      operationId: getEncounterType
+      operationId: characterEncounter_getEncounterType
       tags:
       - Encounter Type Management
       description: Retrieve an encounter type by its unique code.
@@ -1982,7 +1982,7 @@ paths:
   /character-encounter/type/list:
     post:
       summary: List all encounter types
-      operationId: listEncounterTypes
+      operationId: characterEncounter_listEncounterTypes
       tags:
       - Encounter Type Management
       description: Retrieve all encounter types including built-in and custom 
@@ -2006,7 +2006,7 @@ paths:
   /character-encounter/query/by-character:
     post:
       summary: Get character's encounters (paginated)
-      operationId: queryByCharacter
+      operationId: characterEncounter_queryByCharacter
       tags:
       - Queries
       description: |
@@ -2031,7 +2031,7 @@ paths:
   /character-encounter/query/between:
     post:
       summary: Get encounters between two characters
-      operationId: queryBetween
+      operationId: characterEncounter_queryBetween
       tags:
       - Queries
       description: |
@@ -2056,7 +2056,7 @@ paths:
   /character-encounter/query/by-location:
     post:
       summary: Recent encounters at location
-      operationId: queryByLocation
+      operationId: characterEncounter_queryByLocation
       tags:
       - Queries
       description: |
@@ -2081,7 +2081,7 @@ paths:
   /character-encounter/has-met:
     post:
       summary: Quick check if two characters have met
-      operationId: hasMet
+      operationId: characterEncounter_hasMet
       tags:
       - Queries
       description: |
@@ -2106,7 +2106,7 @@ paths:
   /character-encounter/get-sentiment:
     post:
       summary: Aggregate sentiment toward another character
-      operationId: getSentiment
+      operationId: characterEncounter_getSentiment
       tags:
       - Queries
       description: |
@@ -2131,7 +2131,7 @@ paths:
   /character-encounter/get-perspective:
     post:
       summary: Get character's view of encounter
-      operationId: getPerspective
+      operationId: characterEncounter_getPerspective
       tags:
       - Perspectives
       description: |
@@ -2158,7 +2158,7 @@ paths:
   /character-encounter/get-compress-data:
     post:
       summary: Get encounter data for compression
-      operationId: getCompressData
+      operationId: characterEncounter_getCompressData
       tags:
       - Compression
       description: |
@@ -2184,7 +2184,7 @@ paths:
   /character-history/get-participation:
     post:
       summary: Get all historical events a character participated in
-      operationId: getParticipation
+      operationId: characterHistory_getParticipation
       tags:
       - Historical Events
       description: |
@@ -2209,7 +2209,7 @@ paths:
   /character-history/get-event-participants:
     post:
       summary: Get all characters who participated in a historical event
-      operationId: getEventParticipants
+      operationId: characterHistory_getEventParticipants
       tags:
       - Historical Events
       description: |
@@ -2234,7 +2234,7 @@ paths:
   /character-history/get-backstory:
     post:
       summary: Get machine-readable backstory elements for behavior system
-      operationId: getBackstory
+      operationId: characterHistory_getBackstory
       tags:
       - Backstory
       description: |
@@ -2262,7 +2262,7 @@ paths:
   /character-history/get-compress-data:
     post:
       summary: Get history data for compression
-      operationId: getCompressData
+      operationId: characterHistory_getCompressData
       tags:
       - Compression
       description: |
@@ -2288,7 +2288,7 @@ paths:
   /character-personality/get:
     post:
       summary: Get personality for a character
-      operationId: getPersonality
+      operationId: characterPersonality_getPersonality
       tags:
       - Personality Management
       description: |
@@ -2315,7 +2315,7 @@ paths:
   /character-personality/get-combat:
     post:
       summary: Get combat preferences for a character
-      operationId: getCombatPreferences
+      operationId: characterPersonality_getCombatPreferences
       tags:
       - Combat Preferences
       description: |
@@ -2343,7 +2343,7 @@ paths:
   /character-personality/get-compress-data:
     post:
       summary: Get personality data for compression
-      operationId: getCompressData
+      operationId: characterPersonality_getCompressData
       tags:
       - Compression
       description: |
@@ -2369,7 +2369,7 @@ paths:
   /character-personality/cleanup-by-character:
     post:
       summary: Cleanup all personality data for a deleted character
-      operationId: cleanupByCharacter
+      operationId: characterPersonality_cleanupByCharacter
       tags:
       - Resource Cleanup
       description: |
@@ -2394,7 +2394,7 @@ paths:
                 $ref: '#/components/schemas/CleanupByCharacterResponse'
   /chat/type/register:
     post:
-      operationId: RegisterRoomType
+      operationId: chat_RegisterRoomType
       summary: Register a new room type
       description: >
         Registers a new room type definition. Room types are a dynamic registry
@@ -2418,7 +2418,7 @@ paths:
                 $ref: '#/components/schemas/RoomTypeResponse'
   /chat/type/get:
     post:
-      operationId: GetRoomType
+      operationId: chat_GetRoomType
       summary: Get room type by code
       description: Returns the room type definition for the specified code and 
         optional game service scope.
@@ -2439,7 +2439,7 @@ paths:
                 $ref: '#/components/schemas/RoomTypeResponse'
   /chat/type/list:
     post:
-      operationId: ListRoomTypes
+      operationId: chat_ListRoomTypes
       summary: List room types with filters
       description: Returns room types matching the specified filters with 
         pagination.
@@ -2460,7 +2460,7 @@ paths:
                 $ref: '#/components/schemas/ListRoomTypesResponse'
   /chat/type/update:
     post:
-      operationId: UpdateRoomType
+      operationId: chat_UpdateRoomType
       summary: Update a room type definition
       description: Updates mutable fields of a room type definition. Cannot 
         change code or message format.
@@ -2481,7 +2481,7 @@ paths:
                 $ref: '#/components/schemas/RoomTypeResponse'
   /chat/type/deprecate:
     post:
-      operationId: DeprecateRoomType
+      operationId: chat_DeprecateRoomType
       summary: Soft-deprecate a room type
       description: Sets the room type status to Deprecated. Existing rooms 
         continue to work but no new rooms can be created with this type.
@@ -2502,7 +2502,7 @@ paths:
                 $ref: '#/components/schemas/RoomTypeResponse'
   /chat/room/create:
     post:
-      operationId: CreateRoom
+      operationId: chat_CreateRoom
       summary: Create a chat room
       description: >
         Creates a new chat room of the specified type. Optionally associates
@@ -2525,7 +2525,7 @@ paths:
                 $ref: '#/components/schemas/ChatRoomResponse'
   /chat/room/get:
     post:
-      operationId: GetRoom
+      operationId: chat_GetRoom
       summary: Get room by ID
       description: Returns the chat room metadata for the specified room ID.
       x-permissions:
@@ -2545,7 +2545,7 @@ paths:
                 $ref: '#/components/schemas/ChatRoomResponse'
   /chat/room/list:
     post:
-      operationId: ListRooms
+      operationId: chat_ListRooms
       summary: List rooms with filters
       description: Returns rooms matching the specified filters with pagination.
       x-permissions:
@@ -2565,7 +2565,7 @@ paths:
                 $ref: '#/components/schemas/ListRoomsResponse'
   /chat/room/update:
     post:
-      operationId: UpdateRoom
+      operationId: chat_UpdateRoom
       summary: Update room settings
       description: Updates mutable room settings. Caller must be the room owner.
       x-permissions:
@@ -2587,7 +2587,7 @@ paths:
                 $ref: '#/components/schemas/ChatRoomResponse'
   /chat/room/delete:
     post:
-      operationId: DeleteRoom
+      operationId: chat_DeleteRoom
       summary: Delete a room
       description: Deletes a room, removing all participants and messages. 
         Caller must be the room owner or the room must be empty.
@@ -2610,7 +2610,7 @@ paths:
                 $ref: '#/components/schemas/ChatRoomResponse'
   /chat/room/archive:
     post:
-      operationId: ArchiveRoom
+      operationId: chat_ArchiveRoom
       summary: Archive a room to Resource
       description: Archives a persistent room via lib-resource, preserving 
         message history and metadata. Room is marked as archived after 
@@ -2634,7 +2634,7 @@ paths:
                 $ref: '#/components/schemas/ChatRoomResponse'
   /chat/room/join:
     post:
-      operationId: JoinRoom
+      operationId: chat_JoinRoom
       summary: Join a chat room
       description: >
         Joins the caller to the specified room. For companion rooms in AutoJoinLazy
@@ -2657,7 +2657,7 @@ paths:
                 $ref: '#/components/schemas/ChatRoomResponse'
   /chat/room/leave:
     post:
-      operationId: LeaveRoom
+      operationId: chat_LeaveRoom
       summary: Leave a chat room
       description: Removes the caller from the room. If the owner leaves, 
         promotes the next moderator or oldest member.
@@ -2680,7 +2680,7 @@ paths:
                 $ref: '#/components/schemas/ChatRoomResponse'
   /chat/room/participants:
     post:
-      operationId: ListParticipants
+      operationId: chat_ListParticipants
       summary: List room participants
       description: Returns all current participants in the room with their roles
         and status.
@@ -2703,7 +2703,7 @@ paths:
                 $ref: '#/components/schemas/ParticipantsResponse'
   /chat/room/participant/kick:
     post:
-      operationId: KickParticipant
+      operationId: chat_KickParticipant
       summary: Remove a participant from the room
       description: Kicks a participant from the room. Caller must be Owner or 
         Moderator with higher role than target.
@@ -2726,7 +2726,7 @@ paths:
                 $ref: '#/components/schemas/ChatRoomResponse'
   /chat/room/participant/ban:
     post:
-      operationId: BanParticipant
+      operationId: chat_BanParticipant
       summary: Ban a participant from the room
       description: Bans a participant. If currently in the room, they are kicked
         first. Optionally set a duration; null means permanent.
@@ -2749,7 +2749,7 @@ paths:
                 $ref: '#/components/schemas/ChatRoomResponse'
   /chat/room/participant/unban:
     post:
-      operationId: UnbanParticipant
+      operationId: chat_UnbanParticipant
       summary: Unban a participant
       description: Removes a ban record for a participant. Caller must be Owner 
         or Moderator.
@@ -2772,7 +2772,7 @@ paths:
                 $ref: '#/components/schemas/ChatRoomResponse'
   /chat/room/participant/mute:
     post:
-      operationId: MuteParticipant
+      operationId: chat_MuteParticipant
       summary: Mute a participant
       description: Mutes a participant, preventing them from sending messages. 
         Optionally set a duration; null means permanent.
@@ -2795,7 +2795,7 @@ paths:
                 $ref: '#/components/schemas/ChatRoomResponse'
   /chat/room/participant/unmute:
     post:
-      operationId: UnmuteParticipant
+      operationId: chat_UnmuteParticipant
       summary: Unmute a participant
       description: Removes a mute from a participant, allowing them to send 
         messages again. Caller must be Owner or Moderator.
@@ -2818,7 +2818,7 @@ paths:
                 $ref: '#/components/schemas/ChatRoomResponse'
   /chat/room/participant/change-role:
     post:
-      operationId: ChangeParticipantRole
+      operationId: chat_ChangeParticipantRole
       summary: Change a participant's role
       description: >
         Changes a participant's role within a chat room. Only the room Owner can change
@@ -2844,7 +2844,7 @@ paths:
                 $ref: '#/components/schemas/ChatRoomResponse'
   /chat/message/send:
     post:
-      operationId: SendMessage
+      operationId: chat_SendMessage
       summary: Send a message to a room
       description: >
         Sends a message to the specified room. Content is validated against
@@ -2870,7 +2870,7 @@ paths:
                 $ref: '#/components/schemas/ChatMessageResponse'
   /chat/message/send-batch:
     post:
-      operationId: SendMessageBatch
+      operationId: chat_SendMessageBatch
       summary: Send multiple messages
       description: Sends multiple messages to a room atomically. Intended for 
         bulk sentiment pushes from higher-layer services.
@@ -2891,7 +2891,7 @@ paths:
                 $ref: '#/components/schemas/SendMessageBatchResponse'
   /chat/message/history:
     post:
-      operationId: GetMessageHistory
+      operationId: chat_GetMessageHistory
       summary: Get message history
       description: Returns paginated message history for a room, ordered by 
         timestamp descending. Uses cursor-based pagination.
@@ -2914,7 +2914,7 @@ paths:
                 $ref: '#/components/schemas/MessageHistoryResponse'
   /chat/message/delete:
     post:
-      operationId: DeleteMessage
+      operationId: chat_DeleteMessage
       summary: Delete a message
       description: Deletes a specific message. Caller must be the message 
         sender, room Owner, or Moderator.
@@ -2937,7 +2937,7 @@ paths:
                 $ref: '#/components/schemas/ChatMessageResponse'
   /chat/message/pin:
     post:
-      operationId: PinMessage
+      operationId: chat_PinMessage
       summary: Pin a message
       description: Pins a message in the room. Caller must be Owner or 
         Moderator. Returns conflict if max pinned messages reached.
@@ -2960,7 +2960,7 @@ paths:
                 $ref: '#/components/schemas/ChatMessageResponse'
   /chat/message/unpin:
     post:
-      operationId: UnpinMessage
+      operationId: chat_UnpinMessage
       summary: Unpin a message
       description: Unpins a previously pinned message. Caller must be Owner or 
         Moderator.
@@ -2983,7 +2983,7 @@ paths:
                 $ref: '#/components/schemas/ChatMessageResponse'
   /chat/message/search:
     post:
-      operationId: SearchMessages
+      operationId: chat_SearchMessages
       summary: Full-text search in persistent rooms
       description: Searches message content in persistent rooms using MySQL 
         full-text search. Not available for ephemeral rooms.
@@ -3006,7 +3006,7 @@ paths:
                 $ref: '#/components/schemas/SearchMessagesResponse'
   /chat/admin/rooms:
     post:
-      operationId: AdminListRooms
+      operationId: chat_AdminListRooms
       summary: List all rooms system-wide
       description: Returns all rooms across the system for administrative 
         purposes. Supports filtering by status and type.
@@ -3027,7 +3027,7 @@ paths:
                 $ref: '#/components/schemas/ListRoomsResponse'
   /chat/admin/stats:
     post:
-      operationId: AdminGetStats
+      operationId: chat_AdminGetStats
       summary: Room and message statistics
       description: Returns system-wide chat statistics for monitoring and 
         debugging.
@@ -3048,7 +3048,7 @@ paths:
                 $ref: '#/components/schemas/AdminStatsResponse'
   /chat/admin/cleanup:
     post:
-      operationId: AdminForceCleanup
+      operationId: chat_AdminForceCleanup
       summary: Force cleanup of idle rooms
       description: Triggers an immediate idle room cleanup cycle, bypassing the 
         normal interval.
@@ -3069,7 +3069,7 @@ paths:
                 $ref: '#/components/schemas/AdminCleanupResponse'
   /collection/entry-template/create:
     post:
-      operationId: createEntryTemplate
+      operationId: collection_createEntryTemplate
       tags:
       - EntryTemplate
       summary: Create an entry template
@@ -3101,7 +3101,7 @@ paths:
           description: Duplicate code for this collection type and game service
   /collection/entry-template/get:
     post:
-      operationId: getEntryTemplate
+      operationId: collection_getEntryTemplate
       tags:
       - EntryTemplate
       summary: Get an entry template by ID
@@ -3126,7 +3126,7 @@ paths:
           description: Entry template not found
   /collection/entry-template/list:
     post:
-      operationId: listEntryTemplates
+      operationId: collection_listEntryTemplates
       tags:
       - EntryTemplate
       summary: List entry templates
@@ -3150,7 +3150,7 @@ paths:
                 $ref: '#/components/schemas/ListEntryTemplatesResponse'
   /collection/entry-template/update:
     post:
-      operationId: updateEntryTemplate
+      operationId: collection_updateEntryTemplate
       tags:
       - EntryTemplate
       summary: Update an entry template
@@ -3176,7 +3176,7 @@ paths:
           description: Entry template not found
   /collection/entry-template/delete:
     post:
-      operationId: deleteEntryTemplate
+      operationId: collection_deleteEntryTemplate
       tags:
       - EntryTemplate
       summary: Delete an entry template
@@ -3202,7 +3202,7 @@ paths:
           description: Entry template not found
   /collection/entry-template/seed:
     post:
-      operationId: seedEntryTemplates
+      operationId: collection_seedEntryTemplates
       tags:
       - EntryTemplate
       summary: Bulk seed entry templates
@@ -3229,7 +3229,7 @@ paths:
           description: Invalid request (validation errors)
   /collection/create:
     post:
-      operationId: createCollection
+      operationId: collection_createCollection
       tags:
       - Collection
       summary: Create a collection for an owner
@@ -3260,7 +3260,7 @@ paths:
             service, or max collections exceeded
   /collection/get:
     post:
-      operationId: getCollection
+      operationId: collection_getCollection
       tags:
       - Collection
       summary: Get a collection with unlocked entry summary
@@ -3286,7 +3286,7 @@ paths:
           description: Collection not found
   /collection/list:
     post:
-      operationId: listCollections
+      operationId: collection_listCollections
       tags:
       - Collection
       summary: List all collections for an owner
@@ -3310,7 +3310,7 @@ paths:
                 $ref: '#/components/schemas/ListCollectionsResponse'
   /collection/delete:
     post:
-      operationId: deleteCollection
+      operationId: collection_deleteCollection
       tags:
       - Collection
       summary: Delete a collection and its inventory container
@@ -3336,7 +3336,7 @@ paths:
           description: Collection not found
   /collection/grant:
     post:
-      operationId: grantEntry
+      operationId: collection_grantEntry
       tags:
       - Entry
       summary: Grant/unlock an entry (idempotent)
@@ -3367,7 +3367,7 @@ paths:
           description: Max entries reached or item creation failed
   /collection/has:
     post:
-      operationId: hasEntry
+      operationId: collection_hasEntry
       tags:
       - Entry
       summary: Check if owner has a specific entry
@@ -3391,7 +3391,7 @@ paths:
                 $ref: '#/components/schemas/HasEntryResponse'
   /collection/query:
     post:
-      operationId: queryEntries
+      operationId: collection_queryEntries
       tags:
       - Entry
       summary: Query unlocked entries with filtering
@@ -3417,7 +3417,7 @@ paths:
           description: Collection not found
   /collection/update-metadata:
     post:
-      operationId: updateEntryMetadata
+      operationId: collection_updateEntryMetadata
       tags:
       - Entry
       summary: Update entry instance metadata
@@ -3443,7 +3443,7 @@ paths:
           description: Collection or entry not found
   /collection/stats:
     post:
-      operationId: getCompletionStats
+      operationId: collection_getCompletionStats
       tags:
       - Entry
       summary: Get completion statistics per collection type
@@ -3469,7 +3469,7 @@ paths:
           description: Collection not found
   /collection/content/select-for-area:
     post:
-      operationId: selectContentForArea
+      operationId: collection_selectContentForArea
       tags:
       - Content
       summary: Select content for an area based on unlocked library
@@ -3497,7 +3497,7 @@ paths:
           description: Area config not found or no matching collection exists
   /collection/content/area-config/set:
     post:
-      operationId: setAreaContentConfig
+      operationId: collection_setAreaContentConfig
       tags:
       - Content
       summary: Set area-to-theme mapping
@@ -3523,7 +3523,7 @@ paths:
           description: Game service or default entry template not found
   /collection/content/area-config/get:
     post:
-      operationId: getAreaContentConfig
+      operationId: collection_getAreaContentConfig
       tags:
       - Content
       summary: Get area content config
@@ -3549,7 +3549,7 @@ paths:
           description: Area content config not found
   /collection/content/area-config/list:
     post:
-      operationId: listAreaContentConfigs
+      operationId: collection_listAreaContentConfigs
       tags:
       - Content
       summary: List area configs for a game service
@@ -3572,7 +3572,7 @@ paths:
                 $ref: '#/components/schemas/ListAreaContentConfigsResponse'
   /collection/discovery/advance:
     post:
-      operationId: advanceDiscovery
+      operationId: collection_advanceDiscovery
       tags:
       - Discovery
       summary: Advance progressive discovery level
@@ -3602,7 +3602,7 @@ paths:
           description: Already at max discovery level
   /collection/cleanup-by-character:
     post:
-      operationId: cleanupByCharacter
+      operationId: collection_cleanupByCharacter
       tags:
       - Resource Cleanup
       summary: Cleanup all collections for a deleted character
@@ -3631,7 +3631,7 @@ paths:
   /client-capabilities:
     post:
       summary: Get client capability manifest (GUID → API mappings)
-      operationId: getClientCapabilities
+      operationId: connect_getClientCapabilities
       tags:
       - Client Capabilities
       x-permissions:
@@ -3670,7 +3670,7 @@ paths:
           description: Error retrieving capabilities
   /contract/template/get:
     post:
-      operationId: getContractTemplate
+      operationId: contract_getContractTemplate
       tags:
       - Templates
       summary: Get template by ID or code
@@ -3699,7 +3699,7 @@ paths:
         states: {}
   /contract/template/list:
     post:
-      operationId: listContractTemplates
+      operationId: contract_listContractTemplates
       tags:
       - Templates
       summary: List templates with filters
@@ -3724,7 +3724,7 @@ paths:
         states: {}
   /contract/instance/create:
     post:
-      operationId: createContractInstance
+      operationId: contract_createContractInstance
       tags:
       - Instances
       summary: Create contract instance from template
@@ -3753,7 +3753,7 @@ paths:
         states: {}
   /contract/instance/propose:
     post:
-      operationId: proposeContractInstance
+      operationId: contract_proposeContractInstance
       tags:
       - Instances
       summary: Propose contract to parties (starts consent flow)
@@ -3782,7 +3782,7 @@ paths:
         states: {}
   /contract/instance/consent:
     post:
-      operationId: consentToContract
+      operationId: contract_consentToContract
       tags:
       - Instances
       summary: Party consents to contract
@@ -3811,7 +3811,7 @@ paths:
         states: {}
   /contract/instance/get:
     post:
-      operationId: getContractInstance
+      operationId: contract_getContractInstance
       tags:
       - Instances
       summary: Get instance by ID
@@ -3836,7 +3836,7 @@ paths:
         states: {}
   /contract/instance/query:
     post:
-      operationId: queryContractInstances
+      operationId: contract_queryContractInstances
       tags:
       - Instances
       summary: Query instances by party, template, status
@@ -3863,7 +3863,7 @@ paths:
         states: {}
   /contract/instance/terminate:
     post:
-      operationId: terminateContractInstance
+      operationId: contract_terminateContractInstance
       tags:
       - Instances
       summary: Request early termination
@@ -3893,7 +3893,7 @@ paths:
         states: {}
   /contract/instance/get-status:
     post:
-      operationId: getContractInstanceStatus
+      operationId: contract_getContractInstanceStatus
       tags:
       - Instances
       summary: Get current status and milestone progress
@@ -3920,7 +3920,7 @@ paths:
         states: {}
   /contract/milestone/complete:
     post:
-      operationId: completeMilestone
+      operationId: contract_completeMilestone
       tags:
       - Milestones
       summary: External system reports milestone completed
@@ -3950,7 +3950,7 @@ paths:
         states: {}
   /contract/milestone/fail:
     post:
-      operationId: failMilestone
+      operationId: contract_failMilestone
       tags:
       - Milestones
       summary: External system reports milestone failed
@@ -3980,7 +3980,7 @@ paths:
         states: {}
   /contract/milestone/get:
     post:
-      operationId: getMilestone
+      operationId: contract_getMilestone
       tags:
       - Milestones
       summary: Get milestone details and status
@@ -4005,7 +4005,7 @@ paths:
         states: {}
   /contract/breach/report:
     post:
-      operationId: reportBreach
+      operationId: contract_reportBreach
       tags:
       - Breaches
       summary: Report a contract breach
@@ -4035,7 +4035,7 @@ paths:
         states: {}
   /contract/breach/cure:
     post:
-      operationId: cureBreach
+      operationId: contract_cureBreach
       tags:
       - Breaches
       summary: Mark breach as cured (system/admin action)
@@ -4065,7 +4065,7 @@ paths:
         states: {}
   /contract/breach/get:
     post:
-      operationId: getBreach
+      operationId: contract_getBreach
       tags:
       - Breaches
       summary: Get breach details
@@ -4090,7 +4090,7 @@ paths:
         states: {}
   /contract/metadata/update:
     post:
-      operationId: updateContractMetadata
+      operationId: contract_updateContractMetadata
       tags:
       - Metadata
       summary: Update game metadata on instance
@@ -4118,7 +4118,7 @@ paths:
         states: {}
   /contract/metadata/get:
     post:
-      operationId: getContractMetadata
+      operationId: contract_getContractMetadata
       tags:
       - Metadata
       summary: Get game metadata
@@ -4143,7 +4143,7 @@ paths:
         states: {}
   /contract/check-constraint:
     post:
-      operationId: checkContractConstraint
+      operationId: contract_checkContractConstraint
       tags:
       - Constraints
       summary: Check if entity can take action given contracts
@@ -4168,7 +4168,7 @@ paths:
         states: {}
   /contract/query-active:
     post:
-      operationId: queryActiveContracts
+      operationId: contract_queryActiveContracts
       tags:
       - Constraints
       summary: Query active contracts for entity
@@ -4193,7 +4193,7 @@ paths:
         states: {}
   /contract/lock:
     post:
-      operationId: lockContract
+      operationId: contract_lockContract
       tags:
       - Guardian
       summary: Lock contract under guardian custody
@@ -4225,7 +4225,7 @@ paths:
         states: {}
   /contract/unlock:
     post:
-      operationId: unlockContract
+      operationId: contract_unlockContract
       tags:
       - Guardian
       summary: Unlock contract from guardian custody
@@ -4254,7 +4254,7 @@ paths:
         states: {}
   /contract/transfer-party:
     post:
-      operationId: transferContractParty
+      operationId: contract_transferContractParty
       tags:
       - Guardian
       summary: Transfer party role to new entity
@@ -4286,7 +4286,7 @@ paths:
         states: {}
   /contract/clause-type/list:
     post:
-      operationId: listClauseTypes
+      operationId: contract_listClauseTypes
       tags:
       - ClauseTypes
       summary: List all registered clause types
@@ -4311,7 +4311,7 @@ paths:
         states: {}
   /contract/instance/set-template-values:
     post:
-      operationId: setContractTemplateValues
+      operationId: contract_setContractTemplateValues
       tags:
       - Execution
       summary: Set template values on contract instance
@@ -4341,7 +4341,7 @@ paths:
         states: {}
   /contract/instance/check-asset-requirements:
     post:
-      operationId: checkAssetRequirements
+      operationId: contract_checkAssetRequirements
       tags:
       - Execution
       summary: Check if asset requirement clauses are satisfied
@@ -4371,7 +4371,7 @@ paths:
         states: {}
   /contract/instance/execute:
     post:
-      operationId: executeContract
+      operationId: contract_executeContract
       tags:
       - Execution
       summary: Execute all contract clauses (idempotent)
@@ -4403,7 +4403,7 @@ paths:
         states: {}
   /currency/definition/get:
     post:
-      operationId: getCurrencyDefinition
+      operationId: currency_getCurrencyDefinition
       tags:
       - Currency Definition
       summary: Get currency definition by ID or code
@@ -4432,7 +4432,7 @@ paths:
         states: {}
   /currency/definition/list:
     post:
-      operationId: listCurrencyDefinitions
+      operationId: currency_listCurrencyDefinitions
       tags:
       - Currency Definition
       summary: List currency definitions with filters
@@ -4457,7 +4457,7 @@ paths:
         states: {}
   /currency/wallet/create:
     post:
-      operationId: createWallet
+      operationId: currency_createWallet
       tags:
       - Wallet
       summary: Create a new wallet for an owner
@@ -4484,7 +4484,7 @@ paths:
         states: {}
   /currency/wallet/get:
     post:
-      operationId: getWallet
+      operationId: currency_getWallet
       tags:
       - Wallet
       summary: Get wallet by ID or owner
@@ -4511,7 +4511,7 @@ paths:
         states: {}
   /currency/wallet/get-or-create:
     post:
-      operationId: getOrCreateWallet
+      operationId: currency_getOrCreateWallet
       tags:
       - Wallet
       summary: Get existing wallet or create if not exists
@@ -4536,7 +4536,7 @@ paths:
         states: {}
   /currency/balance/get:
     post:
-      operationId: getBalance
+      operationId: currency_getBalance
       tags:
       - Balance
       summary: Get balance for a specific currency in a wallet
@@ -4564,7 +4564,7 @@ paths:
         states: {}
   /currency/balance/batch-get:
     post:
-      operationId: batchGetBalances
+      operationId: currency_batchGetBalances
       tags:
       - Balance
       summary: Get multiple balances in one call
@@ -4589,7 +4589,7 @@ paths:
         states: {}
   /currency/credit:
     post:
-      operationId: creditCurrency
+      operationId: currency_creditCurrency
       tags:
       - Balance
       summary: Credit currency to a wallet (faucet operation)
@@ -4622,7 +4622,7 @@ paths:
         states: {}
   /currency/debit:
     post:
-      operationId: debitCurrency
+      operationId: currency_debitCurrency
       tags:
       - Balance
       summary: Debit currency from a wallet (sink operation)
@@ -4653,7 +4653,7 @@ paths:
         states: {}
   /currency/transfer:
     post:
-      operationId: transferCurrency
+      operationId: currency_transferCurrency
       tags:
       - Balance
       summary: Transfer currency between wallets
@@ -4684,7 +4684,7 @@ paths:
         states: {}
   /currency/batch-credit:
     post:
-      operationId: batchCreditCurrency
+      operationId: currency_batchCreditCurrency
       tags:
       - Balance
       summary: Credit multiple wallets in one call
@@ -4709,7 +4709,7 @@ paths:
         states: {}
   /currency/batch-debit:
     post:
-      operationId: batchDebitCurrency
+      operationId: currency_batchDebitCurrency
       tags:
       - Balance
       summary: Debit multiple wallets in one call
@@ -4734,7 +4734,7 @@ paths:
         states: {}
   /currency/convert/calculate:
     post:
-      operationId: calculateConversion
+      operationId: currency_calculateConversion
       tags:
       - Conversion
       summary: Calculate conversion without executing
@@ -4763,7 +4763,7 @@ paths:
         states: {}
   /currency/convert/execute:
     post:
-      operationId: executeConversion
+      operationId: currency_executeConversion
       tags:
       - Conversion
       summary: Execute currency conversion in a wallet
@@ -4792,7 +4792,7 @@ paths:
         states: {}
   /currency/exchange-rate/get:
     post:
-      operationId: getExchangeRate
+      operationId: currency_getExchangeRate
       tags:
       - Conversion
       summary: Get exchange rate between two currencies
@@ -4821,7 +4821,7 @@ paths:
         states: {}
   /currency/transaction/get:
     post:
-      operationId: getTransaction
+      operationId: currency_getTransaction
       tags:
       - Transaction History
       summary: Get a transaction by ID
@@ -4846,7 +4846,7 @@ paths:
         states: {}
   /currency/transaction/history:
     post:
-      operationId: getTransactionHistory
+      operationId: currency_getTransactionHistory
       tags:
       - Transaction History
       summary: Get paginated transaction history for a wallet
@@ -4873,7 +4873,7 @@ paths:
         states: {}
   /currency/transaction/by-reference:
     post:
-      operationId: getTransactionsByReference
+      operationId: currency_getTransactionsByReference
       tags:
       - Transaction History
       summary: Get transactions by reference type and ID
@@ -4898,7 +4898,7 @@ paths:
         states: {}
   /currency/stats/global-supply:
     post:
-      operationId: getGlobalSupply
+      operationId: currency_getGlobalSupply
       tags:
       - Analytics
       summary: Get global supply statistics for a currency
@@ -4925,7 +4925,7 @@ paths:
         states: {}
   /currency/escrow/deposit:
     post:
-      operationId: escrowDeposit
+      operationId: currency_escrowDeposit
       tags:
       - Escrow Integration
       summary: Debit wallet for escrow deposit
@@ -4954,7 +4954,7 @@ paths:
         states: {}
   /currency/escrow/release:
     post:
-      operationId: escrowRelease
+      operationId: currency_escrowRelease
       tags:
       - Escrow Integration
       summary: Credit recipient on escrow completion
@@ -4981,7 +4981,7 @@ paths:
         states: {}
   /currency/escrow/refund:
     post:
-      operationId: escrowRefund
+      operationId: currency_escrowRefund
       tags:
       - Escrow Integration
       summary: Credit depositor on escrow refund
@@ -5008,7 +5008,7 @@ paths:
         states: {}
   /currency/hold/create:
     post:
-      operationId: createHold
+      operationId: currency_createHold
       tags:
       - Authorization Hold
       summary: Create an authorization hold (reserve funds)
@@ -5038,7 +5038,7 @@ paths:
         states: {}
   /currency/hold/capture:
     post:
-      operationId: captureHold
+      operationId: currency_captureHold
       tags:
       - Authorization Hold
       summary: Capture held funds (debit final amount)
@@ -5068,7 +5068,7 @@ paths:
         states: {}
   /currency/hold/release:
     post:
-      operationId: releaseHold
+      operationId: currency_releaseHold
       tags:
       - Authorization Hold
       summary: Release held funds (make available again)
@@ -5097,7 +5097,7 @@ paths:
         states: {}
   /currency/hold/get:
     post:
-      operationId: getHold
+      operationId: currency_getHold
       tags:
       - Authorization Hold
       summary: Get hold status and details
@@ -5128,7 +5128,7 @@ paths:
         Creates a deity entity with domain influences and personality traits.
         Provisions a divinity currency wallet, a domain power seed, and optionally
         starts a deity watcher actor via Puppetmaster.
-      operationId: createDeity
+      operationId: divine_createDeity
       tags:
       - Deity Management
       x-permissions:
@@ -5154,7 +5154,7 @@ paths:
     post:
       summary: Get a deity by ID
       description: Returns a single deity entity by its unique identifier.
-      operationId: getDeity
+      operationId: divine_getDeity
       tags:
       - Deity Management
       x-permissions:
@@ -5179,7 +5179,7 @@ paths:
       summary: Get a deity by code within a game service
       description: Looks up a deity by its unique code within a game service 
         scope.
-      operationId: getDeityByCode
+      operationId: divine_getDeityByCode
       tags:
       - Deity Management
       x-permissions:
@@ -5205,7 +5205,7 @@ paths:
       description: |
         Returns a paginated list of deities for a game service, optionally
         filtered by domain code and status.
-      operationId: listDeities
+      operationId: divine_listDeities
       tags:
       - Deity Management
       x-permissions:
@@ -5229,7 +5229,7 @@ paths:
       description: |
         Partial update of deity properties. Only non-null fields are applied.
         Requires a distributed lock on the deity.
-      operationId: updateDeity
+      operationId: divine_updateDeity
       tags:
       - Deity Management
       x-permissions:
@@ -5257,7 +5257,7 @@ paths:
       description: |
         Sets the deity status to Active. If Puppetmaster is available and no
         watcher actor exists, starts one. Publishes a deity activated event.
-      operationId: activateDeity
+      operationId: divine_activateDeity
       tags:
       - Deity Management
       x-permissions:
@@ -5285,7 +5285,7 @@ paths:
       description: |
         Sets the deity status to Dormant. Stops the watcher actor if Puppetmaster
         is available. Clears all attention slots. Publishes a deity dormant event.
-      operationId: deactivateDeity
+      operationId: divine_deactivateDeity
       tags:
       - Deity Management
       x-permissions:
@@ -5315,7 +5315,7 @@ paths:
         if active, revokes all blessings, removes all follower relationships, deletes
         attention slots, and coordinates cleanup via lib-resource. Publishes a
         lifecycle deleted event.
-      operationId: deleteDeity
+      operationId: divine_deleteDeity
       tags:
       - Deity Management
       x-permissions:
@@ -5336,7 +5336,7 @@ paths:
       summary: Get a deity's divinity balance
       description: Returns the current divinity balance for a deity by querying 
         its currency wallet.
-      operationId: getDivinityBalance
+      operationId: divine_getDivinityBalance
       tags:
       - Divinity Economy
       x-permissions:
@@ -5362,7 +5362,7 @@ paths:
       description: |
         Credits divinity to a deity's currency wallet. Used for mortal actions
         in the deity's domain, direct grants, or other divinity generation sources.
-      operationId: creditDivinity
+      operationId: divine_creditDivinity
       tags:
       - Divinity Economy
       x-permissions:
@@ -5389,7 +5389,7 @@ paths:
         Debits divinity from a deity's currency wallet. Used for blessing grants,
         miracles, or other divinity expenditures. Validates sufficient balance
         before debiting.
-      operationId: debitDivinity
+      operationId: divine_debitDivinity
       tags:
       - Divinity Economy
       x-permissions:
@@ -5416,7 +5416,7 @@ paths:
       summary: Get divinity transaction history
       description: Returns paginated transaction history for a deity's divinity 
         wallet.
-      operationId: getDivinityHistory
+      operationId: divine_getDivinityHistory
       tags:
       - Divinity Economy
       x-permissions:
@@ -5445,7 +5445,7 @@ paths:
         debits divinity, grants the blessing via lib-collection (Greater/Supreme) or
         Status Inventory (Minor/Standard), and records the blessing. Blessings are
         entity-agnostic -- characters, accounts, deities, or any entity type can receive them.
-      operationId: grantBlessing
+      operationId: divine_grantBlessing
       tags:
       - Blessing Orchestration
       x-permissions:
@@ -5476,7 +5476,7 @@ paths:
         Revokes a blessing. For status-type blessings (Minor/Standard), removes
         the status item. For permanent blessings (Greater/Supreme), marks as
         revoked in collection. Updates the blessing record with revocation timestamp.
-      operationId: revokeBlessing
+      operationId: divine_revokeBlessing
       tags:
       - Blessing Orchestration
       x-permissions:
@@ -5502,7 +5502,7 @@ paths:
     post:
       summary: List blessings for an entity
       description: Returns paginated blessings granted to a specific entity.
-      operationId: listBlessingsByEntity
+      operationId: divine_listBlessingsByEntity
       tags:
       - Blessing Orchestration
       x-permissions:
@@ -5525,7 +5525,7 @@ paths:
       summary: List blessings granted by a deity
       description: Returns paginated blessings granted by a specific deity, 
         optionally filtered by tier.
-      operationId: listBlessingsByDeity
+      operationId: divine_listBlessingsByDeity
       tags:
       - Blessing Orchestration
       x-permissions:
@@ -5547,7 +5547,7 @@ paths:
     post:
       summary: Get a blessing by ID
       description: Returns a single blessing record by its unique identifier.
-      operationId: getBlessing
+      operationId: divine_getBlessing
       tags:
       - Blessing Orchestration
       x-permissions:
@@ -5574,7 +5574,7 @@ paths:
         Creates a deity-character follower relationship via lib-relationship,
         increments the deity's follower count, and adds the character to the
         deity's attention slots if capacity is available.
-      operationId: registerFollower
+      operationId: divine_registerFollower
       tags:
       - Follower Management
       x-permissions:
@@ -5602,7 +5602,7 @@ paths:
       description: |
         Removes the deity-character follower relationship, decrements the
         deity's follower count, and removes the character from attention slots.
-      operationId: unregisterFollower
+      operationId: divine_unregisterFollower
       tags:
       - Follower Management
       x-permissions:
@@ -5623,7 +5623,7 @@ paths:
       summary: Get followers of a deity
       description: Returns paginated follower list for a deity by querying 
         relationships.
-      operationId: getFollowers
+      operationId: divine_getFollowers
       tags:
       - Follower Management
       x-permissions:
@@ -5651,7 +5651,7 @@ paths:
         blessings targeting this character (entityType=character), removes follower
         relationships from all deities, updates follower counts, and clears
         attention slots.
-      operationId: cleanupByCharacter
+      operationId: divine_cleanupByCharacter
       tags:
       - Resource Cleanup
       x-permissions:
@@ -5672,7 +5672,7 @@ paths:
         Called by lib-resource when a game service is deleted. Deletes all deities
         for this game service along with their blessings, followers, attention
         slots, and associated resources.
-      operationId: cleanupByGameService
+      operationId: divine_cleanupByGameService
       tags:
       - Resource Cleanup
       x-permissions:
@@ -5688,7 +5688,7 @@ paths:
           description: Cleanup completed
   /documentation/query:
     post:
-      operationId: queryDocumentation
+      operationId: documentation_queryDocumentation
       summary: Natural language documentation search
       description: |
         Search documentation using natural language queries.
@@ -5717,7 +5717,7 @@ paths:
           description: Internal server error
   /documentation/get:
     post:
-      operationId: getDocument
+      operationId: documentation_getDocument
       summary: Get specific document by ID or slug
       description: |
         Retrieve a specific document by its unique identifier or slug.
@@ -5744,7 +5744,7 @@ paths:
           description: Document not found
   /documentation/search:
     post:
-      operationId: searchDocumentation
+      operationId: documentation_searchDocumentation
       summary: Full-text keyword search
       description: |
         Search documentation using exact keyword matching.
@@ -5769,7 +5769,7 @@ paths:
                 $ref: '#/components/schemas/SearchDocumentationResponse'
   /documentation/list:
     post:
-      operationId: listDocuments
+      operationId: documentation_listDocuments
       summary: List documents by category
       description: |
         List all documents in a specific category or all categories.
@@ -5794,7 +5794,7 @@ paths:
                 $ref: '#/components/schemas/ListDocumentsResponse'
   /documentation/suggest:
     post:
-      operationId: suggestRelatedTopics
+      operationId: documentation_suggestRelatedTopics
       summary: Get related topics and follow-up suggestions
       description: |
         Given a topic or document ID, returns related topics the user
@@ -5819,7 +5819,7 @@ paths:
                 $ref: '#/components/schemas/SuggestRelatedResponse'
   /documentation/repo/bind:
     post:
-      operationId: bindRepository
+      operationId: documentation_bindRepository
       summary: Bind a git repository to a documentation namespace
       description: |
         Bind a git repository URL to a documentation namespace.
@@ -5849,7 +5849,7 @@ paths:
           description: Namespace already bound to a repository
   /documentation/repo/sync:
     post:
-      operationId: syncRepository
+      operationId: documentation_syncRepository
       summary: Manually trigger repository sync
       description: |
         Manually trigger synchronization of a bound repository.
@@ -5878,7 +5878,7 @@ paths:
           description: Sync already in progress
   /documentation/repo/status:
     post:
-      operationId: getRepositoryStatus
+      operationId: documentation_getRepositoryStatus
       summary: Get repository binding status
       description: |
         Get current status of a repository binding including sync state and statistics.
@@ -5904,7 +5904,7 @@ paths:
           description: No binding found for namespace
   /documentation/repo/list:
     post:
-      operationId: listRepositoryBindings
+      operationId: documentation_listRepositoryBindings
       summary: List all repository bindings
       description: |
         List all repository bindings with optional filtering by status.
@@ -5928,7 +5928,7 @@ paths:
                 $ref: '#/components/schemas/ListRepositoryBindingsResponse'
   /documentation/repo/update:
     post:
-      operationId: updateRepositoryBinding
+      operationId: documentation_updateRepositoryBinding
       summary: Update repository binding configuration
       description: |
         Update sync settings, file patterns, category mappings, or archive configuration.
@@ -5954,7 +5954,7 @@ paths:
           description: No binding found for namespace
   /documentation/repo/archive/create:
     post:
-      operationId: createDocumentationArchive
+      operationId: documentation_createDocumentationArchive
       summary: Create documentation archive
       description: |
         Create a .bannou bundle archive of all documents in a namespace.
@@ -5981,7 +5981,7 @@ paths:
           description: Namespace not found
   /documentation/repo/archive/list:
     post:
-      operationId: listDocumentationArchives
+      operationId: documentation_listDocumentationArchives
       summary: List documentation archives
       description: |
         List all archives for a namespace.
@@ -6005,7 +6005,7 @@ paths:
                 $ref: '#/components/schemas/ListArchivesResponse'
   /escrow/create:
     post:
-      operationId: createEscrow
+      operationId: escrow_createEscrow
       tags:
       - Lifecycle
       summary: Create a new escrow agreement
@@ -6034,7 +6034,7 @@ paths:
           description: Invalid request
   /escrow/get:
     post:
-      operationId: getEscrow
+      operationId: escrow_getEscrow
       tags:
       - Lifecycle
       summary: Get escrow details
@@ -6059,7 +6059,7 @@ paths:
           description: Escrow not found
   /escrow/list:
     post:
-      operationId: listEscrows
+      operationId: escrow_listEscrows
       tags:
       - Lifecycle
       summary: List escrows for a party
@@ -6082,7 +6082,7 @@ paths:
                 $ref: '#/components/schemas/ListEscrowsResponse'
   /escrow/deposit:
     post:
-      operationId: deposit
+      operationId: escrow_deposit
       tags:
       - Deposits
       summary: Deposit assets into escrow
@@ -6112,7 +6112,7 @@ paths:
           description: Deposit failed
   /escrow/deposit/validate:
     post:
-      operationId: validateDeposit
+      operationId: escrow_validateDeposit
       tags:
       - Deposits
       summary: Validate a deposit without executing
@@ -6135,7 +6135,7 @@ paths:
                 $ref: '#/components/schemas/ValidateDepositResponse'
   /escrow/deposit/status:
     post:
-      operationId: getDepositStatus
+      operationId: escrow_getDepositStatus
       tags:
       - Deposits
       summary: Get deposit status for a party
@@ -6158,7 +6158,7 @@ paths:
                 $ref: '#/components/schemas/GetDepositStatusResponse'
   /escrow/consent:
     post:
-      operationId: recordConsent
+      operationId: escrow_recordConsent
       tags:
       - Consent
       summary: Record party consent
@@ -6183,7 +6183,7 @@ paths:
           description: Consent failed
   /escrow/consent/status:
     post:
-      operationId: getConsentStatus
+      operationId: escrow_getConsentStatus
       tags:
       - Consent
       summary: Get consent status for escrow
@@ -6206,7 +6206,7 @@ paths:
                 $ref: '#/components/schemas/GetConsentStatusResponse'
   /escrow/release:
     post:
-      operationId: release
+      operationId: escrow_release
       tags:
       - Completion
       summary: Trigger release
@@ -6234,7 +6234,7 @@ paths:
           description: Release failed
   /escrow/refund:
     post:
-      operationId: refund
+      operationId: escrow_refund
       tags:
       - Completion
       summary: Trigger refund
@@ -6259,7 +6259,7 @@ paths:
           description: Refund failed
   /escrow/cancel:
     post:
-      operationId: cancel
+      operationId: escrow_cancel
       tags:
       - Completion
       summary: Cancel escrow before fully funded
@@ -6284,7 +6284,7 @@ paths:
           description: Cancel failed
   /escrow/dispute:
     post:
-      operationId: dispute
+      operationId: escrow_dispute
       tags:
       - Completion
       summary: Raise a dispute on funded escrow
@@ -6309,7 +6309,7 @@ paths:
           description: Dispute failed
   /escrow/confirm-release:
     post:
-      operationId: confirmRelease
+      operationId: escrow_confirmRelease
       tags:
       - Completion
       summary: Confirm receipt of released assets
@@ -6338,7 +6338,7 @@ paths:
           description: Escrow not found
   /escrow/confirm-refund:
     post:
-      operationId: confirmRefund
+      operationId: escrow_confirmRefund
       tags:
       - Completion
       summary: Confirm receipt of refunded assets
@@ -6367,7 +6367,7 @@ paths:
           description: Escrow not found
   /escrow/resolve:
     post:
-      operationId: resolve
+      operationId: escrow_resolve
       tags:
       - Arbiter
       summary: Arbiter resolves disputed escrow
@@ -6392,7 +6392,7 @@ paths:
           description: Resolution failed
   /escrow/verify-condition:
     post:
-      operationId: verifyCondition
+      operationId: escrow_verifyCondition
       tags:
       - Condition
       summary: Verify condition for conditional escrow
@@ -6419,7 +6419,7 @@ paths:
           description: Verification failed
   /escrow/reaffirm:
     post:
-      operationId: reaffirm
+      operationId: escrow_reaffirm
       tags:
       - Validation
       summary: Re-affirm after validation failure
@@ -6446,7 +6446,7 @@ paths:
   /faction/create:
     post:
       summary: Create a new faction
-      operationId: createFaction
+      operationId: faction_createFaction
       tags:
       - Faction CRUD
       description: |
@@ -6483,7 +6483,7 @@ paths:
   /faction/get:
     post:
       summary: Get a faction by ID
-      operationId: getFaction
+      operationId: faction_getFaction
       tags:
       - Faction CRUD
       description: |
@@ -6510,7 +6510,7 @@ paths:
   /faction/get-by-code:
     post:
       summary: Get a faction by code
-      operationId: getFactionByCode
+      operationId: faction_getFactionByCode
       tags:
       - Faction CRUD
       description: |
@@ -6537,7 +6537,7 @@ paths:
   /faction/list:
     post:
       summary: List factions with filters
-      operationId: listFactions
+      operationId: faction_listFactions
       tags:
       - Faction CRUD
       description: |
@@ -6562,7 +6562,7 @@ paths:
   /faction/update:
     post:
       summary: Update a faction
-      operationId: updateFaction
+      operationId: faction_updateFaction
       tags:
       - Faction CRUD
       description: |
@@ -6591,7 +6591,7 @@ paths:
   /faction/deprecate:
     post:
       summary: Deprecate a faction
-      operationId: deprecateFaction
+      operationId: faction_deprecateFaction
       tags:
       - Faction CRUD
       description: |
@@ -6620,7 +6620,7 @@ paths:
   /faction/undeprecate:
     post:
       summary: Reactivate a deprecated faction
-      operationId: undeprecateFaction
+      operationId: faction_undeprecateFaction
       tags:
       - Faction CRUD
       description: Restores a deprecated faction to active status.
@@ -6646,7 +6646,7 @@ paths:
   /faction/designate-realm-baseline:
     post:
       summary: Designate a faction as realm baseline
-      operationId: designateRealmBaseline
+      operationId: faction_designateRealmBaseline
       tags:
       - Faction CRUD
       description: |
@@ -6679,7 +6679,7 @@ paths:
   /faction/get-realm-baseline:
     post:
       summary: Get the realm baseline faction
-      operationId: getRealmBaseline
+      operationId: faction_getRealmBaseline
       tags:
       - Faction CRUD
       description: |
@@ -6706,7 +6706,7 @@ paths:
   /faction/member/add:
     post:
       summary: Add a character to a faction
-      operationId: addMember
+      operationId: faction_addMember
       tags:
       - Membership
       description: |
@@ -6742,7 +6742,7 @@ paths:
   /faction/member/remove:
     post:
       summary: Remove a character from a faction
-      operationId: removeMember
+      operationId: faction_removeMember
       tags:
       - Membership
       description: |
@@ -6765,7 +6765,7 @@ paths:
   /faction/member/list:
     post:
       summary: List members of a faction
-      operationId: listMembers
+      operationId: faction_listMembers
       tags:
       - Membership
       description: |
@@ -6792,7 +6792,7 @@ paths:
   /faction/member/list-by-character:
     post:
       summary: List a character's faction memberships
-      operationId: listMembershipsByCharacter
+      operationId: faction_listMembershipsByCharacter
       tags:
       - Membership
       description: |
@@ -6818,7 +6818,7 @@ paths:
   /faction/member/update-role:
     post:
       summary: Update a member's role
-      operationId: updateMemberRole
+      operationId: faction_updateMemberRole
       tags:
       - Membership
       description: |
@@ -6845,7 +6845,7 @@ paths:
   /faction/member/check:
     post:
       summary: Check if a character is a member of a faction
-      operationId: checkMembership
+      operationId: faction_checkMembership
       tags:
       - Membership
       description: |
@@ -6870,7 +6870,7 @@ paths:
   /faction/territory/claim:
     post:
       summary: Claim a location for a faction
-      operationId: claimTerritory
+      operationId: faction_claimTerritory
       tags:
       - Territory
       description: |
@@ -6905,7 +6905,7 @@ paths:
   /faction/territory/release:
     post:
       summary: Release a territory claim
-      operationId: releaseTerritory
+      operationId: faction_releaseTerritory
       tags:
       - Territory
       description: |
@@ -6927,7 +6927,7 @@ paths:
   /faction/territory/list:
     post:
       summary: List territory claims for a faction
-      operationId: listTerritoryClaims
+      operationId: faction_listTerritoryClaims
       tags:
       - Territory
       description: |
@@ -6954,7 +6954,7 @@ paths:
   /faction/territory/get-controlling:
     post:
       summary: Get the controlling faction for a location
-      operationId: getControllingFaction
+      operationId: faction_getControllingFaction
       tags:
       - Territory
       description: |
@@ -6984,7 +6984,7 @@ paths:
   /faction/norm/define:
     post:
       summary: Define a behavioral norm for a faction
-      operationId: defineNorm
+      operationId: faction_defineNorm
       tags:
       - Norms
       description: |
@@ -7028,7 +7028,7 @@ paths:
   /faction/norm/update:
     post:
       summary: Update an existing norm
-      operationId: updateNorm
+      operationId: faction_updateNorm
       tags:
       - Norms
       description: |
@@ -7057,7 +7057,7 @@ paths:
   /faction/norm/delete:
     post:
       summary: Delete a norm definition
-      operationId: deleteNorm
+      operationId: faction_deleteNorm
       tags:
       - Norms
       description: Removes a behavioral norm definition from a faction.
@@ -7077,7 +7077,7 @@ paths:
   /faction/norm/list:
     post:
       summary: List norms defined by a faction
-      operationId: listNorms
+      operationId: faction_listNorms
       tags:
       - Norms
       description: |
@@ -7104,7 +7104,7 @@ paths:
   /faction/cleanup-by-character:
     post:
       summary: Cleanup faction data for a deleted character
-      operationId: cleanupByCharacter
+      operationId: faction_cleanupByCharacter
       tags:
       - Resource Cleanup
       description: |
@@ -7129,7 +7129,7 @@ paths:
   /faction/cleanup-by-realm:
     post:
       summary: Cleanup faction data for a deleted realm
-      operationId: cleanupByRealm
+      operationId: faction_cleanupByRealm
       tags:
       - Resource Cleanup
       description: |
@@ -7154,7 +7154,7 @@ paths:
   /faction/cleanup-by-location:
     post:
       summary: Cleanup territory claims for a deleted location
-      operationId: cleanupByLocation
+      operationId: faction_cleanupByLocation
       tags:
       - Resource Cleanup
       description: |
@@ -7179,7 +7179,7 @@ paths:
   /faction/get-compress-data:
     post:
       summary: Get faction data for character archival compression
-      operationId: getCompressData
+      operationId: faction_getCompressData
       tags:
       - Compression
       description: |
@@ -7208,7 +7208,7 @@ paths:
       summary: List all registered game services
       description: Returns all game services, optionally filtered by active 
         status.
-      operationId: listServices
+      operationId: gameService_listServices
       tags:
       - Game Service Registry
       x-permissions:
@@ -7232,7 +7232,7 @@ paths:
       summary: Get service by ID or stub name
       description: Retrieves a single service by either serviceId (GUID) or 
         stubName.
-      operationId: getService
+      operationId: gameService_getService
       tags:
       - Game Service Registry
       x-permissions:
@@ -7257,7 +7257,7 @@ paths:
     post:
       summary: Get game session details
       description: Get details of the current game session the user has joined.
-      operationId: getGameSession
+      operationId: gameSession_getGameSession
       tags:
       - Game Sessions
       x-permissions:
@@ -7282,7 +7282,7 @@ paths:
   /sessions/leave:
     post:
       summary: Leave a game session
-      operationId: leaveGameSession
+      operationId: gameSession_leaveGameSession
       tags:
       - Game Sessions
       x-permissions:
@@ -7303,7 +7303,7 @@ paths:
   /sessions/chat:
     post:
       summary: Send chat message to game session
-      operationId: sendChatMessage
+      operationId: gameSession_sendChatMessage
       tags:
       - Game Chat
       x-permissions:
@@ -7327,7 +7327,7 @@ paths:
   /sessions/actions:
     post:
       summary: Perform game action (enhanced permissions after joining)
-      operationId: performGameAction
+      operationId: gameSession_performGameAction
       tags:
       - Game Actions
       x-permissions:
@@ -7360,7 +7360,7 @@ paths:
       description: |
         Leave a game session by its session ID. This is the session-specific alternative
         to /sessions/leave which uses gameType. Useful for matchmade sessions.
-      operationId: leaveGameSessionById
+      operationId: gameSession_leaveGameSessionById
       tags:
       - Game Sessions
       x-permissions:
@@ -7385,7 +7385,7 @@ paths:
         Creates a garden instance for the player. Finds or creates the player's
         active guardian seed, initializes drift metrics, and returns the initial
         garden state. First tick of the garden orchestrator spawns POIs.
-      operationId: enterGarden
+      operationId: gardener_enterGarden
       tags:
       - Garden Management
       x-permissions:
@@ -7413,7 +7413,7 @@ paths:
       summary: Get current garden state
       description: Returns the player's current garden instance with active 
         POIs.
-      operationId: getGardenState
+      operationId: gardener_getGardenState
       tags:
       - Garden Management
       x-permissions:
@@ -7440,7 +7440,7 @@ paths:
       description: |
         Updates the player's position and velocity in garden space. Accumulates
         drift metrics and checks proximity triggers against active POIs.
-      operationId: updatePosition
+      operationId: gardener_updatePosition
       tags:
       - Garden Management
       x-permissions:
@@ -7467,7 +7467,7 @@ paths:
       description: |
         Cleans up the garden instance, all associated POIs, and publishes a
         garden-left event with session duration.
-      operationId: leaveGarden
+      operationId: gardener_leaveGarden
       tags:
       - Garden Management
       x-permissions:
@@ -7493,7 +7493,7 @@ paths:
       summary: List active POIs
       description: Returns all active POIs for the player's current garden 
         instance.
-      operationId: listPois
+      operationId: gardener_listPois
       tags:
       - POI Interaction
       x-permissions:
@@ -7521,7 +7521,7 @@ paths:
         Triggers interaction with a POI. Result depends on the POI's trigger mode:
         prompted POIs return scenario info with choices, proximity/interaction POIs
         enter the scenario directly.
-      operationId: interactWithPoi
+      operationId: gardener_interactWithPoi
       tags:
       - POI Interaction
       x-permissions:
@@ -7550,7 +7550,7 @@ paths:
       description: |
         Marks a POI as declined. The template is added to the garden instance's
         scenario history for diversity scoring.
-      operationId: declinePoi
+      operationId: gardener_declinePoi
       tags:
       - POI Interaction
       x-permissions:
@@ -7580,7 +7580,7 @@ paths:
         Validates prerequisites, creates a game session, creates a scenario
         instance, destroys the garden instance (player leaves the garden), and
         publishes scenario-started events.
-      operationId: enterScenario
+      operationId: gardener_enterScenario
       tags:
       - Scenario Lifecycle
       x-permissions:
@@ -7607,7 +7607,7 @@ paths:
     post:
       summary: Get current scenario state
       description: Returns the player's active scenario instance.
-      operationId: getScenarioState
+      operationId: gardener_getScenarioState
       tags:
       - Scenario Lifecycle
       x-permissions:
@@ -7634,7 +7634,7 @@ paths:
       description: |
         Calculates and awards growth per domain, closes the game session,
         writes history, and returns the player to the garden.
-      operationId: completeScenario
+      operationId: gardener_completeScenario
       tags:
       - Scenario Lifecycle
       x-permissions:
@@ -7661,7 +7661,7 @@ paths:
       description: |
         Awards partial growth proportional to time spent, cleans up the
         game session, and writes history.
-      operationId: abandonScenario
+      operationId: gardener_abandonScenario
       tags:
       - Scenario Lifecycle
       x-permissions:
@@ -7689,7 +7689,7 @@ paths:
         Completes the current scenario with growth awards and immediately
         creates a new scenario instance from the target template. Validates
         chaining rules (leadsTo list, max chain depth).
-      operationId: chainScenario
+      operationId: gardener_chainScenario
       tags:
       - Scenario Lifecycle
       x-permissions:
@@ -7716,7 +7716,7 @@ paths:
     post:
       summary: Create a scenario template
       description: Creates a new scenario template definition.
-      operationId: createTemplate
+      operationId: gardener_createTemplate
       tags:
       - Template Management
       x-permissions:
@@ -7741,7 +7741,7 @@ paths:
     post:
       summary: Get scenario template by ID
       description: Returns a scenario template by its unique identifier.
-      operationId: getTemplate
+      operationId: gardener_getTemplate
       tags:
       - Template Management
       x-permissions:
@@ -7766,7 +7766,7 @@ paths:
     post:
       summary: Get scenario template by code
       description: Returns a scenario template by its unique code string.
-      operationId: getTemplateByCode
+      operationId: gardener_getTemplateByCode
       tags:
       - Template Management
       x-permissions:
@@ -7791,7 +7791,7 @@ paths:
     post:
       summary: List scenario templates
       description: Returns paginated scenario templates with optional filters.
-      operationId: listTemplates
+      operationId: gardener_listTemplates
       tags:
       - Template Management
       x-permissions:
@@ -7814,7 +7814,7 @@ paths:
     post:
       summary: Update scenario template
       description: Updates non-null fields of an existing template.
-      operationId: updateTemplate
+      operationId: gardener_updateTemplate
       tags:
       - Template Management
       x-permissions:
@@ -7840,7 +7840,7 @@ paths:
       summary: Deprecate scenario template
       description: Sets the template status to Deprecated, preventing new 
         instances.
-      operationId: deprecateTemplate
+      operationId: gardener_deprecateTemplate
       tags:
       - Template Management
       x-permissions:
@@ -7867,7 +7867,7 @@ paths:
       description: >-
         Permanently deletes a scenario template. Template must be in Deprecated
         status before deletion. Publishes a scenario-template.deleted lifecycle event.
-      operationId: deleteTemplate
+      operationId: gardener_deleteTemplate
       tags:
       - Template Management
       x-permissions:
@@ -7895,7 +7895,7 @@ paths:
       summary: Get deployment phase configuration
       description: Returns the current deployment phase configuration. Creates 
         defaults if none exists.
-      operationId: getPhaseConfig
+      operationId: gardener_getPhaseConfig
       tags:
       - Deployment Phase
       x-permissions:
@@ -7919,7 +7919,7 @@ paths:
       summary: Update deployment phase configuration
       description: Updates non-null fields of the phase configuration. Publishes
         phase-changed event if phase changes.
-      operationId: updatePhaseConfig
+      operationId: gardener_updatePhaseConfig
       tags:
       - Deployment Phase
       x-permissions:
@@ -7943,7 +7943,7 @@ paths:
       summary: Get deployment phase metrics
       description: Returns current counts of active garden instances, scenario 
         instances, and capacity utilization.
-      operationId: getPhaseMetrics
+      operationId: gardener_getPhaseMetrics
       tags:
       - Deployment Phase
       x-permissions:
@@ -7968,7 +7968,7 @@ paths:
       description: |
         Both bonded players enter a shared scenario instance. Validates bond state,
         both participants' garden instances, and template multiplayer support.
-      operationId: enterScenarioTogether
+      operationId: gardener_enterScenarioTogether
       tags:
       - Bond Scenarios
       x-permissions:
@@ -7997,7 +7997,7 @@ paths:
       summary: Get shared garden state for bonded players
       description: Returns the merged garden state for both bond participants 
         including shared POIs.
-      operationId: getSharedGardenState
+      operationId: gardener_getSharedGardenState
       tags:
       - Bond Scenarios
       x-permissions:
@@ -8020,7 +8020,7 @@ paths:
           description: Bond not found or participants not in garden
   /inventory/container/create:
     post:
-      operationId: createContainer
+      operationId: inventory_createContainer
       tags:
       - Container
       summary: Create a new container
@@ -8047,7 +8047,7 @@ paths:
         states: {}
   /inventory/container/get:
     post:
-      operationId: getContainer
+      operationId: inventory_getContainer
       tags:
       - Container
       summary: Get container with contents
@@ -8073,7 +8073,7 @@ paths:
         states: {}
   /inventory/container/get-or-create:
     post:
-      operationId: getOrCreateContainer
+      operationId: inventory_getOrCreateContainer
       tags:
       - Container
       summary: Get container or create if not exists
@@ -8099,7 +8099,7 @@ paths:
         states: {}
   /inventory/container/list:
     post:
-      operationId: listContainers
+      operationId: inventory_listContainers
       tags:
       - Container
       summary: List containers for owner
@@ -8122,7 +8122,7 @@ paths:
         states: {}
   /inventory/container/update:
     post:
-      operationId: updateContainer
+      operationId: inventory_updateContainer
       tags:
       - Container
       summary: Update container properties
@@ -8148,7 +8148,7 @@ paths:
         states: {}
   /inventory/add:
     post:
-      operationId: addItemToContainer
+      operationId: inventory_addItemToContainer
       tags:
       - Inventory Operations
       summary: Add item to container
@@ -8178,7 +8178,7 @@ paths:
         states: {}
   /inventory/remove:
     post:
-      operationId: removeItemFromContainer
+      operationId: inventory_removeItemFromContainer
       tags:
       - Inventory Operations
       summary: Remove item from container
@@ -8205,7 +8205,7 @@ paths:
         states: {}
   /inventory/move:
     post:
-      operationId: moveItem
+      operationId: inventory_moveItem
       tags:
       - Inventory Operations
       summary: Move item to different slot or container
@@ -8235,7 +8235,7 @@ paths:
         states: {}
   /inventory/transfer:
     post:
-      operationId: transferItem
+      operationId: inventory_transferItem
       tags:
       - Inventory Operations
       summary: Transfer item to different owner
@@ -8264,7 +8264,7 @@ paths:
         states: {}
   /inventory/split:
     post:
-      operationId: splitStack
+      operationId: inventory_splitStack
       tags:
       - Inventory Operations
       summary: Split stack into two
@@ -8293,7 +8293,7 @@ paths:
         states: {}
   /inventory/merge:
     post:
-      operationId: mergeStacks
+      operationId: inventory_mergeStacks
       tags:
       - Inventory Operations
       summary: Merge two stacks
@@ -8323,7 +8323,7 @@ paths:
         states: {}
   /inventory/query:
     post:
-      operationId: queryItems
+      operationId: inventory_queryItems
       tags:
       - Inventory Queries
       summary: Find items across containers
@@ -8348,7 +8348,7 @@ paths:
         states: {}
   /inventory/count:
     post:
-      operationId: countItems
+      operationId: inventory_countItems
       tags:
       - Inventory Queries
       summary: Count items of a template
@@ -8372,7 +8372,7 @@ paths:
         states: {}
   /inventory/has:
     post:
-      operationId: hasItems
+      operationId: inventory_hasItems
       tags:
       - Inventory Queries
       summary: Check if entity has required items
@@ -8397,7 +8397,7 @@ paths:
         states: {}
   /inventory/find-space:
     post:
-      operationId: findSpace
+      operationId: inventory_findSpace
       tags:
       - Inventory Queries
       summary: Find where item would fit
@@ -8422,7 +8422,7 @@ paths:
         states: {}
   /item/template/create:
     post:
-      operationId: createItemTemplate
+      operationId: item_createItemTemplate
       tags:
       - Item Template
       summary: Create a new item template
@@ -8451,7 +8451,7 @@ paths:
         states: {}
   /item/template/get:
     post:
-      operationId: getItemTemplate
+      operationId: item_getItemTemplate
       tags:
       - Item Template
       summary: Get item template by ID or code
@@ -8480,7 +8480,7 @@ paths:
         states: {}
   /item/template/list:
     post:
-      operationId: listItemTemplates
+      operationId: item_listItemTemplates
       tags:
       - Item Template
       summary: List item templates with filters
@@ -8505,7 +8505,7 @@ paths:
         states: {}
   /item/template/update:
     post:
-      operationId: updateItemTemplate
+      operationId: item_updateItemTemplate
       tags:
       - Item Template
       summary: Update mutable fields of an item template
@@ -8534,7 +8534,7 @@ paths:
         states: {}
   /item/instance/create:
     post:
-      operationId: createItemInstance
+      operationId: item_createItemInstance
       tags:
       - Item Instance
       summary: Create a new item instance
@@ -8566,7 +8566,7 @@ paths:
         states: {}
   /item/instance/get:
     post:
-      operationId: getItemInstance
+      operationId: item_getItemInstance
       tags:
       - Item Instance
       summary: Get item instance by ID
@@ -8591,7 +8591,7 @@ paths:
         states: {}
   /item/instance/modify:
     post:
-      operationId: modifyItemInstance
+      operationId: item_modifyItemInstance
       tags:
       - Item Instance
       summary: Modify item instance state
@@ -8622,7 +8622,7 @@ paths:
         states: {}
   /item/instance/bind:
     post:
-      operationId: bindItemInstance
+      operationId: item_bindItemInstance
       tags:
       - Item Instance
       summary: Bind item to character
@@ -8653,7 +8653,7 @@ paths:
         states: {}
   /item/instance/destroy:
     post:
-      operationId: destroyItemInstance
+      operationId: item_destroyItemInstance
       tags:
       - Item Instance
       summary: Destroy item instance
@@ -8682,7 +8682,7 @@ paths:
         states: {}
   /item/use:
     post:
-      operationId: useItem
+      operationId: item_useItem
       tags:
       - Item Instance
       summary: Use an item (execute its behavior contract)
@@ -8716,7 +8716,7 @@ paths:
         states: {}
   /item/use-step:
     post:
-      operationId: useItemStep
+      operationId: item_useItemStep
       tags:
       - Item Instance
       summary: Complete a specific step of a multi-step item use
@@ -8754,7 +8754,7 @@ paths:
         states: {}
   /item/instance/list-by-container:
     post:
-      operationId: listItemsByContainer
+      operationId: item_listItemsByContainer
       tags:
       - Item Query
       summary: List items in a container
@@ -8777,7 +8777,7 @@ paths:
         states: {}
   /item/instance/batch-get:
     post:
-      operationId: batchGetItemInstances
+      operationId: item_batchGetItemInstances
       tags:
       - Item Query
       summary: Get multiple item instances by ID
@@ -8804,7 +8804,7 @@ paths:
       description: |
         Create a new leaderboard with specified properties.
         Developer-only endpoint for setting up game leaderboards.
-      operationId: createLeaderboardDefinition
+      operationId: leaderboard_createLeaderboardDefinition
       tags:
       - Definitions
       x-permissions:
@@ -8831,7 +8831,7 @@ paths:
       description: |
         Update properties of an existing leaderboard.
         Developer-only endpoint.
-      operationId: updateLeaderboardDefinition
+      operationId: leaderboard_updateLeaderboardDefinition
       tags:
       - Definitions
       x-permissions:
@@ -8858,7 +8858,7 @@ paths:
       description: |
         Delete a leaderboard and all its scores.
         Developer-only endpoint. This action is irreversible.
-      operationId: deleteLeaderboardDefinition
+      operationId: leaderboard_deleteLeaderboardDefinition
       tags:
       - Definitions
       x-permissions:
@@ -8879,7 +8879,7 @@ paths:
     post:
       summary: Get entity's rank
       description: Get the current rank and score for a specific entity.
-      operationId: getEntityRank
+      operationId: leaderboard_getEntityRank
       tags:
       - Rankings
       x-permissions:
@@ -8904,7 +8904,7 @@ paths:
     post:
       summary: Get top entries
       description: Get the top N entries on a leaderboard.
-      operationId: getTopRanks
+      operationId: leaderboard_getTopRanks
       tags:
       - Rankings
       x-permissions:
@@ -8929,7 +8929,7 @@ paths:
       description: |
         Get leaderboard entries surrounding a specific entity.
         Useful for showing a player's position with nearby competitors.
-      operationId: getRanksAround
+      operationId: leaderboard_getRanksAround
       tags:
       - Rankings
       x-permissions:
@@ -8954,7 +8954,7 @@ paths:
     post:
       summary: Get current season info
       description: Get information about the current or a specific past season.
-      operationId: getSeason
+      operationId: leaderboard_getSeason
       tags:
       - Seasons
       x-permissions:
@@ -8977,7 +8977,7 @@ paths:
           description: Season not found
   /license/board-template/create:
     post:
-      operationId: createBoardTemplate
+      operationId: license_createBoardTemplate
       tags:
       - BoardTemplate
       summary: Create a new board template
@@ -9007,7 +9007,7 @@ paths:
           description: Referenced game service or contract template not found
   /license/board-template/get:
     post:
-      operationId: getBoardTemplate
+      operationId: license_getBoardTemplate
       tags:
       - BoardTemplate
       summary: Get a board template by ID
@@ -9032,7 +9032,7 @@ paths:
           description: Board template not found
   /license/board-template/list:
     post:
-      operationId: listBoardTemplates
+      operationId: license_listBoardTemplates
       tags:
       - BoardTemplate
       summary: List board templates for a game service
@@ -9056,7 +9056,7 @@ paths:
                 $ref: '#/components/schemas/ListBoardTemplatesResponse'
   /license/board-template/update:
     post:
-      operationId: updateBoardTemplate
+      operationId: license_updateBoardTemplate
       tags:
       - BoardTemplate
       summary: Update a board template
@@ -9083,7 +9083,7 @@ paths:
           description: Board template not found
   /license/board-template/delete:
     post:
-      operationId: deleteBoardTemplate
+      operationId: license_deleteBoardTemplate
       tags:
       - BoardTemplate
       summary: Delete a board template
@@ -9112,7 +9112,7 @@ paths:
           description: Active board instances exist for this template
   /license/definition/add:
     post:
-      operationId: addLicenseDefinition
+      operationId: license_addLicenseDefinition
       tags:
       - Definition
       summary: Add a license definition to a board template
@@ -9146,7 +9146,7 @@ paths:
           description: Duplicate code or position, or max definitions exceeded
   /license/definition/get:
     post:
-      operationId: getLicenseDefinition
+      operationId: license_getLicenseDefinition
       tags:
       - Definition
       summary: Get a license definition
@@ -9172,7 +9172,7 @@ paths:
           description: Board template or license definition not found
   /license/definition/list:
     post:
-      operationId: listLicenseDefinitions
+      operationId: license_listLicenseDefinitions
       tags:
       - Definition
       summary: List all license definitions for a board template
@@ -9198,7 +9198,7 @@ paths:
           description: Board template not found
   /license/definition/update:
     post:
-      operationId: updateLicenseDefinition
+      operationId: license_updateLicenseDefinition
       tags:
       - Definition
       summary: Update a license definition
@@ -9225,7 +9225,7 @@ paths:
           description: Board template or license definition not found
   /license/definition/remove:
     post:
-      operationId: removeLicenseDefinition
+      operationId: license_removeLicenseDefinition
       tags:
       - Definition
       summary: Remove a license definition from a board template
@@ -9254,7 +9254,7 @@ paths:
           description: License is unlocked by active board instances
   /license/board/create:
     post:
-      operationId: createBoard
+      operationId: license_createBoard
       tags:
       - Board
       summary: Create a board instance for an owner
@@ -9288,7 +9288,7 @@ paths:
           description: Duplicate board or max boards per character exceeded
   /license/board/get:
     post:
-      operationId: getBoard
+      operationId: license_getBoard
       tags:
       - Board
       summary: Get a board instance by ID
@@ -9313,7 +9313,7 @@ paths:
           description: Board not found
   /license/board/list-by-owner:
     post:
-      operationId: listBoardsByOwner
+      operationId: license_listBoardsByOwner
       tags:
       - Board
       summary: List boards for an owner
@@ -9337,7 +9337,7 @@ paths:
                 $ref: '#/components/schemas/ListBoardsByOwnerResponse'
   /license/board/delete:
     post:
-      operationId: deleteBoard
+      operationId: license_deleteBoard
       tags:
       - Board
       summary: Delete a board instance
@@ -9364,7 +9364,7 @@ paths:
           description: Board not found
   /license/unlock:
     post:
-      operationId: unlockLicense
+      operationId: license_unlockLicense
       tags:
       - Gameplay
       summary: Unlock a license on a board
@@ -9400,7 +9400,7 @@ paths:
           description: Contract execution failed
   /license/check-unlockable:
     post:
-      operationId: checkUnlockable
+      operationId: license_checkUnlockable
       tags:
       - Gameplay
       summary: Check if a license can be unlocked
@@ -9428,7 +9428,7 @@ paths:
           description: Board or license definition not found
   /license/board-state:
     post:
-      operationId: getBoardState
+      operationId: license_getBoardState
       tags:
       - Gameplay
       summary: Get full board state
@@ -9456,7 +9456,7 @@ paths:
           description: Board not found
   /license/board-template/seed:
     post:
-      operationId: seedBoardTemplate
+      operationId: license_seedBoardTemplate
       tags:
       - BoardTemplate
       summary: Bulk seed a board template with license definitions
@@ -9485,7 +9485,7 @@ paths:
           description: Board template not found
   /license/board/clone:
     post:
-      operationId: cloneBoard
+      operationId: license_cloneBoard
       tags:
       - Board
       summary: Clone a board's unlock state to a new owner
@@ -9522,7 +9522,7 @@ paths:
             boards exceeded
   /license/cleanup-by-owner:
     post:
-      operationId: cleanupByOwner
+      operationId: license_cleanupByOwner
       tags:
       - Cleanup
       summary: Cleanup boards referencing a deleted owner
@@ -9551,7 +9551,7 @@ paths:
   /location/get:
     post:
       summary: Get location by ID
-      operationId: getLocation
+      operationId: location_getLocation
       tags:
       - Location
       x-permissions:
@@ -9577,7 +9577,7 @@ paths:
       summary: Get location by code and realm
       description: Retrieve a location using its unique code within a specific 
         realm
-      operationId: getLocationByCode
+      operationId: location_getLocationByCode
       tags:
       - Location
       x-permissions:
@@ -9603,7 +9603,7 @@ paths:
       summary: List locations with filtering
       description: Retrieve locations with optional realm, parent, and type 
         filtering
-      operationId: listLocations
+      operationId: location_listLocations
       tags:
       - Location
       x-permissions:
@@ -9629,7 +9629,7 @@ paths:
         Returns all locations within a specific realm, optionally filtered by
         location type and parent. This is the primary access pattern for
         realm-scoped location queries.
-      operationId: listLocationsByRealm
+      operationId: location_listLocationsByRealm
       tags:
       - Location
       x-permissions:
@@ -9654,7 +9654,7 @@ paths:
       description: |
         Retrieve all locations that have the specified location as their parent.
         Useful for getting all cities in a region, all buildings in a city, etc.
-      operationId: listLocationsByParent
+      operationId: location_listLocationsByParent
       tags:
       - Location
       x-permissions:
@@ -9681,7 +9681,7 @@ paths:
       description: |
         Returns all top-level locations in a realm (locations with no parent).
         These are typically regions or major areas within the realm.
-      operationId: listRootLocations
+      operationId: location_listRootLocations
       tags:
       - Location
       x-permissions:
@@ -9707,7 +9707,7 @@ paths:
         Returns the full ancestry chain from the specified location up to the
         root location (parentLocationId=null). For example, for a specific building
         might return [district, city, region].
-      operationId: getLocationAncestors
+      operationId: location_getLocationAncestors
       tags:
       - Location
       x-permissions:
@@ -9730,7 +9730,7 @@ paths:
           description: Location not found
   /location/validate-territory:
     post:
-      operationId: validateTerritory
+      operationId: location_validateTerritory
       tags:
       - Location
       summary: Validate location against territory boundaries
@@ -9766,7 +9766,7 @@ paths:
         Returns all locations that are descendants of the specified location
         (direct children, grandchildren, etc.). Useful for finding all places
         within a region or city.
-      operationId: getLocationDescendants
+      operationId: location_getLocationDescendants
       tags:
       - Location
       x-permissions:
@@ -9793,7 +9793,7 @@ paths:
       description: |
         Fast validation endpoint for other services to check location validity.
         Returns true if location exists and is not deprecated, false otherwise.
-      operationId: locationExists
+      operationId: location_locationExists
       tags:
       - Location
       x-permissions:
@@ -9820,7 +9820,7 @@ paths:
         that position, ordered by depth descending (most specific first). Only
         locations with spatial bounds data are considered. A position is "in" a
         location if it falls within the location's axis-aligned bounding box.
-      operationId: queryLocationsByPosition
+      operationId: location_queryLocationsByPosition
       tags:
       - Location
       x-permissions:
@@ -9851,7 +9851,7 @@ paths:
         The optional previousLocationId provides a caller-hint optimization: if provided
         and matches the current stored location, only a TTL refresh occurs (no GET needed).
         If omitted, the service reads the current value to detect location changes.
-      operationId: reportEntityPosition
+      operationId: location_reportEntityPosition
       tags:
       - Location Presence
       x-permissions:
@@ -9878,7 +9878,7 @@ paths:
       description: |
         Queries where an entity currently is. Returns the entity's location if a
         non-expired presence binding exists.
-      operationId: getEntityLocation
+      operationId: location_getEntityLocation
       tags:
       - Location Presence
       x-permissions:
@@ -9904,7 +9904,7 @@ paths:
         Queries which entities are currently present at a location. Supports optional
         entity type filtering and pagination. Results are hydrated from the entity
         presence store for reporting metadata.
-      operationId: listEntitiesAtLocation
+      operationId: location_listEntitiesAtLocation
       tags:
       - Location Presence
       x-permissions:
@@ -9929,7 +9929,7 @@ paths:
       description: |
         Clears an entity's presence binding, removing it from its current location.
         Publishes a departure event if the entity was present at a location.
-      operationId: clearEntityPosition
+      operationId: location_clearEntityPosition
       tags:
       - Location Presence
       x-permissions:
@@ -9955,7 +9955,7 @@ paths:
         Consumers use this when starting up to get initial state.
         Returns current snapshot of requested region/kinds.
         For very large maps, payloadRef points to lib-asset storage.
-      operationId: requestSnapshot
+      operationId: mapping_requestSnapshot
       tags:
       - Runtime
       x-permissions:
@@ -9983,7 +9983,7 @@ paths:
         Returns all map data at a point across requested kinds.
         Used by behavior stacks for contextual decisions.
         Optionally includes objects within radius.
-      operationId: queryPoint
+      operationId: mapping_queryPoint
       tags:
       - Query
       x-permissions:
@@ -10009,7 +10009,7 @@ paths:
         Returns map data within a bounding box.
         For event actors needing region overview.
         Limited to maxObjects per kind.
-      operationId: queryBounds
+      operationId: mapping_queryBounds
       tags:
       - Query
       x-permissions:
@@ -10034,7 +10034,7 @@ paths:
       description: |
         Returns all objects matching an objectType filter.
         For event actors asking "where are all the boulder clusters?"
-      operationId: queryObjectsByType
+      operationId: mapping_queryObjectsByType
       tags:
       - Query
       x-permissions:
@@ -10067,7 +10067,7 @@ paths:
 
         Well-known types have predefined scoring; use affordanceType=custom
         with customAffordance for novel scenarios.
-      operationId: queryAffordance
+      operationId: mapping_queryAffordance
       tags:
       - Query
       x-permissions:
@@ -10093,7 +10093,7 @@ paths:
         For level editors and design tools only.
         Game servers do NOT use this - they use create-channel for implicit authority.
         Returns authority token for publishing edits.
-      operationId: checkoutForAuthoring
+      operationId: mapping_checkoutForAuthoring
       tags:
       - Authoring
       x-permissions:
@@ -10120,7 +10120,7 @@ paths:
       description: |
         Commits pending changes and releases the checkout lock.
         Optionally includes a commit message for history.
-      operationId: commitAuthoring
+      operationId: mapping_commitAuthoring
       tags:
       - Authoring
       x-permissions:
@@ -10147,7 +10147,7 @@ paths:
       description: |
         Discards pending changes and releases the checkout lock.
         Use when abandoning edits.
-      operationId: releaseAuthoring
+      operationId: mapping_releaseAuthoring
       tags:
       - Authoring
       x-permissions:
@@ -10173,7 +10173,7 @@ paths:
         Creates a new map definition (template) that describes the structure
         of a region. Definitions are templates that can be used to bootstrap
         channels with predefined layer configurations.
-      operationId: createDefinition
+      operationId: mapping_createDefinition
       tags:
       - Definition
       x-permissions:
@@ -10199,7 +10199,7 @@ paths:
       summary: Get a map definition by ID
       description: Returns the full map definition including all layer 
         configurations.
-      operationId: getDefinition
+      operationId: mapping_getDefinition
       tags:
       - Definition
       x-permissions:
@@ -10224,7 +10224,7 @@ paths:
     post:
       summary: List map definitions with optional filters
       description: Returns a paginated list of map definitions.
-      operationId: listDefinitions
+      operationId: mapping_listDefinitions
       tags:
       - Definition
       x-permissions:
@@ -10249,7 +10249,7 @@ paths:
       description: |
         Updates an existing map definition. Cannot change the definition ID.
         Layer configurations can be modified.
-      operationId: updateDefinition
+      operationId: mapping_updateDefinition
       tags:
       - Definition
       x-permissions:
@@ -10276,7 +10276,7 @@ paths:
       description: |
         List all available matchmaking queues that players can join.
         Returns queue configuration details including skill settings.
-      operationId: listQueues
+      operationId: matchmaking_listQueues
       tags:
       - Queues
       x-permissions:
@@ -10302,7 +10302,7 @@ paths:
       summary: Get queue details
       description: |
         Get detailed configuration for a specific matchmaking queue.
-      operationId: getQueue
+      operationId: matchmaking_getQueue
       tags:
       - Queues
       x-permissions:
@@ -10330,7 +10330,7 @@ paths:
         Creates a matchmaking ticket and begins searching for compatible players.
         Returns immediately after ticket creation. Match results are delivered
         via WebSocket push events.
-      operationId: joinMatchmaking
+      operationId: matchmaking_joinMatchmaking
       tags:
       - Matchmaking
       x-permissions:
@@ -10362,7 +10362,7 @@ paths:
       description: |
         Leave a matchmaking queue and cancel the ticket.
         Only available when actively in a queue (shortcut/prebound).
-      operationId: leaveMatchmaking
+      operationId: matchmaking_leaveMatchmaking
       tags:
       - Matchmaking
       x-permissions:
@@ -10386,7 +10386,7 @@ paths:
       description: |
         Get current matchmaking status for the player's active ticket.
         Only available when actively in a queue (shortcut/prebound).
-      operationId: getMatchmakingStatus
+      operationId: matchmaking_getMatchmakingStatus
       tags:
       - Matchmaking
       x-permissions:
@@ -10415,7 +10415,7 @@ paths:
         Accept a match that has been formed. Only available when a match
         is pending acceptance (shortcut/prebound after match formation).
         All players must accept within the timeout for the match to start.
-      operationId: acceptMatch
+      operationId: matchmaking_acceptMatch
       tags:
       - Matchmaking
       x-permissions:
@@ -10444,7 +10444,7 @@ paths:
         Decline a match that has been formed. Only available when a match
         is pending acceptance (shortcut/prebound after match formation).
         Declining cancels the match for all participants.
-      operationId: declineMatch
+      operationId: matchmaking_declineMatch
       tags:
       - Matchmaking
       x-permissions:
@@ -10468,7 +10468,7 @@ paths:
       description: |
         Get operational statistics for matchmaking queues.
         Includes queue depths, average wait times, and match rates.
-      operationId: getMatchmakingStats
+      operationId: matchmaking_getMatchmakingStats
       tags:
       - Statistics
       x-permissions:
@@ -10492,7 +10492,7 @@ paths:
       description: |
         Generates a complete musical composition using the specified style definition
         and compositional constraints. Returns MIDI-JSON format output.
-      operationId: GenerateComposition
+      operationId: music_GenerateComposition
       tags:
       - Generation
       x-permissions:
@@ -10521,7 +10521,7 @@ paths:
       description: |
         Validates a MIDI-JSON structure for correctness including note ranges,
         timing, and format compliance.
-      operationId: ValidateMidiJson
+      operationId: music_ValidateMidiJson
       tags:
       - Validation
       x-permissions:
@@ -10546,7 +10546,7 @@ paths:
       description: |
         Retrieves a style definition by ID or name. Styles define mode preferences,
         interval rules, form templates, and genre-specific parameters.
-      operationId: GetStyle
+      operationId: music_GetStyle
       tags:
       - Styles
       x-permissions:
@@ -10572,7 +10572,7 @@ paths:
       summary: List available styles
       description: |
         Lists all available style definitions with optional filtering by category.
-      operationId: ListStyles
+      operationId: music_ListStyles
       tags:
       - Styles
       x-permissions:
@@ -10598,7 +10598,7 @@ paths:
         Generates a chord progression using harmonic function theory.
         Supports multiple harmonic styles including functional harmony,
         modal interchange, and jazz voicings.
-      operationId: GenerateProgression
+      operationId: music_GenerateProgression
       tags:
       - Theory
       x-permissions:
@@ -10625,7 +10625,7 @@ paths:
       description: |
         Generates a melodic line over a chord progression using contour rules,
         interval preferences, and rhythmic patterns from the specified style.
-      operationId: GenerateMelody
+      operationId: music_GenerateMelody
       tags:
       - Theory
       x-permissions:
@@ -10652,7 +10652,7 @@ paths:
       description: |
         Applies voice leading rules to a chord sequence, ensuring smooth
         part-writing according to traditional or style-specific rules.
-      operationId: ApplyVoiceLeading
+      operationId: music_ApplyVoiceLeading
       tags:
       - Theory
       x-permissions:
@@ -10676,7 +10676,7 @@ paths:
   /obligation/action-mapping/set:
     post:
       summary: Create or update an action tag to violation type mapping
-      operationId: setActionMapping
+      operationId: obligation_setActionMapping
       tags:
       - Action Mapping
       description: |
@@ -10712,7 +10712,7 @@ paths:
   /obligation/action-mapping/list:
     post:
       summary: List registered action tag mappings
-      operationId: listActionMappings
+      operationId: obligation_listActionMappings
       tags:
       - Action Mapping
       description: |
@@ -10737,7 +10737,7 @@ paths:
   /obligation/action-mapping/delete:
     post:
       summary: Delete an action tag mapping
-      operationId: deleteActionMapping
+      operationId: obligation_deleteActionMapping
       tags:
       - Action Mapping
       description: |
@@ -10759,7 +10759,7 @@ paths:
   /obligation/query-violations:
     post:
       summary: Query violation history for a character
-      operationId: queryViolations
+      operationId: obligation_queryViolations
       tags:
       - Violations
       description: |
@@ -10785,7 +10785,7 @@ paths:
   /obligation/invalidate-cache:
     post:
       summary: Force obligation cache refresh for a character
-      operationId: invalidateCache
+      operationId: obligation_invalidateCache
       tags:
       - Cache Management
       description: |
@@ -10813,7 +10813,7 @@ paths:
   /obligation/get-compress-data:
     post:
       summary: Get obligation data for character archival compression
-      operationId: getCompressData
+      operationId: obligation_getCompressData
       tags:
       - Compression
       description: |
@@ -10839,7 +10839,7 @@ paths:
   /obligation/cleanup-by-character:
     post:
       summary: Cleanup all obligation data for a deleted character
-      operationId: cleanupByCharacter
+      operationId: obligation_cleanupByCharacter
       tags:
       - Resource Cleanup
       description: |
@@ -10868,7 +10868,7 @@ paths:
       description: |
         Starts a regional watcher for the specified realm with the given behavior.
         If a watcher already exists for this realm and watcher type, returns the existing watcher.
-      operationId: startWatcher
+      operationId: puppetmaster_startWatcher
       tags:
       - Watchers
       x-permissions:
@@ -10890,7 +10890,7 @@ paths:
     post:
       summary: Stop a regional watcher
       description: Stops an active regional watcher by its ID.
-      operationId: stopWatcher
+      operationId: puppetmaster_stopWatcher
       tags:
       - Watchers
       x-permissions:
@@ -10914,7 +10914,7 @@ paths:
       description: |
         Starts all applicable regional watchers for the specified realm.
         Uses configured watcher templates to determine which watchers to start.
-      operationId: startWatchersForRealm
+      operationId: puppetmaster_startWatchersForRealm
       tags:
       - Watchers
       x-permissions:
@@ -10934,7 +10934,7 @@ paths:
                 $ref: '#/components/schemas/StartWatchersForRealmResponse'
   /quest/definition/create:
     post:
-      operationId: createQuestDefinition
+      operationId: quest_createQuestDefinition
       tags:
       - Definitions
       summary: Create a new quest definition
@@ -10961,7 +10961,7 @@ paths:
           description: Quest definition with this code already exists
   /quest/definition/get:
     post:
-      operationId: getQuestDefinition
+      operationId: quest_getQuestDefinition
       tags:
       - Definitions
       summary: Get quest definition by ID or code
@@ -10986,7 +10986,7 @@ paths:
           description: Quest definition not found
   /quest/definition/list:
     post:
-      operationId: listQuestDefinitions
+      operationId: quest_listQuestDefinitions
       tags:
       - Definitions
       summary: List quest definitions with filtering
@@ -11009,7 +11009,7 @@ paths:
                 $ref: '#/components/schemas/ListQuestDefinitionsResponse'
   /quest/definition/update:
     post:
-      operationId: updateQuestDefinition
+      operationId: quest_updateQuestDefinition
       tags:
       - Definitions
       summary: Update quest definition metadata
@@ -11034,7 +11034,7 @@ paths:
           description: Quest definition not found
   /quest/definition/deprecate:
     post:
-      operationId: deprecateQuestDefinition
+      operationId: quest_deprecateQuestDefinition
       tags:
       - Definitions
       summary: Mark quest definition as deprecated
@@ -11059,7 +11059,7 @@ paths:
           description: Quest definition not found
   /quest/accept:
     post:
-      operationId: acceptQuest
+      operationId: quest_acceptQuest
       tags:
       - Instances
       summary: Accept a quest
@@ -11088,7 +11088,7 @@ paths:
           description: Quest already active or on cooldown
   /quest/abandon:
     post:
-      operationId: abandonQuest
+      operationId: quest_abandonQuest
       tags:
       - Instances
       summary: Abandon an active quest
@@ -11115,7 +11115,7 @@ paths:
           description: Quest not in abandonable state
   /quest/get:
     post:
-      operationId: getQuest
+      operationId: quest_getQuest
       tags:
       - Instances
       summary: Get quest instance details
@@ -11140,7 +11140,7 @@ paths:
           description: Quest not found
   /quest/list:
     post:
-      operationId: listQuests
+      operationId: quest_listQuests
       tags:
       - Instances
       summary: List character's quests
@@ -11162,7 +11162,7 @@ paths:
                 $ref: '#/components/schemas/ListQuestsResponse'
   /quest/list-available:
     post:
-      operationId: listAvailableQuests
+      operationId: quest_listAvailableQuests
       tags:
       - Instances
       summary: List quests available to accept
@@ -11185,7 +11185,7 @@ paths:
                 $ref: '#/components/schemas/ListAvailableQuestsResponse'
   /quest/log:
     post:
-      operationId: getQuestLog
+      operationId: quest_getQuestLog
       tags:
       - Instances
       summary: Get player-facing quest log
@@ -11207,7 +11207,7 @@ paths:
                 $ref: '#/components/schemas/QuestLogResponse'
   /quest/objective/progress:
     post:
-      operationId: reportObjectiveProgress
+      operationId: quest_reportObjectiveProgress
       tags:
       - Objectives
       summary: Report progress on an objective
@@ -11232,7 +11232,7 @@ paths:
           description: Quest or objective not found
   /quest/objective/get:
     post:
-      operationId: getObjectiveProgress
+      operationId: quest_getObjectiveProgress
       tags:
       - Objectives
       summary: Get objective progress details
@@ -11258,7 +11258,7 @@ paths:
   /quest/get-compress-data:
     post:
       summary: Get quest data for compression
-      operationId: getCompressData
+      operationId: quest_getCompressData
       tags:
       - Compression
       description: |
@@ -11284,7 +11284,7 @@ paths:
   /realm/get:
     post:
       summary: Get realm by ID
-      operationId: getRealm
+      operationId: realm_getRealm
       tags:
       - Realm
       x-permissions:
@@ -11310,7 +11310,7 @@ paths:
       summary: Get realm by code
       description: Retrieve a realm using its unique code (e.g., "REALM_1", 
         "REALM_2")
-      operationId: getRealmByCode
+      operationId: realm_getRealmByCode
       tags:
       - Realm
       x-permissions:
@@ -11335,7 +11335,7 @@ paths:
     post:
       summary: List all realms
       description: Retrieve all realms with optional filtering
-      operationId: listRealms
+      operationId: realm_listRealms
       tags:
       - Realm
       x-permissions:
@@ -11360,7 +11360,7 @@ paths:
       description: |
         Fast validation endpoint for other services to check realm validity.
         Returns true if realm exists and is not deprecated, false otherwise.
-      operationId: realmExists
+      operationId: realm_realmExists
       tags:
       - Realm
       x-permissions:
@@ -11386,7 +11386,7 @@ paths:
         Batch validation endpoint for services creating multi-realm entities.
         Returns validation results for each realm ID in a single call, avoiding
         N+1 API calls when validating multiple realms.
-      operationId: realmsExistBatch
+      operationId: realm_realmsExistBatch
       tags:
       - Realm
       x-permissions:
@@ -11408,7 +11408,7 @@ paths:
   /realm-history/get-participation:
     post:
       summary: Get all historical events a realm participated in
-      operationId: getRealmParticipation
+      operationId: realmHistory_getRealmParticipation
       tags:
       - Historical Events
       description: |
@@ -11433,7 +11433,7 @@ paths:
   /realm-history/get-event-participants:
     post:
       summary: Get all realms that participated in a historical event
-      operationId: getRealmEventParticipants
+      operationId: realmHistory_getRealmEventParticipants
       tags:
       - Historical Events
       description: |
@@ -11458,7 +11458,7 @@ paths:
   /realm-history/get-lore:
     post:
       summary: Get machine-readable lore elements for behavior system
-      operationId: getRealmLore
+      operationId: realmHistory_getRealmLore
       tags:
       - Lore
       description: |
@@ -11485,7 +11485,7 @@ paths:
           description: No lore defined for this realm
   /relationship/get:
     post:
-      operationId: getRelationship
+      operationId: relationship_getRelationship
       tags:
       - Relationship Management
       summary: Get a relationship by ID
@@ -11509,7 +11509,7 @@ paths:
         states: {}
   /relationship/list-by-entity:
     post:
-      operationId: listRelationshipsByEntity
+      operationId: relationship_listRelationshipsByEntity
       tags:
       - Relationship Management
       summary: List all relationships for an entity
@@ -11535,7 +11535,7 @@ paths:
         states: {}
   /relationship/get-between:
     post:
-      operationId: getRelationshipsBetween
+      operationId: relationship_getRelationshipsBetween
       tags:
       - Relationship Management
       summary: Get all relationships between two specific entities
@@ -11560,7 +11560,7 @@ paths:
         states: {}
   /relationship/list-by-type:
     post:
-      operationId: listRelationshipsByType
+      operationId: relationship_listRelationshipsByType
       tags:
       - Relationship Management
       summary: List all relationships of a specific type
@@ -11585,7 +11585,7 @@ paths:
         states: {}
   /relationship/cleanup-by-entity:
     post:
-      operationId: cleanupByEntity
+      operationId: relationship_cleanupByEntity
       tags:
       - Relationship Management
       summary: Cleanup relationships referencing a deleted entity
@@ -11614,7 +11614,7 @@ paths:
   /relationship-type/get:
     post:
       summary: Get relationship type by ID
-      operationId: getRelationshipType
+      operationId: relationship_getRelationshipType
       tags:
       - Relationship Type Management
       x-permissions:
@@ -11640,7 +11640,7 @@ paths:
       summary: Get relationship type by code
       description: Retrieve a relationship type using its unique code (e.g., 
         "SON", "MOTHER", "FRIEND")
-      operationId: getRelationshipTypeByCode
+      operationId: relationship_getRelationshipTypeByCode
       tags:
       - Relationship Type Management
       x-permissions:
@@ -11666,7 +11666,7 @@ paths:
       summary: List all relationship types
       description: Retrieve all relationship types with optional hierarchy 
         filtering
-      operationId: listRelationshipTypes
+      operationId: relationship_listRelationshipTypes
       tags:
       - Relationship Type Management
       x-permissions:
@@ -11690,7 +11690,7 @@ paths:
       summary: Get child types for a parent type
       description: Retrieve all relationship types that have the specified type 
         as their parent
-      operationId: getChildRelationshipTypes
+      operationId: relationship_getChildRelationshipTypes
       tags:
       - Relationship Type Management
       x-permissions:
@@ -11718,7 +11718,7 @@ paths:
         Checks if a relationship type matches or descends from an ancestor type.
         For example, "SON" matches "CHILD" because CHILD is an ancestor of SON.
         This enables queries like "find all CHILD relationships" to match SON, DAUGHTER, etc.
-      operationId: matchesHierarchy
+      operationId: relationship_matchesHierarchy
       tags:
       - Relationship Type Management
       x-permissions:
@@ -11745,7 +11745,7 @@ paths:
       description: |
         Returns the full ancestry chain from the specified type up to the root.
         For example, for "SON" might return ["CHILD", "FAMILY"].
-      operationId: getAncestors
+      operationId: relationship_getAncestors
       tags:
       - Relationship Type Management
       x-permissions:
@@ -11768,7 +11768,7 @@ paths:
           description: Relationship type not found
   /resource/register:
     post:
-      operationId: registerReference
+      operationId: resource_registerReference
       tags:
       - Reference Management
       summary: Register a reference to a resource
@@ -11792,7 +11792,7 @@ paths:
                 $ref: '#/components/schemas/RegisterReferenceResponse'
   /resource/unregister:
     post:
-      operationId: unregisterReference
+      operationId: resource_unregisterReference
       tags:
       - Reference Management
       summary: Remove a reference to a resource
@@ -11816,7 +11816,7 @@ paths:
                 $ref: '#/components/schemas/UnregisterReferenceResponse'
   /resource/check:
     post:
-      operationId: checkReferences
+      operationId: resource_checkReferences
       tags:
       - Reference Management
       summary: Check reference count and cleanup eligibility
@@ -11840,7 +11840,7 @@ paths:
                 $ref: '#/components/schemas/CheckReferencesResponse'
   /resource/list:
     post:
-      operationId: listReferences
+      operationId: resource_listReferences
       tags:
       - Reference Management
       summary: List all references to a resource
@@ -11864,7 +11864,7 @@ paths:
                 $ref: '#/components/schemas/ListReferencesResponse'
   /resource/cleanup/execute:
     post:
-      operationId: executeCleanup
+      operationId: resource_executeCleanup
       tags:
       - Cleanup Management
       summary: Execute cleanup for a resource
@@ -11889,7 +11889,7 @@ paths:
                 $ref: '#/components/schemas/ExecuteCleanupResponse'
   /resource/cleanup/list:
     post:
-      operationId: listCleanupCallbacks
+      operationId: resource_listCleanupCallbacks
       tags:
       - Cleanup Management
       summary: List registered cleanup callbacks
@@ -11913,7 +11913,7 @@ paths:
                 $ref: '#/components/schemas/ListCleanupCallbacksResponse'
   /resource/compress/execute:
     post:
-      operationId: executeCompress
+      operationId: resource_executeCompress
       tags:
       - Compression Management
       summary: Compress a resource and all dependents
@@ -11948,7 +11948,7 @@ paths:
                 $ref: '#/components/schemas/ExecuteCompressResponse'
   /resource/compress/list:
     post:
-      operationId: listCompressCallbacks
+      operationId: resource_listCompressCallbacks
       tags:
       - Compression Management
       summary: List registered compression callbacks
@@ -11972,7 +11972,7 @@ paths:
                 $ref: '#/components/schemas/ListCompressCallbacksResponse'
   /resource/archive/get:
     post:
-      operationId: getArchive
+      operationId: resource_getArchive
       tags:
       - Compression Management
       summary: Retrieve compressed archive
@@ -11996,7 +11996,7 @@ paths:
                 $ref: '#/components/schemas/GetArchiveResponse'
   /resource/snapshot/execute:
     post:
-      operationId: executeSnapshot
+      operationId: resource_executeSnapshot
       tags:
       - Snapshot Management
       summary: Create ephemeral snapshot of a living resource
@@ -12036,7 +12036,7 @@ paths:
                 $ref: '#/components/schemas/ExecuteSnapshotResponse'
   /resource/snapshot/get:
     post:
-      operationId: getSnapshot
+      operationId: resource_getSnapshot
       tags:
       - Snapshot Management
       summary: Retrieve an ephemeral snapshot
@@ -12065,7 +12065,7 @@ paths:
     post:
       tags:
       - Slots
-      operationId: CreateSlot
+      operationId: saveLoad_CreateSlot
       summary: Create or configure a save slot
       description: |
         Creates a new save slot or updates configuration of an existing slot.
@@ -12094,7 +12094,7 @@ paths:
     post:
       tags:
       - Slots
-      operationId: GetSlot
+      operationId: saveLoad_GetSlot
       summary: Get slot metadata
       description: Returns slot configuration and version summary.
       x-permissions:
@@ -12118,7 +12118,7 @@ paths:
     post:
       tags:
       - Slots
-      operationId: ListSlots
+      operationId: saveLoad_ListSlots
       summary: List slots for owner
       description: Returns all slots owned by the specified entity.
       x-permissions:
@@ -12140,7 +12140,7 @@ paths:
     post:
       tags:
       - Slots
-      operationId: DeleteSlot
+      operationId: saveLoad_DeleteSlot
       summary: Delete slot and all versions
       description: |
         Permanently deletes a slot and all save versions within it.
@@ -12168,7 +12168,7 @@ paths:
     post:
       tags:
       - Slots
-      operationId: RenameSlot
+      operationId: saveLoad_RenameSlot
       summary: Rename a save slot
       description: |
         Renames an existing slot without affecting its versions or data.
@@ -12196,7 +12196,7 @@ paths:
     post:
       tags:
       - Saves
-      operationId: Save
+      operationId: saveLoad_Save
       summary: Save data to slot
       description: |
         Creates a new version in the specified slot with the provided data.
@@ -12229,7 +12229,7 @@ paths:
     post:
       tags:
       - Saves
-      operationId: Load
+      operationId: saveLoad_Load
       summary: Load data from slot
       description: |
         Retrieves save data from the specified slot. By default, loads the
@@ -12257,7 +12257,7 @@ paths:
     post:
       tags:
       - Saves
-      operationId: SaveDelta
+      operationId: saveLoad_SaveDelta
       summary: Save incremental changes from base version
       description: |
         Creates a new version by applying a delta (patch) to a base version.
@@ -12293,7 +12293,7 @@ paths:
     post:
       tags:
       - Saves
-      operationId: LoadWithDeltas
+      operationId: saveLoad_LoadWithDeltas
       summary: Load save reconstructing from delta chain
       description: |
         Loads save data, automatically reconstructing from delta chain if needed.
@@ -12324,7 +12324,7 @@ paths:
     post:
       tags:
       - Saves
-      operationId: CollapseDeltas
+      operationId: saveLoad_CollapseDeltas
       summary: Collapse delta chain into full snapshot
       description: |
         Collapses a chain of delta versions into a single full snapshot.
@@ -12350,7 +12350,7 @@ paths:
     post:
       tags:
       - Versions
-      operationId: ListVersions
+      operationId: saveLoad_ListVersions
       summary: List versions in slot
       description: Returns all versions in a slot with metadata.
       x-permissions:
@@ -12374,7 +12374,7 @@ paths:
     post:
       tags:
       - Versions
-      operationId: PinVersion
+      operationId: saveLoad_PinVersion
       summary: Pin a version as checkpoint
       description: |
         Pins a specific version, excluding it from rolling cleanup.
@@ -12400,7 +12400,7 @@ paths:
     post:
       tags:
       - Versions
-      operationId: UnpinVersion
+      operationId: saveLoad_UnpinVersion
       summary: Unpin a version
       description: Removes pin from a version, making it eligible for rolling 
         cleanup.
@@ -12425,7 +12425,7 @@ paths:
     post:
       tags:
       - Versions
-      operationId: DeleteVersion
+      operationId: saveLoad_DeleteVersion
       summary: Delete specific version
       description: |
         Permanently deletes a specific version from a slot.
@@ -12453,7 +12453,7 @@ paths:
     post:
       tags:
       - Query
-      operationId: QuerySaves
+      operationId: saveLoad_QuerySaves
       summary: Query saves with filters
       description: |
         Search and filter saves across slots. Supports filtering by owner,
@@ -12477,7 +12477,7 @@ paths:
     post:
       tags:
       - Transfer
-      operationId: CopySave
+      operationId: saveLoad_CopySave
       summary: Copy save to different slot or owner
       description: |
         Copies a save version to a different slot or owner.
@@ -12505,7 +12505,7 @@ paths:
     post:
       tags:
       - Transfer
-      operationId: ExportSaves
+      operationId: saveLoad_ExportSaves
       summary: Export saves for backup/portability
       description: |
         Exports one or more slots with all versions as a downloadable archive.
@@ -12529,7 +12529,7 @@ paths:
     post:
       tags:
       - Validation
-      operationId: VerifyIntegrity
+      operationId: saveLoad_VerifyIntegrity
       summary: Verify save data integrity
       description: |
         Verifies the integrity of stored save data by comparing content hash
@@ -12555,7 +12555,7 @@ paths:
     post:
       tags:
       - Versions
-      operationId: PromoteVersion
+      operationId: saveLoad_PromoteVersion
       summary: Promote old version to latest
       description: |
         Creates a new version from an existing older version, effectively
@@ -12581,7 +12581,7 @@ paths:
     post:
       tags:
       - Migration
-      operationId: MigrateSave
+      operationId: saveLoad_MigrateSave
       summary: Migrate save to new schema version
       description: |
         Applies migration handlers to upgrade a save from one schema version
@@ -12609,7 +12609,7 @@ paths:
     post:
       tags:
       - Migration
-      operationId: RegisterSchema
+      operationId: saveLoad_RegisterSchema
       summary: Register a save data schema
       description: |
         Registers a JSON schema for validation of save data.
@@ -12633,7 +12633,7 @@ paths:
     post:
       tags:
       - Migration
-      operationId: ListSchemas
+      operationId: saveLoad_ListSchemas
       summary: List registered schemas
       description: Returns all registered schemas for a game/namespace.
       x-permissions:
@@ -12658,7 +12658,7 @@ paths:
         Creates a new scene document and stores it in lib-asset.
         Publishes scene.created event on success.
         Returns Conflict if a scene with the same sceneId already exists.
-      operationId: createScene
+      operationId: scene_createScene
       tags:
       - Scene
       x-permissions:
@@ -12687,7 +12687,7 @@ paths:
       description: |
         Retrieves a scene document. Optionally resolves nested scene references
         up to a configurable depth.
-      operationId: getScene
+      operationId: scene_getScene
       tags:
       - Scene
       x-permissions:
@@ -12714,7 +12714,7 @@ paths:
       description: |
         Lists scenes matching the provided filters. Supports pagination.
         Results are ordered by updatedAt descending (most recent first).
-      operationId: listScenes
+      operationId: scene_listScenes
       tags:
       - Scene
       x-permissions:
@@ -12740,7 +12740,7 @@ paths:
         Updates an existing scene document. Scene must not be checked out by
         another user. Increments the PATCH version automatically.
         Publishes scene.updated event on success.
-      operationId: updateScene
+      operationId: scene_updateScene
       tags:
       - Scene
       x-permissions:
@@ -12772,7 +12772,7 @@ paths:
         Soft-deletes a scene. The scene data remains recoverable via lib-asset
         for approximately 30 days. Cannot delete if other scenes reference this one.
         Publishes scene.deleted event on success.
-      operationId: deleteScene
+      operationId: scene_deleteScene
       tags:
       - Scene
       x-permissions:
@@ -12801,7 +12801,7 @@ paths:
       description: |
         Validates a scene document without saving it. Checks structural validity
         and optionally applies game-specific validation rules.
-      operationId: validateScene
+      operationId: scene_validateScene
       tags:
       - Scene
       x-permissions:
@@ -12827,7 +12827,7 @@ paths:
         Acquires an exclusive lock on the scene for editing.
         Returns a checkout token required for commit.
         Lock expires after TTL if not extended via heartbeat.
-      operationId: checkoutScene
+      operationId: scene_checkoutScene
       tags:
       - Versioning
       x-permissions:
@@ -12856,7 +12856,7 @@ paths:
       description: |
         Commits the changes made during checkout, increments version,
         and releases the lock. Publishes scene.committed event.
-      operationId: commitScene
+      operationId: scene_commitScene
       tags:
       - Versioning
       x-permissions:
@@ -12885,7 +12885,7 @@ paths:
       description: |
         Discards any changes and releases the checkout lock.
         Scene remains at its pre-checkout version.
-      operationId: discardCheckout
+      operationId: scene_discardCheckout
       tags:
       - Versioning
       x-permissions:
@@ -12912,7 +12912,7 @@ paths:
       description: |
         Extends the checkout lock TTL. Should be called periodically
         during editing to prevent lock expiration.
-      operationId: heartbeatCheckout
+      operationId: scene_heartbeatCheckout
       tags:
       - Versioning
       x-permissions:
@@ -12941,7 +12941,7 @@ paths:
       description: |
         Returns the version history for a scene, up to the configured
         retention limit per gameId.
-      operationId: getSceneHistory
+      operationId: scene_getSceneHistory
       tags:
       - Versioning
       x-permissions:
@@ -12968,7 +12968,7 @@ paths:
       description: |
         Retrieves the registered validation rules for a specific
         gameId and sceneType combination.
-      operationId: getValidationRules
+      operationId: scene_getValidationRules
       tags:
       - Validation
       x-permissions:
@@ -12993,7 +12993,7 @@ paths:
       description: |
         Searches scene names, descriptions, tags, and node names
         for matching content.
-      operationId: searchScenes
+      operationId: scene_searchScenes
       tags:
       - Query
       x-permissions:
@@ -13018,7 +13018,7 @@ paths:
       description: |
         Returns all scenes that contain reference nodes pointing
         to the specified scene.
-      operationId: findReferences
+      operationId: scene_findReferences
       tags:
       - Query
       x-permissions:
@@ -13043,7 +13043,7 @@ paths:
       description: |
         Returns all scenes containing nodes that reference
         a specific asset ID.
-      operationId: findAssetUsage
+      operationId: scene_findAssetUsage
       tags:
       - Query
       x-permissions:
@@ -13068,7 +13068,7 @@ paths:
       description: |
         Creates a copy of a scene with a new sceneId and name.
         All node IDs are regenerated. Version resets to 1.0.0.
-      operationId: duplicateScene
+      operationId: scene_duplicateScene
       tags:
       - Scene
       x-permissions:
@@ -13091,7 +13091,7 @@ paths:
           description: Source scene not found
   /seed/create:
     post:
-      operationId: CreateSeed
+      operationId: seed_CreateSeed
       summary: Create a new seed
       description: >
         Creates a new seed bound to the specified owner. The seed type must
@@ -13115,7 +13115,7 @@ paths:
                 $ref: '#/components/schemas/SeedResponse'
   /seed/get:
     post:
-      operationId: GetSeed
+      operationId: seed_GetSeed
       summary: Get seed by ID
       description: Returns the seed entity with current growth phase and summary
         data.
@@ -13136,7 +13136,7 @@ paths:
                 $ref: '#/components/schemas/SeedResponse'
   /seed/get-by-owner:
     post:
-      operationId: GetSeedsByOwner
+      operationId: seed_GetSeedsByOwner
       summary: Get seeds by owner ID and type
       description: >
         Returns all seeds owned by the specified entity. Optionally filter
@@ -13158,7 +13158,7 @@ paths:
                 $ref: '#/components/schemas/ListSeedsResponse'
   /seed/list:
     post:
-      operationId: ListSeeds
+      operationId: seed_ListSeeds
       summary: List seeds with filtering
       description: >
         Returns seeds matching the specified filters. Supports filtering
@@ -13180,7 +13180,7 @@ paths:
                 $ref: '#/components/schemas/ListSeedsResponse'
   /seed/update:
     post:
-      operationId: UpdateSeed
+      operationId: seed_UpdateSeed
       summary: Update seed metadata or display name
       description: Updates mutable fields of a seed. Cannot change owner or seed
         type.
@@ -13201,7 +13201,7 @@ paths:
                 $ref: '#/components/schemas/SeedResponse'
   /seed/activate:
     post:
-      operationId: ActivateSeed
+      operationId: seed_ActivateSeed
       summary: Set a seed as active
       description: >
         Activates the specified seed. Only one seed of a given type can be
@@ -13224,7 +13224,7 @@ paths:
                 $ref: '#/components/schemas/SeedResponse'
   /seed/archive:
     post:
-      operationId: ArchiveSeed
+      operationId: seed_ArchiveSeed
       summary: Archive a seed
       description: >
         Soft-deletes a seed, preserving its data but removing it from active
@@ -13247,7 +13247,7 @@ paths:
                 $ref: '#/components/schemas/SeedResponse'
   /seed/growth/get:
     post:
-      operationId: GetGrowth
+      operationId: seed_GetGrowth
       summary: Get full growth domain map
       description: >
         Returns the complete growth domain map for a seed, including all
@@ -13269,7 +13269,7 @@ paths:
                 $ref: '#/components/schemas/GrowthResponse'
   /seed/growth/record:
     post:
-      operationId: RecordGrowth
+      operationId: seed_RecordGrowth
       summary: Record growth in a domain
       description: >
         Records growth in a specific domain for a seed. Primarily called
@@ -13292,7 +13292,7 @@ paths:
                 $ref: '#/components/schemas/GrowthResponse'
   /seed/growth/record-batch:
     post:
-      operationId: RecordGrowthBatch
+      operationId: seed_RecordGrowthBatch
       summary: Record growth across multiple domains atomically
       description: >
         Records growth across multiple domains in a single atomic operation.
@@ -13315,7 +13315,7 @@ paths:
                 $ref: '#/components/schemas/GrowthResponse'
   /seed/growth/get-phase:
     post:
-      operationId: GetGrowthPhase
+      operationId: seed_GetGrowthPhase
       summary: Get current growth phase
       description: >
         Returns the current computed growth phase for the seed, based on
@@ -13337,7 +13337,7 @@ paths:
                 $ref: '#/components/schemas/GrowthPhaseResponse'
   /seed/capability/get-manifest:
     post:
-      operationId: GetCapabilityManifest
+      operationId: seed_GetCapabilityManifest
       summary: Get current capability manifest
       description: >
         Returns the most recently computed capability manifest for the seed.
@@ -13360,7 +13360,7 @@ paths:
                 $ref: '#/components/schemas/CapabilityManifestResponse'
   /seed/type/register:
     post:
-      operationId: RegisterSeedType
+      operationId: seed_RegisterSeedType
       summary: Register a new seed type definition
       description: >
         Registers a seed type with its growth phase definitions, capability
@@ -13383,7 +13383,7 @@ paths:
                 $ref: '#/components/schemas/SeedTypeResponse'
   /seed/type/get:
     post:
-      operationId: GetSeedType
+      operationId: seed_GetSeedType
       summary: Get seed type definition
       description: Returns the full seed type definition including phases and 
         capability rules.
@@ -13404,7 +13404,7 @@ paths:
                 $ref: '#/components/schemas/SeedTypeResponse'
   /seed/type/list:
     post:
-      operationId: ListSeedTypes
+      operationId: seed_ListSeedTypes
       summary: List registered seed types
       description: Returns all seed types registered for the specified game 
         service.
@@ -13425,7 +13425,7 @@ paths:
                 $ref: '#/components/schemas/ListSeedTypesResponse'
   /seed/type/update:
     post:
-      operationId: UpdateSeedType
+      operationId: seed_UpdateSeedType
       summary: Update seed type definition
       description: >
         Updates a seed type definition. Changes to phase thresholds or
@@ -13447,7 +13447,7 @@ paths:
                 $ref: '#/components/schemas/SeedTypeResponse'
   /seed/type/deprecate:
     post:
-      operationId: DeprecateSeedType
+      operationId: seed_DeprecateSeedType
       summary: Deprecate a seed type
       description: >
         Marks a seed type as deprecated. Deprecated seed types cannot be used
@@ -13472,7 +13472,7 @@ paths:
           description: Seed type not found
   /seed/type/undeprecate:
     post:
-      operationId: UndeprecateSeedType
+      operationId: seed_UndeprecateSeedType
       summary: Restore a deprecated seed type
       description: >
         Removes deprecated status from a seed type, allowing new seeds
@@ -13496,7 +13496,7 @@ paths:
           description: Seed type not found
   /seed/type/delete:
     post:
-      operationId: DeleteSeedType
+      operationId: seed_DeleteSeedType
       summary: Delete a seed type
       description: >
         Hard deletes a deprecated seed type. Fails if any non-archived seeds
@@ -13521,7 +13521,7 @@ paths:
           description: Non-archived seeds still exist for this type
   /seed/bond/initiate:
     post:
-      operationId: InitiateBond
+      operationId: seed_InitiateBond
       summary: Begin bond process between seeds
       description: >
         Initiates a bond between seeds of the same type. All participants
@@ -13544,7 +13544,7 @@ paths:
                 $ref: '#/components/schemas/BondResponse'
   /seed/bond/confirm:
     post:
-      operationId: ConfirmBond
+      operationId: seed_ConfirmBond
       summary: Confirm a pending bond
       description: >
         Confirms a pending bond. When all participants have confirmed, the
@@ -13566,7 +13566,7 @@ paths:
                 $ref: '#/components/schemas/BondResponse'
   /seed/bond/get:
     post:
-      operationId: GetBond
+      operationId: seed_GetBond
       summary: Get bond by ID
       description: Returns the bond record with all participants and status.
       x-permissions:
@@ -13586,7 +13586,7 @@ paths:
                 $ref: '#/components/schemas/BondResponse'
   /seed/bond/get-for-seed:
     post:
-      operationId: GetBondForSeed
+      operationId: seed_GetBondForSeed
       summary: Get bond for a specific seed
       description: Returns the bond that the specified seed participates in, if 
         any.
@@ -13607,7 +13607,7 @@ paths:
                 $ref: '#/components/schemas/BondResponse'
   /seed/bond/get-partners:
     post:
-      operationId: GetBondPartners
+      operationId: seed_GetBondPartners
       summary: Get partner seed(s) public info
       description: Returns public information about the other seeds in the bond.
       x-permissions:
@@ -13628,7 +13628,7 @@ paths:
   /species/get:
     post:
       summary: Get species by ID
-      operationId: getSpecies
+      operationId: species_getSpecies
       tags:
       - Species
       x-permissions:
@@ -13654,7 +13654,7 @@ paths:
       summary: Get species by code
       description: Retrieve a species using its unique code (e.g., "HUMAN", 
         "ELF", "DWARF")
-      operationId: getSpeciesByCode
+      operationId: species_getSpeciesByCode
       tags:
       - Species
       x-permissions:
@@ -13679,7 +13679,7 @@ paths:
     post:
       summary: List all species
       description: Retrieve all species with optional realm filtering
-      operationId: listSpecies
+      operationId: species_listSpecies
       tags:
       - Species
       x-permissions:
@@ -13702,7 +13702,7 @@ paths:
     post:
       summary: List species available in a realm
       description: Retrieve all species that are available in a specific realm
-      operationId: listSpeciesByRealm
+      operationId: species_listSpeciesByRealm
       tags:
       - Species
       x-permissions:
@@ -13725,7 +13725,7 @@ paths:
           description: Realm not found
   /status/template/create:
     post:
-      operationId: createStatusTemplate
+      operationId: status_createStatusTemplate
       tags:
       - StatusTemplate
       summary: Create a status template
@@ -13759,7 +13759,7 @@ paths:
             exceeded
   /status/template/get:
     post:
-      operationId: getStatusTemplate
+      operationId: status_getStatusTemplate
       tags:
       - StatusTemplate
       summary: Get a status template by ID
@@ -13784,7 +13784,7 @@ paths:
           description: Status template not found
   /status/template/get-by-code:
     post:
-      operationId: getStatusTemplateByCode
+      operationId: status_getStatusTemplateByCode
       tags:
       - StatusTemplate
       summary: Get a status template by code
@@ -13810,7 +13810,7 @@ paths:
           description: Status template not found
   /status/template/list:
     post:
-      operationId: listStatusTemplates
+      operationId: status_listStatusTemplates
       tags:
       - StatusTemplate
       summary: List status templates
@@ -13834,7 +13834,7 @@ paths:
                 $ref: '#/components/schemas/ListStatusTemplatesResponse'
   /status/template/update:
     post:
-      operationId: updateStatusTemplate
+      operationId: status_updateStatusTemplate
       tags:
       - StatusTemplate
       summary: Update a status template
@@ -13860,7 +13860,7 @@ paths:
           description: Status template not found
   /status/template/seed:
     post:
-      operationId: seedStatusTemplates
+      operationId: status_seedStatusTemplates
       tags:
       - StatusTemplate
       summary: Bulk seed status templates
@@ -13887,7 +13887,7 @@ paths:
           description: Invalid request (validation errors)
   /status/grant:
     post:
-      operationId: grantStatus
+      operationId: status_grantStatus
       tags:
       - Status
       summary: Grant a status effect to an entity
@@ -13927,7 +13927,7 @@ paths:
             behavior, contract/item failure)
   /status/remove:
     post:
-      operationId: removeStatus
+      operationId: status_removeStatus
       tags:
       - Status
       summary: Remove a specific status instance
@@ -13955,7 +13955,7 @@ paths:
           description: Status instance not found
   /status/remove-by-source:
     post:
-      operationId: removeBySource
+      operationId: status_removeBySource
       tags:
       - Status
       summary: Remove all statuses from a source
@@ -13979,7 +13979,7 @@ paths:
                 $ref: '#/components/schemas/RemoveStatusesResponse'
   /status/remove-by-category:
     post:
-      operationId: removeByCategory
+      operationId: status_removeByCategory
       tags:
       - Status
       summary: Remove all statuses of a category (cleanse)
@@ -14003,7 +14003,7 @@ paths:
                 $ref: '#/components/schemas/RemoveStatusesResponse'
   /status/has:
     post:
-      operationId: hasStatus
+      operationId: status_hasStatus
       tags:
       - Status
       summary: Check if an entity has a specific status
@@ -14027,7 +14027,7 @@ paths:
                 $ref: '#/components/schemas/HasStatusResponse'
   /status/list:
     post:
-      operationId: listStatuses
+      operationId: status_listStatuses
       tags:
       - Status
       summary: List active statuses for an entity
@@ -14053,7 +14053,7 @@ paths:
                 $ref: '#/components/schemas/ListStatusesResponse'
   /status/get:
     post:
-      operationId: getStatus
+      operationId: status_getStatus
       tags:
       - Status
       summary: Get a specific status instance
@@ -14079,7 +14079,7 @@ paths:
           description: Status instance not found
   /status/effects/get:
     post:
-      operationId: getEffects
+      operationId: status_getEffects
       tags:
       - Effects
       summary: Get unified effects for an entity
@@ -14105,7 +14105,7 @@ paths:
                 $ref: '#/components/schemas/GetEffectsResponse'
   /status/effects/get-seed:
     post:
-      operationId: getSeedEffects
+      operationId: status_getSeedEffects
       tags:
       - Effects
       summary: Get seed-derived passive effects for an entity
@@ -14131,7 +14131,7 @@ paths:
                 $ref: '#/components/schemas/SeedEffectsResponse'
   /status/cleanup-by-owner:
     post:
-      operationId: cleanupByOwner
+      operationId: status_cleanupByOwner
       tags:
       - Cleanup
       summary: Remove all statuses and containers for an owner
@@ -14170,7 +14170,7 @@ paths:
         3. Select template based on goal and constraints
         4. Run GOAP planner to generate action sequences
         5. Cache plan and publish storyline.composed event
-      operationId: Compose
+      operationId: storyline_Compose
       tags:
       - Composition
       x-permissions:
@@ -14199,7 +14199,7 @@ paths:
       description: |
         Retrieves a previously generated storyline plan by its ID.
         Returns 404 if the plan has expired from cache or doesn't exist.
-      operationId: GetPlan
+      operationId: storyline_GetPlan
       tags:
       - Plans
       x-permissions:
@@ -14225,7 +14225,7 @@ paths:
       description: |
         Lists storyline plans in the cache, optionally filtered by realm.
         Plans are ordered by creation time (newest first).
-      operationId: ListPlans
+      operationId: storyline_ListPlans
       tags:
       - Plans
       x-permissions:
@@ -14250,7 +14250,7 @@ paths:
         Creates a reusable scenario definition template.
         Scenarios are passive building blocks with triggering conditions,
         phases, mutations, and optional quest hooks.
-      operationId: CreateScenarioDefinition
+      operationId: storyline_CreateScenarioDefinition
       tags:
       - Scenario Definitions
       x-permissions:
@@ -14278,7 +14278,7 @@ paths:
       description: |
         Retrieves a scenario definition by its ID or code.
         Uses read-through cache for performance.
-      operationId: GetScenarioDefinition
+      operationId: storyline_GetScenarioDefinition
       tags:
       - Scenario Definitions
       x-permissions:
@@ -14304,7 +14304,7 @@ paths:
       description: |
         Lists scenario definitions with optional filtering by realm, game service, and tags.
         Results are paginated and ordered by priority (descending), then creation time.
-      operationId: ListScenarioDefinitions
+      operationId: storyline_ListScenarioDefinitions
       tags:
       - Scenario Definitions
       x-permissions:
@@ -14328,7 +14328,7 @@ paths:
       description: |
         Updates an existing scenario definition.
         Uses ETag for optimistic concurrency control.
-      operationId: UpdateScenarioDefinition
+      operationId: storyline_UpdateScenarioDefinition
       tags:
       - Scenario Definitions
       x-permissions:
@@ -14356,7 +14356,7 @@ paths:
       description: |
         Soft-deletes a scenario definition by marking it deprecated.
         Deprecated scenarios are not returned by find-available.
-      operationId: DeprecateScenarioDefinition
+      operationId: storyline_DeprecateScenarioDefinition
       tags:
       - Scenario Definitions
       x-permissions:
@@ -14379,7 +14379,7 @@ paths:
         Tests whether a scenario would trigger for a character without
         actually executing it. Returns detailed condition evaluation results
         and predicted mutations.
-      operationId: TestScenarioTrigger
+      operationId: storyline_TestScenarioTrigger
       tags:
       - Scenario Discovery
       x-permissions:
@@ -14404,7 +14404,7 @@ paths:
       summary: Get active scenarios for a character
       description: |
         Returns currently executing scenarios for a character.
-      operationId: GetActiveScenarios
+      operationId: storyline_GetActiveScenarios
       tags:
       - Scenario Execution
       x-permissions:
@@ -14427,7 +14427,7 @@ paths:
       summary: Get scenario execution history
       description: |
         Returns historical scenario executions for a character with pagination.
-      operationId: GetScenarioHistory
+      operationId: storyline_GetScenarioHistory
       tags:
       - Scenario Execution
       x-permissions:
@@ -14448,7 +14448,7 @@ paths:
   /storyline/get-compress-data:
     post:
       summary: Get storyline data for compression
-      operationId: getCompressData
+      operationId: storyline_getCompressData
       tags:
       - Compression
       description: |
@@ -14476,7 +14476,7 @@ paths:
       summary: Get subscriptions for an account
       description: Returns all subscriptions for a given account, with optional 
         filtering.
-      operationId: getAccountSubscriptions
+      operationId: subscription_getAccountSubscriptions
       tags:
       - Subscription Management
       x-permissions:
@@ -14498,7 +14498,7 @@ paths:
   /subscription/get:
     post:
       summary: Get a specific subscription by ID
-      operationId: getSubscription
+      operationId: subscription_getSubscription
       tags:
       - Subscription Management
       x-permissions:
@@ -14525,7 +14525,7 @@ paths:
       description: |
         Cancels a subscription. Users can cancel their own subscriptions,
         admins can cancel any subscription.
-      operationId: cancelSubscription
+      operationId: subscription_cancelSubscription
       tags:
       - Subscription Management
       x-permissions:
@@ -14550,7 +14550,7 @@ paths:
           description: Not authorized to cancel this subscription
   /transit/mode/register:
     post:
-      operationId: registerMode
+      operationId: transit_registerMode
       summary: Register a new transit mode type
       description: |
         Register a new transit mode type with movement properties, terrain
@@ -14577,7 +14577,7 @@ paths:
           description: Mode code already exists
   /transit/mode/get:
     post:
-      operationId: getMode
+      operationId: transit_getMode
       summary: Get a transit mode by code
       description: Retrieve a transit mode definition by its unique code.
       tags:
@@ -14601,7 +14601,7 @@ paths:
           description: Mode not found
   /transit/mode/list:
     post:
-      operationId: listModes
+      operationId: transit_listModes
       summary: List all registered transit modes
       description: |
         List transit modes with optional filtering by realm availability,
@@ -14625,7 +14625,7 @@ paths:
                 $ref: '#/components/schemas/ListModesResponse'
   /transit/mode/update:
     post:
-      operationId: updateMode
+      operationId: transit_updateMode
       summary: Update a transit mode's properties
       description: |
         Update properties of an existing transit mode. Only provided fields
@@ -14651,7 +14651,7 @@ paths:
           description: Mode not found
   /transit/mode/deprecate:
     post:
-      operationId: deprecateMode
+      operationId: transit_deprecateMode
       summary: Deprecate a transit mode
       description: |
         Deprecate a transit mode. Existing journeys using this mode continue,
@@ -14681,7 +14681,7 @@ paths:
           description: Mode not found
   /transit/mode/undeprecate:
     post:
-      operationId: undeprecateMode
+      operationId: transit_undeprecateMode
       summary: Reverse deprecation of a transit mode
       description: |
         Reverse deprecation of a transit mode (Category A — undeprecate is required).
@@ -14708,7 +14708,7 @@ paths:
           description: Mode not found
   /transit/mode/delete:
     post:
-      operationId: deleteMode
+      operationId: transit_deleteMode
       summary: Delete a deprecated transit mode
       description: |
         Delete a deprecated transit mode (Category A — must be deprecated before
@@ -14742,7 +14742,7 @@ paths:
             compatibleModes)
   /transit/mode/check-availability:
     post:
-      operationId: checkModeAvailability
+      operationId: transit_checkModeAvailability
       summary: Check which transit modes an entity can currently use
       description: |
         Check mode availability for an entity based on item requirements,
@@ -14768,7 +14768,7 @@ paths:
                 $ref: '#/components/schemas/CheckModeAvailabilityResponse'
   /transit/connection/create:
     post:
-      operationId: createConnection
+      operationId: transit_createConnection
       summary: Create a connection between two locations
       description: |
         Create a directed or bidirectional connection between two locations.
@@ -14800,7 +14800,7 @@ paths:
           description: Connection already exists between these locations
   /transit/connection/get:
     post:
-      operationId: getConnection
+      operationId: transit_getConnection
       summary: Get a connection by ID or code
       description: Retrieve a connection by its unique ID or code. One of 
         connectionId or code must be provided.
@@ -14825,7 +14825,7 @@ paths:
           description: Connection not found
   /transit/connection/query:
     post:
-      operationId: queryConnections
+      operationId: transit_queryConnections
       summary: Query connections by location, terrain, mode, or status
       description: |
         Query connections with optional filters. All filters are optional;
@@ -14849,7 +14849,7 @@ paths:
                 $ref: '#/components/schemas/QueryConnectionsResponse'
   /transit/connection/update:
     post:
-      operationId: updateConnection
+      operationId: transit_updateConnection
       summary: Update a connection's properties
       description: |
         Update properties of an existing connection. Does not update status —
@@ -14876,7 +14876,7 @@ paths:
           description: Connection not found
   /transit/connection/update-status:
     post:
-      operationId: updateConnectionStatus
+      operationId: transit_updateConnectionStatus
       summary: Transition a connection's operational status with optimistic 
         concurrency
       description: |
@@ -14910,7 +14910,7 @@ paths:
             currentStatus (Bad Request forces caller to refresh and retry)
   /transit/connection/delete:
     post:
-      operationId: deleteConnection
+      operationId: transit_deleteConnection
       summary: Delete a connection between locations
       description: |
         Delete a connection. Rejects if active journeys are currently using
@@ -14939,7 +14939,7 @@ paths:
             using this connection)
   /transit/connection/bulk-seed:
     post:
-      operationId: bulkSeedConnections
+      operationId: transit_bulkSeedConnections
       summary: Seed connections from configuration
       description: |
         Seed connections from configuration using location codes resolved via
@@ -14966,7 +14966,7 @@ paths:
                 $ref: '#/components/schemas/BulkSeedConnectionsResponse'
   /transit/journey/create:
     post:
-      operationId: createJourney
+      operationId: transit_createJourney
       summary: Plan a journey (status preparing)
       description: |
         Plan a journey from origin to destination. Internally calls route/calculate
@@ -14999,7 +14999,7 @@ paths:
             available
   /transit/journey/depart:
     post:
-      operationId: departJourney
+      operationId: transit_departJourney
       summary: Start a prepared journey
       description: |
         Start a prepared journey, transitioning status from preparing to in_transit.
@@ -15028,7 +15028,7 @@ paths:
           description: Journey not found
   /transit/journey/resume:
     post:
-      operationId: resumeJourney
+      operationId: transit_resumeJourney
       summary: Resume an interrupted journey
       description: |
         Resume an interrupted journey, transitioning status from interrupted
@@ -15059,7 +15059,7 @@ paths:
           description: Journey not found
   /transit/journey/advance:
     post:
-      operationId: advanceJourney
+      operationId: transit_advanceJourney
       summary: Mark arrival at next waypoint
       description: |
         Mark arrival at the next waypoint, completing the current leg and
@@ -15089,7 +15089,7 @@ paths:
           description: Journey not found
   /transit/journey/advance-batch:
     post:
-      operationId: advanceBatchJourneys
+      operationId: transit_advanceBatchJourneys
       summary: Advance multiple journeys in a single call
       description: |
         Advance multiple journeys in a single call for game SDK efficiency at
@@ -15118,7 +15118,7 @@ paths:
                 $ref: '#/components/schemas/AdvanceBatchResponse'
   /transit/journey/arrive:
     post:
-      operationId: arriveJourney
+      operationId: transit_arriveJourney
       summary: Force-arrive a journey at destination
       description: |
         Force-arrive a journey at its destination, skipping remaining legs.
@@ -15148,7 +15148,7 @@ paths:
           description: Journey not found
   /transit/journey/interrupt:
     post:
-      operationId: interruptJourney
+      operationId: transit_interruptJourney
       summary: Interrupt an active journey
       description: |
         Interrupt an active journey due to combat, event, or breakdown.
@@ -15178,7 +15178,7 @@ paths:
           description: Journey not found
   /transit/journey/abandon:
     post:
-      operationId: abandonJourney
+      operationId: transit_abandonJourney
       summary: Abandon a journey
       description: |
         Abandon a journey. The entity stays at its current location.
@@ -15207,7 +15207,7 @@ paths:
           description: Journey not found
   /transit/journey/get:
     post:
-      operationId: getJourney
+      operationId: transit_getJourney
       summary: Get a journey by ID
       description: Retrieve a journey by its unique ID.
       tags:
@@ -15231,7 +15231,7 @@ paths:
           description: Journey not found
   /transit/journey/query-by-connection:
     post:
-      operationId: queryJourneysByConnection
+      operationId: transit_queryJourneysByConnection
       summary: List active journeys on a specific connection
       description: |
         List active journeys currently traversing a specific connection.
@@ -15258,7 +15258,7 @@ paths:
           description: Connection not found
   /transit/journey/list:
     post:
-      operationId: listJourneys
+      operationId: transit_listJourneys
       summary: List journeys for an entity or within a realm
       description: |
         List journeys with optional filtering by entity, entity type, realm,
@@ -15282,7 +15282,7 @@ paths:
                 $ref: '#/components/schemas/ListJourneysResponse'
   /transit/journey/query-archive:
     post:
-      operationId: queryJourneyArchive
+      operationId: transit_queryJourneyArchive
       summary: Query archived journeys from MySQL historical store
       description: |
         Query archived (completed/abandoned) journeys from the MySQL historical
@@ -15307,7 +15307,7 @@ paths:
                 $ref: '#/components/schemas/ListJourneysResponse'
   /transit/route/calculate:
     post:
-      operationId: calculateRoute
+      operationId: transit_calculateRoute
       summary: Calculate route options between two locations
       description: |
         Calculate route options between two locations. Pure computation endpoint
@@ -15336,7 +15336,7 @@ paths:
           description: Locations not found or no route available
   /transit/discovery/reveal:
     post:
-      operationId: revealDiscovery
+      operationId: transit_revealDiscovery
       summary: Reveal a discoverable connection to an entity
       description: |
         Reveal a discoverable connection to an entity via explicit grant.
@@ -15366,7 +15366,7 @@ paths:
           description: Connection not found
   /transit/discovery/list:
     post:
-      operationId: listDiscoveries
+      operationId: transit_listDiscoveries
       summary: List connections an entity has discovered
       description: List all discoverable connections that an entity has 
         discovered, with optional realm filtering.
@@ -15389,7 +15389,7 @@ paths:
                 $ref: '#/components/schemas/ListDiscoveriesResponse'
   /transit/discovery/check:
     post:
-      operationId: checkDiscoveries
+      operationId: transit_checkDiscoveries
       summary: Check if an entity has discovered specific connections
       description: Check whether an entity has discovered each of the specified 
         connections.
@@ -15421,7 +15421,7 @@ paths:
         **Access Control**: This endpoint requires the `voice:ringing` state, which is
         automatically set by the Voice service when a VoicePeerJoinedEvent is sent to the client.
         The state is cleared after the answer is processed or times out.
-      operationId: answerPeer
+      operationId: voice_answerPeer
       tags:
       - Voice Peers
       x-permissions:
@@ -15452,7 +15452,7 @@ paths:
 
         This endpoint is the ONLY way to initiate voice room broadcasting.
         lib-broadcast subscribes to the resulting approval/decline events.
-      operationId: requestBroadcastConsent
+      operationId: voice_requestBroadcastConsent
       tags:
       - Voice Broadcasting
       x-permissions:
@@ -15484,7 +15484,7 @@ paths:
         When all participants consent, lib-voice publishes
         voice.broadcast.approved. If any participant declines,
         lib-voice publishes voice.broadcast.declined.
-      operationId: respondBroadcastConsent
+      operationId: voice_respondBroadcastConsent
       tags:
       - Voice Broadcasting
       x-permissions:
@@ -15513,7 +15513,7 @@ paths:
         Any participant can stop an active broadcast at any time.
         This is equivalent to revoking consent. Publishes
         voice.broadcast.stopped with reason ConsentRevoked.
-      operationId: stopBroadcast
+      operationId: voice_stopBroadcast
       tags:
       - Voice Broadcasting
       x-permissions:
@@ -15537,7 +15537,7 @@ paths:
       description: >
         Returns the current broadcast state: whether consent is pending,
         active, or inactive.
-      operationId: getBroadcastStatus
+      operationId: voice_getBroadcastStatus
       tags:
       - Voice Broadcasting
       x-permissions:
@@ -15562,7 +15562,7 @@ paths:
   /website/status:
     get:
       summary: Get website status and version
-      operationId: getStatus
+      operationId: website_getStatus
       tags:
       - Status
       x-permissions:
@@ -15578,7 +15578,7 @@ paths:
   /website/content/{slug}:
     get:
       summary: Get dynamic page content from CMS
-      operationId: getPageContent
+      operationId: website_getPageContent
       tags:
       - Content
       x-permissions:
@@ -15604,7 +15604,7 @@ paths:
   /website/news:
     get:
       summary: Get latest news and announcements
-      operationId: getNews
+      operationId: website_getNews
       tags:
       - Content
       x-permissions:
@@ -15636,7 +15636,7 @@ paths:
   /website/downloads:
     get:
       summary: Get download links for game clients
-      operationId: getDownloads
+      operationId: website_getDownloads
       tags:
       - Downloads
       x-permissions:
@@ -15658,7 +15658,7 @@ paths:
   /website/contact:
     post:
       summary: Submit contact form
-      operationId: submitContact
+      operationId: website_submitContact
       tags:
       - Contact
       x-permissions:
@@ -15684,7 +15684,7 @@ paths:
   /website/account/profile:
     get:
       summary: Get account profile for logged-in user
-      operationId: getAccountProfile
+      operationId: website_getAccountProfile
       tags:
       - Account
       x-permissions:
@@ -15704,7 +15704,7 @@ paths:
   /website/cms/pages:
     get:
       summary: List all CMS pages
-      operationId: listPages
+      operationId: website_listPages
       tags:
       - CMS
       x-permissions:
@@ -15729,7 +15729,7 @@ paths:
                   $ref: '#/components/schemas/PageMetadata'
     post:
       summary: Create new CMS page
-      operationId: createPage
+      operationId: website_createPage
       tags:
       - CMS
       x-permissions:
@@ -15753,7 +15753,7 @@ paths:
   /website/cms/pages/{slug}:
     put:
       summary: Update CMS page
-      operationId: updatePage
+      operationId: website_updatePage
       tags:
       - CMS
       x-permissions:
@@ -15782,7 +15782,7 @@ paths:
                 $ref: '#/components/schemas/PageContent'
     delete:
       summary: Delete CMS page
-      operationId: deletePage
+      operationId: website_deletePage
       tags:
       - CMS
       x-permissions:
@@ -15802,7 +15802,7 @@ paths:
   /website/cms/site-settings:
     get:
       summary: Get site configuration
-      operationId: getSiteSettings
+      operationId: website_getSiteSettings
       tags:
       - CMS
       x-permissions:
@@ -15817,7 +15817,7 @@ paths:
                 $ref: '#/components/schemas/SiteSettings'
     put:
       summary: Update site configuration
-      operationId: updateSiteSettings
+      operationId: website_updateSiteSettings
       tags:
       - CMS
       x-permissions:
@@ -15841,7 +15841,7 @@ paths:
   /website/cms/theme:
     get:
       summary: Get current theme configuration
-      operationId: getTheme
+      operationId: website_getTheme
       tags:
       - CMS
       x-permissions:
@@ -15856,7 +15856,7 @@ paths:
                 $ref: '#/components/schemas/ThemeConfig'
     put:
       summary: Update theme configuration
-      operationId: updateTheme
+      operationId: website_updateTheme
       tags:
       - CMS
       x-permissions:
@@ -15875,7 +15875,7 @@ paths:
           description: Theme updated
   /worldstate/clock/get-realm-time:
     post:
-      operationId: getRealmTime
+      operationId: worldstate_getRealmTime
       summary: Get current game time for a realm
       description: Returns full GameTimeSnapshot for a realm. Reads from Redis 
         cache (hot path).
@@ -15900,7 +15900,7 @@ paths:
           description: No clock initialized for this realm
   /worldstate/clock/get-realm-time-by-code:
     post:
-      operationId: getRealmTimeByCode
+      operationId: worldstate_getRealmTimeByCode
       summary: Get current game time by realm code
       description: Convenience endpoint accepting realm code string instead of 
         GUID. Resolves to realm ID via IRealmClient, then delegates to 
@@ -15926,7 +15926,7 @@ paths:
           description: Realm code not found or no clock initialized
   /worldstate/clock/batch-get-realm-times:
     post:
-      operationId: batchGetRealmTimes
+      operationId: worldstate_batchGetRealmTimes
       summary: Get current game time for multiple realms
       description: Returns GameTimeSnapshot for multiple realms in a single 
         call. Used by services operating across realms.
@@ -15949,7 +15949,7 @@ paths:
                 $ref: '#/components/schemas/BatchGetRealmTimesResponse'
   /worldstate/clock/get-elapsed-game-time:
     post:
-      operationId: getElapsedGameTime
+      operationId: worldstate_getElapsedGameTime
       summary: Compute elapsed game-time between two real timestamps
       description: Given a realmId, fromRealTime, and toRealTime, computes total
         game-seconds elapsed. Integrates over ratio history segments. Critical 
@@ -15976,7 +15976,7 @@ paths:
           description: No clock initialized for this realm
   /worldstate/clock/trigger-sync:
     post:
-      operationId: triggerTimeSync
+      operationId: worldstate_triggerTimeSync
       summary: Trigger a time sync event for an entity's sessions
       description: Publishes a WorldstateTimeSyncEvent with syncReason 
         TriggerSync to a specific entity's connected sessions. Primary caller is
@@ -16002,7 +16002,7 @@ paths:
           description: No clock initialized for this realm
   /worldstate/clock/initialize:
     post:
-      operationId: initializeRealmClock
+      operationId: worldstate_initializeRealmClock
       summary: Initialize a clock for a realm
       description: The primary path from "realm exists" to "realm has a clock." 
         Validates realm existence, calendar template existence, and that no 
@@ -16033,7 +16033,7 @@ paths:
           description: Clock already initialized for this realm
   /worldstate/clock/set-ratio:
     post:
-      operationId: setTimeRatio
+      operationId: worldstate_setTimeRatio
       summary: Change the time ratio for a realm
       description: Materializes current clock state, records new ratio segment 
         in history, updates realm clock. Setting ratio to 0.0 pauses the clock.
@@ -16058,7 +16058,7 @@ paths:
           description: No clock initialized for this realm
   /worldstate/clock/advance:
     post:
-      operationId: advanceClock
+      operationId: worldstate_advanceClock
       summary: Manually advance a realm's clock
       description: Advances a realm's clock by a specified amount of game time. 
         Used for testing and administrative fast-forward. Publishes all boundary
@@ -16086,7 +16086,7 @@ paths:
           description: No clock initialized for this realm
   /worldstate/calendar/seed:
     post:
-      operationId: seedCalendar
+      operationId: worldstate_seedCalendar
       summary: Create a calendar template
       description: Creates a calendar template for a game service. Validates 
         structural consistency (day period coverage, season-month mapping, day 
@@ -16119,7 +16119,7 @@ paths:
             calendars exceeded
   /worldstate/calendar/get:
     post:
-      operationId: getCalendar
+      operationId: worldstate_getCalendar
       summary: Get a calendar template
       description: Returns a calendar template by game service ID and template 
         code.
@@ -16144,7 +16144,7 @@ paths:
           description: Calendar template not found
   /worldstate/calendar/list:
     post:
-      operationId: listCalendars
+      operationId: worldstate_listCalendars
       summary: List calendar templates for a game service
       description: Returns all calendar templates registered for a game service.
       tags:
@@ -16166,7 +16166,7 @@ paths:
                 $ref: '#/components/schemas/ListCalendarsResponse'
   /worldstate/calendar/update:
     post:
-      operationId: updateCalendar
+      operationId: worldstate_updateCalendar
       summary: Update a calendar template
       description: Partial update of a calendar template. Acquires distributed 
         lock. Validates structural consistency. Cannot change template code or 
@@ -16195,7 +16195,7 @@ paths:
           description: Calendar template not found
   /worldstate/calendar/delete:
     post:
-      operationId: deleteCalendar
+      operationId: worldstate_deleteCalendar
       summary: Delete a calendar template
       description: Deletes a calendar template. Fails with Conflict if any 
         active realm clocks reference this template. Acquires distributed lock. 
@@ -16223,7 +16223,7 @@ paths:
           description: Active realm clocks reference this template
   /worldstate/realm-config/get:
     post:
-      operationId: getRealmConfig
+      operationId: worldstate_getRealmConfig
       summary: Get realm worldstate configuration
       description: Returns the realm's worldstate configuration including 
         calendar template, time ratio, downtime policy, epoch, and active 
@@ -16249,7 +16249,7 @@ paths:
           description: No clock initialized for this realm
   /worldstate/realm-config/update:
     post:
-      operationId: updateRealmConfig
+      operationId: worldstate_updateRealmConfig
       summary: Update realm worldstate configuration
       description: Partial update of realm-level configuration. Acquires 
         distributed lock. Supports changing downtimePolicy and 
@@ -16277,7 +16277,7 @@ paths:
             not found
   /worldstate/realm-config/list:
     post:
-      operationId: listRealmClocks
+      operationId: worldstate_listRealmClocks
       summary: List active realm clocks
       description: Lists all active realm clocks with summary info. Supports 
         pagination and optional gameServiceId filter.

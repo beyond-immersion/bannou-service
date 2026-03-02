@@ -152,18 +152,19 @@ var MessageFlags = {
    * Message payload is binary data (not JSON)
    */
   Binary: 1,
+  // Bit 0x02 is reserved (originally Encrypted, removed).
+  // Bit 0x08 is reserved (originally HighPriority, removed).
+  // Values are preserved to avoid shifting existing flag assignments.
+  /** Reserved for future use. Do not assign. */
+  Reserved0x02: 2,
   /**
-   * Message payload is encrypted
-   */
-  Encrypted: 2,
-  /**
-   * Message payload is compressed (gzip)
+   * Payload is Brotli-compressed. Client must decompress before parsing.
+   * Only set on server-to-client messages when compression is enabled and
+   * payload exceeds the configured size threshold.
    */
   Compressed: 4,
-  /**
-   * Deliver at high priority, skip to front of queues
-   */
-  HighPriority: 8,
+  /** Reserved for future use. Do not assign. */
+  Reserved0x08: 8,
   /**
    * Fire-and-forget message, no response expected
    */
@@ -198,6 +199,9 @@ function isMeta(flags) {
 }
 function isBinary(flags) {
   return hasFlag(flags, MessageFlags.Binary);
+}
+function isCompressed(flags) {
+  return hasFlag(flags, MessageFlags.Compressed);
 }
 
 // src/protocol/ResponseCodes.ts
@@ -484,9 +488,6 @@ function isResponse2(message) {
 function isClientRouted(message) {
   return hasFlag(message.flags, MessageFlags.Client);
 }
-function isHighPriority(message) {
-  return hasFlag(message.flags, MessageFlags.HighPriority);
-}
 function isSuccess2(message) {
   return isResponse(message.flags) && message.responseCode === 0;
 }
@@ -495,6 +496,54 @@ function isError2(message) {
 }
 function isMeta2(message) {
   return hasFlag(message.flags, MessageFlags.Meta);
+}
+
+// src/protocol/PayloadDecompressor.ts
+var _nodeDecompressor = null;
+var _customDecompressor = null;
+var _initialized = false;
+async function initializeDecompressor() {
+  if (_initialized) return;
+  _initialized = true;
+  try {
+    const zlib = await import('zlib');
+    _nodeDecompressor = (data) => {
+      const result = zlib.brotliDecompressSync(data);
+      return new Uint8Array(result.buffer, result.byteOffset, result.byteLength);
+    };
+  } catch {
+  }
+}
+function setPayloadDecompressor(fn) {
+  _customDecompressor = fn;
+}
+function getDecompressor() {
+  return _customDecompressor ?? _nodeDecompressor;
+}
+function decompressPayload(message) {
+  if (!hasFlag(message.flags, MessageFlags.Compressed)) {
+    return message;
+  }
+  if (message.payload.length === 0) {
+    return message;
+  }
+  const decompress = getDecompressor();
+  if (!decompress) {
+    throw new Error(
+      "Received compressed message but no Brotli decompressor is available. In browser environments, call setPayloadDecompressor() with a Brotli implementation."
+    );
+  }
+  const decompressed = decompress(message.payload);
+  return {
+    ...message,
+    flags: message.flags & ~MessageFlags.Compressed,
+    payload: decompressed
+  };
+}
+function resetDecompressor() {
+  _nodeDecompressor = null;
+  _customDecompressor = null;
+  _initialized = false;
 }
 
 // src/BannouClient.ts
@@ -1025,6 +1074,7 @@ var BannouClient = class {
       this._lastError = "No access token available for WebSocket connection";
       return false;
     }
+    await initializeDecompressor();
     let wsUrl;
     if (this.connectUrl) {
       wsUrl = this.connectUrl.replace("https://", "wss://").replace("http://", "ws://");
@@ -1110,7 +1160,8 @@ var BannouClient = class {
         if (bytes.length < RESPONSE_HEADER_SIZE) {
           return;
         }
-        const message = parse(bytes);
+        const parsed = parse(bytes);
+        const message = decompressPayload(parsed);
         this.handleReceivedMessage(message);
       } catch {
       }
@@ -1228,10 +1279,10 @@ var BannouClient = class {
       if (!eventName) {
         return;
       }
-      if (eventName === "connect.capability_manifest") {
+      if (eventName === "connect.capability-manifest") {
         this.handleCapabilityManifest(payloadJson);
       }
-      if (eventName === "connect.disconnect_notification") {
+      if (eventName === "connect.disconnect-notification") {
         this.handleDisconnectNotification(payloadJson);
       }
       const handlers = this.eventHandlers.get(eventName);
@@ -1399,6 +1450,19 @@ var AccountProxy = class {
     );
   }
   /**
+   * Update MFA settings for an account
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async updateMfaEventAsync(request, channel = 0) {
+    return this.client.sendEventAsync(
+      "/account/mfa/update",
+      request,
+      channel
+    );
+  }
+  /**
    * Update email verification status
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -1431,12 +1495,7 @@ var AchievementProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async createAchievementDefinitionAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/achievement/definition/create",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/achievement/definition/create", request, channel, timeout);
   }
   /**
    * List achievement definitions
@@ -1446,12 +1505,7 @@ var AchievementProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listAchievementDefinitionsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/achievement/definition/list",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/achievement/definition/list", request, channel, timeout);
   }
   /**
    * Update achievement definition
@@ -1461,12 +1515,7 @@ var AchievementProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async updateAchievementDefinitionAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/achievement/definition/update",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/achievement/definition/update", request, channel, timeout);
   }
   /**
    * Delete achievement definition
@@ -1489,12 +1538,7 @@ var AchievementProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getAchievementProgressAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/achievement/progress/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/achievement/progress/get", request, channel, timeout);
   }
   /**
    * List unlocked achievements
@@ -1504,12 +1548,7 @@ var AchievementProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listUnlockedAchievementsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/achievement/list-unlocked",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/achievement/list-unlocked", request, channel, timeout);
   }
 };
 
@@ -1531,12 +1570,7 @@ var ActorProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async createActorTemplateAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/actor/template/create",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/actor/template/create", request, channel, timeout);
   }
   /**
    * Update an actor template
@@ -1546,12 +1580,7 @@ var ActorProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async updateActorTemplateAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/actor/template/update",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/actor/template/update", request, channel, timeout);
   }
   /**
    * Delete an actor template
@@ -1561,12 +1590,7 @@ var ActorProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async deleteActorTemplateAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/actor/template/delete",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/actor/template/delete", request, channel, timeout);
   }
   /**
    * Spawn a new actor from a template
@@ -1599,6 +1623,26 @@ var ActorProxy = class {
     );
   }
   /**
+   * Bind an unbound actor to a character
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async bindActorCharacterAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/actor/bind-character", request, channel, timeout);
+  }
+  /**
+   * Cleanup actors referencing a deleted character
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cleanupByCharacterAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/actor/cleanup-by-character", request, channel, timeout);
+  }
+  /**
    * Inject a perception event into an actor's queue (testing)
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -1606,25 +1650,17 @@ var ActorProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async injectPerceptionAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/actor/inject-perception",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/actor/inject-perception", request, channel, timeout);
   }
   /**
    * Start an encounter managed by an Event Brain actor
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
-   * @returns Promise that completes when the event is sent.
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
    */
-  async startEncounterEventAsync(request, channel = 0) {
-    return this.client.sendEventAsync(
-      "/actor/encounter/start",
-      request,
-      channel
-    );
+  async startEncounterAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/actor/encounter/start", request, channel, timeout);
   }
   /**
    * Update the phase of an active encounter
@@ -1634,12 +1670,7 @@ var ActorProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async updateEncounterPhaseAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/actor/encounter/update-phase",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/actor/encounter/update-phase", request, channel, timeout);
   }
   /**
    * End an active encounter
@@ -1751,12 +1782,7 @@ var AssetsProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async bulkGetAssetsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/assets/bulk-get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/assets/bulk-get", request, channel, timeout);
   }
 };
 
@@ -1866,11 +1892,7 @@ var AuthProxy = class {
    * @returns Promise that completes when the event is sent.
    */
   async logoutEventAsync(request, channel = 0) {
-    return this.client.sendEventAsync(
-      "/auth/logout",
-      request,
-      channel
-    );
+    return this.client.sendEventAsync("/auth/logout", request, channel);
   }
   /**
    * Get active sessions for account
@@ -1935,6 +1957,61 @@ var AuthProxy = class {
     return this.client.invokeAsync(
       "/auth/providers",
       {},
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Initialize MFA setup
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async setupMfaAsync(channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/auth/mfa/setup",
+      {},
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Confirm MFA setup with TOTP code
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async enableMfaEventAsync(request, channel = 0) {
+    return this.client.sendEventAsync(
+      "/auth/mfa/enable",
+      request,
+      channel
+    );
+  }
+  /**
+   * Disable MFA for current account
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async disableMfaEventAsync(request, channel = 0) {
+    return this.client.sendEventAsync(
+      "/auth/mfa/disable",
+      request,
+      channel
+    );
+  }
+  /**
+   * Verify MFA code during login
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async verifyMfaAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/auth/mfa/verify",
+      request,
       channel,
       timeout
     );
@@ -2004,12 +2081,7 @@ var BundlesProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async createMetabundleAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/bundles/metabundle/create",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/bundles/metabundle/create", request, channel, timeout);
   }
   /**
    * Get async metabundle job status
@@ -2049,12 +2121,7 @@ var BundlesProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async resolveBundlesAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/bundles/resolve",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/bundles/resolve", request, channel, timeout);
   }
   /**
    * Find all bundles containing a specific asset
@@ -2064,12 +2131,7 @@ var BundlesProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async queryBundlesByAssetAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/bundles/query/by-asset",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/bundles/query/by-asset", request, channel, timeout);
   }
   /**
    * Update bundle metadata
@@ -2109,12 +2171,7 @@ var BundlesProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async restoreBundleAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/bundles/restore",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/bundles/restore", request, channel, timeout);
   }
   /**
    * Query bundles with advanced filters
@@ -2139,12 +2196,7 @@ var BundlesProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listBundleVersionsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/bundles/list-versions",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/bundles/list-versions", request, channel, timeout);
   }
 };
 
@@ -2166,12 +2218,7 @@ var CacheProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getCachedBehaviorAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/cache/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/cache/get", request, channel, timeout);
   }
   /**
    * Invalidate cached behavior
@@ -2221,12 +2268,7 @@ var CharacterProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listCharactersAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/character/list",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/character/list", request, channel, timeout);
   }
   /**
    * Get character with optional related data (personality, backstory, family)
@@ -2236,12 +2278,7 @@ var CharacterProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getEnrichedCharacterAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/character/get-enriched",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/character/get-enriched", request, channel, timeout);
   }
   /**
    * Get compressed archive data for a character
@@ -2251,12 +2288,7 @@ var CharacterProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getCharacterArchiveAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/character/get-archive",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/character/get-archive", request, channel, timeout);
   }
   /**
    * Get all characters in a realm (primary query pattern)
@@ -2266,12 +2298,17 @@ var CharacterProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getCharactersByRealmAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/character/by-realm",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/character/by-realm", request, channel, timeout);
+  }
+  /**
+   * Get character base data for compression
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCompressDataAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/character/get-compress-data", request, channel, timeout);
   }
 };
 
@@ -2293,12 +2330,7 @@ var CharacterEncounterProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getEncounterTypeAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/character-encounter/type/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/character-encounter/type/get", request, channel, timeout);
   }
   /**
    * List all encounter types
@@ -2308,12 +2340,7 @@ var CharacterEncounterProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listEncounterTypesAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/character-encounter/type/list",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/character-encounter/type/list", request, channel, timeout);
   }
   /**
    * Get character's encounters (paginated)
@@ -2323,12 +2350,7 @@ var CharacterEncounterProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async queryByCharacterAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/character-encounter/query/by-character",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/character-encounter/query/by-character", request, channel, timeout);
   }
   /**
    * Get encounters between two characters
@@ -2338,12 +2360,7 @@ var CharacterEncounterProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async queryBetweenAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/character-encounter/query/between",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/character-encounter/query/between", request, channel, timeout);
   }
   /**
    * Recent encounters at location
@@ -2353,12 +2370,7 @@ var CharacterEncounterProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async queryByLocationAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/character-encounter/query/by-location",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/character-encounter/query/by-location", request, channel, timeout);
   }
   /**
    * Quick check if two characters have met
@@ -2398,12 +2410,17 @@ var CharacterEncounterProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getPerspectiveAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/character-encounter/get-perspective",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/character-encounter/get-perspective", request, channel, timeout);
+  }
+  /**
+   * Get encounter data for compression
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCompressDataAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/character-encounter/get-compress-data", request, channel, timeout);
   }
 };
 
@@ -2425,12 +2442,7 @@ var CharacterHistoryProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getParticipationAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/character-history/get-participation",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/character-history/get-participation", request, channel, timeout);
   }
   /**
    * Get all characters who participated in a historical event
@@ -2440,12 +2452,7 @@ var CharacterHistoryProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getEventParticipantsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/character-history/get-event-participants",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/character-history/get-event-participants", request, channel, timeout);
   }
   /**
    * Get machine-readable backstory elements for behavior system
@@ -2461,6 +2468,16 @@ var CharacterHistoryProxy = class {
       channel,
       timeout
     );
+  }
+  /**
+   * Get history data for compression
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCompressDataAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/character-history/get-compress-data", request, channel, timeout);
   }
 };
 
@@ -2482,12 +2499,7 @@ var CharacterPersonalityProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getPersonalityAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/character-personality/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/character-personality/get", request, channel, timeout);
   }
   /**
    * Get combat preferences for a character
@@ -2497,12 +2509,444 @@ var CharacterPersonalityProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getCombatPreferencesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/character-personality/get-combat", request, channel, timeout);
+  }
+  /**
+   * Get personality data for compression
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCompressDataAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/character-personality/get-compress-data", request, channel, timeout);
+  }
+  /**
+   * Cleanup all personality data for a deleted character
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cleanupByCharacterAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/character-personality/cleanup-by-character", request, channel, timeout);
+  }
+};
+
+// src/Generated/proxies/ChatProxy.ts
+var ChatProxy = class {
+  client;
+  /**
+   * Creates a new ChatProxy instance.
+   * @param client - The underlying Bannou client.
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Register a new room type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async registerRoomTypeAsync(request, channel = 0, timeout) {
     return this.client.invokeAsync(
-      "/character-personality/get-combat",
+      "/chat/type/register",
       request,
       channel,
       timeout
     );
+  }
+  /**
+   * Get room type by code
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getRoomTypeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/type/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List room types with filters
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listRoomTypesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/chat/type/list", request, channel, timeout);
+  }
+  /**
+   * Update a room type definition
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateRoomTypeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/type/update",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Soft-deprecate a room type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deprecateRoomTypeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/chat/type/deprecate", request, channel, timeout);
+  }
+  /**
+   * Create a chat room
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async createRoomAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/room/create",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get room by ID
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getRoomAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/room/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List rooms with filters
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listRoomsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/room/list",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Update room settings
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateRoomAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/room/update",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Delete a room
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deleteRoomAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/room/delete",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Archive a room to Resource
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async archiveRoomAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/room/archive",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Join a chat room
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async joinRoomAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/room/join",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Leave a chat room
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async leaveRoomAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/room/leave",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List room participants
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listParticipantsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/chat/room/participants", request, channel, timeout);
+  }
+  /**
+   * Remove a participant from the room
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async kickParticipantAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/room/participant/kick",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Ban a participant from the room
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async banParticipantAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/room/participant/ban",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Unban a participant
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async unbanParticipantAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/room/participant/unban",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Mute a participant
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async muteParticipantAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/room/participant/mute",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Unmute a participant
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async unmuteParticipantAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/chat/room/participant/unmute", request, channel, timeout);
+  }
+  /**
+   * Change a participant's role
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async changeParticipantRoleAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/chat/room/participant/change-role", request, channel, timeout);
+  }
+  /**
+   * Send a message to a room
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async sendMessageAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/message/send",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Send multiple messages
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async sendMessageBatchAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/chat/message/send-batch", request, channel, timeout);
+  }
+  /**
+   * Get message history
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getMessageHistoryAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/chat/message/history", request, channel, timeout);
+  }
+  /**
+   * Delete a message
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deleteMessageAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/message/delete",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Pin a message
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async pinMessageAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/message/pin",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Unpin a message
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async unpinMessageAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/message/unpin",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Full-text search in persistent rooms
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async searchMessagesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/chat/message/search", request, channel, timeout);
+  }
+  /**
+   * List all rooms system-wide
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async adminListRoomsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/admin/rooms",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Room and message statistics
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async adminGetStatsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/chat/admin/stats",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Force cleanup of idle rooms
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async adminForceCleanupAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/chat/admin/cleanup", request, channel, timeout);
   }
 };
 
@@ -2524,12 +2968,249 @@ var ClientCapabilitiesProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getClientCapabilitiesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/client-capabilities", request, channel, timeout);
+  }
+};
+
+// src/Generated/proxies/CollectionProxy.ts
+var CollectionProxy = class {
+  client;
+  /**
+   * Creates a new CollectionProxy instance.
+   * @param client - The underlying Bannou client.
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Create an entry template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async createEntryTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/entry-template/create", request, channel, timeout);
+  }
+  /**
+   * Get an entry template by ID
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getEntryTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/entry-template/get", request, channel, timeout);
+  }
+  /**
+   * List entry templates
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listEntryTemplatesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/entry-template/list", request, channel, timeout);
+  }
+  /**
+   * Update an entry template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateEntryTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/entry-template/update", request, channel, timeout);
+  }
+  /**
+   * Delete an entry template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deleteEntryTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/entry-template/delete", request, channel, timeout);
+  }
+  /**
+   * Bulk seed entry templates
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async seedEntryTemplatesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/entry-template/seed", request, channel, timeout);
+  }
+  /**
+   * Create a collection for an owner
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async createCollectionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/create", request, channel, timeout);
+  }
+  /**
+   * Get a collection with unlocked entry summary
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCollectionAsync(request, channel = 0, timeout) {
     return this.client.invokeAsync(
-      "/client-capabilities",
+      "/collection/get",
       request,
       channel,
       timeout
     );
+  }
+  /**
+   * List all collections for an owner
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listCollectionsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/list", request, channel, timeout);
+  }
+  /**
+   * Delete a collection and its inventory container
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deleteCollectionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/delete", request, channel, timeout);
+  }
+  /**
+   * Grant/unlock an entry (idempotent)
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async grantEntryAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/collection/grant",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Check if owner has a specific entry
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async hasEntryAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/collection/has",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Query unlocked entries with filtering
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async queryEntriesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/collection/query",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Update entry instance metadata
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateEntryMetadataAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/update-metadata", request, channel, timeout);
+  }
+  /**
+   * Get completion statistics per collection type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCompletionStatsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/stats", request, channel, timeout);
+  }
+  /**
+   * Select content for an area based on unlocked library
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async selectContentForAreaAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/content/select-for-area", request, channel, timeout);
+  }
+  /**
+   * Set area-to-theme mapping
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async setAreaContentConfigAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/content/area-config/set", request, channel, timeout);
+  }
+  /**
+   * Get area content config
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getAreaContentConfigAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/content/area-config/get", request, channel, timeout);
+  }
+  /**
+   * List area configs for a game service
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listAreaContentConfigsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/content/area-config/list", request, channel, timeout);
+  }
+  /**
+   * Advance progressive discovery level
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async advanceDiscoveryAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/discovery/advance", request, channel, timeout);
+  }
+  /**
+   * Cleanup all collections for a deleted character
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cleanupByCharacterAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/collection/cleanup-by-character", request, channel, timeout);
   }
 };
 
@@ -2551,12 +3232,7 @@ var CompileProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async compileAbmlBehaviorAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/compile",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/compile", request, channel, timeout);
   }
 };
 
@@ -2578,12 +3254,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getContractTemplateAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/template/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/template/get", request, channel, timeout);
   }
   /**
    * List templates with filters
@@ -2593,12 +3264,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listContractTemplatesAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/template/list",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/template/list", request, channel, timeout);
   }
   /**
    * Create contract instance from template
@@ -2608,12 +3274,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async createContractInstanceAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/instance/create",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/instance/create", request, channel, timeout);
   }
   /**
    * Propose contract to parties (starts consent flow)
@@ -2623,12 +3284,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async proposeContractInstanceAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/instance/propose",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/instance/propose", request, channel, timeout);
   }
   /**
    * Party consents to contract
@@ -2638,12 +3294,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async consentToContractAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/instance/consent",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/instance/consent", request, channel, timeout);
   }
   /**
    * Get instance by ID
@@ -2653,12 +3304,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getContractInstanceAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/instance/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/instance/get", request, channel, timeout);
   }
   /**
    * Query instances by party, template, status
@@ -2668,12 +3314,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async queryContractInstancesAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/instance/query",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/instance/query", request, channel, timeout);
   }
   /**
    * Request early termination
@@ -2683,12 +3324,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async terminateContractInstanceAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/instance/terminate",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/instance/terminate", request, channel, timeout);
   }
   /**
    * Get current status and milestone progress
@@ -2698,12 +3334,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getContractInstanceStatusAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/instance/get-status",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/instance/get-status", request, channel, timeout);
   }
   /**
    * External system reports milestone completed
@@ -2713,12 +3344,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async completeMilestoneAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/milestone/complete",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/milestone/complete", request, channel, timeout);
   }
   /**
    * External system reports milestone failed
@@ -2803,12 +3429,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async updateContractMetadataAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/metadata/update",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/metadata/update", request, channel, timeout);
   }
   /**
    * Get game metadata
@@ -2818,12 +3439,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getContractMetadataAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/metadata/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/metadata/get", request, channel, timeout);
   }
   /**
    * Check if entity can take action given contracts
@@ -2833,12 +3449,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async checkContractConstraintAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/check-constraint",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/check-constraint", request, channel, timeout);
   }
   /**
    * Query active contracts for entity
@@ -2848,12 +3459,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async queryActiveContractsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/query-active",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/query-active", request, channel, timeout);
   }
   /**
    * Lock contract under guardian custody
@@ -2878,12 +3484,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async unlockContractAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/unlock",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/unlock", request, channel, timeout);
   }
   /**
    * Transfer party role to new entity
@@ -2893,12 +3494,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async transferContractPartyAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/transfer-party",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/transfer-party", request, channel, timeout);
   }
   /**
    * List all registered clause types
@@ -2908,12 +3504,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listClauseTypesAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/clause-type/list",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/clause-type/list", request, channel, timeout);
   }
   /**
    * Set template values on contract instance
@@ -2923,12 +3514,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async setContractTemplateValuesAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/instance/set-template-values",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/instance/set-template-values", request, channel, timeout);
   }
   /**
    * Check if asset requirement clauses are satisfied
@@ -2938,12 +3524,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async checkAssetRequirementsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/instance/check-asset-requirements",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/instance/check-asset-requirements", request, channel, timeout);
   }
   /**
    * Execute all contract clauses (idempotent)
@@ -2953,12 +3534,7 @@ var ContractProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async executeContractAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/contract/instance/execute",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/contract/instance/execute", request, channel, timeout);
   }
 };
 
@@ -2980,12 +3556,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getCurrencyDefinitionAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/definition/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/definition/get", request, channel, timeout);
   }
   /**
    * List currency definitions with filters
@@ -2995,12 +3566,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listCurrencyDefinitionsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/definition/list",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/definition/list", request, channel, timeout);
   }
   /**
    * Create a new wallet for an owner
@@ -3025,12 +3591,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getWalletAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/wallet/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/wallet/get", request, channel, timeout);
   }
   /**
    * Get existing wallet or create if not exists
@@ -3040,12 +3601,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getOrCreateWalletAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/wallet/get-or-create",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/wallet/get-or-create", request, channel, timeout);
   }
   /**
    * Get balance for a specific currency in a wallet
@@ -3070,12 +3626,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async batchGetBalancesAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/balance/batch-get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/balance/batch-get", request, channel, timeout);
   }
   /**
    * Credit currency to a wallet (faucet operation)
@@ -3085,12 +3636,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async creditCurrencyAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/credit",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/credit", request, channel, timeout);
   }
   /**
    * Debit currency from a wallet (sink operation)
@@ -3100,12 +3646,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async debitCurrencyAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/debit",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/debit", request, channel, timeout);
   }
   /**
    * Transfer currency between wallets
@@ -3115,12 +3656,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async transferCurrencyAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/transfer",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/transfer", request, channel, timeout);
   }
   /**
    * Credit multiple wallets in one call
@@ -3138,6 +3674,21 @@ var CurrencyProxy = class {
     );
   }
   /**
+   * Debit multiple wallets in one call
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async batchDebitCurrencyAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/currency/batch-debit",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
    * Calculate conversion without executing
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -3145,12 +3696,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async calculateConversionAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/convert/calculate",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/convert/calculate", request, channel, timeout);
   }
   /**
    * Execute currency conversion in a wallet
@@ -3160,12 +3706,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async executeConversionAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/convert/execute",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/convert/execute", request, channel, timeout);
   }
   /**
    * Get exchange rate between two currencies
@@ -3175,12 +3716,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getExchangeRateAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/exchange-rate/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/exchange-rate/get", request, channel, timeout);
   }
   /**
    * Get a transaction by ID
@@ -3190,12 +3726,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getTransactionAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/transaction/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/transaction/get", request, channel, timeout);
   }
   /**
    * Get paginated transaction history for a wallet
@@ -3205,12 +3736,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getTransactionHistoryAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/transaction/history",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/transaction/history", request, channel, timeout);
   }
   /**
    * Get transactions by reference type and ID
@@ -3220,12 +3746,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getTransactionsByReferenceAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/transaction/by-reference",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/transaction/by-reference", request, channel, timeout);
   }
   /**
    * Get global supply statistics for a currency
@@ -3235,12 +3756,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getGlobalSupplyAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/stats/global-supply",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/stats/global-supply", request, channel, timeout);
   }
   /**
    * Debit wallet for escrow deposit
@@ -3250,12 +3766,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async escrowDepositAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/escrow/deposit",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/escrow/deposit", request, channel, timeout);
   }
   /**
    * Credit recipient on escrow completion
@@ -3265,12 +3776,7 @@ var CurrencyProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async escrowReleaseAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/currency/escrow/release",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/currency/escrow/release", request, channel, timeout);
   }
   /**
    * Credit depositor on escrow refund
@@ -3349,6 +3855,305 @@ var CurrencyProxy = class {
   }
 };
 
+// src/Generated/proxies/DivineProxy.ts
+var DivineProxy = class {
+  client;
+  /**
+   * Creates a new DivineProxy instance.
+   * @param client - The underlying Bannou client.
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Create a new deity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async createDeityAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/divine/deity/create",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get a deity by ID
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getDeityAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/divine/deity/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get a deity by code within a game service
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getDeityByCodeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/divine/deity/get-by-code",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List deities with optional filters
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listDeitiesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/divine/deity/list",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Update deity properties
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateDeityAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/divine/deity/update",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Activate a dormant deity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async activateDeityAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/divine/deity/activate",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Deactivate an active deity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deactivateDeityAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/divine/deity/deactivate",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Delete a deity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async deleteDeityEventAsync(request, channel = 0) {
+    return this.client.sendEventAsync(
+      "/divine/deity/delete",
+      request,
+      channel
+    );
+  }
+  /**
+   * Get a deity's divinity balance
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getDivinityBalanceAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/divine/divinity/get-balance", request, channel, timeout);
+  }
+  /**
+   * Credit divinity to a deity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async creditDivinityAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/divine/divinity/credit", request, channel, timeout);
+  }
+  /**
+   * Debit divinity from a deity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async debitDivinityAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/divine/divinity/debit", request, channel, timeout);
+  }
+  /**
+   * Get divinity transaction history
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getDivinityHistoryAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/divine/divinity/get-history", request, channel, timeout);
+  }
+  /**
+   * Grant a blessing from a deity to an entity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async grantBlessingAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/divine/blessing/grant",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Revoke an active blessing
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async revokeBlessingAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/divine/blessing/revoke",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List blessings for an entity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listBlessingsByEntityAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/divine/blessing/list-by-entity", request, channel, timeout);
+  }
+  /**
+   * List blessings granted by a deity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listBlessingsByDeityAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/divine/blessing/list-by-deity", request, channel, timeout);
+  }
+  /**
+   * Get a blessing by ID
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getBlessingAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/divine/blessing/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Register a character as a follower of a deity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async registerFollowerAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/divine/follower/register",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Unregister a character as a follower
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async unregisterFollowerEventAsync(request, channel = 0) {
+    return this.client.sendEventAsync(
+      "/divine/follower/unregister",
+      request,
+      channel
+    );
+  }
+  /**
+   * Get followers of a deity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getFollowersAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/divine/follower/get-followers", request, channel, timeout);
+  }
+  /**
+   * Cleanup divine data for a deleted character
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async cleanupByCharacterEventAsync(request, channel = 0) {
+    return this.client.sendEventAsync(
+      "/divine/cleanup-by-character",
+      request,
+      channel
+    );
+  }
+  /**
+   * Cleanup divine data for a deleted game service
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async cleanupByGameServiceEventAsync(request, channel = 0) {
+    return this.client.sendEventAsync(
+      "/divine/cleanup-by-game-service",
+      request,
+      channel
+    );
+  }
+};
+
 // src/Generated/proxies/DocumentationProxy.ts
 var DocumentationProxy = class {
   client;
@@ -3367,12 +4172,7 @@ var DocumentationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async queryDocumentationAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/documentation/query",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/documentation/query", request, channel, timeout);
   }
   /**
    * Get specific document by ID or slug
@@ -3397,12 +4197,7 @@ var DocumentationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async searchDocumentationAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/documentation/search",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/documentation/search", request, channel, timeout);
   }
   /**
    * List documents by category
@@ -3412,12 +4207,7 @@ var DocumentationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listDocumentsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/documentation/list",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/documentation/list", request, channel, timeout);
   }
   /**
    * Get related topics and follow-up suggestions
@@ -3427,12 +4217,7 @@ var DocumentationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async suggestRelatedTopicsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/documentation/suggest",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/documentation/suggest", request, channel, timeout);
   }
   /**
    * Bind a git repository to a documentation namespace
@@ -3442,12 +4227,7 @@ var DocumentationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async bindRepositoryAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/documentation/repo/bind",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/documentation/repo/bind", request, channel, timeout);
   }
   /**
    * Manually trigger repository sync
@@ -3457,12 +4237,7 @@ var DocumentationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async syncRepositoryAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/documentation/repo/sync",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/documentation/repo/sync", request, channel, timeout);
   }
   /**
    * Get repository binding status
@@ -3472,12 +4247,7 @@ var DocumentationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getRepositoryStatusAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/documentation/repo/status",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/documentation/repo/status", request, channel, timeout);
   }
   /**
    * List all repository bindings
@@ -3487,12 +4257,7 @@ var DocumentationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listRepositoryBindingsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/documentation/repo/list",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/documentation/repo/list", request, channel, timeout);
   }
   /**
    * Update repository binding configuration
@@ -3502,12 +4267,7 @@ var DocumentationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async updateRepositoryBindingAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/documentation/repo/update",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/documentation/repo/update", request, channel, timeout);
   }
   /**
    * Create documentation archive
@@ -3517,12 +4277,7 @@ var DocumentationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async createDocumentationArchiveAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/documentation/repo/archive/create",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/documentation/repo/archive/create", request, channel, timeout);
   }
   /**
    * List documentation archives
@@ -3619,12 +4374,7 @@ var EscrowProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async validateDepositAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/escrow/deposit/validate",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/escrow/deposit/validate", request, channel, timeout);
   }
   /**
    * Get deposit status for a party
@@ -3634,12 +4384,7 @@ var EscrowProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getDepositStatusAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/escrow/deposit/status",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/escrow/deposit/status", request, channel, timeout);
   }
   /**
    * Record party consent
@@ -3664,12 +4409,7 @@ var EscrowProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getConsentStatusAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/escrow/consent/status",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/escrow/consent/status", request, channel, timeout);
   }
   /**
    * Trigger release
@@ -3732,6 +4472,26 @@ var EscrowProxy = class {
     );
   }
   /**
+   * Confirm receipt of released assets
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async confirmReleaseAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/escrow/confirm-release", request, channel, timeout);
+  }
+  /**
+   * Confirm receipt of refunded assets
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async confirmRefundAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/escrow/confirm-refund", request, channel, timeout);
+  }
+  /**
    * Arbiter resolves disputed escrow
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -3754,12 +4514,7 @@ var EscrowProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async verifyConditionAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/escrow/verify-condition",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/escrow/verify-condition", request, channel, timeout);
   }
   /**
    * Re-affirm after validation failure
@@ -3771,6 +4526,362 @@ var EscrowProxy = class {
   async reaffirmAsync(request, channel = 0, timeout) {
     return this.client.invokeAsync(
       "/escrow/reaffirm",
+      request,
+      channel,
+      timeout
+    );
+  }
+};
+
+// src/Generated/proxies/FactionProxy.ts
+var FactionProxy = class {
+  client;
+  /**
+   * Creates a new FactionProxy instance.
+   * @param client - The underlying Bannou client.
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Create a new faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async createFactionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/faction/create",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get a faction by ID
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getFactionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/faction/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get a faction by code
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getFactionByCodeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/faction/get-by-code",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List factions with filters
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listFactionsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/faction/list",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Update a faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateFactionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/faction/update",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Deprecate a faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deprecateFactionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/faction/deprecate",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Reactivate a deprecated faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async undeprecateFactionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/faction/undeprecate", request, channel, timeout);
+  }
+  /**
+   * Designate a faction as realm baseline
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async designateRealmBaselineAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/faction/designate-realm-baseline", request, channel, timeout);
+  }
+  /**
+   * Get the realm baseline faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getRealmBaselineAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/faction/get-realm-baseline",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Add a character to a faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async addMemberAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/faction/member/add",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Remove a character from a faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async removeMemberEventAsync(request, channel = 0) {
+    return this.client.sendEventAsync(
+      "/faction/member/remove",
+      request,
+      channel
+    );
+  }
+  /**
+   * List members of a faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listMembersAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/faction/member/list",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List a character's faction memberships
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listMembershipsByCharacterAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/faction/member/list-by-character", request, channel, timeout);
+  }
+  /**
+   * Update a member's role
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateMemberRoleAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/faction/member/update-role", request, channel, timeout);
+  }
+  /**
+   * Check if a character is a member of a faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async checkMembershipAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/faction/member/check", request, channel, timeout);
+  }
+  /**
+   * Claim a location for a faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async claimTerritoryAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/faction/territory/claim", request, channel, timeout);
+  }
+  /**
+   * Release a territory claim
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async releaseTerritoryEventAsync(request, channel = 0) {
+    return this.client.sendEventAsync(
+      "/faction/territory/release",
+      request,
+      channel
+    );
+  }
+  /**
+   * List territory claims for a faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listTerritoryClaimsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/faction/territory/list", request, channel, timeout);
+  }
+  /**
+   * Get the controlling faction for a location
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getControllingFactionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/faction/territory/get-controlling", request, channel, timeout);
+  }
+  /**
+   * Define a behavioral norm for a faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async defineNormAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/faction/norm/define",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Update an existing norm
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateNormAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/faction/norm/update",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Delete a norm definition
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async deleteNormEventAsync(request, channel = 0) {
+    return this.client.sendEventAsync(
+      "/faction/norm/delete",
+      request,
+      channel
+    );
+  }
+  /**
+   * List norms defined by a faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listNormsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/faction/norm/list",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Cleanup faction data for a deleted character
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cleanupByCharacterAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/faction/cleanup-by-character", request, channel, timeout);
+  }
+  /**
+   * Cleanup faction data for a deleted realm
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cleanupByRealmAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/faction/cleanup-by-realm", request, channel, timeout);
+  }
+  /**
+   * Cleanup territory claims for a deleted location
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cleanupByLocationAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/faction/cleanup-by-location", request, channel, timeout);
+  }
+  /**
+   * Get faction data for character archival compression
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCompressDataAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/faction/get-compress-data",
       request,
       channel,
       timeout
@@ -3820,6 +4931,278 @@ var GameServiceProxy = class {
   }
 };
 
+// src/Generated/proxies/GardenerProxy.ts
+var GardenerProxy = class {
+  client;
+  /**
+   * Creates a new GardenerProxy instance.
+   * @param client - The underlying Bannou client.
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Enter the garden
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async enterGardenAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/gardener/garden/enter",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get current garden state
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getGardenStateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/garden/get", request, channel, timeout);
+  }
+  /**
+   * Update player position in the garden
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updatePositionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/garden/update-position", request, channel, timeout);
+  }
+  /**
+   * Leave the garden
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async leaveGardenAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/gardener/garden/leave",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List active POIs
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listPoisAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/gardener/poi/list",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Interact with a POI
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async interactWithPoiAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/poi/interact", request, channel, timeout);
+  }
+  /**
+   * Decline a POI
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async declinePoiAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/gardener/poi/decline",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Enter a scenario
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async enterScenarioAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/scenario/enter", request, channel, timeout);
+  }
+  /**
+   * Get current scenario state
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getScenarioStateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/scenario/get", request, channel, timeout);
+  }
+  /**
+   * Complete a scenario
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async completeScenarioAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/scenario/complete", request, channel, timeout);
+  }
+  /**
+   * Abandon a scenario
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async abandonScenarioAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/scenario/abandon", request, channel, timeout);
+  }
+  /**
+   * Chain to another scenario
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async chainScenarioAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/scenario/chain", request, channel, timeout);
+  }
+  /**
+   * Create a scenario template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async createTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/template/create", request, channel, timeout);
+  }
+  /**
+   * Get scenario template by ID
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/template/get", request, channel, timeout);
+  }
+  /**
+   * Get scenario template by code
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getTemplateByCodeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/template/get-by-code", request, channel, timeout);
+  }
+  /**
+   * List scenario templates
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listTemplatesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/template/list", request, channel, timeout);
+  }
+  /**
+   * Update scenario template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/template/update", request, channel, timeout);
+  }
+  /**
+   * Deprecate scenario template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deprecateTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/template/deprecate", request, channel, timeout);
+  }
+  /**
+   * Delete scenario template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deleteTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/template/delete", request, channel, timeout);
+  }
+  /**
+   * Get deployment phase configuration
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getPhaseConfigAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/phase/get", request, channel, timeout);
+  }
+  /**
+   * Update deployment phase configuration
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updatePhaseConfigAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/phase/update", request, channel, timeout);
+  }
+  /**
+   * Get deployment phase metrics
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getPhaseMetricsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/phase/get-metrics", request, channel, timeout);
+  }
+  /**
+   * Enter a scenario together with a bonded player
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async enterScenarioTogetherAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/bond/enter-together", request, channel, timeout);
+  }
+  /**
+   * Get shared garden state for bonded players
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getSharedGardenStateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/gardener/bond/get-shared-garden", request, channel, timeout);
+  }
+};
+
 // src/Generated/proxies/GoapProxy.ts
 var GoapProxy = class {
   client;
@@ -3853,12 +5236,7 @@ var GoapProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async validateGoapPlanAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/goap/validate-plan",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/goap/validate-plan", request, channel, timeout);
   }
 };
 
@@ -3895,12 +5273,7 @@ var InventoryProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getContainerAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/inventory/container/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/inventory/container/get", request, channel, timeout);
   }
   /**
    * Get container or create if not exists
@@ -3910,12 +5283,7 @@ var InventoryProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getOrCreateContainerAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/inventory/container/get-or-create",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/inventory/container/get-or-create", request, channel, timeout);
   }
   /**
    * List containers for owner
@@ -3925,12 +5293,7 @@ var InventoryProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listContainersAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/inventory/container/list",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/inventory/container/list", request, channel, timeout);
   }
   /**
    * Update container properties
@@ -4117,12 +5480,7 @@ var ItemProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async createItemTemplateAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/item/template/create",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/item/template/create", request, channel, timeout);
   }
   /**
    * Get item template by ID or code
@@ -4132,12 +5490,7 @@ var ItemProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getItemTemplateAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/item/template/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/item/template/get", request, channel, timeout);
   }
   /**
    * List item templates with filters
@@ -4147,12 +5500,7 @@ var ItemProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listItemTemplatesAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/item/template/list",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/item/template/list", request, channel, timeout);
   }
   /**
    * Update mutable fields of an item template
@@ -4162,12 +5510,7 @@ var ItemProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async updateItemTemplateAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/item/template/update",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/item/template/update", request, channel, timeout);
   }
   /**
    * Create a new item instance
@@ -4177,12 +5520,7 @@ var ItemProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async createItemInstanceAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/item/instance/create",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/item/instance/create", request, channel, timeout);
   }
   /**
    * Get item instance by ID
@@ -4192,12 +5530,7 @@ var ItemProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getItemInstanceAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/item/instance/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/item/instance/get", request, channel, timeout);
   }
   /**
    * Modify item instance state
@@ -4207,12 +5540,7 @@ var ItemProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async modifyItemInstanceAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/item/instance/modify",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/item/instance/modify", request, channel, timeout);
   }
   /**
    * Bind item to character
@@ -4222,12 +5550,7 @@ var ItemProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async bindItemInstanceAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/item/instance/bind",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/item/instance/bind", request, channel, timeout);
   }
   /**
    * Destroy item instance
@@ -4237,8 +5560,33 @@ var ItemProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async destroyItemInstanceAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/item/instance/destroy", request, channel, timeout);
+  }
+  /**
+   * Use an item (execute its behavior contract)
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async useItemAsync(request, channel = 0, timeout) {
     return this.client.invokeAsync(
-      "/item/instance/destroy",
+      "/item/use",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Complete a specific step of a multi-step item use
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async useItemStepAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/item/use-step",
       request,
       channel,
       timeout
@@ -4252,12 +5600,7 @@ var ItemProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listItemsByContainerAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/item/instance/list-by-container",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/item/instance/list-by-container", request, channel, timeout);
   }
   /**
    * Get multiple item instances by ID
@@ -4267,12 +5610,7 @@ var ItemProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async batchGetItemInstancesAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/item/instance/batch-get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/item/instance/batch-get", request, channel, timeout);
   }
 };
 
@@ -4294,12 +5632,7 @@ var LeaderboardProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async createLeaderboardDefinitionAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/leaderboard/definition/create",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/leaderboard/definition/create", request, channel, timeout);
   }
   /**
    * Update leaderboard definition
@@ -4309,12 +5642,7 @@ var LeaderboardProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async updateLeaderboardDefinitionAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/leaderboard/definition/update",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/leaderboard/definition/update", request, channel, timeout);
   }
   /**
    * Delete leaderboard definition
@@ -4352,12 +5680,7 @@ var LeaderboardProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getTopRanksAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/leaderboard/rank/top",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/leaderboard/rank/top", request, channel, timeout);
   }
   /**
    * Get entries around entity
@@ -4367,12 +5690,7 @@ var LeaderboardProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getRanksAroundAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/leaderboard/rank/around",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/leaderboard/rank/around", request, channel, timeout);
   }
   /**
    * Get current season info
@@ -4388,6 +5706,243 @@ var LeaderboardProxy = class {
       channel,
       timeout
     );
+  }
+};
+
+// src/Generated/proxies/LicenseProxy.ts
+var LicenseProxy = class {
+  client;
+  /**
+   * Creates a new LicenseProxy instance.
+   * @param client - The underlying Bannou client.
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Create a new board template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async createBoardTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/license/board-template/create", request, channel, timeout);
+  }
+  /**
+   * Get a board template by ID
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getBoardTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/license/board-template/get", request, channel, timeout);
+  }
+  /**
+   * List board templates for a game service
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listBoardTemplatesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/license/board-template/list", request, channel, timeout);
+  }
+  /**
+   * Update a board template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateBoardTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/license/board-template/update", request, channel, timeout);
+  }
+  /**
+   * Delete a board template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deleteBoardTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/license/board-template/delete", request, channel, timeout);
+  }
+  /**
+   * Add a license definition to a board template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async addLicenseDefinitionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/license/definition/add", request, channel, timeout);
+  }
+  /**
+   * Get a license definition
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getLicenseDefinitionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/license/definition/get", request, channel, timeout);
+  }
+  /**
+   * List all license definitions for a board template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listLicenseDefinitionsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/license/definition/list", request, channel, timeout);
+  }
+  /**
+   * Update a license definition
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateLicenseDefinitionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/license/definition/update", request, channel, timeout);
+  }
+  /**
+   * Remove a license definition from a board template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async removeLicenseDefinitionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/license/definition/remove", request, channel, timeout);
+  }
+  /**
+   * Create a board instance for an owner
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async createBoardAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/license/board/create",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get a board instance by ID
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getBoardAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/license/board/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List boards for an owner
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listBoardsByOwnerAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/license/board/list-by-owner", request, channel, timeout);
+  }
+  /**
+   * Delete a board instance
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deleteBoardAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/license/board/delete",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Unlock a license on a board
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async unlockLicenseAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/license/unlock", request, channel, timeout);
+  }
+  /**
+   * Check if a license can be unlocked
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async checkUnlockableAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/license/check-unlockable", request, channel, timeout);
+  }
+  /**
+   * Get full board state
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getBoardStateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/license/board-state",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Bulk seed a board template with license definitions
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async seedBoardTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/license/board-template/seed", request, channel, timeout);
+  }
+  /**
+   * Clone a board's unlock state to a new owner
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cloneBoardAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/license/board/clone",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Cleanup boards referencing a deleted owner
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cleanupByOwnerAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/license/cleanup-by-owner", request, channel, timeout);
   }
 };
 
@@ -4424,12 +5979,7 @@ var LocationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getLocationByCodeAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/location/get-by-code",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/location/get-by-code", request, channel, timeout);
   }
   /**
    * List locations with filtering
@@ -4439,12 +5989,7 @@ var LocationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listLocationsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/location/list",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/location/list", request, channel, timeout);
   }
   /**
    * List all locations in a realm (primary query pattern)
@@ -4454,12 +5999,7 @@ var LocationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listLocationsByRealmAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/location/list-by-realm",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/location/list-by-realm", request, channel, timeout);
   }
   /**
    * Get child locations for a parent location
@@ -4469,12 +6009,7 @@ var LocationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listLocationsByParentAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/location/list-by-parent",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/location/list-by-parent", request, channel, timeout);
   }
   /**
    * Get root locations in a realm
@@ -4484,12 +6019,7 @@ var LocationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listRootLocationsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/location/list-root",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/location/list-root", request, channel, timeout);
   }
   /**
    * Get all ancestors of a location
@@ -4499,12 +6029,17 @@ var LocationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getLocationAncestorsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/location/get-ancestors",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/location/get-ancestors", request, channel, timeout);
+  }
+  /**
+   * Validate location against territory boundaries
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async validateTerritoryAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/location/validate-territory", request, channel, timeout);
   }
   /**
    * Get all descendants of a location
@@ -4514,12 +6049,7 @@ var LocationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getLocationDescendantsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/location/get-descendants",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/location/get-descendants", request, channel, timeout);
   }
   /**
    * Check if location exists and is active
@@ -4529,12 +6059,57 @@ var LocationProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async locationExistsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/location/exists",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/location/exists", request, channel, timeout);
+  }
+  /**
+   * Find locations containing a spatial position
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async queryLocationsByPositionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/location/query/by-position", request, channel, timeout);
+  }
+  /**
+   * Report entity presence at a location
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async reportEntityPositionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/location/report-entity-position", request, channel, timeout);
+  }
+  /**
+   * Get the current location of an entity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getEntityLocationAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/location/get-entity-location", request, channel, timeout);
+  }
+  /**
+   * List entities currently at a location
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listEntitiesAtLocationAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/location/list-entities-at-location", request, channel, timeout);
+  }
+  /**
+   * Remove entity presence from its current location
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async clearEntityPositionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/location/clear-entity-position", request, channel, timeout);
   }
 };
 
@@ -4556,12 +6131,7 @@ var MappingProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async requestSnapshotAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/mapping/request-snapshot",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/mapping/request-snapshot", request, channel, timeout);
   }
   /**
    * Query map data at a specific point
@@ -4601,12 +6171,7 @@ var MappingProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async queryObjectsByTypeAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/mapping/query/objects-by-type",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/mapping/query/objects-by-type", request, channel, timeout);
   }
   /**
    * Find locations that afford a specific action or scene type
@@ -4616,12 +6181,7 @@ var MappingProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async queryAffordanceAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/mapping/query/affordance",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/mapping/query/affordance", request, channel, timeout);
   }
   /**
    * Acquire exclusive edit lock for design-time editing
@@ -4631,12 +6191,7 @@ var MappingProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async checkoutForAuthoringAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/mapping/authoring/checkout",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/mapping/authoring/checkout", request, channel, timeout);
   }
   /**
    * Commit design-time changes
@@ -4646,12 +6201,7 @@ var MappingProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async commitAuthoringAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/mapping/authoring/commit",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/mapping/authoring/commit", request, channel, timeout);
   }
   /**
    * Release authoring checkout without committing
@@ -4661,12 +6211,7 @@ var MappingProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async releaseAuthoringAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/mapping/authoring/release",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/mapping/authoring/release", request, channel, timeout);
   }
   /**
    * Create a map definition template
@@ -4706,12 +6251,7 @@ var MappingProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listDefinitionsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/mapping/definition/list",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/mapping/definition/list", request, channel, timeout);
   }
   /**
    * Update a map definition
@@ -4778,12 +6318,7 @@ var MatchmakingProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async joinMatchmakingAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/matchmaking/join",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/matchmaking/join", request, channel, timeout);
   }
   /**
    * Leave matchmaking queue
@@ -4806,12 +6341,7 @@ var MatchmakingProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getMatchmakingStatusAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/matchmaking/status",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/matchmaking/status", request, channel, timeout);
   }
   /**
    * Accept a formed match
@@ -4849,12 +6379,7 @@ var MatchmakingProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getMatchmakingStatsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/matchmaking/stats",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/matchmaking/stats", request, channel, timeout);
   }
 };
 
@@ -4876,12 +6401,7 @@ var MusicProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async generateCompositionAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/music/generate",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/music/generate", request, channel, timeout);
   }
   /**
    * Validate MIDI-JSON structure
@@ -4891,12 +6411,7 @@ var MusicProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async validateMidiJsonAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/music/validate",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/music/validate", request, channel, timeout);
   }
   /**
    * Get style definition
@@ -4936,12 +6451,7 @@ var MusicProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async generateProgressionAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/music/theory/progression",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/music/theory/progression", request, channel, timeout);
   }
   /**
    * Generate melody over harmony
@@ -4951,12 +6461,7 @@ var MusicProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async generateMelodyAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/music/theory/melody",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/music/theory/melody", request, channel, timeout);
   }
   /**
    * Apply voice leading to chords
@@ -4968,6 +6473,325 @@ var MusicProxy = class {
   async applyVoiceLeadingAsync(request, channel = 0, timeout) {
     return this.client.invokeAsync(
       "/music/theory/voice-lead",
+      request,
+      channel,
+      timeout
+    );
+  }
+};
+
+// src/Generated/proxies/ObligationProxy.ts
+var ObligationProxy = class {
+  client;
+  /**
+   * Creates a new ObligationProxy instance.
+   * @param client - The underlying Bannou client.
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Create or update an action tag to violation type mapping
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async setActionMappingAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/obligation/action-mapping/set", request, channel, timeout);
+  }
+  /**
+   * List registered action tag mappings
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listActionMappingsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/obligation/action-mapping/list", request, channel, timeout);
+  }
+  /**
+   * Delete an action tag mapping
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async deleteActionMappingEventAsync(request, channel = 0) {
+    return this.client.sendEventAsync(
+      "/obligation/action-mapping/delete",
+      request,
+      channel
+    );
+  }
+  /**
+   * Query violation history for a character
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async queryViolationsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/obligation/query-violations", request, channel, timeout);
+  }
+  /**
+   * Force obligation cache refresh for a character
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async invalidateCacheAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/obligation/invalidate-cache", request, channel, timeout);
+  }
+  /**
+   * Get obligation data for character archival compression
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCompressDataAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/obligation/get-compress-data",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Cleanup all obligation data for a deleted character
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cleanupByCharacterAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/obligation/cleanup-by-character", request, channel, timeout);
+  }
+};
+
+// src/Generated/proxies/PuppetmasterProxy.ts
+var PuppetmasterProxy = class {
+  client;
+  /**
+   * Creates a new PuppetmasterProxy instance.
+   * @param client - The underlying Bannou client.
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Manually start a regional watcher
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async startWatcherAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/puppetmaster/watchers/start",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Stop a regional watcher
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async stopWatcherAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/puppetmaster/watchers/stop",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Start all relevant watchers for a realm
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async startWatchersForRealmAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/puppetmaster/watchers/start-for-realm", request, channel, timeout);
+  }
+};
+
+// src/Generated/proxies/QuestProxy.ts
+var QuestProxy = class {
+  client;
+  /**
+   * Creates a new QuestProxy instance.
+   * @param client - The underlying Bannou client.
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Create a new quest definition
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async createQuestDefinitionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/quest/definition/create", request, channel, timeout);
+  }
+  /**
+   * Get quest definition by ID or code
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getQuestDefinitionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/quest/definition/get", request, channel, timeout);
+  }
+  /**
+   * List quest definitions with filtering
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listQuestDefinitionsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/quest/definition/list", request, channel, timeout);
+  }
+  /**
+   * Update quest definition metadata
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateQuestDefinitionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/quest/definition/update", request, channel, timeout);
+  }
+  /**
+   * Mark quest definition as deprecated
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deprecateQuestDefinitionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/quest/definition/deprecate", request, channel, timeout);
+  }
+  /**
+   * Accept a quest
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async acceptQuestAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/quest/accept",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Abandon an active quest
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async abandonQuestAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/quest/abandon", request, channel, timeout);
+  }
+  /**
+   * Get quest instance details
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getQuestAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/quest/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List character's quests
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listQuestsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/quest/list",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List quests available to accept
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listAvailableQuestsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/quest/list-available", request, channel, timeout);
+  }
+  /**
+   * Get player-facing quest log
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getQuestLogAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/quest/log",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Report progress on an objective
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async reportObjectiveProgressAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/quest/objective/progress", request, channel, timeout);
+  }
+  /**
+   * Get objective progress details
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getObjectiveProgressAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/quest/objective/get", request, channel, timeout);
+  }
+  /**
+   * Get quest data for compression
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCompressDataAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/quest/get-compress-data",
       request,
       channel,
       timeout
@@ -5045,6 +6869,16 @@ var RealmProxy = class {
       timeout
     );
   }
+  /**
+   * Check if multiple realms exist and are active
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async realmsExistBatchAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/realm/exists-batch", request, channel, timeout);
+  }
 };
 
 // src/Generated/proxies/RealmHistoryProxy.ts
@@ -5065,12 +6899,7 @@ var RealmHistoryProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getRealmParticipationAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/realm-history/get-participation",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/realm-history/get-participation", request, channel, timeout);
   }
   /**
    * Get all realms that participated in a historical event
@@ -5080,12 +6909,7 @@ var RealmHistoryProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getRealmEventParticipantsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/realm-history/get-event-participants",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/realm-history/get-event-participants", request, channel, timeout);
   }
   /**
    * Get machine-readable lore elements for behavior system
@@ -5122,12 +6946,7 @@ var RelationshipProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getRelationshipAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/relationship/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/relationship/get", request, channel, timeout);
   }
   /**
    * List all relationships for an entity
@@ -5137,12 +6956,7 @@ var RelationshipProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listRelationshipsByEntityAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/relationship/list-by-entity",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/relationship/list-by-entity", request, channel, timeout);
   }
   /**
    * Get all relationships between two specific entities
@@ -5152,12 +6966,7 @@ var RelationshipProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getRelationshipsBetweenAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/relationship/get-between",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/relationship/get-between", request, channel, timeout);
   }
   /**
    * List all relationships of a specific type
@@ -5167,12 +6976,17 @@ var RelationshipProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listRelationshipsByTypeAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/relationship/list-by-type",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/relationship/list-by-type", request, channel, timeout);
+  }
+  /**
+   * Cleanup relationships referencing a deleted entity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cleanupByEntityAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/relationship/cleanup-by-entity", request, channel, timeout);
   }
 };
 
@@ -5194,12 +7008,7 @@ var RelationshipTypeProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getRelationshipTypeAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/relationship-type/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/relationship-type/get", request, channel, timeout);
   }
   /**
    * Get relationship type by code
@@ -5209,12 +7018,7 @@ var RelationshipTypeProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getRelationshipTypeByCodeAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/relationship-type/get-by-code",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/relationship-type/get-by-code", request, channel, timeout);
   }
   /**
    * List all relationship types
@@ -5224,12 +7028,7 @@ var RelationshipTypeProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listRelationshipTypesAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/relationship-type/list",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/relationship-type/list", request, channel, timeout);
   }
   /**
    * Get child types for a parent type
@@ -5239,12 +7038,7 @@ var RelationshipTypeProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getChildRelationshipTypesAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/relationship-type/get-children",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/relationship-type/get-children", request, channel, timeout);
   }
   /**
    * Check if type matches ancestor in hierarchy
@@ -5254,12 +7048,7 @@ var RelationshipTypeProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async matchesHierarchyAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/relationship-type/matches-hierarchy",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/relationship-type/matches-hierarchy", request, channel, timeout);
   }
   /**
    * Get all ancestors of a relationship type
@@ -5269,8 +7058,135 @@ var RelationshipTypeProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getAncestorsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/relationship-type/get-ancestors", request, channel, timeout);
+  }
+};
+
+// src/Generated/proxies/ResourceProxy.ts
+var ResourceProxy = class {
+  client;
+  /**
+   * Creates a new ResourceProxy instance.
+   * @param client - The underlying Bannou client.
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Register a reference to a resource
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async registerReferenceAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/resource/register", request, channel, timeout);
+  }
+  /**
+   * Remove a reference to a resource
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async unregisterReferenceAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/resource/unregister", request, channel, timeout);
+  }
+  /**
+   * Check reference count and cleanup eligibility
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async checkReferencesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/resource/check", request, channel, timeout);
+  }
+  /**
+   * List all references to a resource
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listReferencesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/resource/list", request, channel, timeout);
+  }
+  /**
+   * Execute cleanup for a resource
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async executeCleanupAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/resource/cleanup/execute", request, channel, timeout);
+  }
+  /**
+   * List registered cleanup callbacks
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listCleanupCallbacksAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/resource/cleanup/list", request, channel, timeout);
+  }
+  /**
+   * Compress a resource and all dependents
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async executeCompressAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/resource/compress/execute", request, channel, timeout);
+  }
+  /**
+   * List registered compression callbacks
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listCompressCallbacksAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/resource/compress/list", request, channel, timeout);
+  }
+  /**
+   * Retrieve compressed archive
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getArchiveAsync(request, channel = 0, timeout) {
     return this.client.invokeAsync(
-      "/relationship-type/get-ancestors",
+      "/resource/archive/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Create ephemeral snapshot of a living resource
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async executeSnapshotAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/resource/snapshot/execute", request, channel, timeout);
+  }
+  /**
+   * Retrieve an ephemeral snapshot
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getSnapshotAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/resource/snapshot/get",
       request,
       channel,
       timeout
@@ -5491,12 +7407,7 @@ var SaveLoadProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async deleteVersionAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/save-load/version/delete",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/save-load/version/delete", request, channel, timeout);
   }
   /**
    * Query saves with filters
@@ -5551,12 +7462,7 @@ var SaveLoadProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async verifyIntegrityAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/save-load/verify",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/save-load/verify", request, channel, timeout);
   }
   /**
    * Promote old version to latest
@@ -5803,12 +7709,7 @@ var SceneProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getValidationRulesAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/scene/get-validation-rules",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/scene/get-validation-rules", request, channel, timeout);
   }
   /**
    * Full-text search across scenes
@@ -5833,12 +7734,7 @@ var SceneProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async findReferencesAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/scene/find-references",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/scene/find-references", request, channel, timeout);
   }
   /**
    * Find scenes using a specific asset
@@ -5848,12 +7744,7 @@ var SceneProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async findAssetUsageAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/scene/find-asset-usage",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/scene/find-asset-usage", request, channel, timeout);
   }
   /**
    * Duplicate a scene with a new ID
@@ -5869,6 +7760,346 @@ var SceneProxy = class {
       channel,
       timeout
     );
+  }
+};
+
+// src/Generated/proxies/SeedProxy.ts
+var SeedProxy = class {
+  client;
+  /**
+   * Creates a new SeedProxy instance.
+   * @param client - The underlying Bannou client.
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Create a new seed
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async createSeedAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/create",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get seed by ID
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getSeedAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get seeds by owner ID and type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getSeedsByOwnerAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/get-by-owner",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List seeds with filtering
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listSeedsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/list",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Update seed metadata or display name
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateSeedAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/update",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Set a seed as active
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async activateSeedAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/activate",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Archive a seed
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async archiveSeedAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/archive",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get full growth domain map
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getGrowthAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/growth/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Record growth in a domain
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async recordGrowthAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/growth/record",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Record growth across multiple domains atomically
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async recordGrowthBatchAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/growth/record-batch",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get current growth phase
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getGrowthPhaseAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/seed/growth/get-phase", request, channel, timeout);
+  }
+  /**
+   * Get current capability manifest
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCapabilityManifestAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/seed/capability/get-manifest", request, channel, timeout);
+  }
+  /**
+   * Register a new seed type definition
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async registerSeedTypeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/type/register",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get seed type definition
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getSeedTypeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/type/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List registered seed types
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listSeedTypesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/seed/type/list", request, channel, timeout);
+  }
+  /**
+   * Update seed type definition
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateSeedTypeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/type/update",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Deprecate a seed type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deprecateSeedTypeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/seed/type/deprecate", request, channel, timeout);
+  }
+  /**
+   * Restore a deprecated seed type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async undeprecateSeedTypeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/seed/type/undeprecate", request, channel, timeout);
+  }
+  /**
+   * Delete a seed type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async deleteSeedTypeEventAsync(request, channel = 0) {
+    return this.client.sendEventAsync(
+      "/seed/type/delete",
+      request,
+      channel
+    );
+  }
+  /**
+   * Begin bond process between seeds
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async initiateBondAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/bond/initiate",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Confirm a pending bond
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async confirmBondAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/bond/confirm",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get bond by ID
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getBondAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/bond/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get bond for a specific seed
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getBondForSeedAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/seed/bond/get-for-seed",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get partner seed(s) public info
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getBondPartnersAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/seed/bond/get-partners", request, channel, timeout);
   }
 };
 
@@ -5890,12 +8121,7 @@ var SessionsProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getGameSessionAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/sessions/get",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/sessions/get", request, channel, timeout);
   }
   /**
    * Leave a game session
@@ -6016,8 +8242,365 @@ var SpeciesProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async listSpeciesByRealmAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/species/list-by-realm", request, channel, timeout);
+  }
+};
+
+// src/Generated/proxies/StatusProxy.ts
+var StatusProxy = class {
+  client;
+  /**
+   * Creates a new StatusProxy instance.
+   * @param client - The underlying Bannou client.
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Create a status template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async createStatusTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/status/template/create", request, channel, timeout);
+  }
+  /**
+   * Get a status template by ID
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getStatusTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/status/template/get", request, channel, timeout);
+  }
+  /**
+   * Get a status template by code
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getStatusTemplateByCodeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/status/template/get-by-code", request, channel, timeout);
+  }
+  /**
+   * List status templates
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listStatusTemplatesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/status/template/list", request, channel, timeout);
+  }
+  /**
+   * Update a status template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateStatusTemplateAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/status/template/update", request, channel, timeout);
+  }
+  /**
+   * Bulk seed status templates
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async seedStatusTemplatesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/status/template/seed", request, channel, timeout);
+  }
+  /**
+   * Grant a status effect to an entity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async grantStatusAsync(request, channel = 0, timeout) {
     return this.client.invokeAsync(
-      "/species/list-by-realm",
+      "/status/grant",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Remove a specific status instance
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async removeStatusAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/status/remove", request, channel, timeout);
+  }
+  /**
+   * Remove all statuses from a source
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async removeBySourceAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/status/remove-by-source", request, channel, timeout);
+  }
+  /**
+   * Remove all statuses of a category (cleanse)
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async removeByCategoryAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/status/remove-by-category", request, channel, timeout);
+  }
+  /**
+   * Check if an entity has a specific status
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async hasStatusAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/status/has",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List active statuses for an entity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listStatusesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/status/list",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get a specific status instance
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getStatusAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/status/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get unified effects for an entity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getEffectsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/status/effects/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get seed-derived passive effects for an entity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getSeedEffectsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/status/effects/get-seed", request, channel, timeout);
+  }
+  /**
+   * Remove all statuses and containers for an owner
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cleanupByOwnerAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/status/cleanup-by-owner",
+      request,
+      channel,
+      timeout
+    );
+  }
+};
+
+// src/Generated/proxies/StorylineProxy.ts
+var StorylineProxy = class {
+  client;
+  /**
+   * Creates a new StorylineProxy instance.
+   * @param client - The underlying Bannou client.
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Compose a storyline plan from archive seeds
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async composeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/storyline/compose",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Retrieve a cached storyline plan
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getPlanAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/storyline/plan/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List cached storyline plans
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listPlansAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/storyline/plan/list",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Create a new scenario definition
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async createScenarioDefinitionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/storyline/scenario/create", request, channel, timeout);
+  }
+  /**
+   * Get a scenario definition by ID or code
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getScenarioDefinitionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/storyline/scenario/get", request, channel, timeout);
+  }
+  /**
+   * List scenario definitions
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listScenarioDefinitionsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/storyline/scenario/list", request, channel, timeout);
+  }
+  /**
+   * Update a scenario definition
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateScenarioDefinitionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/storyline/scenario/update", request, channel, timeout);
+  }
+  /**
+   * Deprecate a scenario definition
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async deprecateScenarioDefinitionEventAsync(request, channel = 0) {
+    return this.client.sendEventAsync(
+      "/storyline/scenario/deprecate",
+      request,
+      channel
+    );
+  }
+  /**
+   * Dry-run scenario trigger
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async testScenarioTriggerAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/storyline/scenario/test",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get active scenarios for a character
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getActiveScenariosAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/storyline/scenario/get-active", request, channel, timeout);
+  }
+  /**
+   * Get scenario execution history
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getScenarioHistoryAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/storyline/scenario/get-history", request, channel, timeout);
+  }
+  /**
+   * Get storyline data for compression
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCompressDataAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/storyline/get-compress-data",
       request,
       channel,
       timeout
@@ -6043,12 +8626,7 @@ var SubscriptionProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async getAccountSubscriptionsAsync(request, channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/subscription/account/list",
-      request,
-      channel,
-      timeout
-    );
+    return this.client.invokeAsync("/subscription/account/list", request, channel, timeout);
   }
   /**
    * Get a specific subscription by ID
@@ -6073,12 +8651,419 @@ var SubscriptionProxy = class {
    * @returns ApiResponse containing the response on success.
    */
   async cancelSubscriptionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/subscription/cancel", request, channel, timeout);
+  }
+};
+
+// src/Generated/proxies/TransitProxy.ts
+var TransitProxy = class {
+  client;
+  /**
+   * Creates a new TransitProxy instance.
+   * @param client - The underlying Bannou client.
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Register a new transit mode type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async registerModeAsync(request, channel = 0, timeout) {
     return this.client.invokeAsync(
-      "/subscription/cancel",
+      "/transit/mode/register",
       request,
       channel,
       timeout
     );
+  }
+  /**
+   * Get a transit mode by code
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getModeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/mode/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List all registered transit modes
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listModesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/mode/list",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Update a transit mode's properties
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateModeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/mode/update",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Deprecate a transit mode
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deprecateModeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/mode/deprecate",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Reverse deprecation of a transit mode
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async undeprecateModeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/mode/undeprecate",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Delete a deprecated transit mode
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deleteModeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/mode/delete",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Check which transit modes an entity can currently use
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async checkModeAvailabilityAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/transit/mode/check-availability", request, channel, timeout);
+  }
+  /**
+   * Create a connection between two locations
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async createConnectionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/transit/connection/create", request, channel, timeout);
+  }
+  /**
+   * Get a connection by ID or code
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getConnectionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/connection/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Query connections by location, terrain, mode, or status
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async queryConnectionsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/transit/connection/query", request, channel, timeout);
+  }
+  /**
+   * Update a connection's properties
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateConnectionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/transit/connection/update", request, channel, timeout);
+  }
+  /**
+   * Transition a connection's operational status with optimistic concurrency
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateConnectionStatusAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/transit/connection/update-status", request, channel, timeout);
+  }
+  /**
+   * Delete a connection between locations
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deleteConnectionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/transit/connection/delete", request, channel, timeout);
+  }
+  /**
+   * Seed connections from configuration
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async bulkSeedConnectionsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/transit/connection/bulk-seed", request, channel, timeout);
+  }
+  /**
+   * Plan a journey (status preparing)
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async createJourneyAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/journey/create",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Start a prepared journey
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async departJourneyAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/journey/depart",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Resume an interrupted journey
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async resumeJourneyAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/journey/resume",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Mark arrival at next waypoint
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async advanceJourneyAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/journey/advance",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Advance multiple journeys in a single call
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async advanceBatchJourneysAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/journey/advance-batch",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Force-arrive a journey at destination
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async arriveJourneyAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/journey/arrive",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Interrupt an active journey
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async interruptJourneyAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/journey/interrupt",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Abandon a journey
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async abandonJourneyAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/journey/abandon",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Get a journey by ID
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getJourneyAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/journey/get",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * List active journeys on a specific connection
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async queryJourneysByConnectionAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/transit/journey/query-by-connection", request, channel, timeout);
+  }
+  /**
+   * List journeys for an entity or within a realm
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listJourneysAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/transit/journey/list",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Query archived journeys from MySQL historical store
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async queryJourneyArchiveAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/transit/journey/query-archive", request, channel, timeout);
+  }
+  /**
+   * Calculate route options between two locations
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async calculateRouteAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/transit/route/calculate", request, channel, timeout);
+  }
+  /**
+   * Reveal a discoverable connection to an entity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async revealDiscoveryAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/transit/discovery/reveal", request, channel, timeout);
+  }
+  /**
+   * List connections an entity has discovered
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listDiscoveriesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/transit/discovery/list", request, channel, timeout);
+  }
+  /**
+   * Check if an entity has discovered specific connections
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async checkDiscoveriesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/transit/discovery/check", request, channel, timeout);
   }
 };
 
@@ -6131,6 +9116,49 @@ var VoiceProxy = class {
       request,
       channel
     );
+  }
+  /**
+   * Request broadcast consent from all room participants
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async requestBroadcastConsentAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/voice/room/broadcast/request", request, channel, timeout);
+  }
+  /**
+   * Respond to a broadcast consent request
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async respondBroadcastConsentAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/voice/room/broadcast/consent", request, channel, timeout);
+  }
+  /**
+   * Stop broadcasting from a voice room
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async stopBroadcastEventAsync(request, channel = 0) {
+    return this.client.sendEventAsync(
+      "/voice/room/broadcast/stop",
+      request,
+      channel
+    );
+  }
+  /**
+   * Get broadcast status for a voice room
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getBroadcastStatusAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/voice/room/broadcast/status", request, channel, timeout);
   }
 };
 
@@ -6187,20 +9215,6 @@ var WebsiteProxy = class {
     );
   }
   /**
-   * Get game server status for all realms
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async getServerStatusAsync(channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/website/server-status",
-      {},
-      channel,
-      timeout
-    );
-  }
-  /**
    * Get download links for game clients
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
@@ -6238,20 +9252,6 @@ var WebsiteProxy = class {
   async getAccountProfileAsync(channel = 0, timeout) {
     return this.client.invokeAsync(
       "/website/account/profile",
-      {},
-      channel,
-      timeout
-    );
-  }
-  /**
-   * Get character list for logged-in user
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async getAccountCharactersAsync(channel = 0, timeout) {
-    return this.client.invokeAsync(
-      "/website/account/characters",
       {},
       channel,
       timeout
@@ -6343,19 +9343,192 @@ var WebsiteProxy = class {
       channel
     );
   }
+};
+
+// src/Generated/proxies/WorldstateProxy.ts
+var WorldstateProxy = class {
+  client;
   /**
-   * Get subscription status
+   * Creates a new WorldstateProxy instance.
+   * @param client - The underlying Bannou client.
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Get current game time for a realm
+   * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getAccountSubscriptionAsync(channel = 0, timeout) {
+  async getRealmTimeAsync(request, channel = 0, timeout) {
     return this.client.invokeAsync(
-      "/website/account/subscription",
-      {},
+      "/worldstate/clock/get-realm-time",
+      request,
       channel,
       timeout
     );
+  }
+  /**
+   * Get current game time by realm code
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getRealmTimeByCodeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/worldstate/clock/get-realm-time-by-code", request, channel, timeout);
+  }
+  /**
+   * Get current game time for multiple realms
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async batchGetRealmTimesAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/worldstate/clock/batch-get-realm-times", request, channel, timeout);
+  }
+  /**
+   * Compute elapsed game-time between two real timestamps
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getElapsedGameTimeAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/worldstate/clock/get-elapsed-game-time", request, channel, timeout);
+  }
+  /**
+   * Trigger a time sync event for an entity's sessions
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async triggerTimeSyncAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/worldstate/clock/trigger-sync", request, channel, timeout);
+  }
+  /**
+   * Initialize a clock for a realm
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async initializeRealmClockAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/worldstate/clock/initialize", request, channel, timeout);
+  }
+  /**
+   * Change the time ratio for a realm
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async setTimeRatioAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/worldstate/clock/set-ratio",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Manually advance a realm's clock
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async advanceClockAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync(
+      "/worldstate/clock/advance",
+      request,
+      channel,
+      timeout
+    );
+  }
+  /**
+   * Create a calendar template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async seedCalendarAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/worldstate/calendar/seed", request, channel, timeout);
+  }
+  /**
+   * Get a calendar template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCalendarAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/worldstate/calendar/get", request, channel, timeout);
+  }
+  /**
+   * List calendar templates for a game service
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listCalendarsAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/worldstate/calendar/list", request, channel, timeout);
+  }
+  /**
+   * Update a calendar template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateCalendarAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/worldstate/calendar/update", request, channel, timeout);
+  }
+  /**
+   * Delete a calendar template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deleteCalendarAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/worldstate/calendar/delete", request, channel, timeout);
+  }
+  /**
+   * Get realm worldstate configuration
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getRealmConfigAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/worldstate/realm-config/get", request, channel, timeout);
+  }
+  /**
+   * Update realm worldstate configuration
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async updateRealmConfigAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/worldstate/realm-config/update", request, channel, timeout);
+  }
+  /**
+   * List active realm clocks
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listRealmClocksAsync(request, channel = 0, timeout) {
+    return this.client.invokeAsync("/worldstate/realm-config/list", request, channel, timeout);
   }
 };
 
@@ -6449,10 +9622,26 @@ Object.defineProperty(BannouClient.prototype, "characterPersonality", {
   configurable: true,
   enumerable: true
 });
+Object.defineProperty(BannouClient.prototype, "chat", {
+  get() {
+    const cache = this[PROXY_CACHE] ??= {};
+    return cache.chat ??= new ChatProxy(this);
+  },
+  configurable: true,
+  enumerable: true
+});
 Object.defineProperty(BannouClient.prototype, "clientCapabilities", {
   get() {
     const cache = this[PROXY_CACHE] ??= {};
     return cache.clientCapabilities ??= new ClientCapabilitiesProxy(this);
+  },
+  configurable: true,
+  enumerable: true
+});
+Object.defineProperty(BannouClient.prototype, "collection", {
+  get() {
+    const cache = this[PROXY_CACHE] ??= {};
+    return cache.collection ??= new CollectionProxy(this);
   },
   configurable: true,
   enumerable: true
@@ -6481,6 +9670,14 @@ Object.defineProperty(BannouClient.prototype, "currency", {
   configurable: true,
   enumerable: true
 });
+Object.defineProperty(BannouClient.prototype, "divine", {
+  get() {
+    const cache = this[PROXY_CACHE] ??= {};
+    return cache.divine ??= new DivineProxy(this);
+  },
+  configurable: true,
+  enumerable: true
+});
 Object.defineProperty(BannouClient.prototype, "documentation", {
   get() {
     const cache = this[PROXY_CACHE] ??= {};
@@ -6497,10 +9694,26 @@ Object.defineProperty(BannouClient.prototype, "escrow", {
   configurable: true,
   enumerable: true
 });
+Object.defineProperty(BannouClient.prototype, "faction", {
+  get() {
+    const cache = this[PROXY_CACHE] ??= {};
+    return cache.faction ??= new FactionProxy(this);
+  },
+  configurable: true,
+  enumerable: true
+});
 Object.defineProperty(BannouClient.prototype, "gameService", {
   get() {
     const cache = this[PROXY_CACHE] ??= {};
     return cache.gameService ??= new GameServiceProxy(this);
+  },
+  configurable: true,
+  enumerable: true
+});
+Object.defineProperty(BannouClient.prototype, "gardener", {
+  get() {
+    const cache = this[PROXY_CACHE] ??= {};
+    return cache.gardener ??= new GardenerProxy(this);
   },
   configurable: true,
   enumerable: true
@@ -6537,6 +9750,14 @@ Object.defineProperty(BannouClient.prototype, "leaderboard", {
   configurable: true,
   enumerable: true
 });
+Object.defineProperty(BannouClient.prototype, "license", {
+  get() {
+    const cache = this[PROXY_CACHE] ??= {};
+    return cache.license ??= new LicenseProxy(this);
+  },
+  configurable: true,
+  enumerable: true
+});
 Object.defineProperty(BannouClient.prototype, "location", {
   get() {
     const cache = this[PROXY_CACHE] ??= {};
@@ -6565,6 +9786,30 @@ Object.defineProperty(BannouClient.prototype, "music", {
   get() {
     const cache = this[PROXY_CACHE] ??= {};
     return cache.music ??= new MusicProxy(this);
+  },
+  configurable: true,
+  enumerable: true
+});
+Object.defineProperty(BannouClient.prototype, "obligation", {
+  get() {
+    const cache = this[PROXY_CACHE] ??= {};
+    return cache.obligation ??= new ObligationProxy(this);
+  },
+  configurable: true,
+  enumerable: true
+});
+Object.defineProperty(BannouClient.prototype, "puppetmaster", {
+  get() {
+    const cache = this[PROXY_CACHE] ??= {};
+    return cache.puppetmaster ??= new PuppetmasterProxy(this);
+  },
+  configurable: true,
+  enumerable: true
+});
+Object.defineProperty(BannouClient.prototype, "quest", {
+  get() {
+    const cache = this[PROXY_CACHE] ??= {};
+    return cache.quest ??= new QuestProxy(this);
   },
   configurable: true,
   enumerable: true
@@ -6601,6 +9846,14 @@ Object.defineProperty(BannouClient.prototype, "relationshipType", {
   configurable: true,
   enumerable: true
 });
+Object.defineProperty(BannouClient.prototype, "resource", {
+  get() {
+    const cache = this[PROXY_CACHE] ??= {};
+    return cache.resource ??= new ResourceProxy(this);
+  },
+  configurable: true,
+  enumerable: true
+});
 Object.defineProperty(BannouClient.prototype, "saveLoad", {
   get() {
     const cache = this[PROXY_CACHE] ??= {};
@@ -6613,6 +9866,14 @@ Object.defineProperty(BannouClient.prototype, "scene", {
   get() {
     const cache = this[PROXY_CACHE] ??= {};
     return cache.scene ??= new SceneProxy(this);
+  },
+  configurable: true,
+  enumerable: true
+});
+Object.defineProperty(BannouClient.prototype, "seed", {
+  get() {
+    const cache = this[PROXY_CACHE] ??= {};
+    return cache.seed ??= new SeedProxy(this);
   },
   configurable: true,
   enumerable: true
@@ -6633,10 +9894,34 @@ Object.defineProperty(BannouClient.prototype, "species", {
   configurable: true,
   enumerable: true
 });
+Object.defineProperty(BannouClient.prototype, "status", {
+  get() {
+    const cache = this[PROXY_CACHE] ??= {};
+    return cache.status ??= new StatusProxy(this);
+  },
+  configurable: true,
+  enumerable: true
+});
+Object.defineProperty(BannouClient.prototype, "storyline", {
+  get() {
+    const cache = this[PROXY_CACHE] ??= {};
+    return cache.storyline ??= new StorylineProxy(this);
+  },
+  configurable: true,
+  enumerable: true
+});
 Object.defineProperty(BannouClient.prototype, "subscription", {
   get() {
     const cache = this[PROXY_CACHE] ??= {};
     return cache.subscription ??= new SubscriptionProxy(this);
+  },
+  configurable: true,
+  enumerable: true
+});
+Object.defineProperty(BannouClient.prototype, "transit", {
+  get() {
+    const cache = this[PROXY_CACHE] ??= {};
+    return cache.transit ??= new TransitProxy(this);
   },
   configurable: true,
   enumerable: true
@@ -6661,6 +9946,14 @@ Object.defineProperty(BannouClient.prototype, "website", {
   get() {
     const cache = this[PROXY_CACHE] ??= {};
     return cache.website ??= new WebsiteProxy(this);
+  },
+  configurable: true,
+  enumerable: true
+});
+Object.defineProperty(BannouClient.prototype, "worldstate", {
+  get() {
+    const cache = this[PROXY_CACHE] ??= {};
+    return cache.worldstate ??= new WorldstateProxy(this);
   },
   configurable: true,
   enumerable: true
@@ -6710,56 +10003,73 @@ exports.CharacterEncounterProxy = CharacterEncounterProxy;
 exports.CharacterHistoryProxy = CharacterHistoryProxy;
 exports.CharacterPersonalityProxy = CharacterPersonalityProxy;
 exports.CharacterProxy = CharacterProxy;
+exports.ChatProxy = ChatProxy;
 exports.ClientCapabilitiesProxy = ClientCapabilitiesProxy;
+exports.CollectionProxy = CollectionProxy;
 exports.CompileProxy = CompileProxy;
 exports.ConnectionState = ConnectionState;
 exports.ContractProxy = ContractProxy;
 exports.CurrencyProxy = CurrencyProxy;
 exports.DisconnectReason = DisconnectReason;
+exports.DivineProxy = DivineProxy;
 exports.DocumentationProxy = DocumentationProxy;
 exports.EMPTY_GUID = EMPTY_GUID;
 exports.EscrowProxy = EscrowProxy;
 exports.EventSubscription = EventSubscription;
+exports.FactionProxy = FactionProxy;
 exports.GameServiceProxy = GameServiceProxy;
+exports.GardenerProxy = GardenerProxy;
 exports.GoapProxy = GoapProxy;
 exports.HEADER_SIZE = HEADER_SIZE;
 exports.InventoryProxy = InventoryProxy;
 exports.ItemProxy = ItemProxy;
 exports.LeaderboardProxy = LeaderboardProxy;
+exports.LicenseProxy = LicenseProxy;
 exports.LocationProxy = LocationProxy;
 exports.MappingProxy = MappingProxy;
 exports.MatchmakingProxy = MatchmakingProxy;
 exports.MessageFlags = MessageFlags;
 exports.MetaType = MetaType;
 exports.MusicProxy = MusicProxy;
+exports.ObligationProxy = ObligationProxy;
+exports.PuppetmasterProxy = PuppetmasterProxy;
+exports.QuestProxy = QuestProxy;
 exports.RESPONSE_HEADER_SIZE = RESPONSE_HEADER_SIZE;
 exports.RealmHistoryProxy = RealmHistoryProxy;
 exports.RealmProxy = RealmProxy;
 exports.RelationshipProxy = RelationshipProxy;
 exports.RelationshipTypeProxy = RelationshipTypeProxy;
+exports.ResourceProxy = ResourceProxy;
 exports.ResponseCodes = ResponseCodes;
 exports.SaveLoadProxy = SaveLoadProxy;
 exports.SceneProxy = SceneProxy;
+exports.SeedProxy = SeedProxy;
 exports.SessionsProxy = SessionsProxy;
 exports.SpeciesProxy = SpeciesProxy;
+exports.StatusProxy = StatusProxy;
+exports.StorylineProxy = StorylineProxy;
 exports.SubscriptionProxy = SubscriptionProxy;
+exports.TransitProxy = TransitProxy;
 exports.ValidateProxy = ValidateProxy;
 exports.VoiceProxy = VoiceProxy;
 exports.WebsiteProxy = WebsiteProxy;
+exports.WorldstateProxy = WorldstateProxy;
 exports.createRequest = createRequest;
 exports.createResponse = createResponse;
+exports.decompressPayload = decompressPayload;
 exports.expectsResponse = expectsResponse;
 exports.generateMessageId = generateMessageId;
 exports.generateUuid = generateUuid;
 exports.getJsonPayload = getJsonPayload;
 exports.getResponseCodeName = getResponseCodeName;
 exports.hasFlag = hasFlag;
+exports.initializeDecompressor = initializeDecompressor;
 exports.isBinaryFlag = isBinary;
 exports.isClientRouted = isClientRouted;
+exports.isCompressedFlag = isCompressed;
 exports.isError = isError2;
 exports.isErrorCode = isError;
 exports.isEventFlag = isEvent;
-exports.isHighPriority = isHighPriority;
 exports.isMeta = isMeta2;
 exports.isMetaFlag = isMeta;
 exports.isResponse = isResponse2;
@@ -6772,7 +10082,9 @@ exports.readGuid = readGuid;
 exports.readUInt16 = readUInt16;
 exports.readUInt32 = readUInt32;
 exports.readUInt64 = readUInt64;
+exports.resetDecompressor = resetDecompressor;
 exports.resetMessageIdCounter = resetMessageIdCounter;
+exports.setPayloadDecompressor = setPayloadDecompressor;
 exports.testNetworkByteOrderCompatibility = testNetworkByteOrderCompatibility;
 exports.toByteArray = toByteArray;
 exports.writeGuid = writeGuid;

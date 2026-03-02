@@ -666,6 +666,7 @@ public class ServiceHealthMonitorTests
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
     private readonly Mock<IControlPlaneServiceProvider> _mockControlPlaneProvider;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
 
@@ -676,6 +677,7 @@ public class ServiceHealthMonitorTests
         _mockEventManager = new Mock<IOrchestratorEventManager>();
         _mockControlPlaneProvider = new Mock<IControlPlaneServiceProvider>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
         _configuration = new OrchestratorServiceConfiguration
         {
             HeartbeatTimeoutSeconds = 90,
@@ -699,6 +701,7 @@ public class ServiceHealthMonitorTests
             _mockEventManager.Object,
             _mockControlPlaneProvider.Object,
             new DefaultMeshInstanceIdentifier(),
+            _mockLockProvider.Object,
             _mockTelemetryProvider.Object);
     }
 
@@ -847,6 +850,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
     private readonly Mock<IControlPlaneServiceProvider> _mockControlPlaneProvider;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
 
@@ -860,6 +864,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         _mockEventManager = new Mock<IOrchestratorEventManager>();
         _mockControlPlaneProvider = new Mock<IControlPlaneServiceProvider>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
         _configuration = new OrchestratorServiceConfiguration
         {
             HeartbeatTimeoutSeconds = 90,
@@ -893,6 +898,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
             _mockEventManager.Object,
             _mockControlPlaneProvider.Object,
             new DefaultMeshInstanceIdentifier(),
+            _mockLockProvider.Object,
             _mockTelemetryProvider.Object);
     }
 

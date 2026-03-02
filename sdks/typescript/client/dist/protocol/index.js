@@ -8,18 +8,19 @@ var MessageFlags = {
    * Message payload is binary data (not JSON)
    */
   Binary: 1,
+  // Bit 0x02 is reserved (originally Encrypted, removed).
+  // Bit 0x08 is reserved (originally HighPriority, removed).
+  // Values are preserved to avoid shifting existing flag assignments.
+  /** Reserved for future use. Do not assign. */
+  Reserved0x02: 2,
   /**
-   * Message payload is encrypted
-   */
-  Encrypted: 2,
-  /**
-   * Message payload is compressed (gzip)
+   * Payload is Brotli-compressed. Client must decompress before parsing.
+   * Only set on server-to-client messages when compression is enabled and
+   * payload exceeds the configured size threshold.
    */
   Compressed: 4,
-  /**
-   * Deliver at high priority, skip to front of queues
-   */
-  HighPriority: 8,
+  /** Reserved for future use. Do not assign. */
+  Reserved0x08: 8,
   /**
    * Fire-and-forget message, no response expected
    */
@@ -54,6 +55,9 @@ function isMeta(flags) {
 }
 function isBinary(flags) {
   return hasFlag(flags, MessageFlags.Binary);
+}
+function isCompressed(flags) {
+  return hasFlag(flags, MessageFlags.Compressed);
 }
 
 // src/protocol/ResponseCodes.ts
@@ -351,9 +355,6 @@ function isResponse2(message) {
 function isClientRouted(message) {
   return hasFlag(message.flags, MessageFlags.Client);
 }
-function isHighPriority(message) {
-  return hasFlag(message.flags, MessageFlags.HighPriority);
-}
 function isSuccess2(message) {
   return isResponse(message.flags) && message.responseCode === 0;
 }
@@ -364,6 +365,54 @@ function isMeta2(message) {
   return hasFlag(message.flags, MessageFlags.Meta);
 }
 
-export { EMPTY_GUID, HEADER_SIZE, MessageFlags, RESPONSE_HEADER_SIZE, ResponseCodes, createRequest, createResponse, expectsResponse, fromJson, getJsonPayload, getResponseCodeName, hasFlag, isBinary as isBinaryFlag, isClientRouted, isError2 as isError, isError as isErrorCode, isEvent as isEventFlag, isHighPriority, isMeta2 as isMeta, isMeta as isMetaFlag, isResponse2 as isResponse, isResponse as isResponseFlag, isSuccess2 as isSuccess, isSuccess as isSuccessCode, mapToHttpStatus, parse, readGuid, readUInt16, readUInt32, readUInt64, testNetworkByteOrderCompatibility, toByteArray, writeGuid, writeUInt16, writeUInt32, writeUInt64 };
+// src/protocol/PayloadDecompressor.ts
+var _nodeDecompressor = null;
+var _customDecompressor = null;
+var _initialized = false;
+async function initializeDecompressor() {
+  if (_initialized) return;
+  _initialized = true;
+  try {
+    const zlib = await import('zlib');
+    _nodeDecompressor = (data) => {
+      const result = zlib.brotliDecompressSync(data);
+      return new Uint8Array(result.buffer, result.byteOffset, result.byteLength);
+    };
+  } catch {
+  }
+}
+function setPayloadDecompressor(fn) {
+  _customDecompressor = fn;
+}
+function getDecompressor() {
+  return _customDecompressor ?? _nodeDecompressor;
+}
+function decompressPayload(message) {
+  if (!hasFlag(message.flags, MessageFlags.Compressed)) {
+    return message;
+  }
+  if (message.payload.length === 0) {
+    return message;
+  }
+  const decompress = getDecompressor();
+  if (!decompress) {
+    throw new Error(
+      "Received compressed message but no Brotli decompressor is available. In browser environments, call setPayloadDecompressor() with a Brotli implementation."
+    );
+  }
+  const decompressed = decompress(message.payload);
+  return {
+    ...message,
+    flags: message.flags & ~MessageFlags.Compressed,
+    payload: decompressed
+  };
+}
+function resetDecompressor() {
+  _nodeDecompressor = null;
+  _customDecompressor = null;
+  _initialized = false;
+}
+
+export { EMPTY_GUID, HEADER_SIZE, MessageFlags, RESPONSE_HEADER_SIZE, ResponseCodes, createRequest, createResponse, decompressPayload, expectsResponse, fromJson, getJsonPayload, getResponseCodeName, hasFlag, initializeDecompressor, isBinary as isBinaryFlag, isClientRouted, isCompressed as isCompressedFlag, isError2 as isError, isError as isErrorCode, isEvent as isEventFlag, isMeta2 as isMeta, isMeta as isMetaFlag, isResponse2 as isResponse, isResponse as isResponseFlag, isSuccess2 as isSuccess, isSuccess as isSuccessCode, mapToHttpStatus, parse, readGuid, readUInt16, readUInt32, readUInt64, resetDecompressor, setPayloadDecompressor, testNetworkByteOrderCompatibility, toByteArray, writeGuid, writeUInt16, writeUInt32, writeUInt64 };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

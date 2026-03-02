@@ -137,6 +137,16 @@ Recipe-based crafting orchestration service (L4 GameFeatures) for production wor
 
 Multi-currency management service (L2 GameFoundation) for game economies. Handles currency definitions with scope/realm restrictions, wallet lifecycle management, balance operations (credit/debit/transfer with idempotency-key deduplication), authorization holds (reserve/capture/release), currency conversion via exchange-rate-to-base pivot, and escrow integration (deposit/release/refund endpoints consumed by lib-escrow). Features a background autogain worker for passive income and transaction history with configurable retention. All mutating balance operations use distributed locks for multi-instance safety.
 
+## Director {#director}
+
+**Deep Dive**: [docs/plugins/DIRECTOR.md](plugins/DIRECTOR.md)
+
+Human-in-the-loop orchestration service (L4 GameFeatures) for developer-driven event coordination, actor observation, and player audience management. The Director is to the development team what Puppetmaster is to NPC behavior and Gardener is to player experience: an orchestration layer that coordinates major world events through existing service primitives, ensuring the right players witness the right moments. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item, Divine over Currency/Seed/Collection) that composes existing Bannou primitives to deliver live event management mechanics.
+
+Three control tiers define the developer's relationship to the actor system: **Observe** (tap into any actor's perception stream and cognitive state), **Steer** (inject perceptions and adjust GOAP priorities while actors run autonomously), and **Drive** (replace an actor's ABML cognition with human decision-making, issuing API calls through the same action handlers actors use). The developer never bypasses game rules -- every action goes through the same pipelines the autonomous system uses, simultaneously testing actor mechanisms while orchestrating live content.
+
+Game-agnostic: event categories, steering strategies, and broadcast coordination rules are configured through director configuration and event templates at deployment time. Internal-only, never internet-facing. All endpoints require the `developer` role.
+
 ## Disposition {#disposition}
 
 **Deep Dive**: [docs/plugins/DISPOSITION.md](plugins/DISPOSITION.md)
@@ -459,7 +469,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 
 ## Summary
 
-- **Total services**: 75
+- **Total services**: 76
 - **Total endpoints**: 892
 
 ---
