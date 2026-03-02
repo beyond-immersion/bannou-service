@@ -329,7 +329,7 @@ def generate_lifecycle_events_file(
 
     # Build the complete OpenAPI document
     doc = {
-        'openapi': '3.0.3',
+        'openapi': '3.0.4',
         'info': {
             'title': f'{service_title} Lifecycle Events',
             'description': (

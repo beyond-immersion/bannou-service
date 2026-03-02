@@ -1907,8 +1907,8 @@ public class OrchestratorProcessingPoolTests
 
         // No pool configuration exists
         _mockStateManager
-            .Setup(x => x.GetValueAsync<OrchestratorService.PoolConfiguration>(It.Is<string>(s => s.Contains("pool:config"))))
-            .ReturnsAsync((OrchestratorService.PoolConfiguration?)null);
+            .Setup(x => x.GetPoolConfigurationAsync("unknown-pool"))
+            .ReturnsAsync((PoolConfiguration?)null);
 
         var request = new ScalePoolRequest { PoolType = "unknown-pool", TargetInstances = 5 };
 
@@ -1949,14 +1949,14 @@ public class OrchestratorProcessingPoolTests
 
         // No existing instances
         _mockStateManager
-            .Setup(x => x.GetListAsync<OrchestratorService.ProcessorInstance>(It.Is<string>(s => s.Contains("pool:instances"))))
-            .ReturnsAsync((List<OrchestratorService.ProcessorInstance>?)null);
+            .Setup(x => x.GetPoolInstancesAsync("actor-shared"))
+            .ReturnsAsync((List<ProcessorInstance>?)null);
         _mockStateManager
-            .Setup(x => x.GetListAsync<OrchestratorService.ProcessorInstance>(It.Is<string>(s => s.Contains("pool:available"))))
-            .ReturnsAsync((List<OrchestratorService.ProcessorInstance>?)null);
+            .Setup(x => x.GetAvailableProcessorsAsync("actor-shared"))
+            .ReturnsAsync((List<ProcessorInstance>?)null);
         _mockStateManager
-            .Setup(x => x.GetHashAsync<OrchestratorService.ProcessorLease>(It.Is<string>(s => s.Contains("pool:leases"))))
-            .ReturnsAsync((Dictionary<string, OrchestratorService.ProcessorLease>?)null);
+            .Setup(x => x.GetLeasesAsync("actor-shared"))
+            .ReturnsAsync((Dictionary<string, ProcessorLease>?)null);
 
         var request = new ScalePoolRequest { PoolType = "actor-shared", TargetInstances = 2 };
 
@@ -2091,7 +2091,7 @@ public class OrchestratorProcessingPoolTests
 
     private void SetupPoolConfiguration(string poolType, string serviceName)
     {
-        var config = new OrchestratorService.PoolConfiguration
+        var config = new PoolConfiguration
         {
             PoolType = poolType,
             ServiceName = serviceName,
@@ -2109,18 +2109,18 @@ public class OrchestratorProcessingPoolTests
         };
 
         _mockStateManager
-            .Setup(x => x.GetValueAsync<OrchestratorService.PoolConfiguration>(It.Is<string>(s => s.Contains($"pool:{poolType}:config"))))
+            .Setup(x => x.GetPoolConfigurationAsync(poolType))
             .ReturnsAsync(config);
     }
 
     private void SetupExistingPoolInstances(string poolType, int totalCount, int availableCount)
     {
-        var instances = Enumerable.Range(0, totalCount).Select(i => new OrchestratorService.ProcessorInstance
+        var instances = Enumerable.Range(0, totalCount).Select(i => new ProcessorInstance
         {
             ProcessorId = $"{poolType}-{Guid.NewGuid():N}",
             AppId = $"bannou-pool-{poolType}-{i:D4}",
             PoolType = poolType,
-            Status = i < availableCount ? OrchestratorService.ProcessorStatus.Available : OrchestratorService.ProcessorStatus.Pending,
+            Status = i < availableCount ? ProcessorStatus.Available : ProcessorStatus.Pending,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-10),
             LastUpdated = DateTimeOffset.UtcNow.AddMinutes(-1)
         }).ToList();
@@ -2128,16 +2128,16 @@ public class OrchestratorProcessingPoolTests
         var availableInstances = instances.Take(availableCount).ToList();
 
         _mockStateManager
-            .Setup(x => x.GetListAsync<OrchestratorService.ProcessorInstance>(It.Is<string>(s => s.Contains($"pool:{poolType}:instances"))))
+            .Setup(x => x.GetPoolInstancesAsync(poolType))
             .ReturnsAsync(instances);
 
         _mockStateManager
-            .Setup(x => x.GetListAsync<OrchestratorService.ProcessorInstance>(It.Is<string>(s => s.Contains($"pool:{poolType}:available"))))
+            .Setup(x => x.GetAvailableProcessorsAsync(poolType))
             .ReturnsAsync(availableInstances);
 
         _mockStateManager
-            .Setup(x => x.GetHashAsync<OrchestratorService.ProcessorLease>(It.Is<string>(s => s.Contains($"pool:{poolType}:leases"))))
-            .ReturnsAsync(new Dictionary<string, OrchestratorService.ProcessorLease>());
+            .Setup(x => x.GetLeasesAsync(poolType))
+            .ReturnsAsync(new Dictionary<string, ProcessorLease>());
     }
 
     #endregion
@@ -2186,11 +2186,11 @@ public class OrchestratorProcessingPoolTests
 
         // Setup: known pool types
         _mockStateManager
-            .Setup(x => x.GetListAsync<string>("orchestrator:pools:known"))
+            .Setup(x => x.GetKnownPoolTypesAsync())
             .ReturnsAsync(new List<string> { poolType });
 
         // Setup: lease exists in this pool
-        var lease = new OrchestratorService.ProcessorLease
+        var lease = new ProcessorLease
         {
             LeaseId = leaseId,
             ProcessorId = "proc-001",
@@ -2199,13 +2199,12 @@ public class OrchestratorProcessingPoolTests
             AcquiredAt = DateTimeOffset.UtcNow.AddMinutes(-5),
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5)
         };
-        var leases = new Dictionary<string, OrchestratorService.ProcessorLease>
+        var leases = new Dictionary<string, ProcessorLease>
         {
             [leaseId.ToString()] = lease
         };
         _mockStateManager
-            .Setup(x => x.GetHashAsync<OrchestratorService.ProcessorLease>(
-                It.Is<string>(s => s.Contains($"pool:{poolType}:leases"))))
+            .Setup(x => x.GetLeasesAsync(poolType))
             .ReturnsAsync(leases);
 
         // Override lock to fail for this pool
@@ -2245,11 +2244,11 @@ public class OrchestratorProcessingPoolTests
 
         // Setup: known pool types
         _mockStateManager
-            .Setup(x => x.GetListAsync<string>("orchestrator:pools:known"))
+            .Setup(x => x.GetKnownPoolTypesAsync())
             .ReturnsAsync(new List<string> { poolType });
 
         // Setup: lease exists in this pool
-        var lease = new OrchestratorService.ProcessorLease
+        var lease = new ProcessorLease
         {
             LeaseId = leaseId,
             ProcessorId = processorId,
@@ -2258,20 +2257,18 @@ public class OrchestratorProcessingPoolTests
             AcquiredAt = DateTimeOffset.UtcNow.AddMinutes(-5),
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5)
         };
-        var leases = new Dictionary<string, OrchestratorService.ProcessorLease>
+        var leases = new Dictionary<string, ProcessorLease>
         {
             [leaseId.ToString()] = lease
         };
         _mockStateManager
-            .Setup(x => x.GetHashAsync<OrchestratorService.ProcessorLease>(
-                It.Is<string>(s => s.Contains($"pool:{poolType}:leases"))))
+            .Setup(x => x.GetLeasesAsync(poolType))
             .ReturnsAsync(leases);
 
         // Setup: available processors list
         _mockStateManager
-            .Setup(x => x.GetListAsync<OrchestratorService.ProcessorInstance>(
-                It.Is<string>(s => s.Contains($"pool:{poolType}:available"))))
-            .ReturnsAsync(new List<OrchestratorService.ProcessorInstance>());
+            .Setup(x => x.GetAvailableProcessorsAsync(poolType))
+            .ReturnsAsync(new List<ProcessorInstance>());
 
         // Setup: message bus to capture published event
         _mockMessageBus
@@ -2289,7 +2286,6 @@ public class OrchestratorProcessingPoolTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.True(response.Released);
         Assert.Equal(processorId, response.ProcessorId);
 
         // Verify the ProcessorReleasedEvent was published

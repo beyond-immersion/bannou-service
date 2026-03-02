@@ -181,7 +181,7 @@ def merge_schemas(schema_dir: Path) -> dict:
     """Merge all service schemas into a consolidated client schema."""
     # Initialize consolidated schema
     consolidated = {
-        'openapi': '3.0.3',
+        'openapi': '3.0.4',
         'info': {
             'title': 'Bannou Client API',
             'description': '''

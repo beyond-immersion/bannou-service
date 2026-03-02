@@ -27,19 +27,16 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     // Cache of current service routings to detect changes
     private readonly ConcurrentDictionary<string, ServiceRouting> _currentRoutings = new();
 
-    // Version tracking for full mappings events
-    private long _mappingsVersion = 0;
+    // Mappings version tracked in Redis via _stateManager.IncrementMappingsVersionAsync()
 
     // Instance ID for this orchestrator (for source tracking in events)
     private readonly Guid _instanceId;
 
     // Periodic publication timer
     private Timer? _fullMappingsTimer;
-    private readonly TimeSpan _fullMappingsInterval = TimeSpan.FromSeconds(30);
+    private readonly TimeSpan _fullMappingsInterval;
 
-    // Track if routing changed since last publication
-    private bool _routingChanged = false;
-    private readonly object _routingChangeLock = new();
+    // Periodic timer always publishes — no in-memory routing-change flag needed (IMPLEMENTATION TENETS)
 
     public ServiceHealthMonitor(
         ILogger<ServiceHealthMonitor> logger,
@@ -53,6 +50,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     {
         _logger = logger;
         _configuration = configuration;
+        _fullMappingsInterval = TimeSpan.FromSeconds(configuration.FullMappingsIntervalSeconds);
         _appConfiguration = appConfiguration;
         _stateManager = stateManager;
         _eventManager = eventManager;
@@ -201,7 +199,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                         {
                             AppId = heartbeat.AppId,
                             Host = heartbeat.AppId, // In Docker, container name = app_id
-                            Port = 80,
+                            Port = _configuration.DefaultServicePort,
                             Status = serviceStatus.Status,
                             LoadPercent = loadPercent
                         };
@@ -217,10 +215,9 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                 }
             }
 
-            // If routing changed, mark for publication and publish immediately
+            // If routing changed, publish immediately
             if (routingChanged)
             {
-                MarkRoutingChanged();
                 await PublishFullMappingsAsync("new service routing initialized");
             }
         }
@@ -242,13 +239,13 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         {
             AppId = appId,
             Host = appId,
-            Port = 80,
-            Status = InstanceHealthStatus.Healthy
+            Port = _configuration.DefaultServicePort,
+            Status = ServiceHealthStatus.Healthy
         };
 
         await _stateManager.WriteServiceRoutingAsync(serviceName, routing);
         _currentRoutings[serviceName] = routing;
-        MarkRoutingChanged();
+        // Routing change will be picked up by periodic timer publication
 
         _logger.LogInformation("Set routing for {ServiceName} -> {AppId}", serviceName, appId);
     }
@@ -270,14 +267,14 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         {
             AppId = defaultAppId,
             Host = defaultAppId,
-            Port = 80,
-            Status = InstanceHealthStatus.Healthy,
+            Port = _configuration.DefaultServicePort,
+            Status = ServiceHealthStatus.Healthy,
             LastUpdated = DateTimeOffset.UtcNow
         };
 
         await _stateManager.WriteServiceRoutingAsync(serviceName, defaultRouting);
         _currentRoutings[serviceName] = defaultRouting;
-        MarkRoutingChanged();
+        // Routing change will be picked up by periodic timer publication
 
         _logger.LogInformation(
             "Restored routing for {ServiceName} to default app-id '{DefaultAppId}'",
@@ -310,14 +307,14 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                 {
                     AppId = defaultAppId,
                     Host = defaultAppId,
-                    Port = 80,
-                    Status = InstanceHealthStatus.Healthy,
+                    Port = _configuration.DefaultServicePort,
+                    Status = ServiceHealthStatus.Healthy,
                     LastUpdated = DateTimeOffset.UtcNow
                 };
             }
 
             // Mark routing changed and publish immediately
-            MarkRoutingChanged();
+            // Routing change will be picked up by periodic timer publication
             await PublishFullMappingsAsync("reset to default topology");
 
             _logger.LogInformation(
@@ -332,31 +329,13 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     }
 
     /// <summary>
-    /// Mark that routing has changed, triggering immediate publication.
-    /// </summary>
-    private void MarkRoutingChanged()
-    {
-        lock (_routingChangeLock)
-        {
-            _routingChanged = true;
-        }
-    }
-
-    /// <summary>
-    /// Publish full mappings if routing changed or periodic timer fired.
+    /// Publish full mappings on periodic timer.
+    /// Every routing change already publishes immediately; this is the periodic heartbeat.
     /// </summary>
     private async Task PublishFullMappingsIfNeededAsync()
     {
         using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.PublishFullMappingsIfNeededAsync");
-        bool shouldPublish;
-        lock (_routingChangeLock)
-        {
-            shouldPublish = _routingChanged;
-            _routingChanged = false;
-        }
-
-        // Always publish on timer (periodic heartbeat), but only increment version if changed
-        await PublishFullMappingsAsync(shouldPublish ? "routing changed" : "periodic");
+        await PublishFullMappingsAsync("periodic");
     }
 
     /// <summary>
@@ -393,8 +372,8 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                 mappings[routing.Key] = routing.Value.AppId;
             }
 
-            // Increment version
-            var version = Interlocked.Increment(ref _mappingsVersion);
+            // Increment version via Redis for multi-instance safety (IMPLEMENTATION TENETS)
+            var version = await _stateManager.IncrementMappingsVersionAsync();
 
             var fullMappingsEvent = new FullServiceMappingsEvent
             {
@@ -438,9 +417,10 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// Get comprehensive health report for all services (default: all sources).
     /// Reads heartbeat data from Redis and control plane info, evaluates health status.
     /// </summary>
-    public Task<ServiceHealthReport> GetServiceHealthReportAsync()
+    public async Task<ServiceHealthReport> GetServiceHealthReportAsync()
     {
-        return GetServiceHealthReportAsync(ServiceHealthSource.All, null);
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.GetServiceHealthReportAsync");
+        return await GetServiceHealthReportAsync(ServiceHealthSource.All, null);
     }
 
     /// <summary>
@@ -476,7 +456,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                 var timeSinceLastHeartbeat = now - heartbeat.LastSeen;
                 var isExpired = timeSinceLastHeartbeat > heartbeatTimeout;
 
-                if (isExpired || heartbeat.Status == InstanceHealthStatus.Unavailable || heartbeat.Status == InstanceHealthStatus.Unknown)
+                if (isExpired || heartbeat.Status == InstanceHealthStatus.Unavailable)
                 {
                     unhealthyServices.Add(heartbeat);
                 }
@@ -581,7 +561,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         string reason;
         string? degradedDuration = null;
 
-        if (worstStatus == InstanceHealthStatus.Unavailable || worstStatus == InstanceHealthStatus.Unknown)
+        if (worstStatus == InstanceHealthStatus.Unavailable)
         {
             shouldRestart = true;
             reason = $"Service is {worstStatus}";

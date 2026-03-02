@@ -55,7 +55,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
 
         _httpClient = httpClientFactory.CreateClient("Portainer");
         _httpClient.BaseAddress = new Uri(portainerUrl);
-        _httpClient.Timeout = TimeSpan.FromSeconds(30);
+        _httpClient.Timeout = TimeSpan.FromSeconds(configuration.PortainerRequestTimeoutSeconds);
 
         // Add API key if configured
         // See ORCHESTRATOR-SDK-REFERENCE.md for authentication options

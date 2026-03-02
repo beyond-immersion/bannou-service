@@ -37,6 +37,10 @@ info:
     - topic: bannou.configuration-events
       event: ConfigurationChangedEvent
       description: Published when configuration or secrets change for self-service restart pattern
+    # Processor pool events
+    - topic: orchestrator.processor.released
+      event: ProcessorReleasedEvent
+      description: Published when a processor is released back to the pool for analytics tracking
 
 paths: {}
 
@@ -180,3 +184,40 @@ components:
           items:
             type: string
           description: Configuration keys that changed (not values for security). Key prefixes indicate scope (auth.*, database.*, mesh.*, connect.*).
+
+    # =========================================================================
+    # Processor Pool Events
+    # =========================================================================
+    ProcessorReleasedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a processor is released back to the pool. Used by the Analytics service for pool utilization tracking. Topic orchestrator.processor.released.
+      required:
+        - eventId
+        - timestamp
+        - poolType
+        - processorId
+        - success
+        - leaseDurationMs
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the release occurred
+        poolType:
+          type: string
+          description: The pool type the processor belongs to (e.g., "actor-shared", "asset-image")
+        processorId:
+          type: string
+          description: Identifier of the processor that was released
+        success:
+          type: boolean
+          description: Whether the processing job completed successfully
+        leaseDurationMs:
+          type: integer
+          format: int64
+          description: How long the lease was held in milliseconds

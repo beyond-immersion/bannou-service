@@ -14,6 +14,7 @@ namespace LibOrchestrator.Backends;
 public class BackendDetector : IBackendDetector
 {
     private readonly ILogger<BackendDetector> _logger;
+    private readonly ILoggerFactory _loggerFactory;
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -32,12 +33,14 @@ public class BackendDetector : IBackendDetector
 
     public BackendDetector(
         ILogger<BackendDetector> logger,
+        ILoggerFactory loggerFactory,
         OrchestratorServiceConfiguration configuration,
         AppConfiguration appConfiguration,
         IHttpClientFactory httpClientFactory,
         ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
+        _loggerFactory = loggerFactory;
         _configuration = configuration;
         _appConfiguration = appConfiguration;
         _httpClientFactory = httpClientFactory;
@@ -316,9 +319,8 @@ public class BackendDetector : IBackendDetector
 
     private IContainerOrchestrator CreateKubernetesOrchestrator()
     {
-        // Kubernetes implementation uses KubernetesClient SDK
         return new KubernetesOrchestrator(
-            _logger.GetType().Assembly.CreateLogger<KubernetesOrchestrator>(),
+            _loggerFactory.CreateLogger<KubernetesOrchestrator>(),
             _configuration,
             _telemetryProvider);
     }
@@ -326,7 +328,7 @@ public class BackendDetector : IBackendDetector
     private IContainerOrchestrator CreatePortainerOrchestrator()
     {
         return new PortainerOrchestrator(
-            _logger.GetType().Assembly.CreateLogger<PortainerOrchestrator>(),
+            _loggerFactory.CreateLogger<PortainerOrchestrator>(),
             _configuration,
             _httpClientFactory,
             _telemetryProvider);
@@ -336,7 +338,7 @@ public class BackendDetector : IBackendDetector
     {
         return new DockerSwarmOrchestrator(
             _configuration,
-            _logger.GetType().Assembly.CreateLogger<DockerSwarmOrchestrator>(),
+            _loggerFactory.CreateLogger<DockerSwarmOrchestrator>(),
             _telemetryProvider);
     }
 
@@ -345,19 +347,7 @@ public class BackendDetector : IBackendDetector
         return new DockerComposeOrchestrator(
             _configuration,
             _appConfiguration,
-            _logger.GetType().Assembly.CreateLogger<DockerComposeOrchestrator>(),
+            _loggerFactory.CreateLogger<DockerComposeOrchestrator>(),
             _telemetryProvider);
-    }
-}
-
-/// <summary>
-/// Extension method to create typed loggers from assembly.
-/// </summary>
-internal static class LoggerExtensions
-{
-    public static ILogger<T> CreateLogger<T>(this System.Reflection.Assembly assembly)
-    {
-        using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-        return loggerFactory.CreateLogger<T>();
     }
 }

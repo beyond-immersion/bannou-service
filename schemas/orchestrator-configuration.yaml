@@ -69,6 +69,12 @@ x-service-configuration:
       env: ORCHESTRATOR_PORTAINER_ENDPOINT_ID
       default: 1
       minimum: 1
+    PortainerRequestTimeoutSeconds:
+      type: integer
+      description: HTTP request timeout in seconds for Portainer API calls
+      env: ORCHESTRATOR_PORTAINER_REQUEST_TIMEOUT_SECONDS
+      default: 30
+      minimum: 1
 
     # Docker Configuration (Docker Compose backend)
     DockerImageName:
@@ -220,6 +226,15 @@ x-service-configuration:
       env: ORCHESTRATOR_POOL_LOCK_TIMEOUT_SECONDS
       default: 15
       minimum: 1
+
+    # Service Discovery Configuration
+    DefaultServicePort:
+      type: integer
+      description: Default HTTP port for discovered service instances used in health checks and mesh registration
+      env: ORCHESTRATOR_DEFAULT_SERVICE_PORT
+      default: 80
+      minimum: 1
+      maximum: 65535
 
     # Infrastructure Connection Strings
     RedisConnectionString:

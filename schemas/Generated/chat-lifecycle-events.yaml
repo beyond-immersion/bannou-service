@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Chat Service Events Lifecycle Events
   description: "Auto-generated lifecycle event schemas for chat service.\nDO NOT EDIT - This file is completely overwritten

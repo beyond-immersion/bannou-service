@@ -506,6 +506,8 @@ None identified.
 
 7. **Permission state race on peer leave during join**: The sequential `voice:ringing` loop in `NotifyPeerJoinedAsync` can set state on a session that left between the participant list fetch and the state update. This is benign: every `UpdateSessionStateAsync` call is try-catch wrapped (logs warning), and the leaving session's own `LeaveVoiceRoomAsync` path clears its permission state independently.
 
+8. **Realm-agnostic by design (L3 boundary)**: Voice rooms have zero realm or game concept awareness. The same voice room primitive manifests differently per realm via client rendering — explicit voice chat in Omega (cyberpunk), "speaking at a gathering" or "bard performing for a crowd" in Arcadia. Realm-specific presentation is entirely a lib-showtime (L4) and client concern. This is an architectural boundary enforced by Voice's L3 AppFeatures layer: it cannot depend on L2 GameFoundation services like Realm.
+
 ### Design Considerations (Requires Planning)
 
 1. **RTPEngine UDP protocol**: Uses raw UDP with bencode encoding. No connection state, no retries on packet loss. `_sendLock` prevents concurrent sends but lost responses are not retried - the operation simply times out. Additionally, cookie mismatch responses (stale data from previous timed-out requests) are logged but used anyway -- a correctness bug.
@@ -514,9 +516,9 @@ None identified.
 2. **SIP credential expiration not enforced**: Credentials have a 24-hour expiration timestamp (`SipCredentialExpirationHours`) but no server-side enforcement. Clients receive the expiration but there's no background task to rotate credentials or invalidate sessions.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/405 -->
 
-3. **Realm-specific voice manifestation**: In Omega (cyberpunk), voice rooms are explicit. In Arcadia, the same mechanics manifest as "speaking at a gathering" or "bard performing for a crowd." How much realm-specific logic belongs in lib-voice (none -- it's L3) vs. lib-showtime (L4) vs. client rendering? The answer should be: lib-voice provides the audio primitive; lib-showtime provides the game context; the client renders the appropriate visual metaphor based on realm. Voice never knows about realms.
+3. ~~**Realm-specific voice manifestation**~~: **FIXED** (2026-03-01) - Resolved: Voice is L3 and contains zero realm references. Realm-specific manifestation (e.g., "bard performing" in Arcadia vs explicit voice rooms in Omega) is entirely a client rendering and lib-showtime (L4) concern. Voice provides the audio primitive; it never knows about realms. Moved to Intentional Quirks #8.
 
-4. **Voice room capacity and the streaming metagame**: When lib-showtime creates voice rooms for game sessions, how does room capacity interact with audience size? A streamer with 50 simulated audience members shouldn't need a 50-person voice room -- only real participants need voice. lib-showtime must track the distinction between voice participants and audience members independently.
+4. ~~**Voice room capacity and the streaming metagame**~~: **FIXED** (2026-03-01) - Resolved: Voice room capacity counts only real registered participants (sessions with SIP/SDP endpoints via `ISipEndpointRegistry`). Showtime's audience members are completely separate lightweight data objects stored in `showtime-audience-pool` (Redis), not voice room participants. When Showtime creates a voice room for a game session (`AutoVoiceOnGameSession`), the `maxParticipants` reflects real player count, not audience size. The separation is architectural: Voice has no concept of audiences, and Showtime maintains independent data stores for audience pools (`showtime-audience-pool`) and voice room associations (`showtime-session-voice`).
 
 ---
 
@@ -545,3 +547,5 @@ None identified.
 | Date | Gap | Fix |
 |------|-----|-----|
 | 2026-03-01 | Game-agnostic API descriptions (Stubs #4) | Fixed "game session ID" → "WebSocket session ID" in client events schema, "lib-stream" → "lib-broadcast" in API schema descriptions |
+| 2026-03-01 | Realm-specific voice manifestation (Design #3) | Resolved as Intentional Quirk #8: Voice is L3 with zero realm references. Realm-specific manifestation is a client/lib-showtime concern. |
+| 2026-03-01 | Voice room capacity and the streaming metagame (Design #4) | Resolved: Voice capacity counts real participants only; Showtime audience members are separate data objects in independent stores. No code change needed. |

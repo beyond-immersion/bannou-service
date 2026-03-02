@@ -4,7 +4,7 @@
 > **Schema**: schemas/orchestrator-api.yaml
 > **Version**: 3.0.0
 > **Layer**: AppFeatures
-> **State Stores**: orchestrator-heartbeats (Redis), orchestrator-routings (Redis), orchestrator-config (Redis)
+> **State Stores**: orchestrator-heartbeats (Redis), orchestrator-routings (Redis), orchestrator-config (Redis), orchestrator-statestore (Redis)
 
 ---
 
@@ -19,7 +19,7 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | Redis persistence for heartbeats, routing, configuration versioning, and processing pool state (via `IOrchestratorStateManager`) |
-| lib-state (`IDistributedLockProvider`) | Pool-level locks for atomic acquire/release operations (15-second TTL) |
+| lib-state (`IDistributedLockProvider`) | Pool-level locks for atomic acquire/release operations (15-second TTL); mappings version increment lock |
 | lib-messaging (`IMessageBus`) | Publishing health pings, service mapping broadcasts, deployment events, processor released events, error events, and permission registration |
 | lib-messaging (`IEventConsumer`) | Registering event handlers (heartbeat consumer) |
 | `IHttpClientFactory` (Microsoft.Extensions.Http) | HTTP client for OpenResty cache invalidation requests |
@@ -45,13 +45,14 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 
 ## State Storage
 
-**Stores**: 3 state stores
+**Stores**: 4 state stores
 
 | Store | Backend | Purpose |
 |-------|---------|---------|
 | `orchestrator-heartbeats` | Redis | Service instance heartbeat data with TTL-based expiry |
 | `orchestrator-routings` | Redis | Service-to-app-id routing mappings with TTL |
-| `orchestrator-config` | Redis | Deployment configuration versions, pool configs, metrics |
+| `orchestrator-config` | Redis | Deployment configuration versions and history |
+| `orchestrator-statestore` | Redis | Processing pool state: instances, leases, configs, metrics |
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
@@ -62,12 +63,12 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | `version` (config store) | `ConfigVersion` | Current configuration version number |
 | `current` (config store) | `DeploymentConfiguration` | Active deployment configuration (no TTL) |
 | `history:{version}` (config store) | `DeploymentConfiguration` | Historical config versions (TTL: ConfigHistoryTtlDays) |
-| `processing-pool:{poolType}:instances` (config store) | `List<ProcessorInstance>` | All instances in a pool |
-| `processing-pool:{poolType}:available` (config store) | `List<ProcessorInstance>` | Available (unleased) instances |
-| `processing-pool:{poolType}:leases` (config store) | `Dictionary<string, ProcessorLease>` | Active leases by lease ID |
-| `processing-pool:{poolType}:metrics` (config store) | `PoolMetricsData` | Jobs completed/failed counts, avg time |
-| `processing-pool:{poolType}:config` (config store) | `PoolConfiguration` | Pool settings: min/max instances, thresholds |
-| `orchestrator:pools:known` (config store) | `List<string>` | Registry of known pool types |
+| `processing-pool:{poolType}:instances` (pool store) | `List<ProcessorInstance>` | All instances in a pool |
+| `processing-pool:{poolType}:available` (pool store) | `List<ProcessorInstance>` | Available (unleased) instances |
+| `processing-pool:{poolType}:leases` (pool store) | `Dictionary<string, ProcessorLease>` | Active leases by lease ID |
+| `processing-pool:{poolType}:metrics` (pool store) | `PoolMetricsData` | Jobs completed/failed counts, avg time |
+| `processing-pool:{poolType}:config` (pool store) | `PoolConfiguration` | Pool settings: min/max instances, thresholds |
+| `processing-pool:known` (pool store) | `List<string>` | Registry of known pool types |
 
 ---
 
@@ -77,10 +78,10 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `orchestrator.health-ping` | `OrchestratorHealthPingEvent` | Infrastructure health check verifies pub/sub path |
+| `orchestrator-health` | `OrchestratorHealthPingEvent` | Infrastructure health check verifies pub/sub path |
 | `bannou.full-service-mappings` | `FullServiceMappingsEvent` | After any routing change (deploy, teardown, topology update, reset) |
 | `bannou.deployment-events` | `DeploymentEvent` | Deploy/teardown started, completed, failed, or topology changed |
-| `bannou.service-restart` | `ServiceRestartEvent` | Service restart requested via SmartRestartManager |
+| `bannou.service-lifecycle` | `ServiceRestartEvent` | Service restart requested via SmartRestartManager |
 | `orchestrator.processor.released` | `ProcessorReleasedEvent` | Processor released back to pool (includes pool type, success/failure, lease duration) |
 | (error topic via `TryPublishErrorAsync`) | Error event | Any unexpected internal failure |
 
@@ -122,6 +123,12 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | `HealthCheckIntervalMs` | `ORCHESTRATOR_HEALTH_CHECK_INTERVAL_MS` | `2000` | Interval between health checks during restart |
 | `DefaultWaitBeforeKillSeconds` | `ORCHESTRATOR_DEFAULT_WAIT_BEFORE_KILL_SECONDS` | `30` | Seconds to wait before killing a container during stop |
 | `ContainerStatusPollIntervalSeconds` | `ORCHESTRATOR_CONTAINER_STATUS_POLL_INTERVAL_SECONDS` | `2` | Deploy readiness poll interval |
+| `FullMappingsIntervalSeconds` | `ORCHESTRATOR_FULL_MAPPINGS_INTERVAL_SECONDS` | `30` | Periodic full service-to-appId mappings broadcast interval |
+| `OrphanContainerThresholdHours` | `ORCHESTRATOR_ORPHAN_CONTAINER_THRESHOLD_HOURS` | `24` | Hours since last heartbeat before container is orphaned |
+| `IndexUpdateMaxRetries` | `ORCHESTRATOR_INDEX_UPDATE_MAX_RETRIES` | `3` | Max retries for state index update operations |
+| `DefaultPoolLeaseTimeoutSeconds` | `ORCHESTRATOR_DEFAULT_POOL_LEASE_TIMEOUT_SECONDS` | `300` | Default lease timeout for acquired pool instances |
+| `PoolLockTimeoutSeconds` | `ORCHESTRATOR_POOL_LOCK_TIMEOUT_SECONDS` | `15` | Timeout for distributed locks on pool operations |
+| `PortainerRequestTimeoutSeconds` | `ORCHESTRATOR_PORTAINER_REQUEST_TIMEOUT_SECONDS` | `30` | HTTP request timeout for Portainer API calls |
 | `RedisConnectionString` | `ORCHESTRATOR_REDIS_CONNECTION_STRING` | `"bannou-redis:6379"` | Redis connection string |
 
 ---
@@ -131,10 +138,10 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<OrchestratorService>` | Scoped | Structured logging |
-| `ILoggerFactory` | Singleton | Creates loggers for internal helpers (PresetLoader) |
-| `OrchestratorServiceConfiguration` | Singleton | All 25 config properties |
+| `ILoggerFactory` | Singleton | Creates loggers for internal helpers (PresetLoader, BackendDetector backends) |
+| `OrchestratorServiceConfiguration` | Singleton | All 33 config properties |
 | `AppConfiguration` | Singleton | Global app configuration (DEFAULT_APP_NAME, etc.) |
-| `IDistributedLockProvider` | Singleton | Pool-level distributed locks (`orchestrator-pool`, 15s TTL) |
+| `IDistributedLockProvider` | Singleton | Pool-level distributed locks (`orchestrator-pool`, 15s TTL); mappings version increment lock |
 | `IMessageBus` | Scoped | Event publishing |
 | `IEventConsumer` | Scoped | Event subscription registration |
 | `IHttpClientFactory` | Singleton | HTTP client for OpenResty cache invalidation |
@@ -437,7 +444,29 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 ### Bugs
 
-None identified.
+None currently active. The following were identified and fixed during the 2026-03-02 tenet audit:
+
+1. **[FIXED] T16/T1: Event topic mismatch** — `RESTART_TOPIC` was `bannou.service-restart` but schema declared `bannou.service-lifecycle`. Fixed to match schema.
+
+2. **[FIXED] T21: Hardcoded `_fullMappingsInterval`** — Periodic broadcast interval was hardcoded to 30 seconds, ignoring `FullMappingsIntervalSeconds` configuration property. Fixed to read from config.
+
+3. **[FIXED] T21: Hardcoded Portainer HTTP timeout** — `PortainerOrchestrator` used hardcoded 30-second timeout instead of `PortainerRequestTimeoutSeconds` config property. Fixed to read from config.
+
+4. **[FIXED] T9: Non-atomic `IncrementMappingsVersionAsync`** — Read-then-write on mappings version counter without distributed lock. Race condition could lose version increments under concurrent deploys. Fixed with `IDistributedLockProvider` lock.
+
+5. **[FIXED] T9: Non-atomic `ReclaimExpiredLeasesAsync`** — Read-then-write on lease/available lists without lock protection. Fixed by moving to typed state manager methods called within the existing pool lock scope.
+
+6. **[FIXED] T9: Non-thread-safe `_initialized` bool in Singleton** — `OrchestratorStateManager` (Singleton) used plain `bool` for initialization guard. Race under concurrent first requests. Fixed with `volatile` + double-check locking.
+
+7. **[FIXED] T23/T30: Parameterless `GetServiceHealthReportAsync`** — Non-async `Task`-returning method without `StartActivity` span. Fixed with `async` keyword and telemetry span.
+
+8. **[FIXED] T23: `OrchestratorEventManager.DisposeAsync`** — Non-async `ValueTask`-returning method. Fixed with `async` keyword and `await Task.CompletedTask`.
+
+9. **[FIXED] T4: `LoggerFactory.Create` in `BackendDetector`** — Bypassed DI container by creating logger via static factory method. Fixed to inject `ILoggerFactory` through constructor.
+
+10. **[FIXED] T8: Schema success booleans** — `ReleaseProcessorResponse.Released`, `CleanupPoolResponse.CleanedUp`, and `TopologyUpdateResponse.Success` were echoing success status already conveyed by HTTP 200. Removed from schema and regenerated.
+
+11. **[FIXED] T4/T6/T21: Raw-key generic state methods for processing pools** — Pool data was stored via generic `GetListAsync<T>(string key)` / `SetListAsync<T>(...)` methods with inline `string.Format` key construction, bypassing the typed state store pattern. Six generic methods replaced with 12 typed methods on `IOrchestratorStateManager` using `orchestrator-statestore` (which was defined in `state-stores.yaml` but never used — a T21 violation).
 
 ### Intentional Quirks
 
@@ -472,6 +501,8 @@ None identified.
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
 ### Completed
+
+- **2026-03-02**: Full tenet compliance audit (11 violations fixed). T16/T1 event topic mismatch; T21 hardcoded intervals (full mappings broadcast, Portainer timeout); T9 race conditions (mappings version increment, lease reclamation, state manager initialization); T23/T30 non-async methods (health report, event manager dispose); T4 DI bypass (BackendDetector logger); T8 success booleans (3 response fields removed from schema); T4/T6/T21 raw-key generic state methods replaced with 12 typed methods on `IOrchestratorStateManager` using previously-unused `orchestrator-statestore`. 7 missing configuration properties added to deep dive documentation.
 
 - **2026-02-01**: Implemented network/volume/image pruning via `IContainerOrchestrator` interface. Added `PruneNetworksAsync()`, `PruneVolumesAsync()`, and `PruneImagesAsync()` methods to all four orchestrator backends (DockerCompose, DockerSwarm, Kubernetes, Portainer). Updated `CleanAsync` in OrchestratorService to use the new prune methods.
 

@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
@@ -203,7 +204,7 @@ public class SmartRestartManager : ISmartRestartManager
         {
             var recommendation = await _healthMonitor.ShouldRestartServiceAsync(serviceName);
 
-            if (recommendation.CurrentStatus == ServiceHealthStatus.Healthy)
+            if (recommendation.CurrentStatus == InstanceHealthStatus.Healthy)
             {
                 var elapsed = DateTime.UtcNow - startTime;
                 _logger.LogInformation(
@@ -229,7 +230,7 @@ public class SmartRestartManager : ISmartRestartManager
     /// <summary>
     /// Get current service status from health monitoring.
     /// </summary>
-    private async Task<ServiceHealthStatus?> GetCurrentServiceStatusAsync(string serviceName)
+    private async Task<InstanceHealthStatus?> GetCurrentServiceStatusAsync(string serviceName)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "SmartRestartManager.GetCurrentServiceStatusAsync");
         var recommendation = await _healthMonitor.ShouldRestartServiceAsync(serviceName);

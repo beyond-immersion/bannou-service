@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Currency Service Events Lifecycle Events
   description: "Auto-generated lifecycle event schemas for currency service.\nDO NOT EDIT - This file is completely overwritten

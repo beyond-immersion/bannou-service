@@ -651,7 +651,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             var stderrContent = await stderrReader.ReadToEndAsync(cancellationToken);
             if (!string.IsNullOrEmpty(stderrContent))
             {
-                content += "\n[STDERR]\n" + stderrContent;
+                content += "\nstderr:\n" + stderrContent;
             }
         }
 

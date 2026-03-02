@@ -19,7 +19,7 @@ public class OrchestratorEventManager : IOrchestratorEventManager
 
     private const string HEARTBEAT_TOPIC = "bannou.service-heartbeat";
     private const string FULL_MAPPINGS_TOPIC = "bannou.full-service-mappings";
-    private const string RESTART_TOPIC = "bannou.service-restart";
+    private const string RESTART_TOPIC = "bannou.service-lifecycle";
     private const string DEPLOYMENT_TOPIC = "bannou.deployment-events";
 
     public OrchestratorEventManager(
@@ -69,6 +69,9 @@ public class OrchestratorEventManager : IOrchestratorEventManager
             mappingsEvent.TotalServices);
     }
 
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    public async ValueTask DisposeAsync()
+    {
+        await Task.CompletedTask;
+    }
     public void Dispose() { }
 }

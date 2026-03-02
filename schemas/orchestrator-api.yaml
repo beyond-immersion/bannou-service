@@ -1548,7 +1548,7 @@ components:
       properties:
         success:
           type: boolean
-          description: Whether all nodes were deployed successfully (false indicates partial failure)
+          description: Whether the deployment completed successfully without errors
         deploymentId:
           type: string
           description: Unique deployment identifier for tracking
@@ -1737,16 +1737,12 @@ components:
             this will destroy all data and require a full re-deployment.
 
     TeardownResponse:
-      description: Result of an environment teardown including removed resources and any errors
+      description: Result of an environment teardown including removed resources and any errors. Check errors array for partial failures.
       type: object
       additionalProperties: false
       required:
-      - success
       - duration
       properties:
-        success:
-          type: boolean
-          description: Whether all containers were torn down successfully (false indicates partial failure)
         duration:
           type: string
           description: Time taken to complete teardown
@@ -1814,15 +1810,10 @@ components:
           description: Only clean resources matching labels
 
     CleanResponse:
-      description: Result of a cleanup operation including reclaimed space and removed resource counts
+      description: Result of a cleanup operation including reclaimed space and removed resource counts. Check errors array for partial failures.
       type: object
       additionalProperties: false
-      required:
-      - success
       properties:
-        success:
-          type: boolean
-          description: Whether all requested cleanup operations completed (false indicates partial failure)
         reclaimedSpaceMb:
           type: integer
           description: Disk space reclaimed (MB)
@@ -1947,16 +1938,12 @@ components:
           description: Full node config (for add-node action)
 
     TopologyUpdateResponse:
-      description: Result of a topology update including applied changes and the new topology state
+      description: Result of a topology update including applied changes and the new topology state. Check individual appliedChanges for per-change success status.
       type: object
       additionalProperties: false
       required:
-      - success
       - appliedChanges
       properties:
-        success:
-          type: boolean
-          description: Whether all topology changes were applied successfully (false indicates partial failure)
         appliedChanges:
           type: array
           items:
@@ -1978,13 +1965,16 @@ components:
           description: Non-fatal warnings during topology update
 
     AppliedChange:
-      description: Details of a single topology change that was applied, including success status
+      description: Details of a single topology change that was applied
       type: object
       additionalProperties: false
       required:
-      - action
       - success
+      - action
       properties:
+        success:
+          type: boolean
+          description: Whether this specific change was applied successfully
         action:
           type: string
           description: Type of topology change that was applied
@@ -1992,9 +1982,6 @@ components:
           type: string
           nullable: true
           description: Node or service affected
-        success:
-          type: boolean
-          description: Whether this specific change was applied successfully
         error:
           type: string
           nullable: true

@@ -104,6 +104,13 @@ public class OrchestratorServiceConfiguration : BaseServiceConfiguration
     public int PortainerEndpointId { get; set; } = 1;
 
     /// <summary>
+    /// HTTP request timeout in seconds for Portainer API calls
+    /// Environment variable: ORCHESTRATOR_PORTAINER_REQUEST_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int PortainerRequestTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
     /// Docker image name for deployed Bannou containers
     /// Environment variable: ORCHESTRATOR_DOCKER_IMAGE_NAME
     /// </summary>
@@ -254,6 +261,13 @@ public class OrchestratorServiceConfiguration : BaseServiceConfiguration
     /// </summary>
     [ConfigRange(Minimum = 1)]
     public int PoolLockTimeoutSeconds { get; set; } = 15;
+
+    /// <summary>
+    /// Default HTTP port for discovered service instances used in health checks and mesh registration
+    /// Environment variable: ORCHESTRATOR_DEFAULT_SERVICE_PORT
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 65535)]
+    public int DefaultServicePort { get; set; } = 80;
 
     /// <summary>
     /// Redis connection string for orchestrator state.

@@ -70,7 +70,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Subscription](#subscription-status) | L2 | 95% | 0 | L3-hardened. Distributed locks, telemetry spans, constructor caching, type safety, worker delegation. 33 tests, 0 warnings. |
 | [Transit](#transit-status) | L2 | 0% | 0 | Pre-implementation. Deep dive audited to L3. 32 endpoints, 13 events, 3 client events, 8 state stores, 1 variable provider, 1 DI enrichment interface. No schema, no code. |
 | [Worldstate](#worldstate-status) | L2 | 5% | 0 | Stub. Schemas complete, code generated, all 18 endpoints throw NotImplementedException. 3 schema issues (T8 success booleans, missing lock store). Deep dive audited to L3. |
-| [Orchestrator](#orchestrator-status) | L3 | 58% | 0 | Compose backend works. 3/4 backends stubbed. Pool auto-scale/idle timeout missing. |
+| [Orchestrator](#orchestrator-status) | L3 | 65% | 0 | L3-hardened. Schema/code tenet audit complete: enum consolidation, NRT, T8 filler removal, T30 spans (27 methods), T9 Redis-backed counters, T26 sentinels. Compose backend solid. 3/4 backends stubbed. Pool auto-scale missing. |
 | [Asset](#asset-status) | L3 | 92% | 0 | L3-hardened. Schema/enum consolidation, background workers (bundle cleanup, ZIP cache), transactional indexes, all events published. 117 tests. |
 | [Documentation](#documentation-status) | L3 | 92% | 0 | All 27 endpoints done. Full-text search, git sync, archive. Full TENET audit complete. Semantic search pending. |
 | [Voice](#voice-status) | L3 | 95% | 0 | L3-hardened. Full TENET audit (2 rounds): NRT-compliant schemas, distributed locks on all read-modify-write paths (6 methods), T7/T8/T9/T16/T21/T25 compliant, dead code removed. 89 tests. |
@@ -1032,11 +1032,13 @@ gh issue list --search "Worldstate:" --state open
 
 **Layer**: L3 AppFeatures | **Deep Dive**: [ORCHESTRATOR.md](plugins/ORCHESTRATOR.md)
 
-### Production Readiness: 58%
+### Production Readiness: 65%
 
-The Docker Compose backend is functional and solid: preset-based deployment, live topology updates (add/remove/move/scale/update-env), service-to-app-id routing broadcasts consumed by Mesh, processing pool acquire/release with distributed locks, config versioning with rollback, health monitoring with source-filtered reports (control plane vs deployed vs all), container management (restart, status, logs), and infrastructure health checks. 25 configuration properties all wired. No bugs.
+L3-hardened. Full TENET compliance audit completed (2026-03-02). The Docker Compose backend is functional and solid: preset-based deployment, live topology updates (add/remove/move/scale/update-env), service-to-app-id routing broadcasts consumed by Mesh, processing pool acquire/release with distributed locks, config versioning with rollback, health monitoring with source-filtered reports (control plane vs deployed vs all), container management (restart, status, logs), and infrastructure health checks. 25 configuration properties all wired. No bugs.
 
-However, 3 of 4 container backends are stubs (Swarm, Kubernetes, Portainer -- only Compose is implemented). Processing pool management is missing auto-scaling (thresholds stored but no trigger), idle timeout enforcement (config stored but no timer), lease expiry enforcement (lazy reclamation only on next acquire), and queue depth tracking (hardcoded 0). Design consideration #4 notes the scoped service TTL cache is structurally ineffective. Design consideration #5 notes `_lastKnownDeployment` is in-memory state that would diverge across instances.
+Schema hardened: events moved to orchestrator-events.yaml (schema-first), inline enums extracted to named schemas, NRT compliance (required arrays, nullable: true), T8 filler removal (success booleans, echoed fields, message strings), validation keywords added, health status enums unified in common-api.yaml (ServiceHealthStatus 3-value, InstanceHealthStatus 5-value). Code hardened: T30 telemetry spans on all 27 async methods across 6 files, T9 multi-instance safety (mappings version counter moved to Redis, in-memory routing-changed flag removed), T5 anonymous objects replaced with typed dictionaries, T26 sentinel string.Empty defaults fixed to nullable, T23 DisposeAsync compliance, T21 hardcoded tunables moved to configuration schema.
+
+Remaining functional gaps: 3 of 4 container backends are stubs (Swarm, Kubernetes, Portainer -- only Compose is implemented). Processing pool management is missing auto-scaling (thresholds stored but no trigger), idle timeout enforcement (config stored but no timer), lease expiry enforcement (lazy reclamation only on next acquire), and queue depth tracking (hardcoded 0). Design consideration #4 notes the scoped service TTL cache is structurally ineffective.
 
 ### Bug Count: 0
 

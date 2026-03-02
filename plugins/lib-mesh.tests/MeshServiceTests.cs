@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Mesh.Services;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
 
 namespace BeyondImmersion.BannouService.Mesh.Tests;
@@ -670,6 +671,177 @@ public class MeshServiceTests
         Assert.Equal("light", response.Endpoint.Host); // Should select endpoint with fewer connections
     }
 
+    [Fact]
+    public async Task GetRouteAsync_WithWeightedAlgorithm_ShouldFavorLessLoadedEndpoints()
+    {
+        // Arrange - one heavily loaded, one lightly loaded
+        var lightEndpoint = new MeshEndpoint
+        {
+            InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy,
+            Host = "light", Port = 3500, LoadPercent = 10, CurrentConnections = 5
+        };
+        var heavyEndpoint = new MeshEndpoint
+        {
+            InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy,
+            Host = "heavy", Port = 3500, LoadPercent = 90, CurrentConnections = 500
+        };
+
+        _mockStateManager
+            .Setup(x => x.GetEndpointsForAppIdAsync("bannou", false))
+            .ReturnsAsync(new List<MeshEndpoint> { heavyEndpoint, lightEndpoint });
+
+        MeshService.ResetLoadBalancingStateForTesting();
+        var service = CreateService();
+
+        // Act - run multiple requests and count selections
+        var lightCount = 0;
+        var heavyCount = 0;
+        for (var i = 0; i < 100; i++)
+        {
+            var (_, response) = await service.GetRouteAsync(
+                new GetRouteRequest { AppId = "bannou", Algorithm = LoadBalancerAlgorithm.Weighted },
+                CancellationToken.None);
+            if (response?.Endpoint.Host == "light") lightCount++;
+            else heavyCount++;
+        }
+
+        // Assert - light endpoint should be selected significantly more often
+        // With load 10 vs 90, weights are 90 vs 10 => ~90% vs ~10%
+        Assert.True(lightCount > heavyCount,
+            $"Expected light ({lightCount}) > heavy ({heavyCount}), but it wasn't");
+    }
+
+    [Fact]
+    public async Task GetRouteAsync_WithRoundRobinAlgorithm_ShouldCycleThroughEndpoints()
+    {
+        // Arrange
+        var endpoint1 = new MeshEndpoint
+        {
+            InstanceId = Guid.NewGuid(), AppId = "bannou-rr", Status = EndpointStatus.Healthy,
+            Host = "host1", Port = 3500
+        };
+        var endpoint2 = new MeshEndpoint
+        {
+            InstanceId = Guid.NewGuid(), AppId = "bannou-rr", Status = EndpointStatus.Healthy,
+            Host = "host2", Port = 3500
+        };
+
+        _mockStateManager
+            .Setup(x => x.GetEndpointsForAppIdAsync("bannou-rr", false))
+            .ReturnsAsync(new List<MeshEndpoint> { endpoint1, endpoint2 });
+
+        MeshService.ResetLoadBalancingStateForTesting();
+        var service = CreateService();
+        var request = new GetRouteRequest { AppId = "bannou-rr", Algorithm = LoadBalancerAlgorithm.RoundRobin };
+
+        // Act
+        var (_, response1) = await service.GetRouteAsync(request, CancellationToken.None);
+        var (_, response2) = await service.GetRouteAsync(request, CancellationToken.None);
+
+        // Assert - should alternate between the two endpoints
+        Assert.NotNull(response1);
+        Assert.NotNull(response2);
+        Assert.NotEqual(response1.Endpoint.Host, response2.Endpoint.Host);
+    }
+
+    [Fact]
+    public async Task GetRouteAsync_WithRandomAlgorithm_ShouldReturnValidEndpoint()
+    {
+        // Arrange
+        var endpoints = new List<MeshEndpoint>
+        {
+            new() { InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy, Host = "host1", Port = 3500 },
+            new() { InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy, Host = "host2", Port = 3500 }
+        };
+
+        _mockStateManager
+            .Setup(x => x.GetEndpointsForAppIdAsync("bannou", false))
+            .ReturnsAsync(endpoints);
+
+        var service = CreateService();
+        var request = new GetRouteRequest { AppId = "bannou", Algorithm = LoadBalancerAlgorithm.Random };
+
+        // Act
+        var (statusCode, response) = await service.GetRouteAsync(request, CancellationToken.None);
+
+        // Assert - should select one of the available endpoints
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Contains(response.Endpoint.Host, new[] { "host1", "host2" });
+    }
+
+    [Fact]
+    public async Task GetRouteAsync_WithWeightedRoundRobin_ShouldDistributeByLoad()
+    {
+        // Arrange
+        var lightEndpoint = new MeshEndpoint
+        {
+            InstanceId = Guid.NewGuid(), AppId = "bannou-wrr", Status = EndpointStatus.Healthy,
+            Host = "light", Port = 3500, LoadPercent = 10
+        };
+        var heavyEndpoint = new MeshEndpoint
+        {
+            InstanceId = Guid.NewGuid(), AppId = "bannou-wrr", Status = EndpointStatus.Healthy,
+            Host = "heavy", Port = 3500, LoadPercent = 90
+        };
+
+        _mockStateManager
+            .Setup(x => x.GetEndpointsForAppIdAsync("bannou-wrr", false))
+            .ReturnsAsync(new List<MeshEndpoint> { heavyEndpoint, lightEndpoint });
+
+        MeshService.ResetLoadBalancingStateForTesting();
+        var service = CreateService();
+
+        // Act - run multiple requests
+        var lightCount = 0;
+        var heavyCount = 0;
+        for (var i = 0; i < 20; i++)
+        {
+            var (_, response) = await service.GetRouteAsync(
+                new GetRouteRequest { AppId = "bannou-wrr", Algorithm = LoadBalancerAlgorithm.WeightedRoundRobin },
+                CancellationToken.None);
+            if (response?.Endpoint.Host == "light") lightCount++;
+            else heavyCount++;
+        }
+
+        // Assert - light endpoint gets more selections (deterministic, not random)
+        Assert.True(lightCount > heavyCount,
+            $"Expected light ({lightCount}) > heavy ({heavyCount})");
+    }
+
+    [Fact]
+    public async Task GetRouteAsync_WithSingleEndpoint_ShouldAlwaysReturnIt()
+    {
+        // Arrange
+        var endpoint = new MeshEndpoint
+        {
+            InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy,
+            Host = "only-one", Port = 3500
+        };
+
+        _mockStateManager
+            .Setup(x => x.GetEndpointsForAppIdAsync("bannou", false))
+            .ReturnsAsync(new List<MeshEndpoint> { endpoint });
+
+        MeshService.ResetLoadBalancingStateForTesting();
+        var service = CreateService();
+
+        // Act - try each algorithm with single endpoint
+        foreach (var algo in new[] { LoadBalancerAlgorithm.RoundRobin, LoadBalancerAlgorithm.LeastConnections,
+                                     LoadBalancerAlgorithm.Weighted, LoadBalancerAlgorithm.Random })
+        {
+            var (statusCode, response) = await service.GetRouteAsync(
+                new GetRouteRequest { AppId = "bannou", Algorithm = algo },
+                CancellationToken.None);
+
+            Assert.Equal(StatusCodes.OK, statusCode);
+            Assert.NotNull(response);
+            Assert.Equal("only-one", response.Endpoint.Host);
+            Assert.NotNull(response.Alternates);
+            Assert.Empty(response.Alternates);
+        }
+    }
+
     #endregion
 
     #region GetMappingsAsync Tests
@@ -1010,6 +1182,783 @@ public class MeshStateManagerTests
         // Assert - should return false when initialization fails
         Assert.False(result);
     }
+
+    [Fact]
+    public async Task InitializeAsync_WithHealthyStores_ShouldReturnTrue()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        _mockStateStoreFactory
+            .Setup(x => x.GetStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshEndpoints, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockEndpointStore.Object);
+        _mockStateStoreFactory
+            .Setup(x => x.GetCacheableStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshAppidIndex, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockAppIdIndexStore.Object);
+        _mockStateStoreFactory
+            .Setup(x => x.GetCacheableStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshGlobalIndex, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockGlobalIndexStore.Object);
+
+        // Health check calls ExistsAsync on global index
+        mockGlobalIndexStore
+            .Setup(x => x.ExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+
+        // Act
+        var result = await manager.InitializeAsync();
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_CalledTwice_ShouldSkipSecondInitialization()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        _mockStateStoreFactory
+            .Setup(x => x.GetStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshEndpoints, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockEndpointStore.Object);
+        _mockStateStoreFactory
+            .Setup(x => x.GetCacheableStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshAppidIndex, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockAppIdIndexStore.Object);
+        _mockStateStoreFactory
+            .Setup(x => x.GetCacheableStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshGlobalIndex, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockGlobalIndexStore.Object);
+
+        mockGlobalIndexStore
+            .Setup(x => x.ExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+
+        // Act
+        var result1 = await manager.InitializeAsync();
+        var result2 = await manager.InitializeAsync();
+
+        // Assert - both return true, but factory only called once
+        Assert.True(result1);
+        Assert.True(result2);
+        _mockStateStoreFactory.Verify(
+            x => x.GetStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshEndpoints, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_WhenNotInitialized_ShouldReturnUnhealthy()
+    {
+        // Arrange - don't call InitializeAsync
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+
+        // Act
+        var (isHealthy, message, operationTime) = await manager.CheckHealthAsync();
+
+        // Assert
+        Assert.False(isHealthy);
+        Assert.Contains("not initialized", message ?? string.Empty);
+        Assert.Null(operationTime);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_WhenInitialized_ShouldReturnHealthy()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        _mockStateStoreFactory
+            .Setup(x => x.GetStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshEndpoints, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockEndpointStore.Object);
+        _mockStateStoreFactory
+            .Setup(x => x.GetCacheableStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshAppidIndex, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockAppIdIndexStore.Object);
+        _mockStateStoreFactory
+            .Setup(x => x.GetCacheableStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshGlobalIndex, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockGlobalIndexStore.Object);
+
+        mockGlobalIndexStore
+            .Setup(x => x.ExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        // Act
+        var (isHealthy, message, operationTime) = await manager.CheckHealthAsync();
+
+        // Assert
+        Assert.True(isHealthy);
+        Assert.NotNull(message);
+        Assert.NotNull(operationTime);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_WhenExistsThrows_ShouldReturnUnhealthy()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        _mockStateStoreFactory
+            .Setup(x => x.GetStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshEndpoints, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockEndpointStore.Object);
+        _mockStateStoreFactory
+            .Setup(x => x.GetCacheableStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshAppidIndex, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockAppIdIndexStore.Object);
+        _mockStateStoreFactory
+            .Setup(x => x.GetCacheableStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshGlobalIndex, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockGlobalIndexStore.Object);
+
+        // First call succeeds (initialization), second call throws (health check after init)
+        var callCount = 0;
+        mockGlobalIndexStore
+            .Setup(x => x.ExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                if (callCount > 1) throw new Exception("Redis connection lost");
+                return true;
+            });
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        // Act
+        var (isHealthy, message, _) = await manager.CheckHealthAsync();
+
+        // Assert
+        Assert.False(isHealthy);
+        Assert.Contains("Health check failed", message ?? string.Empty);
+    }
+
+    #region RegisterEndpointAsync Tests
+
+    [Fact]
+    public async Task RegisterEndpointAsync_WhenNotInitialized_ShouldReturnFalse()
+    {
+        // Arrange - don't call InitializeAsync
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        var endpoint = new MeshEndpoint
+        {
+            InstanceId = Guid.NewGuid(),
+            AppId = "test-app",
+            Host = "localhost",
+            Port = 5000
+        };
+
+        // Act
+        var result = await manager.RegisterEndpointAsync(endpoint, 90);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task RegisterEndpointAsync_WhenInitialized_ShouldSaveAndIndex()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        var endpoint = new MeshEndpoint
+        {
+            InstanceId = Guid.NewGuid(),
+            AppId = "test-app",
+            Host = "localhost",
+            Port = 5000
+        };
+
+        // Act
+        var result = await manager.RegisterEndpointAsync(endpoint, 90);
+
+        // Assert
+        Assert.True(result);
+
+        // Verify endpoint was saved
+        mockEndpointStore.Verify(x => x.SaveAsync(
+            endpoint.InstanceId.ToString(),
+            endpoint,
+            It.Is<StateOptions>(o => o.Ttl == 90),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify instance was added to app-id index
+        mockAppIdIndexStore.Verify(x => x.AddToSetAsync(
+            endpoint.AppId,
+            endpoint.InstanceId.ToString(),
+            It.Is<StateOptions>(o => o.Ttl == 90),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify instance was added to global index
+        mockGlobalIndexStore.Verify(x => x.AddToSetAsync(
+            "_index",
+            endpoint.InstanceId.ToString(),
+            null,
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RegisterEndpointAsync_WhenSaveThrows_ShouldReturnFalse()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
+
+        mockEndpointStore
+            .Setup(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<MeshEndpoint>(), It.IsAny<StateOptions>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Redis write failed"));
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        var endpoint = new MeshEndpoint { InstanceId = Guid.NewGuid(), AppId = "test", Host = "h", Port = 1 };
+
+        // Act
+        var result = await manager.RegisterEndpointAsync(endpoint, 90);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    #endregion
+
+    #region DeregisterEndpointAsync Tests
+
+    [Fact]
+    public async Task DeregisterEndpointAsync_WhenNotInitialized_ShouldReturnFalse()
+    {
+        // Arrange
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+
+        // Act
+        var result = await manager.DeregisterEndpointAsync(Guid.NewGuid(), "test-app");
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task DeregisterEndpointAsync_WhenInitialized_ShouldRemoveFromAllStores()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        var instanceId = Guid.NewGuid();
+        var appId = "test-app";
+
+        // Act
+        var result = await manager.DeregisterEndpointAsync(instanceId, appId);
+
+        // Assert
+        Assert.True(result);
+
+        mockEndpointStore.Verify(x => x.DeleteAsync(instanceId.ToString(), It.IsAny<CancellationToken>()), Times.Once);
+        mockAppIdIndexStore.Verify(x => x.RemoveFromSetAsync(appId, instanceId.ToString(), It.IsAny<CancellationToken>()), Times.Once);
+        mockGlobalIndexStore.Verify(x => x.RemoveFromSetAsync("_index", instanceId.ToString(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeregisterEndpointAsync_WhenDeleteThrows_ShouldReturnFalse()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
+
+        mockEndpointStore
+            .Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Redis delete failed"));
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        // Act
+        var result = await manager.DeregisterEndpointAsync(Guid.NewGuid(), "test");
+
+        // Assert
+        Assert.False(result);
+    }
+
+    #endregion
+
+    #region UpdateHeartbeatAsync Tests
+
+    [Fact]
+    public async Task UpdateHeartbeatAsync_WhenNotInitialized_ShouldReturnFalse()
+    {
+        // Arrange
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+
+        // Act
+        var result = await manager.UpdateHeartbeatAsync(Guid.NewGuid(), "app", EndpointStatus.Healthy, 0, 0, null, 90);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task UpdateHeartbeatAsync_WhenEndpointNotFound_ShouldReturnFalse()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
+
+        mockEndpointStore
+            .Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MeshEndpoint?)null);
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        // Act
+        var result = await manager.UpdateHeartbeatAsync(Guid.NewGuid(), "app", EndpointStatus.Healthy, 50, 100, null, 90);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task UpdateHeartbeatAsync_WhenEndpointExists_ShouldUpdateAndSave()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
+
+        var instanceId = Guid.NewGuid();
+        var existingEndpoint = new MeshEndpoint
+        {
+            InstanceId = instanceId,
+            AppId = "test-app",
+            Host = "localhost",
+            Port = 5000,
+            Status = EndpointStatus.Healthy,
+            LoadPercent = 10,
+            CurrentConnections = 5
+        };
+
+        mockEndpointStore
+            .Setup(x => x.GetAsync(instanceId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingEndpoint);
+
+        MeshEndpoint? savedEndpoint = null;
+        mockEndpointStore
+            .Setup(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<MeshEndpoint>(), It.IsAny<StateOptions>(), It.IsAny<CancellationToken>()))
+            .Callback<string, MeshEndpoint, StateOptions?, CancellationToken>((_, ep, _, _) => savedEndpoint = ep)
+            .ReturnsAsync("etag");
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        var issues = new List<string> { "high memory" };
+
+        // Act
+        var result = await manager.UpdateHeartbeatAsync(
+            instanceId, "test-app", EndpointStatus.Degraded, 85f, 200, issues, 120);
+
+        // Assert
+        Assert.True(result);
+        Assert.NotNull(savedEndpoint);
+        Assert.Equal(EndpointStatus.Degraded, savedEndpoint.Status);
+        Assert.Equal(85f, savedEndpoint.LoadPercent);
+        Assert.Equal(200, savedEndpoint.CurrentConnections);
+        Assert.NotNull(savedEndpoint.Issues);
+        Assert.Contains("high memory", savedEndpoint.Issues);
+
+        // Verify TTL was refreshed on app-id index
+        mockAppIdIndexStore.Verify(x => x.RefreshSetTtlAsync("test-app", 120, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region GetEndpointsForAppIdAsync Tests
+
+    [Fact]
+    public async Task GetEndpointsForAppIdAsync_WhenNotInitialized_ShouldReturnEmpty()
+    {
+        // Arrange
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+
+        // Act
+        var endpoints = await manager.GetEndpointsForAppIdAsync("test-app");
+
+        // Assert
+        Assert.Empty(endpoints);
+    }
+
+    [Fact]
+    public async Task GetEndpointsForAppIdAsync_ShouldReturnHealthyEndpoints()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
+
+        var healthyId = Guid.NewGuid();
+        var unhealthyId = Guid.NewGuid();
+
+        mockAppIdIndexStore
+            .Setup(x => x.GetSetAsync<string>("test-app", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<string>)new List<string> { healthyId.ToString(), unhealthyId.ToString() });
+
+        mockEndpointStore
+            .Setup(x => x.GetAsync(healthyId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MeshEndpoint { InstanceId = healthyId, AppId = "test-app", Status = EndpointStatus.Healthy });
+        mockEndpointStore
+            .Setup(x => x.GetAsync(unhealthyId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MeshEndpoint { InstanceId = unhealthyId, AppId = "test-app", Status = EndpointStatus.Unavailable });
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        // Act
+        var endpoints = await manager.GetEndpointsForAppIdAsync("test-app");
+
+        // Assert - only healthy endpoint returned
+        Assert.Single(endpoints);
+        Assert.Equal(healthyId, endpoints[0].InstanceId);
+    }
+
+    [Fact]
+    public async Task GetEndpointsForAppIdAsync_WithIncludeUnhealthy_ShouldReturnAll()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
+
+        var healthyId = Guid.NewGuid();
+        var unhealthyId = Guid.NewGuid();
+
+        mockAppIdIndexStore
+            .Setup(x => x.GetSetAsync<string>("test-app", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<string>)new List<string> { healthyId.ToString(), unhealthyId.ToString() });
+
+        mockEndpointStore
+            .Setup(x => x.GetAsync(healthyId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MeshEndpoint { InstanceId = healthyId, AppId = "test-app", Status = EndpointStatus.Healthy });
+        mockEndpointStore
+            .Setup(x => x.GetAsync(unhealthyId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MeshEndpoint { InstanceId = unhealthyId, AppId = "test-app", Status = EndpointStatus.Unavailable });
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        // Act
+        var endpoints = await manager.GetEndpointsForAppIdAsync("test-app", includeUnhealthy: true);
+
+        // Assert - both endpoints returned
+        Assert.Equal(2, endpoints.Count);
+    }
+
+    [Fact]
+    public async Task GetEndpointsForAppIdAsync_WithStaleIndex_ShouldCleanup()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
+
+        var staleId = Guid.NewGuid();
+
+        mockAppIdIndexStore
+            .Setup(x => x.GetSetAsync<string>("test-app", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<string>)new List<string> { staleId.ToString() });
+
+        // Endpoint has expired (returns null)
+        mockEndpointStore
+            .Setup(x => x.GetAsync(staleId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MeshEndpoint?)null);
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        // Act
+        var endpoints = await manager.GetEndpointsForAppIdAsync("test-app");
+
+        // Assert - empty result, stale entry cleaned up
+        Assert.Empty(endpoints);
+        mockAppIdIndexStore.Verify(x => x.RemoveFromSetAsync("test-app", staleId.ToString(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region GetAllEndpointsAsync Tests
+
+    [Fact]
+    public async Task GetAllEndpointsAsync_WhenNotInitialized_ShouldReturnEmpty()
+    {
+        // Arrange
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+
+        // Act
+        var endpoints = await manager.GetAllEndpointsAsync();
+
+        // Assert
+        Assert.Empty(endpoints);
+    }
+
+    [Fact]
+    public async Task GetAllEndpointsAsync_ShouldReturnAllEndpoints()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
+
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+
+        mockGlobalIndexStore
+            .Setup(x => x.GetSetAsync<string>("_index", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<string>)new List<string> { id1.ToString(), id2.ToString() });
+
+        mockEndpointStore
+            .Setup(x => x.GetAsync(id1.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MeshEndpoint { InstanceId = id1, AppId = "app-a", Host = "h1", Port = 1 });
+        mockEndpointStore
+            .Setup(x => x.GetAsync(id2.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MeshEndpoint { InstanceId = id2, AppId = "app-b", Host = "h2", Port = 2 });
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        // Act
+        var endpoints = await manager.GetAllEndpointsAsync();
+
+        // Assert
+        Assert.Equal(2, endpoints.Count);
+    }
+
+    [Fact]
+    public async Task GetAllEndpointsAsync_WithPrefix_ShouldFilterByPrefix()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
+
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+
+        mockGlobalIndexStore
+            .Setup(x => x.GetSetAsync<string>("_index", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<string>)new List<string> { id1.ToString(), id2.ToString() });
+
+        mockEndpointStore
+            .Setup(x => x.GetAsync(id1.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MeshEndpoint { InstanceId = id1, AppId = "bannou-auth", Host = "h1", Port = 1 });
+        mockEndpointStore
+            .Setup(x => x.GetAsync(id2.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MeshEndpoint { InstanceId = id2, AppId = "other-service", Host = "h2", Port = 2 });
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        // Act
+        var endpoints = await manager.GetAllEndpointsAsync("bannou");
+
+        // Assert
+        Assert.Single(endpoints);
+        Assert.Equal("bannou-auth", endpoints[0].AppId);
+    }
+
+    [Fact]
+    public async Task GetAllEndpointsAsync_WithStaleIndex_ShouldCleanup()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
+
+        var staleId = Guid.NewGuid();
+
+        mockGlobalIndexStore
+            .Setup(x => x.GetSetAsync<string>("_index", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<string>)new List<string> { staleId.ToString() });
+
+        mockEndpointStore
+            .Setup(x => x.GetAsync(staleId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MeshEndpoint?)null);
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        // Act
+        var endpoints = await manager.GetAllEndpointsAsync();
+
+        // Assert
+        Assert.Empty(endpoints);
+        mockGlobalIndexStore.Verify(x => x.RemoveFromSetAsync("_index", staleId.ToString(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region GetEndpointByInstanceIdAsync Tests
+
+    [Fact]
+    public async Task GetEndpointByInstanceIdAsync_WhenNotInitialized_ShouldReturnNull()
+    {
+        // Arrange
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+
+        // Act
+        var result = await manager.GetEndpointByInstanceIdAsync(Guid.NewGuid());
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetEndpointByInstanceIdAsync_WhenFound_ShouldReturnEndpoint()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
+
+        var instanceId = Guid.NewGuid();
+        var expected = new MeshEndpoint { InstanceId = instanceId, AppId = "test", Host = "h", Port = 1 };
+
+        mockEndpointStore
+            .Setup(x => x.GetAsync(instanceId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expected);
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        // Act
+        var result = await manager.GetEndpointByInstanceIdAsync(instanceId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(instanceId, result.InstanceId);
+    }
+
+    [Fact]
+    public async Task GetEndpointByInstanceIdAsync_WhenNotFound_ShouldReturnNull()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
+
+        mockEndpointStore
+            .Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MeshEndpoint?)null);
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        // Act
+        var result = await manager.GetEndpointByInstanceIdAsync(Guid.NewGuid());
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetEndpointByInstanceIdAsync_WhenStoreThrows_ShouldPropagate()
+    {
+        // Arrange
+        var mockEndpointStore = new Mock<IStateStore<MeshEndpoint>>();
+        var mockAppIdIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+        var mockGlobalIndexStore = new Mock<ICacheableStateStore<MeshEndpoint>>();
+
+        SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
+
+        mockEndpointStore
+            .Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Redis failure"));
+
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
+        await manager.InitializeAsync();
+
+        // Act & Assert - state store failures propagate to caller
+        await Assert.ThrowsAsync<Exception>(() => manager.GetEndpointByInstanceIdAsync(Guid.NewGuid()));
+    }
+
+    #endregion
+
+    #region Helpers
+
+    /// <summary>
+    /// Sets up the mock state store factory to return initialized stores
+    /// and configures the global index ExistsAsync for health checks.
+    /// </summary>
+    private void SetupInitializedManager(
+        Mock<IStateStore<MeshEndpoint>> mockEndpointStore,
+        Mock<ICacheableStateStore<MeshEndpoint>> mockAppIdIndexStore,
+        Mock<ICacheableStateStore<MeshEndpoint>> mockGlobalIndexStore)
+    {
+        _mockStateStoreFactory
+            .Setup(x => x.GetStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshEndpoints, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockEndpointStore.Object);
+        _mockStateStoreFactory
+            .Setup(x => x.GetCacheableStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshAppidIndex, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockAppIdIndexStore.Object);
+        _mockStateStoreFactory
+            .Setup(x => x.GetCacheableStoreAsync<MeshEndpoint>(StateStoreDefinitions.MeshGlobalIndex, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockGlobalIndexStore.Object);
+
+        mockGlobalIndexStore
+            .Setup(x => x.ExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Default return for SaveAsync (returns etag string)
+        mockEndpointStore
+            .Setup(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<MeshEndpoint>(), It.IsAny<StateOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+    }
+
+    #endregion
 }
 
 /// <summary>

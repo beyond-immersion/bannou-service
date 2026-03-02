@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
@@ -24,6 +25,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     private const string HEARTBEATS_STORE = StateStoreDefinitions.OrchestratorHeartbeats;
     private const string ROUTINGS_STORE = StateStoreDefinitions.OrchestratorRoutings;
     private const string CONFIG_STORE = StateStoreDefinitions.OrchestratorConfig;
+    private const string POOL_STORE = StateStoreDefinitions.Orchestrator;
 
     // Index keys for tracking known entities (avoids KEYS/SCAN)
     private const string HEARTBEAT_INDEX_KEY = "_index";
@@ -34,6 +36,14 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     private const string CONFIG_CURRENT_KEY = "current";
     private const string CONFIG_HISTORY_PREFIX = "history:";
 
+    // Processing pool key patterns (internal to state manager — FOUNDATION TENETS)
+    private const string POOL_INSTANCES_KEY = "processing-pool:{0}:instances";
+    private const string POOL_AVAILABLE_KEY = "processing-pool:{0}:available";
+    private const string POOL_LEASES_KEY = "processing-pool:{0}:leases";
+    private const string POOL_METRICS_KEY = "processing-pool:{0}:metrics";
+    private const string POOL_CONFIG_KEY = "processing-pool:{0}:config";
+    private const string POOL_KNOWN_KEY = "processing-pool:known";
+
     // Cached stores (lazy initialization after InitializeAsync)
     private IStateStore<InstanceHealthState>? _heartbeatStore;
     private IStateStore<HeartbeatIndex>? _heartbeatIndexStore;
@@ -41,8 +51,13 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     private IStateStore<RoutingIndex>? _routingIndexStore;
     private IStateStore<DeploymentConfiguration>? _configStore;
     private IStateStore<ConfigVersion>? _versionStore;
+    private IStateStore<List<ProcessorInstance>>? _poolInstanceListStore;
+    private IStateStore<Dictionary<string, ProcessorLease>>? _poolLeaseStore;
+    private IStateStore<PoolConfiguration>? _poolConfigStore;
+    private IStateStore<PoolMetricsData>? _poolMetricsStore;
+    private IStateStore<List<string>>? _poolKnownStore;
 
-    private bool _initialized;
+    private int _initialized; // 0=false, 1=true; Interlocked for thread safety in Singleton
 
     /// <summary>
     /// Creates OrchestratorStateManager with state store factory from lib-state.
@@ -68,8 +83,8 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.InitializeAsync");
         try
         {
-            // Prevent re-initialization
-            if (_initialized)
+            // Prevent re-initialization (thread-safe for Singleton — IMPLEMENTATION TENETS)
+            if (Interlocked.CompareExchange(ref _initialized, 1, 0) != 0)
             {
                 _logger.LogDebug("State stores already initialized, skipping...");
                 return true;
@@ -88,12 +103,18 @@ public class OrchestratorStateManager : IOrchestratorStateManager
             _configStore = await _stateStoreFactory.GetStoreAsync<DeploymentConfiguration>(CONFIG_STORE, cancellationToken);
             _versionStore = await _stateStoreFactory.GetStoreAsync<ConfigVersion>(CONFIG_STORE, cancellationToken);
 
+            // Processing pool stores — using primary orchestrator state store (FOUNDATION TENETS)
+            _poolInstanceListStore = await _stateStoreFactory.GetStoreAsync<List<ProcessorInstance>>(POOL_STORE, cancellationToken);
+            _poolLeaseStore = await _stateStoreFactory.GetStoreAsync<Dictionary<string, ProcessorLease>>(POOL_STORE, cancellationToken);
+            _poolConfigStore = await _stateStoreFactory.GetStoreAsync<PoolConfiguration>(POOL_STORE, cancellationToken);
+            _poolMetricsStore = await _stateStoreFactory.GetStoreAsync<PoolMetricsData>(POOL_STORE, cancellationToken);
+            _poolKnownStore = await _stateStoreFactory.GetStoreAsync<List<string>>(POOL_STORE, cancellationToken);
+
             // Verify connectivity with a simple operation
             var testResult = await CheckHealthAsync();
 
             if (testResult.IsHealthy)
             {
-                _initialized = true;
                 _logger.LogInformation(
                     "Orchestrator state stores initialized successfully (operation time: {OperationTime}ms)",
                     testResult.OperationTime?.TotalMilliseconds ?? 0);
@@ -101,11 +122,13 @@ public class OrchestratorStateManager : IOrchestratorStateManager
             }
 
             _logger.LogWarning("State store health check failed: {Message}", testResult.Message);
+            Interlocked.Exchange(ref _initialized, 0); // Reset so retry can succeed
             return false;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to initialize orchestrator state stores");
+            Interlocked.Exchange(ref _initialized, 0); // Reset so retry can succeed
             return false;
         }
     }
@@ -283,10 +306,9 @@ public class OrchestratorStateManager : IOrchestratorStateManager
                         AppId = healthStatus.AppId,
                         Status = healthStatus.Status,
                         LastSeen = healthStatus.LastSeen,
-                        // Store issues in Metadata if present
                         Metadata = healthStatus.Issues?.Count > 0
-                            ? new { issues = healthStatus.Issues }
-                            : new object()
+                            ? new Dictionary<string, object?> { ["issues"] = healthStatus.Issues }
+                            : null
                     });
                 }
                 else
@@ -368,10 +390,9 @@ public class OrchestratorStateManager : IOrchestratorStateManager
                 AppId = healthStatus.AppId,
                 Status = healthStatus.Status,
                 LastSeen = healthStatus.LastSeen,
-                // Store issues in Metadata if present
                 Metadata = healthStatus.Issues?.Count > 0
-                    ? new { issues = healthStatus.Issues }
-                    : new object()
+                    ? new Dictionary<string, object?> { ["issues"] = healthStatus.Issues }
+                    : null
             };
         }
         catch (Exception ex)
@@ -698,7 +719,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
             {
                 AppId = defaultAppId,
                 Host = defaultAppId,
-                Port = 80,
+                Port = _configuration.DefaultServicePort,
                 Status = ServiceHealthStatus.Healthy,
                 LastUpdated = DateTimeOffset.UtcNow
             };
@@ -763,6 +784,64 @@ public class OrchestratorStateManager : IOrchestratorStateManager
             _logger.LogError(ex, "Failed to get configuration version");
             throw; // Don't mask state store failures - caller needs to know
         }
+    }
+
+    /// <summary>
+    /// Atomically increment and return the mappings version counter.
+    /// Stored in Redis for multi-instance safety (IMPLEMENTATION TENETS).
+    /// </summary>
+    public async Task<int> IncrementMappingsVersionAsync()
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.IncrementMappingsVersionAsync");
+        if (_versionStore == null)
+        {
+            _logger.LogWarning("State stores not initialized. Returning version 0.");
+            return 0;
+        }
+
+        const string mappingsVersionKey = "mappings-version";
+        const int maxRetries = 3;
+
+        for (int retry = 0; retry < maxRetries; retry++)
+        {
+            try
+            {
+                var (versionObj, etag) = await _versionStore.GetWithETagAsync(mappingsVersionKey);
+                var newVersion = (versionObj?.Version ?? 0) + 1;
+
+                if (etag == null)
+                {
+                    // Key doesn't exist yet — initial creation (no concurrency check needed)
+                    await _versionStore.SaveAsync(mappingsVersionKey, new ConfigVersion { Version = newVersion });
+                    return newVersion;
+                }
+
+                var newEtag = await _versionStore.TrySaveAsync(
+                    mappingsVersionKey,
+                    new ConfigVersion { Version = newVersion },
+                    etag);
+
+                if (newEtag != null)
+                {
+                    return newVersion;
+                }
+
+                // ETag mismatch — another instance incremented concurrently; retry
+                _logger.LogDebug(
+                    "Mappings version increment conflict on attempt {Attempt}, retrying",
+                    retry + 1);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to increment mappings version on attempt {Attempt}", retry + 1);
+                throw;
+            }
+        }
+
+        // All retries exhausted — should be extremely rare
+        _logger.LogWarning("Mappings version increment failed after {MaxRetries} retries due to contention", maxRetries);
+        var fallback = await _versionStore.GetAsync(mappingsVersionKey);
+        return fallback?.Version ?? 0;
     }
 
     /// <summary>
@@ -967,152 +1046,113 @@ public class OrchestratorStateManager : IOrchestratorStateManager
 
     #endregion
 
-    #region Generic Storage Methods
+    #region Processing Pool State Management
 
-    /// <summary>
-    /// Get a list of items.
-    /// </summary>
-    public async Task<List<T>?> GetListAsync<T>(string key) where T : class
+    /// <inheritdoc />
+    public async Task<List<ProcessorInstance>?> GetAvailableProcessorsAsync(string poolType)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetListAsync");
-        if (_configStore == null)
-        {
-            _logger.LogWarning("State stores not initialized. Cannot get list.");
-            return null;
-        }
-
-        try
-        {
-            // Use config store for generic storage
-            var store = await _stateStoreFactory.GetStoreAsync<List<T>>(CONFIG_STORE);
-            return await store.GetAsync(key);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get list from key {Key}", key);
-            throw; // Don't mask state store failures - null return should mean "not found", not "error"
-        }
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetAvailableProcessorsAsync");
+        if (_poolInstanceListStore == null) throw new InvalidOperationException("State stores not initialized");
+        var key = string.Format(POOL_AVAILABLE_KEY, poolType);
+        return await _poolInstanceListStore.GetAsync(key);
     }
 
-    /// <summary>
-    /// Set a list of items.
-    /// </summary>
-    public async Task SetListAsync<T>(string key, List<T> items) where T : class
+    /// <inheritdoc />
+    public async Task SetAvailableProcessorsAsync(string poolType, List<ProcessorInstance> instances)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.SetListAsync");
-        if (_configStore == null)
-        {
-            _logger.LogWarning("State stores not initialized. Cannot set list.");
-            return;
-        }
-
-        try
-        {
-            var store = await _stateStoreFactory.GetStoreAsync<List<T>>(CONFIG_STORE);
-            await store.SaveAsync(key, items);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to set list at key {Key}", key);
-            throw; // Don't mask state store failures - caller needs to know if data wasn't saved
-        }
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.SetAvailableProcessorsAsync");
+        if (_poolInstanceListStore == null) throw new InvalidOperationException("State stores not initialized");
+        var key = string.Format(POOL_AVAILABLE_KEY, poolType);
+        await _poolInstanceListStore.SaveAsync(key, instances);
     }
 
-    /// <summary>
-    /// Get a hash (dictionary).
-    /// </summary>
-    public async Task<Dictionary<string, T>?> GetHashAsync<T>(string key) where T : class
+    /// <inheritdoc />
+    public async Task<List<ProcessorInstance>?> GetPoolInstancesAsync(string poolType)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetHashAsync");
-        if (_configStore == null)
-        {
-            _logger.LogWarning("State stores not initialized. Cannot get hash.");
-            return null;
-        }
-
-        try
-        {
-            var store = await _stateStoreFactory.GetStoreAsync<Dictionary<string, T>>(CONFIG_STORE);
-            return await store.GetAsync(key);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get hash from key {Key}", key);
-            throw; // Don't mask state store failures - null return should mean "not found", not "error"
-        }
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetPoolInstancesAsync");
+        if (_poolInstanceListStore == null) throw new InvalidOperationException("State stores not initialized");
+        var key = string.Format(POOL_INSTANCES_KEY, poolType);
+        return await _poolInstanceListStore.GetAsync(key);
     }
 
-    /// <summary>
-    /// Set a hash (dictionary).
-    /// </summary>
-    public async Task SetHashAsync<T>(string key, Dictionary<string, T> hash) where T : class
+    /// <inheritdoc />
+    public async Task SetPoolInstancesAsync(string poolType, List<ProcessorInstance> instances)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.SetHashAsync");
-        if (_configStore == null)
-        {
-            _logger.LogWarning("State stores not initialized. Cannot set hash.");
-            return;
-        }
-
-        try
-        {
-            var store = await _stateStoreFactory.GetStoreAsync<Dictionary<string, T>>(CONFIG_STORE);
-            await store.SaveAsync(key, hash);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to set hash at key {Key}", key);
-            throw; // Don't mask state store failures - caller needs to know if data wasn't saved
-        }
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.SetPoolInstancesAsync");
+        if (_poolInstanceListStore == null) throw new InvalidOperationException("State stores not initialized");
+        var key = string.Format(POOL_INSTANCES_KEY, poolType);
+        await _poolInstanceListStore.SaveAsync(key, instances);
     }
 
-    /// <summary>
-    /// Get a single value.
-    /// </summary>
-    public async Task<T?> GetValueAsync<T>(string key) where T : class
+    /// <inheritdoc />
+    public async Task<Dictionary<string, ProcessorLease>?> GetLeasesAsync(string poolType)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetValueAsync");
-        if (_configStore == null)
-        {
-            _logger.LogWarning("State stores not initialized. Cannot get value.");
-            return null;
-        }
-
-        try
-        {
-            var store = await _stateStoreFactory.GetStoreAsync<T>(CONFIG_STORE);
-            return await store.GetAsync(key);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get value from key {Key}", key);
-            throw; // Don't mask state store failures - null return should mean "not found", not "error"
-        }
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetLeasesAsync");
+        if (_poolLeaseStore == null) throw new InvalidOperationException("State stores not initialized");
+        var key = string.Format(POOL_LEASES_KEY, poolType);
+        return await _poolLeaseStore.GetAsync(key);
     }
 
-    /// <summary>
-    /// Set a single value.
-    /// </summary>
-    public async Task SetValueAsync<T>(string key, T value, TimeSpan? ttl = null) where T : class
+    /// <inheritdoc />
+    public async Task SetLeasesAsync(string poolType, Dictionary<string, ProcessorLease> leases)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.SetValueAsync");
-        if (_configStore == null)
-        {
-            _logger.LogWarning("State stores not initialized. Cannot set value.");
-            return;
-        }
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.SetLeasesAsync");
+        if (_poolLeaseStore == null) throw new InvalidOperationException("State stores not initialized");
+        var key = string.Format(POOL_LEASES_KEY, poolType);
+        await _poolLeaseStore.SaveAsync(key, leases);
+    }
 
-        try
-        {
-            var store = await _stateStoreFactory.GetStoreAsync<T>(CONFIG_STORE);
-            var options = ttl.HasValue ? new StateOptions { Ttl = (int)ttl.Value.TotalSeconds } : null;
-            await store.SaveAsync(key, value, options);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to set value at key {Key}", key);
-            throw; // Don't mask state store failures - caller needs to know if data wasn't saved
-        }
+    /// <inheritdoc />
+    public async Task<PoolConfiguration?> GetPoolConfigurationAsync(string poolType)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetPoolConfigurationAsync");
+        if (_poolConfigStore == null) throw new InvalidOperationException("State stores not initialized");
+        var key = string.Format(POOL_CONFIG_KEY, poolType);
+        return await _poolConfigStore.GetAsync(key);
+    }
+
+    /// <inheritdoc />
+    public async Task SetPoolConfigurationAsync(string poolType, PoolConfiguration config)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.SetPoolConfigurationAsync");
+        if (_poolConfigStore == null) throw new InvalidOperationException("State stores not initialized");
+        var key = string.Format(POOL_CONFIG_KEY, poolType);
+        await _poolConfigStore.SaveAsync(key, config);
+    }
+
+    /// <inheritdoc />
+    public async Task<PoolMetricsData?> GetPoolMetricsAsync(string poolType)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetPoolMetricsAsync");
+        if (_poolMetricsStore == null) throw new InvalidOperationException("State stores not initialized");
+        var key = string.Format(POOL_METRICS_KEY, poolType);
+        return await _poolMetricsStore.GetAsync(key);
+    }
+
+    /// <inheritdoc />
+    public async Task SetPoolMetricsAsync(string poolType, PoolMetricsData metrics, TimeSpan? ttl = null)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.SetPoolMetricsAsync");
+        if (_poolMetricsStore == null) throw new InvalidOperationException("State stores not initialized");
+        var key = string.Format(POOL_METRICS_KEY, poolType);
+        var options = ttl.HasValue ? new StateOptions { Ttl = (int)ttl.Value.TotalSeconds } : null;
+        await _poolMetricsStore.SaveAsync(key, metrics, options);
+    }
+
+    /// <inheritdoc />
+    public async Task<List<string>?> GetKnownPoolTypesAsync()
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetKnownPoolTypesAsync");
+        if (_poolKnownStore == null) throw new InvalidOperationException("State stores not initialized");
+        return await _poolKnownStore.GetAsync(POOL_KNOWN_KEY);
+    }
+
+    /// <inheritdoc />
+    public async Task SetKnownPoolTypesAsync(List<string> poolTypes)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.SetKnownPoolTypesAsync");
+        if (_poolKnownStore == null) throw new InvalidOperationException("State stores not initialized");
+        await _poolKnownStore.SaveAsync(POOL_KNOWN_KEY, poolTypes);
     }
 
     #endregion
@@ -1125,10 +1165,10 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         _logger.LogDebug("OrchestratorStateManager disposed");
     }
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         Dispose();
-        return ValueTask.CompletedTask;
+        await Task.CompletedTask;
     }
 
     #endregion

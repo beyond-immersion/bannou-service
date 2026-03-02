@@ -452,7 +452,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
                             {
                                 ["bannou.mesh-enabled"] = "true",
                                 ["bannou.app-id"] = appId,
-                                ["bannou.app-port"] = "80"
+                                ["bannou.app-port"] = _configuration.DefaultServicePort.ToString()
                             }
                         },
                         Spec = new V1PodSpec
@@ -466,7 +466,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
                                     Env = envVars,
                                     Ports = new List<V1ContainerPort>
                                     {
-                                        new() { ContainerPort = 80, Name = "http" }
+                                        new() { ContainerPort = _configuration.DefaultServicePort, Name = "http" }
                                     }
                                 }
                             }

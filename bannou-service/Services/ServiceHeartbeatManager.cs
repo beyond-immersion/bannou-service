@@ -326,7 +326,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
                     {
                         ServiceId = service.InstanceId,
                         ServiceName = plugin.PluginName,
-                        Status = (Events.ServiceHealthStatus)ServiceHealthStatus.Degraded,
+                        Status = ServiceHealthStatus.Degraded,
                         Version = service.ServiceVersion
                     });
                 }
@@ -345,7 +345,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
             Timestamp = DateTimeOffset.UtcNow,
             ServiceId = InstanceId,
             AppId = AppId,
-            Status = (Events.InstanceHealthStatus)overallStatus,
+            Status = overallStatus,
             Services = serviceStatuses,
             Issues = _currentIssues.Count > 0 ? _currentIssues.ToList() : null,
             Capacity = GetInstanceCapacity()

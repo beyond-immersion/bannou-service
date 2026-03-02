@@ -72,7 +72,7 @@ public interface IBannouService
         {
             ServiceId = InstanceId,
             ServiceName = GetName() ?? GetType().Name,
-            Status = (Events.ServiceHealthStatus)ServiceHealthStatus.Healthy,
+            Status = ServiceHealthStatus.Healthy,
             Version = ServiceVersion
         };
     }

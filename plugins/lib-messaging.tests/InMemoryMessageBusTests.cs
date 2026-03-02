@@ -567,6 +567,146 @@ public class InMemoryMessageBusTests
 
     #endregion
 
+    #region SubscribeDynamicRawAsync Tests
+
+    [Fact]
+    public async Task SubscribeDynamicRawAsync_WithValidParameters_ReturnsDisposable()
+    {
+        // Arrange
+        var topic = "test.topic";
+        var handler = new Func<byte[], CancellationToken, Task>((bytes, ct) => Task.CompletedTask);
+
+        // Act
+        var disposable = await _messageBus.SubscribeDynamicRawAsync(topic, handler);
+
+        // Assert
+        Assert.NotNull(disposable);
+        await disposable.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task SubscribeDynamicRawAsync_ReceivesSerializedBytes()
+    {
+        // Arrange
+        var topic = "test.topic";
+        byte[]? receivedBytes = null;
+        var receivedEvent = new TaskCompletionSource<bool>();
+
+        var disposable = await _messageBus.SubscribeDynamicRawAsync(topic, (bytes, ct) =>
+        {
+            receivedBytes = bytes;
+            receivedEvent.TrySetResult(true);
+            return Task.CompletedTask;
+        });
+
+        var eventData = new TestEvent { Message = "RawTest" };
+
+        // Act
+        await _messageBus.TryPublishAsync(topic, eventData);
+        await Task.WhenAny(receivedEvent.Task, Task.Delay(1000));
+
+        // Assert - Should receive bytes containing the serialized message
+        Assert.NotNull(receivedBytes);
+        Assert.True(receivedBytes.Length > 0);
+        var json = System.Text.Encoding.UTF8.GetString(receivedBytes);
+        Assert.Contains("RawTest", json);
+
+        // Cleanup
+        await disposable.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task SubscribeDynamicRawAsync_AfterDispose_NoLongerReceives()
+    {
+        // Arrange
+        var topic = "test.topic";
+        var receivedCount = 0;
+
+        var disposable = await _messageBus.SubscribeDynamicRawAsync(topic, (bytes, ct) =>
+        {
+            Interlocked.Increment(ref receivedCount);
+            return Task.CompletedTask;
+        });
+
+        // First publish - should receive
+        await _messageBus.TryPublishAsync(topic, new TestEvent { Message = "First" });
+        await Task.Delay(50);
+        Assert.Equal(1, receivedCount);
+
+        // Act - Dispose
+        await disposable.DisposeAsync();
+
+        // Second publish - should NOT receive
+        await _messageBus.TryPublishAsync(topic, new TestEvent { Message = "Second" });
+        await Task.Delay(50);
+
+        // Assert
+        Assert.Equal(1, receivedCount);
+    }
+
+    #endregion
+
+    #region TryPublishAsync Failure Path Tests
+
+    [Fact]
+    public async Task TryPublishAsync_WhenPublishFails_ReturnsFalse()
+    {
+        // Note: In the InMemoryMessageBus implementation, the publish itself
+        // can't really fail (serialize + fire-and-forget), but subscriber
+        // delivery failures are caught per-handler without propagating.
+        // This test verifies that subscriber exceptions don't affect return value.
+
+        // Arrange
+        var topic = "test.topic";
+        await _messageBus.SubscribeAsync<TestEvent>(topic, (evt, ct) =>
+        {
+            throw new InvalidOperationException("Handler failure");
+        });
+
+        // Act
+        var result = await _messageBus.TryPublishAsync(topic, new TestEvent { Message = "Test" });
+        await Task.Delay(50);
+
+        // Assert - Should still return true (delivery is fire-and-forget)
+        Assert.True(result);
+    }
+
+    #endregion
+
+    #region Multiple Topic Tests
+
+    [Fact]
+    public async Task Subscribe_MultipleDifferentTopics_OnlyReceivesMatchingTopic()
+    {
+        // Arrange
+        var topic1 = "test.topic1";
+        var topic2 = "test.topic2";
+        var receivedOnTopic1 = 0;
+        var receivedOnTopic2 = 0;
+
+        await _messageBus.SubscribeAsync<TestEvent>(topic1, (evt, ct) =>
+        {
+            Interlocked.Increment(ref receivedOnTopic1);
+            return Task.CompletedTask;
+        });
+
+        await _messageBus.SubscribeAsync<TestEvent>(topic2, (evt, ct) =>
+        {
+            Interlocked.Increment(ref receivedOnTopic2);
+            return Task.CompletedTask;
+        });
+
+        // Act - Publish only to topic1
+        await _messageBus.TryPublishAsync(topic1, new TestEvent { Message = "OnlyTopic1" });
+        await Task.Delay(50);
+
+        // Assert
+        Assert.Equal(1, receivedOnTopic1);
+        Assert.Equal(0, receivedOnTopic2);
+    }
+
+    #endregion
+
     #region Test Event Classes
 
     private class TestEvent
