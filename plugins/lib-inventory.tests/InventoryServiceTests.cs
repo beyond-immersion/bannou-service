@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Inventory;
+using BeyondImmersion.BannouService.Inventory.Caching;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
@@ -30,6 +31,8 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
     private readonly Mock<ILogger<InventoryService>> _mockLogger;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
+    private readonly Mock<IInventoryDataCache> _mockInventoryCache;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public InventoryServiceTests()
     {
@@ -42,6 +45,8 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         _mockLogger = new Mock<ILogger<InventoryService>>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
+        _mockInventoryCache = new Mock<IInventoryDataCache>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
 
         _mockEntitySessionRegistry
             .Setup(r => r.PublishToEntitySessionsAsync(
@@ -96,7 +101,9 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             _mockLogger.Object,
             Configuration,
             _mockTelemetryProvider.Object,
-            _mockEntitySessionRegistry.Object);
+            _mockEntitySessionRegistry.Object,
+            _mockInventoryCache.Object,
+            _mockEventConsumer.Object);
     }
 
     #region Constructor Tests

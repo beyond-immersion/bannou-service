@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Currency;
+using BeyondImmersion.BannouService.Currency.Caching;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
@@ -307,6 +308,8 @@ public class CurrencyConversionConcurrencyTests
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
+    private readonly Mock<ICurrencyDataCache> _mockCurrencyCache;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     // Typed stores
     private readonly Mock<IStateStore<WalletModel>> _mockWalletStore;
@@ -337,6 +340,8 @@ public class CurrencyConversionConcurrencyTests
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
+        _mockCurrencyCache = new Mock<ICurrencyDataCache>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Initialize stores
         _mockWalletStore = new Mock<IStateStore<WalletModel>>();
@@ -416,7 +421,9 @@ public class CurrencyConversionConcurrencyTests
             _configuration,
             _mockLockProvider.Object,
             _mockTelemetryProvider.Object,
-            _mockEntitySessionRegistry.Object);
+            _mockEntitySessionRegistry.Object,
+            _mockCurrencyCache.Object,
+            _mockEventConsumer.Object);
     }
 
     private WalletModel CreateTestWallet()
