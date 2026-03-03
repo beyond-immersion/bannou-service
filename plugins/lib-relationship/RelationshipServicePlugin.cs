@@ -1,4 +1,7 @@
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Relationship.Caching;
+using BeyondImmersion.BannouService.Relationship.Providers;
 using BeyondImmersion.BannouService.Resource;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -12,6 +15,18 @@ public class RelationshipServicePlugin : StandardServicePlugin<IRelationshipServ
 {
     public override string PluginName => "relationship";
     public override string DisplayName => "Relationship Service";
+
+    /// <summary>
+    /// Configure services for dependency injection.
+    /// </summary>
+    public override void ConfigureServices(IServiceCollection services)
+    {
+        base.ConfigureServices(services);
+
+        // Register relationship data cache and variable provider factory for ABML expressions
+        services.AddSingleton<IRelationshipDataCache, RelationshipDataCache>();
+        services.AddSingleton<IVariableProviderFactory, RelationshipProviderFactory>();
+    }
 
     /// <summary>
     /// Running phase - registers cleanup callbacks with lib-resource for character and realm

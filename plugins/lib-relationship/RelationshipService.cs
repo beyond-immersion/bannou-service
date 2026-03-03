@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Relationship.Caching;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,6 +26,7 @@ public partial class RelationshipService : IRelationshipService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly IResourceClient _resourceClient;
+    private readonly IRelationshipDataCache _relationshipCache;
 
     // Cached state store references (per IMPLEMENTATION TENETS - constructor-cached pattern)
     private readonly IStateStore<RelationshipModel> _relationshipModelStore;
@@ -57,6 +59,7 @@ public partial class RelationshipService : IRelationshipService
     /// <param name="eventConsumer">Event consumer for registering event handlers.</param>
     /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
     /// <param name="resourceClient">Resource client for reference tracking (L1 hard dependency).</param>
+    /// <param name="relationshipCache">Cache for relationship variable provider data.</param>
     public RelationshipService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -65,7 +68,8 @@ public partial class RelationshipService : IRelationshipService
         IDistributedLockProvider lockProvider,
         IEventConsumer eventConsumer,
         ITelemetryProvider telemetryProvider,
-        IResourceClient resourceClient)
+        IResourceClient resourceClient,
+        IRelationshipDataCache relationshipCache)
     {
         _messageBus = messageBus;
         _logger = logger;
@@ -73,6 +77,7 @@ public partial class RelationshipService : IRelationshipService
         _lockProvider = lockProvider;
         _telemetryProvider = telemetryProvider;
         _resourceClient = resourceClient;
+        _relationshipCache = relationshipCache;
 
         // Cache state store references (per IMPLEMENTATION TENETS)
         _relationshipModelStore = stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship);
