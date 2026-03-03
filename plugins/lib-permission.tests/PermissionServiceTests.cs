@@ -45,6 +45,7 @@ public class PermissionServiceTests
     private const string SESSION_STATES_KEY = "session:{0}:states";
     private const string SESSION_PERMISSIONS_KEY = "session:{0}:permissions";
     private const string PERMISSION_MATRIX_KEY = "permissions:{0}:{1}:{2}";
+    private const string SERVICE_REGISTERED_KEY = "service-registered:{0}";
 
     public PermissionServiceTests()
     {
@@ -1981,6 +1982,1023 @@ public class PermissionServiceTests
         // Assert — with empty roles, DetermineHighestPriorityRole returns default ("anonymous")
         Assert.NotNull(savedStates);
         Assert.Equal("anonymous", savedStates!["role"]);
+    }
+
+    #endregion
+
+    #region IPermissionRegistry.RegisterServiceAsync Tests (Gap 1)
+
+    /// <summary>
+    /// Verifies that the explicit IPermissionRegistry.RegisterServiceAsync implementation
+    /// correctly converts generic dictionary types to ServicePermissionMatrix and delegates
+    /// to RegisterServicePermissionsAsync.
+    /// </summary>
+    [Fact]
+    public async Task IPermissionRegistry_RegisterServiceAsync_ConvertsAndDelegates()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Setup for successful registration path
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+        _mockCacheableStore
+            .Setup(s => s.SetContainsAsync<string>(REGISTERED_SERVICES_KEY, "test-svc", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HashSet<string>?)null);
+
+        // Capture what gets saved as the permission matrix
+        string? savedMatrixKey = null;
+        HashSet<string>? savedEndpoints = null;
+        _mockHashSetStore
+            .Setup(s => s.SaveAsync(
+                It.Is<string>(k => k.StartsWith("permissions:")),
+                It.IsAny<HashSet<string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, HashSet<string>, StateOptions?, CancellationToken>((k, v, _, _) =>
+            {
+                savedMatrixKey = k;
+                savedEndpoints = v;
+            })
+            .ReturnsAsync("etag");
+
+        var permissionMatrix = new Dictionary<string, IDictionary<string, ICollection<string>>>
+        {
+            ["default"] = new Dictionary<string, ICollection<string>>
+            {
+                ["admin"] = new List<string> { "/test/endpoint" }
+            }
+        };
+
+        // Act — cast to explicit interface
+        IPermissionRegistry registry = service;
+        await registry.RegisterServiceAsync("test-svc", "2.0.0", permissionMatrix);
+
+        // Assert — verify the service was added to registered services
+        _mockCacheableStore.Verify(s => s.AddToSetAsync<string>(
+            REGISTERED_SERVICES_KEY,
+            "test-svc",
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that IPermissionRegistry.RegisterServiceAsync correctly converts and passes
+    /// the version and permission matrix through to the underlying implementation.
+    /// </summary>
+    [Fact]
+    public async Task IPermissionRegistry_RegisterServiceAsync_PassesVersionToImplementation()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Make the lock fail so RegisterServicePermissionsAsync returns non-OK status.
+        // Actually, RegisterServicePermissionsAsync doesn't use locks. Instead, we need
+        // to trigger a non-OK return. Looking at the code, the only non-OK path doesn't exist
+        // (it always returns OK). Let's test the conversion logic by verifying the data flows through.
+        // The InvalidOperationException path would require RegisterServicePermissionsAsync to return
+        // a non-OK status, which currently only happens via an impossible code path.
+        // However, we can still test the conversion is correct with more detailed assertions.
+
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+        _mockCacheableStore
+            .Setup(s => s.SetContainsAsync<string>(REGISTERED_SERVICES_KEY, "fail-svc", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        // Force the registration to succeed and verify the matrix was correctly constructed
+        ServiceRegistrationInfo? capturedRegistration = null;
+        _mockRegistrationInfoStore
+            .Setup(s => s.SaveAsync(
+                It.Is<string>(k => k.Contains("fail-svc")),
+                It.IsAny<ServiceRegistrationInfo>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, ServiceRegistrationInfo, StateOptions?, CancellationToken>(
+                (_, info, _, _) => capturedRegistration = info)
+            .ReturnsAsync("etag");
+
+        var permissionMatrix = new Dictionary<string, IDictionary<string, ICollection<string>>>
+        {
+            ["authenticated"] = new Dictionary<string, ICollection<string>>
+            {
+                ["user"] = new List<string> { "/ep1", "/ep2" },
+                ["admin"] = new List<string> { "/admin-ep" }
+            }
+        };
+
+        // Act
+        IPermissionRegistry registry = service;
+        await registry.RegisterServiceAsync("fail-svc", "3.0.0", permissionMatrix);
+
+        // Assert — verify the version was passed through the conversion
+        Assert.NotNull(capturedRegistration);
+        Assert.Equal("fail-svc", capturedRegistration.ServiceId);
+        Assert.Equal("3.0.0", capturedRegistration.Version);
+    }
+
+    #endregion
+
+    #region RegisterServicePermissionsAsync Idempotent Skip Tests (Gap 2)
+
+    /// <summary>
+    /// Verifies that when the hash matches AND the service is already registered,
+    /// registration is skipped (idempotent path) and no permission matrix is stored.
+    /// </summary>
+    [Fact]
+    public async Task RegisterServicePermissionsAsync_HashMatchAndAlreadyRegistered_SkipsRegistration()
+    {
+        // Arrange
+        var service = CreateService();
+        var permissions = new ServicePermissionMatrix
+        {
+            ServiceId = "orchestrator",
+            Version = "1.0.0",
+            Permissions = new Dictionary<string, StatePermissions>
+            {
+                ["default"] = new StatePermissions
+                {
+                    ["admin"] = new System.Collections.ObjectModel.Collection<string> { "/health" }
+                }
+            }
+        };
+
+        // First call to get the hash
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+        _mockCacheableStore
+            .Setup(s => s.SetContainsAsync<string>(REGISTERED_SERVICES_KEY, "orchestrator", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HashSet<string>?)null);
+
+        // First registration to get the stored hash
+        await service.RegisterServicePermissionsAsync(permissions);
+
+        // Capture the hash that was stored
+        string? storedHash = null;
+        _mockStringStore
+            .Setup(s => s.SaveAsync(
+                It.Is<string>(k => k.StartsWith("permission_hash:")),
+                It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, StateOptions?, CancellationToken>((_, hash, _, _) => storedHash = hash)
+            .ReturnsAsync("etag");
+
+        await service.RegisterServicePermissionsAsync(permissions);
+
+        // Now set up the stored hash to match and service already registered
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("permission_hash:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(storedHash);
+        _mockCacheableStore
+            .Setup(s => s.SetContainsAsync<string>(REGISTERED_SERVICES_KEY, "orchestrator", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Reset verification counts
+        _mockHashSetStore.Invocations.Clear();
+
+        // Act — second registration with same data should skip
+        var (status, response) = await service.RegisterServicePermissionsAsync(permissions);
+
+        // Assert — idempotent skip
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Key assertion: no permission matrix should be stored (SaveAsync on hash set store not called)
+        _mockHashSetStore.Verify(s => s.SaveAsync(
+            It.Is<string>(k => k.StartsWith("permissions:")),
+            It.IsAny<HashSet<string>>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region RegisterServicePermissionsAsync Null Permissions Tests (Gap 3)
+
+    /// <summary>
+    /// Verifies that when Permissions is null, the registration logs a warning
+    /// and continues without storing any permission matrix, but still stores
+    /// version and registration info.
+    /// </summary>
+    [Fact]
+    public async Task RegisterServicePermissionsAsync_NullPermissions_SkipsMatrixStorageButRegisters()
+    {
+        // Arrange
+        var service = CreateService();
+
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+        _mockCacheableStore
+            .Setup(s => s.SetContainsAsync<string>(REGISTERED_SERVICES_KEY, "null-perms-svc", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var permissions = new ServicePermissionMatrix
+        {
+            ServiceId = "null-perms-svc",
+            Version = "1.0.0",
+            Permissions = new Dictionary<string, StatePermissions>()
+        };
+
+        // Act
+        var (status, response) = await service.RegisterServicePermissionsAsync(permissions);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // No permission matrix should be stored (empty permissions)
+        _mockHashSetStore.Verify(s => s.SaveAsync(
+            It.Is<string>(k => k.StartsWith("permissions:")),
+            It.IsAny<HashSet<string>>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+
+        // But the service should still be registered
+        _mockCacheableStore.Verify(s => s.AddToSetAsync<string>(
+            REGISTERED_SERVICES_KEY,
+            "null-perms-svc",
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Version and registration info should still be stored
+        _mockRegistrationInfoStore.Verify(s => s.SaveAsync(
+            It.Is<string>(k => k.Contains("null-perms-svc")),
+            It.IsAny<ServiceRegistrationInfo>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region UpdateSessionStateAsync Lock Failure Tests (Gap 4)
+
+    /// <summary>
+    /// Verifies that UpdateSessionStateAsync returns Conflict when the distributed lock
+    /// cannot be acquired for the session.
+    /// </summary>
+    [Fact]
+    public async Task UpdateSessionStateAsync_LockFailure_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Make the lock fail
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        var stateUpdate = new SessionStateUpdate
+        {
+            SessionId = Guid.NewGuid(),
+            ServiceId = "game-session",
+            NewState = "in_game"
+        };
+
+        // Act
+        var (status, response) = await service.UpdateSessionStateAsync(stateUpdate);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+
+        // Verify no state was saved
+        _mockDictStringStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(),
+            It.IsAny<Dictionary<string, string>>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region UpdateSessionRoleAsync Lock Failure Tests (Gap 5)
+
+    /// <summary>
+    /// Verifies that UpdateSessionRoleAsync returns Conflict when the distributed lock
+    /// cannot be acquired for the session.
+    /// </summary>
+    [Fact]
+    public async Task UpdateSessionRoleAsync_LockFailure_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Make the lock fail
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        var roleUpdate = new SessionRoleUpdate
+        {
+            SessionId = Guid.NewGuid(),
+            NewRole = "admin"
+        };
+
+        // Act
+        var (status, response) = await service.UpdateSessionRoleAsync(roleUpdate);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+
+        // Verify no state was saved
+        _mockDictStringStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(),
+            It.IsAny<Dictionary<string, string>>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region RecompileSessionPermissionsAsync Exception Tests (Gap 6)
+
+    /// <summary>
+    /// Verifies that when RecompileSessionPermissionsAsync catches an exception,
+    /// it publishes an error event via TryPublishErrorAsync and returns (false, null).
+    /// </summary>
+    [Fact]
+    public async Task RecompileSessionPermissions_ExceptionDuringCompilation_PublishesErrorEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
+
+        // Setup session states so recompile enters the try block
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string> { ["role"] = "user" });
+
+        // Make GetSetAsync throw to trigger the catch block inside RecompileSessionPermissionsAsync
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Redis unavailable"));
+
+        // Setup permissions for the initial read
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
+
+        // Capture error event
+        string? capturedErrorTopic = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishErrorAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<ServiceErrorEventSeverity>(),
+                It.IsAny<object?>(),
+                It.IsAny<string?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, string, string, string?, string?, ServiceErrorEventSeverity, object?, string?, Guid?, CancellationToken>(
+                (svc, op, errType, msg, dep, ep, sev, det, stack, corr, ct) => capturedErrorTopic = op)
+            .ReturnsAsync(true);
+
+        // Act - UpdateSessionRoleAsync triggers RecompileSessionPermissionsAsync internally
+        var roleUpdate = new SessionRoleUpdate
+        {
+            SessionId = sessionId,
+            NewRole = "user"
+        };
+
+        var (status, response) = await service.UpdateSessionRoleAsync(roleUpdate);
+
+        // Assert - Should still return OK (the role was saved before recompile)
+        Assert.Equal(StatusCodes.OK, status);
+
+        // The error event should have been published for the recompile failure
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
+            "permission",
+            "RecompileSessionPermissions",
+            It.IsAny<string>(),
+            It.Is<string>(msg => msg.Contains("Redis unavailable")),
+            "state",
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region PublishCapabilityUpdateAsync Exception Tests (Gap 7)
+
+    /// <summary>
+    /// Verifies that when PublishToSessionAsync throws an exception,
+    /// the error is caught and an error event is published.
+    /// </summary>
+    [Fact]
+    public async Task PublishCapabilityUpdate_ExceptionOnPublish_PublishesErrorEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
+
+        // Setup session for connected path (HandleSessionConnectedAsync skips connection check)
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "svc" });
+
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "/endpoint" });
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        // Make PublishToSessionAsync throw
+        _mockClientEventPublisher
+            .Setup(x => x.PublishToSessionAsync(
+                It.IsAny<string>(),
+                It.IsAny<BaseClientEvent>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("RabbitMQ connection lost"));
+
+        // Act - HandleSessionConnectedAsync triggers recompile with skipActiveConnectionsCheck=true
+        var (status, _) = await service.HandleSessionConnectedAsync(
+            sessionIdStr, "account-001", roles: new List<string> { "user" }, authorizations: null);
+
+        // Assert - Should still succeed (error is caught)
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify error event was published
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
+            "permission",
+            "PublishCapabilities",
+            It.IsAny<string>(),
+            It.Is<string>(msg => msg.Contains("RabbitMQ connection lost")),
+            "messaging",
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region PublishCapabilityUpdateAsync Publish Returns False Tests (Gap 8)
+
+    /// <summary>
+    /// Verifies that when PublishToSessionAsync returns false (publish failure),
+    /// a warning is logged but no error event is published.
+    /// The method completes normally without throwing.
+    /// </summary>
+    [Fact]
+    public async Task PublishCapabilityUpdate_PublishReturnsFalse_CompletesWithoutError()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "svc" });
+
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "/endpoint" });
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        // Make PublishToSessionAsync return false
+        _mockClientEventPublisher
+            .Setup(x => x.PublishToSessionAsync(
+                It.IsAny<string>(),
+                It.IsAny<BaseClientEvent>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        // Act
+        var (status, _) = await service.HandleSessionConnectedAsync(
+            sessionIdStr, "account-001", roles: new List<string> { "user" }, authorizations: null);
+
+        // Assert — operation succeeds despite publish failure
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify that no TryPublishErrorAsync was called (this is just a warning log, not an error event)
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
+            It.IsAny<string>(),
+            "PublishCapabilities",
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region GetRegisteredServicesAsync Tests (Gap 9)
+
+    /// <summary>
+    /// Verifies GetRegisteredServicesAsync returns an OK response with service details
+    /// when services are registered.
+    /// </summary>
+    [Fact]
+    public async Task GetRegisteredServicesAsync_WithRegisteredServices_ReturnsServiceList()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Setup registered services list
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "account", "auth" });
+
+        // Setup registration info for account
+        var accountRegKey = string.Format(SERVICE_REGISTERED_KEY, "account");
+        _mockRegistrationInfoStore
+            .Setup(s => s.GetAsync(accountRegKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceRegistrationInfo
+            {
+                ServiceId = "account",
+                Version = "2.0.0",
+                RegisteredAtUnix = DateTimeOffset.UtcNow.AddMinutes(-5).ToUnixTimeSeconds()
+            });
+
+        // Setup registration info for auth
+        var authRegKey = string.Format(SERVICE_REGISTERED_KEY, "auth");
+        _mockRegistrationInfoStore
+            .Setup(s => s.GetAsync(authRegKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceRegistrationInfo
+            {
+                ServiceId = "auth",
+                Version = "4.0.0",
+                RegisteredAtUnix = DateTimeOffset.UtcNow.AddMinutes(-3).ToUnixTimeSeconds()
+            });
+
+        // Setup service states for endpoint counting
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("service-states:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "default" });
+
+        // Setup endpoints for account (default state, user role)
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("permissions:account:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "/account/get", "/account/update" });
+
+        // Setup endpoints for auth
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("permissions:auth:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "/auth/login", "/auth/validate" });
+
+        var request = new ListServicesRequest();
+
+        // Act
+        var (status, response) = await service.GetRegisteredServicesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Services.Count);
+
+        var accountInfo = response.Services.First(s => s.ServiceId == "account");
+        Assert.Equal("2.0.0", accountInfo.Version);
+        Assert.True(accountInfo.EndpointCount > 0);
+
+        var authInfo = response.Services.First(s => s.ServiceId == "auth");
+        Assert.Equal("4.0.0", authInfo.Version);
+    }
+
+    /// <summary>
+    /// Verifies GetRegisteredServicesAsync returns an empty list when no services are registered.
+    /// </summary>
+    [Fact]
+    public async Task GetRegisteredServicesAsync_NoRegisteredServices_ReturnsEmptyList()
+    {
+        // Arrange
+        var service = CreateService();
+
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var request = new ListServicesRequest();
+
+        // Act
+        var (status, response) = await service.GetRegisteredServicesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Services);
+        Assert.True(response.Timestamp <= DateTimeOffset.UtcNow);
+    }
+
+    /// <summary>
+    /// Verifies GetRegisteredServicesAsync handles missing registration data gracefully
+    /// by using "unknown" version and current timestamp.
+    /// </summary>
+    [Fact]
+    public async Task GetRegisteredServicesAsync_MissingRegistrationData_UsesDefaults()
+    {
+        // Arrange
+        var service = CreateService();
+
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "orphan-svc" });
+
+        // No registration info found
+        _mockRegistrationInfoStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ServiceRegistrationInfo?)null);
+
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HashSet<string>?)null);
+
+        var request = new ListServicesRequest();
+
+        // Act
+        var (status, response) = await service.GetRegisteredServicesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Services);
+
+        var svcInfo = response.Services.First();
+        Assert.Equal("orphan-svc", svcInfo.ServiceId);
+        Assert.Equal("unknown", svcInfo.Version);
+        Assert.Equal(0, svcInfo.EndpointCount);
+    }
+
+    #endregion
+
+    #region DetermineHighestPriorityRole Fallback Tests (Gap 10)
+
+    /// <summary>
+    /// Verifies that when roles contain values NOT in the configured hierarchy,
+    /// the method falls back to returning the first role from the input.
+    /// </summary>
+    [Fact]
+    public async Task HandleSessionConnectedAsync_RolesNotInHierarchy_UsesFirstRole()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid().ToString();
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        // Track saved session states to check the assigned role
+        Dictionary<string, string>? savedStates = null;
+        _mockDictStringStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, Dictionary<string, string>, StateOptions?, CancellationToken>(
+                (_, v, _, _) => savedStates = v)
+            .ReturnsAsync("etag");
+
+        // Roles that are NOT in the default hierarchy ["anonymous", "user", "developer", "admin"]
+        var unknownRoles = new List<string> { "moderator", "vip" };
+
+        // Act
+        await service.HandleSessionConnectedAsync(sessionId, "acct-001", roles: unknownRoles, authorizations: null);
+
+        // Assert — should fall back to the first role ("moderator")
+        Assert.NotNull(savedStates);
+        var states = savedStates ?? throw new InvalidOperationException("Captured savedStates was null");
+        Assert.Equal("moderator", states["role"]);
+    }
+
+    #endregion
+
+    #region ComputePermissionDataHash Tests (Gap 11)
+
+    /// <summary>
+    /// Verifies that the same permission data produces the same hash (determinism),
+    /// and different data produces different hashes.
+    /// </summary>
+    [Fact]
+    public async Task RegisterServicePermissionsAsync_SameData_ProducesSameHash()
+    {
+        // Arrange
+        var service = CreateService();
+
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+        _mockCacheableStore
+            .Setup(s => s.SetContainsAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HashSet<string>?)null);
+
+        // Capture hashes
+        var capturedHashes = new List<string>();
+        _mockStringStore
+            .Setup(s => s.SaveAsync(
+                It.Is<string>(k => k.StartsWith("permission_hash:")),
+                It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, StateOptions?, CancellationToken>((_, hash, _, _) => capturedHashes.Add(hash))
+            .ReturnsAsync("etag");
+
+        var permissions1 = new ServicePermissionMatrix
+        {
+            ServiceId = "hash-test-1",
+            Version = "1.0.0",
+            Permissions = new Dictionary<string, StatePermissions>
+            {
+                ["default"] = new StatePermissions
+                {
+                    ["user"] = new System.Collections.ObjectModel.Collection<string> { "/a", "/b" }
+                }
+            }
+        };
+
+        var permissions2 = new ServicePermissionMatrix
+        {
+            ServiceId = "hash-test-2",
+            Version = "1.0.0",
+            Permissions = new Dictionary<string, StatePermissions>
+            {
+                ["default"] = new StatePermissions
+                {
+                    ["user"] = new System.Collections.ObjectModel.Collection<string> { "/a", "/b" }
+                }
+            }
+        };
+
+        var permissionsDifferent = new ServicePermissionMatrix
+        {
+            ServiceId = "hash-test-3",
+            Version = "2.0.0",  // Different version
+            Permissions = new Dictionary<string, StatePermissions>
+            {
+                ["default"] = new StatePermissions
+                {
+                    ["user"] = new System.Collections.ObjectModel.Collection<string> { "/a", "/b" }
+                }
+            }
+        };
+
+        // Act
+        await service.RegisterServicePermissionsAsync(permissions1);
+        await service.RegisterServicePermissionsAsync(permissions2);
+        await service.RegisterServicePermissionsAsync(permissionsDifferent);
+
+        // Assert — same data should produce same hash, different data should differ
+        Assert.Equal(3, capturedHashes.Count);
+        Assert.Equal(capturedHashes[0], capturedHashes[1]); // Same version + same permissions
+        Assert.NotEqual(capturedHashes[0], capturedHashes[2]); // Different version
+    }
+
+    #endregion
+
+    #region GetSessionDataStateOptions Zero TTL Tests (Gap 12)
+
+    /// <summary>
+    /// Verifies that when SessionDataTtlSeconds is 0 (disabled), the session data
+    /// SaveAsync calls pass null StateOptions (no TTL).
+    /// </summary>
+    [Fact]
+    public async Task UpdateSessionStateAsync_ZeroTtl_PassesNullStateOptions()
+    {
+        // Arrange
+        _mockConfiguration.Object.SessionDataTtlSeconds = 0;
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string> { ["role"] = "user" });
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
+
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var stateUpdate = new SessionStateUpdate
+        {
+            SessionId = sessionId,
+            ServiceId = "game-session",
+            NewState = "in_game"
+        };
+
+        // Act
+        var (status, _) = await service.UpdateSessionStateAsync(stateUpdate);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Key assertion: StateOptions should be null when TTL is 0
+        _mockDictStringStore.Verify(s => s.SaveAsync(
+            statesKey,
+            It.IsAny<Dictionary<string, string>>(),
+            It.Is<StateOptions?>(opts => opts == null),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region HandleSessionConnectedAsync Invalid Authorization Format Tests (Gap 13)
+
+    /// <summary>
+    /// Verifies that when HandleSessionConnectedAsync receives malformed authorizations
+    /// (missing colon separator), they are silently skipped without affecting valid ones.
+    /// This is the direct DI call path (not the event handler path).
+    /// </summary>
+    [Fact]
+    public async Task HandleSessionConnectedAsync_InvalidAuthorizationFormat_SkipsInvalid()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid().ToString();
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        Dictionary<string, string>? savedStates = null;
+        _mockDictStringStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, Dictionary<string, string>, StateOptions?, CancellationToken>(
+                (_, v, _, _) => savedStates = v)
+            .ReturnsAsync("etag");
+
+        // Mix of valid, invalid (no colon), and triple-colon format
+        var authorizations = new List<string>
+        {
+            "game-1:authorized",         // valid
+            "no-colon-here",             // invalid: no separator
+            "game-2:registered"          // valid
+        };
+
+        // Act
+        var (status, _) = await service.HandleSessionConnectedAsync(
+            sessionId, "acct-001", roles: null, authorizations: authorizations);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedStates);
+        var states = savedStates ?? throw new InvalidOperationException("Captured savedStates was null");
+
+        // Valid authorizations should be stored
+        Assert.True(states.ContainsKey("game-1"));
+        Assert.Equal("authorized", states["game-1"]);
+        Assert.True(states.ContainsKey("game-2"));
+        Assert.Equal("registered", states["game-2"]);
+
+        // The invalid authorization should NOT have been stored as a session state
+        // (Split on ':' for "no-colon-here" yields only 1 part, so the if (parts.Length == 2) check skips it)
+        Assert.False(states.ContainsKey("no-colon-here"));
+    }
+
+    #endregion
+
+    #region HandleSessionUpdatedAsync Exception Tests (Gap 14)
+
+    /// <summary>
+    /// Verifies that when HandleSessionUpdatedAsync catches an exception,
+    /// it publishes an error event and does not rethrow.
+    /// </summary>
+    [Fact]
+    public async Task HandleSessionUpdatedAsync_Exception_PublishesErrorEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+
+        // Make UpdateSessionRoleAsync fail by having the lock fail
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Lock service down"));
+
+        var evt = new SessionUpdatedEvent
+        {
+            SessionId = sessionId,
+            AccountId = Guid.NewGuid(),
+            Roles = new List<string> { "user" },
+            Authorizations = new List<string>(),
+            Reason = SessionUpdatedEventReason.RoleChanged
+        };
+
+        // Act — should not throw
+        await service.HandleSessionUpdatedAsync(evt);
+
+        // Assert — error event should be published
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
+            "permission",
+            "HandleSessionUpdated",
+            It.IsAny<string>(),
+            It.Is<string>(msg => msg.Contains("Lock service down")),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

@@ -392,4 +392,217 @@ public class PermissionSessionActivityListenerTests
     }
 
     #endregion
+
+    #region OnReconnectedAsync Exception Tests (Gap 15)
+
+    /// <summary>
+    /// Verifies that when GetSetAsync throws during RecompileSessionPermissionsAsync,
+    /// the exception is caught internally (not propagated) and RefreshSessionTtlAsync still runs.
+    /// RecompileSessionPermissionsAsync has a catch-all that logs errors and publishes error events,
+    /// so OnReconnectedAsync completes normally and proceeds to TTL refresh.
+    /// </summary>
+    [Fact]
+    public async Task OnReconnectedAsync_RecompileFails_ErrorCaughtAndTtlStillRefreshed()
+    {
+        // Arrange
+        var listener = CreateListener();
+        var sessionId = Guid.NewGuid();
+
+        // Setup session states so RecompileSessionPermissionsAsync proceeds past null check
+        _mockDictStringStore.Setup(s => s.GetAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string> { ["role"] = "user" });
+
+        // Make GetSetAsync<string>(REGISTERED_SERVICES_KEY) throw to simulate failure during recompilation.
+        // This exception is caught by the try-catch in RecompileSessionPermissionsAsync.
+        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Redis connection lost during reconnection"));
+
+        // Act — should NOT throw (exception caught internally by RecompileSessionPermissionsAsync)
+        await listener.OnReconnectedAsync(sessionId, CancellationToken.None);
+
+        // Assert — error event should be published for the caught exception
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
+            It.IsAny<string>(),
+            "RecompileSessionPermissions",
+            It.IsAny<string>(),
+            It.Is<string>(msg => msg.Contains("Redis connection lost")),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once());
+    }
+
+    /// <summary>
+    /// Verifies that when AddToSetAsync (the first operation in RecompileForReconnectionAsync) throws,
+    /// the exception propagates and neither recompilation nor TTL refresh occurs.
+    /// </summary>
+    [Fact]
+    public async Task OnReconnectedAsync_AddToSetFails_ExceptionPropagatesAndNoRecompile()
+    {
+        // Arrange
+        var listener = CreateListener();
+        var sessionId = Guid.NewGuid();
+
+        // AddToSetAsync is the first call in RecompileForReconnectionAsync
+        _mockCacheableStore.Setup(s => s.AddToSetAsync<string>(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Redis unavailable"));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => listener.OnReconnectedAsync(sessionId, CancellationToken.None));
+
+        // Verify no TTL refresh was attempted
+        _mockRedisOps.Verify(r => r.ExpireAsync(
+            It.IsAny<string>(),
+            It.IsAny<TimeSpan>(),
+            It.IsAny<CancellationToken>()),
+            Times.Never());
+    }
+
+    #endregion
+
+    #region AlignSessionTtlAsync Redis Failure Tests (Gap 16)
+
+    /// <summary>
+    /// Verifies that when the first ExpireAsync call in AlignSessionTtlAsync throws,
+    /// the second key's TTL is never set. This confirms that a partial Redis failure
+    /// during TTL alignment propagates the exception rather than silently leaving one key misaligned.
+    /// AlignSessionTtlAsync is called from OnDisconnectedAsync when reconnectable with a window.
+    /// </summary>
+    [Fact]
+    public async Task AlignSessionTtlAsync_FirstExpireFails_ExceptionPropagatesSecondKeyNotSet()
+    {
+        // Arrange
+        var listener = CreateListener();
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var reconnectionWindow = TimeSpan.FromSeconds(120);
+
+        var statesKey = $"permission:session:{sessionIdStr}:states";
+        var permissionsKey = $"permission:session:{sessionIdStr}:permissions";
+
+        // Set up for HandleSessionDisconnectedAsync to succeed
+        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        // First ExpireAsync (states key) throws — sequence matters
+        var expireCallCount = 0;
+        _mockRedisOps.Setup(r => r.ExpireAsync(
+            It.IsAny<string>(),
+            It.IsAny<TimeSpan>(),
+            It.IsAny<CancellationToken>()))
+            .Returns<string, TimeSpan, CancellationToken>((key, ttl, ct) =>
+            {
+                expireCallCount++;
+                // AlignSessionTtlAsync is called after HandleSessionDisconnectedAsync.
+                // The states key is the first ExpireAsync call in AlignSessionTtlAsync.
+                if (key == statesKey && ttl == reconnectionWindow)
+                    throw new InvalidOperationException("Redis EXPIRE failed on states key");
+                return Task.FromResult(true);
+            });
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => listener.OnDisconnectedAsync(sessionId, reconnectable: true, reconnectionWindow, CancellationToken.None));
+
+        // The permissions key EXPIRE with reconnectionWindow should never have been called
+        // because the states key EXPIRE threw first
+        _mockRedisOps.Verify(r => r.ExpireAsync(
+            permissionsKey,
+            reconnectionWindow,
+            It.IsAny<CancellationToken>()),
+            Times.Never());
+    }
+
+    /// <summary>
+    /// Verifies that when the second ExpireAsync call (permissions key) in AlignSessionTtlAsync throws,
+    /// the exception propagates. The first key's TTL was set successfully, creating a potential
+    /// inconsistency (states key has aligned TTL, permissions key does not).
+    /// </summary>
+    [Fact]
+    public async Task AlignSessionTtlAsync_SecondExpireFails_ExceptionPropagatesFirstKeyAlreadySet()
+    {
+        // Arrange
+        var listener = CreateListener();
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var reconnectionWindow = TimeSpan.FromSeconds(120);
+
+        var statesKey = $"permission:session:{sessionIdStr}:states";
+        var permissionsKey = $"permission:session:{sessionIdStr}:permissions";
+
+        // Set up for HandleSessionDisconnectedAsync to succeed
+        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        // Track which keys had ExpireAsync called with the reconnection window TTL
+        var alignedKeys = new List<string>();
+
+        _mockRedisOps.Setup(r => r.ExpireAsync(
+            It.IsAny<string>(),
+            It.IsAny<TimeSpan>(),
+            It.IsAny<CancellationToken>()))
+            .Returns<string, TimeSpan, CancellationToken>((key, ttl, ct) =>
+            {
+                if (ttl == reconnectionWindow)
+                {
+                    alignedKeys.Add(key);
+                    // Second alignment call (permissions key) throws
+                    if (key == permissionsKey)
+                        throw new InvalidOperationException("Redis EXPIRE failed on permissions key");
+                }
+                return Task.FromResult(true);
+            });
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => listener.OnDisconnectedAsync(sessionId, reconnectable: true, reconnectionWindow, CancellationToken.None));
+
+        // Verify the first key (states) was aligned before the failure
+        Assert.Contains(statesKey, alignedKeys);
+    }
+
+    /// <summary>
+    /// Verifies that when GetRedisOperations returns null during AlignSessionTtlAsync
+    /// (InMemory mode), the method returns early without attempting any ExpireAsync calls.
+    /// OnDisconnectedAsync still completes successfully.
+    /// </summary>
+    [Fact]
+    public async Task AlignSessionTtlAsync_NoRedisOps_SkipsAlignmentGracefully()
+    {
+        // Arrange
+        // GetRedisOperations returns null (InMemory mode)
+        _mockStateStoreFactory.Setup(f => f.GetRedisOperations()).Returns((IRedisOperations?)null);
+        var listener = CreateListener();
+        var sessionId = Guid.NewGuid();
+        var reconnectionWindow = TimeSpan.FromSeconds(120);
+
+        // Set up for HandleSessionDisconnectedAsync to succeed
+        _mockCacheableStore.Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        // Act — should complete without throwing despite reconnectable + window
+        await listener.OnDisconnectedAsync(sessionId, reconnectable: true, reconnectionWindow, CancellationToken.None);
+
+        // Assert — no ExpireAsync calls attempted
+        _mockRedisOps.Verify(r => r.ExpireAsync(
+            It.IsAny<string>(),
+            It.IsAny<TimeSpan>(),
+            It.IsAny<CancellationToken>()),
+            Times.Never());
+    }
+
+    #endregion
 }

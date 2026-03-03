@@ -1437,5 +1437,77 @@ public class ChatServiceMessageTests : ChatServiceTestBase
         Assert.Equal(StatusCodes.BadRequest, status);
     }
 
+    /// <summary>
+    /// Verifies that sending a valid custom format message succeeds.
+    /// Covers the happy path for Custom format which only had error path tests.
+    /// </summary>
+    [Fact]
+    public async Task SendMessage_CustomFormat_ValidPayload_SavesAndReturnsOK()
+    {
+        var service = CreateService();
+        SetCallerSession(TestSessionId);
+
+        var room = CreateTestRoom(roomTypeCode: "custom");
+        var roomType = CreateTestRoomType("custom", MessageFormat.Custom, PersistenceMode.Persistent);
+        SetupRoomCache(room);
+        SetupFindRoomTypeByCode(roomType);
+
+        var sender = CreateTestParticipant(sessionId: TestSessionId);
+        SetupParticipants(TestRoomId, sender);
+
+        // Rate limit: first message
+        MockParticipantStore
+            .Setup(s => s.IncrementAsync(
+                It.IsAny<string>(), It.IsAny<long>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1L);
+
+        // Capture saved message
+        ChatMessageModel? savedMessage = null;
+        MockMessageStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ChatMessageModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ChatMessageModel, StateOptions?, CancellationToken>(
+                (_, m, _, _) => savedMessage = m)
+            .ReturnsAsync("etag");
+
+        var customPayload = "{\"action\": \"emote\", \"emoteId\": 42, \"target\": \"all\"}";
+        var request = new SendMessageRequest
+        {
+            RoomId = TestRoomId,
+            Content = new SendMessageContent { CustomPayload = customPayload },
+        };
+
+        var (status, response) = await service.SendMessageAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(savedMessage);
+        Assert.Equal(customPayload, savedMessage.CustomPayload);
+        Assert.Equal(MessageFormat.Custom, savedMessage.MessageFormat);
+        Assert.Equal(TestRoomId, savedMessage.RoomId);
+
+        // Verify persistent store was used
+        MockMessageStore.Verify(
+            s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ChatMessageModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify event published
+        MockMessageBus.Verify(
+            m => m.TryPublishAsync("chat.message.sent", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify client broadcast
+        MockClientEventPublisher.Verify(
+            p => p.PublishToSessionsAsync(
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<ChatMessageReceivedClientEvent>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        ClearCallerSession();
+    }
+
     #endregion
 }

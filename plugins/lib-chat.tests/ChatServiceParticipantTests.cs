@@ -1,4 +1,7 @@
+using BeyondImmersion.Bannou.Chat.ClientEvents;
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Chat;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.State;
@@ -8,7 +11,8 @@ namespace BeyondImmersion.BannouService.Chat.Tests;
 
 /// <summary>
 /// Tests for ChatService participant operations:
-/// JoinRoom, LeaveRoom, ListParticipants, KickParticipant, BanParticipant, UnbanParticipant, MuteParticipant.
+/// JoinRoom, LeaveRoom, ListParticipants, KickParticipant, BanParticipant, UnbanParticipant,
+/// MuteParticipant, UnmuteParticipant, ChangeParticipantRole.
 /// </summary>
 public class ChatServiceParticipantTests : ChatServiceTestBase
 {
@@ -868,6 +872,507 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
+
+        ClearCallerSession();
+    }
+
+    #endregion
+
+    #region ChangeParticipantRole
+
+    /// <summary>
+    /// Verifies that the room owner can change a member's role to Moderator.
+    /// </summary>
+    [Fact]
+    public async Task ChangeParticipantRole_OwnerPromotesMemberToModerator_Succeeds()
+    {
+        var service = CreateService();
+        var ownerSession = Guid.NewGuid();
+        var targetSession = Guid.NewGuid();
+        SetCallerSession(ownerSession);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var owner = CreateTestParticipant(sessionId: ownerSession, role: ChatParticipantRole.Owner);
+        var target = CreateTestParticipant(sessionId: targetSession, role: ChatParticipantRole.Member);
+        SetupParticipants(TestRoomId, owner, target);
+
+        // Capture saved participant
+        ChatParticipantModel? savedParticipant = null;
+        MockParticipantStore
+            .Setup(s => s.HashSetAsync(
+                TestRoomId.ToString(), targetSession.ToString(),
+                It.IsAny<ChatParticipantModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, string, ChatParticipantModel, StateOptions?, CancellationToken>(
+                (_, _, p, _, _) => savedParticipant = p);
+
+        // Capture published event
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        MockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.Is<string>(t => t == "chat.participant.role-changed"),
+                It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((t, e, _) =>
+            {
+                capturedTopic = t;
+                capturedEvent = e;
+            })
+            .ReturnsAsync(true);
+
+        var (status, response) = await service.ChangeParticipantRoleAsync(new ChangeParticipantRoleRequest
+        {
+            RoomId = TestRoomId,
+            TargetSessionId = targetSession,
+            NewRole = ChatParticipantRole.Moderator,
+        }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify participant saved with new role
+        Assert.NotNull(savedParticipant);
+        Assert.Equal(ChatParticipantRole.Moderator, savedParticipant.Role);
+
+        // Verify event content
+        Assert.Equal("chat.participant.role-changed", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<ChatParticipantRoleChangedEvent>(capturedEvent);
+        Assert.Equal(TestRoomId, typedEvent.RoomId);
+        Assert.Equal(targetSession, typedEvent.ParticipantSessionId);
+        Assert.Equal(ChatParticipantRole.Member, typedEvent.OldRole);
+        Assert.Equal(ChatParticipantRole.Moderator, typedEvent.NewRole);
+        Assert.Equal(ownerSession, typedEvent.ChangedBySessionId);
+
+        // Verify client event broadcast
+        MockClientEventPublisher.Verify(
+            p => p.PublishToSessionsAsync(
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<ChatParticipantRoleChangedClientEvent>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        ClearCallerSession();
+    }
+
+    /// <summary>
+    /// Verifies that a non-owner cannot change roles.
+    /// </summary>
+    [Fact]
+    public async Task ChangeParticipantRole_CallerNotOwner_ReturnsForbidden()
+    {
+        var service = CreateService();
+        var modSession = Guid.NewGuid();
+        var targetSession = Guid.NewGuid();
+        SetCallerSession(modSession);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var moderator = CreateTestParticipant(sessionId: modSession, role: ChatParticipantRole.Moderator);
+        var target = CreateTestParticipant(sessionId: targetSession, role: ChatParticipantRole.Member);
+        SetupParticipants(TestRoomId, moderator, target);
+
+        var (status, _) = await service.ChangeParticipantRoleAsync(new ChangeParticipantRoleRequest
+        {
+            RoomId = TestRoomId,
+            TargetSessionId = targetSession,
+            NewRole = ChatParticipantRole.ReadOnly,
+        }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.Forbidden, status);
+        ClearCallerSession();
+    }
+
+    /// <summary>
+    /// Verifies that the owner cannot change their own role.
+    /// </summary>
+    [Fact]
+    public async Task ChangeParticipantRole_CannotChangeOwnRole_ReturnsBadRequest()
+    {
+        var service = CreateService();
+        var ownerSession = Guid.NewGuid();
+        SetCallerSession(ownerSession);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var owner = CreateTestParticipant(sessionId: ownerSession, role: ChatParticipantRole.Owner);
+        SetupParticipants(TestRoomId, owner);
+
+        var (status, _) = await service.ChangeParticipantRoleAsync(new ChangeParticipantRoleRequest
+        {
+            RoomId = TestRoomId,
+            TargetSessionId = ownerSession,
+            NewRole = ChatParticipantRole.Moderator,
+        }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.BadRequest, status);
+        ClearCallerSession();
+    }
+
+    /// <summary>
+    /// Verifies that promoting to Owner is forbidden (ownership only transfers on owner leave).
+    /// </summary>
+    [Fact]
+    public async Task ChangeParticipantRole_CannotPromoteToOwner_ReturnsBadRequest()
+    {
+        var service = CreateService();
+        var ownerSession = Guid.NewGuid();
+        var targetSession = Guid.NewGuid();
+        SetCallerSession(ownerSession);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var owner = CreateTestParticipant(sessionId: ownerSession, role: ChatParticipantRole.Owner);
+        var target = CreateTestParticipant(sessionId: targetSession, role: ChatParticipantRole.Member);
+        SetupParticipants(TestRoomId, owner, target);
+
+        var (status, _) = await service.ChangeParticipantRoleAsync(new ChangeParticipantRoleRequest
+        {
+            RoomId = TestRoomId,
+            TargetSessionId = targetSession,
+            NewRole = ChatParticipantRole.Owner,
+        }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.BadRequest, status);
+        ClearCallerSession();
+    }
+
+    /// <summary>
+    /// Verifies that changing role for a non-existent participant returns NotFound.
+    /// </summary>
+    [Fact]
+    public async Task ChangeParticipantRole_TargetNotInRoom_ReturnsNotFound()
+    {
+        var service = CreateService();
+        var ownerSession = Guid.NewGuid();
+        SetCallerSession(ownerSession);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var owner = CreateTestParticipant(sessionId: ownerSession, role: ChatParticipantRole.Owner);
+        SetupParticipants(TestRoomId, owner);
+
+        var (status, _) = await service.ChangeParticipantRoleAsync(new ChangeParticipantRoleRequest
+        {
+            RoomId = TestRoomId,
+            TargetSessionId = Guid.NewGuid(), // not in room
+            NewRole = ChatParticipantRole.Moderator,
+        }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.NotFound, status);
+        ClearCallerSession();
+    }
+
+    /// <summary>
+    /// Verifies that changing role without session returns Unauthorized.
+    /// </summary>
+    [Fact]
+    public async Task ChangeParticipantRole_NoSession_ReturnsUnauthorized()
+    {
+        var service = CreateService();
+        ClearCallerSession();
+
+        var (status, _) = await service.ChangeParticipantRoleAsync(new ChangeParticipantRoleRequest
+        {
+            RoomId = TestRoomId,
+            TargetSessionId = Guid.NewGuid(),
+            NewRole = ChatParticipantRole.Moderator,
+        }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.Unauthorized, status);
+    }
+
+    /// <summary>
+    /// Verifies that changing role for a non-existent room returns NotFound.
+    /// </summary>
+    [Fact]
+    public async Task ChangeParticipantRole_RoomNotFound_ReturnsNotFound()
+    {
+        var service = CreateService();
+        SetCallerSession(Guid.NewGuid());
+
+        // Room does not exist (no mock setup for GetAsync)
+        MockRoomStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ChatRoomModel?)null);
+
+        var (status, _) = await service.ChangeParticipantRoleAsync(new ChangeParticipantRoleRequest
+        {
+            RoomId = Guid.NewGuid(),
+            TargetSessionId = Guid.NewGuid(),
+            NewRole = ChatParticipantRole.Moderator,
+        }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.NotFound, status);
+        ClearCallerSession();
+    }
+
+    /// <summary>
+    /// Verifies that lock failure returns Conflict.
+    /// </summary>
+    [Fact]
+    public async Task ChangeParticipantRole_LockFailure_ReturnsConflict()
+    {
+        var service = CreateService();
+        SetCallerSession(Guid.NewGuid());
+        SetupLockFailure();
+
+        var (status, _) = await service.ChangeParticipantRoleAsync(new ChangeParticipantRoleRequest
+        {
+            RoomId = TestRoomId,
+            TargetSessionId = Guid.NewGuid(),
+            NewRole = ChatParticipantRole.Moderator,
+        }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.Conflict, status);
+
+        // Restore default lock behavior
+        SetupLockSuccess();
+        ClearCallerSession();
+    }
+
+    #endregion
+
+    #region UnmuteParticipant
+
+    /// <summary>
+    /// Verifies successful unmute: target is muted, caller is moderator.
+    /// </summary>
+    [Fact]
+    public async Task UnmuteParticipant_ValidRequest_UnmutesAndPublishesEvents()
+    {
+        var service = CreateService();
+        var modSession = Guid.NewGuid();
+        var targetSession = Guid.NewGuid();
+        SetCallerSession(modSession);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var moderator = CreateTestParticipant(sessionId: modSession, role: ChatParticipantRole.Moderator);
+        SetupParticipants(TestRoomId, moderator);
+
+        var target = CreateTestParticipant(sessionId: targetSession, isMuted: true);
+        target.MutedUntil = DateTimeOffset.UtcNow.AddMinutes(30);
+        MockParticipantStore
+            .Setup(s => s.HashGetAsync<ChatParticipantModel>(
+                TestRoomId.ToString(), targetSession.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(target);
+
+        // Capture saved participant
+        ChatParticipantModel? savedParticipant = null;
+        MockParticipantStore
+            .Setup(s => s.HashSetAsync(
+                TestRoomId.ToString(), targetSession.ToString(),
+                It.IsAny<ChatParticipantModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, string, ChatParticipantModel, StateOptions?, CancellationToken>(
+                (_, _, p, _, _) => savedParticipant = p);
+
+        // Capture published event
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        MockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.Is<string>(t => t == "chat.participant.unmuted"),
+                It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((t, e, _) =>
+            {
+                capturedTopic = t;
+                capturedEvent = e;
+            })
+            .ReturnsAsync(true);
+
+        var (status, response) = await service.UnmuteParticipantAsync(new UnmuteParticipantRequest
+        {
+            RoomId = TestRoomId,
+            TargetSessionId = targetSession,
+        }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify participant saved with unmuted state
+        Assert.NotNull(savedParticipant);
+        Assert.False(savedParticipant.IsMuted);
+        Assert.Null(savedParticipant.MutedUntil);
+
+        // Verify event content
+        Assert.Equal("chat.participant.unmuted", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<ChatParticipantUnmutedEvent>(capturedEvent);
+        Assert.Equal(TestRoomId, typedEvent.RoomId);
+        Assert.Equal(targetSession, typedEvent.TargetSessionId);
+        Assert.Equal(modSession, typedEvent.UnmutedBySessionId);
+
+        // Verify client event broadcast
+        MockClientEventPublisher.Verify(
+            p => p.PublishToSessionsAsync(
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<ChatParticipantUnmutedClientEvent>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        ClearCallerSession();
+    }
+
+    /// <summary>
+    /// Verifies that unmuting a non-existent participant returns NotFound.
+    /// </summary>
+    [Fact]
+    public async Task UnmuteParticipant_TargetNotInRoom_ReturnsNotFound()
+    {
+        var service = CreateService();
+        var modSession = Guid.NewGuid();
+        SetCallerSession(modSession);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var moderator = CreateTestParticipant(sessionId: modSession, role: ChatParticipantRole.Owner);
+        SetupParticipants(TestRoomId, moderator);
+
+        MockParticipantStore
+            .Setup(s => s.HashGetAsync<ChatParticipantModel>(
+                TestRoomId.ToString(),
+                It.Is<string>(k => k != modSession.ToString()),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ChatParticipantModel?)null);
+
+        var (status, _) = await service.UnmuteParticipantAsync(new UnmuteParticipantRequest
+        {
+            RoomId = TestRoomId,
+            TargetSessionId = Guid.NewGuid(),
+        }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.NotFound, status);
+        ClearCallerSession();
+    }
+
+    /// <summary>
+    /// Verifies that a regular member cannot unmute participants.
+    /// </summary>
+    [Fact]
+    public async Task UnmuteParticipant_CallerLacksPermission_ReturnsForbidden()
+    {
+        var service = CreateService();
+        var memberSession = Guid.NewGuid();
+        SetCallerSession(memberSession);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var member = CreateTestParticipant(sessionId: memberSession, role: ChatParticipantRole.Member);
+        SetupParticipants(TestRoomId, member);
+
+        var (status, _) = await service.UnmuteParticipantAsync(new UnmuteParticipantRequest
+        {
+            RoomId = TestRoomId,
+            TargetSessionId = Guid.NewGuid(),
+        }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.Forbidden, status);
+        ClearCallerSession();
+    }
+
+    /// <summary>
+    /// Verifies that unmuting an already-unmuted participant returns BadRequest.
+    /// </summary>
+    [Fact]
+    public async Task UnmuteParticipant_TargetNotMuted_ReturnsBadRequest()
+    {
+        var service = CreateService();
+        var modSession = Guid.NewGuid();
+        var targetSession = Guid.NewGuid();
+        SetCallerSession(modSession);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var moderator = CreateTestParticipant(sessionId: modSession, role: ChatParticipantRole.Moderator);
+        SetupParticipants(TestRoomId, moderator);
+
+        // Target is NOT muted
+        var target = CreateTestParticipant(sessionId: targetSession, isMuted: false);
+        MockParticipantStore
+            .Setup(s => s.HashGetAsync<ChatParticipantModel>(
+                TestRoomId.ToString(), targetSession.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(target);
+
+        var (status, _) = await service.UnmuteParticipantAsync(new UnmuteParticipantRequest
+        {
+            RoomId = TestRoomId,
+            TargetSessionId = targetSession,
+        }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.BadRequest, status);
+        ClearCallerSession();
+    }
+
+    /// <summary>
+    /// Verifies that unmute without session returns Unauthorized.
+    /// </summary>
+    [Fact]
+    public async Task UnmuteParticipant_NoSession_ReturnsUnauthorized()
+    {
+        var service = CreateService();
+        ClearCallerSession();
+
+        var (status, _) = await service.UnmuteParticipantAsync(new UnmuteParticipantRequest
+        {
+            RoomId = TestRoomId,
+            TargetSessionId = Guid.NewGuid(),
+        }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.Unauthorized, status);
+    }
+
+    #endregion
+
+    #region JoinRoom Archived Room
+
+    /// <summary>
+    /// Verifies that joining a room with Archived status still succeeds.
+    /// NOTE: The current implementation only rejects Locked rooms, not Archived.
+    /// This test documents the current behavior. If Archived rooms should be
+    /// rejected, the status check at JoinRoomAsync needs to be updated.
+    /// </summary>
+    [Fact]
+    public async Task JoinRoom_ArchivedRoom_CurrentBehavior_DoesNotRejectArchived()
+    {
+        var service = CreateService();
+        SetCallerSession(TestSessionId);
+
+        // Room has Archived status but JoinRoomAsync only checks for Locked
+        var room = CreateTestRoom(status: ChatRoomStatus.Archived);
+        room.IsArchived = true;
+        SetupRoom(room);
+
+        var roomType = CreateTestRoomType("text");
+        SetupFindRoomTypeByCode(roomType);
+
+        // No ban
+        MockBanStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ChatBanModel?)null);
+
+        var (status, response) = await service.JoinRoomAsync(new JoinRoomRequest
+        {
+            RoomId = TestRoomId,
+            SenderType = "player",
+            SenderId = Guid.NewGuid(),
+            DisplayName = "Player1",
+        }, CancellationToken.None);
+
+        // Current behavior: Archived rooms are NOT rejected (only Locked is checked)
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
 
         ClearCallerSession();
     }

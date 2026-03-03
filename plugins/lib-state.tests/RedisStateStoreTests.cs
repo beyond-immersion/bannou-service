@@ -1058,4 +1058,678 @@ public class RedisStateStoreTests
     }
 
     #endregion
+
+    #region SaveBulkAsync Transaction Failure Tests (Gap 5)
+
+    /// <summary>
+    /// Verifies that SaveBulkAsync throws InvalidOperationException when
+    /// the Redis transaction fails unexpectedly (ExecuteAsync returns false).
+    /// </summary>
+    [Fact]
+    public async Task SaveBulkAsync_WithTransactionFailure_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var items = new Dictionary<string, TestEntity>
+        {
+            ["key1"] = new TestEntity { Id = "1", Name = "One", Value = 1 },
+            ["key2"] = new TestEntity { Id = "2", Name = "Two", Value = 2 }
+        };
+
+        var mockTransaction = CreateMockTransaction(executeResult: false);
+
+        _mockDatabase
+            .Setup(db => db.CreateTransaction(It.IsAny<object?>()))
+            .Returns(mockTransaction.Object);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _store.SaveBulkAsync(items));
+
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("bulk transaction unexpectedly failed")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    #endregion
+
+    #region SortedSetRangeByScoreAsync Tests (Gap 6)
+
+    /// <summary>
+    /// Verifies ascending range query returns results in correct order
+    /// with member-score tuples deserialized from SortedSetEntry.
+    /// </summary>
+    [Fact]
+    public async Task SortedSetRangeByScoreAsync_Ascending_ReturnsResults()
+    {
+        // Arrange
+        _mockDatabase
+            .Setup(db => db.SortedSetRangeByScoreWithScoresAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<double>(),
+                It.IsAny<double>(),
+                Exclude.None,
+                Order.Ascending,
+                It.IsAny<long>(),
+                It.IsAny<long>(),
+                It.IsAny<CommandFlags>()))
+            .ReturnsAsync(new SortedSetEntry[]
+            {
+                new("player-a", 100.0),
+                new("player-b", 200.0),
+                new("player-c", 300.0)
+            });
+
+        // Act
+        var results = await _store.SortedSetRangeByScoreAsync("leaderboard", 0, 500);
+
+        // Assert
+        Assert.Equal(3, results.Count);
+        Assert.Equal("player-a", results[0].member);
+        Assert.Equal(100.0, results[0].score);
+        Assert.Equal("player-b", results[1].member);
+        Assert.Equal(200.0, results[1].score);
+        Assert.Equal("player-c", results[2].member);
+        Assert.Equal(300.0, results[2].score);
+    }
+
+    /// <summary>
+    /// Verifies descending range query uses Order.Descending.
+    /// </summary>
+    [Fact]
+    public async Task SortedSetRangeByScoreAsync_Descending_UsesDescendingOrder()
+    {
+        // Arrange
+        Order? capturedOrder = null;
+        _mockDatabase
+            .Setup(db => db.SortedSetRangeByScoreWithScoresAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<double>(),
+                It.IsAny<double>(),
+                It.IsAny<Exclude>(),
+                It.IsAny<Order>(),
+                It.IsAny<long>(),
+                It.IsAny<long>(),
+                It.IsAny<CommandFlags>()))
+            .Callback<RedisKey, double, double, Exclude, Order, long, long, CommandFlags>(
+                (key, min, max, exclude, order, skip, take, flags) => capturedOrder = order)
+            .ReturnsAsync(new SortedSetEntry[]
+            {
+                new("player-c", 300.0),
+                new("player-b", 200.0)
+            });
+
+        // Act
+        var results = await _store.SortedSetRangeByScoreAsync(
+            "leaderboard", 0, 500, descending: true);
+
+        // Assert
+        Assert.Equal(Order.Descending, capturedOrder);
+        Assert.Equal(2, results.Count);
+        Assert.Equal("player-c", results[0].member);
+    }
+
+    /// <summary>
+    /// Verifies that offset and count parameters are passed through to Redis.
+    /// </summary>
+    [Fact]
+    public async Task SortedSetRangeByScoreAsync_WithOffsetAndCount_PassesParameters()
+    {
+        // Arrange
+        long? capturedOffset = null;
+        long? capturedCount = null;
+        _mockDatabase
+            .Setup(db => db.SortedSetRangeByScoreWithScoresAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<double>(),
+                It.IsAny<double>(),
+                It.IsAny<Exclude>(),
+                It.IsAny<Order>(),
+                It.IsAny<long>(),
+                It.IsAny<long>(),
+                It.IsAny<CommandFlags>()))
+            .Callback<RedisKey, double, double, Exclude, Order, long, long, CommandFlags>(
+                (key, min, max, exclude, order, skip, take, flags) =>
+                {
+                    capturedOffset = skip;
+                    capturedCount = take;
+                })
+            .ReturnsAsync(Array.Empty<SortedSetEntry>());
+
+        // Act
+        await _store.SortedSetRangeByScoreAsync("leaderboard", 0, 1000, offset: 10, count: 5);
+
+        // Assert
+        Assert.Equal(10, capturedOffset);
+        Assert.Equal(5, capturedCount);
+    }
+
+    /// <summary>
+    /// Verifies the correct sorted set key prefix is used.
+    /// </summary>
+    [Fact]
+    public async Task SortedSetRangeByScoreAsync_UsesCorrectKeyPrefix()
+    {
+        // Arrange
+        string? capturedKey = null;
+        _mockDatabase
+            .Setup(db => db.SortedSetRangeByScoreWithScoresAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<double>(),
+                It.IsAny<double>(),
+                It.IsAny<Exclude>(),
+                It.IsAny<Order>(),
+                It.IsAny<long>(),
+                It.IsAny<long>(),
+                It.IsAny<CommandFlags>()))
+            .Callback<RedisKey, double, double, Exclude, Order, long, long, CommandFlags>(
+                (key, min, max, exclude, order, skip, take, flags) => capturedKey = key.ToString())
+            .ReturnsAsync(Array.Empty<SortedSetEntry>());
+
+        // Act
+        await _store.SortedSetRangeByScoreAsync("scores", 0, 100);
+
+        // Assert
+        Assert.Equal($"{KeyPrefix}:zset:scores", capturedKey);
+    }
+
+    /// <summary>
+    /// Documents that SortedSetRangeByScoreAsync always passes Exclude.None to Redis.
+    /// The Exclude parameter is not exposed in the public API.
+    /// </summary>
+    [Fact]
+    public async Task SortedSetRangeByScoreAsync_AlwaysUsesExcludeNone()
+    {
+        // Arrange
+        Exclude? capturedExclude = null;
+        _mockDatabase
+            .Setup(db => db.SortedSetRangeByScoreWithScoresAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<double>(),
+                It.IsAny<double>(),
+                It.IsAny<Exclude>(),
+                It.IsAny<Order>(),
+                It.IsAny<long>(),
+                It.IsAny<long>(),
+                It.IsAny<CommandFlags>()))
+            .Callback<RedisKey, double, double, Exclude, Order, long, long, CommandFlags>(
+                (key, min, max, exclude, order, skip, take, flags) => capturedExclude = exclude)
+            .ReturnsAsync(Array.Empty<SortedSetEntry>());
+
+        // Act
+        await _store.SortedSetRangeByScoreAsync("leaderboard", 0, 100);
+
+        // Assert — the public API does not expose an Exclude parameter;
+        // the implementation always passes Exclude.None to Redis
+        Assert.Equal(Exclude.None, capturedExclude);
+    }
+
+    #endregion
+
+    #region HashSetManyAsync Tests (Gap 7)
+
+    /// <summary>
+    /// Verifies HashSetManyAsync serializes all fields and writes them to the correct hash key.
+    /// Uses Capture Pattern to verify the HashEntry array passed to Redis.
+    /// </summary>
+    [Fact]
+    public async Task HashSetManyAsync_WithMultipleFields_WritesAllToHash()
+    {
+        // Arrange
+        HashEntry[]? capturedEntries = null;
+        string? capturedKey = null;
+        _mockDatabase
+            .Setup(db => db.HashSetAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<HashEntry[]>(),
+                It.IsAny<CommandFlags>()))
+            .Callback<RedisKey, HashEntry[], CommandFlags>(
+                (key, entries, flags) =>
+                {
+                    capturedKey = key.ToString();
+                    capturedEntries = entries;
+                })
+            .Returns(Task.CompletedTask);
+
+        var fields = new Dictionary<string, TestEntity>
+        {
+            ["field-a"] = new TestEntity { Id = "1", Name = "Alpha", Value = 10 },
+            ["field-b"] = new TestEntity { Id = "2", Name = "Beta", Value = 20 }
+        };
+
+        // Act
+        await _store.HashSetManyAsync("myhash", fields);
+
+        // Assert
+        Assert.Equal($"{KeyPrefix}:hash:myhash", capturedKey);
+        Assert.NotNull(capturedEntries);
+        Assert.Equal(2, capturedEntries.Length);
+
+        // Verify field names are correct
+        var fieldNames = capturedEntries.Select(e => e.Name.ToString()).ToList();
+        Assert.Contains("field-a", fieldNames);
+        Assert.Contains("field-b", fieldNames);
+    }
+
+    /// <summary>
+    /// Verifies HashSetManyAsync with empty fields returns immediately without calling Redis.
+    /// </summary>
+    [Fact]
+    public async Task HashSetManyAsync_WithEmptyFields_DoesNotCallRedis()
+    {
+        // Act
+        await _store.HashSetManyAsync("myhash", new Dictionary<string, TestEntity>());
+
+        // Assert — no Redis calls should have been made
+        _mockDatabase.Verify(
+            db => db.HashSetAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<HashEntry[]>(),
+                It.IsAny<CommandFlags>()),
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies HashSetManyAsync applies TTL via KeyExpireAsync when StateOptions.Ttl is set.
+    /// </summary>
+    [Fact]
+    public async Task HashSetManyAsync_WithTtl_AppliesKeyExpire()
+    {
+        // Arrange
+        TimeSpan? capturedTtl = null;
+        _mockDatabase
+            .Setup(db => db.HashSetAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<HashEntry[]>(),
+                It.IsAny<CommandFlags>()))
+            .Returns(Task.CompletedTask);
+
+        _mockDatabase
+            .Setup(db => db.KeyExpireAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<ExpireWhen>(),
+                It.IsAny<CommandFlags>()))
+            .Callback<RedisKey, TimeSpan?, ExpireWhen, CommandFlags>(
+                (key, ttl, when, flags) => capturedTtl = ttl)
+            .ReturnsAsync(true);
+
+        var fields = new Dictionary<string, TestEntity>
+        {
+            ["field-a"] = new TestEntity { Id = "1", Name = "Alpha", Value = 10 }
+        };
+
+        // Act
+        await _store.HashSetManyAsync("myhash", fields, new StateOptions { Ttl = 300 });
+
+        // Assert
+        Assert.NotNull(capturedTtl);
+        Assert.Equal(TimeSpan.FromSeconds(300), capturedTtl.Value);
+    }
+
+    #endregion
+
+    #region RefreshSetTtlAsync Tests (Gap 8)
+
+    /// <summary>
+    /// Verifies RefreshSetTtlAsync calls KeyExpireAsync with the correct set key and TTL.
+    /// </summary>
+    [Fact]
+    public async Task RefreshSetTtlAsync_CallsKeyExpireWithCorrectParameters()
+    {
+        // Arrange
+        string? capturedKey = null;
+        TimeSpan? capturedTtl = null;
+        _mockDatabase
+            .Setup(db => db.KeyExpireAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<ExpireWhen>(),
+                It.IsAny<CommandFlags>()))
+            .Callback<RedisKey, TimeSpan?, ExpireWhen, CommandFlags>(
+                (key, ttl, when, flags) =>
+                {
+                    capturedKey = key.ToString();
+                    capturedTtl = ttl;
+                })
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _store.RefreshSetTtlAsync("myset", 120);
+
+        // Assert
+        Assert.True(result);
+        Assert.Equal($"{KeyPrefix}:set:myset", capturedKey);
+        Assert.Equal(TimeSpan.FromSeconds(120), capturedTtl);
+    }
+
+    /// <summary>
+    /// Verifies RefreshSetTtlAsync returns false when the set key does not exist.
+    /// </summary>
+    [Fact]
+    public async Task RefreshSetTtlAsync_NonExistentKey_ReturnsFalse()
+    {
+        // Arrange
+        _mockDatabase
+            .Setup(db => db.KeyExpireAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<ExpireWhen>(),
+                It.IsAny<CommandFlags>()))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _store.RefreshSetTtlAsync("nonexistent", 60);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    #endregion
+
+    #region RefreshHashTtlAsync Tests (Gap 9)
+
+    /// <summary>
+    /// Verifies RefreshHashTtlAsync calls KeyExpireAsync with the correct hash key and TTL.
+    /// </summary>
+    [Fact]
+    public async Task RefreshHashTtlAsync_CallsKeyExpireWithCorrectParameters()
+    {
+        // Arrange
+        string? capturedKey = null;
+        TimeSpan? capturedTtl = null;
+        _mockDatabase
+            .Setup(db => db.KeyExpireAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<ExpireWhen>(),
+                It.IsAny<CommandFlags>()))
+            .Callback<RedisKey, TimeSpan?, ExpireWhen, CommandFlags>(
+                (key, ttl, when, flags) =>
+                {
+                    capturedKey = key.ToString();
+                    capturedTtl = ttl;
+                })
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _store.RefreshHashTtlAsync("myhash", 600);
+
+        // Assert
+        Assert.True(result);
+        Assert.Equal($"{KeyPrefix}:hash:myhash", capturedKey);
+        Assert.Equal(TimeSpan.FromSeconds(600), capturedTtl);
+    }
+
+    /// <summary>
+    /// Verifies RefreshHashTtlAsync returns false when the hash key does not exist.
+    /// </summary>
+    [Fact]
+    public async Task RefreshHashTtlAsync_NonExistentKey_ReturnsFalse()
+    {
+        // Arrange
+        _mockDatabase
+            .Setup(db => db.KeyExpireAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<ExpireWhen>(),
+                It.IsAny<CommandFlags>()))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _store.RefreshHashTtlAsync("nonexistent", 60);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    #endregion
+
+    #region DeleteHashAsync Tests (Gap 10)
+
+    /// <summary>
+    /// Verifies DeleteHashAsync calls KeyDeleteAsync with the correct hash key prefix.
+    /// </summary>
+    [Fact]
+    public async Task DeleteHashAsync_WithExistingHash_ReturnsTrueAndUsesCorrectKey()
+    {
+        // Arrange
+        string? capturedKey = null;
+        _mockDatabase
+            .Setup(db => db.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
+            .Callback<RedisKey, CommandFlags>((key, flags) => capturedKey = key.ToString())
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _store.DeleteHashAsync("myhash");
+
+        // Assert
+        Assert.True(result);
+        Assert.Equal($"{KeyPrefix}:hash:myhash", capturedKey);
+    }
+
+    /// <summary>
+    /// Verifies DeleteHashAsync returns false when the hash does not exist.
+    /// </summary>
+    [Fact]
+    public async Task DeleteHashAsync_WithNonExistentHash_ReturnsFalse()
+    {
+        // Arrange
+        _mockDatabase
+            .Setup(db => db.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _store.DeleteHashAsync("nonexistent");
+
+        // Assert
+        Assert.False(result);
+    }
+
+    #endregion
+
+    #region DecrementAsync Tests (Gap 11)
+
+    /// <summary>
+    /// Verifies DecrementAsync calls StringDecrementAsync with the correct counter key and decrement value.
+    /// </summary>
+    [Fact]
+    public async Task DecrementAsync_CallsStringDecrementWithCorrectParameters()
+    {
+        // Arrange
+        string? capturedKey = null;
+        long? capturedDecrement = null;
+        _mockDatabase
+            .Setup(db => db.StringDecrementAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<long>(),
+                It.IsAny<CommandFlags>()))
+            .Callback<RedisKey, long, CommandFlags>(
+                (key, decr, flags) =>
+                {
+                    capturedKey = key.ToString();
+                    capturedDecrement = decr;
+                })
+            .ReturnsAsync(9);
+
+        // Act
+        var result = await _store.DecrementAsync("mycounter", 1);
+
+        // Assert
+        Assert.Equal(9, result);
+        Assert.Equal($"{KeyPrefix}:counter:mycounter", capturedKey);
+        Assert.Equal(1, capturedDecrement);
+    }
+
+    /// <summary>
+    /// Verifies DecrementAsync with custom decrement value passes the value through.
+    /// </summary>
+    [Fact]
+    public async Task DecrementAsync_WithCustomDecrement_PassesCorrectValue()
+    {
+        // Arrange
+        long? capturedDecrement = null;
+        _mockDatabase
+            .Setup(db => db.StringDecrementAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<long>(),
+                It.IsAny<CommandFlags>()))
+            .Callback<RedisKey, long, CommandFlags>(
+                (key, decr, flags) => capturedDecrement = decr)
+            .ReturnsAsync(5);
+
+        // Act
+        var result = await _store.DecrementAsync("mycounter", 5);
+
+        // Assert
+        Assert.Equal(5, result);
+        Assert.Equal(5, capturedDecrement);
+    }
+
+    /// <summary>
+    /// Verifies DecrementAsync applies TTL via KeyExpireAsync when StateOptions.Ttl is set.
+    /// </summary>
+    [Fact]
+    public async Task DecrementAsync_WithTtl_AppliesKeyExpire()
+    {
+        // Arrange
+        TimeSpan? capturedTtl = null;
+        _mockDatabase
+            .Setup(db => db.StringDecrementAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<long>(),
+                It.IsAny<CommandFlags>()))
+            .ReturnsAsync(9);
+
+        _mockDatabase
+            .Setup(db => db.KeyExpireAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<ExpireWhen>(),
+                It.IsAny<CommandFlags>()))
+            .Callback<RedisKey, TimeSpan?, ExpireWhen, CommandFlags>(
+                (key, ttl, when, flags) => capturedTtl = ttl)
+            .ReturnsAsync(true);
+
+        // Act
+        await _store.DecrementAsync("mycounter", 1, new StateOptions { Ttl = 60 });
+
+        // Assert
+        Assert.NotNull(capturedTtl);
+        Assert.Equal(TimeSpan.FromSeconds(60), capturedTtl.Value);
+    }
+
+    #endregion
+
+    #region SetCounterAsync Tests (Gap 12)
+
+    /// <summary>
+    /// Verifies SetCounterAsync calls StringSetAsync with the correct counter key and value.
+    /// Uses Verify pattern since StringSetAsync has many overloads with optional parameters.
+    /// </summary>
+    [Fact]
+    public async Task SetCounterAsync_SetsValueWithCorrectKey()
+    {
+        // Arrange — setup the Expiration-based overload (resolved by compiler for 2-arg calls)
+        _mockDatabase
+            .Setup(db => db.StringSetAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<RedisValue>(),
+                It.IsAny<Expiration>(),
+                It.IsAny<ValueCondition>(),
+                It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+
+        // Act
+        await _store.SetCounterAsync("mycounter", 42);
+
+        // Assert — verify the correct key was used
+        _mockDatabase.Verify(
+            db => db.StringSetAsync(
+                It.Is<RedisKey>(k => k.ToString() == $"{KeyPrefix}:counter:mycounter"),
+                It.Is<RedisValue>(v => (long)v == 42),
+                It.IsAny<Expiration>(),
+                It.IsAny<ValueCondition>(),
+                It.IsAny<CommandFlags>()),
+            Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies SetCounterAsync with TTL passes the expiry through to Redis.
+    /// </summary>
+    [Fact]
+    public async Task SetCounterAsync_WithTtl_SetsValueWithExpiry()
+    {
+        // Arrange
+        _mockDatabase
+            .Setup(db => db.StringSetAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<RedisValue>(),
+                It.IsAny<Expiration>(),
+                It.IsAny<ValueCondition>(),
+                It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+
+        // Act
+        await _store.SetCounterAsync("mycounter", 100, new StateOptions { Ttl = 300 });
+
+        // Assert — verify TTL was passed (Expiration wraps TimeSpan, displayed as "EX 300")
+        _mockDatabase.Verify(
+            db => db.StringSetAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<RedisValue>(),
+                It.Is<Expiration>(e => e.ToString().Contains("300")),
+                It.IsAny<ValueCondition>(),
+                It.IsAny<CommandFlags>()),
+            Times.Once);
+    }
+
+    #endregion
+
+    #region DeleteCounterAsync Tests (Gap 13)
+
+    /// <summary>
+    /// Verifies DeleteCounterAsync calls KeyDeleteAsync with the correct counter key prefix.
+    /// </summary>
+    [Fact]
+    public async Task DeleteCounterAsync_WithExistingCounter_ReturnsTrueAndUsesCorrectKey()
+    {
+        // Arrange
+        string? capturedKey = null;
+        _mockDatabase
+            .Setup(db => db.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
+            .Callback<RedisKey, CommandFlags>((key, flags) => capturedKey = key.ToString())
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _store.DeleteCounterAsync("mycounter");
+
+        // Assert
+        Assert.True(result);
+        Assert.Equal($"{KeyPrefix}:counter:mycounter", capturedKey);
+    }
+
+    /// <summary>
+    /// Verifies DeleteCounterAsync returns false when the counter does not exist.
+    /// </summary>
+    [Fact]
+    public async Task DeleteCounterAsync_WithNonExistentCounter_ReturnsFalse()
+    {
+        // Arrange
+        _mockDatabase
+            .Setup(db => db.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _store.DeleteCounterAsync("nonexistent");
+
+        // Assert
+        Assert.False(result);
+    }
+
+    #endregion
 }

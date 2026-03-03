@@ -1,6 +1,8 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -682,5 +684,280 @@ public class ContractExpirationServiceTests
                 It.Is<GetContractInstanceStatusRequest>(r => r.ContractId == pendingId),
                 It.IsAny<CancellationToken>()),
             Times.AtLeastOnce);
+    }
+
+    // ============================================================================
+    // Payment Schedule Check Flow via Concrete ContractService (Gap 18)
+    // ============================================================================
+
+    [Fact]
+    public async Task CheckActiveContracts_WithConcreteService_ChecksPaymentScheduleAndPublishesEvent()
+    {
+        // Arrange: Wire up a concrete ContractService so the "as ContractService" cast
+        // succeeds in CheckPaymentScheduleAsync, exercising the full payment schedule path.
+        var contractId = Guid.NewGuid();
+
+        // Create mocks for the concrete ContractService dependencies
+        var concreteStoreFactory = new Mock<IStateStoreFactory>();
+        var concreteMessageBus = new Mock<IMessageBus>();
+        var concreteNavigator = new Mock<IServiceNavigator>();
+        var concreteLockProvider = new Mock<IDistributedLockProvider>();
+        var concreteLogger = new Mock<ILogger<ContractService>>();
+        var concreteEventConsumer = new Mock<IEventConsumer>();
+        var concreteTelemetryProvider = new Mock<ITelemetryProvider>();
+        var concreteConfig = new ContractServiceConfiguration
+        {
+            MilestoneDeadlineStartupDelaySeconds = 0,
+            MilestoneDeadlineCheckIntervalSeconds = 600,
+        };
+
+        // Setup stores needed by the concrete service (may be called during GetContractInstanceStatusAsync)
+        var concreteInstanceStore = new Mock<IStateStore<ContractInstanceModel>>();
+        var concreteTemplateStore = new Mock<IStateStore<ContractTemplateModel>>();
+        var concreteBreachStore = new Mock<IStateStore<BreachModel>>();
+        var concreteStringStore = new Mock<IStateStore<string>>();
+        var concreteClauseTypeStore = new Mock<IStateStore<ClauseTypeModel>>();
+
+        // The concreteStoreFactory is used by BOTH the concrete ContractService constructor AND
+        // CheckActiveContractsAsync (which resolves stateStoreFactory from scope). The index store
+        // is retrieved from this same factory via GetStore<List<string>>(StateStoreDefinitions.Contract).
+        var concreteIndexStore = new Mock<IStateStore<List<string>>>();
+
+        concreteStoreFactory.Setup(f => f.GetStore<ContractInstanceModel>("contract-statestore")).Returns(concreteInstanceStore.Object);
+        concreteStoreFactory.Setup(f => f.GetStore<ContractTemplateModel>("contract-statestore")).Returns(concreteTemplateStore.Object);
+        concreteStoreFactory.Setup(f => f.GetStore<BreachModel>("contract-statestore")).Returns(concreteBreachStore.Object);
+        concreteStoreFactory.Setup(f => f.GetStore<string>("contract-statestore")).Returns(concreteStringStore.Object);
+        concreteStoreFactory.Setup(f => f.GetStore<List<string>>("contract-statestore")).Returns(concreteIndexStore.Object);
+        concreteStoreFactory.Setup(f => f.GetStore<ClauseTypeModel>("contract-statestore")).Returns(concreteClauseTypeStore.Object);
+
+        // Default: no pending contracts, only active ones
+        concreteIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<string>?)null);
+        concreteIndexStore.Setup(s => s.GetAsync("status-idx:active", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId.ToString() });
+
+        // Default message bus for event publishing
+        concreteMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Default lock provider
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        concreteLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+
+        var concreteService = new ContractService(
+            concreteMessageBus.Object,
+            concreteNavigator.Object,
+            concreteStoreFactory.Object,
+            concreteLockProvider.Object,
+            concreteLogger.Object,
+            concreteConfig,
+            concreteEventConsumer.Object,
+            concreteTelemetryProvider.Object);
+
+        // Contract instance with a payment due in the past
+        var instance = new ContractInstanceModel
+        {
+            ContractId = contractId,
+            TemplateId = Guid.NewGuid(),
+            TemplateCode = "rental_agreement",
+            Status = ContractStatus.Active,
+            EffectiveFrom = DateTimeOffset.UtcNow.AddDays(-10),
+            NextPaymentDue = DateTimeOffset.UtcNow.AddMinutes(-5), // Payment overdue
+            PaymentsDuePublished = 0,
+            Terms = new ContractTermsModel
+            {
+                PaymentSchedule = PaymentSchedule.Recurring,
+                PaymentFrequency = "P7D"
+            },
+            Parties = new List<ContractPartyModel>
+            {
+                new() { EntityId = Guid.NewGuid(), EntityType = EntityType.Character, Role = "landlord", ConsentStatus = ConsentStatus.Consented },
+                new() { EntityId = Guid.NewGuid(), EntityType = EntityType.Character, Role = "tenant", ConsentStatus = ConsentStatus.Consented }
+            }
+        };
+
+        // Wire up scoped provider to return the CONCRETE service and the shared state store factory
+        _mockScopedProvider.Setup(sp => sp.GetService(typeof(IContractService)))
+            .Returns(concreteService);
+        _mockScopedProvider.Setup(sp => sp.GetService(typeof(IStateStoreFactory)))
+            .Returns(concreteStoreFactory.Object);
+
+        // The concrete service's GetContractInstanceStatusAsync will be called - set up
+        // the instance store that it reads from (the concrete service's store)
+        concreteInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        concreteInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        // The CheckPaymentScheduleAsync also reads from the stateStoreFactory resolved in scope
+        // (which is concreteStoreFactory) via GetStore<ContractInstanceModel>
+        // This is already set up above via concreteStoreFactory
+
+        // Capture the payment due event
+        ContractPaymentDueEvent? publishedPaymentEvent = null;
+        concreteMessageBus
+            .Setup(m => m.TryPublishAsync(
+                "contract.payment.due",
+                It.IsAny<ContractPaymentDueEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, ContractPaymentDueEvent, PublishOptions?, Guid?, CancellationToken>(
+                (_, evt, _, _, _) => publishedPaymentEvent = evt)
+            .ReturnsAsync(true);
+
+        using var worker = new ContractExpirationService(
+            _mockServiceProvider.Object,
+            new Mock<ILogger<ContractExpirationService>>().Object,
+            _configuration);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
+
+        // Act
+        await worker.StartAsync(cts.Token);
+        await Task.Delay(350);
+        await worker.StopAsync(CancellationToken.None);
+
+        // Assert - payment due event was published via the concrete service path
+        concreteMessageBus.Verify(
+            m => m.TryPublishAsync(
+                "contract.payment.due",
+                It.IsAny<ContractPaymentDueEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce);
+
+        // Assert - instance store was queried for payment schedule check
+        concreteInstanceStore.Verify(
+            s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()),
+            Times.AtLeast(2)); // Once by GetContractInstanceStatusAsync, once by CheckPaymentScheduleAsync
+
+        // Assert - instance was saved with updated payment schedule
+        concreteInstanceStore.Verify(
+            s => s.TrySaveAsync(
+                $"instance:{contractId}",
+                It.IsAny<ContractInstanceModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public async Task CheckActiveContracts_WithConcreteService_NoPaymentDue_DoesNotPublishEvent()
+    {
+        // Arrange: Contract exists but payment is not yet due
+        var contractId = Guid.NewGuid();
+
+        // Create mocks for the concrete ContractService dependencies
+        var concreteStoreFactory = new Mock<IStateStoreFactory>();
+        var concreteMessageBus = new Mock<IMessageBus>();
+        var concreteNavigator = new Mock<IServiceNavigator>();
+        var concreteLockProvider = new Mock<IDistributedLockProvider>();
+        var concreteLogger = new Mock<ILogger<ContractService>>();
+        var concreteEventConsumer = new Mock<IEventConsumer>();
+        var concreteTelemetryProvider = new Mock<ITelemetryProvider>();
+        var concreteConfig = new ContractServiceConfiguration
+        {
+            MilestoneDeadlineStartupDelaySeconds = 0,
+            MilestoneDeadlineCheckIntervalSeconds = 600,
+        };
+
+        var concreteInstanceStore = new Mock<IStateStore<ContractInstanceModel>>();
+        var concreteTemplateStore = new Mock<IStateStore<ContractTemplateModel>>();
+        var concreteBreachStore = new Mock<IStateStore<BreachModel>>();
+        var concreteStringStore = new Mock<IStateStore<string>>();
+        var concreteClauseTypeStore = new Mock<IStateStore<ClauseTypeModel>>();
+        var concreteIndexStore = new Mock<IStateStore<List<string>>>();
+
+        concreteStoreFactory.Setup(f => f.GetStore<ContractInstanceModel>("contract-statestore")).Returns(concreteInstanceStore.Object);
+        concreteStoreFactory.Setup(f => f.GetStore<ContractTemplateModel>("contract-statestore")).Returns(concreteTemplateStore.Object);
+        concreteStoreFactory.Setup(f => f.GetStore<BreachModel>("contract-statestore")).Returns(concreteBreachStore.Object);
+        concreteStoreFactory.Setup(f => f.GetStore<string>("contract-statestore")).Returns(concreteStringStore.Object);
+        concreteStoreFactory.Setup(f => f.GetStore<List<string>>("contract-statestore")).Returns(concreteIndexStore.Object);
+        concreteStoreFactory.Setup(f => f.GetStore<ClauseTypeModel>("contract-statestore")).Returns(concreteClauseTypeStore.Object);
+
+        // Default: no pending contracts, only active ones
+        concreteIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<string>?)null);
+        concreteIndexStore.Setup(s => s.GetAsync("status-idx:active", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId.ToString() });
+
+        concreteMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        concreteLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+
+        var concreteService = new ContractService(
+            concreteMessageBus.Object,
+            concreteNavigator.Object,
+            concreteStoreFactory.Object,
+            concreteLockProvider.Object,
+            concreteLogger.Object,
+            concreteConfig,
+            concreteEventConsumer.Object,
+            concreteTelemetryProvider.Object);
+
+        // Contract with payment NOT yet due (3 days in the future)
+        var instance = new ContractInstanceModel
+        {
+            ContractId = contractId,
+            TemplateId = Guid.NewGuid(),
+            TemplateCode = "rental_agreement",
+            Status = ContractStatus.Active,
+            EffectiveFrom = DateTimeOffset.UtcNow.AddDays(-4),
+            NextPaymentDue = DateTimeOffset.UtcNow.AddDays(3), // Not yet due
+            PaymentsDuePublished = 0,
+            Terms = new ContractTermsModel
+            {
+                PaymentSchedule = PaymentSchedule.Recurring,
+                PaymentFrequency = "P7D"
+            }
+        };
+
+        _mockScopedProvider.Setup(sp => sp.GetService(typeof(IContractService)))
+            .Returns(concreteService);
+        _mockScopedProvider.Setup(sp => sp.GetService(typeof(IStateStoreFactory)))
+            .Returns(concreteStoreFactory.Object);
+
+        concreteInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        concreteInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        using var worker = new ContractExpirationService(
+            _mockServiceProvider.Object,
+            new Mock<ILogger<ContractExpirationService>>().Object,
+            _configuration);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
+
+        // Act
+        await worker.StartAsync(cts.Token);
+        await Task.Delay(350);
+        await worker.StopAsync(CancellationToken.None);
+
+        // Assert - NO payment due event published (payment is in the future)
+        concreteMessageBus.Verify(
+            m => m.TryPublishAsync(
+                "contract.payment.due",
+                It.IsAny<ContractPaymentDueEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }

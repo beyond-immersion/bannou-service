@@ -758,6 +758,196 @@ public class StateStoreFactoryTests : IAsyncDisposable
         Assert.Empty(config.Stores);
     }
 
+    // ==================== GetStore sync-over-async warning (Gap 34) ====================
+
+    /// <summary>
+    /// Verifies that calling GetStore before InitializeAsync still returns a
+    /// functional store. In InMemory mode, the sync-over-async initialization
+    /// succeeds internally. Warning log verification is not possible with
+    /// NullLoggerFactory and requires infrastructure-level log capture.
+    /// </summary>
+    [Fact]
+    public void GetStore_BeforeInitializeAsync_StillReturnsStore()
+    {
+        // NullLoggerFactory returns NullLogger which doesn't capture anything,
+        // so we just verify the factory creates a store without throwing.
+        // The warning path is exercised when _initialized is false on GetStore,
+        // but log output verification requires a capturing logger (infrastructure test).
+        var storeName = $"pre-init-{Guid.NewGuid():N}";
+        var factory = TrackFactory(CreateInMemoryFactory(new Dictionary<string, StoreConfiguration>
+        {
+            [storeName] = new() { Backend = StateBackend.Redis }
+        }));
+
+        // Act — GetStore without prior InitializeAsync
+        // In InMemory mode, the sync-over-async EnsureInitializedAsync succeeds
+        var store = factory.GetStore<TestModel>(storeName);
+
+        // Assert — store is returned (sync initialization completed internally)
+        Assert.NotNull(store);
+    }
+
+    // ==================== Telemetry wrapping path (Gap 33) ====================
+
+    /// <summary>
+    /// Verifies that GetStore in InMemory mode returns a store that implements
+    /// ICacheableStateStore, confirming the telemetry wrapping code path is
+    /// exercised (NullTelemetryProvider returns the unwrapped store as-is,
+    /// but the wrapping branch is still entered).
+    /// </summary>
+    [Fact]
+    public void GetStore_InMemoryMode_TelemetryWrappingPathExecutes()
+    {
+        var storeName = $"telemetry-wrap-{Guid.NewGuid():N}";
+        var factory = TrackFactory(CreateInMemoryFactory(new Dictionary<string, StoreConfiguration>
+        {
+            [storeName] = new() { Backend = StateBackend.Redis }
+        }));
+
+        // Act
+        var store = factory.GetStore<TestModel>(storeName);
+
+        // Assert — InMemoryStateStore implements ICacheableStateStore,
+        // and the factory's GetStoreInternal wraps it via ITelemetryProvider.
+        // With NullTelemetryProvider, wrapping returns the same instance,
+        // but the ICacheableStateStore branch in GetStoreInternal was entered.
+        Assert.IsAssignableFrom<ICacheableStateStore<TestModel>>(store);
+        Assert.IsAssignableFrom<IStateStore<TestModel>>(store);
+    }
+
+    // ==================== Error publisher deduplication skip (Gap 38) ====================
+
+    /// <summary>
+    /// Verifies that GetStore with error publishing enabled returns a functional
+    /// store that can perform round-trip operations.
+    /// </summary>
+    /// <remarks>
+    /// Full error publisher verification (deduplication, event publication on
+    /// store failure) requires triggering actual store errors, which is
+    /// infrastructure-dependent. InMemoryStateStore does not naturally fail,
+    /// so we can only verify the store creation path succeeds with error
+    /// publishing configured. Error publisher behavior is covered in
+    /// infrastructure tests.
+    /// </remarks>
+    [Fact]
+    public async Task GetStore_WithErrorPublishingEnabled_ReturnsWorkingStore()
+    {
+        // Arrange
+        var mockMessageBus = new Mock<IMessageBus>();
+        var storeName = $"dedup-store-{Guid.NewGuid():N}";
+        var factory = TrackFactory(CreateInMemoryFactory(
+            new Dictionary<string, StoreConfiguration>
+            {
+                [storeName] = new() { Backend = StateBackend.Redis }
+            },
+            messageBus: mockMessageBus.Object,
+            enableErrorPublishing: true,
+            deduplicationWindowSeconds: 60));
+
+        await factory.InitializeAsync();
+
+        // Act — get a store; the factory creates the error publisher internally
+        var store = factory.GetStore<TestModel>(storeName);
+
+        // Assert — the store was created and is functional with error publishing configured.
+        // Actual error publisher behavior (dedup, event publication) requires store failures
+        // which are infrastructure-dependent.
+        Assert.NotNull(store);
+
+        // Verify the store can do round-trip operations (proving it's functional)
+        await store.SaveAsync("key1", new TestModel { Name = "test" });
+        var retrieved = await store.GetAsync("key1");
+        Assert.NotNull(retrieved);
+        Assert.Equal("test", retrieved.Name);
+    }
+
+    /// <summary>
+    /// Verifies that requesting multiple stores from the same factory returns
+    /// different store instances (one per store name).
+    /// </summary>
+    /// <remarks>
+    /// Deduplication cache sharing verification (proving that the factory-level
+    /// _errorDeduplicationCache is shared across stores) requires triggering
+    /// actual store errors and observing that the second store's error is
+    /// deduplicated by the first store's error within the time window. This is
+    /// infrastructure-dependent. Here we only verify that distinct store names
+    /// produce distinct store instances.
+    /// </remarks>
+    [Fact]
+    public async Task GetStore_MultipleStoresFromSameFactory_ReturnsDifferentInstances()
+    {
+        // Arrange
+        var mockMessageBus = new Mock<IMessageBus>();
+        var storeName1 = $"dedup-a-{Guid.NewGuid():N}";
+        var storeName2 = $"dedup-b-{Guid.NewGuid():N}";
+        var factory = TrackFactory(CreateInMemoryFactory(
+            new Dictionary<string, StoreConfiguration>
+            {
+                [storeName1] = new() { Backend = StateBackend.Redis },
+                [storeName2] = new() { Backend = StateBackend.Redis }
+            },
+            messageBus: mockMessageBus.Object,
+            enableErrorPublishing: true));
+
+        await factory.InitializeAsync();
+
+        // Act — get both stores
+        var store1 = factory.GetStore<TestModel>(storeName1);
+        var store2 = factory.GetStore<TestModel>(storeName2);
+
+        // Assert — different store names produce different store instances
+        Assert.NotNull(store1);
+        Assert.NotNull(store2);
+        Assert.NotSame((object)store1, (object)store2);
+    }
+
+    // ==================== Infrastructure-Dependent Gap Documentation ====================
+    //
+    // The following gaps require real infrastructure and are NOT unit-testable:
+    //
+    // Gap 14-19 (RedisSearchStateStore search/index operations):
+    //   CreateIndexAsync, SearchAsync, SearchCountAsync, AggregateAsync,
+    //   DropIndexAsync, TrySaveAsync (search variant) — require NRedisStack
+    //   FT() and JSON() extension methods that cannot be mocked with IDatabase.
+    //   Covered in infrastructure-tests.
+    //
+    // Gap 20-21 (RedisSearchStateStore base/cacheable operations):
+    //   Base IStateStore and ICacheableStateStore operations on RedisSearchStateStore
+    //   use ScriptEvaluateAsync for Lua scripts — mockable in theory but the
+    //   script logic is complex enough that mocking provides little value.
+    //   Covered in infrastructure-tests.
+    //
+    // Gap 22-30 (MySqlStateStore query operations):
+    //   QueryAsync, QueryPagedAsync, CountAsync with predicate, JsonQueryAsync,
+    //   JsonQueryFirstAsync, JsonQueryCountAsync, DeleteAsync, DeleteBulkAsync,
+    //   GetKeyCountAsync — require real MySQL or EF Core InMemory which doesn't
+    //   support all LINQ translations. Covered in infrastructure-tests.
+    //
+    // Gap 31 (StateStoreFactory.CreateSearchIndexesAsync):
+    //   Requires real Redis FT.CREATE commands. Infrastructure-dependent.
+    //
+    // Gap 32 (StateStoreFactory.GetKeyCountAsync for MySQL/SQLite/Redis backends):
+    //   MySQL/SQLite paths need real database; Redis path returns null by design.
+    //   InMemory path is already tested above. Infrastructure-dependent.
+    //
+    // Gap 35 (StateStoreFactory.EnsureInitializedAsync MySQL retry logic):
+    //   Requires real MySQL connection failures to exercise retry loop.
+    //   Infrastructure-dependent.
+    //
+    // Gap 36 (StateStoreFactory.EnsureInitializedAsync SQLite file operations):
+    //   Requires real file system for SQLite database creation.
+    //   Infrastructure-dependent.
+    //
+    // Gap 37 (StateStoreFactory.DisposeAsync cleanup):
+    //   Partially covered by existing DisposeAsync_ClearsStoreCache test above.
+    //   Full verification of Redis/MySQL connection disposal requires real connections.
+    //   Infrastructure-dependent for the non-InMemory paths.
+    //
+    // Gap 39-40 (RedisDistributedLockProvider Redis lock operations):
+    //   LockAsync and UnlockAsync with real Redis require Lua script execution.
+    //   In-memory mode is already tested in RedisDistributedLockProviderTests.cs.
+    //   Infrastructure-dependent for the Redis paths.
+
     // ==================== Test models ====================
 
     private class TestModel

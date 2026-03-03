@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -457,6 +458,226 @@ public class TokenServiceTests
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
         Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ValidateTokenAsync_WithCorruptedSessionData_ShouldReturnUnauthorizedAndPublishError()
+    {
+        // Arrange - Generate a valid JWT then set up session with null Roles (corruption)
+        var account = CreateTestAccount();
+        string? capturedSessionKey = null;
+
+        _mockSessionService.Setup(s => s.SaveSessionAsync(
+            It.IsAny<string>(),
+            It.IsAny<SessionDataModel>(),
+            It.IsAny<int?>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, SessionDataModel, int?, CancellationToken>((key, _, _, _) =>
+            {
+                capturedSessionKey = key;
+            })
+            .Returns(Task.CompletedTask);
+
+        _mockSessionService.Setup(s => s.AddSessionToAccountIndexAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _mockSessionService.Setup(s => s.AddSessionIdReverseIndexAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<string>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var (jwt, _) = await _service.GenerateAccessTokenAsync(account);
+
+        // Set up corrupted session data (null Roles via reflection to simulate Redis corruption)
+        var corruptedSession = new SessionDataModel
+        {
+            AccountId = account.AccountId,
+            Email = account.Email,
+            DisplayName = account.DisplayName,
+            SessionId = Guid.NewGuid(),
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        // Use reflection to set Roles to null (simulates data corruption from Redis
+        // without using null-forgiving operator per QUALITY TENETS)
+        typeof(SessionDataModel).GetProperty("Roles")?.SetValue(corruptedSession, null);
+
+        _mockSessionService.Setup(s => s.GetSessionAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(corruptedSession);
+
+        string? capturedOperation = null;
+        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, string, string, string, string?, string?, ServiceErrorEventSeverity, object?, string?, Guid?, CancellationToken>(
+                (_, op, _, _, _, _, _, _, _, _, _) =>
+                {
+                    capturedOperation = op;
+                })
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await _service.ValidateTokenAsync(jwt);
+
+        // Assert - Corrupted session returns Unauthorized
+        Assert.Equal(StatusCodes.Unauthorized, status);
+        Assert.Null(response);
+
+        // Assert - Error event was published for corruption
+        Assert.Equal("ValidateToken", capturedOperation);
+    }
+
+    [Fact]
+    public async Task ValidateTokenAsync_WithExpiredSession_ShouldReturnUnauthorized()
+    {
+        // Arrange - Generate a valid JWT then set up expired session
+        var account = CreateTestAccount();
+
+        _mockSessionService.Setup(s => s.SaveSessionAsync(
+            It.IsAny<string>(),
+            It.IsAny<SessionDataModel>(),
+            It.IsAny<int?>(),
+            It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _mockSessionService.Setup(s => s.AddSessionToAccountIndexAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _mockSessionService.Setup(s => s.AddSessionIdReverseIndexAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<string>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var (jwt, _) = await _service.GenerateAccessTokenAsync(account);
+
+        // Set up expired session
+        var expiredSession = new SessionDataModel
+        {
+            AccountId = account.AccountId,
+            Email = account.Email,
+            DisplayName = account.DisplayName,
+            Roles = new List<string> { "user" },
+            Authorizations = new List<string>(),
+            SessionId = Guid.NewGuid(),
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(-1), // Already expired
+            CreatedAt = DateTimeOffset.UtcNow.AddHours(-2)
+        };
+
+        _mockSessionService.Setup(s => s.GetSessionAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expiredSession);
+
+        // Act
+        var (status, response) = await _service.ValidateTokenAsync(jwt);
+
+        // Assert - Expired session returns Unauthorized
+        Assert.Equal(StatusCodes.Unauthorized, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ValidateTokenAsync_WithValidSession_ShouldUpdateLastActivityAndReturnOk()
+    {
+        // Arrange - Generate a valid JWT then set up valid session
+        var account = CreateTestAccount();
+
+        _mockSessionService.Setup(s => s.SaveSessionAsync(
+            It.IsAny<string>(),
+            It.IsAny<SessionDataModel>(),
+            It.IsAny<int?>(),
+            It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _mockSessionService.Setup(s => s.AddSessionToAccountIndexAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _mockSessionService.Setup(s => s.AddSessionIdReverseIndexAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<string>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var (jwt, _) = await _service.GenerateAccessTokenAsync(account);
+
+        // Set up valid session
+        var sessionId = Guid.NewGuid();
+        var validSession = new SessionDataModel
+        {
+            AccountId = account.AccountId,
+            Email = account.Email,
+            DisplayName = account.DisplayName,
+            Roles = new List<string> { "user" },
+            Authorizations = new List<string> { "game:arcadia" },
+            SessionId = sessionId,
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            LastActiveAt = DateTimeOffset.UtcNow.AddMinutes(-5)
+        };
+
+        _mockSessionService.Setup(s => s.GetSessionAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(validSession);
+
+        // Capture the session data when saved (to verify LastActiveAt was updated)
+        SessionDataModel? capturedSessionData = null;
+        int? capturedTtl = null;
+
+        // Reset the SaveSession mock for the validation save
+        _mockSessionService.Setup(s => s.SaveSessionAsync(
+            It.IsAny<string>(),
+            It.IsAny<SessionDataModel>(),
+            It.IsAny<int?>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, SessionDataModel, int?, CancellationToken>((_, session, ttl, _) =>
+            {
+                capturedSessionData = session;
+                capturedTtl = ttl;
+            })
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (status, response) = await _service.ValidateTokenAsync(jwt);
+
+        // Assert - Returns OK with valid response
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(account.AccountId, response.AccountId);
+        Assert.Equal(new List<string> { "user" }, response.Roles);
+        Assert.Equal(new List<string> { "game:arcadia" }, response.Authorizations);
+
+        // Assert - Session was re-saved with updated LastActiveAt and remaining TTL
+        Assert.NotNull(capturedSessionData);
+        Assert.True(capturedTtl > 0, "Remaining TTL should be positive");
+        // LastActiveAt should be approximately now (within a few seconds)
+        var timeSinceUpdate = DateTimeOffset.UtcNow - capturedSessionData.LastActiveAt;
+        Assert.True(timeSinceUpdate.TotalSeconds < 10, "LastActiveAt should be updated to approximately now");
     }
 
     #endregion

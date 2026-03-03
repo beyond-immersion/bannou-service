@@ -606,6 +606,227 @@ public class SessionServiceTests
 
     #endregion
 
+    #region GetAccountSessionsAsync Error Handling Tests
+
+    [Fact]
+    public async Task GetAccountSessionsAsync_WhenStateStoreThrows_ShouldPublishErrorAndRethrow()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+
+        _mockCacheableStringStore.Setup(s => s.GetSetAsync<string>(
+            $"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Redis connection failed"));
+
+        string? capturedServiceName = null;
+        string? capturedOperation = null;
+
+        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, string, string, string, string?, string?, ServiceErrorEventSeverity, object?, string?, Guid?, CancellationToken>(
+                (svc, op, _, _, _, _, _, _, _, _, _) =>
+                {
+                    capturedServiceName = svc;
+                    capturedOperation = op;
+                })
+            .ReturnsAsync(true);
+
+        // Act & Assert - Should re-throw (not mask the error)
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _service.GetAccountSessionsAsync(accountId));
+
+        // Assert - Error event was published before re-throw
+        Assert.Equal("auth", capturedServiceName);
+        Assert.Equal("GetAccountSessions", capturedOperation);
+    }
+
+    #endregion
+
+    #region AddSessionToAccountIndexAsync Error Handling Tests
+
+    [Fact]
+    public async Task AddSessionToAccountIndexAsync_WhenStateStoreThrows_ShouldPublishErrorAndNotRethrow()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var sessionKey = "error-session-key";
+
+        _mockCacheableStringStore.Setup(s => s.AddToSetAsync(
+            $"account-sessions:{accountId}",
+            sessionKey,
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Redis write failed"));
+
+        string? capturedServiceName = null;
+        string? capturedOperation = null;
+
+        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, string, string, string, string?, string?, ServiceErrorEventSeverity, object?, string?, Guid?, CancellationToken>(
+                (svc, op, _, _, _, _, _, _, _, _, _) =>
+                {
+                    capturedServiceName = svc;
+                    capturedOperation = op;
+                })
+            .ReturnsAsync(true);
+
+        // Act - Should NOT throw (catch swallows, publishes error, does not re-throw)
+        await _service.AddSessionToAccountIndexAsync(accountId, sessionKey);
+
+        // Assert - Error event was published
+        Assert.Equal("auth", capturedServiceName);
+        Assert.Equal("AddSessionToAccountIndex", capturedOperation);
+    }
+
+    #endregion
+
+    #region InvalidateAllSessionsForAccountAsync Edge Revocation Tests
+
+    [Fact]
+    public async Task InvalidateAllSessionsForAccountAsync_WithEdgeRevocationEnabled_ShouldPushRevocations()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var sessionKey = Guid.NewGuid().ToString("N");
+        var sessionKeys = new List<string> { sessionKey };
+
+        var sessionData = CreateTestSessionData();
+        sessionData.AccountId = accountId;
+        sessionData.Jti = "test-jti-for-revocation";
+        sessionData.ExpiresAt = DateTimeOffset.UtcNow.AddHours(1);
+
+        _mockCacheableStringStore.Setup(s => s.GetSetAsync<string>(
+            $"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionKeys);
+
+        _mockSessionStore.Setup(s => s.GetAsync($"session:{sessionKey}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionData);
+
+        _mockSessionStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        _mockCacheableStringStore.Setup(s => s.DeleteAsync(
+            $"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Enable edge revocation
+        _mockEdgeRevocationService.Setup(e => e.IsEnabled).Returns(true);
+
+        string? capturedJti = null;
+        Guid capturedAccountId = Guid.Empty;
+
+        _mockEdgeRevocationService.Setup(e => e.RevokeTokenAsync(
+            It.IsAny<string>(),
+            It.IsAny<Guid>(),
+            It.IsAny<TimeSpan>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, Guid, TimeSpan, string, CancellationToken>(
+                (jti, acctId, _, _, _) =>
+                {
+                    capturedJti = jti;
+                    capturedAccountId = acctId;
+                })
+            .Returns(Task.CompletedTask);
+
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+            It.IsAny<string>(),
+            It.IsAny<SessionInvalidatedEvent>(),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        await _service.InvalidateAllSessionsForAccountAsync(accountId);
+
+        // Assert - Edge revocation was called with correct JTI and account ID
+        Assert.Equal("test-jti-for-revocation", capturedJti);
+        Assert.Equal(accountId, capturedAccountId);
+    }
+
+    [Fact]
+    public async Task InvalidateAllSessionsForAccountAsync_WithEdgeRevocationDisabled_ShouldSkipRevocations()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var sessionKey = Guid.NewGuid().ToString("N");
+        var sessionKeys = new List<string> { sessionKey };
+
+        var sessionData = CreateTestSessionData();
+        sessionData.AccountId = accountId;
+        sessionData.Jti = "test-jti-no-revocation";
+        sessionData.ExpiresAt = DateTimeOffset.UtcNow.AddHours(1);
+
+        _mockCacheableStringStore.Setup(s => s.GetSetAsync<string>(
+            $"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionKeys);
+
+        _mockSessionStore.Setup(s => s.GetAsync($"session:{sessionKey}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionData);
+
+        _mockSessionStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        _mockCacheableStringStore.Setup(s => s.DeleteAsync(
+            $"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Edge revocation is disabled (default from constructor)
+        _mockEdgeRevocationService.Setup(e => e.IsEnabled).Returns(false);
+
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+            It.IsAny<string>(),
+            It.IsAny<SessionInvalidatedEvent>(),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        await _service.InvalidateAllSessionsForAccountAsync(accountId);
+
+        // Assert - RevokeTokenAsync should NOT have been called
+        _mockEdgeRevocationService.Verify(e => e.RevokeTokenAsync(
+            It.IsAny<string>(),
+            It.IsAny<Guid>(),
+            It.IsAny<TimeSpan>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+
+        // Assert - Session deletion and event publishing still happened
+        _mockSessionStore.Verify(s => s.DeleteAsync($"session:{sessionKey}", It.IsAny<CancellationToken>()), Times.Once);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "session.invalidated",
+            It.IsAny<SessionInvalidatedEvent>(),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
     #region GetAccountSessionsAsync Tests
 
     [Fact]

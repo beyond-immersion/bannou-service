@@ -2007,6 +2007,849 @@ public class AuthServiceTests
 
     #endregion
 
+    #region GetRevocationListAsync Tests
+
+    [Fact]
+    public async Task GetRevocationListAsync_WhenEdgeRevocationDisabled_ShouldReturnEmptyLists()
+    {
+        // Arrange
+        _mockEdgeRevocationService.Setup(e => e.IsEnabled).Returns(false);
+
+        var service = CreateAuthService();
+        var request = new GetRevocationListRequest
+        {
+            IncludeTokens = true,
+            IncludeAccounts = true,
+            Limit = 100
+        };
+
+        // Act
+        var (status, response) = await service.GetRevocationListAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.RevokedTokens);
+        Assert.Empty(response.RevokedAccounts);
+
+        // Verify edge revocation service was NOT called
+        _mockEdgeRevocationService.Verify(
+            e => e.GetRevocationListAsync(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task GetRevocationListAsync_WhenEdgeRevocationEnabled_ShouldDelegateToService()
+    {
+        // Arrange
+        _mockEdgeRevocationService.Setup(e => e.IsEnabled).Returns(true);
+
+        var expectedTokens = new List<RevokedTokenEntry>
+        {
+            new RevokedTokenEntry { Jti = "jti-1", AccountId = Guid.NewGuid(), Reason = "Logout" }
+        };
+        var expectedAccounts = new List<RevokedAccountEntry>
+        {
+            new RevokedAccountEntry { AccountId = Guid.NewGuid(), Reason = "AccountDeleted" }
+        };
+
+        _mockEdgeRevocationService
+            .Setup(e => e.GetRevocationListAsync(true, true, 50, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((expectedTokens, expectedAccounts, 0, (int?)1));
+
+        var service = CreateAuthService();
+        var request = new GetRevocationListRequest
+        {
+            IncludeTokens = true,
+            IncludeAccounts = true,
+            Limit = 50
+        };
+
+        // Act
+        var (status, response) = await service.GetRevocationListAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.RevokedTokens);
+        Assert.Single(response.RevokedAccounts);
+        Assert.Equal("jti-1", response.RevokedTokens.First().Jti);
+    }
+
+    #endregion
+
+    #region TerminateSessionAsync Tests
+
+    [Fact]
+    public async Task TerminateSessionAsync_SessionNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid();
+
+        _mockSessionService
+            .Setup(s => s.FindSessionKeyBySessionIdAsync(sessionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        var service = CreateAuthService();
+        var request = new TerminateSessionRequest { SessionId = sessionId };
+
+        // Act
+        var status = await service.TerminateSessionAsync("jwt", request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+
+        // Verify no session store operations occurred
+        _mockSessionStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task TerminateSessionAsync_SessionFound_ShouldDeleteAndPublishEvents()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid();
+        var sessionKey = Guid.NewGuid().ToString("N");
+        var accountId = Guid.NewGuid();
+
+        _mockSessionService
+            .Setup(s => s.FindSessionKeyBySessionIdAsync(sessionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionKey);
+
+        var sessionData = new SessionDataModel
+        {
+            AccountId = accountId,
+            SessionId = sessionId,
+            Jti = "test-jti",
+            Email = "test@example.com",
+            Roles = new List<string> { "user" },
+            Authorizations = new List<string>(),
+            ExpiresAtUnix = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds(),
+            CreatedAtUnix = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeSeconds()
+        };
+
+        _mockSessionStore
+            .Setup(s => s.GetAsync($"session:{sessionKey}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionData);
+
+        var service = CreateAuthService();
+        var request = new TerminateSessionRequest { SessionId = sessionId };
+
+        // Act
+        var status = await service.TerminateSessionAsync("jwt", request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify session was deleted
+        _mockSessionStore.Verify(
+            s => s.DeleteAsync($"session:{sessionKey}", It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify session removed from account index
+        _mockSessionService.Verify(
+            s => s.RemoveSessionFromAccountIndexAsync(accountId, sessionKey, It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify reverse index removed
+        _mockSessionService.Verify(
+            s => s.RemoveSessionIdReverseIndexAsync(sessionId, It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify session invalidation event published
+        _mockSessionService.Verify(
+            s => s.PublishSessionInvalidatedEventAsync(
+                accountId,
+                It.Is<List<string>>(l => l.Contains(sessionKey)),
+                SessionInvalidatedEventReason.AdminAction,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task TerminateSessionAsync_WithEdgeRevocationEnabled_ShouldPushRevocation()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid();
+        var sessionKey = Guid.NewGuid().ToString("N");
+        var accountId = Guid.NewGuid();
+
+        _mockEdgeRevocationService.Setup(e => e.IsEnabled).Returns(true);
+
+        _mockSessionService
+            .Setup(s => s.FindSessionKeyBySessionIdAsync(sessionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionKey);
+
+        var sessionData = new SessionDataModel
+        {
+            AccountId = accountId,
+            SessionId = sessionId,
+            Jti = "revocable-jti",
+            Email = "test@example.com",
+            Roles = new List<string> { "user" },
+            Authorizations = new List<string>(),
+            ExpiresAtUnix = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds(),
+            CreatedAtUnix = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeSeconds()
+        };
+
+        _mockSessionStore
+            .Setup(s => s.GetAsync($"session:{sessionKey}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionData);
+
+        var service = CreateAuthService();
+        var request = new TerminateSessionRequest { SessionId = sessionId };
+
+        // Act
+        var status = await service.TerminateSessionAsync("jwt", request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify edge revocation was called
+        _mockEdgeRevocationService.Verify(
+            e => e.RevokeTokenAsync("revocable-jti", accountId, It.IsAny<TimeSpan>(), "AdminAction", It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task TerminateSessionAsync_SessionDataNull_ShouldStillDeleteAndRemoveReverseIndex()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid();
+        var sessionKey = Guid.NewGuid().ToString("N");
+
+        _mockSessionService
+            .Setup(s => s.FindSessionKeyBySessionIdAsync(sessionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionKey);
+
+        _mockSessionStore
+            .Setup(s => s.GetAsync($"session:{sessionKey}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SessionDataModel?)null);
+
+        var service = CreateAuthService();
+        var request = new TerminateSessionRequest { SessionId = sessionId };
+
+        // Act
+        var status = await service.TerminateSessionAsync("jwt", request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Session key still deleted
+        _mockSessionStore.Verify(
+            s => s.DeleteAsync($"session:{sessionKey}", It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Reverse index still removed
+        _mockSessionService.Verify(
+            s => s.RemoveSessionIdReverseIndexAsync(sessionId, It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Account index NOT updated (no session data to extract accountId)
+        _mockSessionService.Verify(
+            s => s.RemoveSessionFromAccountIndexAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        // Session invalidation event NOT published (no session data)
+        _mockSessionService.Verify(
+            s => s.PublishSessionInvalidatedEventAsync(It.IsAny<Guid>(), It.IsAny<List<string>>(), It.IsAny<SessionInvalidatedEventReason>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    #endregion
+
+    #region LogoutAsync Tests
+
+    [Fact]
+    public async Task LogoutAsync_WithInvalidJwt_ShouldReturnUnauthorized()
+    {
+        // Arrange
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("invalid-jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.Unauthorized, (ValidateTokenResponse?)null));
+
+        var service = CreateAuthService();
+
+        // Act
+        var status = await service.LogoutAsync("invalid-jwt", null);
+
+        // Assert
+        Assert.Equal(StatusCodes.Unauthorized, status);
+    }
+
+    [Fact]
+    public async Task LogoutAsync_SingleSession_ShouldDeleteAndPublishEvents()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var sessionKey = Guid.NewGuid();
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("valid-jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse
+            {
+                AccountId = accountId,
+                SessionKey = sessionKey,
+                Roles = new List<string> { "user" },
+                Authorizations = new List<string>()
+            }));
+
+        var sessionData = new SessionDataModel
+        {
+            AccountId = accountId,
+            SessionId = sessionKey,
+            Jti = "logout-jti",
+            Email = "test@example.com",
+            Roles = new List<string> { "user" },
+            Authorizations = new List<string>(),
+            ExpiresAtUnix = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds(),
+            CreatedAtUnix = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeSeconds()
+        };
+
+        _mockSessionStore
+            .Setup(s => s.GetAsync($"session:{sessionKey:N}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionData);
+
+        var service = CreateAuthService();
+
+        // Act
+        var status = await service.LogoutAsync("valid-jwt", new LogoutRequest { AllSessions = false });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify session was deleted
+        _mockSessionStore.Verify(
+            s => s.DeleteAsync($"session:{sessionKey:N}", It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify session removed from account index
+        _mockSessionService.Verify(
+            s => s.RemoveSessionFromAccountIndexAsync(accountId, sessionKey.ToString("N"), It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify session invalidation event published
+        _mockSessionService.Verify(
+            s => s.PublishSessionInvalidatedEventAsync(
+                accountId,
+                It.Is<List<string>>(l => l.Count == 1),
+                SessionInvalidatedEventReason.Logout,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task LogoutAsync_AllSessions_ShouldDeleteAllSessionsAndPublishBulkEvent()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var sessionKey = Guid.NewGuid();
+        var sessionKey2Str = Guid.NewGuid().ToString("N");
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("valid-jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse
+            {
+                AccountId = accountId,
+                SessionKey = sessionKey,
+                Roles = new List<string> { "user" },
+                Authorizations = new List<string>()
+            }));
+
+        _mockSessionService
+            .Setup(s => s.GetSessionKeysForAccountAsync(accountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { sessionKey.ToString("N"), sessionKey2Str });
+
+        // Return session data for both sessions
+        _mockSessionStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("session:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SessionDataModel
+            {
+                AccountId = accountId,
+                SessionId = Guid.NewGuid(),
+                Jti = "jti-bulk",
+                Email = "test@example.com",
+                Roles = new List<string> { "user" },
+                Authorizations = new List<string>(),
+                ExpiresAtUnix = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds(),
+                CreatedAtUnix = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeSeconds()
+            });
+
+        var service = CreateAuthService();
+
+        // Act
+        var status = await service.LogoutAsync("valid-jwt", new LogoutRequest { AllSessions = true });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify all sessions deleted (two session keys)
+        _mockSessionStore.Verify(
+            s => s.DeleteAsync(It.Is<string>(k => k.StartsWith("session:")), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+
+        // Verify account sessions index deleted
+        _mockSessionService.Verify(
+            s => s.DeleteAccountSessionsIndexAsync(accountId, It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify session invalidation event published for all sessions
+        _mockSessionService.Verify(
+            s => s.PublishSessionInvalidatedEventAsync(
+                accountId,
+                It.Is<List<string>>(l => l.Count == 2),
+                SessionInvalidatedEventReason.Logout,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task LogoutAsync_WithEdgeRevocationEnabled_ShouldPushRevocations()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var sessionKey = Guid.NewGuid();
+
+        _mockEdgeRevocationService.Setup(e => e.IsEnabled).Returns(true);
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("valid-jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse
+            {
+                AccountId = accountId,
+                SessionKey = sessionKey,
+                Roles = new List<string> { "user" },
+                Authorizations = new List<string>()
+            }));
+
+        var sessionData = new SessionDataModel
+        {
+            AccountId = accountId,
+            SessionId = sessionKey,
+            Jti = "revoke-me",
+            Email = "test@example.com",
+            Roles = new List<string> { "user" },
+            Authorizations = new List<string>(),
+            ExpiresAtUnix = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds(),
+            CreatedAtUnix = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeSeconds()
+        };
+
+        _mockSessionStore
+            .Setup(s => s.GetAsync($"session:{sessionKey:N}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionData);
+
+        var service = CreateAuthService();
+
+        // Act
+        var status = await service.LogoutAsync("valid-jwt", new LogoutRequest { AllSessions = false });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify edge revocation was called
+        _mockEdgeRevocationService.Verify(
+            e => e.RevokeTokenAsync("revoke-me", accountId, It.IsAny<TimeSpan>(), "Logout", It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
+
+    #region GetSessionsAsync Tests
+
+    [Fact]
+    public async Task GetSessionsAsync_WithInvalidJwt_ShouldReturnUnauthorized()
+    {
+        // Arrange
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("bad-jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.Unauthorized, (ValidateTokenResponse?)null));
+
+        var service = CreateAuthService();
+
+        // Act
+        var (status, response) = await service.GetSessionsAsync("bad-jwt");
+
+        // Assert
+        Assert.Equal(StatusCodes.Unauthorized, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetSessionsAsync_WithValidJwt_ShouldReturnSessions()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var sessionKey = Guid.NewGuid();
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("valid-jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse
+            {
+                AccountId = accountId,
+                SessionKey = sessionKey,
+                Roles = new List<string> { "user" },
+                Authorizations = new List<string>()
+            }));
+
+        var expectedSessions = new List<SessionInfo>
+        {
+            new SessionInfo
+            {
+                SessionId = sessionKey,
+                CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
+                LastActive = DateTimeOffset.UtcNow,
+                DeviceInfo = new DeviceInfo { DeviceType = DeviceType.Desktop, Platform = "Unknown", Browser = "Unknown" }
+            }
+        };
+
+        _mockSessionService
+            .Setup(s => s.GetAccountSessionsAsync(accountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedSessions);
+
+        var service = CreateAuthService();
+
+        // Act
+        var (status, response) = await service.GetSessionsAsync("valid-jwt");
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Sessions);
+        Assert.Equal(sessionKey, response.Sessions.First().SessionId);
+    }
+
+    [Fact]
+    public async Task GetSessionsAsync_WithNoSessions_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("valid-jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse
+            {
+                AccountId = accountId,
+                SessionKey = Guid.NewGuid(),
+                Roles = new List<string> { "user" },
+                Authorizations = new List<string>()
+            }));
+
+        _mockSessionService
+            .Setup(s => s.GetAccountSessionsAsync(accountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SessionInfo>());
+
+        var service = CreateAuthService();
+
+        // Act
+        var (status, response) = await service.GetSessionsAsync("valid-jwt");
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Sessions);
+    }
+
+    #endregion
+
+    #region InvalidateAccountSessionsAsync Tests
+
+    [Fact]
+    public async Task InvalidateAccountSessionsAsync_ShouldDelegateToSessionService()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var service = CreateAuthService();
+
+        // Act
+        await service.InvalidateAccountSessionsAsync(accountId);
+
+        // Assert
+        _mockSessionService.Verify(
+            s => s.InvalidateAllSessionsForAccountAsync(accountId, SessionInvalidatedEventReason.AccountDeleted, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
+
+    #region PropagateRoleChangesAsync Tests
+
+    [Fact]
+    public async Task PropagateRoleChangesAsync_WithActiveSessions_ShouldUpdateRolesAndPublishEvents()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var sessionKey = Guid.NewGuid().ToString("N");
+        var sessionId = Guid.NewGuid();
+        var newRoles = new List<string> { "user", "admin" };
+
+        _mockSessionService
+            .Setup(s => s.GetSessionKeysForAccountAsync(accountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { sessionKey });
+
+        var sessionData = new SessionDataModel
+        {
+            AccountId = accountId,
+            SessionId = sessionId,
+            Email = "test@example.com",
+            Roles = new List<string> { "user" },
+            Authorizations = new List<string> { "read" },
+            ExpiresAtUnix = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds(),
+            CreatedAtUnix = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeSeconds()
+        };
+
+        _mockSessionStore
+            .Setup(s => s.GetAsync($"session:{sessionKey}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionData);
+
+        // Capture the saved session to verify roles were updated
+        SessionDataModel? capturedSession = null;
+        _mockSessionStore
+            .Setup(s => s.SaveAsync($"session:{sessionKey}", It.IsAny<SessionDataModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SessionDataModel, StateOptions?, CancellationToken>((_, data, _, _) => capturedSession = data)
+            .ReturnsAsync("etag");
+
+        var service = CreateAuthService();
+
+        // Act
+        await service.PropagateRoleChangesAsync(accountId, newRoles, CancellationToken.None);
+
+        // Assert - Verify session was saved with updated roles
+        Assert.NotNull(capturedSession);
+        Assert.Equal(newRoles, capturedSession.Roles);
+
+        // Verify session TTL was preserved
+        _mockSessionStore.Verify(
+            s => s.SaveAsync($"session:{sessionKey}", It.IsAny<SessionDataModel>(), It.Is<StateOptions>(o => o.Ttl > 0), It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify session.updated event was published for permission recompilation
+        _mockSessionService.Verify(
+            s => s.PublishSessionUpdatedEventAsync(
+                accountId, sessionId, newRoles, It.IsAny<List<string>>(),
+                SessionUpdatedEventReason.RoleChanged, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task PropagateRoleChangesAsync_WithNoSessions_ShouldReturnEarly()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+
+        _mockSessionService
+            .Setup(s => s.GetSessionKeysForAccountAsync(accountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var service = CreateAuthService();
+
+        // Act
+        await service.PropagateRoleChangesAsync(accountId, new List<string> { "admin" }, CancellationToken.None);
+
+        // Assert - No session store operations should occur
+        _mockSessionStore.Verify(
+            s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task PropagateRoleChangesAsync_WithExpiredSession_ShouldSkipUpdate()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var sessionKey = Guid.NewGuid().ToString("N");
+
+        _mockSessionService
+            .Setup(s => s.GetSessionKeysForAccountAsync(accountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { sessionKey });
+
+        // Session already expired
+        var expiredSession = new SessionDataModel
+        {
+            AccountId = accountId,
+            SessionId = Guid.NewGuid(),
+            Roles = new List<string> { "user" },
+            Authorizations = new List<string>(),
+            ExpiresAtUnix = DateTimeOffset.UtcNow.AddMinutes(-5).ToUnixTimeSeconds(),
+            CreatedAtUnix = DateTimeOffset.UtcNow.AddHours(-2).ToUnixTimeSeconds()
+        };
+
+        _mockSessionStore
+            .Setup(s => s.GetAsync($"session:{sessionKey}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expiredSession);
+
+        var service = CreateAuthService();
+
+        // Act
+        await service.PropagateRoleChangesAsync(accountId, new List<string> { "admin" }, CancellationToken.None);
+
+        // Assert - Session should NOT be saved (expired)
+        _mockSessionStore.Verify(
+            s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SessionDataModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    #endregion
+
+    #region PropagateEmailChangeAsync Tests
+
+    [Fact]
+    public async Task PropagateEmailChangeAsync_WithActiveSessions_ShouldUpdateEmailWithoutEvent()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var sessionKey = Guid.NewGuid().ToString("N");
+        var newEmail = "newemail@example.com";
+
+        _mockSessionService
+            .Setup(s => s.GetSessionKeysForAccountAsync(accountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { sessionKey });
+
+        var sessionData = new SessionDataModel
+        {
+            AccountId = accountId,
+            SessionId = Guid.NewGuid(),
+            Email = "oldemail@example.com",
+            Roles = new List<string> { "user" },
+            Authorizations = new List<string>(),
+            ExpiresAtUnix = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds(),
+            CreatedAtUnix = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeSeconds()
+        };
+
+        _mockSessionStore
+            .Setup(s => s.GetAsync($"session:{sessionKey}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionData);
+
+        // Capture saved session to verify email was updated
+        SessionDataModel? capturedSession = null;
+        _mockSessionStore
+            .Setup(s => s.SaveAsync($"session:{sessionKey}", It.IsAny<SessionDataModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SessionDataModel, StateOptions?, CancellationToken>((_, data, _, _) => capturedSession = data)
+            .ReturnsAsync("etag");
+
+        var service = CreateAuthService();
+
+        // Act
+        await service.PropagateEmailChangeAsync(accountId, newEmail, CancellationToken.None);
+
+        // Assert - Email was updated
+        Assert.NotNull(capturedSession);
+        Assert.Equal(newEmail, capturedSession.Email);
+
+        // Verify NO session.updated event was published (email changes don't affect permissions)
+        _mockSessionService.Verify(
+            s => s.PublishSessionUpdatedEventAsync(
+                It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<List<string>>(), It.IsAny<List<string>>(),
+                It.IsAny<SessionUpdatedEventReason>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task PropagateEmailChangeAsync_WithNoSessions_ShouldReturnEarly()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+
+        _mockSessionService
+            .Setup(s => s.GetSessionKeysForAccountAsync(accountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var service = CreateAuthService();
+
+        // Act
+        await service.PropagateEmailChangeAsync(accountId, "new@example.com", CancellationToken.None);
+
+        // Assert
+        _mockSessionStore.Verify(
+            s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    #endregion
+
+    #region Event Publishing Verification Tests
+
+    [Fact]
+    public async Task LoginAsync_Success_ShouldPublishLoginSuccessfulEvent()
+    {
+        // Arrange
+        _mockCacheableStore.Setup(s => s.GetCounterAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((long?)null);
+
+        var accountId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var password = "correct-password";
+
+        _mockAccountClient.Setup(c => c.GetAccountByEmailAsync(It.IsAny<GetAccountByEmailRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse
+            {
+                AccountId = accountId,
+                Email = "test@example.com",
+                DisplayName = "TestUser",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password)
+            });
+
+        _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(It.IsAny<AccountResponse>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("access-token", sessionId));
+        _mockTokenService.Setup(t => t.GenerateRefreshToken()).Returns("refresh-token");
+
+        // Capture the published event
+        AuthLoginSuccessfulEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync("auth.login.successful", It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((_, evt, _, _, _) => capturedEvent = evt as AuthLoginSuccessfulEvent)
+            .ReturnsAsync(true);
+
+        var service = CreateAuthService();
+        var request = new LoginRequest { Email = "test@example.com", Password = password };
+
+        // Act
+        var (status, response) = await service.LoginAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(capturedEvent);
+        Assert.Equal(accountId, capturedEvent.AccountId);
+        Assert.Equal("TestUser", capturedEvent.Username);
+        Assert.Equal(sessionId, capturedEvent.SessionId);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_Success_ShouldPublishRegistrationSuccessfulEvent()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+
+        _mockAccountClient.Setup(c => c.CreateAccountAsync(It.IsAny<CreateAccountRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse { AccountId = accountId, Email = "new@example.com", DisplayName = "NewUser" });
+
+        _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(It.IsAny<AccountResponse>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("access-token", sessionId));
+        _mockTokenService.Setup(t => t.GenerateRefreshToken()).Returns("refresh-token");
+
+        // Capture the published event
+        AuthRegistrationSuccessfulEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync("auth.registration.successful", It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((_, evt, _, _, _) => capturedEvent = evt as AuthRegistrationSuccessfulEvent)
+            .ReturnsAsync(true);
+
+        var service = CreateAuthService();
+        var request = new RegisterRequest { Username = "NewUser", Password = "password123", Email = "new@example.com" };
+
+        // Act
+        var (status, response) = await service.RegisterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(capturedEvent);
+        Assert.Equal(accountId, capturedEvent.AccountId);
+        Assert.Equal("NewUser", capturedEvent.Username);
+        Assert.Equal("new@example.com", capturedEvent.Email);
+        Assert.Equal(sessionId, capturedEvent.SessionId);
+    }
+
+    #endregion
+
     #region MFA Verify Tests
 
     [Fact]

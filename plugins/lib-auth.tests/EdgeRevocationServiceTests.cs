@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -324,6 +325,189 @@ public class EdgeRevocationServiceTests
         // Assert
         Assert.Equal(2, tokens.Count);
         Assert.Equal(3, totalCount);
+    }
+
+    #endregion
+
+    #region RevokeAccountAsync Provider Failure Tests
+
+    [Fact]
+    public async Task RevokeAccountAsync_WhenProviderReturnsFalse_ShouldAddToFailedPushes()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var issuedBefore = DateTimeOffset.UtcNow;
+
+        _mockProvider.Setup(p => p.PushAccountRevocationAsync(
+            It.IsAny<Guid>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        // Act
+        await _service.RevokeAccountAsync(accountId, issuedBefore, "test-failure");
+
+        // Assert - Failed push should be recorded
+        _mockFailedStore.Verify(s => s.SaveAsync(
+            It.Is<string>(k => k.Contains("failed:") && k.Contains(accountId.ToString())),
+            It.Is<FailedEdgePushEntry>(e => e.Type == "account" && e.AccountId == accountId && e.ProviderId == "test-provider"),
+            null,
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region PushToProvidersAsync Timeout Tests
+
+    [Fact]
+    public async Task RevokeTokenAsync_WhenProviderTimesOut_ShouldAddToFailedPushes()
+    {
+        // Arrange - Provider delays longer than the configured timeout
+        var jti = "timeout-jti";
+        var accountId = Guid.NewGuid();
+        var ttl = TimeSpan.FromMinutes(60);
+
+        _mockProvider.Setup(p => p.PushTokenRevocationAsync(
+            It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .Returns(async (string _, Guid _, TimeSpan _, CancellationToken ct) =>
+            {
+                // Simulate a long delay that will exceed the timeout
+                await Task.Delay(TimeSpan.FromSeconds(30), ct);
+                return true;
+            });
+
+        // Act - EdgeRevocationTimeoutSeconds is 5, so the provider will be cancelled
+        await _service.RevokeTokenAsync(jti, accountId, ttl, "timeout-test");
+
+        // Assert - Failed push should be recorded due to timeout
+        _mockFailedStore.Verify(s => s.SaveAsync(
+            It.Is<string>(k => k.Contains("failed:") && k.Contains(jti)),
+            It.Is<FailedEdgePushEntry>(e => e.Type == "token" && e.Jti == jti && e.ProviderId == "test-provider"),
+            null,
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RevokeAccountAsync_WhenProviderThrowsException_ShouldAddToFailedPushesAndPublishError()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var issuedBefore = DateTimeOffset.UtcNow;
+
+        _mockProvider.Setup(p => p.PushAccountRevocationAsync(
+            It.IsAny<Guid>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Provider crashed"));
+
+        // Act
+        await _service.RevokeAccountAsync(accountId, issuedBefore, "exception-test");
+
+        // Assert - Failed push should be recorded
+        _mockFailedStore.Verify(s => s.SaveAsync(
+            It.Is<string>(k => k.Contains("failed:")),
+            It.Is<FailedEdgePushEntry>(e => e.Type == "account" && e.ProviderId == "test-provider"),
+            null,
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert - Error event should be published
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
+            "auth",
+            "edge-revocation-push-failed",
+            "InvalidOperationException",
+            It.Is<string>(msg => msg.Contains("Provider crashed")),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region RetryFailedPushesAsync Tests
+
+    [Fact]
+    public async Task RevokeTokenAsync_WithExistingFailedPushes_ShouldRetryThem()
+    {
+        // Arrange
+        var jti = "new-jti";
+        var accountId = Guid.NewGuid();
+        var ttl = TimeSpan.FromMinutes(60);
+
+        // Set up an existing failed push entry in the index
+        var failedKey = "failed:test-provider:token:old-jti";
+        var failedEntry = new FailedEdgePushEntry
+        {
+            Type = "token",
+            Jti = "old-jti",
+            AccountId = Guid.NewGuid(),
+            TtlSeconds = 3600,
+            ProviderId = "test-provider",
+            RetryCount = 0,
+            CreatedAtUnix = DateTimeOffset.UtcNow.AddMinutes(-5).ToUnixTimeSeconds()
+        };
+
+        _mockIndexStore.Setup(s => s.GetAsync("failed-push-index", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { failedKey });
+
+        _mockFailedStore.Setup(s => s.GetAsync(failedKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedEntry);
+
+        // PushBatchAsync succeeds for all entries
+        _mockProvider.Setup(p => p.PushBatchAsync(
+            It.IsAny<List<FailedEdgePushEntry>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        // Act
+        await _service.RevokeTokenAsync(jti, accountId, ttl, "triggers-retry");
+
+        // Assert - PushBatchAsync was called for retry
+        _mockProvider.Verify(p => p.PushBatchAsync(
+            It.Is<List<FailedEdgePushEntry>>(entries =>
+                entries.Count == 1 && entries[0].Jti == "old-jti"),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert - Successful retry entry was deleted
+        _mockFailedStore.Verify(s => s.DeleteAsync(failedKey, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RevokeTokenAsync_WithMaxRetryExceeded_ShouldGiveUpOnFailedPush()
+    {
+        // Arrange
+        var jti = "new-jti";
+        var accountId = Guid.NewGuid();
+        var ttl = TimeSpan.FromMinutes(60);
+
+        // Set up a failed push entry that has exceeded max retries
+        var failedKey = "failed:test-provider:token:exhausted-jti";
+        var failedEntry = new FailedEdgePushEntry
+        {
+            Type = "token",
+            Jti = "exhausted-jti",
+            AccountId = Guid.NewGuid(),
+            TtlSeconds = 3600,
+            ProviderId = "test-provider",
+            RetryCount = 3, // Equals EdgeRevocationMaxRetryAttempts
+            CreatedAtUnix = DateTimeOffset.UtcNow.AddMinutes(-30).ToUnixTimeSeconds()
+        };
+
+        _mockIndexStore.Setup(s => s.GetAsync("failed-push-index", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { failedKey });
+
+        _mockFailedStore.Setup(s => s.GetAsync(failedKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedEntry);
+
+        // Act
+        await _service.RevokeTokenAsync(jti, accountId, ttl, "triggers-retry");
+
+        // Assert - PushBatchAsync should NOT be called (entry was given up on)
+        _mockProvider.Verify(p => p.PushBatchAsync(
+            It.IsAny<List<FailedEdgePushEntry>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+
+        // Assert - Given-up entry was cleaned up (deleted from store and index)
+        _mockFailedStore.Verify(s => s.DeleteAsync(failedKey, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

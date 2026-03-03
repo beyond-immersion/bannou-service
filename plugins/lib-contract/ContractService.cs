@@ -1455,6 +1455,9 @@ public partial class ContractService : IContractService
         // Publish event
         await PublishBreachDetectedEventAsync(model, breachModel, cancellationToken);
 
+        // Check breach threshold for auto-termination
+        await CheckBreachThresholdAsync(model, cancellationToken);
+
         return (StatusCodes.OK, MapBreachToResponse(breachModel));
     }
 

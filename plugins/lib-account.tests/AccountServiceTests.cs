@@ -3432,6 +3432,24 @@ public class AccountServiceTests
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<AuthMethodInfo>());
 
+        // Capture event publication
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>(
+                (topic, evt, opts, id, ct) =>
+                {
+                    capturedTopic = topic;
+                    capturedEvent = evt;
+                })
+            .ReturnsAsync(true);
+
         // Act
         var (status, response) = await service.UpdateProfileAsync(new UpdateProfileRequest
         {
@@ -3444,12 +3462,10 @@ public class AccountServiceTests
         Assert.NotNull(response);
         Assert.Equal("New Display", response.DisplayName);
 
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "account.updated",
-            It.Is<AccountUpdatedEvent>(e => e.ChangedFields.Contains("displayName")),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal("account.updated", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<AccountUpdatedEvent>(capturedEvent);
+        Assert.Contains("displayName", typedEvent.ChangedFields);
     }
 
     [Fact]
@@ -3631,6 +3647,24 @@ public class AccountServiceTests
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<AuthMethodInfo>());
 
+        // Capture event publication
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>(
+                (topic, evt, opts, id, ct) =>
+                {
+                    capturedTopic = topic;
+                    capturedEvent = evt;
+                })
+            .ReturnsAsync(true);
+
         // Act
         var status = await service.UpdateMfaAsync(new UpdateMfaRequest
         {
@@ -3648,12 +3682,10 @@ public class AccountServiceTests
         Assert.NotNull(savedAccount.MfaRecoveryCodes);
         Assert.Equal(2, savedAccount.MfaRecoveryCodes.Count);
 
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "account.updated",
-            It.IsAny<AccountUpdatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal("account.updated", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<AccountUpdatedEvent>(capturedEvent);
+        Assert.Equal(accountId, typedEvent.AccountId);
     }
 
     [Fact]
@@ -4017,6 +4049,24 @@ public class AccountServiceTests
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<AuthMethodInfo>());
 
+        // Capture event publication
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>(
+                (topic, evt, opts, id, ct) =>
+                {
+                    capturedTopic = topic;
+                    capturedEvent = evt;
+                })
+            .ReturnsAsync(true);
+
         // Act
         var (status, response) = await service.UpdateEmailAsync(new UpdateEmailRequest
         {
@@ -4046,15 +4096,12 @@ public class AccountServiceTests
             "email-index-old@test.local",
             It.IsAny<CancellationToken>()), Times.Once);
 
-        // Verify event published
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "account.updated",
-            It.Is<AccountUpdatedEvent>(e =>
-                e.ChangedFields.Contains("email") &&
-                e.ChangedFields.Contains("isVerified")),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        // Verify event published with capture pattern
+        Assert.Equal("account.updated", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<AccountUpdatedEvent>(capturedEvent);
+        Assert.Contains("email", typedEvent.ChangedFields);
+        Assert.Contains("isVerified", typedEvent.ChangedFields);
     }
 
     [Fact]
@@ -4642,6 +4689,24 @@ public class AccountServiceTests
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<AuthMethodInfo>());
 
+        // Capture event publication
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>(
+                (topic, evt, opts, id, ct) =>
+                {
+                    capturedTopic = topic;
+                    capturedEvent = evt;
+                })
+            .ReturnsAsync(true);
+
         // Same key, different value
         var differentMetadata = new Dictionary<string, object> { { "theme", "light" } };
 
@@ -4654,12 +4719,10 @@ public class AccountServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "account.updated",
-            It.Is<AccountUpdatedEvent>(e => e.ChangedFields.Contains("metadata")),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal("account.updated", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<AccountUpdatedEvent>(capturedEvent);
+        Assert.Contains("metadata", typedEvent.ChangedFields);
     }
 
     /// <summary>
@@ -4697,6 +4760,24 @@ public class AccountServiceTests
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<AuthMethodInfo>());
 
+        // Capture event publication
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>(
+                (topic, evt, opts, id, ct) =>
+                {
+                    capturedTopic = topic;
+                    capturedEvent = evt;
+                })
+            .ReturnsAsync(true);
+
         // Extra key → different count → MetadataEquals returns false
         var extraMetadata = new Dictionary<string, object>
         {
@@ -4713,12 +4794,10 @@ public class AccountServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "account.updated",
-            It.Is<AccountUpdatedEvent>(e => e.ChangedFields.Contains("metadata")),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal("account.updated", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<AccountUpdatedEvent>(capturedEvent);
+        Assert.Contains("metadata", typedEvent.ChangedFields);
     }
 
     /// <summary>
@@ -4756,6 +4835,24 @@ public class AccountServiceTests
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<AuthMethodInfo>());
 
+        // Capture event publication
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>(
+                (topic, evt, opts, id, ct) =>
+                {
+                    capturedTopic = topic;
+                    capturedEvent = evt;
+                })
+            .ReturnsAsync(true);
+
         // Act
         var (status, _) = await service.UpdateAccountAsync(new UpdateAccountRequest
         {
@@ -4765,12 +4862,758 @@ public class AccountServiceTests
 
         // Assert - null existing → empty dict, vs non-empty new → change detected
         Assert.Equal(StatusCodes.OK, status);
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "account.updated",
-            It.Is<AccountUpdatedEvent>(e => e.ChangedFields.Contains("metadata")),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal("account.updated", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<AccountUpdatedEvent>(capturedEvent);
+        Assert.Contains("metadata", typedEvent.ChangedFields);
+    }
+
+    #endregion
+
+    #region Gap 1: MaxPageSize Clamping Tests
+
+    [Fact]
+    public async Task ListAccountsAsync_WithPageSizeExceedingMax_ShouldClampToMaxPageSize()
+    {
+        // Arrange
+        var configuration = new AccountServiceConfiguration
+        {
+            MaxPageSize = 50,
+            DefaultPageSize = 20
+        };
+        var service = new AccountService(
+            _mockLogger.Object,
+            configuration,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
+
+        // Capture the limit passed to the query store
+        int? capturedLimit = null;
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, int, int, JsonSortSpec?, CancellationToken>(
+                (_, _, limit, _, _) => capturedLimit = limit)
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 50));
+
+        // Act - Request page size of 200, which exceeds MaxPageSize of 50
+        var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest
+        {
+            PageSize = 200
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(50, response.PageSize);
+        Assert.Equal(50, capturedLimit);
+    }
+
+    [Fact]
+    public async Task ListAccountsAsync_WithPageSizeEqualToMax_ShouldNotClamp()
+    {
+        // Arrange
+        var configuration = new AccountServiceConfiguration
+        {
+            MaxPageSize = 100,
+            DefaultPageSize = 20
+        };
+        var service = new AccountService(
+            _mockLogger.Object,
+            configuration,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
+
+        int? capturedLimit = null;
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, int, int, JsonSortSpec?, CancellationToken>(
+                (_, _, limit, _, _) => capturedLimit = limit)
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 100));
+
+        // Act - Request page size exactly at MaxPageSize
+        var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest
+        {
+            PageSize = 100
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(100, response.PageSize);
+        Assert.Equal(100, capturedLimit);
+    }
+
+    [Fact]
+    public async Task ListAccountsAsync_WithPageSizeBelowMax_ShouldUseRequestedSize()
+    {
+        // Arrange
+        var configuration = new AccountServiceConfiguration
+        {
+            MaxPageSize = 100,
+            DefaultPageSize = 20
+        };
+        var service = new AccountService(
+            _mockLogger.Object,
+            configuration,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
+
+        int? capturedLimit = null;
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, int, int, JsonSortSpec?, CancellationToken>(
+                (_, _, limit, _, _) => capturedLimit = limit)
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 15));
+
+        // Act
+        var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest
+        {
+            PageSize = 15
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(15, response.PageSize);
+        Assert.Equal(15, capturedLimit);
+    }
+
+    #endregion
+
+    #region Gap 2: ListAccountsWithProviderFilterAsync Tests
+
+    [Fact]
+    public async Task ListAccountsAsync_WithProviderFilter_ShouldFilterByProvider()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+
+        var account1Id = Guid.NewGuid();
+        var account2Id = Guid.NewGuid();
+        var account3Id = Guid.NewGuid();
+
+        var account1 = new AccountModel
+        {
+            AccountId = account1Id,
+            Email = "user1@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-3),
+            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-3)
+        };
+        var account2 = new AccountModel
+        {
+            AccountId = account2Id,
+            Email = "user2@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-2),
+            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-2)
+        };
+        var account3 = new AccountModel
+        {
+            AccountId = account3Id,
+            Email = "user3@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+        };
+
+        // Mock the queryable store to return all 3 accounts
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>
+                {
+                    new JsonQueryResult<AccountModel>($"account-{account1Id}", account1),
+                    new JsonQueryResult<AccountModel>($"account-{account2Id}", account2),
+                    new JsonQueryResult<AccountModel>($"account-{account3Id}", account3),
+                },
+                3, 0, 10000));
+
+        // Mock auth methods: only account1 and account3 have Discord
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(
+                $"auth-methods-{account1Id}",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>
+            {
+                new AuthMethodInfo { Provider = AuthProvider.Discord, ExternalId = "disc1" }
+            });
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(
+                $"auth-methods-{account2Id}",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>
+            {
+                new AuthMethodInfo { Provider = AuthProvider.Google, ExternalId = "goog1" }
+            });
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(
+                $"auth-methods-{account3Id}",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>
+            {
+                new AuthMethodInfo { Provider = AuthProvider.Discord, ExternalId = "disc2" }
+            });
+
+        // Act - Filter by Discord provider
+        var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest
+        {
+            Provider = AuthProvider.Discord
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.TotalCount);
+        Assert.Equal(2, response.Accounts.Count);
+        Assert.All(response.Accounts, a =>
+            Assert.Contains(a.AuthMethods, m => m.Provider == AuthProvider.Discord));
+    }
+
+    [Fact]
+    public async Task ListAccountsAsync_WithProviderFilter_ShouldSortByCreatedAtDescending()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+
+        var olderAccountId = Guid.NewGuid();
+        var newerAccountId = Guid.NewGuid();
+
+        var olderAccount = new AccountModel
+        {
+            AccountId = olderAccountId,
+            Email = "older@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-10),
+            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-10)
+        };
+        var newerAccount = new AccountModel
+        {
+            AccountId = newerAccountId,
+            Email = "newer@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+        };
+
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>
+                {
+                    new JsonQueryResult<AccountModel>($"account-{olderAccountId}", olderAccount),
+                    new JsonQueryResult<AccountModel>($"account-{newerAccountId}", newerAccount),
+                },
+                2, 0, 10000));
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.StartsWith("auth-methods-")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>
+            {
+                new AuthMethodInfo { Provider = AuthProvider.Steam, ExternalId = "steam1" }
+            });
+
+        // Act
+        var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest
+        {
+            Provider = AuthProvider.Steam
+        });
+
+        // Assert - newer account should come first (descending order)
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Accounts.Count);
+        var accountList = response.Accounts.ToList();
+        Assert.Equal(newerAccountId, accountList[0].AccountId);
+        Assert.Equal(olderAccountId, accountList[1].AccountId);
+    }
+
+    [Fact]
+    public async Task ListAccountsAsync_WithProviderFilter_ShouldPaginateCorrectly()
+    {
+        // Arrange
+        var configuration = new AccountServiceConfiguration
+        {
+            MaxPageSize = 100,
+            DefaultPageSize = 20,
+            ProviderFilterMaxScanSize = 10000,
+            ListBatchSize = 100
+        };
+        var service = new AccountService(
+            _mockLogger.Object,
+            configuration,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
+
+        // Create 3 accounts, all with Google auth
+        var accounts = new List<(Guid Id, AccountModel Model)>();
+        for (var i = 0; i < 3; i++)
+        {
+            var id = Guid.NewGuid();
+            accounts.Add((id, new AccountModel
+            {
+                AccountId = id,
+                Email = $"user{i}@test.local",
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-(3 - i)),
+                UpdatedAt = DateTimeOffset.UtcNow.AddDays(-(3 - i))
+            }));
+        }
+
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                accounts.Select(a =>
+                    new JsonQueryResult<AccountModel>($"account-{a.Id}", a.Model)).ToList(),
+                3, 0, 10000));
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.StartsWith("auth-methods-")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>
+            {
+                new AuthMethodInfo { Provider = AuthProvider.Google, ExternalId = "g1" }
+            });
+
+        // Act - Request page 2 with size 1
+        var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest
+        {
+            Provider = AuthProvider.Google,
+            Page = 2,
+            PageSize = 1
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(3, response.TotalCount);
+        Assert.Single(response.Accounts);
+        Assert.Equal(2, response.Page);
+        Assert.Equal(1, response.PageSize);
+        Assert.True(response.HasNextPage);
+        Assert.True(response.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task ListAccountsAsync_WithProviderFilter_NoMatches_ShouldReturnEmpty()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>
+                {
+                    new JsonQueryResult<AccountModel>($"account-{accountId}", account)
+                },
+                1, 0, 10000));
+
+        // Account only has Google, but we filter by Discord
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.StartsWith("auth-methods-")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>
+            {
+                new AuthMethodInfo { Provider = AuthProvider.Google, ExternalId = "g1" }
+            });
+
+        // Act
+        var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest
+        {
+            Provider = AuthProvider.Discord
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.TotalCount);
+        Assert.Empty(response.Accounts);
+        Assert.False(response.HasNextPage);
+    }
+
+    #endregion
+
+    #region Gap 3: PublishErrorEventAsync via GetAuthMethodsForAccount Error Path
+
+    [Fact]
+    public async Task GetAccountAsync_WhenAuthMethodsStoreThrows_ShouldPublishErrorEvent()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync(
+                $"account-{accountId}",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        // Simulate state store failure for auth methods
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(
+                $"auth-methods-{accountId}",
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Redis connection failed"));
+
+        // Capture error event publication
+        string? capturedServiceName = null;
+        string? capturedOperation = null;
+        string? capturedErrorType = null;
+        string? capturedMessage = null;
+        string? capturedDependency = null;
+
+        _mockMessageBus
+            .Setup(m => m.TryPublishErrorAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<ServiceErrorEventSeverity>(),
+                It.IsAny<object?>(),
+                It.IsAny<string?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, string, string, string?, string?, ServiceErrorEventSeverity, object?, string?, Guid?, CancellationToken>(
+                (svc, op, errType, msg, dep, endpoint, sev, details, stack, corr, ct) =>
+                {
+                    capturedServiceName = svc;
+                    capturedOperation = op;
+                    capturedErrorType = errType;
+                    capturedMessage = msg;
+                    capturedDependency = dep;
+                })
+            .ReturnsAsync(true);
+
+        // Act & Assert - The exception should propagate (service re-throws after publishing error event)
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.GetAccountAsync(new GetAccountRequest { AccountId = accountId }));
+
+        // Assert on captured error event
+        Assert.Equal("account", capturedServiceName);
+        Assert.Equal("GetAuthMethodsForAccount", capturedOperation);
+        Assert.Equal("InvalidOperationException", capturedErrorType);
+        Assert.Equal("Redis connection failed", capturedMessage);
+        Assert.Equal("state", capturedDependency);
+    }
+
+    #endregion
+
+    #region Gap 4: ConvertJsonElement Recursive Paths via UpdateProfileAsync
+
+    [Fact]
+    public async Task UpdateProfileAsync_WithNestedObjectMetadata_ShouldConvertCorrectly()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            Metadata = null,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        // Capture saved account to verify metadata conversion
+        AccountModel? savedAccount = null;
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, CancellationToken>(
+                (_, model, _, _) => savedAccount = model)
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Create a nested JSON structure via JsonElement to exercise ConvertJsonElement recursion
+        var jsonString = """{"settings":{"theme":"dark","fontSize":14},"tags":["vip","beta"],"active":true,"score":42.5}""";
+        var jsonDoc = System.Text.Json.JsonDocument.Parse(jsonString);
+        var jsonElement = jsonDoc.RootElement.Clone();
+        jsonDoc.Dispose();
+
+        // Act
+        var (status, response) = await service.UpdateProfileAsync(new UpdateProfileRequest
+        {
+            AccountId = accountId,
+            Metadata = jsonElement
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedAccount);
+        Assert.NotNull(savedAccount.Metadata);
+
+        // Verify nested object was converted
+        Assert.True(savedAccount.Metadata.ContainsKey("settings"));
+        var settings = savedAccount.Metadata["settings"];
+        Assert.IsType<Dictionary<string, object?>>(settings);
+        var settingsDict = (Dictionary<string, object?>)settings;
+        Assert.Equal("dark", settingsDict["theme"]);
+        Assert.Equal(14L, settingsDict["fontSize"]); // Int64 via TryGetInt64
+
+        // Verify array was converted
+        Assert.True(savedAccount.Metadata.ContainsKey("tags"));
+        var tags = savedAccount.Metadata["tags"];
+        Assert.IsType<List<object?>>(tags);
+        var tagList = (List<object?>)tags;
+        Assert.Equal(2, tagList.Count);
+        Assert.Equal("vip", tagList[0]);
+        Assert.Equal("beta", tagList[1]);
+
+        // Verify boolean was converted
+        Assert.True(savedAccount.Metadata.ContainsKey("active"));
+        Assert.Equal(true, savedAccount.Metadata["active"]);
+
+        // Verify double was converted (42.5 cannot be int64, falls through to GetDouble)
+        Assert.True(savedAccount.Metadata.ContainsKey("score"));
+        Assert.Equal(42.5, savedAccount.Metadata["score"]);
+    }
+
+    [Fact]
+    public async Task UpdateProfileAsync_WithArrayContainingNestedObjects_ShouldConvertRecursively()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            Metadata = null,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        AccountModel? savedAccount = null;
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, CancellationToken>(
+                (_, model, _, _) => savedAccount = model)
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Create array with nested objects to exercise recursive array+object paths
+        var jsonString = """{"items":[{"name":"sword","damage":50},{"name":"shield","defense":30}]}""";
+        var jsonDoc = System.Text.Json.JsonDocument.Parse(jsonString);
+        var jsonElement = jsonDoc.RootElement.Clone();
+        jsonDoc.Dispose();
+
+        // Act
+        var (status, _) = await service.UpdateProfileAsync(new UpdateProfileRequest
+        {
+            AccountId = accountId,
+            Metadata = jsonElement
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedAccount);
+        Assert.NotNull(savedAccount.Metadata);
+
+        Assert.True(savedAccount.Metadata.ContainsKey("items"));
+        var items = savedAccount.Metadata["items"];
+        Assert.IsType<List<object?>>(items);
+        var itemList = (List<object?>)items;
+        Assert.Equal(2, itemList.Count);
+
+        // Verify first nested object in array
+        var sword = Assert.IsType<Dictionary<string, object?>>(itemList[0]);
+        Assert.Equal("sword", sword["name"]);
+        Assert.Equal(50L, sword["damage"]);
+
+        // Verify second nested object in array
+        var shield = Assert.IsType<Dictionary<string, object?>>(itemList[1]);
+        Assert.Equal("shield", shield["name"]);
+        Assert.Equal(30L, shield["defense"]);
+    }
+
+    [Fact]
+    public async Task UpdateProfileAsync_WithNullMetadataValues_ShouldExcludeFromDictionary()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            Metadata = null,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        AccountModel? savedAccount = null;
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, CancellationToken>(
+                (_, model, _, _) => savedAccount = model)
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // JSON with null value - ConvertJsonElement returns null, which is excluded by caller
+        var jsonString = """{"present":"value","absent":null}""";
+        var jsonDoc = System.Text.Json.JsonDocument.Parse(jsonString);
+        var jsonElement = jsonDoc.RootElement.Clone();
+        jsonDoc.Dispose();
+
+        // Act
+        var (status, _) = await service.UpdateProfileAsync(new UpdateProfileRequest
+        {
+            AccountId = accountId,
+            Metadata = jsonElement
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedAccount);
+        Assert.NotNull(savedAccount.Metadata);
+        Assert.True(savedAccount.Metadata.ContainsKey("present"));
+        Assert.Equal("value", savedAccount.Metadata["present"]);
+        // Null values are excluded from the metadata dictionary by ConvertToMetadataDictionary
+        Assert.False(savedAccount.Metadata.ContainsKey("absent"));
+    }
+
+    #endregion
+
+    #region Gap 5: AccountServicePlugin Tests
+
+    [Fact]
+    public void AccountServicePlugin_PluginName_ShouldBeAccount()
+    {
+        // Act
+        var plugin = new AccountServicePlugin();
+
+        // Assert
+        Assert.Equal("account", plugin.PluginName);
+    }
+
+    [Fact]
+    public void AccountServicePlugin_DisplayName_ShouldBeAccountService()
+    {
+        // Act
+        var plugin = new AccountServicePlugin();
+
+        // Assert
+        Assert.Equal("Account Service", plugin.DisplayName);
+    }
+
+    [Fact]
+    public void AccountServicePlugin_ShouldInheritFromStandardServicePlugin()
+    {
+        // Act
+        var plugin = new AccountServicePlugin();
+
+        // Assert - Verify inheritance chain
+        Assert.IsAssignableFrom<BeyondImmersion.BannouService.Plugins.StandardServicePlugin<IAccountService>>(plugin);
     }
 
     #endregion

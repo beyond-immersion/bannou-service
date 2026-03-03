@@ -3462,4 +3462,1639 @@ public class ResourceServiceTests
     }
 
     #endregion
+
+    #region Gap 1: RegisterReferenceAsync Duplicate/Idempotent
+
+    [Fact]
+    public async Task RegisterReferenceAsync_DuplicateSource_ReturnsAlreadyRegisteredTrue()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+        var sourceId = Guid.NewGuid().ToString();
+
+        // Pre-populate the set with an existing reference
+        var setKey = $"character:{resourceId}:sources";
+        _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>
+        {
+            new() { SourceType = "actor", SourceId = sourceId, RegisteredAt = DateTimeOffset.UtcNow.AddMinutes(-10) }
+        };
+
+        // Override AddToSetAsync to return false (already exists)
+        _mockRefStore
+            .Setup(s => s.AddToSetAsync(
+                It.Is<string>(k => k == setKey),
+                It.Is<ResourceReferenceEntry>(e => e.SourceType == "actor" && e.SourceId == sourceId),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        var request = new RegisterReferenceRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            SourceType = "actor",
+            SourceId = sourceId
+        };
+
+        // Act
+        var (status, response) = await service.RegisterReferenceAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.AlreadyRegistered);
+        Assert.Equal(1, response.NewRefCount); // Count stays at 1
+
+        // Grace period should NOT be cleared for duplicate registration
+        Assert.Empty(_capturedGraceDeletes);
+    }
+
+    #endregion
+
+    #region Gap 2: UnregisterReferenceAsync Not-Registered Source
+
+    [Fact]
+    public async Task UnregisterReferenceAsync_NeverRegisteredSource_ReturnsWasRegisteredFalse()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+        var sourceId = Guid.NewGuid().ToString();
+
+        // Pre-populate with a DIFFERENT reference (not the one being unregistered)
+        var setKey = $"character:{resourceId}:sources";
+        _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>
+        {
+            new() { SourceType = "scene", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow }
+        };
+
+        // Override RemoveFromSetAsync to return false (not found)
+        _mockRefStore
+            .Setup(s => s.RemoveFromSetAsync(
+                It.Is<string>(k => k == setKey),
+                It.Is<ResourceReferenceEntry>(e => e.SourceType == "actor" && e.SourceId == sourceId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        var request = new UnregisterReferenceRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            SourceType = "actor",
+            SourceId = sourceId
+        };
+
+        // Act
+        var (status, response) = await service.UnregisterReferenceAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.WasRegistered);
+        Assert.Equal(1, response.NewRefCount); // Count unchanged (the scene ref remains)
+        Assert.Null(response.GracePeriodStartedAt);
+
+        // No grace period should be started (not removed, not zero)
+        Assert.Empty(_capturedGraceSaves);
+        // No event should be published
+        Assert.Empty(_capturedPublishedEvents);
+    }
+
+    #endregion
+
+    #region Gap 3: CheckReferencesAsync Zero Refs With No Grace Period Record
+
+    [Fact]
+    public async Task CheckReferencesAsync_ZeroRefWithNoGracePeriodRecord_ReturnsNotEligible()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // No references (empty set)
+        var setKey = $"character:{resourceId}:sources";
+        _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>();
+
+        // Grace store returns null (no grace period record)
+        _mockGraceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GracePeriodRecord?)null);
+
+        var request = new CheckReferencesRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.CheckReferencesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.RefCount);
+        Assert.False(response.IsCleanupEligible); // No grace period record means not eligible
+        Assert.Null(response.GracePeriodEndsAt);
+        Assert.Null(response.LastZeroTimestamp);
+        Assert.NotNull(response.Sources);
+        Assert.Empty(response.Sources);
+    }
+
+    #endregion
+
+    #region Gap 4: ExecuteCleanupAsync DryRun With Eligible State
+
+    [Fact]
+    public async Task ExecuteCleanupAsync_DryRun_EligibleForCleanup_ReportsSuccess()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // No references
+        var setKey = $"character:{resourceId}:sources";
+        _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>();
+
+        // Grace period passed (2 hours ago, config is 1 hour)
+        _mockGraceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GracePeriodRecord
+            {
+                ResourceType = "character",
+                ResourceId = resourceId,
+                ZeroTimestamp = DateTimeOffset.UtcNow.AddHours(-2)
+            });
+
+        // No cleanup callbacks (empty index)
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var request = new ExecuteCleanupRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            DryRun = true
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.DryRun);
+        Assert.True(response.Success);
+        Assert.Null(response.AbortReason);
+
+        // No side effects should occur (it's dry run)
+        Assert.Empty(_capturedGraceDeletes);
+        Assert.Empty(_capturedSetDeletes);
+    }
+
+    #endregion
+
+    #region Gap 5: ExecuteCleanupAsync Re-validation Under Lock
+
+    [Fact]
+    public async Task ExecuteCleanupAsync_NewRestrictRefsAddedBetweenPreCheckAndLock_Aborts()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Initially no references
+        var setKey = $"character:{resourceId}:sources";
+        _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>();
+
+        // Grace period passed
+        _mockGraceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GracePeriodRecord
+            {
+                ResourceType = "character",
+                ResourceId = resourceId,
+                ZeroTimestamp = DateTimeOffset.UtcNow.AddHours(-2)
+            });
+
+        // Setup RESTRICT callback for scene type
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "scene" });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:scene", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "scene",
+                OnDeleteAction = OnDeleteAction.RESTRICT,
+                ServiceName = "scene",
+                CallbackEndpoint = "/scene/cleanup",
+                PayloadTemplate = "{}"
+            });
+
+        // Setup successful lock
+        SetupSuccessfulLock();
+
+        // Simulate race condition: between pre-check and lock, a RESTRICT reference is added
+        var lockCallCount = 0;
+        _mockRefStore
+            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string key, CancellationToken _) =>
+            {
+                lockCallCount++;
+                if (lockCallCount > 1) // Second call is under lock
+                {
+                    // Simulate a new reference being added between pre-check and lock
+                    _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>
+                    {
+                        new() { SourceType = "scene", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow }
+                    };
+                    return 1; // Now has 1 reference
+                }
+                return _simulatedSets.ContainsKey(key) ? _simulatedSets[key].Count : 0;
+            });
+
+        var request = new ExecuteCleanupRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            GracePeriodSeconds = 0
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("RESTRICT", response.AbortReason);
+    }
+
+    #endregion
+
+    #region Gap 6: ExecuteCleanupAsync Published Events on Callback Failure
+
+    [Fact]
+    public async Task ExecuteCleanupAsync_CallbackFailure_PublishesCallbackFailedEvent()
+    {
+        // Arrange
+        ClearCaptures();
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // No references
+        var setKey = $"character:{resourceId}:sources";
+        _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>();
+
+        // Grace period passed
+        _mockGraceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GracePeriodRecord
+            {
+                ResourceType = "character",
+                ResourceId = resourceId,
+                ZeroTimestamp = DateTimeOffset.UtcNow.AddHours(-2)
+            });
+
+        // Setup CASCADE callback
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "actor" });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:actor", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "actor",
+                OnDeleteAction = OnDeleteAction.CASCADE,
+                ServiceName = "actor",
+                CallbackEndpoint = "/actor/cleanup-by-character",
+                PayloadTemplate = "{}"
+            });
+
+        // Setup successful lock
+        SetupSuccessfulLock();
+
+        // Setup callback to FAIL
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiBatchAsync(
+                It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<BatchExecutionMode>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IEnumerable<PreboundApiDefinition> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
+            {
+                return apis.Select(api => new PreboundApiResult
+                {
+                    Api = api,
+                    SubstitutedPayload = "{}",
+                    SubstitutionSucceeded = true,
+                    Result = new RawApiResult
+                    {
+                        StatusCode = 500,
+                        ErrorMessage = "Service unavailable",
+                        Duration = TimeSpan.FromMilliseconds(100)
+                    }
+                }).ToList();
+            });
+
+        var request = new ExecuteCleanupRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            GracePeriodSeconds = 0,
+            CleanupPolicy = CleanupPolicy.BEST_EFFORT // Continue despite failures
+        };
+
+        // Act
+        await service.ExecuteCleanupAsync(request, CancellationToken.None);
+
+        // Assert - verify callback-failed event was published
+        var failedEvents = _capturedPublishedEvents
+            .Where(e => e.Topic == "resource.cleanup.callback-failed")
+            .ToList();
+
+        Assert.Single(failedEvents);
+        var failedEvent = Assert.IsType<ResourceCleanupCallbackFailedEvent>(failedEvents[0].Event);
+        Assert.Equal("character", failedEvent.ResourceType);
+        Assert.Equal(resourceId, failedEvent.ResourceId);
+        Assert.Equal("actor", failedEvent.SourceType);
+        Assert.Equal("actor", failedEvent.ServiceName);
+        Assert.Equal(500, failedEvent.StatusCode);
+    }
+
+    #endregion
+
+    #region Gap 7: ExecuteCleanupAsync DETACH Callback Behavior
+
+    [Fact]
+    public async Task ExecuteCleanupAsync_DetachCallback_ProceedsWithActiveReferences()
+    {
+        // Arrange
+        ClearCaptures();
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Active references of DETACH type (these don't block cleanup)
+        var setKey = $"character:{resourceId}:sources";
+        _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>
+        {
+            new() { SourceType = "encounter", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow }
+        };
+
+        // Grace period passed
+        _mockGraceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GracePeriodRecord
+            {
+                ResourceType = "character",
+                ResourceId = resourceId,
+                ZeroTimestamp = DateTimeOffset.UtcNow.AddHours(-2)
+            });
+
+        // Setup DETACH callback for encounter source type
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "encounter" });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:encounter", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "encounter",
+                OnDeleteAction = OnDeleteAction.DETACH,
+                ServiceName = "character-encounter",
+                CallbackEndpoint = "/character-encounter/detach-by-character",
+                PayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}"
+            });
+
+        // Setup successful lock
+        SetupSuccessfulLock();
+
+        // Setup navigator to return successful batch results and capture the callback invocation
+        var capturedBatchApis = new List<PreboundApiDefinition>();
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiBatchAsync(
+                It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<BatchExecutionMode>(),
+                It.IsAny<CancellationToken>()))
+            .Callback((IEnumerable<PreboundApiDefinition> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
+            {
+                capturedBatchApis.AddRange(apis);
+            })
+            .ReturnsAsync((IEnumerable<PreboundApiDefinition> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
+            {
+                return apis.Select(api => new PreboundApiResult
+                {
+                    Api = api,
+                    SubstitutedPayload = "{}",
+                    SubstitutionSucceeded = true,
+                    Result = new RawApiResult
+                    {
+                        StatusCode = 200,
+                        ResponseBody = "{}",
+                        Duration = TimeSpan.FromMilliseconds(50)
+                    }
+                }).ToList();
+            });
+
+        var request = new ExecuteCleanupRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            GracePeriodSeconds = 0
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+
+        // Assert - DETACH doesn't block cleanup, it proceeds
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+
+        // Assert DETACH callback was invoked with the correct service name
+        Assert.NotEmpty(capturedBatchApis);
+        Assert.Contains(capturedBatchApis, api => api.ServiceName == "character-encounter");
+    }
+
+    #endregion
+
+    #region Gap 8: ExecuteCleanupAsync Callback Failure With ALL_REQUIRED
+
+    [Fact]
+    public async Task ExecuteCleanupAsync_CallbackFailure_AllRequired_AbortsCleanup()
+    {
+        // Arrange
+        ClearCaptures();
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // No references
+        var setKey = $"character:{resourceId}:sources";
+        _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>();
+
+        // Grace period passed
+        _mockGraceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GracePeriodRecord
+            {
+                ResourceType = "character",
+                ResourceId = resourceId,
+                ZeroTimestamp = DateTimeOffset.UtcNow.AddHours(-2)
+            });
+
+        // Setup CASCADE callback
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "actor" });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:actor", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "actor",
+                OnDeleteAction = OnDeleteAction.CASCADE,
+                ServiceName = "actor",
+                CallbackEndpoint = "/actor/cleanup-by-character",
+                PayloadTemplate = "{}"
+            });
+
+        // Setup successful lock
+        SetupSuccessfulLock();
+
+        // Setup callback to FAIL (500)
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiBatchAsync(
+                It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<BatchExecutionMode>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IEnumerable<PreboundApiDefinition> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
+            {
+                return apis.Select(api => new PreboundApiResult
+                {
+                    Api = api,
+                    SubstitutedPayload = "{}",
+                    SubstitutionSucceeded = true,
+                    Result = new RawApiResult
+                    {
+                        StatusCode = 500,
+                        ErrorMessage = "Service unavailable",
+                        Duration = TimeSpan.FromMilliseconds(100)
+                    }
+                }).ToList();
+            });
+
+        var request = new ExecuteCleanupRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            GracePeriodSeconds = 0,
+            CleanupPolicy = CleanupPolicy.ALL_REQUIRED
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+
+        // Assert - ALL_REQUIRED should abort on any failure
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("ALL_REQUIRED", response.AbortReason);
+        Assert.Single(response.CallbackResults);
+        var failedResult = response.CallbackResults.First();
+        Assert.False(failedResult.Success);
+        Assert.Equal(500, failedResult.StatusCode);
+
+        // Verify grace period was NOT deleted (cleanup aborted)
+        Assert.Empty(_capturedGraceDeletes);
+        // Verify reference set was NOT deleted (cleanup aborted)
+        Assert.Empty(_capturedSetDeletes);
+    }
+
+    #endregion
+
+    #region Gap 9: ExecuteCleanupAsync Callback Failure With BEST_EFFORT
+
+    [Fact]
+    public async Task ExecuteCleanupAsync_PartialCallbackFailure_BestEffort_ContinuesAndCleanup()
+    {
+        // Arrange
+        ClearCaptures();
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // No references
+        var setKey = $"character:{resourceId}:sources";
+        _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>();
+
+        // Grace period passed
+        _mockGraceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GracePeriodRecord
+            {
+                ResourceType = "character",
+                ResourceId = resourceId,
+                ZeroTimestamp = DateTimeOffset.UtcNow.AddHours(-2)
+            });
+
+        // Setup two CASCADE callbacks
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "actor", "encounter" });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:actor", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "actor",
+                OnDeleteAction = OnDeleteAction.CASCADE,
+                ServiceName = "actor",
+                CallbackEndpoint = "/actor/cleanup",
+                PayloadTemplate = "{}"
+            });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:encounter", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "encounter",
+                OnDeleteAction = OnDeleteAction.CASCADE,
+                ServiceName = "character-encounter",
+                CallbackEndpoint = "/encounter/cleanup",
+                PayloadTemplate = "{}"
+            });
+
+        // Setup successful lock
+        SetupSuccessfulLock();
+
+        // First callback succeeds, second fails
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiBatchAsync(
+                It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<BatchExecutionMode>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IEnumerable<PreboundApiDefinition> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
+            {
+                var results = new List<PreboundApiResult>();
+                var apiList = apis.ToList();
+                for (int i = 0; i < apiList.Count; i++)
+                {
+                    results.Add(new PreboundApiResult
+                    {
+                        Api = apiList[i],
+                        SubstitutedPayload = "{}",
+                        SubstitutionSucceeded = true,
+                        Result = new RawApiResult
+                        {
+                            StatusCode = i == 0 ? 200 : 500,
+                            ResponseBody = i == 0 ? "{}" : null,
+                            ErrorMessage = i == 0 ? null : "Service unavailable",
+                            Duration = TimeSpan.FromMilliseconds(50)
+                        }
+                    });
+                }
+                return results;
+            });
+
+        var request = new ExecuteCleanupRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            GracePeriodSeconds = 0,
+            CleanupPolicy = CleanupPolicy.BEST_EFFORT
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+
+        // Assert - BEST_EFFORT should continue despite partial failure
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal(2, response.CallbackResults.Count);
+        Assert.Single(response.CallbackResults, r => r.Success);
+        Assert.Single(response.CallbackResults, r => !r.Success);
+
+        // Verify cleanup still completed (grace deleted, refs deleted)
+        Assert.Contains($"character:{resourceId}:grace", _capturedGraceDeletes);
+        Assert.Contains($"character:{resourceId}:sources", _capturedSetDeletes);
+
+        // Verify callback-failed event was published for the failed callback
+        Assert.Contains(_capturedPublishedEvents, e => e.Topic == "resource.cleanup.callback-failed");
+    }
+
+    #endregion
+
+    #region Gap 10: ExecuteCompressAsync With DeleteSourceData=true
+
+    [Fact]
+    public async Task ExecuteCompressAsync_WithDeleteSourceDataTrue_CallsCleanupAndSetsFlag()
+    {
+        // Arrange
+        ClearCaptures();
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Setup callbacks
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        // Setup successful lock
+        SetupSuccessfulLock();
+
+        // Setup successful API call for compress
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 200, ResponseBody = "{\"data\": \"test\"}", Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        // Setup empty ref set (so cleanup can proceed)
+        _simulatedSets[$"character:{resourceId}:sources"] = new HashSet<ResourceReferenceEntry>();
+
+        // Setup grace period passed (so cleanup can succeed)
+        _mockGraceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GracePeriodRecord
+            {
+                ResourceType = "character",
+                ResourceId = resourceId,
+                ZeroTimestamp = DateTimeOffset.UtcNow.AddHours(-2)
+            });
+
+        // No cleanup callbacks registered (so cleanup succeeds trivially)
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var request = new ExecuteCompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            DeleteSourceData = true,
+            DeleteSourceDataPolicy = CleanupPolicy.BEST_EFFORT
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.NotNull(response.ArchiveId);
+        Assert.True(response.SourceDataDeleted);
+
+        // Verify archive was saved TWICE (once for initial, once to update SourceDataDeleted flag)
+        Assert.Equal(2, _capturedArchiveSaves.Count);
+        var finalArchive = _capturedArchiveSaves.Last();
+        Assert.True(finalArchive.Archive.SourceDataDeleted);
+
+        // Verify the compressed event has SourceDataDeleted = true
+        var compressedEvent = _capturedPublishedEvents
+            .FirstOrDefault(e => e.Topic == "resource.compressed");
+        Assert.NotNull(compressedEvent.Event);
+        var typedEvent = Assert.IsType<ResourceCompressedEvent>(compressedEvent.Event);
+        Assert.True(typedEvent.SourceDataDeleted);
+    }
+
+    #endregion
+
+    #region Gap 11: ExecuteDecompressAsync Missing Callback
+
+    [Fact]
+    public async Task ExecuteDecompressAsync_ArchiveEntryWithNoMatchingCallback_ReportsFailure()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+        var archiveId = Guid.NewGuid();
+
+        // Setup archive with an entry that has no matching decompress callback
+        _mockArchiveStore
+            .Setup(s => s.GetAsync($"archive:character:{resourceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResourceArchiveModel
+            {
+                ArchiveId = archiveId,
+                ResourceType = "character",
+                ResourceId = resourceId,
+                Version = 1,
+                Entries = new List<ArchiveEntryModel>
+                {
+                    new() { SourceType = "orphaned-data-type", ServiceName = "unknown-service", Data = "dGVzdA==", CompressedAt = DateTimeOffset.UtcNow }
+                },
+                CreatedAt = DateTimeOffset.UtcNow,
+                SourceDataDeleted = true
+            });
+
+        // No compression callbacks registered for "character" at all
+        // (so no matching callback for "orphaned-data-type")
+
+        var request = new ExecuteDecompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteDecompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success); // All callbacks must succeed for Success=true
+        Assert.Single(response.CallbackResults);
+
+        var result = response.CallbackResults.First();
+        Assert.False(result.Success);
+        Assert.Equal("orphaned-data-type", result.SourceType);
+        Assert.Contains("No decompression callback", result.ErrorMessage);
+
+        // No decompressed event should be published (all failed)
+        Assert.DoesNotContain(_capturedPublishedEvents, e => e.Topic == "resource.decompressed");
+    }
+
+    #endregion
+
+    #region Gap 12: ExecuteDecompressAsync Lock Failure (No Lock in Decompress)
+
+    // Note: ExecuteDecompressAsync does NOT use distributed locking.
+    // The decompression process calls callbacks sequentially without a lock.
+    // This gap was identified in the gap list but decompress doesn't have lock
+    // acquisition logic. Instead, we test the scenario where a callback throws
+    // an exception (which tests the error handling path that would be relevant
+    // if there were contention issues).
+
+    [Fact]
+    public async Task ExecuteDecompressAsync_CallbackThrowsException_HandlesGracefully()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+        var archiveId = Guid.NewGuid();
+
+        _mockArchiveStore
+            .Setup(s => s.GetAsync($"archive:character:{resourceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResourceArchiveModel
+            {
+                ArchiveId = archiveId,
+                ResourceType = "character",
+                ResourceId = resourceId,
+                Version = 1,
+                Entries = new List<ArchiveEntryModel>
+                {
+                    new() { SourceType = "character-personality", ServiceName = "character-personality", Data = "dGVzdA==", CompressedAt = DateTimeOffset.UtcNow }
+                },
+                CreatedAt = DateTimeOffset.UtcNow,
+                SourceDataDeleted = true
+            });
+
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-personality", priority: 0)
+        });
+
+        // Setup callback to throw exception (simulating lock contention or transient failure)
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TimeoutException("Connection timed out"));
+
+        var request = new ExecuteDecompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteDecompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Single(response.CallbackResults);
+        var timedOutResult = response.CallbackResults.First();
+        Assert.False(timedOutResult.Success);
+        Assert.Contains("Connection timed out", timedOutResult.ErrorMessage);
+    }
+
+    #endregion
+
+    #region Gap 13: ExecuteSnapshotAsync With Filter
+
+    [Fact]
+    public async Task ExecuteSnapshotAsync_WithFilterSourceTypes_OnlyExecutesMatchingCallbacks()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+        var executedServices = new List<string>();
+
+        // Setup callbacks for 3 types
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0),
+            CreateCompressCallback("character-personality", priority: 10),
+            CreateCompressCallback("character-encounter", priority: 20)
+        });
+
+        // Setup successful API calls with tracking
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<PreboundApiDefinition, IReadOnlyDictionary<string, object?>, CancellationToken>((api, _, _) =>
+            {
+                executedServices.Add(api.ServiceName);
+            })
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 200, ResponseBody = "{\"data\": \"test\"}", Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        var request = new ExecuteSnapshotRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            FilterSourceTypes = new List<string> { "character-base", "character-encounter" }
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal(2, response.CallbackResults.Count); // Only 2 of 3 callbacks
+
+        // Verify only the filtered callbacks were executed
+        Assert.Equal(2, executedServices.Count);
+        Assert.Contains("character-base", executedServices);
+        Assert.Contains("character-encounter", executedServices);
+        Assert.DoesNotContain("character-personality", executedServices);
+
+        // Verify snapshot was saved with 2 entries
+        Assert.Single(_capturedSnapshotSaves);
+        var (_, snapshot, _) = _capturedSnapshotSaves[0];
+        Assert.Equal(2, snapshot.Entries.Count);
+    }
+
+    #endregion
+
+    #region Gap 14: GetSnapshotAsync With Filter
+
+    [Fact]
+    public async Task GetSnapshotAsync_WithFilterSourceTypes_ReturnsOnlyFilteredEntries()
+    {
+        // Arrange
+        var service = CreateService();
+        var snapshotId = Guid.NewGuid();
+        var resourceId = Guid.NewGuid();
+
+        // Pre-populate snapshot with 3 entries
+        var snapshotKey = $"snap:{snapshotId}";
+        _simulatedSnapshots[snapshotKey] = new ResourceSnapshotModel
+        {
+            SnapshotId = snapshotId,
+            ResourceType = "character",
+            ResourceId = resourceId,
+            SnapshotType = "full-snapshot",
+            Entries = new List<ArchiveEntryModel>
+            {
+                new() { SourceType = "character-base", ServiceName = "character", Data = "base64data1", CompressedAt = DateTimeOffset.UtcNow },
+                new() { SourceType = "character-personality", ServiceName = "character-personality", Data = "base64data2", CompressedAt = DateTimeOffset.UtcNow },
+                new() { SourceType = "character-encounter", ServiceName = "character-encounter", Data = "base64data3", CompressedAt = DateTimeOffset.UtcNow }
+            },
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(55)
+        };
+
+        var request = new GetSnapshotRequest
+        {
+            SnapshotId = snapshotId,
+            FilterSourceTypes = new List<string> { "character-base", "character-encounter" }
+        };
+
+        // Act
+        var (status, response) = await service.GetSnapshotAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Found);
+        Assert.NotNull(response.Snapshot);
+        Assert.Equal(2, response.Snapshot.Entries.Count); // Only 2 of 3
+        Assert.Contains(response.Snapshot.Entries, e => e.SourceType == "character-base");
+        Assert.Contains(response.Snapshot.Entries, e => e.SourceType == "character-encounter");
+        Assert.DoesNotContain(response.Snapshot.Entries, e => e.SourceType == "character-personality");
+    }
+
+    #endregion
+
+    #region Gap 15: CompressJsonData Static Helper (Indirect Via Compress Flow)
+
+    [Fact]
+    public async Task ExecuteCompressAsync_ProducesValidGzipBase64InArchiveEntries()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+        var testJson = "{\"characterId\": \"test\", \"traits\": [1,2,3]}";
+
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        SetupSuccessfulLock();
+
+        // Return known JSON from the callback
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 200, ResponseBody = testJson, Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        var request = new ExecuteCompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+
+        // Verify the archive entry contains valid Base64 data that decompresses correctly
+        Assert.Single(_capturedArchiveSaves);
+        var (_, archive) = _capturedArchiveSaves[0];
+        Assert.Single(archive.Entries);
+
+        var entry = archive.Entries[0];
+        Assert.NotNull(entry.Data);
+        Assert.NotEmpty(entry.Data);
+
+        // Verify it's valid base64
+        var compressedBytes = Convert.FromBase64String(entry.Data);
+        Assert.NotEmpty(compressedBytes);
+
+        // Verify it decompresses to the original JSON
+        using var compressedStream = new System.IO.MemoryStream(compressedBytes);
+        using var gzip = new System.IO.Compression.GZipStream(compressedStream, System.IO.Compression.CompressionMode.Decompress);
+        using var reader = new System.IO.StreamReader(gzip, System.Text.Encoding.UTF8);
+        var decompressedJson = reader.ReadToEnd();
+        Assert.Equal(testJson, decompressedJson);
+
+        // Verify checksum is present
+        Assert.NotNull(entry.DataChecksum);
+        Assert.NotEmpty(entry.DataChecksum);
+
+        // Verify original size
+        Assert.NotNull(entry.OriginalSizeBytes);
+        Assert.Equal(System.Text.Encoding.UTF8.GetByteCount(testJson), entry.OriginalSizeBytes);
+    }
+
+    [Fact]
+    public async Task ExecuteCompressAsync_EmptyResponseBody_ProducesValidArchiveEntry()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        SetupSuccessfulLock();
+
+        // Return empty JSON from the callback
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 200, ResponseBody = "{}", Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        var request = new ExecuteCompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+
+        // Verify archive entry is valid even for minimal JSON
+        Assert.Single(_capturedArchiveSaves);
+        var entry = _capturedArchiveSaves[0].Archive.Entries[0];
+        var compressedBytes = Convert.FromBase64String(entry.Data);
+        Assert.NotEmpty(compressedBytes);
+    }
+
+    #endregion
+
+    #region Gap 16: ComputeChecksum Static Helper (Indirect Via Compress Flow)
+
+    [Fact]
+    public async Task ExecuteCompressAsync_ChecksumIsConsistentForSameInput()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId1 = Guid.NewGuid();
+        var resourceId2 = Guid.NewGuid();
+        var sameJson = "{\"data\": \"identical-content\"}";
+
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        SetupSuccessfulLock();
+
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 200, ResponseBody = sameJson, Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        // Compress first resource
+        var (status1, _) = await service.ExecuteCompressAsync(new ExecuteCompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId1
+        }, CancellationToken.None);
+        Assert.Equal(StatusCodes.OK, status1);
+
+        var checksum1 = _capturedArchiveSaves[0].Archive.Entries[0].DataChecksum;
+
+        // Reset captures
+        _capturedArchiveSaves.Clear();
+
+        // Compress second resource with same data
+        var (status2, _) = await service.ExecuteCompressAsync(new ExecuteCompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId2
+        }, CancellationToken.None);
+        Assert.Equal(StatusCodes.OK, status2);
+
+        var checksum2 = _capturedArchiveSaves[0].Archive.Entries[0].DataChecksum;
+
+        // Assert - same input should produce same checksum
+        Assert.NotNull(checksum1);
+        Assert.NotNull(checksum2);
+        Assert.Equal(checksum1, checksum2);
+
+        // Verify checksum looks like SHA256 hex (64 chars)
+        Assert.Equal(64, checksum1.Length);
+        Assert.Matches("^[0-9A-F]+$", checksum1);
+    }
+
+    #endregion
+
+    #region Gap 17: MaintainCallbackIndexAsync / MaintainCompressCallbackIndexAsync
+
+    [Fact]
+    public async Task RemoveCleanupCallbackAsync_LastCallback_CleansUpResourceTypeFromMasterIndex()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Setup existing callback
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:actor", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "actor",
+                OnDeleteAction = OnDeleteAction.CASCADE,
+                ServiceName = "actor",
+                CallbackEndpoint = "/actor/cleanup",
+                PayloadTemplate = "{}"
+            });
+
+        _mockCleanupStore
+            .Setup(s => s.DeleteAsync("callback:character:actor", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        _mockCallbackIndexStore
+            .Setup(s => s.RemoveFromSetAsync("callback-index:character", "actor", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Empty index after removal (this was the last callback)
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>("callback-index:character", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        // Capture master index removal calls
+        var capturedMasterIndexRemovals = new List<(string Key, string Value)>();
+        _mockCallbackIndexStore
+            .Setup(s => s.RemoveFromSetAsync("callback-resource-types", It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback((string key, string value, CancellationToken ct) =>
+            {
+                capturedMasterIndexRemovals.Add((key, value));
+            })
+            .ReturnsAsync(true);
+
+        var request = new RemoveCleanupCallbackRequest
+        {
+            ResourceType = "character",
+            SourceType = "actor"
+        };
+
+        // Act
+        var (status, response) = await service.RemoveCleanupCallbackAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.WasRegistered);
+
+        // Assert master resource type index was updated (resource type removed since no callbacks remain)
+        Assert.Single(capturedMasterIndexRemovals);
+        Assert.Equal("callback-resource-types", capturedMasterIndexRemovals[0].Key);
+        Assert.Equal("character", capturedMasterIndexRemovals[0].Value);
+    }
+
+    [Fact]
+    public async Task DefineCleanupCallbackAsync_NewCallback_UpdatesBothIndexLevels()
+    {
+        // Arrange
+        ClearCaptures();
+        var service = CreateService();
+
+        // Capture AddToSetAsync calls to verify both index levels
+        var capturedSetAdds = new List<(string Key, string Value)>();
+        _mockCallbackIndexStore
+            .Setup(s => s.AddToSetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback((string key, string value, StateOptions? options, CancellationToken ct) =>
+            {
+                capturedSetAdds.Add((key, value));
+            })
+            .ReturnsAsync(true);
+
+        var request = new DefineCleanupRequest
+        {
+            ResourceType = "realm",
+            SourceType = "location",
+            ServiceName = "location",
+            CallbackEndpoint = "/location/cleanup-by-realm",
+            PayloadTemplate = "{}"
+        };
+
+        // Act
+        await service.DefineCleanupCallbackAsync(request, CancellationToken.None);
+
+        // Assert - per-resource-type index was updated
+        Assert.Contains(capturedSetAdds, add => add.Key == "callback-index:realm" && add.Value == "location");
+
+        // Assert - master resource type index was updated
+        Assert.Contains(capturedSetAdds, add => add.Key == "callback-resource-types" && add.Value == "realm");
+    }
+
+    #endregion
+
+    #region Gap 18: ListCleanupCallbacksAsync With No Filter
+
+    [Fact]
+    public async Task ListCleanupCallbacksAsync_NoFilter_IteratesAllResourceTypes()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Setup master resource type index with multiple types
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>("callback-resource-types", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "character", "realm" });
+
+        // Setup per-type indexes
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>("callback-index:character", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "actor", "encounter" });
+
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>("callback-index:realm", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "location" });
+
+        // Setup actual callback definitions
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:actor", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "actor",
+                OnDeleteAction = OnDeleteAction.CASCADE,
+                ServiceName = "actor",
+                CallbackEndpoint = "/actor/cleanup",
+                PayloadTemplate = "{}",
+                RegisteredAt = DateTimeOffset.UtcNow
+            });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:encounter", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "encounter",
+                OnDeleteAction = OnDeleteAction.CASCADE,
+                ServiceName = "character-encounter",
+                CallbackEndpoint = "/encounter/cleanup",
+                PayloadTemplate = "{}",
+                RegisteredAt = DateTimeOffset.UtcNow
+            });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:realm:location", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "realm",
+                SourceType = "location",
+                OnDeleteAction = OnDeleteAction.CASCADE,
+                ServiceName = "location",
+                CallbackEndpoint = "/location/cleanup",
+                PayloadTemplate = "{}",
+                RegisteredAt = DateTimeOffset.UtcNow
+            });
+
+        var request = new ListCleanupCallbacksRequest(); // No filter
+
+        // Act
+        var (status, response) = await service.ListCleanupCallbacksAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(3, response.TotalCount);
+        Assert.Equal(3, response.Callbacks.Count);
+
+        // Verify both resource types are represented
+        Assert.Equal(2, response.Callbacks.Select(c => c.ResourceType).Distinct().Count());
+        Assert.Contains(response.Callbacks, c => c.ResourceType == "character" && c.SourceType == "actor");
+        Assert.Contains(response.Callbacks, c => c.ResourceType == "character" && c.SourceType == "encounter");
+        Assert.Contains(response.Callbacks, c => c.ResourceType == "realm" && c.SourceType == "location");
+    }
+
+    #endregion
+
+    #region Gap 19: Error Event Publishing For Callback Failures
+
+    [Fact]
+    public async Task ExecuteCleanupAsync_MultipleCallbackFailures_PublishesEventForEachFailure()
+    {
+        // Arrange
+        ClearCaptures();
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // No references
+        _simulatedSets[$"character:{resourceId}:sources"] = new HashSet<ResourceReferenceEntry>();
+
+        // Grace period passed
+        _mockGraceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GracePeriodRecord
+            {
+                ResourceType = "character",
+                ResourceId = resourceId,
+                ZeroTimestamp = DateTimeOffset.UtcNow.AddHours(-2)
+            });
+
+        // Setup two CASCADE callbacks
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "actor", "encounter" });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:actor", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "actor",
+                OnDeleteAction = OnDeleteAction.CASCADE,
+                ServiceName = "actor",
+                CallbackEndpoint = "/actor/cleanup",
+                PayloadTemplate = "{}"
+            });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:encounter", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "encounter",
+                OnDeleteAction = OnDeleteAction.CASCADE,
+                ServiceName = "character-encounter",
+                CallbackEndpoint = "/encounter/cleanup",
+                PayloadTemplate = "{}"
+            });
+
+        SetupSuccessfulLock();
+
+        // BOTH callbacks fail
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiBatchAsync(
+                It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<BatchExecutionMode>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IEnumerable<PreboundApiDefinition> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
+            {
+                return apis.Select(api => new PreboundApiResult
+                {
+                    Api = api,
+                    SubstitutedPayload = "{}",
+                    SubstitutionSucceeded = true,
+                    Result = new RawApiResult
+                    {
+                        StatusCode = 503,
+                        ErrorMessage = $"Service {api.ServiceName} unavailable",
+                        Duration = TimeSpan.FromMilliseconds(100)
+                    }
+                }).ToList();
+            });
+
+        var request = new ExecuteCleanupRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            GracePeriodSeconds = 0,
+            CleanupPolicy = CleanupPolicy.BEST_EFFORT
+        };
+
+        // Act
+        await service.ExecuteCleanupAsync(request, CancellationToken.None);
+
+        // Assert - verify a callback-failed event was published for EACH failure
+        var failedEvents = _capturedPublishedEvents
+            .Where(e => e.Topic == "resource.cleanup.callback-failed")
+            .Select(e => Assert.IsType<ResourceCleanupCallbackFailedEvent>(e.Event))
+            .ToList();
+
+        Assert.Equal(2, failedEvents.Count);
+        Assert.Contains(failedEvents, e => e.SourceType == "actor");
+        Assert.Contains(failedEvents, e => e.SourceType == "encounter");
+        Assert.All(failedEvents, e =>
+        {
+            Assert.Equal("character", e.ResourceType);
+            Assert.Equal(resourceId, e.ResourceId);
+            Assert.Equal(503, e.StatusCode);
+        });
+    }
+
+    #endregion
+
+    #region Gap 20: ResourceServiceModels Property-Level Tests
+
+    [Fact]
+    public void GracePeriodRecord_DefaultValues_AreCorrect()
+    {
+        var record = new GracePeriodRecord();
+
+        Assert.Equal(string.Empty, record.ResourceType);
+        Assert.Equal(Guid.Empty, record.ResourceId);
+        Assert.Equal(default(DateTimeOffset), record.ZeroTimestamp);
+    }
+
+    [Fact]
+    public void GracePeriodRecord_PropertiesCanBeSet()
+    {
+        var resourceId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        var record = new GracePeriodRecord
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            ZeroTimestamp = now
+        };
+
+        Assert.Equal("character", record.ResourceType);
+        Assert.Equal(resourceId, record.ResourceId);
+        Assert.Equal(now, record.ZeroTimestamp);
+    }
+
+    [Fact]
+    public void CleanupCallbackDefinition_DefaultValues_AreCorrect()
+    {
+        var callback = new CleanupCallbackDefinition();
+
+        Assert.Equal(string.Empty, callback.ResourceType);
+        Assert.Equal(string.Empty, callback.SourceType);
+        Assert.Equal(OnDeleteAction.CASCADE, callback.OnDeleteAction);
+        Assert.Equal(string.Empty, callback.ServiceName);
+        Assert.Equal(string.Empty, callback.CallbackEndpoint);
+        Assert.Equal(string.Empty, callback.PayloadTemplate);
+        Assert.Null(callback.Description);
+        Assert.Equal(default(DateTimeOffset), callback.RegisteredAt);
+    }
+
+    [Fact]
+    public void CleanupCallbackDefinition_AllPropertiesCanBeSet()
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        var callback = new CleanupCallbackDefinition
+        {
+            ResourceType = "character",
+            SourceType = "actor",
+            OnDeleteAction = OnDeleteAction.RESTRICT,
+            ServiceName = "actor",
+            CallbackEndpoint = "/actor/cleanup",
+            PayloadTemplate = "{\"id\": \"{{resourceId}}\"}",
+            Description = "Clean up actors",
+            RegisteredAt = now
+        };
+
+        Assert.Equal("character", callback.ResourceType);
+        Assert.Equal("actor", callback.SourceType);
+        Assert.Equal(OnDeleteAction.RESTRICT, callback.OnDeleteAction);
+        Assert.Equal("actor", callback.ServiceName);
+        Assert.Equal("/actor/cleanup", callback.CallbackEndpoint);
+        Assert.Equal("{\"id\": \"{{resourceId}}\"}", callback.PayloadTemplate);
+        Assert.Equal("Clean up actors", callback.Description);
+        Assert.Equal(now, callback.RegisteredAt);
+    }
+
+    [Fact]
+    public void CompressCallbackDefinition_DefaultValues_AreCorrect()
+    {
+        var callback = new CompressCallbackDefinition();
+
+        Assert.Equal(string.Empty, callback.ResourceType);
+        Assert.Equal(string.Empty, callback.SourceType);
+        Assert.Equal(string.Empty, callback.ServiceName);
+        Assert.Equal(string.Empty, callback.CompressEndpoint);
+        Assert.Equal(string.Empty, callback.CompressPayloadTemplate);
+        Assert.Null(callback.DecompressEndpoint);
+        Assert.Null(callback.DecompressPayloadTemplate);
+        Assert.Equal(100, callback.Priority); // Default priority
+        Assert.Null(callback.Description);
+        Assert.Equal(default(DateTimeOffset), callback.RegisteredAt);
+    }
+
+    [Fact]
+    public void CompressCallbackDefinition_AllPropertiesCanBeSet()
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        var callback = new CompressCallbackDefinition
+        {
+            ResourceType = "character",
+            SourceType = "character-personality",
+            ServiceName = "character-personality",
+            CompressEndpoint = "/compress",
+            CompressPayloadTemplate = "{\"id\": \"{{resourceId}}\"}",
+            DecompressEndpoint = "/decompress",
+            DecompressPayloadTemplate = "{\"id\": \"{{resourceId}}\", \"data\": \"{{data}}\"}",
+            Priority = 10,
+            Description = "Personality traits",
+            RegisteredAt = now
+        };
+
+        Assert.Equal("character", callback.ResourceType);
+        Assert.Equal("character-personality", callback.SourceType);
+        Assert.Equal("character-personality", callback.ServiceName);
+        Assert.Equal("/compress", callback.CompressEndpoint);
+        Assert.Equal("{\"id\": \"{{resourceId}}\"}", callback.CompressPayloadTemplate);
+        Assert.Equal("/decompress", callback.DecompressEndpoint);
+        Assert.Equal("{\"id\": \"{{resourceId}}\", \"data\": \"{{data}}\"}", callback.DecompressPayloadTemplate);
+        Assert.Equal(10, callback.Priority);
+        Assert.Equal("Personality traits", callback.Description);
+        Assert.Equal(now, callback.RegisteredAt);
+    }
+
+    [Fact]
+    public void ResourceArchiveModel_DefaultValues_AreCorrect()
+    {
+        var archive = new ResourceArchiveModel();
+
+        Assert.Equal(Guid.Empty, archive.ArchiveId);
+        Assert.Equal(string.Empty, archive.ResourceType);
+        Assert.Equal(Guid.Empty, archive.ResourceId);
+        Assert.Equal(0, archive.Version);
+        Assert.NotNull(archive.Entries);
+        Assert.Empty(archive.Entries);
+        Assert.Equal(default(DateTimeOffset), archive.CreatedAt);
+        Assert.False(archive.SourceDataDeleted);
+    }
+
+    [Fact]
+    public void ArchiveEntryModel_DefaultValues_AreCorrect()
+    {
+        var entry = new ArchiveEntryModel();
+
+        Assert.Equal(string.Empty, entry.SourceType);
+        Assert.Equal(string.Empty, entry.ServiceName);
+        Assert.Equal(string.Empty, entry.Data);
+        Assert.Equal(default(DateTimeOffset), entry.CompressedAt);
+        Assert.Null(entry.DataChecksum);
+        Assert.Null(entry.OriginalSizeBytes);
+    }
+
+    [Fact]
+    public void ResourceSnapshotModel_DefaultValues_AreCorrect()
+    {
+        var snapshot = new ResourceSnapshotModel();
+
+        Assert.Equal(Guid.Empty, snapshot.SnapshotId);
+        Assert.Equal(string.Empty, snapshot.ResourceType);
+        Assert.Equal(Guid.Empty, snapshot.ResourceId);
+        Assert.Equal(string.Empty, snapshot.SnapshotType);
+        Assert.NotNull(snapshot.Entries);
+        Assert.Empty(snapshot.Entries);
+        Assert.Equal(default(DateTimeOffset), snapshot.CreatedAt);
+        Assert.Equal(default(DateTimeOffset), snapshot.ExpiresAt);
+    }
+
+    #endregion
 }

@@ -1799,7 +1799,7 @@ public partial class AccountService : IAccountService
             // GetString() returns string? but cannot return null when ValueKind is String;
             // coalesce satisfies compiler's nullable analysis (will never execute)
             System.Text.Json.JsonValueKind.String => element.GetString() ?? string.Empty,
-            System.Text.Json.JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
+            System.Text.Json.JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
             System.Text.Json.JsonValueKind.True => true,
             System.Text.Json.JsonValueKind.False => false,
             System.Text.Json.JsonValueKind.Null => null,  // Null values excluded from metadata dictionary by caller

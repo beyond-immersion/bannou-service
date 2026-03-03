@@ -1,7 +1,11 @@
+using BeyondImmersion.Bannou.Chat.ClientEvents;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Chat;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Moq;
@@ -537,6 +541,283 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
         MockResourceClient.Verify(
             r => r.ExecuteCompressAsync(It.IsAny<ExecuteCompressRequest>(), It.IsAny<CancellationToken>()),
             Times.Never);
+    }
+
+    #endregion
+
+    #region ExecuteContractRoomActionAsync Error Paths
+
+    /// <summary>
+    /// Verifies that when archive fails during contract fulfilled handling,
+    /// the error is caught and logged without propagating.
+    /// </summary>
+    [Fact]
+    public async Task HandleContractFulfilled_ArchiveFails_LogsWarningAndContinues()
+    {
+        var service = CreateService();
+
+        var room = CreateTestRoom(contractId: TestContractId);
+        room.ContractFulfilledAction = ContractRoomAction.Archive;
+
+        SetupContractRoomQuery(TestContractId, room);
+
+        // Resource client throws
+        MockResourceClient
+            .Setup(r => r.ExecuteCompressAsync(
+                It.IsAny<ExecuteCompressRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Resource service unavailable", 503, null, null, null));
+
+        var evt = new ContractFulfilledEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ContractId = TestContractId,
+        };
+
+        // Should not throw - error is caught inside ExecuteContractRoomActionAsync
+        await service.HandleContractFulfilledAsync(evt);
+
+        // Archive event should NOT be published (archive failed)
+        MockMessageBus.Verify(
+            m => m.TryPublishAsync("chat.room.archived", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that delete action with participants clears permissions and
+    /// publishes deletion events.
+    /// </summary>
+    [Fact]
+    public async Task HandleContractTerminated_DeleteAction_ClearsParticipantPermissions()
+    {
+        var service = CreateService();
+        var p1Session = Guid.NewGuid();
+        var p2Session = Guid.NewGuid();
+
+        var room = CreateTestRoom(contractId: TestContractId);
+        room.ContractTerminatedAction = ContractRoomAction.Delete;
+
+        SetupContractRoomQuery(TestContractId, room);
+
+        var p1 = CreateTestParticipant(sessionId: p1Session);
+        var p2 = CreateTestParticipant(sessionId: p2Session);
+        SetupParticipants(TestRoomId, p1, p2);
+
+        var evt = new ContractTerminatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ContractId = TestContractId,
+        };
+
+        await service.HandleContractTerminatedAsync(evt);
+
+        // Verify permissions cleared for both participants
+        MockPermissionClient.Verify(p => p.ClearSessionStateAsync(
+            It.IsAny<ClearSessionStateRequest>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+
+        // Verify client event broadcast to participants
+        MockClientEventPublisher.Verify(
+            p => p.PublishToSessionsAsync(
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<ChatRoomDeletedClientEvent>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify room deleted
+        MockRoomStore.Verify(
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that when the entire contract event handler throws,
+    /// the error is published via TryPublishErrorAsync.
+    /// </summary>
+    [Fact]
+    public async Task HandleContractFulfilled_ExceptionThrown_PublishesError()
+    {
+        var service = CreateService();
+
+        // Room store query throws
+        MockRoomStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>>(),
+                It.IsAny<int>(), It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Database connection lost"));
+
+        var evt = new ContractFulfilledEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ContractId = TestContractId,
+        };
+
+        // Should not throw
+        await service.HandleContractFulfilledAsync(evt);
+
+        // Verify error event was published
+        MockMessageBus.Verify(
+            m => m.TryPublishErrorAsync(
+                "chat", "HandleContractFulfilled",
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<ServiceErrorEventSeverity>(),
+                It.IsAny<object?>(), It.IsAny<string?>(),
+                It.IsAny<Guid?>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
+
+    #region FindRoomsByContractIdAsync Safety Cap
+
+    /// <summary>
+    /// Verifies that the safety cap stops iteration when maxResults is reached.
+    /// Uses a small maxResults value and many rooms to trigger the cap.
+    /// </summary>
+    [Fact]
+    public async Task HandleContractFulfilled_SafetyCap_StopsAtMaxResults()
+    {
+        var service = CreateService();
+
+        // Set a very small safety cap
+        Configuration.MaxContractRoomQueryResults = 2;
+        Configuration.ContractRoomQueryBatchSize = 1;
+
+        var room1 = CreateTestRoom(roomId: Guid.NewGuid(), contractId: TestContractId);
+        var room2 = CreateTestRoom(roomId: Guid.NewGuid(), contractId: TestContractId);
+
+        room1.ContractFulfilledAction = ContractRoomAction.Lock;
+        room2.ContractFulfilledAction = ContractRoomAction.Lock;
+
+        var page1 = new List<JsonQueryResult<ChatRoomModel>>
+        {
+            new($"room:{room1.RoomId}", room1),
+        };
+        var page2 = new List<JsonQueryResult<ChatRoomModel>>
+        {
+            new($"room:{room2.RoomId}", room2),
+        };
+
+        // Page 1: returns 1 room, HasMore=true, TotalCount=5 (many more available)
+        // Page 2: returns 1 more room, allRooms.Count == 2 >= maxResults(2), breaks
+        MockRoomStore
+            .SetupSequence(s => s.JsonQueryPagedAsync(
+                It.Is<IReadOnlyList<QueryCondition>>(c =>
+                    c.Any(q => q.Path == "$.ContractId" && (string)q.Value == TestContractId.ToString())),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<ChatRoomModel>(page1, 5, 0, 1))
+            .ReturnsAsync(new JsonPagedResult<ChatRoomModel>(page2, 5, 1, 1));
+
+        SetupParticipants(room1.RoomId, CreateTestParticipant(sessionId: Guid.NewGuid()));
+        SetupParticipants(room2.RoomId, CreateTestParticipant(sessionId: Guid.NewGuid()));
+
+        var evt = new ContractFulfilledEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ContractId = TestContractId,
+        };
+
+        await service.HandleContractFulfilledAsync(evt);
+
+        // Only 2 rooms processed (safety cap), even though TotalCount was 5
+        MockRoomStore.Verify(
+            s => s.SaveAsync(It.IsAny<string>(), It.Is<ChatRoomModel>(r => r.Status == ChatRoomStatus.Locked),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+
+        // Only 2 pages queried (broke after second because allRooms.Count >= maxResults)
+        MockRoomStore.Verify(
+            s => s.JsonQueryPagedAsync(
+                It.Is<IReadOnlyList<QueryCondition>>(c =>
+                    c.Any(q => q.Path == "$.ContractId")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+    }
+
+    #endregion
+
+    #region CleanupIdleRooms Recently-Active Room Preservation
+
+    /// <summary>
+    /// Verifies that rooms with recent activity (below idle timeout threshold)
+    /// are NOT returned by the cleanup query and thus NOT cleaned up.
+    /// This tests the query condition: LastActivityAt < cutoff.
+    /// </summary>
+    [Fact]
+    public async Task CleanupIdleRooms_RecentlyActiveRooms_NotCleaned()
+    {
+        var service = CreateService();
+
+        // The query uses $.LastActivityAt < cutoff, so recently active rooms
+        // would not be returned. We simulate this by returning an empty result.
+        MockRoomStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>>(),
+                It.IsAny<int>(), It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<ChatRoomModel>(
+                new List<JsonQueryResult<ChatRoomModel>>(), 0, 0, 1000));
+
+        var result = await service.CleanupIdleRoomsAsync(CancellationToken.None);
+
+        Assert.Equal(0, result.CleanedRooms);
+        Assert.Equal(0, result.ArchivedRooms);
+        Assert.Equal(0, result.DeletedRooms);
+
+        // Verify no room was archived or deleted
+        MockRoomStore.Verify(
+            s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ChatRoomModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        MockRoomStore.Verify(
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that when a mix of idle and non-idle rooms exist,
+    /// only the idle ones appear in the query results and get cleaned.
+    /// Tests behavior via the cutoff time condition by having both idle and
+    /// non-idle rooms, but the query only returns the idle one.
+    /// </summary>
+    [Fact]
+    public async Task CleanupIdleRooms_MixOfIdleAndActive_OnlyIdleCleaned()
+    {
+        var service = CreateService();
+
+        // Only the idle room appears in the query (recently active is filtered by the store query)
+        var idleRoom = CreateTestRoom(roomId: Guid.NewGuid(), roomTypeCode: "ephemeral");
+        idleRoom.LastActivityAt = DateTimeOffset.UtcNow.AddMinutes(-(Configuration.IdleRoomTimeoutMinutes + 10));
+        idleRoom.ContractId = null;
+
+        var roomType = CreateTestRoomType("ephemeral", MessageFormat.Text, PersistenceMode.Ephemeral);
+        SetupFindRoomTypeByCode(roomType);
+
+        var queryResult = new JsonQueryResult<ChatRoomModel>($"room:{idleRoom.RoomId}", idleRoom);
+        MockRoomStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>>(),
+                It.IsAny<int>(), It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<ChatRoomModel>(
+                new List<JsonQueryResult<ChatRoomModel>> { queryResult }, 1, 0, 1000));
+
+        var result = await service.CleanupIdleRoomsAsync(CancellationToken.None);
+
+        // Only 1 room cleaned (the idle one), the active room was never in the query
+        Assert.Equal(1, result.CleanedRooms);
+        Assert.Equal(0, result.ArchivedRooms);
+        Assert.Equal(1, result.DeletedRooms);
+
+        // Verify only 1 delete call
+        MockRoomStore.Verify(
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     #endregion

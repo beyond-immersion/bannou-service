@@ -832,6 +832,104 @@ public class OAuthProviderServiceTests : IDisposable
 
     #endregion
 
+    #region CleanupOAuthLinksForAccountAsync Tests
+
+    [Fact]
+    public async Task CleanupOAuthLinksForAccountAsync_WithExistingLinks_ShouldDeleteAllLinksAndIndex()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var indexKey = $"account-oauth-links:{accountId}";
+        var linkKeys = new List<string>
+        {
+            "oauth-link:discord:discord-id-123",
+            "oauth-link:google:google-id-456",
+            "oauth-link:twitch:twitch-id-789"
+        };
+
+        _mockListStore.Setup(s => s.GetAsync(indexKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(linkKeys);
+
+        _mockStringStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        _mockListStore.Setup(s => s.DeleteAsync(indexKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        await _service.CleanupOAuthLinksForAccountAsync(accountId);
+
+        // Assert - Each link key should be deleted
+        foreach (var linkKey in linkKeys)
+        {
+            _mockStringStore.Verify(s => s.DeleteAsync(linkKey, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        // Assert - The index itself should be deleted
+        _mockListStore.Verify(s => s.DeleteAsync(indexKey, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CleanupOAuthLinksForAccountAsync_WithNoLinks_ShouldReturnWithoutDeletingAnything()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var indexKey = $"account-oauth-links:{accountId}";
+
+        _mockListStore.Setup(s => s.GetAsync(indexKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<string>?)null);
+
+        // Act
+        await _service.CleanupOAuthLinksForAccountAsync(accountId);
+
+        // Assert - No deletions should occur
+        _mockStringStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockListStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CleanupOAuthLinksForAccountAsync_WhenStateStoreThrows_ShouldPublishErrorAndNotRethrow()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var indexKey = $"account-oauth-links:{accountId}";
+
+        _mockListStore.Setup(s => s.GetAsync(indexKey, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Redis connection failed"));
+
+        string? capturedServiceName = null;
+        string? capturedOperation = null;
+
+        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, string, string, string, string?, string?, ServiceErrorEventSeverity, object?, string?, Guid?, CancellationToken>(
+                (svc, op, _, _, _, _, _, _, _, _, _) =>
+                {
+                    capturedServiceName = svc;
+                    capturedOperation = op;
+                })
+            .ReturnsAsync(true);
+
+        // Act - Should NOT throw (catch swallows, publishes error)
+        await _service.CleanupOAuthLinksForAccountAsync(accountId);
+
+        // Assert - Error event was published
+        Assert.Equal("auth", capturedServiceName);
+        Assert.Equal("CleanupOAuthLinks", capturedOperation);
+    }
+
+    #endregion
+
     #region ValidateSteamTicketAsync Tests
 
     [Fact]

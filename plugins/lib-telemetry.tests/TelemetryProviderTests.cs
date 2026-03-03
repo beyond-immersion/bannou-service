@@ -366,16 +366,25 @@ public class TelemetryProviderTests
         // Arrange
         var provider = CreateProvider(tracingEnabled: true, metricsEnabled: true);
 
-        // Create some activity sources and meters
-        _ = provider.GetActivitySource("test.component");
-        _ = provider.GetMeter("test.component");
+        // Create some activity sources and meters before dispose
+        var sourceBeforeDispose = provider.GetActivitySource("test.component");
+        var meterBeforeDispose = provider.GetMeter("test.component");
+
+        Assert.NotNull(sourceBeforeDispose);
+        Assert.NotNull(meterBeforeDispose);
 
         // Act
         provider.Dispose();
 
-        // Assert - subsequent calls should still work (return null for disabled)
-        // After dispose, the provider should be in a clean state
-        // This test verifies no exceptions are thrown during dispose
+        // Assert - after dispose, dictionaries are cleared, so requesting
+        // the same component returns a NEW instance (not the cached one)
+        var sourceAfterDispose = provider.GetActivitySource("test.component");
+        var meterAfterDispose = provider.GetMeter("test.component");
+
+        Assert.NotNull(sourceAfterDispose);
+        Assert.NotNull(meterAfterDispose);
+        Assert.NotSame(sourceBeforeDispose, sourceAfterDispose);
+        Assert.NotSame(meterBeforeDispose, meterAfterDispose);
     }
 
     [Fact]
@@ -391,13 +400,201 @@ public class TelemetryProviderTests
 
     #endregion
 
+    #region WrapQueryableStateStore
+
+    [Fact]
+    public void WrapQueryableStateStore_WhenBothEnabled_ReturnsWrapper()
+    {
+        // Arrange
+        using var provider = CreateProvider(tracingEnabled: true, metricsEnabled: true);
+        var store = new Mock<IQueryableStateStore<TestModel>>().Object;
+
+        // Act
+        var wrapped = provider.WrapQueryableStateStore(store, "test-queryable-store", "mysql");
+
+        // Assert
+        Assert.NotSame(store, wrapped);
+        Assert.IsType<Instrumentation.InstrumentedQueryableStateStore<TestModel>>(wrapped);
+    }
+
+    [Fact]
+    public void WrapQueryableStateStore_WhenBothDisabled_ReturnsOriginal()
+    {
+        // Arrange
+        using var provider = CreateProvider(tracingEnabled: false, metricsEnabled: false);
+        var store = new Mock<IQueryableStateStore<TestModel>>().Object;
+
+        // Act
+        var wrapped = provider.WrapQueryableStateStore(store, "test-queryable-store", "mysql");
+
+        // Assert
+        Assert.Same(store, wrapped);
+    }
+
+    [Fact]
+    public void WrapQueryableStateStore_WhenOnlyTracingEnabled_ReturnsWrapper()
+    {
+        // Arrange
+        using var provider = CreateProvider(tracingEnabled: true, metricsEnabled: false);
+        var store = new Mock<IQueryableStateStore<TestModel>>().Object;
+
+        // Act
+        var wrapped = provider.WrapQueryableStateStore(store, "test-queryable-store", "mysql");
+
+        // Assert
+        Assert.NotSame(store, wrapped);
+    }
+
+    #endregion
+
+    #region WrapSearchableStateStore
+
+    [Fact]
+    public void WrapSearchableStateStore_WhenBothEnabled_ReturnsWrapper()
+    {
+        // Arrange
+        using var provider = CreateProvider(tracingEnabled: true, metricsEnabled: true);
+        var store = new Mock<ISearchableStateStore<TestModel>>().Object;
+
+        // Act
+        var wrapped = provider.WrapSearchableStateStore(store, "test-search-store", "redis");
+
+        // Assert
+        Assert.NotSame(store, wrapped);
+        Assert.IsType<Instrumentation.InstrumentedSearchableStateStore<TestModel>>(wrapped);
+    }
+
+    [Fact]
+    public void WrapSearchableStateStore_WhenBothDisabled_ReturnsOriginal()
+    {
+        // Arrange
+        using var provider = CreateProvider(tracingEnabled: false, metricsEnabled: false);
+        var store = new Mock<ISearchableStateStore<TestModel>>().Object;
+
+        // Act
+        var wrapped = provider.WrapSearchableStateStore(store, "test-search-store", "redis");
+
+        // Assert
+        Assert.Same(store, wrapped);
+    }
+
+    [Fact]
+    public void WrapSearchableStateStore_WhenOnlyMetricsEnabled_ReturnsWrapper()
+    {
+        // Arrange
+        using var provider = CreateProvider(tracingEnabled: false, metricsEnabled: true);
+        var store = new Mock<ISearchableStateStore<TestModel>>().Object;
+
+        // Act
+        var wrapped = provider.WrapSearchableStateStore(store, "test-search-store", "redis");
+
+        // Assert
+        Assert.NotSame(store, wrapped);
+    }
+
+    #endregion
+
+    #region WrapJsonQueryableStateStore
+
+    [Fact]
+    public void WrapJsonQueryableStateStore_WhenBothEnabled_ReturnsWrapper()
+    {
+        // Arrange
+        using var provider = CreateProvider(tracingEnabled: true, metricsEnabled: true);
+        var store = new Mock<IJsonQueryableStateStore<TestModel>>().Object;
+
+        // Act
+        var wrapped = provider.WrapJsonQueryableStateStore(store, "test-json-store", "mysql");
+
+        // Assert
+        Assert.NotSame(store, wrapped);
+        Assert.IsType<Instrumentation.InstrumentedJsonQueryableStateStore<TestModel>>(wrapped);
+    }
+
+    [Fact]
+    public void WrapJsonQueryableStateStore_WhenBothDisabled_ReturnsOriginal()
+    {
+        // Arrange
+        using var provider = CreateProvider(tracingEnabled: false, metricsEnabled: false);
+        var store = new Mock<IJsonQueryableStateStore<TestModel>>().Object;
+
+        // Act
+        var wrapped = provider.WrapJsonQueryableStateStore(store, "test-json-store", "mysql");
+
+        // Assert
+        Assert.Same(store, wrapped);
+    }
+
+    [Fact]
+    public void WrapJsonQueryableStateStore_WhenOnlyTracingEnabled_ReturnsWrapper()
+    {
+        // Arrange
+        using var provider = CreateProvider(tracingEnabled: true, metricsEnabled: false);
+        var store = new Mock<IJsonQueryableStateStore<TestModel>>().Object;
+
+        // Act
+        var wrapped = provider.WrapJsonQueryableStateStore(store, "test-json-store", "mysql");
+
+        // Assert
+        Assert.NotSame(store, wrapped);
+    }
+
+    #endregion
+
+    #region WrapCacheableStateStore
+
+    [Fact]
+    public void WrapCacheableStateStore_WhenBothEnabled_ReturnsWrapper()
+    {
+        // Arrange
+        using var provider = CreateProvider(tracingEnabled: true, metricsEnabled: true);
+        var store = new Mock<ICacheableStateStore<TestModel>>().Object;
+
+        // Act
+        var wrapped = provider.WrapCacheableStateStore(store, "test-cacheable-store", "redis");
+
+        // Assert
+        Assert.NotSame(store, wrapped);
+        Assert.IsType<Instrumentation.InstrumentedCacheableStateStore<TestModel>>(wrapped);
+    }
+
+    [Fact]
+    public void WrapCacheableStateStore_WhenBothDisabled_ReturnsOriginal()
+    {
+        // Arrange
+        using var provider = CreateProvider(tracingEnabled: false, metricsEnabled: false);
+        var store = new Mock<ICacheableStateStore<TestModel>>().Object;
+
+        // Act
+        var wrapped = provider.WrapCacheableStateStore(store, "test-cacheable-store", "redis");
+
+        // Assert
+        Assert.Same(store, wrapped);
+    }
+
+    [Fact]
+    public void WrapCacheableStateStore_WhenOnlyMetricsEnabled_ReturnsWrapper()
+    {
+        // Arrange
+        using var provider = CreateProvider(tracingEnabled: false, metricsEnabled: true);
+        var store = new Mock<ICacheableStateStore<TestModel>>().Object;
+
+        // Act
+        var wrapped = provider.WrapCacheableStateStore(store, "test-cacheable-store", "redis");
+
+        // Assert
+        Assert.NotSame(store, wrapped);
+    }
+
+    #endregion
+
     /// <summary>
     /// Test model for store wrapping tests.
     /// </summary>
-    private class TestModel
+    public class TestModel
     {
-        public string Id { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
+        public string Id { get; set; } = "test-id";
+        public string Name { get; set; } = "test-name";
     }
 
     /// <summary>
@@ -435,59 +632,5 @@ public class TelemetryProviderTests
 
         public Task<int> DeleteBulkAsync(IEnumerable<string> keys, CancellationToken cancellationToken = default)
             => Task.FromResult(0);
-
-        public Task<bool> AddToSetAsync<TItem>(string key, TItem item, StateOptions? options = null, CancellationToken cancellationToken = default)
-            => Task.FromResult(true);
-
-        public Task<long> AddToSetAsync<TItem>(string key, IEnumerable<TItem> items, StateOptions? options = null, CancellationToken cancellationToken = default)
-            => Task.FromResult(0L);
-
-        public Task<bool> RemoveFromSetAsync<TItem>(string key, TItem item, CancellationToken cancellationToken = default)
-            => Task.FromResult(true);
-
-        public Task<IReadOnlyList<TItem>> GetSetAsync<TItem>(string key, CancellationToken cancellationToken = default)
-            => Task.FromResult<IReadOnlyList<TItem>>(new List<TItem>());
-
-        public Task<bool> SetContainsAsync<TItem>(string key, TItem item, CancellationToken cancellationToken = default)
-            => Task.FromResult(false);
-
-        public Task<long> SetCountAsync(string key, CancellationToken cancellationToken = default)
-            => Task.FromResult(0L);
-
-        public Task<bool> DeleteSetAsync(string key, CancellationToken cancellationToken = default)
-            => Task.FromResult(true);
-
-        public Task<bool> RefreshSetTtlAsync(string key, int ttlSeconds, CancellationToken cancellationToken = default)
-            => Task.FromResult(true);
-
-        public Task<bool> SortedSetAddAsync(string key, string member, double score, StateOptions? options = null, CancellationToken cancellationToken = default)
-            => Task.FromResult(true);
-
-        public Task<long> SortedSetAddBatchAsync(string key, IEnumerable<(string member, double score)> entries, StateOptions? options = null, CancellationToken cancellationToken = default)
-            => Task.FromResult(0L);
-
-        public Task<bool> SortedSetRemoveAsync(string key, string member, CancellationToken cancellationToken = default)
-            => Task.FromResult(true);
-
-        public Task<double?> SortedSetScoreAsync(string key, string member, CancellationToken cancellationToken = default)
-            => Task.FromResult<double?>(null);
-
-        public Task<long?> SortedSetRankAsync(string key, string member, bool descending = true, CancellationToken cancellationToken = default)
-            => Task.FromResult<long?>(null);
-
-        public Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByRankAsync(string key, long start, long stop, bool descending = true, CancellationToken cancellationToken = default)
-            => Task.FromResult<IReadOnlyList<(string member, double score)>>(new List<(string, double)>());
-
-        public Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByScoreAsync(string key, double minScore, double maxScore, int offset = 0, int count = -1, bool descending = false, CancellationToken cancellationToken = default)
-            => Task.FromResult<IReadOnlyList<(string member, double score)>>(new List<(string, double)>());
-
-        public Task<long> SortedSetCountAsync(string key, CancellationToken cancellationToken = default)
-            => Task.FromResult(0L);
-
-        public Task<double> SortedSetIncrementAsync(string key, string member, double increment, CancellationToken cancellationToken = default)
-            => Task.FromResult(increment);
-
-        public Task<bool> SortedSetDeleteAsync(string key, CancellationToken cancellationToken = default)
-            => Task.FromResult(true);
     }
 }
