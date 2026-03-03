@@ -49,6 +49,25 @@ internal class AchievementDefinitionData
     public List<Platform>? Platforms { get; set; }
     public Dictionary<Platform, string>? PlatformIds { get; set; }
     public List<string>? Prerequisites { get; set; }
+
+    /// <summary>Score type code for matching analytics.score.updated events.</summary>
+    public string? ScoreType { get; set; }
+
+    /// <summary>Milestone type code for matching analytics.milestone.reached events.</summary>
+    public string? MilestoneType { get; set; }
+
+    /// <summary>Expected milestone value for matching analytics.milestone.reached events.</summary>
+    public double? MilestoneValue { get; set; }
+
+    /// <summary>Expected milestone name for matching analytics.milestone.reached events.</summary>
+    public string? MilestoneName { get; set; }
+
+    /// <summary>Leaderboard ID for matching leaderboard.rank.changed events.</summary>
+    public string? LeaderboardId { get; set; }
+
+    /// <summary>Rank threshold for leaderboard achievements (unlock when rank &lt;= threshold).</summary>
+    public long? RankThreshold { get; set; }
+
     public bool IsActive { get; set; }
 
     /// <summary>Whether this definition is deprecated and should not be used for new progress.</summary>
@@ -65,7 +84,7 @@ internal class AchievementDefinitionData
     public double? RarityPercent { get; set; }
     public DateTimeOffset? RarityCalculatedAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
-    public Dictionary<string, object>? Metadata { get; set; }
+    public object? Metadata { get; set; }
 }
 
 /// <summary>

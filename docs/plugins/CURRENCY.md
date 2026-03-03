@@ -21,7 +21,7 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 | lib-state (`IStateStoreFactory`) | MySQL persistence for definitions, wallets, balances, transactions, holds; Redis caching for balances and holds; Redis idempotency store |
 | lib-state (`IDistributedLockProvider`) | Balance-level locks for atomic credit/debit/transfer/hold-creation; hold-level locks for capture serialization; wallet-level locks for close operations; index-level locks for list operations; autogain locks to prevent concurrent modification |
 | lib-messaging (`IMessageBus`) | Publishing all currency events (balance, wallet lifecycle, autogain, cap, hold, exchange rate); error event publishing via TryPublishErrorAsync |
-| lib-worldstate (`IWorldstateClient`, L2, **required future migration**) | Autogain worker MUST transition from real-time intervals to game-time via Worldstate's `GetElapsedGameTime` API. At the default 24:1 time ratio, real-time autogain dramatically under-credits compared to game-time. This affects the living economy: NPC passive income must track the simulated world's time, not server time. Migration requires adding an `AutogainTimeSource` config property (enum: `RealTime`, `GameTime`; default `GameTime` once Worldstate is implemented). |
+| lib-worldstate (`IWorldstateClient`, L2, **required future migration**) | Autogain worker MUST transition from real-time intervals to game-time via Worldstate's `GetElapsedGameTime` API. At the default 24:1 time ratio, real-time autogain dramatically under-credits compared to game-time. This affects the living economy: NPC passive income must track the simulated world's time, not server time. Migration requires adding an `AutogainTimeSource` config property (enum: `RealTime`, `GameTime`; default `GameTime` once Worldstate is implemented). Tracked in [#545](https://github.com/beyond-immersion/bannou-service/issues/545) (consolidated Currency+Seed game-time migration) and [#433](https://github.com/beyond-immersion/bannou-service/issues/433) (Currency-specific). |
 
 ---
 
@@ -33,6 +33,8 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 | lib-contract | Registers `currency_transfer` and `fee` clause types that route to `/currency/transfer` and `/currency/balance/get` endpoints via mesh invocation |
 | lib-quest | Hard dependency via `ICurrencyClient` for built-in `currency` prerequisite checking |
 | lib-license | Hard dependency via `ICurrencyClient` for cost verification on license board operations |
+| lib-actor (planned) | `${currency.*}` variable provider via `IVariableProviderFactory` for NPC economic awareness in ABML behavior expressions ([#147](https://github.com/beyond-immersion/bannou-service/issues/147), in progress) |
+| lib-actor (planned) | ABML economic action handlers (`economy_credit`, `economy_debit`, `economy_transfer`) calling `ICurrencyClient` for NPC economic actions ([#428](https://github.com/beyond-immersion/bannou-service/issues/428)) |
 
 ---
 
@@ -502,11 +504,14 @@ Escrow Integration Flow
 
 ### Design Considerations
 
-1. **Transaction retention only enforced at query time**: Transactions beyond `TransactionRetentionDays` are filtered out of history queries but remain in the MySQL store indefinitely. No background cleanup task exists to actually delete old transactions.
+1. **Entity deletion does not trigger wallet cleanup**: When an entity that owns a wallet (character, account, guild) is deleted, no mechanism currently closes or transfers the wallet's balances. Wallets remain active with orphaned `ownerId` references. Character deletion (L2→L2 same layer) could call `/currency/wallet/close` directly, but no integration exists. Account deletion has the privacy exception per T28 but the wallet should still be cleaned up. Needs design decisions on: whether to use lib-resource callbacks or direct API integration, what happens to remaining balances (transfer to treasury? burn?), and whether frozen wallets owned by deleted entities should be force-closed.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/556 -->
+
+2. **Transaction retention only enforced at query time**: Transactions beyond `TransactionRetentionDays` are filtered out of history queries but remain in the MySQL store indefinitely. No background cleanup task exists to actually delete old transactions.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/222 -->
 
-2. **Autogain uses real-time, should use game-time**: The autogain background worker (`CurrencyAutogainTaskService`) uses `DateTimeOffset.UtcNow` and real-time `Task.Delay` intervals. In a living world with a 24:1 game-time ratio, NPCs earning passive income in real-time receive 24x less income than they should per game-day. When Worldstate (L2) is implemented, the autogain worker must call `GetElapsedGameTime` to compute game-time elapsed since last accrual, then apply the autogain rate against game-time rather than real-time. This ensures the NPC-driven economy scales correctly with the world's simulated time. Both `Lazy` mode (on-demand calculation) and `Task` mode (background worker) need this transition.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/433 -->
+3. **Autogain uses real-time, should use game-time**: The autogain background worker (`CurrencyAutogainTaskService`) uses `DateTimeOffset.UtcNow` and real-time `Task.Delay` intervals. In a living world with a 24:1 game-time ratio, NPCs earning passive income in real-time receive 24x less income than they should per game-day. When Worldstate (L2) is implemented, the autogain worker must call `GetElapsedGameTime` to compute game-time elapsed since last accrual, then apply the autogain rate against game-time rather than real-time. This ensures the NPC-driven economy scales correctly with the world's simulated time. Both `Lazy` mode (on-demand calculation) and `Task` mode (background worker) need this transition.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/545 -->
 
 ---
 
@@ -517,11 +522,12 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Pending Design
 
 - **Global supply analytics** - Needs design decisions on aggregation strategy, minted/burned semantics, and escrow integration. Issue: https://github.com/beyond-immersion/bannou-service/issues/211
-- [#433](https://github.com/beyond-immersion/bannou-service/issues/433) - Currency autogain must transition from real-time to game-time via Worldstate (blocked by Worldstate implementation)
+- [#433](https://github.com/beyond-immersion/bannou-service/issues/433) / [#545](https://github.com/beyond-immersion/bannou-service/issues/545) - Currency autogain must transition from real-time to game-time via Worldstate (blocked by Worldstate implementation). #545 is the consolidated issue covering both Currency and Seed background workers.
 - [#470](https://github.com/beyond-immersion/bannou-service/issues/470) - Wallet distribution analytics stub returns all zeros. Needs aggregation strategy decision (shared with #211)
 - [#471](https://github.com/beyond-immersion/bannou-service/issues/471) - Global supply cap enforcement needs aggregation strategy (shared with #211). `GlobalSupplyCap` stored but never checked during credits.
 - [#473](https://github.com/beyond-immersion/bannou-service/issues/473) - Item linkage enforcement: `LinkedToItem`, `LinkedItemTemplateId`, and `LinkageMode` fields are stored but have zero runtime enforcement. Needs design decisions on what each linkage mode means and which operations to gate.
 - [#478](https://github.com/beyond-immersion/bannou-service/issues/478) - Universal value anchoring for dynamic exchange rates. Needs design on coexistence vs replacement of `ExchangeRateToBase`, modifier ownership (L2 vs L4), value change triggers, and relationship to location-scoped exchange rates.
+- [#556](https://github.com/beyond-immersion/bannou-service/issues/556) - Entity deletion does not trigger wallet cleanup. Wallets remain active with orphaned `ownerId` references when owning entities are deleted. Needs design on integration mechanism, balance disposition, and frozen wallet handling.
 
 ### Completed
 

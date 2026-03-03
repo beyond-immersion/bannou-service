@@ -136,9 +136,15 @@ public partial class AchievementService : IAchievementService
             Platforms = body.Platforms?.ToList() ?? new List<Platform> { Platform.Internal },
             PlatformIds = ParsePlatformIds(body.PlatformIds),
             Prerequisites = body.Prerequisites?.ToList(),
+            ScoreType = body.ScoreType,
+            MilestoneType = body.MilestoneType,
+            MilestoneValue = body.MilestoneValue,
+            MilestoneName = body.MilestoneName,
+            LeaderboardId = body.LeaderboardId,
+            RankThreshold = body.RankThreshold,
             IsActive = body.IsActive,
             CreatedAt = now,
-            Metadata = MetadataHelper.ConvertToDictionary(body.Metadata)
+            Metadata = body.Metadata
         };
 
         await definitionStore.SaveAsync(key, definition, options: null, cancellationToken);
@@ -291,6 +297,36 @@ public partial class AchievementService : IAchievementService
         {
             definition.PlatformIds = ParsePlatformIds(body.PlatformIds);
             changedFields.Add("platformIds");
+        }
+        if (body.ScoreType != null && body.ScoreType != definition.ScoreType)
+        {
+            definition.ScoreType = body.ScoreType;
+            changedFields.Add("scoreType");
+        }
+        if (body.MilestoneType != null && body.MilestoneType != definition.MilestoneType)
+        {
+            definition.MilestoneType = body.MilestoneType;
+            changedFields.Add("milestoneType");
+        }
+        if (body.MilestoneValue.HasValue && body.MilestoneValue != definition.MilestoneValue)
+        {
+            definition.MilestoneValue = body.MilestoneValue;
+            changedFields.Add("milestoneValue");
+        }
+        if (body.MilestoneName != null && body.MilestoneName != definition.MilestoneName)
+        {
+            definition.MilestoneName = body.MilestoneName;
+            changedFields.Add("milestoneName");
+        }
+        if (body.LeaderboardId != null && body.LeaderboardId != definition.LeaderboardId)
+        {
+            definition.LeaderboardId = body.LeaderboardId;
+            changedFields.Add("leaderboardId");
+        }
+        if (body.RankThreshold.HasValue && body.RankThreshold != definition.RankThreshold)
+        {
+            definition.RankThreshold = body.RankThreshold;
+            changedFields.Add("rankThreshold");
         }
 
         if (changedFields.Count == 0)
@@ -1391,6 +1427,12 @@ public partial class AchievementService : IAchievementService
                 kvp => kvp.Key.ToString().ToLowerInvariant(),
                 kvp => kvp.Value),
             Prerequisites = definition.Prerequisites,
+            ScoreType = definition.ScoreType,
+            MilestoneType = definition.MilestoneType,
+            MilestoneValue = definition.MilestoneValue,
+            MilestoneName = definition.MilestoneName,
+            LeaderboardId = definition.LeaderboardId,
+            RankThreshold = definition.RankThreshold,
             IsActive = definition.IsActive,
             IsDeprecated = definition.IsDeprecated,
             DeprecatedAt = definition.DeprecatedAt,
@@ -1446,6 +1488,12 @@ public partial class AchievementService : IAchievementService
                 Platforms = definition.Platforms?.ToList(),
                 PlatformIds = definition.PlatformIds?.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value),
                 Prerequisites = definition.Prerequisites?.ToList(),
+                ScoreType = definition.ScoreType,
+                MilestoneType = definition.MilestoneType,
+                MilestoneValue = definition.MilestoneValue,
+                MilestoneName = definition.MilestoneName,
+                LeaderboardId = definition.LeaderboardId,
+                RankThreshold = definition.RankThreshold,
                 IsActive = definition.IsActive,
                 IsDeprecated = definition.IsDeprecated,
                 DeprecatedAt = definition.DeprecatedAt,
@@ -1490,6 +1538,12 @@ public partial class AchievementService : IAchievementService
                 Platforms = definition.Platforms?.ToList(),
                 PlatformIds = definition.PlatformIds?.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value),
                 Prerequisites = definition.Prerequisites?.ToList(),
+                ScoreType = definition.ScoreType,
+                MilestoneType = definition.MilestoneType,
+                MilestoneValue = definition.MilestoneValue,
+                MilestoneName = definition.MilestoneName,
+                LeaderboardId = definition.LeaderboardId,
+                RankThreshold = definition.RankThreshold,
                 IsActive = definition.IsActive,
                 IsDeprecated = definition.IsDeprecated,
                 DeprecatedAt = definition.DeprecatedAt,

@@ -153,6 +153,42 @@ public partial class AchievementDefinitionCreatedEvent : BaseServiceEvent
     public System.Collections.Generic.ICollection<string>? Prerequisites { get; set; } = default!;
 
     /// <summary>
+    /// Score type code for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scoreType")]
+    public string? ScoreType { get; set; } = default!;
+
+    /// <summary>
+    /// Milestone type code for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneType")]
+    public string? MilestoneType { get; set; } = default!;
+
+    /// <summary>
+    /// Expected milestone value for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneValue")]
+    public double? MilestoneValue { get; set; } = default!;
+
+    /// <summary>
+    /// Expected milestone name for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneName")]
+    public string? MilestoneName { get; set; } = default!;
+
+    /// <summary>
+    /// Leaderboard ID for rank change event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("leaderboardId")]
+    public string? LeaderboardId { get; set; } = default!;
+
+    /// <summary>
+    /// Rank threshold for leaderboard achievements
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rankThreshold")]
+    public long? RankThreshold { get; set; } = default!;
+
+    /// <summary>
     /// Whether achievement is earnable
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
@@ -303,6 +339,42 @@ public partial class AchievementDefinitionUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("prerequisites")]
     public System.Collections.Generic.ICollection<string>? Prerequisites { get; set; } = default!;
+
+    /// <summary>
+    /// Score type code for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scoreType")]
+    public string? ScoreType { get; set; } = default!;
+
+    /// <summary>
+    /// Milestone type code for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneType")]
+    public string? MilestoneType { get; set; } = default!;
+
+    /// <summary>
+    /// Expected milestone value for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneValue")]
+    public double? MilestoneValue { get; set; } = default!;
+
+    /// <summary>
+    /// Expected milestone name for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneName")]
+    public string? MilestoneName { get; set; } = default!;
+
+    /// <summary>
+    /// Leaderboard ID for rank change event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("leaderboardId")]
+    public string? LeaderboardId { get; set; } = default!;
+
+    /// <summary>
+    /// Rank threshold for leaderboard achievements
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rankThreshold")]
+    public long? RankThreshold { get; set; } = default!;
 
     /// <summary>
     /// Whether achievement is earnable
@@ -463,6 +535,42 @@ public partial class AchievementDefinitionDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("prerequisites")]
     public System.Collections.Generic.ICollection<string>? Prerequisites { get; set; } = default!;
+
+    /// <summary>
+    /// Score type code for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scoreType")]
+    public string? ScoreType { get; set; } = default!;
+
+    /// <summary>
+    /// Milestone type code for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneType")]
+    public string? MilestoneType { get; set; } = default!;
+
+    /// <summary>
+    /// Expected milestone value for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneValue")]
+    public double? MilestoneValue { get; set; } = default!;
+
+    /// <summary>
+    /// Expected milestone name for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneName")]
+    public string? MilestoneName { get; set; } = default!;
+
+    /// <summary>
+    /// Leaderboard ID for rank change event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("leaderboardId")]
+    public string? LeaderboardId { get; set; } = default!;
+
+    /// <summary>
+    /// Rank threshold for leaderboard achievements
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rankThreshold")]
+    public long? RankThreshold { get; set; } = default!;
 
     /// <summary>
     /// Whether achievement is earnable

@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 
 namespace BeyondImmersion.BannouService.Achievement;
@@ -98,13 +97,13 @@ public partial class AchievementService
                     continue;
                 }
 
-                var metadata = MetadataHelper.ConvertToReadOnlyDictionary(definition.Metadata);
-                if (!MetadataHelper.TryGetString(metadata, "scoreType", out var scoreType))
+                // FOUNDATION TENETS - T29 compliance: typed field instead of metadata bag
+                if (string.IsNullOrEmpty(definition.ScoreType))
                 {
                     continue;
                 }
 
-                if (!string.Equals(scoreType, evt.ScoreType, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(definition.ScoreType, evt.ScoreType, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -201,25 +200,25 @@ public partial class AchievementService
                     continue;
                 }
 
-                var metadata = MetadataHelper.ConvertToReadOnlyDictionary(definition.Metadata);
-                if (!MetadataHelper.TryGetString(metadata, "milestoneType", out var milestoneType))
+                // FOUNDATION TENETS - T29 compliance: typed fields instead of metadata bag
+                if (string.IsNullOrEmpty(definition.MilestoneType))
                 {
                     continue;
                 }
 
-                if (!string.Equals(milestoneType, evt.MilestoneType, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(definition.MilestoneType, evt.MilestoneType, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                if (TryGetMetadataDouble(metadata, "milestoneValue", out var expectedValue) &&
-                    !IsCloseTo(evt.MilestoneValue, expectedValue))
+                if (definition.MilestoneValue.HasValue &&
+                    !IsCloseTo(evt.MilestoneValue, definition.MilestoneValue.Value))
                 {
                     continue;
                 }
 
-                if (MetadataHelper.TryGetString(metadata, "milestoneName", out var milestoneName) &&
-                    !string.Equals(milestoneName, evt.MilestoneName, StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrEmpty(definition.MilestoneName) &&
+                    !string.Equals(definition.MilestoneName, evt.MilestoneName, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -315,20 +314,20 @@ public partial class AchievementService
                     continue;
                 }
 
-                var metadata = MetadataHelper.ConvertToReadOnlyDictionary(definition.Metadata);
-                if (!MetadataHelper.TryGetString(metadata, "leaderboardId", out var leaderboardId))
+                // FOUNDATION TENETS - T29 compliance: typed fields instead of metadata bag
+                if (string.IsNullOrEmpty(definition.LeaderboardId))
                 {
                     continue;
                 }
 
-                if (!string.Equals(leaderboardId, evt.LeaderboardId, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(definition.LeaderboardId, evt.LeaderboardId, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                if (!TryGetMetadataLong(metadata, "rankThreshold", out var rankThreshold) || rankThreshold <= 0)
+                if (!definition.RankThreshold.HasValue || definition.RankThreshold.Value <= 0)
                 {
-                    var message = "Leaderboard rank achievement is missing a valid rankThreshold metadata value";
+                    var message = "Leaderboard rank achievement is missing a valid rankThreshold value";
                     _logger.LogError(
                         "{Message} (AchievementId: {AchievementId}, LeaderboardId: {LeaderboardId})",
                         message,
@@ -347,7 +346,7 @@ public partial class AchievementService
                     continue;
                 }
 
-                if (evt.NewRank > rankThreshold)
+                if (evt.NewRank > definition.RankThreshold.Value)
                 {
                     continue;
                 }
@@ -459,121 +458,4 @@ public partial class AchievementService
     private static bool IsCloseTo(double actual, double expected)
         => Math.Abs(actual - expected) < 0.000001;
 
-    private static bool TryGetMetadataDouble(IReadOnlyDictionary<string, object>? metadata, string key, out double value)
-    {
-        value = 0;
-        if (metadata == null || !metadata.TryGetValue(key, out var raw) || raw == null)
-        {
-            return false;
-        }
-
-        switch (raw)
-        {
-            case double d:
-                value = d;
-                return true;
-            case float f:
-                value = f;
-                return true;
-            case decimal m:
-                value = (double)m;
-                return true;
-            case int i:
-                value = i;
-                return true;
-            case long l:
-                value = l;
-                return true;
-            case JsonElement element:
-                if (element.ValueKind == JsonValueKind.Number)
-                {
-                    if (element.TryGetInt64(out var longValue))
-                    {
-                        value = longValue;
-                        return true;
-                    }
-                    if (element.TryGetDouble(out var doubleValue))
-                    {
-                        value = doubleValue;
-                        return true;
-                    }
-                }
-                if (element.ValueKind == JsonValueKind.String)
-                {
-                    var textValue = element.GetString();
-                    if (!string.IsNullOrWhiteSpace(textValue) &&
-                        double.TryParse(textValue, out var parsed))
-                    {
-                        value = parsed;
-                        return true;
-                    }
-                }
-                break;
-            case string text:
-                if (double.TryParse(text, out var parsedValue))
-                {
-                    value = parsedValue;
-                    return true;
-                }
-                break;
-        }
-
-        return false;
-    }
-
-    private static bool TryGetMetadataLong(IReadOnlyDictionary<string, object>? metadata, string key, out long value)
-    {
-        value = 0;
-        if (metadata == null || !metadata.TryGetValue(key, out var raw) || raw == null)
-        {
-            return false;
-        }
-
-        switch (raw)
-        {
-            case long l:
-                value = l;
-                return true;
-            case int i:
-                value = i;
-                return true;
-            case double d:
-                if (Math.Abs(d - Math.Round(d)) > 0.000001)
-                {
-                    return false;
-                }
-                if (d > long.MaxValue || d < long.MinValue)
-                {
-                    return false;
-                }
-                value = (long)Math.Round(d);
-                return true;
-            case JsonElement element:
-                if (element.ValueKind == JsonValueKind.Number && element.TryGetInt64(out var longValue))
-                {
-                    value = longValue;
-                    return true;
-                }
-                if (element.ValueKind == JsonValueKind.String)
-                {
-                    var textValue = element.GetString();
-                    if (!string.IsNullOrWhiteSpace(textValue) &&
-                        long.TryParse(textValue, out var parsed))
-                    {
-                        value = parsed;
-                        return true;
-                    }
-                }
-                break;
-            case string text:
-                if (long.TryParse(text, out var parsedValue))
-                {
-                    value = parsedValue;
-                    return true;
-                }
-                break;
-        }
-
-        return false;
-    }
 }
