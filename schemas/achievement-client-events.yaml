@@ -1,0 +1,133 @@
+openapi: 3.0.4
+info:
+  title: Achievement Client Events API
+  description: |
+    Server-to-client push events for the Achievement service.
+    These events notify clients of achievement unlocks and progress milestones
+    delivered via WebSocket through entity-session routing.
+
+    All events inherit from BaseClientEvent (common-client-events.yaml) and use
+    the "achievement.{entity}.{action}" naming convention (Pattern C).
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    # ============================================
+    # Achievement Unlocked Client Event
+    # ============================================
+
+    AchievementUnlockedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the unlocking entity's WebSocket sessions when an achievement is unlocked.
+        Includes display data for client UI celebration effects (toast notification, rarity badge).
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - gameServiceId
+        - achievementId
+        - displayName
+        - points
+        - totalPoints
+        - isRare
+      properties:
+        eventName:
+          type: string
+          default: "achievement.unlocked"
+          description: Fixed event type identifier
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service where the achievement was earned
+        achievementId:
+          type: string
+          description: ID of the unlocked achievement
+        displayName:
+          type: string
+          description: Achievement display name for toast notification
+        description:
+          type: string
+          nullable: true
+          description: Achievement description
+        points:
+          type: integer
+          description: Points earned from this achievement
+        totalPoints:
+          type: integer
+          description: Entity's new total achievement points
+        iconUrl:
+          type: string
+          nullable: true
+          description: Achievement icon URL for toast notification
+        isRare:
+          type: boolean
+          description: Whether this is a rare achievement (for special celebration effects)
+        rarity:
+          type: number
+          format: double
+          nullable: true
+          description: Percentage of entities who have earned this (0-100)
+
+    # ============================================
+    # Achievement Progress Milestone Client Event
+    # ============================================
+
+    AchievementProgressMilestoneClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the entity's WebSocket sessions when a significant progress milestone
+        is reached on a progressive achievement (25%, 50%, 75%).
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - gameServiceId
+        - achievementId
+        - displayName
+        - percentComplete
+      properties:
+        eventName:
+          type: string
+          default: "achievement.progress.milestone-reached"
+          description: Fixed event type identifier
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service owning the achievement
+        achievementId:
+          type: string
+          description: ID of the achievement with progress
+        displayName:
+          type: string
+          description: Achievement display name
+        currentProgress:
+          type: integer
+          description: Current progress value
+        targetProgress:
+          type: integer
+          description: Target to unlock
+        percentComplete:
+          type: number
+          format: double
+          description: Completion percentage (0-100)

@@ -4,7 +4,7 @@
 > **Schema**: schemas/achievement-api.yaml
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
-> **State Stores**: achievement-definition (Redis), achievement-progress (Redis)
+> **State Store**: achievement-definition (Redis), achievement-progress (Redis)
 
 ## Overview
 
@@ -14,22 +14,23 @@ The Achievement plugin (L4 GameFeatures) provides a multi-entity achievement and
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (IStateStoreFactory) | All persistence - definitions, progress records, index sets. Uses ETag-based optimistic concurrency for definition updates |
+| lib-state (IStateStoreFactory) | All persistence — definitions (ICacheableStateStore), progress records (IStateStore), index sets. Uses ETag-based optimistic concurrency for definition updates |
 | lib-state (IDistributedLockProvider) | Distributed locks (configurable via LockExpirySeconds, default 30s) for compound progress/unlock operations |
-| lib-messaging (IMessageBus) | Publishing lifecycle events (unlocked, progress, sync, definition CRUD) and error events |
+| lib-messaging (IMessageBus) | Publishing service events (unlocked, progress, sync, definition CRUD) and error events |
 | lib-messaging (IEventConsumer) | Subscribing to analytics.score.updated, analytics.milestone.reached, leaderboard.rank.changed for auto-unlock |
+| lib-connect (IEntitySessionRegistry) | Publishing client events (achievement.unlocked, achievement.progress.milestone-reached) to entity WebSocket sessions |
+| lib-telemetry (ITelemetryProvider) | Telemetry spans for async helper methods and event handlers |
 | Account service (IAccountClient) | SteamAchievementSync queries account auth methods to find Steam external IDs |
 | Permission service (via AchievementPermissionRegistration) | Registers its endpoint permission matrix on startup via messaging event |
 | IHttpClientFactory | SteamAchievementSync makes HTTP calls to Steam Partner API (partner.steam-api.com) |
-| bannou-service (MetadataHelper) | Utility class for converting metadata objects between different representations |
 
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
 |-----------|-------------|
-| (None currently) | No other service subscribes to achievement events or calls AchievementClient in the current codebase |
+| Game clients (via Connect) | Receive `achievement.unlocked` and `achievement.progress.milestone-reached` client events via WebSocket push |
 
-The Achievement plugin is currently a leaf consumer - it reacts to external events but nothing subscribes to its output events. Game clients receive unlock notifications via the Connect service's client event push system.
+The Achievement plugin is currently a leaf service — it reacts to external events but no other Bannou service subscribes to its output events or calls AchievementClient. Game clients receive unlock and progress milestone notifications via the Connect service's client event push system (IEntitySessionRegistry).
 
 ## State Storage
 
@@ -46,22 +47,32 @@ The Achievement plugin is currently a leaf consumer - it reacts to external even
 
 ### Published Events
 
+**Service events** (via IMessageBus):
+
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `achievement.unlocked` | `AchievementUnlockedEvent` | Achievement unlocked via progress completion or direct unlock. Includes rarity information (IsRare, Rarity%) |
 | `achievement.progress.updated` | `AchievementProgressUpdatedEvent` | Progress incremented on a progressive achievement. Includes previous/new/target progress and percent complete |
 | `achievement.platform.synced` | `AchievementPlatformSyncedEvent` | After each platform sync attempt (success or failure). Includes platform-specific achievement ID |
-| `achievement.definition.created` | `AchievementDefinitionCreatedEvent` | New achievement definition created. Includes type, points, platforms list |
-| `achievement.definition.updated` | `AchievementDefinitionUpdatedEvent` | Definition fields updated (displayName, description, isActive, platformIds) |
-| `achievement.definition.deleted` | `AchievementDefinitionDeletedEvent` | Definition removed from store and index |
+| `achievement.definition.created` | `AchievementDefinitionCreatedEvent` | New achievement definition created (auto-generated lifecycle event) |
+| `achievement.definition.updated` | `AchievementDefinitionUpdatedEvent` | Definition fields updated, includes `changedFields` array (auto-generated lifecycle event) |
+
+**Client events** (via IEntitySessionRegistry → WebSocket push):
+
+| Event Name | Event Type | Trigger |
+|------------|-----------|---------|
+| `achievement.unlocked` | `AchievementUnlockedClientEvent` | Sent to unlocking entity's WebSocket sessions with display data for toast notifications |
+| `achievement.progress.milestone-reached` | `AchievementProgressMilestoneClientEvent` | Sent at 25%, 50%, 75% progress milestones on progressive achievements |
+
+**Note**: Definition lifecycle events (created/updated) are auto-generated from `x-lifecycle` in the events schema. Category B deprecation lifecycle means no delete event exists — definitions persist forever.
 
 ### Consumed Events
 
 | Topic | Event Type | Handler | Behavior |
 |-------|-----------|---------|----------|
-| `analytics.score.updated` | `AnalyticsScoreUpdatedEvent` | `HandleScoreUpdatedAsync` | Finds Progressive achievements with matching `scoreType` in metadata, increments progress by delta (must be positive integer) |
-| `analytics.milestone.reached` | `AnalyticsMilestoneReachedEvent` | `HandleMilestoneReachedAsync` | Finds non-Progressive achievements with matching `milestoneType` metadata, optionally filters by `milestoneValue` and `milestoneName`, then unlocks |
-| `leaderboard.rank.changed` | `LeaderboardRankChangedEvent` | `HandleRankChangedAsync` | Finds non-Progressive achievements with matching `leaderboardId` metadata, unlocks when `newRank <= rankThreshold` |
+| `analytics.score.updated` | `AnalyticsScoreUpdatedEvent` | `HandleScoreUpdatedAsync` | Finds Progressive achievements with matching `scoreType` typed field, increments progress by delta (must be positive integer) |
+| `analytics.milestone.reached` | `AnalyticsMilestoneReachedEvent` | `HandleMilestoneReachedAsync` | Finds non-Progressive achievements with matching `milestoneType` typed field, optionally filters by `milestoneValue` and `milestoneName`, then unlocks |
+| `leaderboard.rank.changed` | `LeaderboardRankChangedEvent` | `HandleRankChangedAsync` | Finds non-Progressive achievements with matching `leaderboardId` typed field, unlocks when `newRank <= rankThreshold` |
 
 ## Configuration
 
@@ -89,29 +100,30 @@ The Achievement plugin is currently a leaf consumer - it reacts to external even
 
 | Service | Role |
 |---------|------|
-| `IMessageBus` | Publishes achievement events and error events via TryPublishAsync/TryPublishErrorAsync |
-| `IStateStoreFactory` | Retrieves typed state stores for definitions and progress |
+| `IMessageBus` | Publishes service events and error events via TryPublishAsync/TryPublishErrorAsync |
+| `IStateStoreFactory` | Retrieves typed state stores; constructor-cached as `_definitionStore` (ICacheableStateStore) and `_progressStore` (IStateStore) |
 | `ILogger<AchievementService>` | Structured logging throughout |
 | `AchievementServiceConfiguration` | All configurable thresholds, credentials, and feature flags |
 | `IEventConsumer` | Registers handlers for analytics/leaderboard events in constructor |
 | `IEnumerable<IPlatformAchievementSync>` | Collection of platform sync providers (Steam, Xbox, PlayStation, Internal). Service checks `IsConfigured` to skip unconfigured providers |
 | `IDistributedLockProvider` | Distributed locks for progress updates and unlock operations (30s TTL) |
+| `ITelemetryProvider` | Telemetry spans for async helper methods and event handlers |
+| `IEntitySessionRegistry` | Publishes client events to entity WebSocket sessions for unlock/progress milestone notifications |
 | `RarityCalculationService` (BackgroundService) | Periodically iterates all definitions and recalculates rarity percentages based on TotalEligibleEntities and EarnedCount |
-| `MetadataHelper` (bannou-service) | Utility for safe reading of achievement metadata dictionaries (handles JsonElement, primitives, strings) |
 
 ## API Endpoints (Implementation Notes)
 
 ### Definitions group
-Standard CRUD. Create checks for duplicates (409), maintains a set index per game service, and tracks the game service ID in a global index for rarity calculations. Update uses ETag-based optimistic concurrency and returns 409 on conflict. Delete removes from store and index but leaves historical progress records intact.
+Create/Read/Update/List/Deprecate (Category B — no delete, no undeprecate). Create checks for duplicates (409), maintains a set index per game service, and tracks the game service ID in a global index for rarity calculations. Update uses ETag-based optimistic concurrency and returns 409 on conflict. Deprecate is idempotent (returns OK if already deprecated) and publishes an `achievement.definition.updated` event with `changedFields`. List endpoints support `includeDeprecated` parameter (defaults to `false`).
 
 ### Progress group
 - **progress/get**: Returns progress for an entity. Filters out orphaned entries from deleted definitions (verifies each definition exists before including in response).
-- **progress/update**: Progressive achievements only. Acquires distributed lock, increments progress, auto-unlocks at target, updates definition EarnedCount with optimistic concurrency retry (3 attempts). Already-unlocked achievements return OK with no change. Progress is stored permanently by default (ProgressTtlSeconds=0).
-- **unlock**: Validates prerequisites (all must be unlocked), acquires distributed lock, sets progress to target. Returns `Unlocked=false` if already unlocked (idempotent). Increments EarnedCount with retry. Optionally triggers platform sync for configured platforms per definition.Platforms.
-- **list-unlocked**: Filters from EntityProgressData, enriches with definition metadata. Filters orphaned entries. Supports platform filter.
+- **progress/update**: Progressive achievements only. Acquires distributed lock, increments progress, auto-unlocks at target, updates definition EarnedCount with optimistic concurrency retry (3 attempts). Already-unlocked achievements return OK with no change. Publishes client milestone events at 25/50/75% thresholds. Progress is stored permanently by default (ProgressTtlSeconds=0).
+- **unlock**: Validates prerequisites (all must be unlocked), acquires distributed lock, sets progress to target. Returns OK if already unlocked (idempotent). Increments EarnedCount with retry. Publishes client unlock event. Optionally triggers platform sync for configured platforms per definition.Platforms.
+- **list-unlocked**: Filters from EntityProgressData, enriches with definition metadata. Skips entries with missing UnlockedAt timestamps (data inconsistency — logged as error). Supports platform filter and `includeDeprecated` filter.
 
 ### Platform Sync group
-- **platform/sync**: Admin-only. Validates entity is Account type. Checks `IsConfigured` on provider (rejects unconfigured platforms with 400). Checks platform linkage via IPlatformAchievementSync. Iterates unlocked achievements, looks up platform-specific ID from PlatformIds map, executes with retry logic.
+- **platform/sync**: Admin-only. Validates entity is Account type. Checks `IsConfigured` on provider (rejects unconfigured platforms with 400). Checks platform linkage via IPlatformAchievementSync. Iterates unlocked achievements, looks up platform-specific ID from typed `PlatformMappings` array, executes with retry logic.
 - **platform/status**: Iterates configured sync providers (skips `IsConfigured=false`), checks linkage status. Sync counts are hardcoded zeros (per-entity sync history not yet tracked).
 
 ## Visual Aid
@@ -129,21 +141,21 @@ Standard CRUD. Create checks for duplicates (409), maintains a set index per gam
   │              Achievement Service                        │
   │                                                         │
   │  1. Load definitions for gameServiceId (from index set) │
-  │  2. Match via metadata: scoreType/leaderboardId/etc.    │
+  │  2. Match via typed fields: scoreType/leaderboardId/etc │
   │  3. Acquire distributed lock on progress key            │
   │  4. Update progress or unlock                           │
   │  5. Update EarnedCount on definition (ETag CAS)         │
-  │  6. Save progress (permanent unless TTL configured)      │
-  └────────────┬────────────────────────┬───────────────────┘
-               │                        │
-               ▼                        ▼
-  ┌─────────────────────┐   ┌──────────────────────────────┐
-  │  Publish Events     │   │  Platform Sync (if enabled)  │
-  │  • unlocked         │   │  • Skip if !IsConfigured     │
-  │  • progress.updated │   │  • Check linkage via Account │
-  │  (includes rarity)  │   │  • Retry loop → Steam API    │
-  └─────────────────────┘   │  • Publish sync event        │
-                             └──────────────────────────────┘
+  │  6. Save progress (permanent unless TTL configured)     │
+  └──────┬──────────────────┬───────────────┬───────────────┘
+         │                  │               │
+         ▼                  ▼               ▼
+  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐
+  │ Service Evts │  │ Client Evts  │  │ Platform Sync        │
+  │ • unlocked   │  │ • unlocked   │  │ • Skip !IsConfigured │
+  │ • progress   │  │ • milestone  │  │ • Lookup mapping     │
+  │   .updated   │  │   (25/50/75%)│  │ • Retry → Steam API  │
+  │ (IMessageBus)│  │ (WebSocket)  │  │ • Publish sync event │
+  └──────────────┘  └──────────────┘  └──────────────────────┘
 
            Background: RarityCalculationService
   ┌─────────────────────────────────────────────────────────┐
@@ -170,33 +182,33 @@ Standard CRUD. Create checks for duplicates (409), maintains a set index per gam
 - **Sync history store**: Add a new state store to track per-entity platform sync history, enabling accurate status reporting instead of hardcoded zeros
 - **TotalEligibleEntities automation**: Subscribe to subscription/account lifecycle events to maintain accurate eligible entity counts for rarity
 - **Progressive platform sync**: Call `SetProgressAsync` when progress updates occur (not just on unlock), enabling Steam stats to track incremental progress
-- **Achievement groups/categories**: Schema already has metadata field - could formalize grouping for UI presentation
+- **Achievement groups/categories**: Add a typed `category` field on achievement definitions for UI grouping/filtering
 - **Leaderboard integration on unlock**: Publish achievement points to a leaderboard for gamerscore-style rankings
+- **Configurable milestone thresholds**: Make the 25/50/75% client event thresholds configurable per achievement or globally via configuration
 
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
 
-1. **T29 violation: definition `metadata` reads `scoreType`/`milestoneType`/`leaderboardId`/`rankThreshold` by convention**: `AchievementServiceEvents` reads `scoreType`, `milestoneType`, `milestoneValue`, `milestoneName`, `leaderboardId`, and `rankThreshold` keys from definition metadata via `MetadataHelper.TryGetString()` for analytics and leaderboard event matching. Schema claims "No Bannou plugin reads specific keys." These should be typed fields on the achievement definition schema.
-   <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/466 -->
-
-2. **Dead code: `GetAchievementProgressKey` method is never called**
-   - The method at `AchievementService.cs:95` generates keys in format `{gameServiceId}:{achievementId}:{entityType}:{entityId}` but is never invoked anywhere in the codebase.
-   - Impact: No runtime issue, but represents code bloat/confusion. Should be removed or used if the key pattern was intended for a different purpose.
+1. **T16: `achievement.unlocked` event topic uses Pattern A in a multi-entity service**: Achievement has multiple entity types (definitions, progress, platform sync) with distinct endpoint groups. The topic `achievement.unlocked` should use Pattern C (e.g., `achievement.unlock.granted` or similar) to be consistent with `achievement.definition.created`, `achievement.progress.updated`, etc. Requires cross-service coordination since other services may subscribe to this topic.
 
 ### Intentional Quirks (Documented Behavior)
 
 1. **Rarity dual-threshold logic**: An achievement is "rare" if EarnedCount < RarityThresholdEarnedCount (100) OR RarityPercent < RareThresholdPercent (5%). A brand-new achievement with 0 earned is always rare regardless of percentage.
 
-2. **Delete preserves progress data**: Deleting a definition removes it from store and index but leaves EntityProgressData intact. Orphaned entries filtered at read time.
+2. **Category B deprecation lifecycle**: Achievement definitions follow Category B deprecation — deprecate-only, no delete, no undeprecate. Deprecated definitions persist forever. `includeDeprecated` parameter on all list endpoints defaults to `false`.
 
 3. **Event handlers load all definitions per event**: Each analytics/leaderboard event triggers `LoadAchievementDefinitionsAsync` which iterates the definition index set and loads each definition individually. This is intentional to ensure freshness but creates N+1 query pattern per event.
 
 4. **Progress TTL default is infinite**: ProgressTtlSeconds defaults to 0 meaning progress records never expire. This is intentional for persistent progress tracking but operators should be aware of storage growth.
 
+5. **Orphaned progress data**: Since definitions cannot be deleted (Category B), progress records may reference deprecated definitions. Orphaned entries are filtered at read time by verifying each definition still exists.
+
+6. **Client milestone events at fixed thresholds**: Progress milestone client events fire at exactly 25%, 50%, and 75% completion. These thresholds are hardcoded (not configurable).
+
 ### Design Considerations (Requires Planning)
 
-- **Event handler N+1 query pattern**: Each analytics/leaderboard event triggers `LoadAchievementDefinitionsAsync` which loads every definition individually from Redis (one GetAsync per achievement in the index). No caching layer exists - high-frequency events could generate significant Redis traffic. A cache with invalidation on definition CRUD would improve this but requires careful design around coherency across service instances.
+- **Event handler N+1 query pattern**: Each analytics/leaderboard event triggers `LoadAchievementDefinitionsAsync` which loads every definition individually from Redis (one GetAsync per achievement in the index). No caching layer exists — high-frequency events could generate significant Redis traffic. A cache with invalidation on definition CRUD would improve this but requires careful design around coherency across service instances.
 
 - **Platform sync is fire-and-forget on unlock**: When `AutoSyncOnUnlock=true`, platform syncs happen inline during unlock but failures don't prevent the local unlock from succeeding. Retry logic exists but if all retries fail, the sync is marked failed in the event and the achievement stays locally unlocked but not synced. No retry queue exists for permanently failed syncs.
 
@@ -206,4 +218,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Active
 
-- **2026-02-22**: T29 violation — definition metadata reads 6 keys by convention (`scoreType`, `milestoneType`, `milestoneValue`, `milestoneName`, `leaderboardId`, `rankThreshold`). Needs typed fields on achievement definition schema. [#466](https://github.com/beyond-immersion/bannou-service/issues/466)
+(No active work items)

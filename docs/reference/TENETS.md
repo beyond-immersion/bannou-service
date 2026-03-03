@@ -336,6 +336,7 @@ Tenets are organized into categories based on when they're needed:
 | Using `null!` to test non-nullable params | T12 | Remove test - tests impossible scenario |
 | Adding null checks for NRT-protected params | T12 | Don't add - NRT provides compile-time safety |
 | Wrong naming pattern (method, model, event, topic) | T16 | Follow category-specific pattern in T16 |
+| Non-PascalCase enum value in schema (`two_party`, `ACTIVE`, `jsonPath`) | T1, T16 | Use PascalCase: `TwoParty`, `Active`, `JsonPath` (see SCHEMA-RULES.md) |
 | Service name embedded in event topic entity via hyphens (Pattern B) | T16 | Use dot-separated namespace: `transit-connection.created` → `transit.connection.created` (Pattern C) |
 | Underscores in event topic strings | T16 | Use kebab-case: `currency.exchange_rate.updated` → `currency.exchange-rate.updated` |
 | Client event `eventName` missing entity dot for multi-entity service | T16 | Use Pattern C: `chat.message-received` → `chat.message.received` (message is a real API entity) |

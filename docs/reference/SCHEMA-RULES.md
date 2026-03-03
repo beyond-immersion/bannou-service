@@ -1081,6 +1081,57 @@ Do NOT define enums that enumerate services, resources, or entity types from oth
 
 **Full decision tree**: See IMPLEMENTATION TENETS T14 for the authoritative three-category classification (Category A: entity references → EntityType, Category B: game content codes → string, Category C: system state → service-specific enum).
 
+### Enum Value Casing (PascalCase ONLY)
+
+**ALL enum values in schemas MUST use PascalCase.** No exceptions for snake_case, SCREAMING_SNAKE_CASE, camelCase, or kebab-case.
+
+```yaml
+# CORRECT: PascalCase enum values
+ContractStatus:
+  type: string
+  description: Current status of a contract
+  enum: [Draft, Proposed, Pending, Active, Fulfilled, Expired, Terminated]
+
+EscrowType:
+  type: string
+  description: Type of escrow arrangement
+  enum: [TwoParty, MultiParty, Conditional, Auction]
+
+QuestDifficulty:
+  type: string
+  description: Quest difficulty level
+  enum: [Trivial, Easy, Normal, Hard, Heroic, Legendary]
+
+# WRONG: snake_case (most common violation)
+enum: [two_party, multi_party, conditional, auction]
+
+# WRONG: SCREAMING_SNAKE_CASE
+enum: [TRIVIAL, EASY, NORMAL, HARD, HEROIC, LEGENDARY]
+
+# WRONG: camelCase
+enum: [jsonPathEquals, jsonPathNotEquals, greaterThan]
+
+# WRONG: kebab-case
+enum: [pool-per-type, shared-pool, auto-scale]
+```
+
+**Why PascalCase**: BannouJson serializes C# enum members verbatim (no naming policy). The NSwag generation pipeline converts snake_case schema values to PascalCase C# members via a post-processing step, meaning the wire format is ALREADY PascalCase regardless of what the schema says. Using PascalCase in schemas eliminates the mismatch between schema values and actual wire values, prevents bugs from hardcoded string comparisons against schema values, and establishes one convention instead of five.
+
+**Inline enums follow the same rule**:
+```yaml
+# CORRECT: Inline enum with PascalCase
+properties:
+  status:
+    type: string
+    enum: [Active, Deprecated, Dissolved]
+
+# WRONG: Inline enum with snake_case
+properties:
+  status:
+    type: string
+    enum: [active, deprecated, dissolved]
+```
+
 ### Correct Pattern
 
 ```yaml
@@ -1102,7 +1153,7 @@ AuthMethodInfo:
 AuthProvider:
   type: string
   description: Supported authentication providers
-  enum: [email, google, discord, twitch, steam]
+  enum: [Email, Google, Discord, Twitch, Steam]
 
 # In account-events.yaml x-lifecycle - REFERENCE via $ref
 x-lifecycle:
@@ -1158,6 +1209,8 @@ Before submitting schema changes, verify:
 **Configuration**: Every property has `env` with `{SERVICE}_{PROPERTY}` naming. No `type: object`. Enums via `$ref`. Single-line descriptions only.
 
 **Events**: Only canonical definitions (no cross-service `$ref`). Lifecycle events via `x-lifecycle`. Subscriptions via `x-event-subscriptions`. All published events listed in `x-event-publications` (lifecycle + custom).
+
+**Enum Values**: ALL enum values use PascalCase (`TwoParty`, not `two_party`, `TWO_PARTY`, `twoParty`, or `two-party`). No exceptions.
 
 **Type References**: ALL enums/complex objects use `$ref` to `-api.yaml`. x-lifecycle model fields use `$ref` for objects/enums. All `$ref` paths sibling-relative (no `../`).
 

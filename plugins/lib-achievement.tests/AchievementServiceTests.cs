@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Achievement;
 using BeyondImmersion.BannouService.Achievement.Sync;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -33,6 +34,7 @@ public class AchievementServiceTests
     private readonly List<IPlatformAchievementSync> _platformSyncs;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
 
     public AchievementServiceTests()
     {
@@ -45,6 +47,7 @@ public class AchievementServiceTests
         _platformSyncs = new List<IPlatformAchievementSync>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
 
         var mockLockResponse = new Mock<ILockResponse>();
         mockLockResponse.Setup(l => l.Success).Returns(true);
@@ -112,7 +115,8 @@ public class AchievementServiceTests
             _mockEventConsumer.Object,
             _platformSyncs,
             _mockLockProvider.Object,
-            _mockTelemetryProvider.Object);
+            _mockTelemetryProvider.Object,
+            _mockEntitySessionRegistry.Object);
     }
 
     #region Constructor Validation

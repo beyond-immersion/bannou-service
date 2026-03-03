@@ -123,6 +123,7 @@ var result = await _service.GetAccountAsync(null);  // null is allowed by type s
 | Client event names (multi-entity) | `{service}.{entity}.{action}` | `chat.message.received`, `inventory.item.changed`, `voice.peer.joined` (Pattern C: middle word is a real API-backed entity with its own endpoint group) |
 | State keys | `{entity-prefix}{id}` | `account-{guid}` |
 | Config properties | PascalCase + units | `TimeoutSeconds` |
+| Schema enum values | PascalCase | `TwoParty`, `FailFast`, `QuestCompleted` |
 | Test methods | `UnitOfWork_State_Result` | `GetAccount_WhenExists_Returns` |
 
 Configuration properties: PascalCase, include units in time-based names (`HeartbeatIntervalSeconds`), document environment variable in XML comment.

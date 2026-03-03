@@ -79,51 +79,7 @@ public class SteamAchievementSyncTests : IDisposable
             });
     }
 
-    #region Constructor Tests
-
-    [Fact]
-    public void Constructor_ThrowsOnNullConfiguration()
-    {
-        Assert.Throws<ArgumentNullException>(() => new SteamAchievementSync(
-            null!,
-            _mockAccountClient.Object,
-            _mockHttpClientFactory.Object,
-            _mockLogger.Object,
-            _mockTelemetryProvider.Object));
-    }
-
-    [Fact]
-    public void Constructor_ThrowsOnNullAccountClient()
-    {
-        Assert.Throws<ArgumentNullException>(() => new SteamAchievementSync(
-            _configuration,
-            null!,
-            _mockHttpClientFactory.Object,
-            _mockLogger.Object,
-            _mockTelemetryProvider.Object));
-    }
-
-    [Fact]
-    public void Constructor_ThrowsOnNullHttpClientFactory()
-    {
-        Assert.Throws<ArgumentNullException>(() => new SteamAchievementSync(
-            _configuration,
-            _mockAccountClient.Object,
-            null!,
-            _mockLogger.Object,
-            _mockTelemetryProvider.Object));
-    }
-
-    [Fact]
-    public void Constructor_ThrowsOnNullLogger()
-    {
-        Assert.Throws<ArgumentNullException>(() => new SteamAchievementSync(
-            _configuration,
-            _mockAccountClient.Object,
-            _mockHttpClientFactory.Object,
-            null!,
-            _mockTelemetryProvider.Object));
-    }
+    #region Platform Tests
 
     [Fact]
     public void Platform_ReturnsSteam()

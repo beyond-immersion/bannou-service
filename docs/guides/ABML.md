@@ -593,6 +593,9 @@ When executing behaviors for characters, the ActorRunner registers variable prov
 | `${combat.*}` | Character Personality (L4) | `style`, `preferredRange`, `groupRole`, `riskTolerance`, `retreatThreshold`, `protectAllies` |
 | `${backstory.*}` | Character History (L4) | `origin`, `fear`, `trauma`, `fear.key`, `fear.strength`, `elements`, `elements.TRAUMA` |
 | `${encounters.*}` | Character Encounter (L4) | `recent`, `count`, `grudges`, `allies`, `has_met.{id}`, `sentiment.{id}`, `encounter_count.{id}` |
+| `${currency.*}` | Currency (L2) | `balance.{CODE}`, `locked.{CODE}`, `has_wallet`, `wallet_count` |
+| `${inventory.*}` | Inventory (L2) | `has_item.{CODE}`, `count.{CODE}`, `has_space`, `total_containers`, `total_items`, `total_weight`, `used_slots` |
+| `${relationship.*}` | Relationship (L2) | `has.{TYPE_CODE}`, `count.{TYPE_CODE}`, `total` |
 
 **Example: Multi-provider behavior decisions**
 
@@ -612,6 +615,39 @@ flows:
         if: "${encounters.sentiment.${target.id} < -0.5}"
         then:
           - speak: "You again. I haven't forgotten what you did."
+
+  evaluate_economic_state:
+    - cond:
+        if: "${currency.balance.GOLD < 10 && inventory.has_item.HEALTH_POTION}"
+        then:
+          - log: "Low on gold but has potions - consider selling"
+        if: "${!currency.has_wallet}"
+        then:
+          - log: "No wallet - cannot participate in economy"
+
+  evaluate_social_context:
+    - cond:
+        if: "${relationship.has.ALLY && relationship.count.ALLY > 3}"
+        then:
+          - emit_intent:
+              channel: social
+              stance: "confident"
+              urgency: 0.5
+        if: "${relationship.total == 0}"
+        then:
+          - log: "No relationships - lone wanderer behavior"
+
+  decide_trade:
+    - cond:
+        if: "${currency.balance.GOLD >= 50 && !inventory.has_space}"
+        then:
+          - speak: "My bags are full, I need to sell something first."
+        if: "${inventory.total_weight > 80.0}"
+        then:
+          - speak: "I'm carrying too much to take on more."
+        if: "${currency.locked.GOLD > 0}"
+        then:
+          - log: "Has held funds - escrow transaction in progress"
 ```
 
 ### 5.5 Expression vs Template

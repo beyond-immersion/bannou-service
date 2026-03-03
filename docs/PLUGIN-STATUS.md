@@ -77,7 +77,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Website](#website-status) | L3 | 5% | 0 | Complete stub. All 14 endpoints return NotImplemented. No state stores, no logic. |
 | [Broadcast](#broadcast-status) | L3 | 0% | 0 | Pre-implementation. Deep dive L3-audited: x-lifecycle events, Redis tracking IDs, camera API endpoints, nullable configs, codec enums, worker intervals, T15 webhook exception. No schema, no code. |
 | [Agency](#agency-status) | L4 | 0% | 0 | Pre-implementation. Guardian spirit progressive agency and UX manifest engine spec. No schema, no code. |
-| [Achievement](#achievement-status) | L4 | 75% | 1 | Core CRUD + auto-unlock work. Xbox/PS stubs, rarity calc broken, dead code. |
+| [Achievement](#achievement-status) | L4 | 90% | 1 | Production-hardened. T25/T29/T31/T8/T6/T26/T30/T17 compliant, typed fields, client events, Category B deprecation. 1 T16 Pattern A topic bug. Xbox/PS stubs remain. |
 | [Analytics](#analytics-status) | L4 | 82% | 0 | Robust pipeline. Glicko-2 ratings, event ingestion, summaries. Rating decay missing. |
 | [Behavior](#behavior-status) | L4 | 80% | 0 | ABML compiler + GOAP planner work. 6 stubs: cinematics, bundles, embeddings. |
 | [Character Encounter](#character-encounter-status) | L4 | 88% | 0 | Feature-complete. Encounters, perspectives, decay, sentiment, pruning. Index growth concerns. |
@@ -1224,9 +1224,9 @@ gh issue list --search "Agency:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [ACHIEVEMENT.md](plugins/ACHIEVEMENT.md)
 
-### Production Readiness: 75%
+### Production Readiness: 90%
 
-Core achievement CRUD, progress tracking, event-driven auto-unlock from Analytics/Leaderboard, prerequisite chains, rarity calculations (background service), and Steam platform sync are all implemented and functional. However, Xbox and PlayStation sync providers are stubs, per-entity sync history returns hardcoded zeros, TotalEligibleEntities is never populated (rarity calculations depend on it), and progressive platform sync is never called. The N+1 query pattern on every analytics/leaderboard event is a scalability concern.
+Production-hardened achievement system. Core CRUD, progress tracking, event-driven auto-unlock from Analytics/Leaderboard (via typed fields — T29 compliant), prerequisite chains, rarity calculations (background service), Steam platform sync, and Category B deprecation lifecycle (T31). Typed PlatformMapping array replaces Dict<string,string> (T25). Client events for unlock and progress milestones delivered via IEntitySessionRegistry (T17). Constructor-cached state stores (T6), telemetry spans on helpers/handlers (T30), no sentinel values (T26), no filler response properties (T8). Dead code removed. Xbox/PS sync providers remain stubs. Per-entity sync history returns hardcoded zeros. TotalEligibleEntities never populated. N+1 event handler query pattern is a documented design consideration.
 
 ### Bug Count: 1
 
@@ -1234,7 +1234,7 @@ Core achievement CRUD, progress tracking, event-driven auto-unlock from Analytic
 
 | # | Bug | Description | Issue |
 |---|-----|-------------|-------|
-| 1 | **Dead code: GetAchievementProgressKey** | Method generates keys in a format not used anywhere in the codebase. Minor code bloat/confusion. | No issue |
+| 1 | **T16: `achievement.unlocked` topic uses Pattern A** | Multi-entity service should use Pattern C (`achievement.unlock.granted` or similar) to match `achievement.definition.created`, `achievement.progress.updated`. Requires cross-service coordination. | No issue |
 | 2 | *(No further bugs)* | | |
 | 3 | | | |
 

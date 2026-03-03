@@ -121,6 +121,9 @@ Character Encounter (L4)   ──provides ${encounters.*}───┤
 Character History (L4)     ──provides ${backstory.*}────┤
 Quest (L2)                 ──provides ${quest.*}─────────┤
 Combat Preferences (L4)    ──provides ${combat.*}────────┤
+Currency (L2)              ──provides ${currency.*}──────┤
+Inventory (L2)             ──provides ${inventory.*}─────┤
+Relationship (L2)          ──provides ${relationship.*}──┤
                                                          ▼
                                             Variable Provider Factory
                                             (DI: IEnumerable<IVariableProviderFactory>)
@@ -204,7 +207,7 @@ The separation is clean:
 
 ## 5. Character Data Layer
 
-Five variable provider factories supply character data to the Actor runtime via the DI-based Variable Provider Factory pattern. Each is implemented by its owning L4 service and registered with DI at startup.
+Eight variable provider factories supply character data to the Actor runtime via the DI-based Variable Provider Factory pattern. Each is implemented by its owning service and registered with DI at startup.
 
 ### 5.1 Provider Registry
 
@@ -215,6 +218,9 @@ Five variable provider factories supply character data to the Actor runtime via 
 | **BackstoryProviderFactory** | lib-character-history (L4) | `${backstory.*}` | `${backstory.origin}`, `${backstory.fear.value}` |
 | **EncountersProviderFactory** | lib-character-encounter (L4) | `${encounters.*}` | `${encounters.last_hostile_days}`, `${encounters.sentiment}` |
 | **QuestProviderFactory** | lib-quest (L2) | `${quest.*}` | `${quest.active}`, `${quest.objectives}` |
+| **CurrencyProviderFactory** | lib-currency (L2) | `${currency.*}` | `${currency.balance.GOLD}`, `${currency.has_wallet}`, `${currency.wallet_count}` |
+| **InventoryProviderFactory** | lib-inventory (L2) | `${inventory.*}` | `${inventory.has_item.IRON_SWORD}`, `${inventory.count.HEALTH_POTION}`, `${inventory.has_space}` |
+| **RelationshipProviderFactory** | lib-relationship (L2) | `${relationship.*}` | `${relationship.has.ALLY}`, `${relationship.count.FAMILY}`, `${relationship.total}` |
 
 ### 5.2 How Providers Load
 

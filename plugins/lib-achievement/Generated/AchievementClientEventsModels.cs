@@ -24,7 +24,6 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.ClientEvents;
-using BeyondImmersion.BannouService.Currency;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -42,19 +41,17 @@ using BeyondImmersion.BannouService.Currency;
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.Bannou.Currency.ClientEvents;
+namespace BeyondImmersion.Bannou.Achievement.ClientEvents;
 
 using System = global::System;
 
 /// <summary>
-/// Sent to the wallet owner when any balance mutation occurs: credits, debits,
-/// <br/>transfers, autogain, escrow operations, conversions, and wallet close transfers.
-/// <br/>A single consolidated event with a signed delta and TransactionType discriminator.
-/// <br/>The client's wallet HUD uses this for real-time balance display updates.
+/// Sent to the unlocking entity's WebSocket sessions when an achievement is unlocked.
+/// <br/>Includes display data for client UI celebration effects (toast notification, rarity badge).
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CurrencyBalanceChangedClientEvent : BaseClientEvent
+public partial class AchievementUnlockedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -63,63 +60,77 @@ public partial class CurrencyBalanceChangedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "currency.balance.changed";
+    public override string EventName { get; set; } = "achievement.unlocked";
 
     /// <summary>
-    /// The wallet whose balance changed
+    /// Game service where the achievement was earned
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("walletId")]
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid WalletId { get; set; } = default!;
+    public System.Guid GameServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Currency definition that changed
+    /// ID of the unlocked achievement
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("currencyDefinitionId")]
+    [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CurrencyDefinitionId { get; set; } = default!;
+    public string AchievementId { get; set; } = default!;
 
     /// <summary>
-    /// Human-readable currency code (e.g., "gold", "gems")
+    /// Achievement display name for toast notification
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("currencyCode")]
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string CurrencyCode { get; set; } = default!;
+    public string DisplayName { get; set; } = default!;
 
     /// <summary>
-    /// Signed balance delta (positive for gains, negative for losses)
+    /// Achievement description
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("amount")]
-    public double Amount { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Wallet balance after the change
+    /// Points earned from this achievement
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("newBalance")]
-    public double NewBalance { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("points")]
+    public int Points { get; set; } = default!;
 
     /// <summary>
-    /// Semantic classification of the balance change source
+    /// Entity's new total achievement points
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("transactionType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public TransactionType TransactionType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("totalPoints")]
+    public int TotalPoints { get; set; } = default!;
+
+    /// <summary>
+    /// Achievement icon URL for toast notification
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("iconUrl")]
+    public string? IconUrl { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this is a rare achievement (for special celebration effects)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isRare")]
+    public bool IsRare { get; set; } = default!;
+
+    /// <summary>
+    /// Percentage of entities who have earned this (0-100)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rarity")]
+    public double? Rarity { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Sent to the wallet owner when their wallet is frozen (escrow dispute,
-/// <br/>admin action, etc.). The client should display a "wallet frozen" indicator
-/// <br/>and disable balance-mutating actions.
+/// Sent to the entity's WebSocket sessions when a significant progress milestone
+/// <br/>is reached on a progressive achievement (25%, 50%, 75%).
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CurrencyWalletFrozenClientEvent : BaseClientEvent
+public partial class AchievementProgressMilestoneClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -128,51 +139,49 @@ public partial class CurrencyWalletFrozenClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "currency.wallet.frozen";
+    public override string EventName { get; set; } = "achievement.progress.milestone-reached";
 
     /// <summary>
-    /// The wallet that was frozen
+    /// Game service owning the achievement
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("walletId")]
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid WalletId { get; set; } = default!;
+    public System.Guid GameServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Human-readable reason for the freeze
+    /// ID of the achievement with progress
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Reason { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Sent to the wallet owner when their wallet is unfrozen and usable again.
-/// <br/>The client should remove the "wallet frozen" indicator and re-enable
-/// <br/>balance-mutating actions.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CurrencyWalletUnfrozenClientEvent : BaseClientEvent
-{
+    public string AchievementId { get; set; } = default!;
 
     /// <summary>
-    /// Fixed event type identifier
+    /// Achievement display name
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "currency.wallet.unfrozen";
+    public string DisplayName { get; set; } = default!;
 
     /// <summary>
-    /// The wallet that was unfrozen
+    /// Current progress value
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("walletId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid WalletId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("currentProgress")]
+    public int CurrentProgress { get; set; } = default!;
+
+    /// <summary>
+    /// Target to unlock
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetProgress")]
+    public int TargetProgress { get; set; } = default!;
+
+    /// <summary>
+    /// Completion percentage (0-100)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("percentComplete")]
+    public double PercentComplete { get; set; } = default!;
 
 }
 
