@@ -1563,8 +1563,8 @@ components:
           description: The layer kind
         storageMode:
           type: string
-          enum: [durable, cached, ephemeral]
-          default: cached
+          enum: [Durable, Cached, Ephemeral]
+          default: Cached
           description: How this layer's data should be stored
         ttlSeconds:
           type: integer

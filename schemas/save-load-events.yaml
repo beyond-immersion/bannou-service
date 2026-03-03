@@ -553,11 +553,11 @@ components:
           description: Event type identifier
         previousState:
           type: string
-          enum: [CLOSED, OPEN, HALF_OPEN]
+          enum: [Closed, Open, HalfOpen]
           description: Previous circuit breaker state before the transition
         newState:
           type: string
-          enum: [CLOSED, OPEN, HALF_OPEN]
+          enum: [Closed, Open, HalfOpen]
           description: New circuit breaker state after the transition
         failureCount:
           type: integer

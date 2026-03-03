@@ -526,12 +526,12 @@ components:
         - event: time-limited event effect (festival bonus, seasonal)
         - passive: seed-derived passive capability (used in unified queries)
       enum:
-      - buff
-      - debuff
-      - death
-      - subscription
-      - event
-      - passive
+      - Buff
+      - Debuff
+      - Death
+      - Subscription
+      - Event
+      - Passive
 
     StackBehavior:
       type: string
@@ -543,11 +543,11 @@ components:
         - replace: new application replaces existing entirely
         - ignore: cannot apply if already present
       enum:
-      - refresh_duration
-      - independent
-      - increase_intensity
-      - replace
-      - ignore
+      - RefreshDuration
+      - Independent
+      - IncreaseIntensity
+      - Replace
+      - Ignore
 
     EffectSource:
       type: string
@@ -556,8 +556,8 @@ components:
         - item_based: temporary effect stored as an item in a status container
         - seed_derived: passive capability computed from seed growth state
       enum:
-      - item_based
-      - seed_derived
+      - ItemBased
+      - SeedDerived
 
     StatusRemoveReason:
       type: string
@@ -569,11 +569,11 @@ components:
         - source_removed: source entity was deleted (cascading removal)
         - admin: removed by administrative action
       enum:
-      - expired
-      - cleansed
-      - cancelled
-      - source_removed
-      - admin
+      - Expired
+      - Cleansed
+      - Cancelled
+      - SourceRemoved
+      - Admin
 
     GrantFailureReason:
       type: string
@@ -586,12 +586,12 @@ components:
         - contract_failed: contract instance creation or lifecycle failed
         - item_creation_failed: item instance creation via lib-item failed
       enum:
-      - template_not_found
-      - entity_at_max_statuses
-      - stack_limit_reached
-      - stack_behavior_ignore
-      - contract_failed
-      - item_creation_failed
+      - TemplateNotFound
+      - EntityAtMaxStatuses
+      - StackLimitReached
+      - StackBehaviorIgnore
+      - ContractFailed
+      - ItemCreationFailed
 
     GrantResult:
       type: string
@@ -602,10 +602,10 @@ components:
         - refreshed: timer reset on existing instance
         - replaced: existing instance removed and new one created
       enum:
-      - granted
-      - stacked
-      - refreshed
-      - replaced
+      - Granted
+      - Stacked
+      - Refreshed
+      - Replaced
 
     StatusChangeType:
       type: string
@@ -617,11 +617,11 @@ components:
         - stacked: stack count increased or duration refreshed on existing status
         - cleansed: status removed by category cleanse mechanic
       enum:
-      - granted
-      - removed
-      - expired
-      - stacked
-      - cleansed
+      - Granted
+      - Removed
+      - Expired
+      - Stacked
+      - Cleansed
 
     # ==========================================================================
     # Shared Models

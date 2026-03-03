@@ -470,11 +470,11 @@ components:
     StorylineGoal:
       type: string
       enum:
-      - revenge
-      - resurrection
-      - legacy
-      - mystery
-      - peace
+      - Revenge
+      - Resurrection
+      - Legacy
+      - Mystery
+      - Peace
       description: |
         High-level story goal that drives arc selection.
         revenge: Character seeks vengeance for past wrongs
@@ -1060,7 +1060,7 @@ components:
           description: Risk description
         severity:
           type: string
-          enum: [low, medium, high]
+          enum: [Low, Medium, High]
           description: Risk severity
         mitigation:
           type: string

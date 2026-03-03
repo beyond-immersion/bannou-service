@@ -342,9 +342,9 @@ components:
       type: string
       description: Reason why a scene reference became broken
       enum:
-        - deleted
-        - access_revoked
-        - corrupted
+        - Deleted
+        - AccessRevoked
+        - Corrupted
 
     SceneReferenceBrokenEvent:
       allOf:

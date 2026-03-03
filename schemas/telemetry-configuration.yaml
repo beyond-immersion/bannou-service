@@ -26,11 +26,11 @@ x-service-configuration:
     OtlpProtocol:
       type: string
       enum:
-        - grpc
-        - http
+        - Grpc
+        - Http
       description: OTLP transport protocol
       env: TELEMETRY_OTLP_PROTOCOL
-      default: "grpc"
+      default: "Grpc"
     TracingEnabled:
       type: boolean
       description: Enable distributed tracing export

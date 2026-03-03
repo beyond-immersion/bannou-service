@@ -581,19 +581,19 @@ components:
         Scene classification for querying and validation rule lookup.
         Different types may have different validation requirements per game.
       enum:
-      - unknown
-      - region
-      - city
-      - district
-      - lot
-      - building
-      - room
-      - dungeon
-      - arena
-      - vehicle
-      - prefab
-      - cutscene
-      - other
+      - Unknown
+      - Region
+      - City
+      - District
+      - Lot
+      - Building
+      - Room
+      - Dungeon
+      - Arena
+      - Vehicle
+      - Prefab
+      - Cutscene
+      - Other
 
     NodeType:
       type: string
@@ -602,22 +602,22 @@ components:
         not how it will be used at runtime. Consumers interpret nodes according
         to their own needs via tags and annotations.
       enum:
-      - group
-      - mesh
-      - marker
-      - volume
-      - emitter
-      - reference
-      - custom
+      - Group
+      - Mesh
+      - Marker
+      - Volume
+      - Emitter
+      - Reference
+      - Custom
 
     VolumeShape:
       type: string
       description: Shape of a volume node for spatial bounds
       enum:
-      - box
-      - sphere
-      - capsule
-      - cylinder
+      - Box
+      - Sphere
+      - Capsule
+      - Cylinder
 
     # ========== SCENE COMPOSER EXTENSIONS ==========
     # Types supporting the Scene Composer SDK for attachment points,
@@ -629,28 +629,28 @@ components:
         Types of affordances describing what an object can do or how it can be interacted with.
         Used by AI navigation, character controllers, and procedural content systems.
       enum:
-      - walkable
-      - climbable
-      - sittable
-      - interactive
-      - collectible
-      - destructible
-      - container
-      - door
-      - teleport
+      - Walkable
+      - Climbable
+      - Sittable
+      - Interactive
+      - Collectible
+      - Destructible
+      - Container
+      - Door
+      - Teleport
 
     MarkerType:
       type: string
       description: Types of marker nodes for spawn points, waypoints, and other positional markers.
       enum:
-      - generic
-      - spawn_point
-      - npc_spawn
-      - waypoint
-      - camera_point
-      - light_point
-      - audio_point
-      - trigger_point
+      - Generic
+      - SpawnPoint
+      - NpcSpawn
+      - Waypoint
+      - CameraPoint
+      - LightPoint
+      - AudioPoint
+      - TriggerPoint
 
     AttachmentPoint:
       type: object
@@ -744,36 +744,36 @@ components:
       type: string
       description: Reason why a scene reference could not be resolved
       enum:
-      - not_found
-      - circular_reference
-      - depth_exceeded
-      - access_denied
+      - NotFound
+      - CircularReference
+      - DepthExceeded
+      - AccessDenied
 
     ValidationSeverity:
       type: string
       description: Severity level of a validation issue
       enum:
-      - error
-      - warning
+      - Error
+      - Warning
 
     ValidationRuleType:
       type: string
       description: Type of validation check to perform
       enum:
-      - require_tag
-      - require_node_type
-      - forbid_tag
-      - require_annotation
-      - custom_expression
+      - RequireTag
+      - RequireNodeType
+      - ForbidTag
+      - RequireAnnotation
+      - CustomExpression
 
     SearchMatchType:
       type: string
       description: Where the search match was found
       enum:
-      - name
-      - description
-      - tag
-      - node_name
+      - Name
+      - Description
+      - Tag
+      - NodeName
 
     # ========== SPATIAL TYPES ==========
 

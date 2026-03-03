@@ -750,7 +750,7 @@ components:
     PartySkillAggregation:
       type: string
       description: Method for aggregating party member skills
-      enum: [highest, average, weighted]
+      enum: [Highest, Average, Weighted]
 
     SessionGameType:
       type: string
@@ -950,7 +950,7 @@ components:
     TicketStatus:
       type: string
       description: Current status of a matchmaking ticket
-      enum: [searching, match_found, match_accepted, cancelled, expired]
+      enum: [Searching, MatchFound, MatchAccepted, Cancelled, Expired]
 
     AcceptMatchRequest:
       type: object
@@ -1104,12 +1104,12 @@ components:
       type: string
       description: Reason codes for matchmaking cancellation
       enum:
-      - cancelled_by_user
-      - timeout
-      - session_disconnected
-      - party_disbanded
-      - match_declined
-      - queue_disabled
+      - CancelledByUser
+      - Timeout
+      - SessionDisconnected
+      - PartyDisbanded
+      - MatchDeclined
+      - QueueDisabled
 
 # Service Registration Information
 x-service-registration:
