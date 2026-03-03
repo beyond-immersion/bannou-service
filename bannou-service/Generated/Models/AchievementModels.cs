@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Achievement;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Achievement;
 
@@ -118,9 +133,9 @@ public partial class CreateAchievementDefinitionRequest
     /// Unique identifier for this achievement (lowercase, no spaces)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9_-]+$")]
     public string AchievementId { get; set; } = default!;
 
@@ -128,18 +143,18 @@ public partial class CreateAchievementDefinitionRequest
     /// Human-readable name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Description of how to earn this achievement
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
     public string Description { get; set; } = default!;
 
     /// <summary>
@@ -161,7 +176,7 @@ public partial class CreateAchievementDefinitionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityTypes")]
     // TODO(system.text.json): Add string enum item converter
-    public System.Collections.Generic.ICollection<EntityType> EntityTypes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<EntityType>? EntityTypes { get; set; } = default!;
 
     /// <summary>
     /// Target value for progressive achievements
@@ -186,7 +201,7 @@ public partial class CreateAchievementDefinitionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("platforms")]
     // TODO(system.text.json): Add string enum item converter
-    public System.Collections.Generic.ICollection<Platform> Platforms { get; set; } = default!;
+    public System.Collections.Generic.ICollection<Platform>? Platforms { get; set; } = default!;
 
     /// <summary>
     /// Platform-specific achievement IDs (e.g., {"steam": "ACH_001"})
@@ -201,13 +216,54 @@ public partial class CreateAchievementDefinitionRequest
     public System.Collections.Generic.ICollection<string>? Prerequisites { get; set; } = default!;
 
     /// <summary>
+    /// Score type code for matching analytics.score.updated events (progressive achievements)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scoreType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? ScoreType { get; set; } = default!;
+
+    /// <summary>
+    /// Milestone type code for matching analytics.milestone.reached events
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? MilestoneType { get; set; } = default!;
+
+    /// <summary>
+    /// Expected milestone value for matching analytics.milestone.reached events
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneValue")]
+    public double? MilestoneValue { get; set; } = default!;
+
+    /// <summary>
+    /// Expected milestone name for matching analytics.milestone.reached events
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneName")]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
+    public string? MilestoneName { get; set; } = default!;
+
+    /// <summary>
+    /// Leaderboard ID for matching leaderboard.rank.changed events
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("leaderboardId")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? LeaderboardId { get; set; } = default!;
+
+    /// <summary>
+    /// Rank threshold for leaderboard achievements (unlock when rank &lt;= threshold)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rankThreshold")]
+    [System.ComponentModel.DataAnnotations.Range(1L, long.MaxValue)]
+    public long? RankThreshold { get; set; } = default!;
+
+    /// <summary>
     /// Whether this achievement can be earned
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = true;
 
     /// <summary>
-    /// Additional achievement-specific metadata
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -233,8 +289,9 @@ public partial class GetAchievementDefinitionRequest
     /// ID of the achievement
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string AchievementId { get; set; } = default!;
 
 }
@@ -280,6 +337,12 @@ public partial class ListAchievementDefinitionsRequest
     [System.Text.Json.Serialization.JsonPropertyName("includeHidden")]
     public bool IncludeHidden { get; set; } = false;
 
+    /// <summary>
+    /// Whether to include deprecated definitions in results
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
+    public bool IncludeDeprecated { get; set; } = false;
+
 }
 
 /// <summary>
@@ -318,8 +381,9 @@ public partial class UpdateAchievementDefinitionRequest
     /// ID of the achievement to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string AchievementId { get; set; } = default!;
 
     /// <summary>
@@ -348,13 +412,54 @@ public partial class UpdateAchievementDefinitionRequest
     [System.Text.Json.Serialization.JsonPropertyName("platformIds")]
     public System.Collections.Generic.IDictionary<string, string>? PlatformIds { get; set; } = default!;
 
+    /// <summary>
+    /// Score type code for matching analytics.score.updated events (progressive achievements)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scoreType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? ScoreType { get; set; } = default!;
+
+    /// <summary>
+    /// Milestone type code for matching analytics.milestone.reached events
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? MilestoneType { get; set; } = default!;
+
+    /// <summary>
+    /// Expected milestone value for matching analytics.milestone.reached events
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneValue")]
+    public double? MilestoneValue { get; set; } = default!;
+
+    /// <summary>
+    /// Expected milestone name for matching analytics.milestone.reached events
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneName")]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
+    public string? MilestoneName { get; set; } = default!;
+
+    /// <summary>
+    /// Leaderboard ID for matching leaderboard.rank.changed events
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("leaderboardId")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? LeaderboardId { get; set; } = default!;
+
+    /// <summary>
+    /// Rank threshold for leaderboard achievements (unlock when rank &lt;= threshold)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rankThreshold")]
+    [System.ComponentModel.DataAnnotations.Range(1L, long.MaxValue)]
+    public long? RankThreshold { get; set; } = default!;
+
 }
 
 /// <summary>
-/// Request to delete an achievement
+/// Request to deprecate an achievement definition
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DeleteAchievementDefinitionRequest
+public partial class DeprecateAchievementDefinitionRequest
 {
 
     /// <summary>
@@ -366,12 +471,20 @@ public partial class DeleteAchievementDefinitionRequest
     public System.Guid GameServiceId { get; set; } = default!;
 
     /// <summary>
-    /// ID of the achievement to delete
+    /// ID of the achievement to deprecate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string AchievementId { get; set; } = default!;
+
+    /// <summary>
+    /// Audit reason for deprecation, explaining why this achievement is being phased out
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
 
 }
 
@@ -434,7 +547,7 @@ public partial class AchievementDefinitionResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityTypes")]
     // TODO(system.text.json): Add string enum item converter
-    public System.Collections.Generic.ICollection<EntityType> EntityTypes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<EntityType>? EntityTypes { get; set; } = default!;
 
     /// <summary>
     /// Target for progressive achievements
@@ -459,7 +572,7 @@ public partial class AchievementDefinitionResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("platforms")]
     // TODO(system.text.json): Add string enum item converter
-    public System.Collections.Generic.ICollection<Platform> Platforms { get; set; } = default!;
+    public System.Collections.Generic.ICollection<Platform>? Platforms { get; set; } = default!;
 
     /// <summary>
     /// Platform-specific IDs
@@ -474,10 +587,70 @@ public partial class AchievementDefinitionResponse
     public System.Collections.Generic.ICollection<string>? Prerequisites { get; set; } = default!;
 
     /// <summary>
+    /// Score type code for matching analytics.score.updated events (progressive achievements)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scoreType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? ScoreType { get; set; } = default!;
+
+    /// <summary>
+    /// Milestone type code for matching analytics.milestone.reached events
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? MilestoneType { get; set; } = default!;
+
+    /// <summary>
+    /// Expected milestone value for matching analytics.milestone.reached events
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneValue")]
+    public double? MilestoneValue { get; set; } = default!;
+
+    /// <summary>
+    /// Expected milestone name for matching analytics.milestone.reached events
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneName")]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
+    public string? MilestoneName { get; set; } = default!;
+
+    /// <summary>
+    /// Leaderboard ID for matching leaderboard.rank.changed events
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("leaderboardId")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? LeaderboardId { get; set; } = default!;
+
+    /// <summary>
+    /// Rank threshold for leaderboard achievements (unlock when rank &lt;= threshold)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rankThreshold")]
+    [System.ComponentModel.DataAnnotations.Range(1L, long.MaxValue)]
+    public long? RankThreshold { get; set; } = default!;
+
+    /// <summary>
     /// Whether achievement is earnable
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this definition is deprecated and should not be used for new progress
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When deprecation occurred, null if not deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Audit reason for deprecation, null if not deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// How many entities have earned this
@@ -494,7 +667,7 @@ public partial class AchievementDefinitionResponse
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -606,6 +779,8 @@ public partial class AchievementProgress
     /// Achievement display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string DisplayName { get; set; } = default!;
 
     /// <summary>
@@ -659,8 +834,9 @@ public partial class UpdateAchievementProgressRequest
     /// ID of the achievement
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string AchievementId { get; set; } = default!;
 
     /// <summary>
@@ -755,8 +931,9 @@ public partial class UnlockAchievementRequest
     /// ID of the achievement to unlock
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string AchievementId { get; set; } = default!;
 
     /// <summary>
@@ -860,6 +1037,12 @@ public partial class ListUnlockedAchievementsRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public Platform? Platform { get; set; } = default!;
 
+    /// <summary>
+    /// Whether to include achievements earned from deprecated definitions
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
+    public bool IncludeDeprecated { get; set; } = false;
+
 }
 
 /// <summary>
@@ -929,6 +1112,8 @@ public partial class UnlockedAchievement
     /// Achievement description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Description { get; set; } = default!;
 
     /// <summary>

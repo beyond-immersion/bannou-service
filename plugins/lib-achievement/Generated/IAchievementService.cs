@@ -50,9 +50,9 @@ public partial interface IAchievementService : IBannouService
         Task<(StatusCodes, AchievementDefinitionResponse?)> UpdateAchievementDefinitionAsync(UpdateAchievementDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// DeleteAchievementDefinition operation
+        /// DeprecateAchievementDefinition operation
         /// </summary>
-        Task<StatusCodes> DeleteAchievementDefinitionAsync(DeleteAchievementDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, AchievementDefinitionResponse?)> DeprecateAchievementDefinitionAsync(DeprecateAchievementDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// GetAchievementProgress operation

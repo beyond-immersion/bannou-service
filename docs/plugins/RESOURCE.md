@@ -686,6 +686,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Pending Design Review
 - **2026-02-01**: [#253](https://github.com/beyond-immersion/bannou-service/issues/253) - Batch compression endpoint (`/resource/compress/execute-batch`) for bulk archival operations
+- **2026-02-03**: [#276](https://github.com/beyond-immersion/bannou-service/issues/276) - Automatic cleanup scheduler for periodic grace-period expiry processing (opt-in per resource type)
 - **2026-02-03**: [#278](https://github.com/beyond-immersion/bannou-service/issues/278) - Priority ordering for cleanup callbacks (mirroring compression's existing priority system)
 - **2026-02-08**: [#351](https://github.com/beyond-immersion/bannou-service/issues/351) - Batch reference unregistration for bulk entity deletion (affects character-history, character-encounter, character-personality, actor)
 

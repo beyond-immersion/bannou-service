@@ -12,6 +12,8 @@
 
 The Character service (L2 GameFoundation) manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with family tree data (from lib-relationship), and compression/archival for dead characters via lib-resource. Per the service hierarchy, Character cannot depend on L4 services (personality, history, encounters) -- callers needing that data should aggregate from L4 services directly.
 
+**System realm characters**: The Character service is agnostic to realm type -- it treats characters in system realms (PANTHEON, DUNGEON_CORES, SENTIENT_ARMS, NEXIUS, UNDERWORLD) identically to characters in physical realms. This is by design: system realms give non-physical entities (gods, dungeon cores, sentient weapons, guardian spirits) character records for the actor-bound entity pattern without polluting physical realm queries. System realm filtering is the Realm service's responsibility via `isSystemType`.
+
 ---
 
 ## Schema Extensions
@@ -58,6 +60,9 @@ The Character service (L2 GameFoundation) manages game world characters for Arca
 | lib-quest | Calls `ICharacterClient` to validate character existence when accepting quests |
 | lib-obligation | Calls `ICharacterClient` for character data retrieval during obligation tracking |
 | lib-license | Calls `ICharacterClient` for character owner validation on license board operations |
+| lib-character-lifecycle | Calls `ICharacterClient` to create child characters during procreation, validate character existence, and query character realm/species |
+| lib-divine | Calls `ICharacterClient` to validate character existence for follower registration |
+| lib-disposition | Calls `ICharacterClient` to validate character existence and query character location/status |
 
 ---
 
@@ -176,7 +181,7 @@ For L4 data (personality, backstory, combat preferences), callers should query C
 
 ### Compression (Centralized via Resource Service)
 
-**IMPORTANT**: Character compression is now centralized through the Resource service (L1). Character (L2) provides a compression callback endpoint; actual compression orchestration happens via `/resource/compress/execute`.
+**IMPORTANT**: Character compression is now centralized through the Resource service (L1). Character (L2) provides a compression callback endpoint; actual compression orchestration happens via `/resource/compress/execute`. Character archives are the primary input to the content flywheel -- god-actors perceive compressed archives and compose them into new storylines, quests, and NPC encounters (see VISION.md and ORCHESTRATION-PATTERNS.md).
 
 #### Compression Callback (`/character/get-compress-data`)
 

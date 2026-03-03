@@ -92,9 +92,9 @@ public static class AchievementPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/achievement/definition/delete",
+            Path = "/achievement/definition/deprecate",
             Method = ServiceEndpointMethod.POST,
-            Description = "deleteAchievementDefinition",
+            Description = "deprecateAchievementDefinition",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement

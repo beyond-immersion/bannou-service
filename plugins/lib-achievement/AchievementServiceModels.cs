@@ -50,6 +50,16 @@ internal class AchievementDefinitionData
     public Dictionary<Platform, string>? PlatformIds { get; set; }
     public List<string>? Prerequisites { get; set; }
     public bool IsActive { get; set; }
+
+    /// <summary>Whether this definition is deprecated and should not be used for new progress.</summary>
+    public bool IsDeprecated { get; set; }
+
+    /// <summary>When deprecation occurred, null if not deprecated.</summary>
+    public DateTimeOffset? DeprecatedAt { get; set; }
+
+    /// <summary>Audit reason for deprecation, null if not deprecated.</summary>
+    public string? DeprecationReason { get; set; }
+
     public long EarnedCount { get; set; }
     public long TotalEligibleEntities { get; set; }
     public double? RarityPercent { get; set; }

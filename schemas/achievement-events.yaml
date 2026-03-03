@@ -35,9 +35,6 @@ info:
     - topic: achievement.definition.updated
       event: AchievementDefinitionUpdatedEvent
       description: Published when an achievement definition is updated
-    - topic: achievement.definition.deleted
-      event: AchievementDefinitionDeletedEvent
-      description: Published when an achievement definition is deleted
     # Published when an achievement is unlocked
     - topic: achievement.unlocked
       event: AchievementUnlockedEvent
@@ -50,6 +47,40 @@ info:
     - topic: achievement.platform.synced
       event: AchievementPlatformSyncedEvent
       description: Published when achievement is synced to external platform
+
+# Lifecycle events auto-generated from this definition.
+# Achievement uses a single entity (AchievementDefinition) with topic_prefix for Pattern C namespacing.
+x-lifecycle:
+  topic_prefix: achievement
+  AchievementDefinition:
+    model:
+      gameServiceId: { type: string, format: uuid, required: true, description: "ID of the owning game service" }
+      achievementId: { type: string, primary: true, required: true, description: "Unique achievement identifier within game service" }
+      displayName: { type: string, required: true, description: "Human-readable name" }
+      description: { type: string, required: true, description: "How to earn this achievement" }
+      hiddenDescription: { type: string, nullable: true, description: "Description shown before achievement is earned (for hidden types)" }
+      achievementType: { $ref: 'achievement-api.yaml#/components/schemas/AchievementType', required: true, description: "Classification of the achievement" }
+      entityTypes: { type: array, items: { $ref: 'common-api.yaml#/components/schemas/EntityType' }, nullable: true, description: "Which entity types can earn this achievement" }
+      progressTarget: { type: integer, nullable: true, description: "Target value for progressive achievements" }
+      points: { type: integer, required: true, description: "Point value of this achievement" }
+      iconUrl: { type: string, nullable: true, description: "Achievement icon URL" }
+      platforms: { type: array, items: { $ref: 'achievement-api.yaml#/components/schemas/Platform' }, nullable: true, description: "Available platforms" }
+      platformIds: { type: object, additionalProperties: { type: string }, nullable: true, description: "Platform-specific achievement IDs" }
+      prerequisites: { type: array, items: { type: string }, nullable: true, description: "Achievement IDs that must be unlocked first" }
+      scoreType: { type: string, nullable: true, description: "Score type code for analytics event matching" }
+      milestoneType: { type: string, nullable: true, description: "Milestone type code for analytics event matching" }
+      milestoneValue: { type: number, format: double, nullable: true, description: "Expected milestone value for analytics event matching" }
+      milestoneName: { type: string, nullable: true, description: "Expected milestone name for analytics event matching" }
+      leaderboardId: { type: string, nullable: true, description: "Leaderboard ID for rank change event matching" }
+      rankThreshold: { type: integer, format: int64, nullable: true, description: "Rank threshold for leaderboard achievements" }
+      isActive: { type: boolean, required: true, description: "Whether achievement is earnable" }
+      isDeprecated: { type: boolean, required: true, description: "Whether this definition is deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When deprecation occurred" }
+      deprecationReason: { type: string, nullable: true, description: "Audit reason for deprecation" }
+      earnedCount: { type: integer, format: int64, required: true, description: "How many entities have earned this" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the achievement was created" }
+      metadata: { type: object, additionalProperties: true, nullable: true, description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention." }
+    sensitive: []
 
 paths: {}  # Events don't have HTTP paths
 
@@ -67,9 +98,12 @@ components:
         - timestamp
         - gameServiceId
         - achievementId
+        - displayName
         - entityId
         - entityType
         - points
+        - totalPoints
+        - isRare
       properties:
         eventId:
           type: string
@@ -91,6 +125,7 @@ components:
           description: Achievement display name
         description:
           type: string
+          nullable: true
           description: Achievement description
         entityId:
           type: string
@@ -127,11 +162,13 @@ components:
         - timestamp
         - gameServiceId
         - achievementId
+        - displayName
         - entityId
         - entityType
         - previousProgress
         - newProgress
         - targetProgress
+        - percentComplete
       properties:
         eventId:
           type: string
@@ -223,128 +260,3 @@ components:
           nullable: true
           description: Error message if sync failed
 
-    # ============================================
-    # Definition Lifecycle Events
-    # ============================================
-    AchievementDefinitionCreatedEvent:
-      type: object
-      additionalProperties: false
-      description: Published when a new achievement definition is created
-      required:
-        - eventId
-        - timestamp
-        - gameServiceId
-        - achievementId
-        - displayName
-        - achievementType
-        - points
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the definition was created
-        gameServiceId:
-          type: string
-          format: uuid
-          description: ID of the game service this achievement belongs to
-        achievementId:
-          type: string
-          description: Unique identifier for the achievement within the game service
-        displayName:
-          type: string
-          description: Human-readable display name for the achievement
-        description:
-          type: string
-          nullable: true
-          description: Detailed description of how to earn the achievement
-        achievementType:
-          $ref: 'achievement-api.yaml#/components/schemas/AchievementType'
-          description: Type of achievement
-        points:
-          type: integer
-          description: Points awarded for unlocking this achievement
-        progressTarget:
-          type: integer
-          nullable: true
-          description: Target value for progressive achievements
-        platforms:
-          type: array
-          items:
-            $ref: 'achievement-api.yaml#/components/schemas/Platform'
-          description: Platforms where this achievement is available
-
-    AchievementDefinitionUpdatedEvent:
-      type: object
-      additionalProperties: false
-      description: Published when an achievement definition is updated
-      required:
-        - eventId
-        - timestamp
-        - gameServiceId
-        - achievementId
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the definition was updated
-        gameServiceId:
-          type: string
-          format: uuid
-          description: ID of the game service
-        achievementId:
-          type: string
-          description: Unique identifier for the achievement
-        displayName:
-          type: string
-          nullable: true
-          description: Updated display name (if changed)
-        description:
-          type: string
-          nullable: true
-          description: Updated description (if changed)
-        points:
-          type: integer
-          nullable: true
-          description: Updated points value (if changed)
-        progressTarget:
-          type: integer
-          nullable: true
-          description: Updated progress target (if changed)
-
-    AchievementDefinitionDeletedEvent:
-      type: object
-      additionalProperties: false
-      description: Published when an achievement definition is deleted
-      required:
-        - eventId
-        - timestamp
-        - gameServiceId
-        - achievementId
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the definition was deleted
-        gameServiceId:
-          type: string
-          format: uuid
-          description: ID of the game service
-        achievementId:
-          type: string
-          description: ID of the deleted achievement
-        displayName:
-          type: string
-          nullable: true
-          description: Display name of the deleted achievement (for logging/audit)

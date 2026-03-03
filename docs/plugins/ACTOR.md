@@ -665,8 +665,7 @@ Actor State Model
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/191 -->
 2. **Memory decay**: Gradual relevance decay for memories over time (not just TTL expiry).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/387 -->
-3. **Cross-node encounters**: Encounter coordination across multiple pool nodes for large-scale events.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/390 -->
+3. ~~**Cross-node encounters**~~: **RESOLVED** (2026-03-03) — Existing architecture handles cross-node encounters correctly via mesh forwarding + RabbitMQ perception delivery. Event Brain uses `emit_perception:` → RabbitMQ character-specific topics → character actors on any node receive perceptions via dynamic subscriptions. All encounter endpoints forward to remote nodes via `FindActorAsync()` + `IMeshInvocationClient`. Issue [#390](https://github.com/beyond-immersion/bannou-service/issues/390) closed.
 4. **Behavior versioning**: Deploy behavior updates with version tracking, enabling rollback without service restart.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/391 -->
 5. **Actor migration**: Move running actors between pool nodes for load balancing without state loss.
@@ -680,6 +679,24 @@ Actor State Model
 9. **ABML execution pause/resume for drive sessions**: The existing `paused` `ActorStatus` value (currently unused) would be activated by Director's drive mechanism. When a developer binds to an actor, the behavior loop pauses at the current checkpoint; the developer issues commands through the same `IActionHandler` pipeline that ABML bytecode uses. On release, the behavior loop resumes from `on_tick` with all developer-made state changes (feelings, goals, memories) preserved. Requires new endpoints or command types for pause/resume control. See [DIRECTOR.md](DIRECTOR.md) Tier 3.
 
 10. **External action handler pipeline access**: Expose the actor's `IActionHandler` pipeline to external callers (not just ABML bytecode execution) for developer-driven command execution during drive sessions. The developer issues the same action YAML syntax that ABML documents use (`call:`, `load_snapshot:`, `watch:`, `emit_perception:`, etc.) routed through the same handlers, producing identical results. This makes drive sessions simultaneously a production orchestration tool and an integration test for the entire actor action system. See [DIRECTOR.md](DIRECTOR.md) Tier 3.
+
+11. **`emit_impulse` ABML action**: New ABML action handler in lib-actor for immediate behavior-to-game-engine signaling. Enables actors to send impulse commands (animations, VFX, audio cues) to game engines without waiting for the next state publish cycle.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/408 -->
+
+12. **Game Engine WebSocket transport via Connect Internal mode**: Changes how Actor communicates state updates to game engines, using Connect's internal WebSocket mode instead of direct HTTP polling for real-time actor state delivery.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/409 -->
+
+13. **ABML economic action handlers**: New action handlers enabling NPCs to buy, sell, and trade via ABML behavior expressions. Composes Currency, Item, Inventory, and Escrow APIs into ABML-accessible actions for NPC economic decision-making.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/428 -->
+
+14. **Bytecode version contract**: Cross-cutting risk management for compiler/interpreter version mismatch. Ensures compiled ABML bytecode produced by lib-behavior is compatible with the `BehaviorModelInterpreter` in lib-actor, especially in distributed deployments where versions may differ.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/158 -->
+
+15. **GOAP WorldState extension**: Enhance `BuildWorldStateFromActorState()` to incorporate variable provider data into GOAP world state, enabling richer planning that considers personality, location, obligations, and other provider-sourced context.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/148 -->
+
+16. **Event Brain choreography typed models**: Wire up existing typed choreography schema models to ABML handler, replacing generic object data with the generated `ChoreographyPosition`/`ChoreographyEvent` types for type-safe choreography execution.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/115 -->
 
 ---
 

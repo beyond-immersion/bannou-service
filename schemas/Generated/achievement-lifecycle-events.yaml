@@ -1,0 +1,251 @@
+openapi: 3.0.4
+info:
+  title: Achievement Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for achievement service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: achievement-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    AchievementDefinitionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to achievement.definition.created when a achievementdefinition is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameServiceId
+      - achievementId
+      - displayName
+      - description
+      - achievementType
+      - points
+      - isActive
+      - isDeprecated
+      - earnedCount
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: achievement.definition.created
+          description: 'Event type identifier: achievement.definition.created'
+        gameServiceId: &id001
+          type: string
+          format: uuid
+          description: "ID of the owning game service"
+        achievementId: &id002
+          type: string
+          description: "Unique achievement identifier within game service"
+        displayName: &id003
+          type: string
+          description: "Human-readable name"
+        description: &id004
+          type: string
+          description: "How to earn this achievement"
+        hiddenDescription: &id005
+          type: string
+          nullable: true
+          description: "Description shown before achievement is earned (for hidden types)"
+        achievementType: &id006
+          $ref: ../achievement-api.yaml#/components/schemas/AchievementType
+          description: "Classification of the achievement"
+        entityTypes: &id007
+          type: array
+          items: {$ref: '../common-api.yaml#/components/schemas/EntityType'}
+          nullable: true
+          description: "Which entity types can earn this achievement"
+        progressTarget: &id008
+          type: integer
+          nullable: true
+          description: "Target value for progressive achievements"
+        points: &id009
+          type: integer
+          description: "Point value of this achievement"
+        iconUrl: &id010
+          type: string
+          nullable: true
+          description: "Achievement icon URL"
+        platforms: &id011
+          type: array
+          items: {$ref: '../achievement-api.yaml#/components/schemas/Platform'}
+          nullable: true
+          description: "Available platforms"
+        platformIds: &id012
+          type: object
+          additionalProperties: {type: string}
+          nullable: true
+          description: "Platform-specific achievement IDs"
+        prerequisites: &id013
+          type: array
+          items: {type: string}
+          nullable: true
+          description: "Achievement IDs that must be unlocked first"
+        scoreType: &id014
+          type: string
+          nullable: true
+          description: "Score type code for analytics event matching"
+        milestoneType: &id015
+          type: string
+          nullable: true
+          description: "Milestone type code for analytics event matching"
+        milestoneValue: &id016
+          type: number
+          format: double
+          nullable: true
+          description: "Expected milestone value for analytics event matching"
+        milestoneName: &id017
+          type: string
+          nullable: true
+          description: "Expected milestone name for analytics event matching"
+        leaderboardId: &id018
+          type: string
+          nullable: true
+          description: "Leaderboard ID for rank change event matching"
+        rankThreshold: &id019
+          type: integer
+          format: int64
+          nullable: true
+          description: "Rank threshold for leaderboard achievements"
+        isActive: &id020
+          type: boolean
+          description: "Whether achievement is earnable"
+        isDeprecated: &id021
+          type: boolean
+          description: "Whether this definition is deprecated"
+        deprecatedAt: &id022
+          type: string
+          format: date-time
+          nullable: true
+          description: "When deprecation occurred"
+        deprecationReason: &id023
+          type: string
+          nullable: true
+          description: "Audit reason for deprecation"
+        earnedCount: &id024
+          type: integer
+          format: int64
+          description: "How many entities have earned this"
+        createdAt: &id025
+          type: string
+          format: date-time
+          description: "When the achievement was created"
+        metadata: &id026
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
+    AchievementDefinitionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to achievement.definition.updated when a achievementdefinition is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameServiceId
+      - achievementId
+      - displayName
+      - description
+      - achievementType
+      - points
+      - isActive
+      - isDeprecated
+      - earnedCount
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: achievement.definition.updated
+          description: 'Event type identifier: achievement.definition.updated'
+        gameServiceId: *id001
+        achievementId: *id002
+        displayName: *id003
+        description: *id004
+        hiddenDescription: *id005
+        achievementType: *id006
+        entityTypes: *id007
+        progressTarget: *id008
+        points: *id009
+        iconUrl: *id010
+        platforms: *id011
+        platformIds: *id012
+        prerequisites: *id013
+        scoreType: *id014
+        milestoneType: *id015
+        milestoneValue: *id016
+        milestoneName: *id017
+        leaderboardId: *id018
+        rankThreshold: *id019
+        isActive: *id020
+        isDeprecated: *id021
+        deprecatedAt: *id022
+        deprecationReason: *id023
+        earnedCount: *id024
+        createdAt: *id025
+        metadata: *id026
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    AchievementDefinitionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to achievement.definition.deleted when a achievementdefinition is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameServiceId
+      - achievementId
+      - displayName
+      - description
+      - achievementType
+      - points
+      - isActive
+      - isDeprecated
+      - earnedCount
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: achievement.definition.deleted
+          description: 'Event type identifier: achievement.definition.deleted'
+        gameServiceId: *id001
+        achievementId: *id002
+        displayName: *id003
+        description: *id004
+        hiddenDescription: *id005
+        achievementType: *id006
+        entityTypes: *id007
+        progressTarget: *id008
+        points: *id009
+        iconUrl: *id010
+        platforms: *id011
+        platformIds: *id012
+        prerequisites: *id013
+        scoreType: *id014
+        milestoneType: *id015
+        milestoneValue: *id016
+        milestoneName: *id017
+        leaderboardId: *id018
+        rankThreshold: *id019
+        isActive: *id020
+        isDeprecated: *id021
+        deprecatedAt: *id022
+        deprecationReason: *id023
+        earnedCount: *id024
+        createdAt: *id025
+        metadata: *id026
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

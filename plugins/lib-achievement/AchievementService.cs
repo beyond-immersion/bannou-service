@@ -232,6 +232,12 @@ public partial class AchievementService : IAchievementService
                 continue;
             }
 
+            // IMPLEMENTATION TENETS: Filter deprecated by default
+            if (!body.IncludeDeprecated && definition.IsDeprecated)
+            {
+                continue;
+            }
+
             achievements.Add(MapToResponse(definition, definition.EarnedCount));
         }
 
@@ -309,32 +315,50 @@ public partial class AchievementService : IAchievementService
     }
 
     /// <summary>
-    /// Implementation of DeleteAchievementDefinition operation.
-    /// Deletes an achievement definition.
+    /// Implementation of DeprecateAchievementDefinition operation.
+    /// Marks an achievement definition as deprecated. Idempotent.
     /// </summary>
-    public async Task<StatusCodes> DeleteAchievementDefinitionAsync(DeleteAchievementDefinitionRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, AchievementDefinitionResponse?)> DeprecateAchievementDefinitionAsync(DeprecateAchievementDefinitionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Deleting achievement {AchievementId}", body.AchievementId);
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.DeprecateAchievementDefinitionAsync");
+
+        _logger.LogDebug("Deprecating achievement {AchievementId}", body.AchievementId);
 
         var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
         var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
 
-        var definition = await definitionStore.GetAsync(key, cancellationToken);
+        var (definition, etag) = await definitionStore.GetWithETagAsync(key, cancellationToken);
         if (definition == null)
         {
-            return StatusCodes.NotFound;
+            return (StatusCodes.NotFound, null);
         }
 
-        await definitionStore.DeleteAsync(key, cancellationToken);
-        await definitionStore.RemoveFromSetAsync(
-            GetDefinitionIndexKey(body.GameServiceId),
-            body.AchievementId,
-            cancellationToken);
+        // Idempotent: already deprecated returns OK
+        if (definition.IsDeprecated)
+        {
+            return (StatusCodes.OK, MapToResponse(definition, definition.EarnedCount));
+        }
 
-        // Publish definition deleted event
-        await PublishDefinitionDeletedEventAsync(definition, cancellationToken);
+        var changedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" };
 
-        return StatusCodes.OK;
+        definition.IsDeprecated = true;
+        definition.DeprecatedAt = DateTimeOffset.UtcNow;
+        definition.DeprecationReason = body.DeprecationReason;
+
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
+        var newEtag = await definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for achievement definition {AchievementId}", body.AchievementId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        await PublishDefinitionUpdatedEventAsync(definition, changedFields, cancellationToken);
+
+        _logger.LogInformation("Achievement definition {AchievementId} deprecated", body.AchievementId);
+
+        return (StatusCodes.OK, MapToResponse(definition, definition.EarnedCount));
     }
 
     /// <summary>
@@ -425,6 +449,13 @@ public partial class AchievementService : IAchievementService
         if (definition == null)
         {
             return (StatusCodes.NotFound, null);
+        }
+
+        // Deprecated definitions cannot receive new progress
+        if (definition.IsDeprecated)
+        {
+            _logger.LogWarning("Cannot update progress on deprecated achievement {AchievementId}", body.AchievementId);
+            return (StatusCodes.BadRequest, null);
         }
 
         // Validate entity type
@@ -565,6 +596,13 @@ public partial class AchievementService : IAchievementService
             return (StatusCodes.NotFound, null);
         }
 
+        // Deprecated definitions cannot receive new progress
+        if (definition.IsDeprecated)
+        {
+            _logger.LogWarning("Cannot unlock deprecated achievement {AchievementId}", body.AchievementId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         // Validate entity type
         if (definition.EntityTypes != null && !definition.EntityTypes.Contains(body.EntityType))
         {
@@ -700,6 +738,12 @@ public partial class AchievementService : IAchievementService
             var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
             if (definition == null)
+            {
+                continue;
+            }
+
+            // IMPLEMENTATION TENETS: Filter deprecated definitions by default
+            if (!body.IncludeDeprecated && definition.IsDeprecated)
             {
                 continue;
             }
@@ -1348,6 +1392,9 @@ public partial class AchievementService : IAchievementService
                 kvp => kvp.Value),
             Prerequisites = definition.Prerequisites,
             IsActive = definition.IsActive,
+            IsDeprecated = definition.IsDeprecated,
+            DeprecatedAt = definition.DeprecatedAt,
+            DeprecationReason = definition.DeprecationReason,
             EarnedCount = earnedCount,
             CreatedAt = definition.CreatedAt,
             Metadata = definition.Metadata
@@ -1374,6 +1421,7 @@ public partial class AchievementService : IAchievementService
 
     /// <summary>
     /// Publishes an event when a new achievement definition is created.
+    /// Populates all model fields per lifecycle event contract.
     /// </summary>
     private async Task PublishDefinitionCreatedEventAsync(AchievementDefinitionData definition, CancellationToken cancellationToken)
     {
@@ -1384,14 +1432,27 @@ public partial class AchievementService : IAchievementService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
+                EventName = "achievement.definition.created",
                 GameServiceId = definition.GameServiceId,
                 AchievementId = definition.AchievementId,
                 DisplayName = definition.DisplayName,
                 Description = definition.Description,
+                HiddenDescription = definition.HiddenDescription,
                 AchievementType = definition.AchievementType,
-                Points = definition.Points,
+                EntityTypes = definition.EntityTypes?.ToList(),
                 ProgressTarget = definition.ProgressTarget,
-                Platforms = definition.Platforms?.ToList() ?? new List<Platform>()
+                Points = definition.Points,
+                IconUrl = definition.IconUrl,
+                Platforms = definition.Platforms?.ToList(),
+                PlatformIds = definition.PlatformIds?.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value),
+                Prerequisites = definition.Prerequisites?.ToList(),
+                IsActive = definition.IsActive,
+                IsDeprecated = definition.IsDeprecated,
+                DeprecatedAt = definition.DeprecatedAt,
+                DeprecationReason = definition.DeprecationReason,
+                EarnedCount = definition.EarnedCount,
+                CreatedAt = definition.CreatedAt,
+                Metadata = definition.Metadata
             };
             await _messageBus.TryPublishAsync("achievement.definition.created", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published achievement.definition.created event for {AchievementId}", definition.AchievementId);
@@ -1404,6 +1465,7 @@ public partial class AchievementService : IAchievementService
 
     /// <summary>
     /// Publishes an event when an achievement definition is updated.
+    /// Populates all model fields and changedFields per lifecycle event contract.
     /// </summary>
     private async Task PublishDefinitionUpdatedEventAsync(AchievementDefinitionData definition, List<string> changedFields, CancellationToken cancellationToken)
     {
@@ -1414,12 +1476,28 @@ public partial class AchievementService : IAchievementService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
+                EventName = "achievement.definition.updated",
                 GameServiceId = definition.GameServiceId,
                 AchievementId = definition.AchievementId,
                 DisplayName = definition.DisplayName,
                 Description = definition.Description,
+                HiddenDescription = definition.HiddenDescription,
+                AchievementType = definition.AchievementType,
+                EntityTypes = definition.EntityTypes?.ToList(),
+                ProgressTarget = definition.ProgressTarget,
                 Points = definition.Points,
-                ProgressTarget = definition.ProgressTarget
+                IconUrl = definition.IconUrl,
+                Platforms = definition.Platforms?.ToList(),
+                PlatformIds = definition.PlatformIds?.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value),
+                Prerequisites = definition.Prerequisites?.ToList(),
+                IsActive = definition.IsActive,
+                IsDeprecated = definition.IsDeprecated,
+                DeprecatedAt = definition.DeprecatedAt,
+                DeprecationReason = definition.DeprecationReason,
+                EarnedCount = definition.EarnedCount,
+                CreatedAt = definition.CreatedAt,
+                Metadata = definition.Metadata,
+                ChangedFields = changedFields
             };
             await _messageBus.TryPublishAsync("achievement.definition.updated", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published achievement.definition.updated event for {AchievementId} (changed: {ChangedFields})",
@@ -1428,31 +1506,6 @@ public partial class AchievementService : IAchievementService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to publish achievement.definition.updated event for {AchievementId}", definition.AchievementId);
-        }
-    }
-
-    /// <summary>
-    /// Publishes an event when an achievement definition is deleted.
-    /// </summary>
-    private async Task PublishDefinitionDeletedEventAsync(AchievementDefinitionData definition, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.PublishDefinitionDeletedEventAsync");
-        try
-        {
-            var eventModel = new AchievementDefinitionDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                GameServiceId = definition.GameServiceId,
-                AchievementId = definition.AchievementId,
-                DisplayName = definition.DisplayName
-            };
-            await _messageBus.TryPublishAsync("achievement.definition.deleted", eventModel, cancellationToken: cancellationToken);
-            _logger.LogDebug("Published achievement.definition.deleted event for {AchievementId}", definition.AchievementId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish achievement.definition.deleted event for {AchievementId}", definition.AchievementId);
         }
     }
 

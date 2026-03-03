@@ -256,7 +256,7 @@ Standard CRUD on entry templates with code-uniqueness enforcement per collection
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **Polymorphic ownership with opaque strings**: `ownerType` is an opaque string, not an enum, following the Seed pattern per SCHEMA-RULES.md guidance. Valid owner types that map to `ContainerOwnerType`: `character`, `account`, `location`, `guild`. Unknown types are rejected at the `MapToContainerOwnerType` check, returning `BadRequest`.
+1. **Polymorphic ownership via EntityType enum**: `ownerType` uses the shared `EntityType` enum (Category A per IMPLEMENTATION TENETS T14 decision tree — all valid values are first-class Bannou entities). Valid owner types that map to `ContainerOwnerType`: `character`, `account`, `location`, `guild`. Unknown types are rejected at the `MapToContainerOwnerType` check, returning `BadRequest`.
 
 2. **Dual-key storage pattern**: Templates, collections, and area configs are saved under both a primary key (by ID) and a lookup key (by code/owner). Both keys must be updated on mutations and deleted on removal. This enables O(1) lookups by both ID and business key.
 

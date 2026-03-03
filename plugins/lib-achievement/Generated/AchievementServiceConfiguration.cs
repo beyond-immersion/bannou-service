@@ -103,54 +103,63 @@ public class AchievementServiceConfiguration : BaseServiceConfiguration
     /// Number of retry attempts for failed platform syncs
     /// Environment variable: ACHIEVEMENT_SYNC_RETRY_ATTEMPTS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int SyncRetryAttempts { get; set; } = 3;
 
     /// <summary>
     /// Delay between sync retry attempts in seconds
     /// Environment variable: ACHIEVEMENT_SYNC_RETRY_DELAY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int SyncRetryDelaySeconds { get; set; } = 60;
 
     /// <summary>
     /// Expiry time in seconds for distributed locks on achievement progress operations
     /// Environment variable: ACHIEVEMENT_LOCK_EXPIRY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int LockExpirySeconds { get; set; } = 30;
 
     /// <summary>
     /// Maximum retry attempts for ETag conflicts when incrementing earned count
     /// Environment variable: ACHIEVEMENT_EARNED_COUNT_RETRY_ATTEMPTS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int EarnedCountRetryAttempts { get; set; } = 3;
 
     /// <summary>
     /// TTL in seconds for progress data in Redis (0 = no expiry, progress persists indefinitely)
     /// Environment variable: ACHIEVEMENT_PROGRESS_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int ProgressTtlSeconds { get; set; } = 0;
 
     /// <summary>
     /// Delay in seconds before first rarity calculation (allows services to start)
     /// Environment variable: ACHIEVEMENT_RARITY_CALCULATION_STARTUP_DELAY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int RarityCalculationStartupDelaySeconds { get; set; } = 30;
 
     /// <summary>
     /// How often to recalculate achievement rarity percentages
     /// Environment variable: ACHIEVEMENT_RARITY_CALCULATION_INTERVAL_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int RarityCalculationIntervalMinutes { get; set; } = 60;
 
     /// <summary>
     /// Threshold percentage below which an achievement is considered rare
     /// Environment variable: ACHIEVEMENT_RARE_THRESHOLD_PERCENT
     /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 100.0)]
     public double RareThresholdPercent { get; set; } = 5.0;
 
     /// <summary>
     /// Minimum earned count for an achievement to be considered common (below this is rare regardless of percentage)
     /// Environment variable: ACHIEVEMENT_RARITY_THRESHOLD_EARNED_COUNT
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int RarityThresholdEarnedCount { get; set; } = 100;
 
 }
