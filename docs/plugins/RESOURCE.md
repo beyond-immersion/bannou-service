@@ -478,23 +478,17 @@ None currently.
 
 ## Potential Extensions
 
-1. **Per-resource-type cleanup policies**: Currently `DefaultCleanupPolicy` applies globally; could add per-resource-type configuration via `DefineCleanupRequest`.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-03:https://github.com/beyond-immersion/bannou-service/issues/275 -->
-
-2. **Automatic cleanup scheduler**: Background service that periodically scans for resources past grace period and triggers cleanup (opt-in per resource type).
+1. **Automatic cleanup scheduler**: Background service that periodically scans for resources past grace period and triggers cleanup (opt-in per resource type).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-03:https://github.com/beyond-immersion/bannou-service/issues/276 -->
 
-3. **Reference type metadata**: Allow consumers to attach metadata to references (e.g., reference strength, priority for cleanup ordering).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-03:https://github.com/beyond-immersion/bannou-service/issues/277 -->
-
-4. **Cleanup callback ordering**: Currently all callbacks execute in parallel; could add priority/ordering for sequential cleanup dependencies.
+2. **Cleanup callback ordering**: Currently all callbacks execute in parallel; could add priority/ordering for sequential cleanup dependencies (mirroring compression's existing priority system).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-03:https://github.com/beyond-immersion/bannou-service/issues/278 -->
 
-5. **Reference lifecycle hooks**: Pre-register/post-unregister hooks for validation or side effects.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/474 -->
-
-6. **Batch reference unregistration**: When higher-layer services bulk-delete entities (e.g., character-history deleting all participations), each entity makes an individual `UnregisterReferenceAsync` API call. A batch unregister endpoint would reduce O(N) API calls to a single operation.
+3. **Batch reference unregistration**: When higher-layer services bulk-delete entities (e.g., character-history deleting all participations), each entity makes an individual `UnregisterReferenceAsync` API call. A batch unregister endpoint would reduce O(N) API calls to a single operation.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/351 -->
+
+4. **Batch compression endpoint**: Add `/resource/compress/execute-batch` to compress multiple resources in a single request, improving efficiency for bulk archival operations (e.g., purging many dead characters). Design questions include partial success semantics, lock acquisition strategy, and configurable parallelism.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/253 -->
 
 ---
 
@@ -691,6 +685,8 @@ None currently. Previous design gaps (callback listing/removal, dry-run preview)
 This section tracks active development work on items from the quirks/bugs lists above.
 
 ### Pending Design Review
+- **2026-02-01**: [#253](https://github.com/beyond-immersion/bannou-service/issues/253) - Batch compression endpoint (`/resource/compress/execute-batch`) for bulk archival operations
+- **2026-02-03**: [#278](https://github.com/beyond-immersion/bannou-service/issues/278) - Priority ordering for cleanup callbacks (mirroring compression's existing priority system)
 - **2026-02-08**: [#351](https://github.com/beyond-immersion/bannou-service/issues/351) - Batch reference unregistration for bulk entity deletion (affects character-history, character-encounter, character-personality, actor)
 
 ### Active
@@ -769,6 +765,8 @@ The lib-resource service is feature-complete for the current integration require
 ### Pending Integrations
 
 1. **lib-scene**: Not yet integrated with lib-resource. When scene references to characters are added, will need `x-references` schema extension, cleanup endpoint, and optionally compression callbacks.
+
+2. **lib-seed**: Seed archival currently retains growth data, capability cache, and bond data indefinitely ([#366](https://github.com/beyond-immersion/bannou-service/issues/366)). Phase 2 of the seed cleanup strategy calls for lib-resource compression integration to archive growth/bond data before deletion, requiring `x-compression-callback` schema extension and compress/decompress endpoints in lib-seed.
 
 ---
 

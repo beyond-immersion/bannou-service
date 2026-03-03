@@ -299,10 +299,8 @@ account.deleted event ──► SessionService.InvalidateAllSessionsForAccountAs
 
 ## Stubs & Unimplemented Features
 
-### Audit Event Consumers
-<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/142 -->
-
-Auth publishes 10 audit event types (login successful/failed, registration, OAuth, Steam, password reset, MFA enabled/disabled/verified/failed) but no service subscribes to them. Note: per-email rate limiting is already implemented directly in Auth via Redis counters (`MaxLoginAttempts`/`LoginLockoutMinutes`), so this is NOT about basic brute force protection (that exists). The remaining gap is Analytics (L4) consuming these events for IP-level cross-account correlation, anomaly detection, and admin alerting.
+No Auth-specific stubs remain. Auth publishes 12 well-typed audit events (login success/fail, registration, OAuth x3, Steam, password reset, MFA enabled/disabled/verified/failed) and per-email rate limiting is production-ready via Redis counters. The remaining consumer gap — IP-level cross-account correlation, anomaly detection, and admin alerting — is an **Analytics (L4) responsibility**, tracked externally:
+<!-- AUDIT:EXTERNAL:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/142 -->
 
 ## Potential Extensions
 
@@ -346,6 +344,8 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Evaluated & Closed
 
+- **Email propagation to sessions** (#444, closed 2026-03-03): Already implemented during Auth hardening pass. `HandleAccountUpdatedAsync` checks for "email" in `changedFields` and calls `PropagateEmailChangeAsync` to update all active sessions. Deep dive already documented this correctly. Closed as already implemented.
+- **Auth client events** (#492, closed 2026-02-27): All 7 multi-device security client events implemented via `IEntitySessionRegistry`. See Client Events section above.
 - **Token revocation list evaluation** (#143, closed 2026-02-08): The edge revocation system (`IEdgeRevocationProvider` with CloudFlare KV and OpenResty providers) was fully implemented since this ticket was filed. All design questions answered by the implementation. Ticket closed as superseded.
 - **OAuth token persistence** (#150, closed 2026-02-08): Evaluated across all 45 services - no service requires ongoing OAuth provider API access. Discord Rich Presence is client-side. Storing OAuth refresh tokens adds attack surface for zero benefit. Closed as YAGNI.
 - **Fastly/Lambda@Edge providers** (#160, closed 2026-02-08): Premature optimization with no deployment target. `IEdgeRevocationProvider` is already extensible. Closed - revisit when production edge infrastructure is chosen.

@@ -241,7 +241,9 @@ None. The service is feature-complete for its scope.
 
 ## Potential Extensions
 
-None identified. Previous extensions were either implemented (Permission TTL → config properties) or rejected as unnecessary (fine-grained caching, permission delegation, audit trail).
+### Analytics Observability Events (GH#461)
+
+Permission currently publishes no topic-based events via `IMessageBus` — capability updates go exclusively to session-specific channels via `IClientEventPublisher`. GH#461 proposes adding two observability-only events (`permission.recompiled`, `permission.service_registered`) for Analytics aggregation. These would be fire-and-forget with no functional dependency. High-volume consideration: a single service registration recompiles all active sessions, so at 10K+ concurrent sessions, `permission.recompiled` could produce 10K+ events per registration. Sampling or batched aggregate events may be needed. Low priority — no functional gap exists.
 
 ---
 
@@ -275,7 +277,7 @@ None active. Previous considerations were either fixed (parallel recompilation v
 
 ### Completed
 - **2026-02-11**: Fixed hardcoded states array in `GetRegisteredServicesAsync`. Now dynamically reads per-service states from Redis, stored during registration.
-- **2026-02-11**: Issue #389. Replaced hardcoded `ROLE_ORDER` with `RoleHierarchy` config property. T21 compliance fix.
+- **2026-02-11**: Replaced hardcoded `ROLE_ORDER` with `RoleHierarchy` config property. T21 compliance fix.
 - **2026-02-22**: Production hardening audit. Schema, code, and documentation sweep:
   - **Schema (NRT)**: Fixed 14 NRT violations across response schemas — added `required` arrays and `nullable: true` where needed.
   - **Schema (T8)**: Removed filler properties from responses — `ServiceId` echo from RegistrationResponse, `SessionId` echoes from SessionUpdateResponse/CapabilityResponse/SessionInfo/ValidationResponse, `Message` from SessionUpdateResponse.

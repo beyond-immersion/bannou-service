@@ -21,6 +21,8 @@ The Account plugin is an internal-only CRUD service (L1 AppFoundation) for manag
 
 The Account plugin does **not** call any other service via lib-mesh clients. It is a leaf node that is called by others.
 
+**Note: Account Privacy Exception (per FOUNDATION TENETS T28).** Account resources are explicitly exempt from lib-resource reference registration. We do not track or compile historical reference data about accounts beyond what Analytics stores for its specific purpose. This is a deliberate privacy decision -- the system should not maintain a centralized record of everything that references an account. Consumers that store data keyed by accountId (Subscription, Achievement, etc.) manage their own cleanup independently rather than registering with lib-resource.
+
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -136,7 +138,7 @@ account-{id} ──────────────────────�
   ├─ IsVerified                                         │ different
   ├─ Roles[]                                            │ key prefixes
   ├─ MfaEnabled, MfaSecret?, MfaRecoveryCodes?           │
-  ├─ Metadata{}                                         │
+  ├─ Metadata{}  (client-only opaque data per T29)       │
   └─ CreatedAtUnix / UpdatedAtUnix / DeletedAtUnix      │
                                                         │
 auth-methods-{id}: [ AuthMethodInfo, ... ] ─────────────┤
@@ -184,6 +186,10 @@ On Delete: email-index removed (if exists),             │
 7. **Auth method removal prevents account orphaning**: The `RemoveAuthMethodAsync` endpoint includes a safety check (AccountService.cs:1068-1078) that rejects removal of the last auth method if the account has no password. This prevents accounts from becoming completely inaccessible. Returns `BadRequest` if removal would leave no authentication mechanism.
 
 8. **Provider index ownership validation with stale detection**: When adding an auth method, `AddAuthMethodAsync` checks if another account already owns the provider:externalId combination. If the owning account is soft-deleted (stale index from incomplete cleanup), the orphaned index is overwritten with a log message. Only returns `Conflict` if the owning account is still active.
+
+9. **Soft-delete is NOT deprecation**: Account deletion uses a soft-delete pattern (`DeletedAt` timestamp) for practical data retention and audit purposes. This is distinct from the deprecation lifecycle defined in IMPLEMENTATION TENETS (T31). Accounts are identity instances, not definitions or templates referenced by other entities -- they fall squarely in T31's "immediate hard delete" category. The soft-delete exists for data retention policy compliance and to support stale index detection (quirk #8), not as a deprecation-before-delete workflow.
+
+10. **Metadata field is client-only per FOUNDATION TENETS (T29)**: The `Metadata` dictionary on `AccountModel` uses `additionalProperties: true` and is strictly client-opaque pass-through storage. No Bannou plugin reads specific keys from account metadata by convention. The service stores and returns it unchanged without inspection.
 
 ### Design Considerations (Requires Planning)
 

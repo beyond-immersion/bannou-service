@@ -31,7 +31,15 @@ Binding agreement management (L1 AppFoundation) between entities with milestone-
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-escrow | Uses guardian lock/unlock to take custody during exchanges; binds contract instances with template values; checks contract fulfillment status before release; deposits execute template value setting and asset requirement checking |
+| lib-quest (L2) | Quest objectives map 1:1 to contract milestones; creates templates/instances, manages milestone completion, sets template values for reward distribution, terminates contracts on quest abandonment |
+| lib-item (L2) | Items with `useBehaviorContractTemplateId` delegate use-behavior to contracts; contract lifecycle orchestrates item consumption/transformation effects |
+| lib-location (L2) | Registers `territory_constraint` clause type with Contract at plugin startup for territory-related contract enforcement |
+| lib-escrow (L4) | Uses guardian lock/unlock to take custody during exchanges; binds contract instances with template values; checks contract fulfillment status before release; deposits execute template value setting and asset requirement checking |
+| lib-status (L4) | Creates contract instances for statuses with `ContractTemplateId`; contract expiry triggers status removal via prebound APIs calling `/status/remove`; terminates contracts on manual status removal |
+| lib-license (L4) | Creates contract instances for license node unlocks; sets template values, proposes/consents/completes milestones during unlock execution flow |
+| lib-obligation (L4) | Queries active contracts per character to extract behavioral clauses; produces GOAP action cost modifiers from contractual obligations; reports breaches on knowing violations |
+| lib-arbitration (L4) | Creates arbitration contracts from procedural templates with milestone tracking for dispute resolution phases (filing, response, evidence, ruling, appeal, enforcement) |
+| lib-craft (L4) | Models multi-step recipe execution sessions as contract-backed state machines; milestones track crafting phases with prebound APIs for material consumption and output placement |
 
 ---
 
@@ -577,6 +585,8 @@ When a clause execution fails:
 4. **Prebound API failures are non-blocking**: Failed prebound API executions (milestone callbacks) publish failure events but do not fail the milestone completion. The milestone is still marked complete. This is intentional to avoid coupling milestone state to external service availability.
 
 5. **Template terms merge is configurable**: `MergeTerms` behavior is controlled by `TermsMergeMode` configuration. Default is `shallow` (single-level merge, dictionary values replaced by key) or `deep` (recursive merge of nested dictionaries). See `CONTRACT_TERMS_MERGE_MODE` environment variable.
+
+6. **Template deactivation is Category B-equivalent deprecation**: Contract templates use an `isActive` boolean rather than the T31 triple-field deprecation model (`IsDeprecated`/`DeprecatedAt`/`DeprecationReason`). This is functionally equivalent to Category B deprecation: setting `isActive=false` prevents new instance creation while preserving the template for existing instances that reference it by `templateId`. Contract Template is not formally listed in T31's Category B examples but exhibits the same characteristics -- instances outlive template relevance, and the template must remain readable forever. The `DeleteContractTemplate` endpoint performs soft-delete (sets `isActive=false`), not hard deletion, which aligns with Category B's "no delete" semantics despite the endpoint name.
 
 ### Design Considerations (Requires Planning)
 

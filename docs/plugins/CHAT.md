@@ -36,7 +36,11 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 |-----------|-------------|
 | *(none currently)* | No other plugin references `IChatClient` or subscribes to chat events |
 
-> **Note**: Chat publishes 14 service events that are available for future consumers. Game session companion room integration and analytics event ingestion are likely future dependents.
+> **Planned consumers** (tracked via issues on their respective plugins):
+> - **Gardener** ([#386](https://github.com/beyond-immersion/bannou-service/issues/386)): Bond communication between paired guardian spirits via Chat rooms with progressive message format expansion gated by bond strength. Gardener (L4) creates and manages `bond_communication` rooms using Chat's existing room type and contract integration. No Chat changes needed.
+> - **Lexicon** ([#454](https://github.com/beyond-immersion/bannou-service/issues/454)): NPC structured communication via a custom `lexicon` room type where messages are Lexicon concept tuples (`[INTENT] + [SUBJECT]* + [MODIFIER]* + [CONTEXT]*`) validated against the Lexicon ontology. Chat's room type registration and custom `ValidatorConfig` are already sufficient. Blocked on lib-lexicon implementation.
+> - **Connect** ([#382](https://github.com/beyond-immersion/bannou-service/issues/382)): Companion chat room integration for WebSocket sessions. Connect (L1) can use `IChatClient` as a hard dependency (same layer). The `CompanionRoomMode` config property exists in Connect's schema but has no runtime implementation yet.
+> - Chat publishes 16 service events available for future consumers (e.g., analytics event ingestion).
 
 ---
 
@@ -192,6 +196,8 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 | `MessageRetentionStartupDelaySeconds` | `CHAT_MESSAGE_RETENTION_STARTUP_DELAY_SECONDS` | 60 | Initial delay before the message retention cleanup worker begins first cycle |
 | `MessageRetentionBatchSize` | `CHAT_MESSAGE_RETENTION_BATCH_SIZE` | 500 | Maximum expired messages to delete per room per cleanup cycle |
 | `MessageRetentionLockExpirySeconds` | `CHAT_MESSAGE_RETENTION_LOCK_EXPIRY_SECONDS` | 300 | Distributed lock expiry for message retention cleanup cycle |
+| `MessageRetentionMaxRoomTypeResults` | `CHAT_MESSAGE_RETENTION_MAX_ROOM_TYPE_RESULTS` | 1000 | Maximum room types with retention configuration to process per cleanup cycle |
+| `MessageRetentionMaxRoomsPerType` | `CHAT_MESSAGE_RETENTION_MAX_ROOMS_PER_TYPE` | 1000 | Maximum rooms per type to process per retention cleanup cycle |
 | `ServerSalt` | `CHAT_SERVER_SALT` | (dev default) | Server salt for session shortcut GUID generation |
 
 ---
@@ -205,7 +211,7 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 | `IEntitySessionRegistry` | Room-level entity session management and typing event fan-out |
 | `IDistributedLockProvider` | Distributed locks for room type, room, and participant mutations |
 | `ILogger<ChatService>` | Structured logging |
-| `ChatServiceConfiguration` | Typed configuration access (29 properties) |
+| `ChatServiceConfiguration` | Typed configuration access (31 properties) |
 | `IEventConsumer` | Event consumer registration for 4 contract lifecycle events |
 | `IContractClient` | Contract instance validation on room creation |
 | `IResourceClient` | Room archival via `ExecuteCompressAsync` |
@@ -223,7 +229,7 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 
 ### Room Type Management (5 endpoints)
 
-Standard CRUD for room type definitions. `RegisterRoomType` enforces uniqueness per game service scope and `MaxRoomTypesPerGameService` limit via count query. `DeprecateRoomType` is idempotent. Room types are never truly deleted -- only deprecated (built-in types are re-registered on every startup).
+Standard CRUD for room type definitions. `RegisterRoomType` enforces uniqueness per game service scope and `MaxRoomTypesPerGameService` limit via count query. `DeprecateRoomType` is idempotent. Room types are never truly deleted -- only deprecated (Category B per T31; built-in types are re-registered on every startup). Room types support an optional `RetentionDays` field (nullable `int?` on `ChatRoomTypeModel`) that configures per-type message retention for persistent rooms. The `MessageRetentionWorker` queries room types with `RetentionDays` set and `PersistenceMode.Persistent`, then deletes messages older than the cutoff. Room types without `RetentionDays` retain persistent messages indefinitely.
 
 ### Room Management (6 endpoints)
 
@@ -315,6 +321,18 @@ None. All 32 API endpoints are fully implemented with complete business logic, v
 <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/452 -->
 
 4. ~~**Client event extensions for role changes, moderation, and room updates**~~: **FIXED** (2026-02-26) - Added `ChatParticipantRoleChangedClientEvent` (manual + auto-promotion), `ChatParticipantUnbannedClientEvent`, `ChatParticipantUnmutedClientEvent` (explicit + lazy auto-unmute), and `ChatRoomUpdatedClientEvent` (full room state + changedFields). Added `UnmuteParticipant` and `ChangeParticipantRole` API endpoints. Wired service + client events into `LeaveRoomAsync` (owner promotion), `SendMessageAsync` (lazy unmute), `UnbanParticipantAsync`, and `UpdateRoomAsync`. Issue #493.
+
+### North Star: Social Fabric Transport Layer
+
+Chat is a critical component of the NPC social communication stack described in VISION.md's "Social Fabric" section. The architecture positions Chat as the **transport layer** for a multi-service communication pipeline: Lexicon (L4) provides concept ontology and vocabulary validation, Collection (L2) gates vocabulary by character discovery level, Hearsay (L4) propagates beliefs with concept-level distortion across social hops, Disposition (L4) provides drive-motivated communication needs, and Actor (L2) executes ABML social behaviors that compose and interpret structured messages. Chat's role is to provide the typed message channels with format validation, rate limiting, persistence, and real-time delivery -- all of which are already implemented.
+
+Key existing infrastructure that serves this vision:
+- **Custom room types with `ValidatorConfig`**: Lexicon registers a `lexicon` room type on startup with structured message validation
+- **`SendMessageBatch`**: Enables bulk NPC communication at 100K NPC scale via game server batching
+- **Ephemeral vs persistent storage**: NPC chatter can use ephemeral rooms; important social interactions persist
+- **Contract-governed rooms**: Quest-bound, bond-bound, and encounter-bound conversations get lifecycle management
+
+No Chat changes are needed for this integration path -- the transport layer is ready. The blocking dependency is lib-lexicon (L4), tracked in [#454](https://github.com/beyond-immersion/bannou-service/issues/454).
 
 ---
 

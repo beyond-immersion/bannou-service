@@ -464,15 +464,17 @@ No outstanding stubs. All previously-tracked items (encrypted flag, compressed f
 
 ## Potential Extensions
 
-No outstanding extensions. Multi-instance broadcast was implemented (2026-02-22) via `InterNodeBroadcastManager`.
+1. **Native companion room integration (Chat/Voice)**: Connect has no runtime mechanism for integrating with Chat (L1) or Voice (L3) during session lifecycle. The `CompanionRoomMode` config property exists but is dead code. An `ICompanionRoomProvider` DI interface (in `bannou-service/Providers/`) would let Chat and Voice register companion room creation/teardown logic, discovered by Connect via `IEnumerable<ICompanionRoomProvider>` — same pattern as `IVariableProviderFactory`. Required for L0+L1+L3-only (application) deployments where L2 is absent.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/382 -->
 
 ---
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs (Design-Tracked)
 
-1. **Orphaned configuration: `CompanionRoomMode`**: Defined in `connect-configuration.yaml` and generated into `ConnectServiceConfiguration`, but `_configuration.CompanionRoomMode` is never referenced anywhere in service code. T21 violation — dead config should be wired up in service or removed from schema.
+1. **Orphaned configuration: `CompanionRoomMode`**: Defined in `connect-configuration.yaml` and generated into `ConnectServiceConfiguration`, but `_configuration.CompanionRoomMode` is never referenced anywhere in service code. T21 violation — resolution requires implementing the companion room integration feature ([Issue #382](https://github.com/beyond-immersion/bannou-service/issues/382)) or removing the dead config. See Potential Extensions above for the design approach.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/382 -->
 
 2. ~~**Orphaned configuration: `MaxChannelNumber`**~~: **FIXED** (2026-02-22) - Wired `_configuration.MaxChannelNumber` into `MessageRouter.AnalyzeMessage()` call, replacing the hardcoded `1000` default.
 
@@ -522,5 +524,6 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-02-22**: L3 hardening audit — Schema: consolidated connect-shortcuts.yaml into standard files, extracted ConnectionMode/InternalAuthMode/BroadcastMode/CompanionRoomMode enums to connect-api.yaml, added format:uuid to all UUID fields, added validation constraints to all config integers, extracted inline HTTP method enum, fixed additionalProperties:true T29 descriptions. Code: fixed T9 thread safety (ConcurrentDictionary/ConcurrentQueue in ConnectionState), fixed T26 Guid.Empty sentinels, fixed T5 anonymous objects (typed event/protocol payloads), wired MaxChannelNumber config (T21), fixed T7 bare catch blocks in NetworkByteOrder, fixed T23 .Wait() in WebSocketConnectionManager.Dispose, fixed T24 IDisposable/IAsyncDisposable + ClientWebSocket leak, deduplicated capability manifest construction (removed dead code), added T30 telemetry spans to ConnectService/BannouSessionManager/EntitySessionRegistry/ConnectServiceEvents, added XML docs to MessageRouteInfo/WebSocketConnection properties.
 
 ### Pending Design Review
+- **Companion room integration** - [Issue #382](https://github.com/beyond-immersion/bannou-service/issues/382) - DI Provider pattern (`ICompanionRoomProvider`) for Chat (L1) and Voice (L3) companion rooms during session lifecycle; dead `CompanionRoomMode` config requires this or removal (2026-02-08)
 - **Single-instance P2P limitation** - [Issue #346](https://github.com/beyond-immersion/bannou-service/issues/346) - Requires design decisions on cross-instance delivery mechanism, peer GUID stability, and Redis latency impact; no production consumers yet (2026-02-08)
 
