@@ -428,7 +428,7 @@ components:
     # Enums
     SubscriptionAction:
       type: string
-      enum: [created, updated, cancelled, expired, renewed]
+      enum: [Created, Updated, Cancelled, Expired, Renewed]
       description: The type of action that triggered a subscription state change
 
     # NOTE: CurrentSubscriptionsResponse removed - superseded by QuerySubscriptionsResponse

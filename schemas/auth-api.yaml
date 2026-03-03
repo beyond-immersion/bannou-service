@@ -560,22 +560,22 @@ components:
   schemas:
     Provider:
       type: string
-      enum: [google, discord, twitch, steam]
+      enum: [Google, Discord, Twitch, Steam]
       description: Authentication provider type
 
     EmailProvider:
       type: string
-      enum: [none, sendgrid, smtp, ses]
+      enum: [None, Sendgrid, Smtp, Ses]
       description: Email delivery provider type (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit, ses=AWS SES v2)
 
     DeviceType:
       type: string
-      enum: [desktop, mobile, tablet, console]
+      enum: [Desktop, Mobile, Tablet, Console]
       description: Category of client device used for authentication or session tracking
 
     AuthType:
       type: string
-      enum: [oauth, ticket]
+      enum: [Oauth, Ticket]
       description: Authentication mechanism type (oauth = browser redirect, ticket = game client token)
 
     SessionInvalidatedEventReason:

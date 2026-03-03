@@ -782,16 +782,16 @@ components:
     DocumentCategory:
       type: string
       enum:
-      - getting-started
-      - api-reference
-      - architecture
-      - deployment
-      - troubleshooting
-      - tutorials
-      - game-systems
-      - world-lore
-      - npc-ai
-      - other
+      - GettingStarted
+      - ApiReference
+      - Architecture
+      - Deployment
+      - Troubleshooting
+      - Tutorials
+      - GameSystems
+      - WorldLore
+      - NpcAi
+      - Other
       description: Fixed categories for type-safe filtering
 
     CategoryCount:
@@ -812,10 +812,10 @@ components:
     RelatedDepth:
       type: string
       enum:
-      - none
-      - direct
-      - extended
-      default: direct
+      - None
+      - Direct
+      - Extended
+      default: Direct
       description: |
         How deep to traverse related document links:
         - none: No related documents included
@@ -825,70 +825,70 @@ components:
     SearchField:
       type: string
       enum:
-      - title
-      - content
-      - tags
-      - summary
+      - Title
+      - Content
+      - Tags
+      - Summary
       description: Fields that can be searched within documents
 
     ListSortField:
       type: string
       enum:
-      - created_at
-      - updated_at
-      - title
-      default: updated_at
+      - CreatedAt
+      - UpdatedAt
+      - Title
+      default: UpdatedAt
       description: Fields available for sorting document lists
 
     SuggestionSource:
       type: string
       enum:
-      - document_id
-      - slug
-      - topic
-      - category
+      - DocumentId
+      - Slug
+      - Topic
+      - Category
       description: Source type for generating related topic suggestions
 
     ContentFormat:
       type: string
       enum:
-      - markdown
-      - html
-      - none
+      - Markdown
+      - Html
+      - None
       description: Format of the content field in a document response
 
     SearchSortBy:
       type: string
       enum:
-      - relevance
-      - recency
-      - alphabetical
-      default: relevance
+      - Relevance
+      - Recency
+      - Alphabetical
+      default: Relevance
       description: How to sort search results
 
     TagMatchMode:
       type: string
       enum:
-      - all
-      - any
-      default: all
+      - All
+      - Any
+      default: All
       description: Whether documents must match all specified tags or any tag
 
     SortOrder:
       type: string
       enum:
-      - asc
-      - desc
-      default: desc
+      - Asc
+      - Desc
+      default: Desc
       description: Sort order direction
 
     ConflictResolution:
       type: string
       enum:
-      - skip
-      - update
-      - fail
-      default: skip
+      - Skip
+      - Update
+      - Fail
+      default: Skip
       description: How to handle documents with existing slugs during import
 
     # ===== Query Endpoint =====
@@ -2063,26 +2063,26 @@ components:
     BindingStatus:
       type: string
       enum:
-      - pending
-      - syncing
-      - synced
-      - error
-      - disabled
+      - Pending
+      - Syncing
+      - Synced
+      - Error
+      - Disabled
       description: Status of a repository binding
 
     SyncStatus:
       type: string
       enum:
-      - success
-      - partial
-      - failed
+      - Success
+      - Partial
+      - Failed
       description: Result status of a sync operation
 
     SyncTrigger:
       type: string
       enum:
-      - manual
-      - scheduled
+      - Manual
+      - Scheduled
       description: What triggered the sync operation
 
     # ===== Repository Binding Request/Response Models =====

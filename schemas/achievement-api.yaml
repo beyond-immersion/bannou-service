@@ -323,28 +323,28 @@ components:
       type: string
       description: Type of achievement
       enum:
-      - standard
-      - progressive
-      - hidden
-      - secret
+      - Standard
+      - Progressive
+      - Hidden
+      - Secret
 
     Platform:
       type: string
       description: External platform for achievement sync
       enum:
-      - steam
-      - xbox
-      - playstation
-      - internal
+      - Steam
+      - Xbox
+      - PlayStation
+      - Internal
 
     SyncStatus:
       type: string
       description: Status of platform synchronization
       enum:
-      - pending
-      - synced
-      - failed
-      - not_linked
+      - Pending
+      - Synced
+      - Failed
+      - NotLinked
 
     PlatformMapping:
       type: object

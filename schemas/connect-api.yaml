@@ -1072,11 +1072,11 @@ components:
       type: string
       description: HTTP method for endpoint invocation
       enum:
-        - GET
-        - POST
-        - PUT
-        - DELETE
-        - PATCH
+        - Get
+        - Post
+        - Put
+        - Delete
+        - Patch
 
     ConnectionMode:
       type: string

@@ -436,37 +436,37 @@ components:
     # === ENUMS ===
     QuestStatus:
       type: string
-      enum: [ACTIVE, COMPLETED, FAILED, ABANDONED, EXPIRED]
+      enum: [Active, Completed, Failed, Abandoned, Expired]
       description: Current status of a quest instance
 
     QuestCategory:
       type: string
-      enum: [MAIN, SIDE, BOUNTY, DAILY, WEEKLY, EVENT, TUTORIAL]
+      enum: [Main, Side, Bounty, Daily, Weekly, Event, Tutorial]
       description: Category of quest for organization
 
     QuestDifficulty:
       type: string
-      enum: [TRIVIAL, EASY, NORMAL, HARD, HEROIC, LEGENDARY]
+      enum: [Trivial, Easy, Normal, Hard, Heroic, Legendary]
       description: Difficulty rating of the quest
 
     ObjectiveType:
       type: string
-      enum: [KILL, COLLECT, DELIVER, TRAVEL, DISCOVER, TALK, CRAFT, ESCORT, DEFEND, CUSTOM]
+      enum: [Kill, Collect, Deliver, Travel, Discover, Talk, Craft, Escort, Defend, Custom]
       description: Type of objective determining progress tracking logic
 
     ObjectiveRevealBehavior:
       type: string
-      enum: [ALWAYS, ON_PROGRESS, ON_COMPLETE, NEVER]
+      enum: [Always, OnProgress, OnComplete, Never]
       description: When a hidden objective is revealed in the quest log
 
     PrerequisiteType:
       type: string
-      enum: [QUEST_COMPLETED, CHARACTER_LEVEL, REPUTATION, ITEM_OWNED, CURRENCY_AMOUNT]
+      enum: [QuestCompleted, CharacterLevel, Reputation, ItemOwned, CurrencyAmount]
       description: Type of prerequisite check
 
     PrerequisiteValidationMode:
       type: string
-      enum: [FAIL_FAST, CHECK_ALL]
+      enum: [FailFast, CheckAll]
       description: |
         Controls how prerequisite validation handles multiple prerequisites.
         FAIL_FAST: Stop on first failure, return that failure.
@@ -474,7 +474,7 @@ components:
 
     RewardType:
       type: string
-      enum: [CURRENCY, ITEM, EXPERIENCE, REPUTATION]
+      enum: [Currency, Item, Experience, Reputation]
       description: Type of reward granted on quest completion
 
     # === REQUEST/RESPONSE MODELS ===

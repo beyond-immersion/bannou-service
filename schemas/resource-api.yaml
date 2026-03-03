@@ -531,28 +531,28 @@ components:
 
     OnDeleteAction:
       type: string
-      enum: [CASCADE, RESTRICT, DETACH]
+      enum: [Cascade, Restrict, Detach]
       description: |
         Action to take when the referenced resource is deleted.
-        CASCADE: Delete dependent entities when resource is deleted
-        RESTRICT: Block resource deletion if references exist
-        DETACH: Set reference to null when resource is deleted
+        Cascade: Delete dependent entities when resource is deleted
+        Restrict: Block resource deletion if references exist
+        Detach: Set reference to null when resource is deleted
 
     CleanupPolicy:
       type: string
-      enum: [BEST_EFFORT, ALL_REQUIRED]
+      enum: [BestEffort, AllRequired]
       description: |
         Policy for cleanup callback execution.
-        BEST_EFFORT: Proceed with deletion even if some callbacks fail
-        ALL_REQUIRED: Abort deletion if any callback fails
+        BestEffort: Proceed with deletion even if some callbacks fail
+        AllRequired: Abort deletion if any callback fails
 
     CompressionPolicy:
       type: string
-      enum: [BEST_EFFORT, ALL_REQUIRED]
+      enum: [BestEffort, AllRequired]
       description: |
         Policy for compression callback execution.
-        BEST_EFFORT: Create archive even if some callbacks fail (partial archive)
-        ALL_REQUIRED: Abort compression if any callback fails
+        BestEffort: Create archive even if some callbacks fail (partial archive)
+        AllRequired: Abort compression if any callback fails
 
     # =========================================================================
     # Reference Management Models

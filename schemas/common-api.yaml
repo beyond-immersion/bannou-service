@@ -32,33 +32,33 @@ components:
         service-specific roles that include non-entity values (use service-specific enums).
         See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
       enum:
-        - system
-        - account
-        - character
-        - actor
-        - guild
-        - organization
-        - government
-        - faction
-        - location
-        - realm
-        - item
-        - monster
-        - relationship
-        - session
-        - deity
-        - dungeon
-        - custom
-        - other
+        - System
+        - Account
+        - Character
+        - Actor
+        - Guild
+        - Organization
+        - Government
+        - Faction
+        - Location
+        - Realm
+        - Item
+        - Monster
+        - Relationship
+        - Session
+        - Deity
+        - Dungeon
+        - Custom
+        - Other
 
     ServiceHealthStatus:
       type: string
-      enum: [healthy, degraded, unavailable]
+      enum: [Healthy, Degraded, Unavailable]
       description: Health status for individual services and components. Used by heartbeat events and orchestrator health monitoring.
 
     InstanceHealthStatus:
       type: string
-      enum: [healthy, degraded, overloaded, shutting_down, unavailable]
+      enum: [Healthy, Degraded, Overloaded, ShuttingDown, Unavailable]
       description: Operational status for app instances. Superset of ServiceHealthStatus with instance-level states (overloaded, shutting_down).
 
     SentimentCategory:
@@ -98,7 +98,7 @@ components:
           description: API endpoint path (e.g., "/account/{id}")
         method:
           type: string
-          enum: [GET, POST, PUT, DELETE, PATCH]
+          enum: [Get, Post, Put, Delete, Patch]
           description: HTTP method for this endpoint
         permissions:
           type: array

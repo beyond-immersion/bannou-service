@@ -702,13 +702,13 @@ components:
     AssetType:
       type: string
       enum:
-      - texture
-      - model
-      - audio
-      - behavior
-      - bundle
-      - prefab
-      - other
+      - Texture
+      - Model
+      - Audio
+      - Behavior
+      - Bundle
+      - Prefab
+      - Other
       description: Type classification for assets
 
     GameRealm:
@@ -722,32 +722,32 @@ components:
     ProcessingStatus:
       type: string
       enum:
-      - pending
-      - processing
-      - complete
-      - failed
+      - Pending
+      - Processing
+      - Complete
+      - Failed
       description: Asset processing pipeline status
 
     CompressionType:
       type: string
       enum:
-      - lz4
-      - lzma
-      - none
+      - Lz4
+      - Lzma
+      - None
       description: Compression algorithm for bundles
 
     BundleFormat:
       type: string
       enum:
-      - bannou
-      - zip
+      - Bannou
+      - Zip
       description: Bundle file format
 
     BundleType:
       type: string
       enum:
-      - source
-      - metabundle
+      - Source
+      - Metabundle
       description: |
         Bundle category:
         - source: Original bundle (uploaded or server-created from assets)
@@ -758,8 +758,8 @@ components:
     DeletionStatus:
       type: string
       enum:
-      - deleted
-      - permanently_deleted
+      - Deleted
+      - PermanentlyDeleted
       description: |
         Result of a deletion operation:
         - deleted: Soft-deleted (within retention period, can be restored)
@@ -768,35 +768,35 @@ components:
     BundleSortField:
       type: string
       enum:
-      - created_at
-      - updated_at
-      - name
-      - size
+      - CreatedAt
+      - UpdatedAt
+      - Name
+      - Size
       description: Fields available for sorting bundle query results
 
     SortOrder:
       type: string
       enum:
-      - asc
-      - desc
+      - Asc
+      - Desc
       description: Sort direction for query results
 
     StorageProvider:
       type: string
       enum:
-      - minio
-      - s3
-      - r2
-      - azure
-      - filesystem
+      - Minio
+      - S3
+      - R2
+      - Azure
+      - Filesystem
       description: Storage backend type for asset persistence
 
     ProcessingMode:
       type: string
       enum:
-      - api
-      - worker
-      - both
+      - Api
+      - Worker
+      - Both
       description: |
         Service mode for asset processing:
         - api: Only handle API requests (no processing)
@@ -806,68 +806,68 @@ components:
     AudioOutputFormat:
       type: string
       enum:
-      - mp3
-      - opus
-      - aac
+      - Mp3
+      - Opus
+      - Aac
       description: Default audio transcoding output format
 
     ProcessingType:
       type: string
       enum:
-      - mipmaps
-      - lod_generation
-      - transcode
-      - compression
-      - validation
-      - behavior_compile
+      - Mipmaps
+      - LodGeneration
+      - Transcode
+      - Compression
+      - Validation
+      - BehaviorCompile
       description: Type of processing to be performed on an asset
 
     UploadErrorCode:
       type: string
       enum:
-      - VALIDATION_FAILED
-      - HASH_MISMATCH
-      - SIZE_EXCEEDED
-      - STORAGE_ERROR
-      - TIMEOUT
+      - ValidationFailed
+      - HashMismatch
+      - SizeExceeded
+      - StorageError
+      - Timeout
       description: Error codes for asset upload failures
 
     ProcessingErrorCode:
       type: string
       enum:
-      - PROCESSING_FAILED
-      - INVALID_FORMAT
-      - RESOURCE_EXHAUSTED
-      - TIMEOUT
-      - PROCESSOR_UNAVAILABLE
+      - ProcessingFailed
+      - InvalidFormat
+      - ResourceExhausted
+      - Timeout
+      - ProcessorUnavailable
       description: Error codes for asset processing failures
 
     ValidationErrorCode:
       type: string
       enum:
-      - INVALID_ARCHIVE
-      - MISSING_MANIFEST
-      - INVALID_MANIFEST
-      - HASH_MISMATCH
-      - PATH_TRAVERSAL
-      - SIZE_EXCEEDED
-      - DUPLICATE_ASSET_ID
-      - MISSING_DEPENDENCY
+      - InvalidArchive
+      - MissingManifest
+      - InvalidManifest
+      - HashMismatch
+      - PathTraversal
+      - SizeExceeded
+      - DuplicateAssetId
+      - MissingDependency
       description: Error codes for bundle validation failures
 
     MetabundleErrorCode:
       type: string
       enum:
-      - SOURCE_BUNDLE_NOT_FOUND
-      - SOURCE_BUNDLE_NOT_READY
-      - STANDALONE_ASSET_NOT_FOUND
-      - STANDALONE_ASSET_NOT_READY
-      - REALM_MISMATCH
-      - ASSET_CONFLICT
-      - STORAGE_ERROR
-      - TIMEOUT
-      - CANCELLED
-      - INTERNAL_ERROR
+      - SourceBundleNotFound
+      - SourceBundleNotReady
+      - StandaloneAssetNotFound
+      - StandaloneAssetNotReady
+      - RealmMismatch
+      - AssetConflict
+      - StorageError
+      - Timeout
+      - Cancelled
+      - InternalError
       description: Error codes for metabundle creation failures
 
     ProcessingOutput:
@@ -2174,11 +2174,11 @@ components:
     BundleStatus:
       type: string
       enum:
-      - queued
-      - processing
-      - ready
-      - failed
-      - cancelled
+      - Queued
+      - Processing
+      - Ready
+      - Failed
+      - Cancelled
       description: |
         Bundle processing status:
         - queued: Bundle creation is queued for processing
@@ -2190,9 +2190,9 @@ components:
     BundleLifecycle:
       type: string
       enum:
-      - active
-      - deleted
-      - processing
+      - Active
+      - Deleted
+      - Processing
       description: |
         Bundle lifecycle status:
         - active: Bundle is available for use

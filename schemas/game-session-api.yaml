@@ -755,7 +755,7 @@ components:
     SessionType:
       type: string
       description: Type of game session - determines join behavior
-      enum: [lobby, matchmade]
+      enum: [Lobby, Matchmade]
 
     GameType:
       type: string
@@ -764,22 +764,22 @@ components:
     SessionStatus:
       type: string
       description: Current status of the game session
-      enum: [waiting, active, full, finished]
+      enum: [Waiting, Active, Full, Finished]
 
     PlayerRole:
       type: string
       description: Role of the player in the game session
-      enum: [player, spectator, moderator]
+      enum: [Player, Spectator, Moderator]
 
     ChatMessageType:
       type: string
       description: Type of chat message
-      enum: [public, whisper, system]
+      enum: [Public, Whisper, System]
 
     GameActionType:
       type: string
       description: Type of game action
-      enum: [move, interact, attack, cast_spell, use_item]
+      enum: [Move, Interact, Attack, CastSpell, UseItem]
 
     # NOTE: PlayerReservation removed - reservations use ReservationInfo for matchmaking integration
 

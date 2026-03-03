@@ -666,11 +666,11 @@ components:
         - max_entries_reached: Collection has reached the maximum number of entries
         - item_creation_failed: Failed to create item instance via lib-item
       enum:
-      - already_unlocked
-      - entry_not_found
-      - collection_not_found
-      - max_entries_reached
-      - item_creation_failed
+      - AlreadyUnlocked
+      - EntryNotFound
+      - CollectionNotFound
+      - MaxEntriesReached
+      - ItemCreationFailed
 
     # ==========================================================================
     # Shared Models

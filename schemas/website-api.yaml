@@ -347,7 +347,7 @@ components:
   schemas:
     Platform:
       type: string
-      enum: [windows, macos, linux]
+      enum: [Windows, Macos, Linux]
       description: Target operating system platform
 
     StatusResponse:
@@ -361,7 +361,7 @@ components:
       properties:
         status:
           type: string
-          enum: [healthy, degraded, maintenance]
+          enum: [Healthy, Degraded, Maintenance]
           description: Current health status of the website service
         version:
           type: string
@@ -399,7 +399,7 @@ components:
           description: HTML, Markdown, or custom template content
         contentType:
           type: string
-          enum: [html, markdown, blazor]
+          enum: [Html, Markdown, Blazor]
           description: Format of the page content
         template:
           type: string
@@ -657,8 +657,8 @@ components:
           description: Sort order for the navigation item
         target:
           type: string
-          enum: [_self, _blank]
-          default: _self
+          enum: [Self, Blank]
+          default: Self
           description: Link target attribute for opening behavior
         children:
           type: array
@@ -806,8 +806,8 @@ components:
           description: Body content of the contact message
         category:
           type: string
-          enum: [general, support, bug, feedback, business]
-          default: general
+          enum: [General, Support, Bug, Feedback, Business]
+          default: General
           description: Category to route the contact request
 
     ContactResponse:

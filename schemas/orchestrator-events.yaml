@@ -68,9 +68,9 @@ components:
           description: When this event was created
         status:
           type: string
-          enum: [ok, degraded, checking]
+          enum: [Ok, Degraded, Checking]
           description: Current health status
-          default: ok
+          default: Ok
 
     # =========================================================================
     # Deployment Events

@@ -466,12 +466,12 @@ components:
     AuthProvider:
       type: string
       description: All authentication provider types including email
-      enum: [email, google, discord, twitch, steam]
+      enum: [Email, Google, Discord, Twitch, Steam]
 
     OAuthProvider:
       type: string
       description: OAuth provider types (excludes email)
-      enum: [google, discord, twitch, steam]
+      enum: [Google, Discord, Twitch, Steam]
 
     # Request Models for POST-only pattern
     ListAccountsRequest:

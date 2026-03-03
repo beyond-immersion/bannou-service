@@ -147,7 +147,7 @@ components:
           description: Routing key for direct/topic exchanges (required for topic exchanges, ignored for fanout)
         exchangeType:
           $ref: '#/components/schemas/ExchangeType'
-          default: topic
+          default: Topic
           nullable: true
           description: Exchange type - determines how messages are routed (topic routes by routing key pattern)
         persistent:
@@ -313,9 +313,9 @@ components:
     ExchangeType:
       type: string
       description: RabbitMQ exchange type determining how messages are routed
-      enum: [fanout, direct, topic]
+      enum: [Fanout, Direct, Topic]
 
     DeadLetterOverflowBehavior:
       type: string
       description: Behavior when DLX queue exceeds max length (drop-head drops oldest, reject-publish blocks new messages)
-      enum: [drop-head, reject-publish]
+      enum: [DropHead, RejectPublish]

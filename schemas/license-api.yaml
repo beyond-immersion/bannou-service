@@ -654,8 +654,8 @@ components:
         - four_way: Orthogonal only (up, down, left, right)
         - eight_way: Orthogonal + diagonal (all 8 surrounding cells)
       enum:
-      - four_way
-      - eight_way
+      - FourWay
+      - EightWay
 
     LicenseStatus:
       type: string
@@ -665,9 +665,9 @@ components:
         - unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)
         - unlocked: Already unlocked (item placed at this position)
       enum:
-      - locked
-      - unlockable
-      - unlocked
+      - Locked
+      - Unlockable
+      - Unlocked
 
     UnlockFailureReason:
       type: string
@@ -681,13 +681,13 @@ components:
         - board_not_found: Board instance does not exist
         - license_not_found: License definition does not exist on this board template
       enum:
-      - not_adjacent
-      - insufficient_lp
-      - prerequisites_not_met
-      - contract_failed
-      - already_unlocked
-      - board_not_found
-      - license_not_found
+      - NotAdjacent
+      - InsufficientLp
+      - PrerequisitesNotMet
+      - ContractFailed
+      - AlreadyUnlocked
+      - BoardNotFound
+      - LicenseNotFound
 
     # ==========================================================================
     # Core Models

@@ -540,18 +540,18 @@ components:
     CapabilityUpdateType:
       type: string
       enum:
-      - full
-      - delta
+      - Full
+      - Delta
       description: Type of capability update — full capabilities or delta changes
 
     CapabilityUpdateReason:
       type: string
       enum:
-      - session_created
-      - session_state_changed
-      - role_changed
-      - service_registered
-      - manual_refresh
+      - SessionCreated
+      - SessionStateChanged
+      - RoleChanged
+      - ServiceRegistered
+      - ManualRefresh
       description: Reason for the capability update
 
 # NOTE: Event subscriptions are defined in permission-events.yaml

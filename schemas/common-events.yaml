@@ -203,7 +203,7 @@ components:
           description: Correlation ID / request ID, if available
         severity:
           type: string
-          enum: [info, warning, error, critical]
+          enum: [Info, Warning, Error, Critical]
           default: error
           description: Severity for triage/routing
         dependency:
@@ -579,9 +579,9 @@ components:
         operation:
           type: string
           enum:
-            - add
-            - remove
-            - modify
+            - Add
+            - Remove
+            - Modify
           description: Memory operation type
         memoryKey:
           type: string

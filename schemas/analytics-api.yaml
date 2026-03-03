@@ -263,8 +263,8 @@ components:
       type: string
       description: Type of controller action
       enum:
-      - possess
-      - release
+      - Possess
+      - Release
 
     # ============================================
     # Event Ingestion

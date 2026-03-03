@@ -742,9 +742,9 @@ components:
         - control_plane_only: Only services running on the control plane (main bannou instance)
         - deployed_only: Only services running on explicitly deployed nodes (split topology)
       enum:
-        - all
-        - control_plane_only
-        - deployed_only
+        - All
+        - ControlPlaneOnly
+        - DeployedOnly
 
     ServiceHealthRequest:
       type: object
@@ -1180,7 +1180,7 @@ components:
 
     BackendType:
       type: string
-      enum: [kubernetes, portainer, swarm, compose]
+      enum: [Kubernetes, Portainer, Swarm, Compose]
       description: |
         Container orchestration backend type.
         Priority order: kubernetes > portainer > swarm > compose
@@ -1486,7 +1486,7 @@ components:
 
     DeploymentMode:
       type: string
-      enum: [graceful, force, clean]
+      enum: [Graceful, Force, Clean]
       description: |
         Deployment mode:
         - graceful: Wait for connections to drain
@@ -1692,7 +1692,7 @@ components:
 
     TeardownMode:
       type: string
-      enum: [graceful, force, preserve-data]
+      enum: [Graceful, Force, PreserveData]
       description: |
         Teardown mode:
         - graceful: Signal shutdown, wait for clean exit
@@ -1779,7 +1779,7 @@ components:
 
     CleanTarget:
       type: string
-      enum: [containers, networks, volumes, images, all]
+      enum: [Containers, Networks, Volumes, Images, All]
       description: Type of resource to clean
 
     CleanRequest:
@@ -1993,12 +1993,12 @@ components:
 
     DeploymentAction:
       type: string
-      enum: [started, completed, failed, topology-changed]
+      enum: [Started, Completed, Failed, TopologyChanged]
       description: Type of deployment action that triggered an event
 
     PresetCategory:
       type: string
-      enum: [development, testing, production, custom]
+      enum: [Development, Testing, Production, Custom]
       description: Category classification for deployment presets
 
     ServiceLayerType:
@@ -2008,37 +2008,37 @@ components:
 
     ContainerStatusType:
       type: string
-      enum: [running, starting, stopping, stopped, unhealthy]
+      enum: [Running, Starting, Stopping, Stopped, Unhealthy]
       description: Current runtime status of a container
 
     DeployedServiceStatus:
       type: string
-      enum: [starting, running, healthy, unhealthy, stopped]
+      enum: [Starting, Running, Healthy, Unhealthy, Stopped]
       description: Current status of a deployed service instance
 
     TopologyChangeAction:
       type: string
-      enum: [add-node, remove-node, move-service, scale, update-env]
+      enum: [AddNode, RemoveNode, MoveService, Scale, UpdateEnv]
       description: Type of topology modification to apply
 
     LogStreamType:
       type: string
-      enum: [stdout, stderr]
+      enum: [Stdout, Stderr]
       description: Output stream type for log entries
 
     IngressType:
       type: string
-      enum: [openresty, nginx, traefik, none]
+      enum: [Openresty, Nginx, Traefik, None]
       description: Type of ingress or reverse proxy to use
 
     RestartStrategy:
       type: string
-      enum: [rolling, simultaneous]
+      enum: [Rolling, Simultaneous]
       description: Strategy for performing container restarts
 
     ComponentHealthStatus:
       type: string
-      enum: [healthy, degraded, unavailable]
+      enum: [Healthy, Degraded, Unavailable]
       description: Health status for an individual infrastructure component
 
     # ==========================================================================
@@ -2047,7 +2047,7 @@ components:
 
     RestartPriority:
       type: string
-      enum: [graceful, immediate, force]
+      enum: [Graceful, Immediate, Force]
       description: |
         Restart urgency level:
         - graceful: Rolling update, wait for healthy before cycling next instance

@@ -1023,109 +1023,109 @@ components:
       type: string
       description: Scope of currency availability across realms
       enum:
-      - global
-      - realm_specific
-      - multi_realm
+      - Global
+      - RealmSpecific
+      - MultiRealm
 
     CurrencyPrecision:
       type: string
       description: How the currency handles decimal values (immutable after creation)
       enum:
-      - integer
-      - decimal_2
-      - decimal_4
-      - decimal_8
-      - decimal_full
-      - big_integer
+      - Integer
+      - Decimal2
+      - Decimal4
+      - Decimal8
+      - DecimalFull
+      - BigInteger
 
     WalletStatus:
       type: string
       description: Current status of a wallet
       enum:
-      - active
-      - frozen
-      - closed
+      - Active
+      - Frozen
+      - Closed
 
     CapOverflowBehavior:
       type: string
       description: What happens when a credit would exceed the wallet cap
       enum:
-      - reject
-      - cap_and_lose
-      - cap_and_return
+      - Reject
+      - CapAndLose
+      - CapAndReturn
 
     AutogainMode:
       type: string
       description: How autogain (energy/interest) is calculated
       enum:
-      - simple
-      - compound
+      - Simple
+      - Compound
 
     ExpirationPolicy:
       type: string
       description: How currency expiration is determined
       enum:
-      - fixed_date
-      - duration_from_earn
-      - end_of_season
+      - FixedDate
+      - DurationFromEarn
+      - EndOfSeason
 
     ItemLinkageMode:
       type: string
       description: How currency is linked to inventory items
       enum:
-      - none
-      - visual_only
-      - reference_only
+      - None
+      - VisualOnly
+      - ReferenceOnly
 
     TransactionType:
       type: string
       description: Classification of the currency transaction
       enum:
       # Faucets (currency enters system)
-      - mint
-      - quest_reward
-      - loot_drop
-      - vendor_sale
-      - autogain
-      - refund
-      - conversion_credit
+      - Mint
+      - QuestReward
+      - LootDrop
+      - VendorSale
+      - Autogain
+      - Refund
+      - ConversionCredit
       # Sinks (currency exits system)
-      - burn
-      - vendor_purchase
-      - fee
-      - expiration
-      - cap_overflow
-      - conversion_debit
+      - Burn
+      - VendorPurchase
+      - Fee
+      - Expiration
+      - CapOverflow
+      - ConversionDebit
       # Transfers (currency moves between wallets)
-      - transfer
-      - trade
-      - gift
-      - escrow_deposit
-      - escrow_release
-      - escrow_refund
+      - Transfer
+      - Trade
+      - Gift
+      - EscrowDeposit
+      - EscrowRelease
+      - EscrowRefund
 
     AutogainProcessingMode:
       type: string
       description: How autogain processing is triggered
       enum:
-      - lazy
-      - task
+      - Lazy
+      - Task
 
     HoldStatus:
       type: string
       description: Current status of an authorization hold
       enum:
-      - active
-      - captured
-      - released
-      - expired
+      - Active
+      - Captured
+      - Released
+      - Expired
 
     EarnCapType:
       type: string
       description: Type of earn cap that was applied
       enum:
-      - daily
-      - weekly
+      - Daily
+      - Weekly
 
     # =========================================================================
     # Currency Definition Models

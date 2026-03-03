@@ -543,30 +543,30 @@ components:
         Different kinds have different update frequencies, storage models, and TTLs.
       enum:
         # Static (rarely changes, durable)
-      - terrain
-      - static_geometry
-      - navigation
+      - Terrain
+      - StaticGeometry
+      - Navigation
         # Semi-static (changes on authoring, not runtime)
-      - resources
-      - spawn_points
-      - points_of_interest
+      - Resources
+      - SpawnPoints
+      - PointsOfInterest
         # Dynamic (changes at runtime, cached)
-      - dynamic_objects
-      - hazards
-      - weather_effects
-      - ownership
+      - DynamicObjects
+      - Hazards
+      - WeatherEffects
+      - Ownership
         # Ephemeral (short-lived, high-frequency)
-      - combat_effects
-      - visual_effects
+      - CombatEffects
+      - VisualEffects
 
     NonAuthorityHandlingMode:
       type: string
       description: How to handle publish attempts from non-authority sources
       enum:
-      - reject_and_alert
-      - accept_and_alert
-      - reject_silent
-      default: reject_and_alert
+      - RejectAndAlert
+      - AcceptAndAlert
+      - RejectSilent
+      default: RejectAndAlert
 
     AuthorityTakeoverMode:
       type: string
@@ -574,10 +574,10 @@ components:
         Policy for handling authority takeover when creating a channel that
         already has expired authority. Controls what happens to existing data.
       enum:
-      - preserve_and_diff
-      - reset
-      - require_consume
-      default: preserve_and_diff
+      - PreserveAndDiff
+      - Reset
+      - RequireConsume
+      default: PreserveAndDiff
 
     AffordanceType:
       type: string
@@ -585,51 +585,51 @@ components:
         Well-known affordance types with predefined scoring logic.
         Use 'custom' for novel affordance definitions.
       enum:
-      - ambush
-      - shelter
-      - vista
-      - choke_point
-      - gathering_spot
-      - dramatic_reveal
-      - hidden_path
-      - defensible_position
-      - custom
+      - Ambush
+      - Shelter
+      - Vista
+      - ChokePoint
+      - GatheringSpot
+      - DramaticReveal
+      - HiddenPath
+      - DefensiblePosition
+      - Custom
 
     AffordanceFreshness:
       type: string
       description: Controls caching behavior for affordance queries
       enum:
-      - fresh
-      - cached
-      - aggressive_cache
-      default: cached
+      - Fresh
+      - Cached
+      - AggressiveCache
+      default: Cached
 
     ActorSize:
       type: string
       description: Size classification affecting cover requirements and passage width
       enum:
-      - tiny
-      - small
-      - medium
-      - large
-      - huge
-      default: medium
+      - Tiny
+      - Small
+      - Medium
+      - Large
+      - Huge
+      default: Medium
 
     DeltaType:
       type: string
       description: Whether an update is incremental or a full snapshot
       enum:
-      - delta
-      - snapshot
-      default: delta
+      - Delta
+      - Snapshot
+      default: Delta
 
     ObjectAction:
       type: string
       description: Type of change to a map object
       enum:
-      - created
-      - updated
-      - deleted
+      - Created
+      - Updated
+      - Deleted
 
     # ========== SPATIAL PRIMITIVES ==========
     Position3D:

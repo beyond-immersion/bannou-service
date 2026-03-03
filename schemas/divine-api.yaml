@@ -672,34 +672,34 @@ components:
       type: string
       description: Lifecycle status of a deity entity
       enum:
-        - active
-        - dormant
-        - archived
+        - Active
+        - Dormant
+        - Archived
 
     BlessingTier:
       type: string
       description: Tier of a blessing determining its power, cost, and storage mechanism
       enum:
-        - minor
-        - standard
-        - greater
-        - supreme
+        - Minor
+        - Standard
+        - Greater
+        - Supreme
 
     BlessingStatus:
       type: string
       description: Current status of a granted blessing
       enum:
-        - active
-        - revoked
+        - Active
+        - Revoked
 
     AttentionPriority:
       type: string
       description: Priority level for a deity's attention toward a character
       enum:
-        - low
-        - medium
-        - high
-        - critical
+        - Low
+        - Medium
+        - High
+        - Critical
 
     # =========================================================================
     # Shared Sub-Types

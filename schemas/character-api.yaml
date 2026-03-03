@@ -382,7 +382,7 @@ components:
     CharacterStatus:
       type: string
       description: Character lifecycle status
-      enum: [alive, dead, dormant]
+      enum: [Alive, Dead, Dormant]
 
     # Request Models for POST-only pattern
     CreateCharacterRequest:
@@ -647,7 +647,7 @@ components:
     CharacterRealmLeftReason:
       type: string
       description: Reason a character left a realm
-      enum: [deletion, transfer]
+      enum: [Deletion, Transfer]
 
     # =========================================================================
     # Enriched Character Models (Include Pattern)
