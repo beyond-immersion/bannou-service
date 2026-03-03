@@ -33,6 +33,14 @@ x-service-configuration:
       env: INVENTORY_CONTAINER_CACHE_TTL_SECONDS
       description: TTL for container cache entries
 
+    ProviderCacheTtlSeconds:
+      type: integer
+      minimum: 5
+      maximum: 600
+      default: 60
+      env: INVENTORY_PROVIDER_CACHE_TTL_SECONDS
+      description: TTL in seconds for inventory variable provider in-memory cache entries
+
     LockTimeoutSeconds:
       type: integer
       default: 30

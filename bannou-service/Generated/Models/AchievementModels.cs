@@ -115,6 +115,33 @@ public enum SyncStatus
 #pragma warning restore CS1591
 
 /// <summary>
+/// Maps an achievement to a platform-specific ID
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PlatformMapping
+{
+
+    /// <summary>
+    /// External platform
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("platform")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public Platform Platform { get; set; } = default!;
+
+    /// <summary>
+    /// Platform-specific achievement identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("platformAchievementId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
+    public string PlatformAchievementId { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to create a new achievement
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -204,10 +231,10 @@ public partial class CreateAchievementDefinitionRequest
     public System.Collections.Generic.ICollection<Platform>? Platforms { get; set; } = default!;
 
     /// <summary>
-    /// Platform-specific achievement IDs (e.g., {"steam": "ACH_001"})
+    /// Platform-specific achievement ID mappings
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("platformIds")]
-    public System.Collections.Generic.IDictionary<string, string>? PlatformIds { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("platformMappings")]
+    public System.Collections.Generic.ICollection<PlatformMapping>? PlatformMappings { get; set; } = default!;
 
     /// <summary>
     /// Achievement IDs that must be unlocked first
@@ -409,8 +436,8 @@ public partial class UpdateAchievementDefinitionRequest
     /// <summary>
     /// Updated platform ID mappings
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("platformIds")]
-    public System.Collections.Generic.IDictionary<string, string>? PlatformIds { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("platformMappings")]
+    public System.Collections.Generic.ICollection<PlatformMapping>? PlatformMappings { get; set; } = default!;
 
     /// <summary>
     /// Score type code for matching analytics.score.updated events (progressive achievements)
@@ -575,10 +602,10 @@ public partial class AchievementDefinitionResponse
     public System.Collections.Generic.ICollection<Platform>? Platforms { get; set; } = default!;
 
     /// <summary>
-    /// Platform-specific IDs
+    /// Platform-specific achievement ID mappings
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("platformIds")]
-    public System.Collections.Generic.IDictionary<string, string>? PlatformIds { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("platformMappings")]
+    public System.Collections.Generic.ICollection<PlatformMapping>? PlatformMappings { get; set; } = default!;
 
     /// <summary>
     /// Required achievements
@@ -873,14 +900,6 @@ public partial class UpdateAchievementProgressResponse
 {
 
     /// <summary>
-    /// Achievement identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AchievementId { get; set; } = default!;
-
-    /// <summary>
     /// Progress before update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousProgress")]
@@ -967,20 +986,6 @@ public partial class UnlockAchievementRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UnlockAchievementResponse
 {
-
-    /// <summary>
-    /// Achievement identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AchievementId { get; set; } = default!;
-
-    /// <summary>
-    /// Whether unlock was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("unlocked")]
-    public bool Unlocked { get; set; } = default!;
 
     /// <summary>
     /// Unlock timestamp
@@ -1214,12 +1219,6 @@ public partial class SyncPlatformAchievementsResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("failed")]
     public int Failed { get; set; } = default!;
-
-    /// <summary>
-    /// Whether account is not linked to platform
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("notLinked")]
-    public bool NotLinked { get; set; } = default!;
 
     /// <summary>
     /// Error messages for failed syncs

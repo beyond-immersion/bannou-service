@@ -3,6 +3,7 @@ using BeyondImmersion.Bannou.Currency.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Currency.Caching;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
@@ -30,6 +31,7 @@ public partial class CurrencyService : ICurrencyService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly IEntitySessionRegistry _entitySessionRegistry;
+    private readonly ICurrencyDataCache _currencyCache;
 
     /// <summary>
     /// Initializes a new instance of the CurrencyService.
@@ -41,7 +43,9 @@ public partial class CurrencyService : ICurrencyService
         CurrencyServiceConfiguration configuration,
         IDistributedLockProvider lockProvider,
         ITelemetryProvider telemetryProvider,
-        IEntitySessionRegistry entitySessionRegistry)
+        IEntitySessionRegistry entitySessionRegistry,
+        ICurrencyDataCache currencyCache,
+        IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -50,6 +54,9 @@ public partial class CurrencyService : ICurrencyService
         _lockProvider = lockProvider;
         _telemetryProvider = telemetryProvider;
         _entitySessionRegistry = entitySessionRegistry;
+        _currencyCache = currencyCache;
+
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     #region Currency Definition Operations

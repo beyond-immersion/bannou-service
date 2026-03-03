@@ -34,9 +34,17 @@ public static class VariableProviderDefinitions
     /// <summary>Personality trait values for ABML expressions (${personality.*})</summary>
     public const string Personality = "personality";
 
+    // Currency Service
+    /// <summary>Currency balance and wallet data for ABML expressions (${currency.*})</summary>
+    public const string Currency = "currency";
+
     // Faction Service
     /// <summary>Faction membership and status data for ABML expressions (${faction.*})</summary>
     public const string Faction = "faction";
+
+    // Inventory Service
+    /// <summary>Item possession and container data for ABML expressions (${inventory.*})</summary>
+    public const string Inventory = "inventory";
 
     // Location Service
     /// <summary>Location context data for ABML expressions (${location.*})</summary>
@@ -49,6 +57,10 @@ public static class VariableProviderDefinitions
     // Quest Service
     /// <summary>Active quest data for ABML expressions (${quest.*})</summary>
     public const string Quest = "quest";
+
+    // Relationship Service
+    /// <summary>Entity relationship data for ABML expressions (${relationship.*})</summary>
+    public const string Relationship = "relationship";
 
     // Seed Service
     /// <summary>Seed growth and capability data for ABML expressions (${seed.*})</summary>
@@ -74,12 +86,15 @@ public static class VariableProviderDefinitions
         {
             [Backstory] = new ProviderMetadata("CharacterHistory", "Character backstory elements for ABML expressions (${backstory.*})"),
             [Combat] = new ProviderMetadata("CharacterPersonality", "Combat preference data for ABML expressions (${combat.*})"),
+            [Currency] = new ProviderMetadata("Currency", "Currency balance and wallet data for ABML expressions (${currency.*})"),
             [Encounters] = new ProviderMetadata("CharacterEncounter", "Encounter history and sentiment for ABML expressions (${encounters.*})"),
             [Faction] = new ProviderMetadata("Faction", "Faction membership and status data for ABML expressions (${faction.*})"),
+            [Inventory] = new ProviderMetadata("Inventory", "Item possession and container data for ABML expressions (${inventory.*})"),
             [Location] = new ProviderMetadata("Location", "Location context data for ABML expressions (${location.*})"),
             [Obligations] = new ProviderMetadata("Obligation", "Contract obligation action cost modifiers for ABML expressions (${obligations.*})"),
             [Personality] = new ProviderMetadata("CharacterPersonality", "Personality trait values for ABML expressions (${personality.*})"),
             [Quest] = new ProviderMetadata("Quest", "Active quest data for ABML expressions (${quest.*})"),
+            [Relationship] = new ProviderMetadata("Relationship", "Entity relationship data for ABML expressions (${relationship.*})"),
             [Seed] = new ProviderMetadata("Seed", "Seed growth and capability data for ABML expressions (${seed.*})"),
             [Transit] = new ProviderMetadata("Transit", "Transit mode availability, journey state, and route data for ABML expressions (${transit.*})"),
             [World] = new ProviderMetadata("Worldstate", "Game time, calendar, and season data for ABML expressions (${world.*})"),

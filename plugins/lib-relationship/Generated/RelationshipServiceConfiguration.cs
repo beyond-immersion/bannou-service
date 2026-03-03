@@ -69,4 +69,11 @@ public class RelationshipServiceConfiguration : BaseServiceConfiguration
     /// </summary>
     public int LockTimeoutSeconds { get; set; } = 30;
 
+    /// <summary>
+    /// TTL in seconds for relationship variable provider in-memory cache entries
+    /// Environment variable: RELATIONSHIP_PROVIDER_CACHE_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 600)]
+    public int ProviderCacheTtlSeconds { get; set; } = 300;
+
 }

@@ -47,7 +47,7 @@ internal class AchievementDefinitionData
     public int Points { get; set; }
     public string? IconUrl { get; set; }
     public List<Platform>? Platforms { get; set; }
-    public Dictionary<Platform, string>? PlatformIds { get; set; }
+    public List<PlatformMappingData>? PlatformMappings { get; set; }
     public List<string>? Prerequisites { get; set; }
 
     /// <summary>Score type code for matching analytics.score.updated events.</summary>
@@ -96,6 +96,18 @@ internal class EntityProgressData
     public EntityType EntityType { get; set; }
     public Dictionary<string, AchievementProgressData> Achievements { get; set; } = new();
     public int TotalPoints { get; set; }
+}
+
+/// <summary>
+/// Internal model for platform-specific achievement ID mapping.
+/// </summary>
+internal class PlatformMappingData
+{
+    /// <summary>External platform.</summary>
+    public Platform Platform { get; set; }
+
+    /// <summary>Platform-specific achievement identifier.</summary>
+    public string PlatformAchievementId { get; set; } = string.Empty;
 }
 
 /// <summary>

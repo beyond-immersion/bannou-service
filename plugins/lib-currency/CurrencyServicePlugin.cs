@@ -1,5 +1,8 @@
+using BeyondImmersion.BannouService.Currency.Caching;
+using BeyondImmersion.BannouService.Currency.Providers;
 using BeyondImmersion.BannouService.Currency.Services;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,6 +37,10 @@ public class CurrencyServicePlugin : BaseBannouPlugin
 
         // Register autogain background task processing service
         services.AddHostedService<CurrencyAutogainTaskService>();
+
+        // Register currency data cache and variable provider factory for ABML expressions
+        services.AddSingleton<ICurrencyDataCache, CurrencyDataCache>();
+        services.AddSingleton<IVariableProviderFactory, CurrencyProviderFactory>();
 
         // The generated clients should already be registered by AddAllBannouServiceClients()
 

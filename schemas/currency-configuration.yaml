@@ -67,6 +67,15 @@ x-service-configuration:
       default: 7
       description: Maximum duration for authorization holds in days
 
+    # Variable Provider Cache
+    ProviderCacheTtlSeconds:
+      type: integer
+      minimum: 5
+      maximum: 600
+      env: CURRENCY_PROVIDER_CACHE_TTL_SECONDS
+      default: 30
+      description: TTL in seconds for currency variable provider in-memory cache entries
+
     # Cache TTL Configuration
     balanceCacheTtlSeconds:
       type: integer

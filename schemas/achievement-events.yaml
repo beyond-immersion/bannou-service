@@ -65,7 +65,7 @@ x-lifecycle:
       points: { type: integer, required: true, description: "Point value of this achievement" }
       iconUrl: { type: string, nullable: true, description: "Achievement icon URL" }
       platforms: { type: array, items: { $ref: 'achievement-api.yaml#/components/schemas/Platform' }, nullable: true, description: "Available platforms" }
-      platformIds: { type: object, additionalProperties: { type: string }, nullable: true, description: "Platform-specific achievement IDs" }
+      platformMappings: { type: array, items: { $ref: 'achievement-api.yaml#/components/schemas/PlatformMapping' }, nullable: true, description: "Platform-specific achievement ID mappings" }
       prerequisites: { type: array, items: { type: string }, nullable: true, description: "Achievement IDs that must be unlocked first" }
       scoreType: { type: string, nullable: true, description: "Score type code for analytics event matching" }
       milestoneType: { type: string, nullable: true, description: "Milestone type code for analytics event matching" }

@@ -346,6 +346,23 @@ components:
       - failed
       - not_linked
 
+    PlatformMapping:
+      type: object
+      description: Maps an achievement to a platform-specific ID
+      additionalProperties: false
+      required:
+      - platform
+      - platformAchievementId
+      properties:
+        platform:
+          $ref: '#/components/schemas/Platform'
+          description: External platform
+        platformAchievementId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Platform-specific achievement identifier
+
     # ============================================
     # Achievement Definitions
     # ============================================
@@ -412,12 +429,12 @@ components:
             $ref: '#/components/schemas/Platform'
           nullable: true
           description: Platforms where this achievement exists
-        platformIds:
-          type: object
-          additionalProperties:
-            type: string
+        platformMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformMapping'
           nullable: true
-          description: "Platform-specific achievement IDs (e.g., {\"steam\": \"ACH_001\"})"
+          description: Platform-specific achievement ID mappings
         prerequisites:
           type: array
           items:
@@ -559,10 +576,10 @@ components:
           type: boolean
           nullable: true
           description: New active status
-        platformIds:
-          type: object
-          additionalProperties:
-            type: string
+        platformMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformMapping'
           nullable: true
           description: Updated platform ID mappings
         scoreType:
@@ -679,12 +696,12 @@ components:
             $ref: '#/components/schemas/Platform'
           nullable: true
           description: Available platforms
-        platformIds:
-          type: object
-          additionalProperties:
-            type: string
+        platformMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformMapping'
           nullable: true
-          description: Platform-specific IDs
+          description: Platform-specific achievement ID mappings
         prerequisites:
           type: array
           items:
@@ -884,15 +901,11 @@ components:
       description: Response after updating progress
       additionalProperties: false
       required:
-      - achievementId
       - previousProgress
       - newProgress
       - targetProgress
       - unlocked
       properties:
-        achievementId:
-          type: string
-          description: Achievement identifier
         previousProgress:
           type: integer
           description: Progress before update
@@ -947,16 +960,8 @@ components:
       description: Response after unlocking an achievement
       additionalProperties: false
       required:
-      - achievementId
-      - unlocked
       - unlockedAt
       properties:
-        achievementId:
-          type: string
-          description: Achievement identifier
-        unlocked:
-          type: boolean
-          description: Whether unlock was successful
         unlockedAt:
           type: string
           format: date-time
@@ -1095,7 +1100,6 @@ components:
       - platform
       - synced
       - failed
-      - notLinked
       properties:
         platform:
           $ref: '#/components/schemas/Platform'
@@ -1106,9 +1110,6 @@ components:
         failed:
           type: integer
           description: Number of sync failures
-        notLinked:
-          type: boolean
-          description: Whether account is not linked to platform
         errors:
           type: array
           items:

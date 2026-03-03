@@ -72,6 +72,13 @@ public class InventoryServiceConfiguration : BaseServiceConfiguration
     public int ContainerCacheTtlSeconds { get; set; } = 300;
 
     /// <summary>
+    /// TTL in seconds for inventory variable provider in-memory cache entries
+    /// Environment variable: INVENTORY_PROVIDER_CACHE_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 600)]
+    public int ProviderCacheTtlSeconds { get; set; } = 60;
+
+    /// <summary>
     /// Timeout for container modification locks
     /// Environment variable: INVENTORY_LOCK_TIMEOUT_SECONDS
     /// </summary>

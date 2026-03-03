@@ -73,11 +73,11 @@ components:
           items: {$ref: '../achievement-api.yaml#/components/schemas/Platform'}
           nullable: true
           description: "Available platforms"
-        platformIds: &id012
-          type: object
-          additionalProperties: {type: string}
+        platformMappings: &id012
+          type: array
+          items: {$ref: '../achievement-api.yaml#/components/schemas/PlatformMapping'}
           nullable: true
-          description: "Platform-specific achievement IDs"
+          description: "Platform-specific achievement ID mappings"
         prerequisites: &id013
           type: array
           items: {type: string}
@@ -174,7 +174,7 @@ components:
         points: *id009
         iconUrl: *id010
         platforms: *id011
-        platformIds: *id012
+        platformMappings: *id012
         prerequisites: *id013
         scoreType: *id014
         milestoneType: *id015
@@ -230,7 +230,7 @@ components:
         points: *id009
         iconUrl: *id010
         platforms: *id011
-        platformIds: *id012
+        platformMappings: *id012
         prerequisites: *id013
         scoreType: *id014
         milestoneType: *id015

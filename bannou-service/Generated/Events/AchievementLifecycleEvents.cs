@@ -141,10 +141,10 @@ public partial class AchievementDefinitionCreatedEvent : BaseServiceEvent
     public System.Collections.Generic.ICollection<Platform>? Platforms { get; set; } = default!;
 
     /// <summary>
-    /// Platform-specific achievement IDs
+    /// Platform-specific achievement ID mappings
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("platformIds")]
-    public System.Collections.Generic.IDictionary<string, string>? PlatformIds { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("platformMappings")]
+    public System.Collections.Generic.ICollection<PlatformMapping>? PlatformMappings { get; set; } = default!;
 
     /// <summary>
     /// Achievement IDs that must be unlocked first
@@ -329,10 +329,10 @@ public partial class AchievementDefinitionUpdatedEvent : BaseServiceEvent
     public System.Collections.Generic.ICollection<Platform>? Platforms { get; set; } = default!;
 
     /// <summary>
-    /// Platform-specific achievement IDs
+    /// Platform-specific achievement ID mappings
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("platformIds")]
-    public System.Collections.Generic.IDictionary<string, string>? PlatformIds { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("platformMappings")]
+    public System.Collections.Generic.ICollection<PlatformMapping>? PlatformMappings { get; set; } = default!;
 
     /// <summary>
     /// Achievement IDs that must be unlocked first
@@ -525,10 +525,10 @@ public partial class AchievementDefinitionDeletedEvent : BaseServiceEvent
     public System.Collections.Generic.ICollection<Platform>? Platforms { get; set; } = default!;
 
     /// <summary>
-    /// Platform-specific achievement IDs
+    /// Platform-specific achievement ID mappings
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("platformIds")]
-    public System.Collections.Generic.IDictionary<string, string>? PlatformIds { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("platformMappings")]
+    public System.Collections.Generic.ICollection<PlatformMapping>? PlatformMappings { get; set; } = default!;
 
     /// <summary>
     /// Achievement IDs that must be unlocked first

@@ -28,6 +28,14 @@ x-variable-providers:
   # L2 Game Foundation Providers
   # ============================================================================
 
+  currency:
+    service: Currency
+    purpose: "Currency balance and wallet data for ABML expressions (${currency.*})"
+
+  inventory:
+    service: Inventory
+    purpose: "Item possession and container data for ABML expressions (${inventory.*})"
+
   location:
     service: Location
     purpose: "Location context data for ABML expressions (${location.*})"
@@ -35,6 +43,10 @@ x-variable-providers:
   quest:
     service: Quest
     purpose: "Active quest data for ABML expressions (${quest.*})"
+
+  relationship:
+    service: Relationship
+    purpose: "Entity relationship data for ABML expressions (${relationship.*})"
 
   seed:
     service: Seed

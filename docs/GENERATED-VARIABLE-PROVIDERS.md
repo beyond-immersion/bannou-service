@@ -13,17 +13,20 @@ Variable providers supply entity data to behavior expressions via the
 |-----------|---------|---------|
 | `${backstory.*}` | CharacterHistory | Character backstory elements for ABML expressions (${backstory.*}) |
 | `${combat.*}` | CharacterPersonality | Combat preference data for ABML expressions (${combat.*}) |
+| `${currency.*}` | Currency | Currency balance and wallet data for ABML expressions (${currency.*}) |
 | `${encounters.*}` | CharacterEncounter | Encounter history and sentiment for ABML expressions (${encounters.*}) |
 | `${faction.*}` | Faction | Faction membership and status data for ABML expressions (${faction.*}) |
+| `${inventory.*}` | Inventory | Item possession and container data for ABML expressions (${inventory.*}) |
 | `${location.*}` | Location | Location context data for ABML expressions (${location.*}) |
 | `${obligations.*}` | Obligation | Contract obligation action cost modifiers for ABML expressions (${obligations.*}) |
 | `${personality.*}` | CharacterPersonality | Personality trait values for ABML expressions (${personality.*}) |
 | `${quest.*}` | Quest | Active quest data for ABML expressions (${quest.*}) |
+| `${relationship.*}` | Relationship | Entity relationship data for ABML expressions (${relationship.*}) |
 | `${seed.*}` | Seed | Seed growth and capability data for ABML expressions (${seed.*}) |
 | `${transit.*}` | Transit | Transit mode availability, journey state, and route data for ABML expressions (${transit.*}) |
 | `${world.*}` | Worldstate | Game time, calendar, and season data for ABML expressions (${world.*}) |
 
-**Total**: 11 providers
+**Total**: 14 providers
 
 ## How Providers Work
 

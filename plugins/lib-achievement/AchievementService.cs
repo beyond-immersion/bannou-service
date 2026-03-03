@@ -134,7 +134,11 @@ public partial class AchievementService : IAchievementService
             Points = body.Points,
             IconUrl = body.IconUrl,
             Platforms = body.Platforms?.ToList() ?? new List<Platform> { Platform.Internal },
-            PlatformIds = ParsePlatformIds(body.PlatformIds),
+            PlatformMappings = body.PlatformMappings?.Select(m => new PlatformMappingData
+            {
+                Platform = m.Platform,
+                PlatformAchievementId = m.PlatformAchievementId
+            }).ToList(),
             Prerequisites = body.Prerequisites?.ToList(),
             ScoreType = body.ScoreType,
             MilestoneType = body.MilestoneType,
@@ -293,10 +297,14 @@ public partial class AchievementService : IAchievementService
             definition.IsActive = body.IsActive.Value;
             changedFields.Add("isActive");
         }
-        if (body.PlatformIds != null)
+        if (body.PlatformMappings != null)
         {
-            definition.PlatformIds = ParsePlatformIds(body.PlatformIds);
-            changedFields.Add("platformIds");
+            definition.PlatformMappings = body.PlatformMappings.Select(m => new PlatformMappingData
+            {
+                Platform = m.Platform,
+                PlatformAchievementId = m.PlatformAchievementId
+            }).ToList();
+            changedFields.Add("platformMappings");
         }
         if (body.ScoreType != null && body.ScoreType != definition.ScoreType)
         {
@@ -544,7 +552,6 @@ public partial class AchievementService : IAchievementService
         {
             return (StatusCodes.OK, new UpdateAchievementProgressResponse
             {
-                AchievementId = body.AchievementId,
                 PreviousProgress = achievementProgress.CurrentProgress,
                 NewProgress = achievementProgress.CurrentProgress,
                 TargetProgress = achievementProgress.TargetProgress,
@@ -604,7 +611,6 @@ public partial class AchievementService : IAchievementService
 
         return (StatusCodes.OK, new UpdateAchievementProgressResponse
         {
-            AchievementId = body.AchievementId,
             PreviousProgress = previousProgress,
             NewProgress = achievementProgress.CurrentProgress,
             TargetProgress = achievementProgress.TargetProgress,
@@ -694,8 +700,6 @@ public partial class AchievementService : IAchievementService
         {
             return (StatusCodes.OK, new UnlockAchievementResponse
             {
-                AchievementId = body.AchievementId,
-                Unlocked = false, // Already was unlocked
                 UnlockedAt = existing.UnlockedAt ?? DateTimeOffset.UtcNow
             });
         }
@@ -734,8 +738,6 @@ public partial class AchievementService : IAchievementService
 
         return (StatusCodes.OK, new UnlockAchievementResponse
         {
-            AchievementId = body.AchievementId,
-            Unlocked = true,
             UnlockedAt = now,
             PlatformSyncStatus = platformSyncStatus.Count > 0 ? platformSyncStatus : null
         });
@@ -848,8 +850,7 @@ public partial class AchievementService : IAchievementService
             {
                 Platform = body.Platform,
                 Synced = 0,
-                Failed = 0,
-                NotLinked = true
+                Failed = 0
             });
         }
 
@@ -860,8 +861,7 @@ public partial class AchievementService : IAchievementService
             {
                 Platform = body.Platform,
                 Synced = 0,
-                Failed = 0,
-                NotLinked = true
+                Failed = 0
             });
         }
 
@@ -876,8 +876,7 @@ public partial class AchievementService : IAchievementService
             {
                 Platform = body.Platform,
                 Synced = 0,
-                Failed = 0,
-                NotLinked = false
+                Failed = 0
             });
         }
 
@@ -916,7 +915,7 @@ public partial class AchievementService : IAchievementService
                 continue;
             }
 
-            var platformAchievementId = definition.PlatformIds?.GetValueOrDefault(body.Platform);
+            var platformAchievementId = definition.PlatformMappings?.FirstOrDefault(m => m.Platform == body.Platform)?.PlatformAchievementId;
             if (string.IsNullOrEmpty(platformAchievementId))
             {
                 _logger.LogError(
@@ -997,7 +996,6 @@ public partial class AchievementService : IAchievementService
             Platform = body.Platform,
             Synced = synced,
             Failed = failed,
-            NotLinked = false,
             Errors = errors.Count > 0 ? errors : null
         });
     }
@@ -1057,30 +1055,6 @@ public partial class AchievementService : IAchievementService
     }
 
     #region Helper Methods
-
-    /// <summary>
-    /// Parses platform ID dictionary from string-keyed request format to typed Platform-keyed format.
-    /// Converts at the boundary between external API (string keys) and internal model (Platform enum keys).
-    /// </summary>
-    /// <param name="platformIds">The string-keyed dictionary from the request model.</param>
-    /// <returns>Platform enum-keyed dictionary, or null if input is null.</returns>
-    private static Dictionary<Platform, string>? ParsePlatformIds(IDictionary<string, string>? platformIds)
-    {
-        if (platformIds == null)
-        {
-            return null;
-        }
-
-        var result = new Dictionary<Platform, string>();
-        foreach (var kvp in platformIds)
-        {
-            if (Enum.TryParse<Platform>(kvp.Key, ignoreCase: true, out var platform))
-            {
-                result[platform] = kvp.Value;
-            }
-        }
-        return result;
-    }
 
     /// <summary>
     /// Increments the EarnedCount on an achievement definition with optimistic concurrency retry.
@@ -1230,7 +1204,7 @@ public partial class AchievementService : IAchievementService
             return SyncStatus.NotLinked;
         }
 
-        var platformAchievementId = definition.PlatformIds?.GetValueOrDefault(platform);
+        var platformAchievementId = definition.PlatformMappings?.FirstOrDefault(m => m.Platform == platform)?.PlatformAchievementId;
         if (string.IsNullOrEmpty(platformAchievementId))
         {
             var missingIdMessage = $"Missing platform achievement ID for {platform} achievement {achievementId}";
@@ -1423,9 +1397,11 @@ public partial class AchievementService : IAchievementService
             Points = definition.Points,
             IconUrl = definition.IconUrl,
             Platforms = definition.Platforms ?? new List<Platform>(),
-            PlatformIds = definition.PlatformIds?.ToDictionary(
-                kvp => kvp.Key.ToString().ToLowerInvariant(),
-                kvp => kvp.Value),
+            PlatformMappings = definition.PlatformMappings?.Select(m => new PlatformMapping
+            {
+                Platform = m.Platform,
+                PlatformAchievementId = m.PlatformAchievementId
+            }).ToList(),
             Prerequisites = definition.Prerequisites,
             ScoreType = definition.ScoreType,
             MilestoneType = definition.MilestoneType,
@@ -1486,7 +1462,11 @@ public partial class AchievementService : IAchievementService
                 Points = definition.Points,
                 IconUrl = definition.IconUrl,
                 Platforms = definition.Platforms?.ToList(),
-                PlatformIds = definition.PlatformIds?.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value),
+                PlatformMappings = definition.PlatformMappings?.Select(m => new PlatformMapping
+                {
+                    Platform = m.Platform,
+                    PlatformAchievementId = m.PlatformAchievementId
+                }).ToList(),
                 Prerequisites = definition.Prerequisites?.ToList(),
                 ScoreType = definition.ScoreType,
                 MilestoneType = definition.MilestoneType,
@@ -1507,7 +1487,14 @@ public partial class AchievementService : IAchievementService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to publish achievement.definition.created event for {AchievementId}", definition.AchievementId);
+            _logger.LogError(ex, "Failed to publish achievement.definition.created event for {AchievementId}", definition.AchievementId);
+            await _messageBus.TryPublishErrorAsync(
+                "achievement",
+                "PublishDefinitionCreatedEvent",
+                ex.GetType().Name,
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
         }
     }
 
@@ -1536,7 +1523,11 @@ public partial class AchievementService : IAchievementService
                 Points = definition.Points,
                 IconUrl = definition.IconUrl,
                 Platforms = definition.Platforms?.ToList(),
-                PlatformIds = definition.PlatformIds?.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value),
+                PlatformMappings = definition.PlatformMappings?.Select(m => new PlatformMapping
+                {
+                    Platform = m.Platform,
+                    PlatformAchievementId = m.PlatformAchievementId
+                }).ToList(),
                 Prerequisites = definition.Prerequisites?.ToList(),
                 ScoreType = definition.ScoreType,
                 MilestoneType = definition.MilestoneType,
@@ -1559,7 +1550,14 @@ public partial class AchievementService : IAchievementService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to publish achievement.definition.updated event for {AchievementId}", definition.AchievementId);
+            _logger.LogError(ex, "Failed to publish achievement.definition.updated event for {AchievementId}", definition.AchievementId);
+            await _messageBus.TryPublishErrorAsync(
+                "achievement",
+                "PublishDefinitionUpdatedEvent",
+                ex.GetType().Name,
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
         }
     }
 

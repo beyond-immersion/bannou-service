@@ -106,6 +106,13 @@ public class CurrencyServiceConfiguration : BaseServiceConfiguration
     public int HoldMaxDurationDays { get; set; } = 7;
 
     /// <summary>
+    /// TTL in seconds for currency variable provider in-memory cache entries
+    /// Environment variable: CURRENCY_PROVIDER_CACHE_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 600)]
+    public int ProviderCacheTtlSeconds { get; set; } = 30;
+
+    /// <summary>
     /// TTL in seconds for balance cache entries
     /// Environment variable: CURRENCY_BALANCE_CACHE_TTL_SECONDS
     /// </summary>

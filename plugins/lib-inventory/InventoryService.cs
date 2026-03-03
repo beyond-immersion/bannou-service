@@ -3,6 +3,7 @@ using BeyondImmersion.Bannou.Inventory.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Inventory.Caching;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
@@ -28,6 +29,7 @@ public partial class InventoryService : IInventoryService
     private readonly InventoryServiceConfiguration _configuration;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly IEntitySessionRegistry _entitySessionRegistry;
+    private readonly IInventoryDataCache _inventoryCache;
     private readonly WeightContribution _defaultWeightContribution;
 
     /// <summary>
@@ -54,7 +56,9 @@ public partial class InventoryService : IInventoryService
         ILogger<InventoryService> logger,
         InventoryServiceConfiguration configuration,
         ITelemetryProvider telemetryProvider,
-        IEntitySessionRegistry entitySessionRegistry)
+        IEntitySessionRegistry entitySessionRegistry,
+        IInventoryDataCache inventoryCache,
+        IEventConsumer eventConsumer)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _itemClient = itemClient ?? throw new ArgumentNullException(nameof(itemClient));
@@ -64,9 +68,12 @@ public partial class InventoryService : IInventoryService
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _telemetryProvider = telemetryProvider ?? throw new ArgumentNullException(nameof(telemetryProvider));
         _entitySessionRegistry = entitySessionRegistry ?? throw new ArgumentNullException(nameof(entitySessionRegistry));
+        _inventoryCache = inventoryCache ?? throw new ArgumentNullException(nameof(inventoryCache));
 
         // Configuration already provides typed enum (T25 compliant)
         _defaultWeightContribution = _configuration.DefaultWeightContribution;
+
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer ?? throw new ArgumentNullException(nameof(eventConsumer)));
     }
 
     #region Container Operations

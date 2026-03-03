@@ -33,3 +33,12 @@ x-service-configuration:
       description: Timeout in seconds for distributed lock acquisition on index and uniqueness operations
       env: RELATIONSHIP_LOCK_TIMEOUT_SECONDS
       default: 30
+
+    # Variable Provider Cache
+    ProviderCacheTtlSeconds:
+      type: integer
+      minimum: 5
+      maximum: 600
+      description: TTL in seconds for relationship variable provider in-memory cache entries
+      env: RELATIONSHIP_PROVIDER_CACHE_TTL_SECONDS
+      default: 300

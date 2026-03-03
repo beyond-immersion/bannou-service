@@ -1,0 +1,306 @@
+openapi: 3.0.4
+info:
+  title: Achievement Service Events
+  description: |
+    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
+    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
+    Source: achievement-events.yaml
+
+    Event subscription and publication declarations for Achievement service.
+
+    **Data Flow**: Achievement subscribes to analytics events for progress tracking:
+    - Subscribes to analytics.score.updated for automatic progress
+    - Subscribes to analytics.milestone.reached for milestone achievements
+    - Publishes achievement.unlocked for client notifications and other services
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Analytics events for automatic progress tracking
+  - topic: analytics.score.updated
+    event: AnalyticsScoreUpdatedEvent
+    handler: HandleScoreUpdated
+  - topic: analytics.milestone.reached
+    event: AnalyticsMilestoneReachedEvent
+    handler: HandleMilestoneReached
+    # Leaderboard events for ranking achievements
+  - topic: leaderboard.rank.changed
+    event: LeaderboardRankChangedEvent
+    handler: HandleRankChanged
+  x-event-publications:
+    # Achievement definition lifecycle events
+  - topic: achievement.definition.created
+    event: AchievementDefinitionCreatedEvent
+    description: Published when a new achievement definition is created
+  - topic: achievement.definition.updated
+    event: AchievementDefinitionUpdatedEvent
+    description: Published when an achievement definition is updated
+    # Published when an achievement is unlocked
+  - topic: achievement.unlocked
+    event: AchievementUnlockedEvent
+    description: Published when an entity unlocks an achievement
+    # Published when progress is made toward an achievement
+  - topic: achievement.progress.updated
+    event: AchievementProgressUpdatedEvent
+    description: Published when progress is made on a progressive achievement
+    # Published when platform sync completes
+  - topic: achievement.platform.synced
+    event: AchievementPlatformSyncedEvent
+    description: Published when achievement is synced to external platform
+
+# Lifecycle events auto-generated from this definition.
+# Achievement uses a single entity (AchievementDefinition) with topic_prefix for Pattern C namespacing.
+x-lifecycle:
+  topic_prefix: achievement
+  AchievementDefinition:
+    model:
+      gameServiceId: {type: string, format: uuid, required: true, description: "ID of the owning game service"}
+      achievementId: {type: string, primary: true, required: true, description: "Unique achievement identifier within game
+          service"}
+      displayName: {type: string, required: true, description: "Human-readable name"}
+      description: {type: string, required: true, description: "How to earn this achievement"}
+      hiddenDescription: {type: string, nullable: true, description: "Description shown before achievement is earned (for
+          hidden types)"}
+      achievementType: {$ref: '../achievement-api.yaml#/components/schemas/AchievementType', required: true, description: "Classification
+          of the achievement"}
+      entityTypes: {type: array, items: {$ref: '../common-api.yaml#/components/schemas/EntityType'}, nullable: true, 
+          description: "Which entity types can earn this achievement"}
+      progressTarget: {type: integer, nullable: true, description: "Target value for progressive achievements"}
+      points: {type: integer, required: true, description: "Point value of this achievement"}
+      iconUrl: {type: string, nullable: true, description: "Achievement icon URL"}
+      platforms: {type: array, items: {$ref: '#/components/schemas/Platform'}, nullable: true, description: "Available platforms"}
+      platformMappings: {type: array, items: {$ref: '#/components/schemas/PlatformMapping'}, nullable: true, description: "Platform-specific
+          achievement ID mappings"}
+      prerequisites: {type: array, items: {type: string}, nullable: true, description: "Achievement IDs that must be unlocked
+          first"}
+      scoreType: {type: string, nullable: true, description: "Score type code for analytics event matching"}
+      milestoneType: {type: string, nullable: true, description: "Milestone type code for analytics event matching"}
+      milestoneValue: {type: number, format: double, nullable: true, description: "Expected milestone value for analytics
+          event matching"}
+      milestoneName: {type: string, nullable: true, description: "Expected milestone name for analytics event matching"}
+      leaderboardId: {type: string, nullable: true, description: "Leaderboard ID for rank change event matching"}
+      rankThreshold: {type: integer, format: int64, nullable: true, description: "Rank threshold for leaderboard achievements"}
+      isActive: {type: boolean, required: true, description: "Whether achievement is earnable"}
+      isDeprecated: {type: boolean, required: true, description: "Whether this definition is deprecated"}
+      deprecatedAt: {type: string, format: date-time, nullable: true, description: "When deprecation occurred"}
+      deprecationReason: {type: string, nullable: true, description: "Audit reason for deprecation"}
+      earnedCount: {type: integer, format: int64, required: true, description: "How many entities have earned this"}
+      createdAt: {type: string, format: date-time, required: true, description: "When the achievement was created"}
+      metadata: {type: object, additionalProperties: true, nullable: true, description: "Client-only metadata. No Bannou plugin
+          reads specific keys from this field by convention."}
+    sensitive: []
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # ============================================
+    # Published Events
+    # ============================================
+    AchievementUnlockedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an entity unlocks an achievement
+      required:
+      - eventId
+      - timestamp
+      - gameServiceId
+      - achievementId
+      - displayName
+      - entityId
+      - entityType
+      - points
+      - totalPoints
+      - isRare
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the achievement was unlocked
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        achievementId:
+          type: string
+          description: ID of the unlocked achievement
+        displayName:
+          type: string
+          description: Achievement display name
+        description:
+          type: string
+          nullable: true
+          description: Achievement description
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity that unlocked it
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of entity
+        points:
+          type: integer
+          description: Points earned from this achievement
+        totalPoints:
+          type: integer
+          description: Entity's new total achievement points
+        iconUrl:
+          type: string
+          nullable: true
+          description: Achievement icon URL
+        isRare:
+          type: boolean
+          description: Whether this is a rare achievement (earned by <5% of players)
+        rarity:
+          type: number
+          format: double
+          nullable: true
+          description: Percentage of players who have earned this (0-100)
+
+    AchievementProgressUpdatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when progress is made on a progressive achievement
+      required:
+      - eventId
+      - timestamp
+      - gameServiceId
+      - achievementId
+      - displayName
+      - entityId
+      - entityType
+      - previousProgress
+      - newProgress
+      - targetProgress
+      - percentComplete
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the progress was updated
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        achievementId:
+          type: string
+          description: ID of the achievement
+        displayName:
+          type: string
+          description: Achievement display name
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of entity
+        previousProgress:
+          type: integer
+          description: Progress before update
+        newProgress:
+          type: integer
+          description: Progress after update
+        targetProgress:
+          type: integer
+          description: Target to unlock
+        percentComplete:
+          type: number
+          format: double
+          description: Completion percentage (0-100)
+
+    AchievementPlatformSyncedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an achievement is synced to an external platform
+      required:
+      - eventId
+      - timestamp
+      - gameServiceId
+      - achievementId
+      - entityId
+      - entityType
+      - platform
+      - success
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the sync occurred
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        achievementId:
+          type: string
+          description: ID of the achievement
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity (account for platform sync)
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of entity
+        platform:
+          $ref: '#/components/schemas/Platform'
+          description: Platform that was synced to
+        platformAchievementId:
+          type: string
+          nullable: true
+          description: Platform-specific achievement ID
+        success:
+          type: boolean
+          description: Whether sync was successful
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error message if sync failed
+
+    Platform:
+      type: string
+      description: External platform for achievement sync
+      enum:
+      - steam
+      - xbox
+      - playstation
+      - internal
+
+    PlatformMapping:
+      type: object
+      description: Maps an achievement to a platform-specific ID
+      additionalProperties: false
+      required:
+      - platform
+      - platformAchievementId
+      properties:
+        platform:
+          $ref: '#/components/schemas/Platform'
+          description: External platform
+        platformAchievementId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Platform-specific achievement identifier
+
+    # ============================================
+    # Achievement Definitions
+    # ============================================
+x-inlined-types:
+- Platform
+- PlatformMapping
