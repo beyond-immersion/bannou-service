@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: Infrastructure
 > **State Store**: messaging-external-subs (Redis, app-id keyed with TTL)
+> **Implementation Map**: [docs/maps/MESSAGING.md](../maps/MESSAGING.md)
 
 ---
 

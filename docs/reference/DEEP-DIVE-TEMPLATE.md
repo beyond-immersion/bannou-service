@@ -11,7 +11,7 @@ When building a deep dive for a plugin, follow this process:
 
 1. **Read all source code thoroughly**: Read the service implementation, helper services, interfaces, models, events, configuration, and tests. Do not skim - read every method body, every branch, every error handler.
 
-2. **Build the document structure**: Fill in sections 1-12 based on verifiable source code. Every statement must trace back to a specific line of code.
+2. **Build the document structure**: Fill in sections 1-7 based on verifiable source code. Every statement must trace back to a specific line of code. If an implementation map exists for this plugin, operational sections (dependencies, state, events, DI services, endpoint behavior) belong in the map -- do not duplicate them here.
 
 3. **Compile a comprehensive quirks list**: After understanding the full codebase, identify every non-obvious behavior, potential issue, and design decision. Be thorough - it is better to flag something that turns out to be intentional than to miss a real bug. Look for:
    - Encoding mismatches, type confusion, off-by-one errors
@@ -37,7 +37,7 @@ When building a deep dive for a plugin, follow this process:
 
 ### 1. Header
 
-Two standard header formats exist depending on implementation status. All deep dive documents MUST use one of these two patterns exactly. Do not invent custom header fields (`Depends On`, `Hard Dependencies`, `Soft Dependencies`, `Referenced By`, `Service`, etc.) -- dependencies belong in section 3.
+Two standard header formats exist depending on implementation status. All deep dive documents MUST use one of these two patterns exactly. Do not invent custom header fields (`Depends On`, `Hard Dependencies`, `Soft Dependencies`, `Referenced By`, `Service`, etc.) -- dependencies belong in the implementation map.
 
 #### Implemented Plugin Header
 
@@ -54,6 +54,7 @@ For plugins that have a schema and generated code (whether fully implemented, pa
 ```
 
 Optional additional fields (add after State Store, in this order):
+- `> **Implementation Map**: [docs/maps/{SERVICE-NAME}.md](../maps/{SERVICE-NAME}.md)` — link to the implementation map if one exists
 - `> **Status**: Pre-implementation (architectural specification)` — for plugins with schemas but no service logic yet
 - `> **Planning**: [{doc}]({path})` — link to a planning/design document if one exists
 - `> **Guide**: [{doc}]({path})` — link to a cross-service integration guide if one exists
@@ -79,7 +80,7 @@ The `Layer` field is mandatory in both header formats. It provides at-a-glance l
 - `# {Name} Service (lib-{name})` — use `# {Name} Plugin Deep Dive`
 - `# {Name} Service Deep Dive` — use `Plugin`, not `Service`
 - `> **Service**: lib-{name}` — use `**Plugin**`, not `**Service**`
-- Listing dependencies in the header — they belong in section 3
+- Listing dependencies in the header — they belong in the implementation map
 
 ---
 
@@ -89,21 +90,7 @@ A concise description of what the plugin does, its role in the system, and its a
 
 ---
 
-### 3. Dependencies (What This Plugin Relies On)
-
-A table of other plugins/infrastructure this plugin calls or depends on, with a brief explanation of what it uses each for.
-
-```markdown
-| Dependency | Usage |
-|------------|-------|
-| lib-state (IStateStoreFactory) | Persistence for {data type} |
-| lib-messaging (IMessageBus) | Publishing {event} events |
-| lib-{other} (I{Other}Client) | {What it calls the other service for} |
-```
-
----
-
-### 4. Dependents (What Relies On This Plugin)
+### 3. Dependents (What Relies On This Plugin)
 
 A table of other plugins that consume this plugin's data or events.
 
@@ -116,45 +103,7 @@ A table of other plugins that consume this plugin's data or events.
 
 ---
 
-### 5. State Storage
-
-Describe the state store used, the backend type, and document each key pattern with its purpose and data type.
-
-```markdown
-**Store**: `{store-name}` (Backend: MySQL/Redis)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `{prefix}{id}` | `{ModelType}` | {What this key stores} |
-```
-
----
-
-### 6. Events
-
-#### Published Events
-
-Table of events this plugin publishes and when.
-
-```markdown
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `{entity}.{action}` | `{EventType}` | {When this fires} |
-```
-
-#### Consumed Events
-
-Table of events this plugin subscribes to and what it does with them. If none, state "This plugin does not consume external events."
-
-```markdown
-| Topic | Handler | Action |
-|-------|---------|--------|
-| `{entity}.{action}` | `Handle{Event}Async` | {What happens} |
-```
-
----
-
-### 7. Configuration
+### 4. Configuration
 
 Full list of configuration properties from the configuration schema, with environment variable names, defaults, and what each controls in the service logic.
 
@@ -166,31 +115,7 @@ Full list of configuration properties from the configuration schema, with enviro
 
 ---
 
-### 8. DI Services & Helpers
-
-List of injected dependencies and internal helper classes, with their roles.
-
-```markdown
-| Service | Role |
-|---------|------|
-| `ILogger<{Service}>` | Structured logging |
-| `{Service}Configuration` | Typed configuration access |
-| `IStateStoreFactory` | State store access |
-| `IMessageBus` | Event publishing |
-| `{HelperClass}` | {What it does} |
-```
-
----
-
-### 9. API Endpoints (Implementation Notes)
-
-Brief implementation-level notes on endpoint groups. Not a repeat of the generated docs, but notes on internal behavior, edge cases, and non-obvious logic. Group by tag as in the schema.
-
-**Endpoint groups that are straightforward CRUD can be described collectively** (e.g., "Standard CRUD operations on {entity} with optimistic concurrency via ETags"). Only call out individual endpoints when they have non-obvious behavior, special edge cases, or implementation quirks worth documenting.
-
----
-
-### 10. Visual Aid
+### 5. Visual Aid
 
 One ASCII or Mermaid diagram per document that illustrates something **not already obvious from the tables above**. The Dependencies/Dependents tables already show what connects to what, so don't repeat that.
 
@@ -199,17 +124,17 @@ Good candidates for the visual:
 - **Multi-step operation flow**: How a complex operation (e.g., registration) flows through multiple internal steps
 - **Internal data model structure**: How model fields relate across different key patterns in the same store
 
-Do **not** create a diagram that just draws arrows between this plugin, its dependents, and its dependencies - that's what sections 3 and 4 already say in table form.
+Do **not** create a diagram that just draws arrows between this plugin, its dependents, and its dependencies - that's what the Dependents table and implementation map already say.
 
 ---
 
-### 11. Stubs & Unimplemented Features
+### 6. Stubs & Unimplemented Features
 
 Things that have scaffolding, configuration, or partial code but are not yet functional. Each entry should note what exists and what's missing to complete it.
 
 ---
 
-### 12. Potential Extensions
+### 7. Potential Extensions
 
 Technical observations about ways the plugin could be improved or extended. No stubs exist for these - they are forward-looking ideas. Technical description only (no priority/effort estimates).
 
@@ -219,13 +144,13 @@ Technical observations about ways the plugin could be improved or extended. No s
 
 Plugins may include additional `##` sections for service-specific content that doesn't fit the standard template structure. These sections can be placed in **two positions** depending on their role:
 
-**Position A: Between Overview (2) and Dependencies (3)** — for foundational architectural context that the rest of the document builds on. Use this when the section explains a core design principle, privacy model, protocol, or subsystem that readers need to understand before the standard sections make sense. Examples:
+**Position A: Between Overview (2) and Dependents (3)** — for foundational architectural context that the rest of the document builds on. Use this when the section explains a core design principle, privacy model, protocol, or subsystem that readers need to understand before the standard sections make sense. Examples:
 
 - **Privacy Boundary**: Data flow and PII handling model (e.g., lib-stream's sentiment anonymization)
 - **Core Subsystem Design**: A subsystem architecture that drives the rest of the plugin (e.g., lib-streaming's simulated audience system)
 - **Protocol Details**: Wire protocol or binary format that the plugin implements
 
-**Position B: Between Potential Extensions (12) and Known Quirks (13)** — for supplementary content that adds detail but isn't prerequisite context. Examples:
+**Position B: Between Potential Extensions (7) and Known Quirks (8)** — for supplementary content that adds detail but isn't prerequisite context. Examples:
 
 - **Duration/Format Reference**: ISO 8601 duration formats, encoding details, data format specifications
 - **License Compliance**: Third-party dependency licensing analysis
@@ -241,7 +166,7 @@ Plugins may include additional `##` sections for service-specific content that d
 
 ---
 
-### 13. Known Quirks & Caveats
+### 8. Known Quirks & Caveats
 
 Organized into three categories based on the nature and urgency of each finding.
 
@@ -259,7 +184,7 @@ Issues that are likely bugs, missing implementation, or design oversights, but w
 
 ---
 
-### 14. Work Tracking
+### 9. Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
@@ -293,9 +218,50 @@ Work tracking uses HTML comment markers placed immediately after the item being 
 
 1. **One visual aid maximum** per document unless the plugin genuinely has two independent subsystems that cannot be combined into one readable diagram. The visual must add information not already present in the tables.
 2. **No speculative information** - every statement must be verified against the source code.
-3. **No generated docs repetition** - the API endpoint section adds implementation context, not a copy of the schema descriptions.
-4. **Keep it scannable** - tables over prose where possible, prose only where context requires narrative explanation.
-5. **Configuration must be complete** - every property in the configuration schema must appear in the configuration table.
-6. **State key patterns must be complete** - every key prefix used in the service code must be documented.
-7. **Event coverage must be complete** - every published and consumed event topic must be listed.
-8. **Preserve AUDIT markers** - Never remove or modify `<!-- AUDIT:... -->` markers during document maintenance. These are managed by the `/audit-plugin` workflow and track active development work.
+3. **Keep it scannable** - tables over prose where possible, prose only where context requires narrative explanation.
+4. **Configuration must be complete** - every property in the configuration schema must appear in the configuration table.
+5. **Preserve AUDIT markers** - Never remove or modify `<!-- AUDIT:... -->` markers during document maintenance. These are managed by the `/audit-plugin` workflow and track active development work.
+6. **Cross-reference implementation map** - If an implementation map exists at `docs/maps/{SERVICE-NAME}.md`, the header must include the `Implementation Map` field linking to it. Operational sections (dependencies, state storage, events, DI services, endpoint behavior) belong in the map, not in the deep dive.
+7. **Incremental migration** - Existing deep dives keep their operational sections until an implementation map is created. When a map is created, follow the migration checklist below to move operational content without losing information.
+
+---
+
+## Migration Checklist (Deep Dive → Map)
+
+When creating an implementation map for a plugin that already has a deep dive, follow these steps in order to avoid information loss:
+
+### Step 1: Create the map
+Build `docs/maps/{SERVICE-NAME}.md` following the [Implementation Map Template](IMPLEMENTATION-MAP-TEMPLATE.md). Populate all 10 sections from source code.
+
+### Step 2: Identify what moves
+These deep dive sections move to the map (their content is now covered by map sections):
+
+| Deep Dive Section (old) | Map Section (new) |
+|-------------------------|-------------------|
+| Dependencies | § 4. Dependencies |
+| State Storage | § 3. State |
+| Events (Published/Consumed) | § 5-6. Events Published/Consumed |
+| DI Services & Helpers | § 7. DI Services |
+| API Endpoints (Implementation Notes) | § 8-9. Method Index + Methods |
+
+### Step 3: Preserve what stays
+Before removing any deep dive section, check for content that belongs in the deep dive even after migration:
+
+- **Visual aids**: Diagrams that show internal data model relationships, multi-step operation flows, or state store key patterns belong in the deep dive's Visual Aid section (§ 5), NOT in the map. If a diagram was embedded in an operational section (e.g., a key relationship diagram inside the State Storage section), move it to the Visual Aid section before removing the operational section.
+- **Architectural context notes**: Notes about design decisions, privacy exceptions, tenet compliance rationale, or "why" explanations belong in the deep dive's Overview or as custom sections (Position A). If such notes lived inside an operational section, relocate them before removing the section.
+- **Special behavioral notes**: Quirks-level observations discovered while documenting operational sections (e.g., "PasswordHash intentionally included in by-email response only") should already be in Known Quirks. Verify they are before removing the operational section.
+
+### Step 4: Remove and cross-reference
+1. Add the `Implementation Map` header field to the deep dive
+2. Remove the operational sections identified in Step 2
+3. Renumber remaining sections to match this template
+4. Verify no content was lost by comparing the old deep dive (via git diff) against the map + updated deep dive
+
+### Common Information Loss Patterns
+
+| What Gets Lost | Why | Prevention |
+|----------------|-----|------------|
+| Visual aids embedded in operational sections | Entire section removed without checking for diagrams | Step 3: Move diagrams to Visual Aid section first |
+| Architectural context notes in Dependencies | "Privacy exception" or "leaf node" notes removed with section | Step 3: Move to Overview or custom Position A section |
+| Endpoint behavior quirks in API Endpoints | Notes about non-obvious behavior removed with section | Step 3: Verify all quirks are in Known Quirks section |
+| Model field details in State Storage | Key relationship notes removed with section | Step 3: Move structural details to Visual Aid section |

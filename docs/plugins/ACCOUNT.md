@@ -5,23 +5,11 @@
 > **Version**: 2.0.0
 > **Layer**: AppFoundation
 > **State Store**: account-statestore (MySQL), account-lock (Redis)
+> **Implementation Map**: [docs/maps/ACCOUNT.md](../maps/ACCOUNT.md)
 
 ## Overview
 
 The Account plugin is an internal-only CRUD service (L1 AppFoundation) for managing user accounts. It is never exposed directly to the internet -- all external account operations go through the Auth service, which calls Account via lib-mesh. Handles account creation, lookup (by ID, email, or OAuth provider), updates, soft-deletion, and authentication method management (linking/unlinking OAuth providers). Email is optional -- accounts created via OAuth or Steam may have no email address, identified solely by their linked authentication methods.
-
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (IStateStoreFactory) | All persistence - account records, email indices, provider indices, auth methods. Uses IJsonQueryableStateStore for paginated listing via MySQL JSON queries |
-| lib-state (IDistributedLockProvider) | Distributed locks for email uniqueness during account creation and email change (prevents TOCTOU race conditions) |
-| lib-messaging (IMessageBus) | Publishing lifecycle events (created/updated/deleted) and error events |
-| Permission service (via AccountPermissionRegistration) | Registers its endpoint permission matrix on startup via DI-based `IPermissionRegistry` |
-
-The Account plugin does **not** call any other service via lib-mesh clients. It is a leaf node that is called by others.
-
-**Note: Account Privacy Exception (per FOUNDATION TENETS T28).** Account resources are explicitly exempt from lib-resource reference registration. We do not track or compile historical reference data about accounts beyond what Analytics stores for its specific purpose. This is a deliberate privacy decision -- the system should not maintain a centralized record of everything that references an account. Consumers that store data keyed by accountId (Subscription, Achievement, etc.) manage their own cleanup independently rather than registering with lib-resource.
 
 ## Dependents (What Relies On This Plugin)
 
@@ -32,37 +20,6 @@ The Account plugin does **not** call any other service via lib-mesh clients. It 
 | lib-auth | Subscribes to `account.deleted` to invalidate all sessions and cleanup OAuth links for deleted accounts |
 | lib-auth | Subscribes to `account.updated` to propagate role changes to active sessions |
 | lib-achievement (SteamAchievementSync) | Calls `auth-methods/list` via IAccountClient to look up Steam external IDs for platform sync |
-
-## State Storage
-
-**Store**: `account-statestore` (Backend: MySQL)
-
-All data types are stored in the same logical store, differentiated by key prefix.
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `account-{accountId}` | `AccountModel` | Primary account record (email [nullable], display name, password hash, roles, verification status, timestamps, metadata) |
-| `email-index-{email_lowercase}` | `string` (accountId) | Email-to-account lookup index for login flows. Only created when email is non-null. |
-| `provider-index-{provider}:{externalId}` | `string` (accountId) | OAuth provider-to-account lookup index |
-| `auth-methods-{accountId}` | `List<AuthMethodInfo>` | OAuth methods linked to an account (provider, external ID, method ID, link timestamp) |
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `account.created` | `AccountCreatedEvent` | After successful account creation (includes accountId, email [nullable], roles, authMethods, timestamps) |
-| `account.updated` | `AccountUpdatedEvent` | After any field change on an account (includes full current state, authMethods, + changedFields list) |
-| `account.deleted` | `AccountDeletedEvent` | After soft-deletion (includes final account state, authMethods, + deletion reason) |
-
-All lifecycle events include `authMethods` to enable identification of OAuth/Steam accounts when email is null.
-
-All events are published via `_messageBus.TryPublishAsync()` which handles buffering and retry internally.
-
-### Consumed Events
-
-This plugin does not consume external events. The events schema explicitly declares `x-event-subscriptions: []`.
 
 ## Configuration
 
@@ -78,56 +35,7 @@ This plugin does not consume external events. The events schema explicitly decla
 | `ProviderFilterMaxScanSize` | `ACCOUNT_PROVIDER_FILTER_MAX_SCAN_SIZE` | 10000 | Maximum number of accounts to scan when filtering by provider in the admin-only list endpoint (min: 100, max: 100000) |
 | `AutoManageAnonymousRole` | `ACCOUNT_AUTO_MANAGE_ANONYMOUS_ROLE` | true | When true, automatically manages "anonymous" role: adds it if roles would be empty, removes it when adding non-anonymous roles |
 
-## DI Services & Helpers
-
-| Service | Role |
-|---------|------|
-| `ILogger<AccountService>` | Structured logging for all operations |
-| `AccountServiceConfiguration` | Typed access to configuration properties above |
-| `IStateStoreFactory` | Creates typed state store instances for reading/writing account data |
-| `IMessageBus` | Publishes lifecycle and error events to RabbitMQ |
-| `IDistributedLockProvider` | Distributed locks for email uniqueness during account creation and email change |
-| `ITelemetryProvider` | Telemetry span instrumentation for helper methods (auth method fetch, event publishing, provider-filtered listing) |
-| `AccountPermissionRegistration` | Generated class that registers the service's permission matrix via `IPermissionRegistry` on startup |
-
-## API Endpoints (Implementation Notes)
-
-### Account Management (CRUD)
-
-Standard CRUD operations (`create`, `get`, `update`, `delete`, `list`) on account records with optimistic concurrency via ETags on all mutation operations. Account creation accepts nullable email - when null (for OAuth/Steam accounts), no email index is created and the account is identifiable only via provider lookup or direct ID. The `list` endpoint has two execution paths:
-
-- **Standard path** (no provider filter): Uses `IJsonQueryableStateStore.JsonQueryPagedAsync()` to query account records directly from MySQL with server-side pagination, filtering (email, displayName, verified), and sorting (newest-first via `$.CreatedAtUnix` descending). The `$.AccountId exists` condition acts as a type discriminator to match only account records in the shared store.
-- **Provider-filtered path** (rare admin operation): Queries matching accounts from MySQL using `JsonQueryPagedAsync` with a configurable scan cap (`ProviderFilterMaxScanSize`, default 10000), then loads auth methods for each and filters by provider in-memory. Auth methods are stored in separate keys so provider filtering cannot be a single JSON query. Logs a warning if the scan cap truncates results.
-
-The `delete` operation is a soft-delete (sets `DeletedAt` timestamp) but also cleans up the email index (if email exists) and provider index entries.
-
-### Account Lookup
-
-- `by-email`: Looks up via the `email-index-` key, then loads the full account. **Notably includes `PasswordHash` in the response** - this is intentional for the Auth service's password verification flow. The regular `get` endpoint does not expose the password hash. Only works for accounts with email addresses.
-- `by-provider`: Looks up via the `provider-index-{provider}:{externalId}` key pattern. This is the primary lookup method for OAuth/Steam accounts that may not have email addresses.
-
-### Authentication Methods
-
-`auth-methods/list` returns all linked OAuth methods for an account (verifies account exists and is not deleted first). Add/remove OAuth provider links via `auth-methods/add` and `auth-methods/remove`. Adding a method validates: (1) non-empty ExternalId required, (2) provider not already linked on this account (same provider+externalId), (3) provider:externalId not claimed by another active account (stale indexes from soft-deleted accounts are detected and overwritten). Both `AddAuthMethodAsync` and `RemoveAuthMethodAsync` use ETag-based optimistic concurrency (`GetWithETagAsync` + `TrySaveAsync`) on the auth methods list, returning `Conflict` on concurrent modification. Creates both the auth method entry in the `auth-methods-{accountId}` list and a `provider-index-` entry for reverse lookup. Removing a method includes orphan prevention (see Intentional Quirks #7) and cleans up both the auth method list and provider index.
-
-### Bulk Operations
-
-- `batch-get`: Retrieves multiple accounts by ID in parallel using `Task.WhenAll` over direct key lookups (not JSON queries). Returns a `BatchGetAccountsResponse` with separate `accounts` (found), `notFound` (missing or soft-deleted), and `failed` (fetch errors) lists. Auth methods are loaded in a second parallel pass for found accounts. Max 100 IDs per call (schema-enforced via `maxItems: 100`).
-- `count`: Uses `IJsonQueryableStateStore.JsonCountAsync()` for a pure SQL `SELECT COUNT(*)` with the same filter conditions as `list` (email, displayName, verified), plus a `role` filter that uses `JSON_CONTAINS` on the `$.Roles` array. The `BuildAccountQueryConditions` helper automatically includes the type discriminator and soft-delete exclusion conditions.
-- `roles/bulk-update`: Adds and/or removes roles from up to 100 accounts. Processes sequentially with per-account ETag-based optimistic concurrency. Returns partial success: `succeeded` and `failed` lists with error reasons. Publishes `account.updated` events individually for each changed account. No-op (roles already match) counts as success without publishing an event.
-
-### Profile, Password & MFA
-
-- `profile/update`: User-facing endpoint (not admin-only) for updating display name and metadata. Returns early without saving or publishing an event if nothing changed.
-- `password/update`: Stores a pre-hashed password received from the Auth service. Account service never handles raw passwords.
-- `verification/update`: Sets the `IsVerified` flag.
-- `mfa/update`: Updates MFA settings (enabled flag, encrypted TOTP secret, hashed recovery codes). Auth service owns the encryption/hashing; Account stores opaque ciphertext and hashes. Publishes `account.updated` with `changedFields: ["mfaEnabled", "mfaSecret", "mfaRecoveryCodes"]`.
-
-### Email Change
-
-- `email/update`: Admin-only endpoint for changing an account's email address. Uses a distributed lock on the new email (`account-email:{normalizedNewEmail}` key in `account-lock` Redis store) to coordinate with `CreateAccountAsync` and prevent TOCTOU race conditions. The operation atomically: (1) validates the new email is not already taken, (2) creates the new email index, (3) updates the account record with ETag concurrency (setting the new email, resetting `IsVerified` to false), and (4) deletes the old email index. If the ETag save fails, the new email index is rolled back. Also handles the case where the account had no previous email (OAuth/Steam accounts) — in that case, only the new index is created. Publishes `account.updated` with `["email", "isVerified"]` in `changedFields`.
-
-## State Store Key Relationships
+## Visual Aid
 
 ```
 account-{id} ──────────────────────────────────────────┐
@@ -137,8 +45,8 @@ account-{id} ──────────────────────�
   ├─ DisplayName                                        │ Same store,
   ├─ IsVerified                                         │ different
   ├─ Roles[]                                            │ key prefixes
-  ├─ MfaEnabled, MfaSecret?, MfaRecoveryCodes?           │
-  ├─ Metadata{}  (client-only opaque data per T29)       │
+  ├─ MfaEnabled, MfaSecret?, MfaRecoveryCodes?          │
+  ├─ Metadata{}  (client-only opaque data per T29)      │
   └─ CreatedAtUnix / UpdatedAtUnix / DeletedAtUnix      │
                                                         │
 auth-methods-{id}: [ AuthMethodInfo, ... ] ─────────────┤
