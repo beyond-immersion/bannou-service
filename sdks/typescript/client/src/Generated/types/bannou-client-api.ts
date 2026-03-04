@@ -22307,27 +22307,16 @@ export interface components {
        */
       targetId?: string | null;
     };
-    /** @description Response indicating the result of a game action with any state changes */
+    /** @description Confirms the action was accepted and provides the action ID for async result correlation. Game-specific results are delivered asynchronously via client events from the processing service (L4), not in this response. */
     GameActionResponse: {
       /**
        * Format: uuid
-       * @description Unique identifier for this action instance
+       * @description Unique identifier for this action instance. Use to correlate with async results delivered via GameActionResultClientEvent.
        */
       actionId: string;
-      /** @description Game-specific action result data. No Bannou plugin reads specific keys from this field by convention. */
-      result?: {
-        [key: string]: unknown;
-      } | null;
-      /** @description Updated game state (if applicable). No Bannou plugin reads specific keys from this field by convention. */
-      newGameState?: {
-        [key: string]: unknown;
-      } | null;
     };
-    /**
-     * @description Type of game action
-     * @enum {string}
-     */
-    GameActionType: 'Move' | 'Interact' | 'Attack' | 'CastSpell' | 'UseItem';
+    /** @description Opaque string code identifying the type of game action. Action types are game-defined and extensible without schema changes. Common conventions include move, interact, attack, cast_spell, use_item, but any string code is valid. */
+    GameActionType: string;
     /** @description Information about a player currently participating in a game session */
     GamePlayer: {
       /**

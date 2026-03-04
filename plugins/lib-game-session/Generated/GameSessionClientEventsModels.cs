@@ -440,8 +440,7 @@ public partial class GameActionResultClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("actionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameActionType ActionType { get; set; } = default!;
+    public string ActionType { get; set; } = default!;
 
     /// <summary>
     /// Account ID of player who performed the action

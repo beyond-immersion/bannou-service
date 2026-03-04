@@ -15923,29 +15923,21 @@ struct FGameActionRequest
 };
 
 /**
- * Response indicating the result of a game action with any state changes
+ * Confirms the action was accepted and provides the action ID for async result correlation. Game-specific results are delivered asynchronously via client events from the processing service (L4), not in this response.
  */
 USTRUCT(BlueprintType)
 struct FGameActionResponse
 {
     GENERATED_BODY()
 
-    /** Unique identifier for this action instance */
+    /** Unique identifier for this action instance. Use to correlate with async results delivered via GameActionResultClientEvent. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid ActionId;
-
-    /** Game-specific action result data. No Bannou plugin reads specific keys from this field by convention. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TMap<FString, FString> Result;
-
-    /** Updated game state (if applicable). No Bannou plugin reads specific keys from this field by convention. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TMap<FString, FString> NewGameState;
 
 };
 
 /**
- * Type of game action
+ * Opaque string code identifying the type of game action. Action types are game-defined and extensible without schema changes. Common conventions include move, interact, attack, cast_spell, use_item, but any string code is valid.
  */
 USTRUCT(BlueprintType)
 struct FGameActionType

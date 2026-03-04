@@ -633,22 +633,18 @@ paths:
         \ },\n        \"GameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game service stub
         name for this session. Use the game service's stubName property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific
         sessions.\"\n        },\n        \"GameActionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of game action\",\n            \"enum\": [\n                \"Move\",\n                \"Interact\",\n  \
-        \              \"Attack\",\n                \"CastSpell\",\n                \"UseItem\"\n            ]\n        }\n\
-        \    }\n}"
+        : \"Opaque string code identifying the type of game action. Action types are game-defined and extensible without schema
+        changes. Common conventions include move, interact, attack, cast_spell, use_item, but any string code is valid.\"\n\
+        \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GameActionResponse\"\
-        ,\n    \"$defs\": {\n        \"GameActionResponse\": {\n            \"description\": \"Response indicating the result
-        of a game action with any state changes\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"actionId\"\n            ],\n            \"properties\": {\n\
-        \                \"actionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Unique identifier for this action instance\"\n                },\n     \
-        \           \"result\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Game-specific action result
-        data. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"\
-        newGameState\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Updated game state (if applicable).
-        No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        ,\n    \"$defs\": {\n        \"GameActionResponse\": {\n            \"description\": \"Confirms the action was accepted
+        and provides the action ID for async result correlation. Game-specific results are delivered asynchronously via client
+        events from the processing service (L4), not in this response.\",\n            \"type\": \"object\",\n           \
+        \ \"additionalProperties\": false,\n            \"required\": [\n                \"actionId\"\n            ],\n  \
+        \          \"properties\": {\n                \"actionId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this action instance.
+        Use to correlate with async results delivered via GameActionResultClientEvent.\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Perform game action (enhanced permissions after joining)\",\n    \"description\"\
         : \"\",\n    \"tags\": [\n        \"Game Actions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"performGameAction\"\
         \n}"
@@ -1198,7 +1194,9 @@ components:
           nullable: true
           description: Target of the action (if applicable)
     GameActionResponse:
-      description: Response indicating the result of a game action with any state changes
+      description: Confirms the action was accepted and provides the action ID for async result correlation. 
+        Game-specific results are delivered asynchronously via client events from the processing service (L4), not in 
+        this response.
       type: object
       additionalProperties: false
       required:
@@ -1207,21 +1205,8 @@ components:
         actionId:
           type: string
           format: uuid
-          description: Unique identifier for this action instance
-        result:
-          type: object
-          additionalProperties: true
-          nullable: true
-          description: >-
-            Game-specific action result data.
-            No Bannou plugin reads specific keys from this field by convention.
-        newGameState:
-          type: object
-          additionalProperties: true
-          nullable: true
-          description: >-
-            Updated game state (if applicable).
-            No Bannou plugin reads specific keys from this field by convention.
+          description: Unique identifier for this action instance. Use to correlate with async results delivered via 
+            GameActionResultClientEvent.
     SessionType:
       type: string
       description: Type of game session - determines join behavior
@@ -1256,13 +1241,9 @@ components:
       - System
     GameActionType:
       type: string
-      description: Type of game action
-      enum:
-      - Move
-      - Interact
-      - Attack
-      - CastSpell
-      - UseItem
+      description: Opaque string code identifying the type of game action. Action types are game-defined and extensible 
+        without schema changes. Common conventions include move, interact, attack, cast_spell, use_item, but any string 
+        code is valid.
     ReservationInfo:
       type: object
       description: Reservation token returned when creating a matchmade session

@@ -4325,8 +4325,8 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         _mockSeedQueryStore.Verify(s => s.JsonQueryPagedAsync(
             It.Is<IReadOnlyList<QueryCondition>>(c =>
                 c.Any(q => q.Path == "$.GrowthPhase" &&
-                           q.Operator == QueryOperator.Equals &&
-                           q.Value.ToString() == "awakening")),
+                            q.Operator == QueryOperator.Equals &&
+                            q.Value.ToString() == "awakening")),
             It.IsAny<int>(), It.IsAny<int>(),
             It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -4354,7 +4354,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         _mockSeedQueryStore.Verify(s => s.JsonQueryPagedAsync(
             It.Is<IReadOnlyList<QueryCondition>>(c =>
                 c.Any(q => q.Path == "$.Status" &&
-                           q.Operator == QueryOperator.Equals)),
+                            q.Operator == QueryOperator.Equals)),
             It.IsAny<int>(), It.IsAny<int>(),
             It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()), Times.Once);
     }

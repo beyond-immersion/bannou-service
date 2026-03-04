@@ -12,6 +12,20 @@
 
 A unified relationship management service (L2 GameFoundation) combining entity-to-entity relationships (character friendships, alliances, rivalries) with hierarchical relationship type taxonomy definitions. Supports bidirectional uniqueness enforcement, polymorphic entity types, soft-deletion with recreate capability, type deprecation with merge, and bulk seeding. Used by the Character service for inter-character bonds and family tree categorization, and by the Storyline service for narrative generation. Consolidated from the former separate relationship and relationship-type plugins.
 
+### System Realm & Cross-Cutting Use Cases
+
+Relationship's polymorphic entity support makes it a key primitive for system realm entities and cross-cutting game mechanics. Planned relationship type codes and their consumers:
+
+| Use Case | Type Code(s) | Entities | Consumer |
+|----------|-------------|----------|----------|
+| Family tree | `PARENT`, `CHILD`, `SIBLING`, etc. | Character ↔ Character | lib-character (implemented) |
+| NPC social bonds | `FRIEND`, `RIVAL`, `MENTOR`, etc. | Character ↔ Character | lib-storyline (implemented) |
+| Divine followers | Follower/devotee types | Character ↔ Deity (PANTHEON) | lib-divine (planned) |
+| Marriage bonds | `SPOUSE` | Character ↔ Character | lib-character-lifecycle (planned) |
+| Living weapon wielder | `WEAPON_WIELDER` | Character ↔ Weapon (SENTIENT_ARMS) | Zero-plugin pattern (planned) |
+
+The `${relationship.*}` ABML variable namespace ([#147](https://github.com/beyond-immersion/bannou-service/issues/147)) will expose this data to the Actor behavior system, enabling NPCs to make social decisions based on relationship type, existence, and hierarchy.
+
 ---
 
 ## Dependencies (What This Plugin Relies On)
@@ -22,7 +36,7 @@ A unified relationship management service (L2 GameFoundation) combining entity-t
 | lib-state (`IDistributedLockProvider`) | Distributed locks for composite uniqueness enforcement and index read-modify-write operations |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events and error events |
 | lib-messaging (`IEventConsumer`) | Event registration infrastructure (no current handlers) |
-| lib-resource (`IResourceClient`) | Cleanup callback registration for character and realm reference tracking (via `x-references`) |
+| lib-resource (`IResourceClient`) | Cleanup callback registration for character and realm reference tracking (via `x-references`). Organization and Faction coverage planned ([#564](https://github.com/beyond-immersion/bannou-service/issues/564)) |
 
 ---
 
@@ -32,6 +46,14 @@ A unified relationship management service (L2 GameFoundation) combining entity-t
 |-----------|-------------|
 | lib-character | Calls `IRelationshipClient` for family tree building (entity listing + type code lookup) and reference counting during compression eligibility checks |
 | lib-storyline | Injects `IRelationshipClient` for relationship data and type lookups during narrative generation |
+
+**Planned dependents** (not yet implemented):
+
+| Dependent | Planned Usage |
+|-----------|---------------|
+| lib-divine | Follower bonds between deities and characters, deity-to-deity rivalries |
+| lib-character-lifecycle | Marriage/spouse bonds, parent-child bonds during procreation |
+| lib-asset | Tag hierarchy integration for smart bundling ([#117](https://github.com/beyond-immersion/bannou-service/issues/117)) |
 
 No services subscribe to relationship events.
 
@@ -391,5 +413,7 @@ State Store Layout
 - [#504](https://github.com/beyond-immersion/bannou-service/issues/504): Relationship strength/weight field design — field naming, data type/range, interaction with extensions #2 and #4 (Potential Extension #1)
 - [#505](https://github.com/beyond-immersion/bannou-service/issues/505): Bidirectional asymmetric metadata design — per-entity metadata perspectives, replace vs augment unified field, migration (Potential Extension #2)
 - [#507](https://github.com/beyond-immersion/bannou-service/issues/507): Category-based permissions design — data-conditional permission enforcement approach, category→role mapping, manifest implications (Potential Extension #5)
-- [#509](https://github.com/beyond-immersion/bannou-service/issues/509): In-memory filtering before pagination — list operations load full indexes into memory before paginating, need to evaluate IQueryableStateStore migration (Design Consideration #1)
-- [#510](https://github.com/beyond-immersion/bannou-service/issues/510): Unbounded index growth from ended relationships — entity and type indexes accumulate IDs indefinitely, includes orphaned entity-idx after cascade deletion (Design Consideration #2)
+- [#509](https://github.com/beyond-immersion/bannou-service/issues/509): In-memory filtering before pagination — list operations load full indexes into memory before paginating, need to evaluate IQueryableStateStore migration (Design Consideration #1). Consider bundling with #510 (same root cause; IQueryableStateStore migration solves both)
+- [#510](https://github.com/beyond-immersion/bannou-service/issues/510): Unbounded index growth from ended relationships — entity and type indexes accumulate IDs indefinitely, includes orphaned entity-idx after cascade deletion (Design Consideration #2). Orphaned entity-idx cleanup in `CleanupByEntityAsync` is trivially fixable independent of the broader design
+- [#544](https://github.com/beyond-immersion/bannou-service/issues/544): Game-time auto-population for `startedAt`/`endedAt` fields — cross-cutting with Character Encounter. Key open question: relationships are cross-realm (no single clock applies), so game-time may not be applicable here
+- [#564](https://github.com/beyond-immersion/bannou-service/issues/564): Expand `x-references` cleanup to cover Organization and Faction entity types (when those plugins are implemented)

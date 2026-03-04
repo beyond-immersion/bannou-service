@@ -361,6 +361,20 @@ Historical event participation and lore management (L4 GameFeatures) for realms.
 
 A unified relationship management service (L2 GameFoundation) combining entity-to-entity relationships (character friendships, alliances, rivalries) with hierarchical relationship type taxonomy definitions. Supports bidirectional uniqueness enforcement, polymorphic entity types, soft-deletion with recreate capability, type deprecation with merge, and bulk seeding. Used by the Character service for inter-character bonds and family tree categorization, and by the Storyline service for narrative generation. Consolidated from the former separate relationship and relationship-type plugins.
 
+### System Realm & Cross-Cutting Use Cases
+
+Relationship's polymorphic entity support makes it a key primitive for system realm entities and cross-cutting game mechanics. Planned relationship type codes and their consumers:
+
+| Use Case | Type Code(s) | Entities | Consumer |
+|----------|-------------|----------|----------|
+| Family tree | `PARENT`, `CHILD`, `SIBLING`, etc. | Character ↔ Character | lib-character (implemented) |
+| NPC social bonds | `FRIEND`, `RIVAL`, `MENTOR`, etc. | Character ↔ Character | lib-storyline (implemented) |
+| Divine followers | Follower/devotee types | Character ↔ Deity (PANTHEON) | lib-divine (planned) |
+| Marriage bonds | `SPOUSE` | Character ↔ Character | lib-character-lifecycle (planned) |
+| Living weapon wielder | `WEAPON_WIELDER` | Character ↔ Weapon (SENTIENT_ARMS) | Zero-plugin pattern (planned) |
+
+The `${relationship.*}` ABML variable namespace ([#147](https://github.com/beyond-immersion/bannou-service/issues/147)) will expose this data to the Actor behavior system, enabling NPCs to make social decisions based on relationship type, existence, and hierarchy.
+
 ## Resource {#resource}
 
 **Version**: 1.0.0 | **Schema**: `schemas/resource-api.yaml` | **Endpoints**: 17 | **Deep Dive**: [docs/plugins/RESOURCE.md](plugins/RESOURCE.md)

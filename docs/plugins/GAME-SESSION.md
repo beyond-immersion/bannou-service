@@ -94,7 +94,7 @@ Gardener is the **player experience orchestrator** — the player-side counterpa
 | `SessionStatus` | C (System State) | Service-specific enum (`waiting`, `active`, `full`, `finished`) | Finite session lifecycle state machine; system-owned transitions |
 | `PlayerRole` | C (System State) | Service-specific enum (`player`, `spectator`, `moderator`) | Finite set of system-owned roles determining session permissions |
 | `ChatMessageType` | C (System State) | Service-specific enum (`public`, `whisper`, `system`) | Finite set of system-owned message delivery modes |
-| `GameActionType` | C (System State) | Service-specific enum (`move`, `interact`, `attack`, `cast_spell`, `use_item`) | Finite set of system-owned action categories for the session action system |
+| `GameActionType` | B (Content Code) | Opaque string | Game-defined action type codes (e.g., `move`, `interact`, `attack`). Extensible without schema changes; new action types added at deployment time per game |
 | `GameType` | B (Content Code) | Opaque string | Game service stub name (e.g., "arcadia", "fantasia", "generic"). Extensible without schema changes; new games added by creating game service definitions |
 
 ---
@@ -318,7 +318,7 @@ Service lifetime is **Scoped** (per-request) for GameSessionService. Two Backgro
 
 ### Game Actions (1 endpoint)
 
-- **Actions** (`/sessions/actions`): Validates lobby exists and isn't finished. Publishes `game-session.action.performed` event. Returns action ID with echoed data. Does not validate player membership (relies on permission state).
+- **Actions** (`/sessions/actions`): Validates lobby exists, isn't finished, and that the requesting player is a member. Publishes `game-session.action.performed` event. Returns action ID for async result correlation.
 
 ### Game Chat (1 endpoint)
 
@@ -418,16 +418,14 @@ Subscription Cache Architecture
 
 ## Stubs & Unimplemented Features
 
-1. **Actions endpoint echoes data**: `PerformGameActionAsync` publishes an event and returns the action data back without any game-specific logic. Actual game state mutation would need to be implemented per game type.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/479 -->
+1. ~~**Actions endpoint echoes data**~~: **RESOLVED** (2026-03-04) - Pass-through (validate-and-publish) is the correct L2 container primitive behavior. Game-specific action processing belongs in L4 services that subscribe to `game-session.action.performed` events. Response fields `result` and `newGameState` removed (T8 filler); `GameActionType` converted to opaque string (Category B per T14). See [Issue #479](https://github.com/beyond-immersion/bannou-service/issues/479).
 2. ~~**No player-in-session validation for actions**~~: **FIXED** (2026-02-25) - `PerformGameActionAsync` now checks `model.Players.Any(p => p.AccountId == accountId)` before allowing the action, returning `Forbidden` if the player is not a member. The `in_game` permission state alone was insufficient as it only confirms the player is in *some* session, not the target session.
 
 ---
 
 ## Potential Extensions
 
-1. **Game state machine**: Add per-game-type state machines that validate and apply actions (turns, moves, scoring).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/479 -->
+1. ~~**Game state machine**~~: **RESOLVED** (2026-03-04) - Game state machines are L4's concern, not GameSession's. GameSession validates session membership and publishes action events; L4 services (or game engines) subscribe and apply game-specific logic. See [Issue #479](https://github.com/beyond-immersion/bannou-service/issues/479).
 2. **Spectator mode**: Allow joining with a `Spectator` role that receives events but cannot perform actions.
 3. **Session persistence/replay**: Store action history for replay or late-join state reconstruction.
 4. **Cross-instance lobby sync**: Replace the single `session-list` key with a proper indexed query for scaling.
@@ -470,7 +468,7 @@ Subscription Cache Architecture
 
 4. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
 
-5. **Move action special-cased for empty data**: `Move` is the only action type allowed to have null `ActionData`. Other actions log a debug message but proceed anyway, making the validation ineffective.
+5. ~~**Move action special-cased for empty data**~~: **FIXED** (2026-03-04) - Dead code removed. Both branches proceeded identically (event publishing); the container primitive has no business interpreting action semantics. See [Issue #479](https://github.com/beyond-immersion/bannou-service/issues/479).
 
 6. ~~**Actions endpoint validates session existence, not player membership**~~: **FIXED** (2026-02-25) - `PerformGameActionAsync` now validates player membership via `model.Players.Any()` check. See Stubs item 2 for details.
 
@@ -484,6 +482,7 @@ Subscription Cache Architecture
 
 ### Completed
 
+- **2026-03-04**: Issue #479 — Game action cleanup. Removed `result` and `newGameState` filler fields from `GameActionResponse` (T8). Converted `GameActionType` from enum to opaque string (Category B per T14). Removed dead Move null-data special case (both branches were identical). Pass-through validate-and-publish confirmed as correct L2 container primitive behavior.
 - **2026-02-25**: Implemented `autoLobbyEnabled` check — GameSession now gates subscription-driven lobby shortcuts on `autoLobbyEnabled` from GameService definitions. Added `IGameServiceClient` dependency, `IsAutoLobbyEnabledAsync` helper with telemetry span and fail-open behavior, gating in both `HandleSessionConnectedInternalAsync` and `HandleSubscriptionUpdatedInternalAsync`. 4 new unit tests. Design Consideration #7 resolved.
 - **2026-02-25**: Audit fix — added player membership validation to `PerformGameActionAsync`. Previously only checked lobby existence and status; now returns `Forbidden` if `AccountId` is not in the session's Players list. Added 2 unit tests (non-member returns Forbidden, member returns OK).
 - **2026-02-25**: Audit fix — added distributed lock for session-list removal in `ReservationCleanupService.CancelExpiredSessionAsync`. Race condition between concurrent create + cleanup that could lose session IDs from the list.

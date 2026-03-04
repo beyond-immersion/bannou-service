@@ -9,8 +9,8 @@ using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
-using System.Linq;
 using Moq;
+using System.Linq;
 
 namespace BeyondImmersion.BannouService.Actor.Tests;
 

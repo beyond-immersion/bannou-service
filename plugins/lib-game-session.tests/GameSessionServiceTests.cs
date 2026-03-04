@@ -781,7 +781,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             SessionId = clientSessionId,
             AccountId = accountId,
             GameType = TEST_GAME_TYPE,
-            ActionType = GameActionType.Move
+            ActionType = "move"
         };
 
         // Return a lobby from lobby key lookup, but nothing from session key lookup
@@ -815,7 +815,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             SessionId = clientSessionId,
             AccountId = accountId,
             GameType = TEST_GAME_TYPE,
-            ActionType = GameActionType.Move
+            ActionType = "move"
         };
 
         // Setup finished lobby
@@ -850,7 +850,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             SessionId = clientSessionId,
             AccountId = accountId,
             GameType = TEST_GAME_TYPE,
-            ActionType = GameActionType.Move
+            ActionType = "move"
         };
 
         // Setup lobby with a DIFFERENT player (not the requesting account)
@@ -889,7 +889,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             SessionId = clientSessionId,
             AccountId = accountId,
             GameType = TEST_GAME_TYPE,
-            ActionType = GameActionType.Move
+            ActionType = "move"
         };
 
         // Setup lobby with the requesting player
@@ -2457,7 +2457,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             SessionId = Guid.NewGuid(),
             AccountId = accountId,
             GameType = TEST_GAME_TYPE,
-            ActionType = GameActionType.Attack,
+            ActionType = "attack",
             TargetId = Guid.NewGuid()
         };
 
@@ -2500,7 +2500,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var typedEvent = Assert.IsType<GameSessionActionPerformedEvent>(capturedEvent);
         Assert.Equal(lobbyId, typedEvent.SessionId);
         Assert.Equal(accountId, typedEvent.AccountId);
-        Assert.Equal(GameActionType.Attack, typedEvent.ActionType);
+        Assert.Equal("attack", typedEvent.ActionType);
         Assert.Equal(request.TargetId, typedEvent.TargetId);
     }
 

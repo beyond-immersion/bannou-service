@@ -560,8 +560,7 @@ public partial class GameActionRequest
     [System.Text.Json.Serialization.JsonPropertyName("actionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameActionType ActionType { get; set; } = default!;
+    public string ActionType { get; set; } = default!;
 
     /// <summary>
     /// Game-specific action data. No Bannou plugin reads specific keys from this field by convention.
@@ -578,31 +577,19 @@ public partial class GameActionRequest
 }
 
 /// <summary>
-/// Response indicating the result of a game action with any state changes
+/// Confirms the action was accepted and provides the action ID for async result correlation. Game-specific results are delivered asynchronously via client events from the processing service (L4), not in this response.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GameActionResponse
 {
 
     /// <summary>
-    /// Unique identifier for this action instance
+    /// Unique identifier for this action instance. Use to correlate with async results delivered via GameActionResultClientEvent.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ActionId { get; set; } = default!;
-
-    /// <summary>
-    /// Game-specific action result data. No Bannou plugin reads specific keys from this field by convention.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("result")]
-    public object? Result { get; set; } = default!;
-
-    /// <summary>
-    /// Updated game state (if applicable). No Bannou plugin reads specific keys from this field by convention.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("newGameState")]
-    public object? NewGameState { get; set; } = default!;
 
 }
 
@@ -682,32 +669,6 @@ public enum ChatMessageType
 
     [System.Runtime.Serialization.EnumMember(Value = @"System")]
     System = 2,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Type of game action
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GameActionType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Move")]
-    Move = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Interact")]
-    Interact = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Attack")]
-    Attack = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"CastSpell")]
-    CastSpell = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"UseItem")]
-    UseItem = 4,
 
 }
 #pragma warning restore CS1591

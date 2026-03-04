@@ -359,7 +359,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
                 SessionId = sessionIdGuid,
                 AccountId = testAccountId,
                 GameType = "test-game",
-                ActionType = GameActionType.Move,
+                ActionType = "move",
                 ActionData = new { x = 10, y = 20 }
             };
 
@@ -424,7 +424,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
                 SessionId = sessionIdGuid,
                 AccountId = testAccountId,
                 GameType = "test-game",
-                ActionType = GameActionType.Move,
+                ActionType = "move",
                 ActionData = new { testData = "lifecycle_test" }
             });
             Console.WriteLine($"  Step 3: Performed action {actionResponse.ActionId}");

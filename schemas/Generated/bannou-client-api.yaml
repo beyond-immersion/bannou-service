@@ -31146,8 +31146,10 @@ components:
           nullable: true
           description: Target of the action (if applicable)
     GameActionResponse:
-      description: Response indicating the result of a game action with any 
-        state changes
+      description: Confirms the action was accepted and provides the action ID 
+        for async result correlation. Game-specific results are delivered 
+        asynchronously via client events from the processing service (L4), not 
+        in this response.
       type: object
       additionalProperties: false
       required:
@@ -31156,30 +31158,15 @@ components:
         actionId:
           type: string
           format: uuid
-          description: Unique identifier for this action instance
-        result:
-          type: object
-          additionalProperties: true
-          nullable: true
-          description: >-
-            Game-specific action result data.
-            No Bannou plugin reads specific keys from this field by convention.
-        newGameState:
-          type: object
-          additionalProperties: true
-          nullable: true
-          description: >-
-            Updated game state (if applicable).
-            No Bannou plugin reads specific keys from this field by convention.
+          description: Unique identifier for this action instance. Use to 
+            correlate with async results delivered via 
+            GameActionResultClientEvent.
     GameActionType:
       type: string
-      description: Type of game action
-      enum:
-      - Move
-      - Interact
-      - Attack
-      - CastSpell
-      - UseItem
+      description: Opaque string code identifying the type of game action. 
+        Action types are game-defined and extensible without schema changes. 
+        Common conventions include move, interact, attack, cast_spell, use_item,
+        but any string code is valid.
     GamePlayer:
       description: Information about a player currently participating in a game 
         session

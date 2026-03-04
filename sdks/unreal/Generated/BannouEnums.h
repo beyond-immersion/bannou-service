@@ -898,17 +898,6 @@ enum class EFactionStatus : uint8
     Dissolved UMETA(DisplayName = "Dissolved"),
 };
 
-/** Type of game action */
-UENUM(BlueprintType)
-enum class EGameActionType : uint8
-{
-    Move UMETA(DisplayName = "Move"),
-    Interact UMETA(DisplayName = "Interact"),
-    Attack UMETA(DisplayName = "Attack"),
-    CastSpell UMETA(DisplayName = "CastSpell"),
-    UseItem UMETA(DisplayName = "UseItem"),
-};
-
 /** How a successful status grant was resolved.
 - granted: new status applied (no prior instance)
 - stacked: stack count increased on existing instance

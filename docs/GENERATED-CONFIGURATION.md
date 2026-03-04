@@ -990,6 +990,7 @@ Final ... |
 |---------------------|------|---------|-------------|
 | `RELATIONSHIP_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed lock acquisition on index... |
 | `RELATIONSHIP_PROVIDER_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for relationship variable provider in-memory ... |
+| `RELATIONSHIP_PROVIDER_QUERY_PAGE_SIZE` | int | `100` | Number of relationships to fetch per page when loading provi... |
 | `RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH` | int | `20` | Maximum depth for hierarchy traversal to prevent infinite lo... |
 | `RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK` | int | `100` | Maximum number of individual migration error details to trac... |
 
@@ -1268,9 +1269,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 972
+- **Total properties**: 973
 - **Required (no default)**: 59
-- **Optional (has default)**: 913
+- **Optional (has default)**: 914
 
 ## Environment Variable Naming Convention
 

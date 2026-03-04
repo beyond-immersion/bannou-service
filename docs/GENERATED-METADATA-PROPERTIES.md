@@ -29,8 +29,8 @@ Compliant properties include one of these phrases in their description:
 
 | Metric | Count |
 |--------|-------|
-| Total metadata bag properties | 170 |
-| Compliant (has marker) | 150 |
+| Total metadata bag properties | 168 |
+| Compliant (has marker) | 148 |
 | Non-compliant (missing marker) | 20 |
 | Compliance rate | 88% |
 
@@ -137,8 +137,6 @@ Compliant properties include one of these phrases in their description:
 |-------------|----------|-------------|-----------|-------------|
 | `CreateGameSessionRequest` | `gameSettings` | `game-session-api.yaml` | Y | Game-specific configuration settings. No Bannou plugin reads specific keys fr... |
 | `GameActionRequest` | `actionData` | `game-session-api.yaml` | Y | Game-specific action data. No Bannou plugin reads specific keys from this fie... |
-| `GameActionResponse` | `newGameState` | `game-session-api.yaml` | Y | Updated game state (if applicable). No Bannou plugin reads specific keys from... |
-| `GameActionResponse` | `result` | `game-session-api.yaml` | Y | Game-specific action result data. No Bannou plugin reads specific keys from t... |
 | `GamePlayer` | `characterData` | `game-session-api.yaml` | Y | Game-specific character data for this player. No Bannou plugin reads specific... |
 | `GameSessionResponse` | `gameSettings` | `game-session-api.yaml` | Y | Game-specific configuration settings. No Bannou plugin reads specific keys fr... |
 | `JoinGameSessionByIdRequest` | `characterData` | `game-session-api.yaml` | Y | Game-specific character data. No Bannou plugin reads specific keys from this ... |

@@ -550,14 +550,6 @@ public partial class GameSessionService : IGameSessionService
             return (StatusCodes.Forbidden, null);
         }
 
-        // Validate action data is present for mutation actions
-        var actionType = body.ActionType;
-        if (body.ActionData == null && actionType != GameActionType.Move)
-        {
-            // Move can have empty data for "continue moving" semantics; other actions need data
-            _logger.LogDebug("No action data provided for action type {ActionType} - proceeding with empty data", actionType);
-        }
-
         // Create action response - success only after all validations pass
         var actionId = Guid.NewGuid();
         var actionTimestamp = DateTimeOffset.UtcNow;

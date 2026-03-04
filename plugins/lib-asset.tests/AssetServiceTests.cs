@@ -3672,14 +3672,18 @@ public class AssetServiceTests
 
         var v4 = new StoredBundleVersionRecord
         {
-            BundleId = "test-bundle", Version = 4,
-            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1), CreatedBy = "user",
+            BundleId = "test-bundle",
+            Version = 4,
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            CreatedBy = "user",
             Changes = new List<string> { "update" }
         };
         var v3 = new StoredBundleVersionRecord
         {
-            BundleId = "test-bundle", Version = 3,
-            CreatedAt = DateTimeOffset.UtcNow.AddDays(-2), CreatedBy = "user",
+            BundleId = "test-bundle",
+            Version = 3,
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-2),
+            CreatedBy = "user",
             Changes = new List<string> { "update" }
         };
 

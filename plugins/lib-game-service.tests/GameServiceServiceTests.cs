@@ -1730,22 +1730,31 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync($"game-service:{activeId1}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = activeId1, StubName = "active1", DisplayName = "Active 1",
-                IsActive = true, CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                ServiceId = activeId1,
+                StubName = "active1",
+                DisplayName = "Active 1",
+                IsActive = true,
+                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             });
         _mockModelStore
             .Setup(s => s.GetAsync($"game-service:{inactiveId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = inactiveId, StubName = "inactive", DisplayName = "Inactive",
-                IsActive = false, CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                ServiceId = inactiveId,
+                StubName = "inactive",
+                DisplayName = "Inactive",
+                IsActive = false,
+                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             });
         _mockModelStore
             .Setup(s => s.GetAsync($"game-service:{activeId2}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = activeId2, StubName = "active2", DisplayName = "Active 2",
-                IsActive = true, CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                ServiceId = activeId2,
+                StubName = "active2",
+                DisplayName = "Active 2",
+                IsActive = true,
+                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             });
 
         // Act

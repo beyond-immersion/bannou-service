@@ -136,6 +136,10 @@ public static class EventSubscriptionRegistration
         // From transit-events.yaml
         EventSubscriptionRegistry.Register<WorldstateSeasonChangedEvent>("worldstate.season-changed");
 
+        // From voice-events.yaml
+        EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
+        EventSubscriptionRegistry.Register<SessionReconnectedEvent>("session.reconnected");
+
         // From worldstate-events.yaml
         EventSubscriptionRegistry.Register<CalendarTemplateUpdatedEvent>("worldstate.calendar-template.updated");
         EventSubscriptionRegistry.Register<CalendarTemplateDeletedEvent>("worldstate.calendar-template.deleted");
