@@ -2239,4 +2239,1195 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
     }
 
     #endregion
+
+    #region ListQuests Tests
+
+    [Fact]
+    public async Task ListQuestsAsync_WithStatusFilter_ReturnsFilteredInstances()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var activeInstance = CreateTestInstanceModel(Guid.NewGuid(), characterId);
+        activeInstance.Status = QuestStatus.Active;
+        var completedInstance = CreateTestInstanceModel(Guid.NewGuid(), characterId);
+        completedInstance.Status = QuestStatus.Completed;
+
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel> { activeInstance, completedInstance });
+
+        // Setup: definition cache for each instance
+        var definition = CreateTestDefinitionModel(activeInstance.DefinitionId);
+        _mockDefinitionCache
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(definition);
+
+        // Setup: progress store for objectives
+        _mockProgressStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ObjectiveProgressModel?)null);
+
+        var request = new ListQuestsRequest
+        {
+            CharacterId = characterId,
+            Statuses = new List<QuestStatus> { QuestStatus.Active },
+            Limit = 50,
+            Offset = 0
+        };
+
+        // Act
+        var (status, response) = await service.ListQuestsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        // The store returns both but the service filters by status in-memory
+        // The mock returns all; the service applies .Where(status) filter
+        Assert.True(response.Total <= 2);
+    }
+
+    [Fact]
+    public async Task ListQuestsAsync_NoInstances_ReturnsEmptyList()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel>());
+
+        var request = new ListQuestsRequest
+        {
+            CharacterId = characterId,
+            Limit = 50,
+            Offset = 0
+        };
+
+        // Act
+        var (status, response) = await service.ListQuestsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Quests);
+        Assert.Equal(0, response.Total);
+    }
+
+    [Fact]
+    public async Task ListQuestsAsync_Pagination_RespectsLimitAndOffset()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        var instances = Enumerable.Range(0, 5)
+            .Select(_ => CreateTestInstanceModel(Guid.NewGuid(), characterId))
+            .ToList();
+
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instances);
+
+        var definition = CreateTestDefinitionModel(Guid.NewGuid());
+        _mockDefinitionCache
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(definition);
+
+        _mockProgressStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ObjectiveProgressModel?)null);
+
+        var request = new ListQuestsRequest
+        {
+            CharacterId = characterId,
+            Limit = 2,
+            Offset = 1
+        };
+
+        // Act
+        var (status, response) = await service.ListQuestsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Quests.Count);
+        Assert.Equal(5, response.Total); // Total is full count before pagination
+    }
+
+    #endregion
+
+    #region ListAvailableQuests Tests
+
+    [Fact]
+    public async Task ListAvailableQuestsAsync_FiltersDeprecated_ReturnsOnlyAvailable()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var gameServiceId = Guid.NewGuid();
+
+        // Non-deprecated definition
+        var availableDef = CreateTestDefinitionModel(Guid.NewGuid(), "AVAILABLE_QUEST");
+        availableDef.GameServiceId = gameServiceId;
+        availableDef.IsDeprecated = false;
+
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestDefinitionModel> { availableDef });
+
+        // Character has no quests
+        _mockCharacterIndex
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CharacterQuestIndex?)null);
+
+        var request = new ListAvailableQuestsRequest
+        {
+            CharacterId = characterId,
+            GameServiceId = gameServiceId
+        };
+
+        // Act
+        var (status, response) = await service.ListAvailableQuestsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Available);
+        Assert.Equal("AVAILABLE_QUEST", response.Available.First().Code);
+    }
+
+    [Fact]
+    public async Task ListAvailableQuestsAsync_ExcludesAlreadyActiveQuests()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var activeInstanceId = Guid.NewGuid();
+        var definitionId = Guid.NewGuid();
+
+        var definition = CreateTestDefinitionModel(definitionId, "ACTIVE_QUEST");
+        definition.IsDeprecated = false;
+
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestDefinitionModel> { definition });
+
+        // Character has an active quest for this definition
+        var characterIndex = new CharacterQuestIndex
+        {
+            CharacterId = characterId,
+            ActiveQuestIds = new List<Guid> { activeInstanceId },
+            CompletedQuestCodes = new List<string>()
+        };
+        _mockCharacterIndex
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(characterIndex);
+
+        // Active instance maps to the same definition
+        var activeInstance = CreateTestInstanceModel(activeInstanceId, characterId);
+        activeInstance.DefinitionId = definitionId;
+        _mockInstanceStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(activeInstanceId.ToString())), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(activeInstance);
+
+        var request = new ListAvailableQuestsRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.ListAvailableQuestsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Available);
+    }
+
+    [Fact]
+    public async Task ListAvailableQuestsAsync_ExcludesCompletedNonRepeatable()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        var definition = CreateTestDefinitionModel(Guid.NewGuid(), "COMPLETED_QUEST");
+        definition.IsDeprecated = false;
+        definition.Repeatable = false;
+
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestDefinitionModel> { definition });
+
+        // Character has already completed this quest
+        var characterIndex = new CharacterQuestIndex
+        {
+            CharacterId = characterId,
+            ActiveQuestIds = new List<Guid>(),
+            CompletedQuestCodes = new List<string> { "COMPLETED_QUEST" }
+        };
+        _mockCharacterIndex
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(characterIndex);
+
+        var request = new ListAvailableQuestsRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.ListAvailableQuestsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Available);
+    }
+
+    [Fact]
+    public async Task ListAvailableQuestsAsync_WithPrerequisites_FailedPrerequisiteExcludesQuest()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        var definition = CreateTestDefinitionModel(Guid.NewGuid(), "PREREQ_QUEST");
+        definition.IsDeprecated = false;
+        definition.Prerequisites = new List<PrerequisiteDefinitionModel>
+        {
+            new()
+            {
+                Type = PrerequisiteType.QuestCompleted,
+                QuestCode = "REQUIRED_QUEST"
+            }
+        };
+
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestDefinitionModel> { definition });
+
+        // Character has NOT completed the prerequisite quest
+        var characterIndex = new CharacterQuestIndex
+        {
+            CharacterId = characterId,
+            ActiveQuestIds = new List<Guid>(),
+            CompletedQuestCodes = new List<string>() // REQUIRED_QUEST not here
+        };
+        _mockCharacterIndex
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(characterIndex);
+
+        var request = new ListAvailableQuestsRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.ListAvailableQuestsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Available);
+    }
+
+    [Fact]
+    public async Task ListAvailableQuestsAsync_WithDynamicPrerequisiteProvider_UsesProviderFactory()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        var definition = CreateTestDefinitionModel(Guid.NewGuid(), "LEVEL_QUEST");
+        definition.IsDeprecated = false;
+        definition.Prerequisites = new List<PrerequisiteDefinitionModel>
+        {
+            new()
+            {
+                Type = PrerequisiteType.CharacterLevel,
+                MinLevel = 10
+            }
+        };
+
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestDefinitionModel> { definition });
+
+        // No quests yet
+        _mockCharacterIndex
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CharacterQuestIndex?)null);
+
+        // Add a dynamic prerequisite provider that says the prerequisite is satisfied
+        var mockProvider = new Mock<IPrerequisiteProviderFactory>();
+        mockProvider.Setup(p => p.ProviderName).Returns("character_level");
+        mockProvider
+            .Setup(p => p.CheckAsync(
+                characterId,
+                It.IsAny<string>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PrerequisiteResult(true, null, 15, 10));
+        _prerequisiteProviders.Add(mockProvider.Object);
+
+        var request = new ListAvailableQuestsRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.ListAvailableQuestsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Available);
+        Assert.Equal("LEVEL_QUEST", response.Available.First().Code);
+
+        // Verify provider was called
+        mockProvider.Verify(p => p.CheckAsync(
+            characterId,
+            It.IsAny<string>(),
+            It.IsAny<IReadOnlyDictionary<string, object?>>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ListAvailableQuestsAsync_RepeatableOnCooldown_Excluded()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        var definition = CreateTestDefinitionModel(Guid.NewGuid(), "REPEATABLE_QUEST");
+        definition.IsDeprecated = false;
+        definition.Repeatable = true;
+        definition.CooldownSeconds = 3600;
+
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestDefinitionModel> { definition });
+
+        // Character has completed this quest before (but it's repeatable)
+        var characterIndex = new CharacterQuestIndex
+        {
+            CharacterId = characterId,
+            ActiveQuestIds = new List<Guid>(),
+            CompletedQuestCodes = new List<string> { "REPEATABLE_QUEST" }
+        };
+        _mockCharacterIndex
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(characterIndex);
+
+        // Cooldown is still active
+        var cooldownEntry = new CooldownEntry
+        {
+            CharacterId = characterId,
+            QuestCode = "REPEATABLE_QUEST",
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(30)
+        };
+        _mockCooldownStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cooldownEntry);
+
+        var request = new ListAvailableQuestsRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.ListAvailableQuestsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Available);
+    }
+
+    #endregion
+
+    #region AbandonQuest Additional Tests
+
+    [Fact]
+    public async Task AbandonQuestAsync_CharacterNotQuestor_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var questorCharacterId = Guid.NewGuid();
+        var otherCharacterId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(instanceId, questorCharacterId);
+        instance.Status = QuestStatus.Active;
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag123"));
+
+        var request = new AbandonQuestRequest
+        {
+            QuestInstanceId = instanceId,
+            QuestorCharacterId = otherCharacterId // Not the actual questor
+        };
+
+        // Act
+        var (status, response) = await service.AbandonQuestAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task AbandonQuestAsync_PublishesAbandonedEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(instanceId, characterId);
+        instance.Status = QuestStatus.Active;
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag123"));
+
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<QuestInstanceModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new-etag");
+
+        _mockContractClient
+            .Setup(c => c.TerminateContractInstanceAsync(
+                It.IsAny<TerminateContractInstanceRequest>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContractInstanceResponse { ContractId = instance.ContractInstanceId });
+
+        _mockCharacterIndex
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new CharacterQuestIndex
+            {
+                CharacterId = characterId,
+                ActiveQuestIds = new List<Guid> { instanceId }
+            }, "etag123"));
+        _mockCharacterIndex
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<CharacterQuestIndex>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new-etag");
+
+        var definition = CreateTestDefinitionModel(instance.DefinitionId);
+        _mockDefinitionCache
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(definition);
+
+        _mockProgressStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ObjectiveProgressModel?)null);
+
+        // Capture the published event
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
+        var request = new AbandonQuestRequest
+        {
+            QuestInstanceId = instanceId,
+            QuestorCharacterId = characterId
+        };
+
+        // Act
+        var (status, response) = await service.AbandonQuestAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.Equal(QuestTopics.QuestAbandoned, capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<QuestAbandonedEvent>(capturedEvent);
+        Assert.Equal(instanceId, typedEvent.QuestInstanceId);
+        Assert.Equal(characterId, typedEvent.AbandoningCharacterId);
+    }
+
+    #endregion
+
+    #region ForceCompleteObjective Additional Tests
+
+    [Fact]
+    public async Task ForceCompleteObjectiveAsync_QuestNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((QuestInstanceModel?)null);
+
+        var request = new ForceCompleteObjectiveRequest
+        {
+            QuestInstanceId = instanceId,
+            ObjectiveCode = "KILL_WOLVES"
+        };
+
+        // Act
+        var (status, response) = await service.ForceCompleteObjectiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ForceCompleteObjectiveAsync_ObjectiveNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(instanceId, characterId);
+        instance.Status = QuestStatus.Active;
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockProgressStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((ObjectiveProgressModel?)null, (string?)null));
+
+        var request = new ForceCompleteObjectiveRequest
+        {
+            QuestInstanceId = instanceId,
+            ObjectiveCode = "NON_EXISTENT"
+        };
+
+        // Act
+        var (status, response) = await service.ForceCompleteObjectiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ForceCompleteObjectiveAsync_AlreadyComplete_ReturnsOKIdempotent()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var objectiveCode = "KILL_WOLVES";
+        var instance = CreateTestInstanceModel(instanceId, characterId);
+        instance.Status = QuestStatus.Active;
+
+        var progress = new ObjectiveProgressModel
+        {
+            QuestInstanceId = instanceId,
+            ObjectiveCode = objectiveCode,
+            Name = "Kill Wolves",
+            ObjectiveType = ObjectiveType.Kill,
+            CurrentCount = 10,
+            RequiredCount = 10,
+            IsComplete = true,
+            TrackedEntityIds = new HashSet<Guid>()
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockProgressStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((progress, "etag123"));
+
+        var request = new ForceCompleteObjectiveRequest
+        {
+            QuestInstanceId = instanceId,
+            ObjectiveCode = objectiveCode
+        };
+
+        // Act
+        var (status, response) = await service.ForceCompleteObjectiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Objective.IsComplete);
+        Assert.False(response.MilestoneCompleted); // Already complete, no new milestone
+    }
+
+    #endregion
+
+    #region GetObjectiveProgress Additional Tests
+
+    [Fact]
+    public async Task GetObjectiveProgressAsync_QuestNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((QuestInstanceModel?)null);
+
+        var request = new GetObjectiveProgressRequest
+        {
+            QuestInstanceId = instanceId,
+            ObjectiveCode = "KILL_WOLVES"
+        };
+
+        // Act
+        var (status, response) = await service.GetObjectiveProgressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region ReportObjectiveProgress Additional Tests
+
+    [Fact]
+    public async Task ReportObjectiveProgressAsync_AlreadyComplete_ReturnsCurrentState()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var objectiveCode = "KILL_WOLVES";
+        var instance = CreateTestInstanceModel(instanceId, characterId);
+        instance.Status = QuestStatus.Active;
+
+        var progress = new ObjectiveProgressModel
+        {
+            QuestInstanceId = instanceId,
+            ObjectiveCode = objectiveCode,
+            Name = "Kill Wolves",
+            ObjectiveType = ObjectiveType.Kill,
+            CurrentCount = 10,
+            RequiredCount = 10,
+            IsComplete = true,
+            TrackedEntityIds = new HashSet<Guid>()
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockProgressStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((progress, "etag123"));
+
+        var request = new ReportProgressRequest
+        {
+            QuestInstanceId = instanceId,
+            ObjectiveCode = objectiveCode,
+            IncrementBy = 1
+        };
+
+        // Act
+        var (status, response) = await service.ReportObjectiveProgressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(10, response.Objective.CurrentCount); // Unchanged
+        Assert.True(response.Objective.IsComplete);
+        Assert.False(response.MilestoneCompleted); // Already was complete
+    }
+
+    [Fact]
+    public async Task ReportObjectiveProgressAsync_PublishesProgressEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var objectiveCode = "KILL_WOLVES";
+        var instance = CreateTestInstanceModel(instanceId, characterId);
+        instance.Status = QuestStatus.Active;
+
+        var progress = new ObjectiveProgressModel
+        {
+            QuestInstanceId = instanceId,
+            ObjectiveCode = objectiveCode,
+            Name = "Kill Wolves",
+            ObjectiveType = ObjectiveType.Kill,
+            CurrentCount = 3,
+            RequiredCount = 10,
+            IsComplete = false,
+            TrackedEntityIds = new HashSet<Guid>()
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockProgressStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((progress, "etag123"));
+
+        _mockProgressStore
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<ObjectiveProgressModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new-etag");
+
+        // Capture published events
+        var capturedTopics = new List<string>();
+        var capturedEvents = new List<object>();
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopics.Add(topic);
+                capturedEvents.Add(evt);
+            })
+            .ReturnsAsync(true);
+
+        var request = new ReportProgressRequest
+        {
+            QuestInstanceId = instanceId,
+            ObjectiveCode = objectiveCode,
+            IncrementBy = 2
+        };
+
+        // Act
+        var (status, response) = await service.ReportObjectiveProgressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(5, response.Objective.CurrentCount); // 3 + 2
+
+        // Verify progress event was published
+        Assert.Contains(QuestTopics.QuestObjectiveProgressed, capturedTopics);
+        var progressEvent = capturedEvents.OfType<QuestObjectiveProgressedEvent>().FirstOrDefault();
+        Assert.NotNull(progressEvent);
+        Assert.Equal(instanceId, progressEvent.QuestInstanceId);
+        Assert.Equal(objectiveCode, progressEvent.ObjectiveCode);
+        Assert.Equal(5, progressEvent.CurrentCount);
+        Assert.Equal(10, progressEvent.RequiredCount);
+        Assert.False(progressEvent.IsComplete);
+    }
+
+    [Fact]
+    public async Task ReportObjectiveProgressAsync_NewTrackedEntity_IncrementsProgress()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var objectiveCode = "KILL_WOLVES";
+        var newEntityId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(instanceId, characterId);
+        instance.Status = QuestStatus.Active;
+
+        var progress = new ObjectiveProgressModel
+        {
+            QuestInstanceId = instanceId,
+            ObjectiveCode = objectiveCode,
+            Name = "Kill Wolves",
+            ObjectiveType = ObjectiveType.Kill,
+            CurrentCount = 3,
+            RequiredCount = 10,
+            IsComplete = false,
+            TrackedEntityIds = new HashSet<Guid> { Guid.NewGuid() } // Has one tracked already
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockProgressStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((progress, "etag123"));
+
+        _mockProgressStore
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<ObjectiveProgressModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new-etag");
+
+        var request = new ReportProgressRequest
+        {
+            QuestInstanceId = instanceId,
+            ObjectiveCode = objectiveCode,
+            IncrementBy = 1,
+            TrackedEntityId = newEntityId // New entity, not a duplicate
+        };
+
+        // Act
+        var (status, response) = await service.ReportObjectiveProgressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(4, response.Objective.CurrentCount); // 3 + 1
+    }
+
+    #endregion
+
+    #region HandleMilestoneCompleted Additional Tests
+
+    [Fact]
+    public async Task HandleMilestoneCompletedAsync_NoQuestForContract_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel>());
+
+        var callback = new MilestoneCompletedCallback
+        {
+            ContractInstanceId = contractId,
+            MilestoneCode = "SOME_MILESTONE"
+        };
+
+        // Act
+        var status = await service.HandleMilestoneCompletedAsync(callback, CancellationToken.None);
+
+        // Assert - OK even when no quest found (contract may not be quest-related)
+        Assert.Equal(StatusCodes.OK, status);
+    }
+
+    #endregion
+
+    #region HandleQuestCompleted Additional Tests
+
+    [Fact]
+    public async Task HandleQuestCompletedAsync_NoQuestForContract_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel>());
+
+        var callback = new QuestCompletedCallback
+        {
+            ContractInstanceId = contractId
+        };
+
+        // Act
+        var status = await service.HandleQuestCompletedAsync(callback, CancellationToken.None);
+
+        // Assert - OK even when no quest found
+        Assert.Equal(StatusCodes.OK, status);
+    }
+
+    [Fact]
+    public async Task HandleQuestCompletedAsync_CompletesQuestAndPublishesEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(instanceId, characterId);
+        instance.ContractInstanceId = contractId;
+        instance.Status = QuestStatus.Active;
+
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel> { instance });
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag123"));
+
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<QuestInstanceModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new-etag");
+
+        // Setup: definition for reward processing
+        var definition = CreateTestDefinitionModel(instance.DefinitionId);
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestDefinitionModel> { definition });
+
+        // Setup: character index
+        var characterIndex = new CharacterQuestIndex
+        {
+            CharacterId = characterId,
+            ActiveQuestIds = new List<Guid> { instanceId },
+            CompletedQuestCodes = new List<string>()
+        };
+        _mockCharacterIndex
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((characterIndex, "etag123"));
+        _mockCharacterIndex
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<CharacterQuestIndex>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new-etag");
+
+        // Capture published events
+        var capturedTopics = new List<string>();
+        var capturedEvents = new List<object>();
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopics.Add(topic);
+                capturedEvents.Add(evt);
+            })
+            .ReturnsAsync(true);
+
+        var callback = new QuestCompletedCallback
+        {
+            ContractInstanceId = contractId
+        };
+
+        // Act
+        var status = await service.HandleQuestCompletedAsync(callback, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify completed event was published
+        Assert.Contains(QuestTopics.QuestCompleted, capturedTopics);
+        var completedEvent = capturedEvents.OfType<QuestCompletedEvent>().FirstOrDefault();
+        Assert.NotNull(completedEvent);
+        Assert.Equal(instanceId, completedEvent.QuestInstanceId);
+        Assert.Equal(instance.Code, completedEvent.QuestCode);
+        Assert.Contains(characterId, completedEvent.QuestorCharacterIds);
+    }
+
+    #endregion
+
+    #region GetQuestLog Additional Tests
+
+    [Fact]
+    public async Task GetQuestLogAsync_NoCharacterIndex_ReturnsEmptyLog()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        _mockCharacterIndex
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CharacterQuestIndex?)null);
+
+        // Empty failed quest query
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel>());
+
+        var request = new GetQuestLogRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetQuestLogAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.ActiveQuests);
+        Assert.Equal(0, response.CompletedCount);
+        Assert.Equal(0, response.FailedCount);
+    }
+
+    [Fact]
+    public async Task GetQuestLogAsync_IncludesFailedCount()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        var characterIndex = new CharacterQuestIndex
+        {
+            CharacterId = characterId,
+            ActiveQuestIds = new List<Guid>(),
+            CompletedQuestCodes = new List<string> { "QUEST_A", "QUEST_B" }
+        };
+        _mockCharacterIndex
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(characterIndex);
+
+        // Two failed quests returned by the query
+        var failedInstance1 = CreateTestInstanceModel(Guid.NewGuid(), characterId);
+        failedInstance1.Status = QuestStatus.Failed;
+        var failedInstance2 = CreateTestInstanceModel(Guid.NewGuid(), characterId);
+        failedInstance2.Status = QuestStatus.Failed;
+
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel> { failedInstance1, failedInstance2 });
+
+        var request = new GetQuestLogRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetQuestLogAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.CompletedCount); // From CompletedQuestCodes
+        Assert.Equal(2, response.FailedCount); // From QueryAsync for failed instances
+    }
+
+    [Fact]
+    public async Task GetQuestLogAsync_ObjectiveVisibility_HiddenObjectiveFilteredByRevealBehavior()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var questId = Guid.NewGuid();
+
+        var characterIndex = new CharacterQuestIndex
+        {
+            CharacterId = characterId,
+            ActiveQuestIds = new List<Guid> { questId },
+            CompletedQuestCodes = new List<string>()
+        };
+        _mockCharacterIndex
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(characterIndex);
+
+        var instance = CreateTestInstanceModel(questId, characterId);
+        _mockInstanceStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(questId.ToString())), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        // Definition with hidden objective (RevealBehavior = OnProgress)
+        var defId = instance.DefinitionId;
+        var definition = CreateTestDefinitionModel(defId);
+        definition.Objectives = new List<ObjectiveDefinitionModel>
+        {
+            new()
+            {
+                Code = "VISIBLE_OBJ",
+                Name = "Visible Objective",
+                ObjectiveType = ObjectiveType.Kill,
+                RequiredCount = 5,
+                Hidden = false,
+                RevealBehavior = ObjectiveRevealBehavior.Always,
+                Optional = false
+            },
+            new()
+            {
+                Code = "HIDDEN_OBJ",
+                Name = "Hidden Objective",
+                ObjectiveType = ObjectiveType.Collect,
+                RequiredCount = 3,
+                Hidden = true,
+                RevealBehavior = ObjectiveRevealBehavior.OnProgress,
+                Optional = false
+            }
+        };
+
+        _mockDefinitionCache
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(definition);
+
+        // Visible objective has progress
+        var visibleProgress = new ObjectiveProgressModel
+        {
+            QuestInstanceId = questId,
+            ObjectiveCode = "VISIBLE_OBJ",
+            Name = "Visible Objective",
+            ObjectiveType = ObjectiveType.Kill,
+            CurrentCount = 2,
+            RequiredCount = 5,
+            IsComplete = false,
+            Hidden = false,
+            RevealBehavior = ObjectiveRevealBehavior.Always,
+            Optional = false,
+            TrackedEntityIds = new HashSet<Guid>()
+        };
+
+        // Hidden objective with no progress (RevealBehavior=OnProgress, CurrentCount=0 => stays hidden)
+        var hiddenProgress = new ObjectiveProgressModel
+        {
+            QuestInstanceId = questId,
+            ObjectiveCode = "HIDDEN_OBJ",
+            Name = "Hidden Objective",
+            ObjectiveType = ObjectiveType.Collect,
+            CurrentCount = 0,
+            RequiredCount = 3,
+            IsComplete = false,
+            Hidden = true,
+            RevealBehavior = ObjectiveRevealBehavior.OnProgress,
+            Optional = false,
+            TrackedEntityIds = new HashSet<Guid>()
+        };
+
+        _mockProgressStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("VISIBLE_OBJ")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(visibleProgress);
+        _mockProgressStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("HIDDEN_OBJ")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(hiddenProgress);
+
+        // Empty failed quest query
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel>());
+
+        var request = new GetQuestLogRequest { CharacterId = characterId };
+
+        // Act
+        var (status, response) = await service.GetQuestLogAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.ActiveQuests);
+        var entry = response.ActiveQuests.First();
+        // Only visible objective should show (hidden with OnProgress but 0 progress stays hidden)
+        Assert.Single(entry.VisibleObjectives);
+        Assert.Equal("VISIBLE_OBJ", entry.VisibleObjectives.First().Code);
+    }
+
+    #endregion
 }

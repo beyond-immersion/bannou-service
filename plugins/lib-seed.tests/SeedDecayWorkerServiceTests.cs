@@ -468,6 +468,97 @@ public class SeedDecayWorkerServiceTests
 
     #endregion
 
+    #region Lock Failure Handling
+
+    /// <summary>
+    /// Tests that when the worker cannot acquire a lock for a specific seed during decay,
+    /// it skips that seed gracefully and continues processing others.
+    /// </summary>
+    [Fact]
+    public async Task Worker_LockFailure_SkipsSeedAndContinues()
+    {
+        // Arrange: global decay enabled for this test
+        _configuration.GrowthDecayEnabled = true;
+
+        var seedType = CreateTestType(decayEnabled: true, decayRate: 0.05f);
+        SetupTypeQuery(new List<SeedTypeDefinitionModel> { seedType });
+
+        var seed1Id = Guid.NewGuid();
+        var seed2Id = Guid.NewGuid();
+        var seed1 = CreateSeedForWorker(seed1Id);
+        var seed2 = CreateSeedForWorker(seed2Id);
+        SetupSeedQuery(new List<SeedModel> { seed1, seed2 }, 2);
+
+        // Set up growth data for both seeds
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{seed1Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SeedGrowthModel
+            {
+                SeedId = seed1Id,
+                Domains = new Dictionary<string, DomainGrowthEntry>
+                {
+                    { "combat", new DomainGrowthEntry { Depth = 5f, LastActivityAt = DateTimeOffset.UtcNow.AddDays(-1), PeakDepth = 5f } }
+                }
+            });
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{seed2Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SeedGrowthModel
+            {
+                SeedId = seed2Id,
+                Domains = new Dictionary<string, DomainGrowthEntry>
+                {
+                    { "combat", new DomainGrowthEntry { Depth = 5f, LastActivityAt = DateTimeOffset.UtcNow.AddDays(-1), PeakDepth = 5f } }
+                }
+            });
+
+        // Seed store GetAsync for re-read under lock
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{seed1Id}", It.IsAny<CancellationToken>())).ReturnsAsync(seed1);
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{seed2Id}", It.IsAny<CancellationToken>())).ReturnsAsync(seed2);
+
+        // Lock FAILS for seed1, SUCCEEDS for seed2
+        var failLock = new Mock<ILockResponse>();
+        failLock.Setup(r => r.Success).Returns(false);
+        var successLock = new Mock<ILockResponse>();
+        successLock.Setup(r => r.Success).Returns(true);
+
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                StateStoreDefinitions.SeedLock, seed1Id.ToString(),
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failLock.Object);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                StateStoreDefinitions.SeedLock, seed2Id.ToString(),
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLock.Object);
+
+        _mockGrowthStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        using var worker = CreateWorker();
+
+        // Act
+        await RunOneCycleAsync(worker);
+
+        // Assert: seed1's growth was NOT updated (lock failed, so no re-read under lock occurs)
+        // seed2's growth WAS updated (lock succeeded)
+        _mockGrowthStore.Verify(s => s.SaveAsync(
+            $"growth:{seed2Id}",
+            It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // seed1 was never saved (neither seed nor growth) because lock failed
+        _mockSeedStore.Verify(s => s.GetAsync(
+            $"seed:{seed1Id}", It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
     #region Helpers
 
     private SeedModel CreateSeedForWorker(Guid seedId) => new()

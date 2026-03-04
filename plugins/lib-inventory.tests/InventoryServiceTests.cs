@@ -3382,6 +3382,623 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
 
     #endregion
 
+    #region Edge Case Tests: Lock Failures
+
+    [Fact]
+    public async Task AddItemToContainerAsync_LockFailure_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var containerId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+
+        // Override default lock to fail for this container
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.Is<string>(k => k == containerId.ToString()),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
+
+        // Act
+        var (status, response) = await service.AddItemToContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task SplitStackAsync_LockFailure_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var containerId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, ContainerId = containerId, Quantity = 10 });
+
+        var template = CreateTestTemplate(templateId);
+        template.QuantityModel = QuantityModel.Discrete;
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Override default lock to fail for the container
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.Is<string>(k => k == containerId.ToString()),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        var request = new SplitStackRequest { InstanceId = instanceId, Quantity = 3 };
+
+        // Act
+        var (status, response) = await service.SplitStackAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateContainerAsync_LockFailure_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var containerId = Guid.NewGuid();
+
+        // Override default lock to fail for this container
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.Is<string>(k => k == containerId.ToString()),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        var request = new UpdateContainerRequest { ContainerId = containerId, MaxSlots = 30 };
+
+        // Act
+        var (status, response) = await service.UpdateContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region Edge Case Tests: MergeStacks Deadlock Prevention
+
+    [Fact]
+    public async Task MergeStacksAsync_DifferentContainers_LocksInGuidOrder()
+    {
+        // Arrange: source container GUID > target container GUID
+        // The implementation must lock the smaller GUID first to prevent deadlocks
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+
+        // Create deterministic GUIDs: sourceContainer is larger, targetContainer is smaller
+        var smallerGuid = new Guid("00000000-0000-0000-0000-000000000001");
+        var largerGuid = new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff");
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == sourceId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = sourceId, TemplateId = templateId, ContainerId = largerGuid, Quantity = 5 });
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == targetId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, ContainerId = smallerGuid, Quantity = 3 });
+
+        var template = CreateTestTemplate(templateId);
+        template.MaxStackSize = 99;
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockItemClient
+            .Setup(c => c.ModifyItemInstanceAsync(It.IsAny<ModifyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 8 });
+        _mockItemClient
+            .Setup(c => c.DestroyItemInstanceAsync(It.IsAny<DestroyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DestroyItemInstanceResponse { TemplateId = templateId });
+
+        var smallerContainer = CreateStoredContainerModel(smallerGuid);
+        var largerContainer = CreateStoredContainerModel(largerGuid);
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{smallerGuid}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(smallerContainer);
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{largerGuid}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(largerContainer);
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Track lock acquisition order
+        var lockOrder = new List<string>();
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, string, int, CancellationToken>((_, key, _, _, _) => lockOrder.Add(key))
+            .ReturnsAsync(() =>
+            {
+                var successLock = new Mock<ILockResponse>();
+                successLock.Setup(l => l.Success).Returns(true);
+                return successLock.Object;
+            });
+
+        var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
+
+        // Act
+        await service.MergeStacksAsync(request);
+
+        // Assert: smaller GUID must be locked first regardless of source/target assignment
+        Assert.Equal(2, lockOrder.Count);
+        Assert.Equal(smallerGuid.ToString(), lockOrder[0]);
+        Assert.Equal(largerGuid.ToString(), lockOrder[1]);
+    }
+
+    [Fact]
+    public async Task MergeStacksAsync_SecondLockFailure_ReturnsConflict()
+    {
+        // Arrange: two different containers, first lock succeeds, second lock fails
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var sourceContainerId = Guid.NewGuid();
+        var targetContainerId = Guid.NewGuid();
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == sourceId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = sourceId, TemplateId = templateId, ContainerId = sourceContainerId, Quantity = 5 });
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == targetId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, ContainerId = targetContainerId, Quantity = 3 });
+
+        var template = CreateTestTemplate(templateId);
+        template.MaxStackSize = 99;
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Determine which GUID is smaller to know which lock is first vs second
+        Guid firstLockGuid, secondLockGuid;
+        if (sourceContainerId.CompareTo(targetContainerId) < 0)
+        {
+            firstLockGuid = sourceContainerId;
+            secondLockGuid = targetContainerId;
+        }
+        else
+        {
+            firstLockGuid = targetContainerId;
+            secondLockGuid = sourceContainerId;
+        }
+
+        // First lock succeeds
+        var successLock = new Mock<ILockResponse>();
+        successLock.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.Is<string>(k => k == firstLockGuid.ToString()),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLock.Object);
+
+        // Second lock fails
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.Is<string>(k => k == secondLockGuid.ToString()),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
+
+        // Act
+        var (status, response) = await service.MergeStacksAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+
+        // Verify no item modifications were made (second lock failed before merge)
+        _mockItemClient.Verify(c => c.ModifyItemInstanceAsync(
+            It.IsAny<ModifyItemInstanceRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region Edge Case Tests: DeleteContainer with Transfer
+
+    [Fact]
+    public async Task DeleteContainerAsync_TransferHandling_MovesItemsToTarget()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceContainerId = Guid.NewGuid();
+        var targetContainerId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var sourceModel = CreateStoredContainerModel(sourceContainerId);
+        var targetModel = CreateStoredContainerModel(targetContainerId);
+
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{sourceContainerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceModel);
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{targetContainerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(targetModel);
+        _mockContainerStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        _mockItemClient
+            .Setup(c => c.ListItemsByContainerAsync(It.IsAny<ListItemsByContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ListItemsResponse
+            {
+                Items = new List<ItemInstanceResponse>
+                {
+                    new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, ContainerId = sourceContainerId, Quantity = 1 }
+                },
+                TotalCount = 1
+            });
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, ContainerId = sourceContainerId, Quantity = 1 });
+
+        var template = CreateTestTemplate(templateId);
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockItemClient
+            .Setup(c => c.ModifyItemInstanceAsync(It.IsAny<ModifyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, Quantity = 1 });
+
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        var request = new DeleteContainerRequest
+        {
+            ContainerId = sourceContainerId,
+            ItemHandling = ItemHandling.Transfer,
+            TransferToContainerId = targetContainerId
+        };
+
+        // Act
+        var (status, response) = await service.DeleteContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.ItemsHandled);
+    }
+
+    [Fact]
+    public async Task DeleteContainerAsync_TransferHandling_MissingTarget_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var containerId = Guid.NewGuid();
+        var model = CreateStoredContainerModel(containerId);
+
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        _mockItemClient
+            .Setup(c => c.ListItemsByContainerAsync(It.IsAny<ListItemsByContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ListItemsResponse
+            {
+                Items = new List<ItemInstanceResponse>
+                {
+                    new ItemInstanceResponse { InstanceId = Guid.NewGuid(), TemplateId = Guid.NewGuid(), Quantity = 1 }
+                },
+                TotalCount = 1
+            });
+
+        var request = new DeleteContainerRequest
+        {
+            ContainerId = containerId,
+            ItemHandling = ItemHandling.Transfer
+            // TransferToContainerId intentionally not set
+        };
+
+        // Act
+        var (status, response) = await service.DeleteContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region Edge Case Tests: EmitContainerFullEvent Constraint Types
+
+    [Fact]
+    public async Task AddItemToContainerAsync_GridFull_EmitsContainerFullEventWithGridType()
+    {
+        // Arrange
+        var service = CreateService();
+        var containerId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var container = CreateStoredContainerModel(containerId);
+        container.ConstraintModel = ContainerConstraintModel.Grid;
+        container.MaxSlots = 4; // 2x2 grid = 4 cells
+        container.UsedSlots = 3; // One slot left - after adding, will be full
+        container.GridWidth = 2;
+        container.GridHeight = 2;
+
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(container);
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, Quantity = 1 });
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestTemplate(templateId));
+
+        var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
+
+        // Act
+        await service.AddItemToContainerAsync(request);
+
+        // Assert - emits Grid constraint type, not Slots
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "inventory.container.full",
+            It.Is<InventoryContainerFullEvent>(e =>
+                e.ContainerId == containerId &&
+                e.ConstraintType == ConstraintLimitType.Grid),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AddItemToContainerAsync_VolumetricFull_EmitsContainerFullEventWithVolumeType()
+    {
+        // Arrange
+        var service = CreateService();
+        var containerId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var container = CreateStoredContainerModel(containerId);
+        container.ConstraintModel = ContainerConstraintModel.Volumetric;
+        container.MaxVolume = 100.0;
+        container.CurrentVolume = 95.0; // Adding 5.0 volume will fill it
+        container.MaxSlots = null; // Volumetric doesn't use slots
+
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(container);
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, Quantity = 1 });
+
+        var template = CreateTestTemplate(templateId);
+        template.Volume = 5.0;
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
+
+        // Act
+        await service.AddItemToContainerAsync(request);
+
+        // Assert - emits Volume constraint type
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "inventory.container.full",
+            It.Is<InventoryContainerFullEvent>(e =>
+                e.ContainerId == containerId &&
+                e.ConstraintType == ConstraintLimitType.Volume),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AddItemToContainerAsync_SlotAndWeightFull_ByWeight_EmitsWeightType()
+    {
+        // Arrange: SlotAndWeight where slots are available but weight is at max
+        var service = CreateService();
+        var containerId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var container = CreateStoredContainerModel(containerId);
+        container.ConstraintModel = ContainerConstraintModel.SlotAndWeight;
+        container.MaxSlots = 20;
+        container.UsedSlots = 5; // Plenty of slots remaining
+        container.MaxWeight = 50.0;
+        container.ContentsWeight = 47.0; // Adding 3.0 weight will fill to exactly 50
+
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(container);
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, Quantity = 2 });
+
+        var template = CreateTestTemplate(templateId);
+        template.Weight = 1.5; // 2 items * 1.5 weight = 3.0 -> total 50.0 = max
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
+
+        // Act
+        await service.AddItemToContainerAsync(request);
+
+        // Assert - should emit Weight (not Slots) because slots still have room
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "inventory.container.full",
+            It.Is<InventoryContainerFullEvent>(e =>
+                e.ContainerId == containerId &&
+                e.ConstraintType == ConstraintLimitType.Weight),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Edge Case Tests: Category Constraint Intersection
+
+    [Fact]
+    public async Task AddItemToContainerAsync_CategoryInBothAllowedAndForbidden_ReturnsBadRequest()
+    {
+        // Arrange: category appears in both AllowedCategories and ForbiddenCategories
+        // The implementation checks AllowedCategories first (passes), then ForbiddenCategories (rejects)
+        var service = CreateService();
+        var containerId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var container = CreateStoredContainerModel(containerId);
+        container.AllowedCategories = new List<string> { "Consumable", "Weapon" };
+        container.ForbiddenCategories = new List<string> { "Weapon" }; // Also forbidden
+
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(container);
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, Quantity = 1 });
+
+        var template = CreateTestTemplate(templateId);
+        template.Category = ItemCategory.Weapon;
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
+
+        // Act
+        var (status, response) = await service.AddItemToContainerAsync(request);
+
+        // Assert: ForbiddenCategories takes precedence - item is rejected
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region Edge Case Tests: MoveItem Orphaned Item
+
+    [Fact]
+    public async Task MoveItemAsync_AddToTargetFails_ReturnsAddFailureStatus()
+    {
+        // Arrange: remove from source succeeds, but add to target fails (item becomes orphaned)
+        var service = CreateService();
+        var sourceContainerId = Guid.NewGuid();
+        var targetContainerId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+
+        // Item is in source container
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse
+            {
+                InstanceId = instanceId,
+                TemplateId = templateId,
+                ContainerId = sourceContainerId,
+                Quantity = 1
+            });
+
+        var template = CreateTestTemplate(templateId);
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Source container exists and has the item
+        var sourceContainer = CreateStoredContainerModel(sourceContainerId);
+        sourceContainer.UsedSlots = 5;
+        sourceContainer.ContentsWeight = 10.0;
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{sourceContainerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceContainer);
+
+        // Target container is FULL - will cause AddItemToContainerAsync to fail
+        var targetContainer = CreateStoredContainerModel(targetContainerId);
+        targetContainer.MaxSlots = 5;
+        targetContainer.UsedSlots = 5; // Full
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{targetContainerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(targetContainer);
+
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockItemClient
+            .Setup(c => c.ModifyItemInstanceAsync(It.IsAny<ModifyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, Quantity = 1 });
+
+        var request = new MoveItemRequest
+        {
+            InstanceId = instanceId,
+            TargetContainerId = targetContainerId
+        };
+
+        // Act
+        var (status, response) = await service.MoveItemAsync(request);
+
+        // Assert: returns the error status from the failed add operation
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+
+        // The item.moved event should NOT be published (add failed)
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "inventory.item.moved",
+            It.IsAny<InventoryItemMovedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static CreateContainerRequest CreateValidContainerRequest()

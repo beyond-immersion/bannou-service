@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.GameSession.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
@@ -913,6 +914,1664 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.NotEqual(Guid.Empty, response.ActionId);
+    }
+
+    #endregion
+
+    #region JoinGameSessionById Tests
+
+    [Fact]
+    public async Task JoinGameSessionByIdAsync_WhenLobbySessionExists_ShouldJoinSuccessfully()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var webSocketSessionId = Guid.NewGuid();
+        var gameSessionId = Guid.NewGuid();
+
+        var request = new JoinGameSessionByIdRequest
+        {
+            WebSocketSessionId = webSocketSessionId,
+            AccountId = accountId,
+            GameSessionId = gameSessionId
+        };
+
+        // Setup existing lobby session (not matchmade)
+        var model = new GameSessionModel
+        {
+            SessionId = gameSessionId,
+            MaxPlayers = 4,
+            CurrentPlayers = 1,
+            Status = SessionStatus.Active,
+            SessionType = SessionType.Lobby,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = Guid.NewGuid(), DisplayName = "Existing" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        _mockPermissionClient
+            .Setup(p => p.UpdateSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permission.SessionStateUpdate>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
+
+        // Capture published event
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((topic, evt, _, _, _) =>
+            {
+                if (topic == "game-session.player-joined")
+                {
+                    capturedTopic = topic;
+                    capturedEvent = evt;
+                }
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(gameSessionId, response.SessionId);
+        Assert.Equal(PlayerRole.Player, response.PlayerRole);
+
+        // Verify player-joined event published with correct data
+        Assert.Equal("game-session.player-joined", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<GameSessionPlayerJoinedEvent>(capturedEvent);
+        Assert.Equal(gameSessionId, typedEvent.SessionId);
+        Assert.Equal(accountId, typedEvent.AccountId);
+
+        // Verify permission state set
+        _mockPermissionClient.Verify(p => p.UpdateSessionStateAsync(
+            It.Is<BeyondImmersion.BannouService.Permission.SessionStateUpdate>(u =>
+                u.SessionId == webSocketSessionId &&
+                u.NewState == "in_game"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task JoinGameSessionByIdAsync_MatchmadedSession_WithValidReservation_ShouldJoin()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var webSocketSessionId = Guid.NewGuid();
+        var gameSessionId = Guid.NewGuid();
+        var reservationToken = "valid-token-abc123";
+
+        var request = new JoinGameSessionByIdRequest
+        {
+            WebSocketSessionId = webSocketSessionId,
+            AccountId = accountId,
+            GameSessionId = gameSessionId,
+            ReservationToken = reservationToken
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = gameSessionId,
+            MaxPlayers = 4,
+            CurrentPlayers = 0,
+            Status = SessionStatus.Waiting,
+            SessionType = SessionType.Matchmade,
+            Players = new List<GamePlayer>(),
+            Reservations = new List<ReservationModel>
+            {
+                new()
+                {
+                    AccountId = accountId,
+                    Token = reservationToken,
+                    ReservedAt = DateTimeOffset.UtcNow,
+                    Claimed = false
+                }
+            },
+            ReservationExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        _mockPermissionClient
+            .Setup(p => p.UpdateSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permission.SessionStateUpdate>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
+
+        // Act
+        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(gameSessionId, response.SessionId);
+
+        // Verify session saved with updated player count
+        _mockGameSessionStore.Verify(s => s.SaveAsync(
+            SESSION_KEY_PREFIX + gameSessionId.ToString(),
+            It.Is<GameSessionModel>(m => m.CurrentPlayers == 1 && m.Status == SessionStatus.Active),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task JoinGameSessionByIdAsync_MatchmakedSession_WithExpiredReservation_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var gameSessionId = Guid.NewGuid();
+
+        var request = new JoinGameSessionByIdRequest
+        {
+            WebSocketSessionId = Guid.NewGuid(),
+            AccountId = accountId,
+            GameSessionId = gameSessionId,
+            ReservationToken = "some-token"
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = gameSessionId,
+            MaxPlayers = 4,
+            CurrentPlayers = 0,
+            Status = SessionStatus.Waiting,
+            SessionType = SessionType.Matchmade,
+            Players = new List<GamePlayer>(),
+            Reservations = new List<ReservationModel>
+            {
+                new()
+                {
+                    AccountId = accountId,
+                    Token = "some-token",
+                    ReservedAt = DateTimeOffset.UtcNow.AddMinutes(-10),
+                    Claimed = false
+                }
+            },
+            ReservationExpiresAt = DateTimeOffset.UtcNow.AddMinutes(-5), // Expired 5 minutes ago
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        // Act
+        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task JoinGameSessionByIdAsync_MatchmakedSession_WithInvalidToken_ShouldReturnForbidden()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var gameSessionId = Guid.NewGuid();
+
+        var request = new JoinGameSessionByIdRequest
+        {
+            WebSocketSessionId = Guid.NewGuid(),
+            AccountId = accountId,
+            GameSessionId = gameSessionId,
+            ReservationToken = "wrong-token"
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = gameSessionId,
+            SessionType = SessionType.Matchmade,
+            Status = SessionStatus.Waiting,
+            Players = new List<GamePlayer>(),
+            Reservations = new List<ReservationModel>
+            {
+                new()
+                {
+                    AccountId = accountId,
+                    Token = "correct-token",
+                    Claimed = false
+                }
+            },
+            ReservationExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        // Act
+        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Forbidden, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task JoinGameSessionByIdAsync_MatchmakedSession_AlreadyClaimed_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var gameSessionId = Guid.NewGuid();
+        var token = "valid-token";
+
+        var request = new JoinGameSessionByIdRequest
+        {
+            WebSocketSessionId = Guid.NewGuid(),
+            AccountId = accountId,
+            GameSessionId = gameSessionId,
+            ReservationToken = token
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = gameSessionId,
+            SessionType = SessionType.Matchmade,
+            Status = SessionStatus.Active,
+            Players = new List<GamePlayer>(),
+            Reservations = new List<ReservationModel>
+            {
+                new()
+                {
+                    AccountId = accountId,
+                    Token = token,
+                    Claimed = true, // Already claimed
+                    ClaimedAt = DateTimeOffset.UtcNow.AddMinutes(-1)
+                }
+            },
+            ReservationExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        // Act
+        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task JoinGameSessionByIdAsync_WhenSessionNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new JoinGameSessionByIdRequest
+        {
+            WebSocketSessionId = Guid.NewGuid(),
+            AccountId = Guid.NewGuid(),
+            GameSessionId = Guid.NewGuid()
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GameSessionModel?)null);
+
+        // Act
+        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task JoinGameSessionByIdAsync_WhenSessionFinished_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var gameSessionId = Guid.NewGuid();
+        var request = new JoinGameSessionByIdRequest
+        {
+            WebSocketSessionId = Guid.NewGuid(),
+            AccountId = Guid.NewGuid(),
+            GameSessionId = gameSessionId
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = gameSessionId,
+            Status = SessionStatus.Finished,
+            SessionType = SessionType.Lobby,
+            Players = new List<GamePlayer>(),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        // Act
+        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task JoinGameSessionByIdAsync_WhenPlayerAlreadyInSession_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var gameSessionId = Guid.NewGuid();
+        var request = new JoinGameSessionByIdRequest
+        {
+            WebSocketSessionId = Guid.NewGuid(),
+            AccountId = accountId,
+            GameSessionId = gameSessionId
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = gameSessionId,
+            MaxPlayers = 4,
+            CurrentPlayers = 1,
+            Status = SessionStatus.Active,
+            SessionType = SessionType.Lobby,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = accountId, DisplayName = "Already Here" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        // Act
+        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task JoinGameSessionByIdAsync_LobbyFull_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var gameSessionId = Guid.NewGuid();
+        var request = new JoinGameSessionByIdRequest
+        {
+            WebSocketSessionId = Guid.NewGuid(),
+            AccountId = Guid.NewGuid(),
+            GameSessionId = gameSessionId
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = gameSessionId,
+            MaxPlayers = 2,
+            CurrentPlayers = 2,
+            Status = SessionStatus.Full,
+            SessionType = SessionType.Lobby,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = Guid.NewGuid() },
+                new() { AccountId = Guid.NewGuid() }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        // Act
+        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region LeaveGameSessionById Tests
+
+    [Fact]
+    public async Task LeaveGameSessionByIdAsync_WhenPlayerInSession_ShouldLeaveSuccessfully()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var webSocketSessionId = Guid.NewGuid();
+        var gameSessionId = Guid.NewGuid();
+
+        var request = new LeaveGameSessionByIdRequest
+        {
+            WebSocketSessionId = webSocketSessionId,
+            AccountId = accountId,
+            GameSessionId = gameSessionId
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = gameSessionId,
+            MaxPlayers = 4,
+            CurrentPlayers = 2,
+            Status = SessionStatus.Active,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = accountId, SessionId = webSocketSessionId, DisplayName = "Leaving" },
+                new() { AccountId = Guid.NewGuid(), DisplayName = "Staying" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        _mockPermissionClient
+            .Setup(p => p.ClearSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permission.ClearSessionStateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
+
+        // Capture published event
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((topic, evt, _, _, _) =>
+            {
+                if (topic == "game-session.player-left")
+                {
+                    capturedTopic = topic;
+                    capturedEvent = evt;
+                }
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var status = await service.LeaveGameSessionByIdAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify player-left event with Kicked=false
+        Assert.Equal("game-session.player-left", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<GameSessionPlayerLeftEvent>(capturedEvent);
+        Assert.Equal(gameSessionId, typedEvent.SessionId);
+        Assert.Equal(accountId, typedEvent.AccountId);
+        Assert.False(typedEvent.Kicked);
+
+        // Verify permission state cleared
+        _mockPermissionClient.Verify(p => p.ClearSessionStateAsync(
+            It.Is<BeyondImmersion.BannouService.Permission.ClearSessionStateRequest>(u =>
+                u.SessionId == webSocketSessionId),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task LeaveGameSessionByIdAsync_WhenSessionNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var gameSessionId = Guid.NewGuid();
+        var request = new LeaveGameSessionByIdRequest
+        {
+            WebSocketSessionId = Guid.NewGuid(),
+            AccountId = Guid.NewGuid(),
+            GameSessionId = gameSessionId
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GameSessionModel?)null);
+
+        // Act
+        var status = await service.LeaveGameSessionByIdAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task LeaveGameSessionByIdAsync_WhenPlayerNotInSession_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var gameSessionId = Guid.NewGuid();
+
+        var request = new LeaveGameSessionByIdRequest
+        {
+            WebSocketSessionId = Guid.NewGuid(),
+            AccountId = accountId,
+            GameSessionId = gameSessionId
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = gameSessionId,
+            CurrentPlayers = 1,
+            Status = SessionStatus.Active,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = Guid.NewGuid(), DisplayName = "Other" } // Different player
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        // Act
+        var status = await service.LeaveGameSessionByIdAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task LeaveGameSessionByIdAsync_LastPlayerLeaves_ShouldSetStatusToFinished()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var gameSessionId = Guid.NewGuid();
+
+        var request = new LeaveGameSessionByIdRequest
+        {
+            WebSocketSessionId = Guid.NewGuid(),
+            AccountId = accountId,
+            GameSessionId = gameSessionId
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = gameSessionId,
+            MaxPlayers = 4,
+            CurrentPlayers = 1,
+            Status = SessionStatus.Active,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = accountId, SessionId = Guid.NewGuid(), DisplayName = "LastOne" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        _mockPermissionClient
+            .Setup(p => p.ClearSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permission.ClearSessionStateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
+
+        // Capture saved model to verify status
+        GameSessionModel? savedModel = null;
+        _mockGameSessionStore
+            .Setup(s => s.SaveAsync(
+                SESSION_KEY_PREFIX + gameSessionId.ToString(),
+                It.IsAny<GameSessionModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, GameSessionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m);
+
+        // Act
+        var status = await service.LeaveGameSessionByIdAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedModel);
+        Assert.Equal(SessionStatus.Finished, savedModel.Status);
+        Assert.Equal(0, savedModel.CurrentPlayers);
+    }
+
+    [Fact]
+    public async Task LeaveGameSessionByIdAsync_FromFullSession_ShouldSetStatusToActive()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var gameSessionId = Guid.NewGuid();
+
+        var request = new LeaveGameSessionByIdRequest
+        {
+            WebSocketSessionId = Guid.NewGuid(),
+            AccountId = accountId,
+            GameSessionId = gameSessionId
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = gameSessionId,
+            MaxPlayers = 2,
+            CurrentPlayers = 2,
+            Status = SessionStatus.Full,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = accountId, SessionId = Guid.NewGuid(), DisplayName = "Leaving" },
+                new() { AccountId = Guid.NewGuid(), DisplayName = "Staying" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        _mockPermissionClient
+            .Setup(p => p.ClearSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permission.ClearSessionStateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
+
+        // Capture saved model
+        GameSessionModel? savedModel = null;
+        _mockGameSessionStore
+            .Setup(s => s.SaveAsync(
+                SESSION_KEY_PREFIX + gameSessionId.ToString(),
+                It.IsAny<GameSessionModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, GameSessionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m);
+
+        // Act
+        var status = await service.LeaveGameSessionByIdAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedModel);
+        Assert.Equal(SessionStatus.Active, savedModel.Status);
+        Assert.Equal(1, savedModel.CurrentPlayers);
+    }
+
+    [Fact]
+    public async Task LeaveGameSessionByIdAsync_WithNullWebSocketSessionId_ShouldSkipPermissionClear()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var gameSessionId = Guid.NewGuid();
+
+        var request = new LeaveGameSessionByIdRequest
+        {
+            WebSocketSessionId = null, // Server-side cleanup
+            AccountId = accountId,
+            GameSessionId = gameSessionId
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = gameSessionId,
+            MaxPlayers = 4,
+            CurrentPlayers = 2,
+            Status = SessionStatus.Active,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = accountId, SessionId = Guid.NewGuid(), DisplayName = "Leaving" },
+                new() { AccountId = Guid.NewGuid(), DisplayName = "Staying" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        // Act
+        var status = await service.LeaveGameSessionByIdAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify permission clear was NOT called (null WebSocket session = server-side cleanup)
+        _mockPermissionClient.Verify(p => p.ClearSessionStateAsync(
+            It.IsAny<BeyondImmersion.BannouService.Permission.ClearSessionStateRequest>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region PublishJoinShortcut Tests
+
+    [Fact]
+    public async Task PublishJoinShortcutAsync_WithValidRequest_ShouldPublishShortcut()
+    {
+        // Arrange
+        var service = CreateService();
+        var targetWebSocketSessionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+        var gameSessionId = Guid.NewGuid();
+        var reservationToken = "valid-token";
+
+        var request = new PublishJoinShortcutRequest
+        {
+            TargetWebSocketSessionId = targetWebSocketSessionId,
+            AccountId = accountId,
+            GameSessionId = gameSessionId,
+            ReservationToken = reservationToken
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = gameSessionId,
+            Status = SessionStatus.Waiting,
+            SessionType = SessionType.Matchmade,
+            Players = new List<GamePlayer>(),
+            Reservations = new List<ReservationModel>
+            {
+                new()
+                {
+                    AccountId = accountId,
+                    Token = reservationToken,
+                    Claimed = false
+                }
+            },
+            ReservationExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        // Capture published shortcut event
+        ShortcutPublishedEvent? capturedShortcut = null;
+        _mockClientEventPublisher
+            .Setup(p => p.PublishToSessionAsync(
+                targetWebSocketSessionId.ToString(),
+                It.IsAny<ShortcutPublishedEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, ShortcutPublishedEvent, CancellationToken>((_, evt, _) => capturedShortcut = evt)
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.PublishJoinShortcutAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotEqual(Guid.Empty, response.ShortcutRouteGuid);
+
+        // Verify shortcut event content
+        Assert.NotNull(capturedShortcut);
+        Assert.Equal(targetWebSocketSessionId, capturedShortcut.SessionId);
+        Assert.Contains("join_match_", capturedShortcut.Shortcut.Metadata.Name);
+        Assert.Equal(StateStoreDefinitions.GameSessionLock, capturedShortcut.Shortcut.Metadata.SourceService);
+        Assert.True(capturedShortcut.ReplaceExisting);
+    }
+
+    [Fact]
+    public async Task PublishJoinShortcutAsync_WhenSessionNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var gameSessionId = Guid.NewGuid();
+
+        var request = new PublishJoinShortcutRequest
+        {
+            TargetWebSocketSessionId = Guid.NewGuid(),
+            AccountId = Guid.NewGuid(),
+            GameSessionId = gameSessionId,
+            ReservationToken = "any-token"
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GameSessionModel?)null);
+
+        // Act
+        var (status, response) = await service.PublishJoinShortcutAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task PublishJoinShortcutAsync_WithInvalidReservationToken_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var gameSessionId = Guid.NewGuid();
+
+        var request = new PublishJoinShortcutRequest
+        {
+            TargetWebSocketSessionId = Guid.NewGuid(),
+            AccountId = accountId,
+            GameSessionId = gameSessionId,
+            ReservationToken = "wrong-token"
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = gameSessionId,
+            SessionType = SessionType.Matchmade,
+            Status = SessionStatus.Waiting,
+            Players = new List<GamePlayer>(),
+            Reservations = new List<ReservationModel>
+            {
+                new()
+                {
+                    AccountId = accountId,
+                    Token = "correct-token",
+                    Claimed = false
+                }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + gameSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        // Act
+        var (status, response) = await service.PublishJoinShortcutAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region KickPlayer Tests
+
+    [Fact]
+    public async Task KickPlayerAsync_WhenPlayerInSession_ShouldKickSuccessfully()
+    {
+        // Arrange
+        var service = CreateService();
+        var targetAccountId = Guid.NewGuid();
+        var targetSessionId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+
+        var request = new KickPlayerRequest
+        {
+            SessionId = sessionId,
+            TargetAccountId = targetAccountId,
+            Reason = "Cheating"
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = sessionId,
+            MaxPlayers = 4,
+            CurrentPlayers = 2,
+            Status = SessionStatus.Active,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = targetAccountId, SessionId = targetSessionId, DisplayName = "Cheater" },
+                new() { AccountId = Guid.NewGuid(), DisplayName = "Honest" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        _mockPermissionClient
+            .Setup(p => p.ClearSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permission.ClearSessionStateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
+
+        // Capture published event
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((topic, evt, _, _, _) =>
+            {
+                if (topic == "game-session.player-left")
+                {
+                    capturedTopic = topic;
+                    capturedEvent = evt;
+                }
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var status = await service.KickPlayerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify player-left event with Kicked=true and reason
+        Assert.Equal("game-session.player-left", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<GameSessionPlayerLeftEvent>(capturedEvent);
+        Assert.Equal(sessionId, typedEvent.SessionId);
+        Assert.Equal(targetAccountId, typedEvent.AccountId);
+        Assert.True(typedEvent.Kicked);
+        Assert.Equal("Cheating", typedEvent.Reason);
+
+        // Verify permission cleared for kicked player's session
+        _mockPermissionClient.Verify(p => p.ClearSessionStateAsync(
+            It.Is<BeyondImmersion.BannouService.Permission.ClearSessionStateRequest>(u =>
+                u.SessionId == targetSessionId),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task KickPlayerAsync_WhenSessionNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var request = new KickPlayerRequest
+        {
+            SessionId = sessionId,
+            TargetAccountId = Guid.NewGuid()
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GameSessionModel?)null);
+
+        // Act
+        var status = await service.KickPlayerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task KickPlayerAsync_WhenPlayerNotInSession_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var request = new KickPlayerRequest
+        {
+            SessionId = sessionId,
+            TargetAccountId = Guid.NewGuid() // Not in session
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = sessionId,
+            CurrentPlayers = 1,
+            Status = SessionStatus.Active,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = Guid.NewGuid(), DisplayName = "Other" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        // Act
+        var status = await service.KickPlayerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task KickPlayerAsync_FromFullSession_ShouldTransitionToActive()
+    {
+        // Arrange
+        var service = CreateService();
+        var targetAccountId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+
+        var request = new KickPlayerRequest
+        {
+            SessionId = sessionId,
+            TargetAccountId = targetAccountId
+        };
+
+        var model = new GameSessionModel
+        {
+            SessionId = sessionId,
+            MaxPlayers = 2,
+            CurrentPlayers = 2,
+            Status = SessionStatus.Full,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = targetAccountId, SessionId = Guid.NewGuid(), DisplayName = "Kicked" },
+                new() { AccountId = Guid.NewGuid(), DisplayName = "Stays" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        _mockPermissionClient
+            .Setup(p => p.ClearSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permission.ClearSessionStateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
+
+        // Capture saved model to verify status transition
+        GameSessionModel? savedModel = null;
+        _mockGameSessionStore
+            .Setup(s => s.SaveAsync(
+                SESSION_KEY_PREFIX + sessionId.ToString(),
+                It.IsAny<GameSessionModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, GameSessionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m);
+
+        // Act
+        var status = await service.KickPlayerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedModel);
+        Assert.Equal(SessionStatus.Active, savedModel.Status);
+        Assert.Equal(1, savedModel.CurrentPlayers);
+    }
+
+    #endregion
+
+    #region SendChatMessage Tests
+
+    [Fact]
+    public async Task SendChatMessageAsync_PublicMessage_ShouldBroadcastToAllPlayers()
+    {
+        // Arrange
+        var service = CreateService();
+        var senderId = Guid.NewGuid();
+        var senderSessionId = Guid.NewGuid();
+        var otherSessionId = Guid.NewGuid();
+        var lobbyId = Guid.NewGuid();
+
+        var request = new ChatMessageRequest
+        {
+            SessionId = senderSessionId,
+            AccountId = senderId,
+            GameType = TEST_GAME_TYPE,
+            Message = "Hello everyone!",
+            MessageType = ChatMessageType.Public
+        };
+
+        // Setup lobby lookup
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId,
+            Status = SessionStatus.Active,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = senderId, SessionId = senderSessionId, DisplayName = "Sender" },
+                new() { AccountId = Guid.NewGuid(), SessionId = otherSessionId, DisplayName = "Other" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
+
+        // Setup PublishToSessionsAsync to return count
+        _mockClientEventPublisher
+            .Setup(p => p.PublishToSessionsAsync(
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<SessionChatReceivedClientEvent>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(2);
+
+        // Act
+        var status = await service.SendChatMessageAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify broadcast to all player sessions
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
+            It.Is<IEnumerable<string>>(sessions =>
+                sessions.Contains(senderSessionId.ToString()) &&
+                sessions.Contains(otherSessionId.ToString())),
+            It.Is<SessionChatReceivedClientEvent>(e =>
+                e.Message == "Hello everyone!" &&
+                e.SenderId == senderId &&
+                e.MessageType == ChatMessageType.Public &&
+                e.SessionId == lobbyId),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendChatMessageAsync_WhisperMessage_ShouldSendOnlyToTargetAndSender()
+    {
+        // Arrange
+        var service = CreateService();
+        var senderId = Guid.NewGuid();
+        var senderSessionId = Guid.NewGuid();
+        var targetPlayerId = Guid.NewGuid();
+        var targetSessionId = Guid.NewGuid();
+        var lobbyId = Guid.NewGuid();
+
+        var request = new ChatMessageRequest
+        {
+            SessionId = senderSessionId,
+            AccountId = senderId,
+            GameType = TEST_GAME_TYPE,
+            Message = "Secret message",
+            MessageType = ChatMessageType.Whisper,
+            TargetPlayerId = targetPlayerId
+        };
+
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId,
+            Status = SessionStatus.Active,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = senderId, SessionId = senderSessionId, DisplayName = "Sender" },
+                new() { AccountId = targetPlayerId, SessionId = targetSessionId, DisplayName = "Target" },
+                new() { AccountId = Guid.NewGuid(), SessionId = Guid.NewGuid(), DisplayName = "Bystander" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
+
+        // Track individual publishes
+        var publishedSessions = new List<string>();
+        _mockClientEventPublisher
+            .Setup(p => p.PublishToSessionAsync(
+                It.IsAny<string>(),
+                It.IsAny<SessionChatReceivedClientEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, SessionChatReceivedClientEvent, CancellationToken>((session, _, _) => publishedSessions.Add(session))
+            .ReturnsAsync(true);
+
+        // Act
+        var status = await service.SendChatMessageAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify sent only to target and sender (not bystander) using individual publishes
+        Assert.Equal(2, publishedSessions.Count);
+        Assert.Contains(targetSessionId.ToString(), publishedSessions);
+        Assert.Contains(senderSessionId.ToString(), publishedSessions);
+
+        // Verify broadcast was NOT used
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
+            It.IsAny<IEnumerable<string>>(),
+            It.IsAny<SessionChatReceivedClientEvent>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SendChatMessageAsync_WhenNoLobbyExists_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ChatMessageRequest
+        {
+            SessionId = Guid.NewGuid(),
+            AccountId = Guid.NewGuid(),
+            GameType = TEST_GAME_TYPE,
+            Message = "Hello",
+            MessageType = ChatMessageType.Public
+        };
+
+        // No lobby exists
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(LOBBY_KEY_PREFIX + TEST_GAME_TYPE.ToLowerInvariant(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GameSessionModel?)null);
+
+        // Act
+        var status = await service.SendChatMessageAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task SendChatMessageAsync_WhenLobbyModelNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var lobbyId = Guid.NewGuid();
+        var request = new ChatMessageRequest
+        {
+            SessionId = Guid.NewGuid(),
+            AccountId = Guid.NewGuid(),
+            GameType = TEST_GAME_TYPE,
+            Message = "Hello",
+            MessageType = ChatMessageType.Public
+        };
+
+        // Lobby key returns a reference but the session itself is missing
+        var lobby = new GameSessionModel { SessionId = lobbyId };
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(LOBBY_KEY_PREFIX + TEST_GAME_TYPE.ToLowerInvariant(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lobby);
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GameSessionModel?)null);
+
+        // Act
+        var status = await service.SendChatMessageAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    #endregion
+
+    #region JoinGameSession Edge Cases
+
+    [Fact]
+    public async Task JoinGameSessionAsync_WaitingToActive_ShouldTransitionStatus()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var clientSessionId = Guid.NewGuid();
+        var lobbyId = Guid.NewGuid();
+
+        var request = new JoinGameSessionRequest
+        {
+            SessionId = clientSessionId,
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE
+        };
+
+        SetupValidSubscriberSession(accountId, clientSessionId);
+
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId,
+            MaxPlayers = 4,
+            CurrentPlayers = 0,
+            Status = SessionStatus.Waiting,
+            Players = new List<GamePlayer>(),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
+
+        _mockPermissionClient
+            .Setup(p => p.UpdateSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permission.SessionStateUpdate>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
+
+        // Capture saved model
+        GameSessionModel? savedModel = null;
+        _mockGameSessionStore
+            .Setup(s => s.SaveAsync(
+                It.Is<string>(k => k.StartsWith(SESSION_KEY_PREFIX)),
+                It.IsAny<GameSessionModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, GameSessionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m);
+
+        // Act
+        var (status, response) = await service.JoinGameSessionAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedModel);
+        Assert.Equal(SessionStatus.Active, savedModel.Status);
+        Assert.Equal(1, savedModel.CurrentPlayers);
+    }
+
+    [Fact]
+    public async Task JoinGameSessionAsync_WhenAlreadyInSession_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var clientSessionId = Guid.NewGuid();
+        var lobbyId = Guid.NewGuid();
+
+        var request = new JoinGameSessionRequest
+        {
+            SessionId = clientSessionId,
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE
+        };
+
+        SetupValidSubscriberSession(accountId, clientSessionId);
+
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId,
+            MaxPlayers = 4,
+            CurrentPlayers = 1,
+            Status = SessionStatus.Active,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = accountId, DisplayName = "AlreadyHere" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
+
+        // Act
+        var (status, response) = await service.JoinGameSessionAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task JoinGameSessionAsync_WhenNotAuthorized_ShouldReturnUnauthorized()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var clientSessionId = Guid.NewGuid();
+
+        var request = new JoinGameSessionRequest
+        {
+            SessionId = clientSessionId,
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE
+        };
+
+        // Do NOT set up valid subscriber session - authorization should fail
+        _mockSubscriberSessionsStore
+            .Setup(s => s.GetAsync(SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SubscriberSessionsModel?)null);
+
+        // Act
+        var (status, response) = await service.JoinGameSessionAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Unauthorized, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region LeaveGameSession Edge Cases
+
+    [Fact]
+    public async Task LeaveGameSessionAsync_WhenPlayerNotInLobby_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var lobbyId = Guid.NewGuid();
+
+        var request = new LeaveGameSessionRequest
+        {
+            SessionId = Guid.NewGuid(),
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE
+        };
+
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId,
+            MaxPlayers = 4,
+            CurrentPlayers = 1,
+            Status = SessionStatus.Active,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = Guid.NewGuid(), DisplayName = "NotMe" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
+
+        // Act
+        var status = await service.LeaveGameSessionAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task LeaveGameSessionAsync_LastPlayerLeaves_ShouldSetFinished()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var lobbyId = Guid.NewGuid();
+
+        var request = new LeaveGameSessionRequest
+        {
+            SessionId = Guid.NewGuid(),
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE
+        };
+
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId,
+            MaxPlayers = 4,
+            CurrentPlayers = 1,
+            Status = SessionStatus.Active,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = accountId, SessionId = Guid.NewGuid(), DisplayName = "LastPlayer" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
+
+        _mockPermissionClient
+            .Setup(p => p.ClearSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permission.ClearSessionStateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
+
+        // Capture saved model
+        GameSessionModel? savedModel = null;
+        _mockGameSessionStore
+            .Setup(s => s.SaveAsync(
+                It.Is<string>(k => k.StartsWith(SESSION_KEY_PREFIX)),
+                It.IsAny<GameSessionModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, GameSessionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m);
+
+        // Act
+        var status = await service.LeaveGameSessionAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedModel);
+        Assert.Equal(SessionStatus.Finished, savedModel.Status);
+        Assert.Equal(0, savedModel.CurrentPlayers);
+    }
+
+    [Fact]
+    public async Task LeaveGameSessionAsync_FromFullSession_ShouldTransitionToActive()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var lobbyId = Guid.NewGuid();
+
+        var request = new LeaveGameSessionRequest
+        {
+            SessionId = Guid.NewGuid(),
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE
+        };
+
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId,
+            MaxPlayers = 2,
+            CurrentPlayers = 2,
+            Status = SessionStatus.Full,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = accountId, SessionId = Guid.NewGuid(), DisplayName = "Leaving" },
+                new() { AccountId = Guid.NewGuid(), DisplayName = "Staying" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
+
+        _mockPermissionClient
+            .Setup(p => p.ClearSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permission.ClearSessionStateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
+
+        // Capture saved model
+        GameSessionModel? savedModel = null;
+        _mockGameSessionStore
+            .Setup(s => s.SaveAsync(
+                It.Is<string>(k => k.StartsWith(SESSION_KEY_PREFIX)),
+                It.IsAny<GameSessionModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, GameSessionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m);
+
+        // Act
+        var status = await service.LeaveGameSessionAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedModel);
+        Assert.Equal(SessionStatus.Active, savedModel.Status);
+        Assert.Equal(1, savedModel.CurrentPlayers);
+    }
+
+    #endregion
+
+    #region PerformGameAction Edge Cases
+
+    [Fact]
+    public async Task PerformGameActionAsync_WhenSuccessful_ShouldPublishActionEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var lobbyId = Guid.NewGuid();
+
+        var request = new GameActionRequest
+        {
+            SessionId = Guid.NewGuid(),
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE,
+            ActionType = GameActionType.Attack,
+            TargetId = Guid.NewGuid()
+        };
+
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId,
+            Status = SessionStatus.Active,
+            Players = new List<GamePlayer>
+            {
+                new() { AccountId = accountId, SessionId = Guid.NewGuid(), DisplayName = "Player" }
+            },
+            CurrentPlayers = 1,
+            MaxPlayers = 16,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
+
+        // Capture published action event
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((topic, evt, _, _, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.PerformGameActionAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        Assert.Equal("game-session.action.performed", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<GameSessionActionPerformedEvent>(capturedEvent);
+        Assert.Equal(lobbyId, typedEvent.SessionId);
+        Assert.Equal(accountId, typedEvent.AccountId);
+        Assert.Equal(GameActionType.Attack, typedEvent.ActionType);
+        Assert.Equal(request.TargetId, typedEvent.TargetId);
+    }
+
+    #endregion
+
+    #region ListGameSessions Edge Cases
+
+    [Fact]
+    public async Task ListGameSessionsAsync_WithMultipleSessions_ShouldReturnCorrectCount()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListGameSessionsRequest();
+        var session1Id = Guid.NewGuid();
+        var session2Id = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { session1Id.ToString(), session2Id.ToString() });
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + session1Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GameSessionModel
+            {
+                SessionId = session1Id,
+                SessionName = "Game 1",
+                Status = SessionStatus.Active,
+                Players = new List<GamePlayer>(),
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + session2Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GameSessionModel
+            {
+                SessionId = session2Id,
+                SessionName = "Game 2",
+                Status = SessionStatus.Waiting,
+                Players = new List<GamePlayer>(),
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.ListGameSessionsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Sessions.Count);
+        Assert.Equal(2, response.TotalCount);
+    }
+
+    [Fact]
+    public async Task ListGameSessionsAsync_WhenNullSessionList_ShouldReturnEmpty()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListGameSessionsRequest();
+
+        _mockListStore
+            .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<string>?)null);
+
+        // Act
+        var (status, response) = await service.ListGameSessionsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Sessions);
+        Assert.Equal(0, response.TotalCount);
     }
 
     #endregion

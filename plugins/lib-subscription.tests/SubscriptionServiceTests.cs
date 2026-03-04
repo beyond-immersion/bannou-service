@@ -1142,6 +1142,834 @@ public class SubscriptionServiceTests
         Assert.False(result);
     }
 
+    [Fact]
+    public async Task ExpireSubscriptionAsync_ShouldReturnFalse_WhenLockFails()
+    {
+        // Arrange
+        var service = CreateService();
+        var subscriptionId = Guid.NewGuid();
+
+        // Mock: Lock acquisition fails
+        var mockFailedLock = new Mock<ILockResponse>();
+        mockFailedLock.Setup(l => l.Success).Returns(false);
+        mockFailedLock.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider.Setup(l => l.LockAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockFailedLock.Object);
+
+        // Act
+        var result = await service.ExpireSubscriptionAsync(subscriptionId, CancellationToken.None);
+
+        // Assert
+        Assert.False(result);
+
+        // Verify no state store save was attempted
+        _mockSubscriptionStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<SubscriptionDataModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region CreateSubscriptionAsync Lock and ExpirationDate Edge Cases
+
+    [Fact]
+    public async Task CreateSubscriptionAsync_ShouldReturnConflict_WhenLockFails()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var request = new CreateSubscriptionRequest
+        {
+            AccountId = accountId,
+            ServiceId = serviceId,
+            DurationDays = 30
+        };
+
+        // Mock: Service exists (fetched before lock)
+        _mockServiceClient
+            .Setup(c => c.GetServiceAsync(
+                It.Is<GetServiceRequest>(r => r.ServiceId == serviceId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceInfo
+            {
+                ServiceId = serviceId,
+                StubName = "test-game",
+                DisplayName = "Test Game",
+                IsActive = true
+            });
+
+        // Mock: Lock acquisition fails
+        var mockFailedLock = new Mock<ILockResponse>();
+        mockFailedLock.Setup(l => l.Success).Returns(false);
+        mockFailedLock.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider.Setup(l => l.LockAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockFailedLock.Object);
+
+        // Act
+        var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, statusCode);
+        Assert.Null(response);
+
+        // Verify no subscription was saved
+        _mockSubscriptionStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<SubscriptionDataModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionAsync_ExpirationDateTakesPrecedenceOverDurationDays()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var explicitExpiration = DateTimeOffset.UtcNow.AddDays(90);
+        var request = new CreateSubscriptionRequest
+        {
+            AccountId = accountId,
+            ServiceId = serviceId,
+            ExpirationDate = explicitExpiration,
+            DurationDays = 30 // Should be ignored when ExpirationDate is provided
+        };
+
+        // Mock: Service exists
+        _mockServiceClient
+            .Setup(c => c.GetServiceAsync(
+                It.Is<GetServiceRequest>(r => r.ServiceId == serviceId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceInfo
+            {
+                ServiceId = serviceId,
+                StubName = "test-game",
+                DisplayName = "Test Game",
+                IsActive = true
+            });
+
+        // Mock: No existing subscriptions
+        _mockListStore
+            .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid>());
+        _mockListStore
+            .Setup(s => s.GetAsync($"service-subscriptions:{serviceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid>());
+
+        // Capture saved model
+        SubscriptionDataModel? savedModel = null;
+        _mockSubscriptionStore
+            .Setup(s => s.SaveAsync(
+                It.Is<string>(k => k.StartsWith("subscription:")),
+                It.IsAny<SubscriptionDataModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
+            .ReturnsAsync("etag");
+
+        // Act
+        var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(savedModel);
+        // ExpirationDate should be the explicit one (~90 days from now), not DurationDays-derived (~30 days)
+        Assert.Equal(explicitExpiration.ToUnixTimeSeconds(), savedModel.ExpirationDateUnix);
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionAsync_NoExpirationOrDuration_CreatesUnlimitedSubscription()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var request = new CreateSubscriptionRequest
+        {
+            AccountId = accountId,
+            ServiceId = serviceId
+            // No ExpirationDate, no DurationDays
+        };
+
+        // Mock: Service exists
+        _mockServiceClient
+            .Setup(c => c.GetServiceAsync(
+                It.Is<GetServiceRequest>(r => r.ServiceId == serviceId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceInfo
+            {
+                ServiceId = serviceId,
+                StubName = "test-game",
+                DisplayName = "Test Game",
+                IsActive = true
+            });
+
+        // Mock: No existing subscriptions
+        _mockListStore
+            .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid>());
+        _mockListStore
+            .Setup(s => s.GetAsync($"service-subscriptions:{serviceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid>());
+
+        // Capture saved model
+        SubscriptionDataModel? savedModel = null;
+        _mockSubscriptionStore
+            .Setup(s => s.SaveAsync(
+                It.Is<string>(k => k.StartsWith("subscription:")),
+                It.IsAny<SubscriptionDataModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
+            .ReturnsAsync("etag");
+
+        // Act
+        var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Null(response.ExpirationDate);
+        Assert.NotNull(savedModel);
+        Assert.Null(savedModel.ExpirationDateUnix);
+    }
+
+    #endregion
+
+    #region UpdateSubscriptionAsync Lock and Edge Cases
+
+    [Fact]
+    public async Task UpdateSubscriptionAsync_ShouldReturnConflict_WhenLockFails()
+    {
+        // Arrange
+        var service = CreateService();
+        var subscriptionId = Guid.NewGuid();
+        var request = new UpdateSubscriptionRequest
+        {
+            SubscriptionId = subscriptionId,
+            IsActive = false
+        };
+
+        // Mock: Lock acquisition fails
+        var mockFailedLock = new Mock<ILockResponse>();
+        mockFailedLock.Setup(l => l.Success).Returns(false);
+        mockFailedLock.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider.Setup(l => l.LockAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockFailedLock.Object);
+
+        // Act
+        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, statusCode);
+        Assert.Null(response);
+
+        // Verify no state store operations occurred
+        _mockSubscriptionStore.Verify(s => s.GetAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateSubscriptionAsync_ShouldUpdateIsActive()
+    {
+        // Arrange
+        var service = CreateService();
+        var subscriptionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var request = new UpdateSubscriptionRequest
+        {
+            SubscriptionId = subscriptionId,
+            IsActive = false
+        };
+
+        // Mock: Subscription exists
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SubscriptionDataModel
+            {
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
+                StubName = "test-game",
+                DisplayName = "Test Game",
+                StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                IsActive = true,
+                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            });
+
+        // Capture saved model
+        SubscriptionDataModel? savedModel = null;
+        _mockSubscriptionStore
+            .Setup(s => s.SaveAsync(
+                $"subscription:{subscriptionId}",
+                It.IsAny<SubscriptionDataModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
+            .ReturnsAsync("etag");
+
+        // Act
+        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(savedModel);
+        Assert.False(savedModel.IsActive);
+        Assert.NotNull(savedModel.UpdatedAtUnix);
+    }
+
+    [Fact]
+    public async Task UpdateSubscriptionAsync_ShouldUpdateBothFieldsTogether()
+    {
+        // Arrange
+        var service = CreateService();
+        var subscriptionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var newExpiration = DateTimeOffset.UtcNow.AddDays(60);
+        var request = new UpdateSubscriptionRequest
+        {
+            SubscriptionId = subscriptionId,
+            ExpirationDate = newExpiration,
+            IsActive = false
+        };
+
+        // Mock: Subscription exists with original values
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SubscriptionDataModel
+            {
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
+                StubName = "test-game",
+                DisplayName = "Test Game",
+                StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                ExpirationDateUnix = DateTimeOffset.UtcNow.AddDays(30).ToUnixTimeSeconds(),
+                IsActive = true,
+                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            });
+
+        // Capture saved model
+        SubscriptionDataModel? savedModel = null;
+        _mockSubscriptionStore
+            .Setup(s => s.SaveAsync(
+                $"subscription:{subscriptionId}",
+                It.IsAny<SubscriptionDataModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
+            .ReturnsAsync("etag");
+
+        // Act
+        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(savedModel);
+        Assert.False(savedModel.IsActive);
+        Assert.Equal(newExpiration.ToUnixTimeSeconds(), savedModel.ExpirationDateUnix);
+        Assert.NotNull(savedModel.UpdatedAtUnix);
+    }
+
+    [Fact]
+    public async Task UpdateSubscriptionAsync_ShouldPublishUpdatedEventWithCapturedData()
+    {
+        // Arrange
+        var service = CreateService();
+        var subscriptionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var request = new UpdateSubscriptionRequest
+        {
+            SubscriptionId = subscriptionId,
+            IsActive = false
+        };
+
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SubscriptionDataModel
+            {
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
+                StubName = "test-game",
+                DisplayName = "Test Game",
+                StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                IsActive = true,
+                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            });
+
+        // Capture published event
+        SubscriptionUpdatedEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                "subscription.updated",
+                It.IsAny<SubscriptionUpdatedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>(
+                (topic, evt, opts, corrId, ct) => capturedEvent = evt as SubscriptionUpdatedEvent)
+            .ReturnsAsync(true);
+
+        // Act
+        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(capturedEvent);
+        Assert.Equal(subscriptionId, capturedEvent.SubscriptionId);
+        Assert.Equal(accountId, capturedEvent.AccountId);
+        Assert.Equal(SubscriptionAction.Updated, capturedEvent.Action);
+        Assert.False(capturedEvent.IsActive);
+    }
+
+    #endregion
+
+    #region RenewSubscriptionAsync Edge Cases
+
+    [Fact]
+    public async Task RenewSubscriptionAsync_ShouldReturnConflict_WhenLockFails()
+    {
+        // Arrange
+        var service = CreateService();
+        var subscriptionId = Guid.NewGuid();
+        var request = new RenewSubscriptionRequest
+        {
+            SubscriptionId = subscriptionId,
+            ExtensionDays = 30
+        };
+
+        // Mock: Lock acquisition fails
+        var mockFailedLock = new Mock<ILockResponse>();
+        mockFailedLock.Setup(l => l.Success).Returns(false);
+        mockFailedLock.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider.Setup(l => l.LockAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockFailedLock.Object);
+
+        // Act
+        var (statusCode, response) = await service.RenewSubscriptionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task RenewSubscriptionAsync_NewExpirationDate_SetsExactDate()
+    {
+        // Arrange
+        var service = CreateService();
+        var subscriptionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var exactNewExpiration = DateTimeOffset.UtcNow.AddDays(180);
+        var request = new RenewSubscriptionRequest
+        {
+            SubscriptionId = subscriptionId,
+            NewExpirationDate = exactNewExpiration
+        };
+
+        // Mock: Subscription exists with old expiration
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SubscriptionDataModel
+            {
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
+                StubName = "test-game",
+                DisplayName = "Test Game",
+                StartDateUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds(),
+                ExpirationDateUnix = DateTimeOffset.UtcNow.AddDays(5).ToUnixTimeSeconds(),
+                IsActive = true,
+                CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds()
+            });
+
+        // Capture saved model
+        SubscriptionDataModel? savedModel = null;
+        _mockSubscriptionStore
+            .Setup(s => s.SaveAsync(
+                $"subscription:{subscriptionId}",
+                It.IsAny<SubscriptionDataModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
+            .ReturnsAsync("etag");
+
+        // Act
+        var (statusCode, response) = await service.RenewSubscriptionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(savedModel);
+        Assert.Equal(exactNewExpiration.ToUnixTimeSeconds(), savedModel.ExpirationDateUnix);
+        Assert.True(savedModel.IsActive);
+    }
+
+    [Fact]
+    public async Task RenewSubscriptionAsync_ExtensionFromExpired_ExtendsFromNow()
+    {
+        // Arrange
+        var service = CreateService();
+        var subscriptionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var pastExpiration = DateTimeOffset.UtcNow.AddDays(-10).ToUnixTimeSeconds();
+        var request = new RenewSubscriptionRequest
+        {
+            SubscriptionId = subscriptionId,
+            ExtensionDays = 30
+        };
+
+        // Mock: Expired subscription (expiration in the past)
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SubscriptionDataModel
+            {
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
+                StubName = "test-game",
+                DisplayName = "Test Game",
+                StartDateUnix = DateTimeOffset.UtcNow.AddDays(-40).ToUnixTimeSeconds(),
+                ExpirationDateUnix = pastExpiration,
+                IsActive = false,
+                CancelledAtUnix = DateTimeOffset.UtcNow.AddDays(-5).ToUnixTimeSeconds(),
+                CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-40).ToUnixTimeSeconds()
+            });
+
+        // Capture saved model
+        SubscriptionDataModel? savedModel = null;
+        _mockSubscriptionStore
+            .Setup(s => s.SaveAsync(
+                $"subscription:{subscriptionId}",
+                It.IsAny<SubscriptionDataModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
+            .ReturnsAsync("etag");
+
+        // Act
+        var (statusCode, response) = await service.RenewSubscriptionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(savedModel);
+        Assert.True(savedModel.IsActive);
+        Assert.Null(savedModel.CancelledAtUnix);
+        Assert.Null(savedModel.CancellationReason);
+        // Since expired, extension should be from now (~30 days from now), not from the past expiration
+        var expectedMinExpiration = DateTimeOffset.UtcNow.AddDays(29).ToUnixTimeSeconds();
+        var expectedMaxExpiration = DateTimeOffset.UtcNow.AddDays(31).ToUnixTimeSeconds();
+        Assert.InRange(savedModel.ExpirationDateUnix ?? 0, expectedMinExpiration, expectedMaxExpiration);
+    }
+
+    [Fact]
+    public async Task RenewSubscriptionAsync_WithNoExpirationDate_ExtendsFromNow()
+    {
+        // Arrange
+        var service = CreateService();
+        var subscriptionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var request = new RenewSubscriptionRequest
+        {
+            SubscriptionId = subscriptionId,
+            ExtensionDays = 30
+        };
+
+        // Mock: Subscription exists without expiration date (was unlimited)
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SubscriptionDataModel
+            {
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
+                StubName = "test-game",
+                DisplayName = "Test Game",
+                StartDateUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds(),
+                ExpirationDateUnix = null, // No expiration
+                IsActive = true,
+                CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds()
+            });
+
+        // Capture saved model
+        SubscriptionDataModel? savedModel = null;
+        _mockSubscriptionStore
+            .Setup(s => s.SaveAsync(
+                $"subscription:{subscriptionId}",
+                It.IsAny<SubscriptionDataModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
+            .ReturnsAsync("etag");
+
+        // Act
+        var (statusCode, response) = await service.RenewSubscriptionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(savedModel);
+        // Without existing expiration, extension is from now
+        var expectedMinExpiration = DateTimeOffset.UtcNow.AddDays(29).ToUnixTimeSeconds();
+        var expectedMaxExpiration = DateTimeOffset.UtcNow.AddDays(31).ToUnixTimeSeconds();
+        Assert.InRange(savedModel.ExpirationDateUnix ?? 0, expectedMinExpiration, expectedMaxExpiration);
+    }
+
+    #endregion
+
+    #region QueryCurrentSubscriptionsAsync StubName Path
+
+    [Fact]
+    public async Task QueryCurrentSubscriptionsAsync_ByStubName_ReturnsMatchingSubscriptions()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var subscriptionId = Guid.NewGuid();
+        var request = new QueryCurrentSubscriptionsRequest { StubName = "arcadia" };
+
+        // Mock: Service lookup by stub name
+        _mockServiceClient
+            .Setup(c => c.GetServiceAsync(
+                It.Is<GetServiceRequest>(r => r.StubName == "arcadia"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceInfo
+            {
+                ServiceId = serviceId,
+                StubName = "arcadia",
+                DisplayName = "Arcadia",
+                IsActive = true
+            });
+
+        // Mock: Service subscriptions index
+        _mockListStore
+            .Setup(s => s.GetAsync($"service-subscriptions:{serviceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { subscriptionId });
+
+        // Mock: Active subscription
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SubscriptionDataModel
+            {
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
+                StubName = "arcadia",
+                DisplayName = "Arcadia",
+                StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                ExpirationDateUnix = DateTimeOffset.UtcNow.AddDays(30).ToUnixTimeSeconds(),
+                IsActive = true,
+                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            });
+
+        // Act
+        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.Subscriptions);
+        Assert.Equal("arcadia", response.Subscriptions.First().StubName);
+        Assert.Single(response.AccountIds);
+        Assert.Contains(accountId, response.AccountIds);
+    }
+
+    [Fact]
+    public async Task QueryCurrentSubscriptionsAsync_ByStubName_ServiceNotFound_ReturnsEmpty()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new QueryCurrentSubscriptionsRequest { StubName = "nonexistent-game" };
+
+        // Mock: Service not found
+        _mockServiceClient
+            .Setup(c => c.GetServiceAsync(
+                It.Is<GetServiceRequest>(r => r.StubName == "nonexistent-game"),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404));
+
+        // Act
+        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Empty(response.Subscriptions);
+        Assert.Empty(response.AccountIds);
+    }
+
+    [Fact]
+    public async Task QueryCurrentSubscriptionsAsync_ByStubName_FiltersNonMatchingStubNames()
+    {
+        // Arrange
+        var service = CreateService();
+        var serviceId = Guid.NewGuid();
+        var matchingSubId = Guid.NewGuid();
+        var nonMatchingSubId = Guid.NewGuid();
+        var request = new QueryCurrentSubscriptionsRequest { StubName = "arcadia" };
+
+        // Mock: Service lookup
+        _mockServiceClient
+            .Setup(c => c.GetServiceAsync(
+                It.Is<GetServiceRequest>(r => r.StubName == "arcadia"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceInfo
+            {
+                ServiceId = serviceId,
+                StubName = "arcadia",
+                DisplayName = "Arcadia",
+                IsActive = true
+            });
+
+        // Mock: Service has two subscriptions
+        _mockListStore
+            .Setup(s => s.GetAsync($"service-subscriptions:{serviceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { matchingSubId, nonMatchingSubId });
+
+        // Mock: Matching subscription
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{matchingSubId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SubscriptionDataModel
+            {
+                SubscriptionId = matchingSubId,
+                AccountId = Guid.NewGuid(),
+                ServiceId = serviceId,
+                StubName = "arcadia",
+                DisplayName = "Arcadia",
+                StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                ExpirationDateUnix = DateTimeOffset.UtcNow.AddDays(30).ToUnixTimeSeconds(),
+                IsActive = true,
+                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            });
+
+        // Mock: Non-matching subscription (different stub name - edge case where index has stale data)
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{nonMatchingSubId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SubscriptionDataModel
+            {
+                SubscriptionId = nonMatchingSubId,
+                AccountId = Guid.NewGuid(),
+                ServiceId = serviceId,
+                StubName = "fantasia",
+                DisplayName = "Fantasia",
+                StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                ExpirationDateUnix = DateTimeOffset.UtcNow.AddDays(30).ToUnixTimeSeconds(),
+                IsActive = true,
+                CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            });
+
+        // Act
+        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.Subscriptions);
+        Assert.Equal("arcadia", response.Subscriptions.First().StubName);
+    }
+
+    #endregion
+
+    #region CancelSubscriptionAsync Lock Failure
+
+    [Fact]
+    public async Task CancelSubscriptionAsync_ShouldReturnConflict_WhenLockFails()
+    {
+        // Arrange
+        var service = CreateService();
+        var subscriptionId = Guid.NewGuid();
+        var request = new CancelSubscriptionRequest
+        {
+            SubscriptionId = subscriptionId,
+            Reason = "Test"
+        };
+
+        // Mock: Lock acquisition fails
+        var mockFailedLock = new Mock<ILockResponse>();
+        mockFailedLock.Setup(l => l.Success).Returns(false);
+        mockFailedLock.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider.Setup(l => l.LockAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockFailedLock.Object);
+
+        // Act
+        var (statusCode, response) = await service.CancelSubscriptionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, statusCode);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region PublishSubscriptionClientEvent Exception Handling
+
+    [Fact]
+    public async Task CreateSubscriptionAsync_ClientEventPublishFailure_DoesNotAffectSuccess()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var request = new CreateSubscriptionRequest
+        {
+            AccountId = accountId,
+            ServiceId = serviceId,
+            DurationDays = 30
+        };
+
+        // Mock: Service exists
+        _mockServiceClient
+            .Setup(c => c.GetServiceAsync(
+                It.Is<GetServiceRequest>(r => r.ServiceId == serviceId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceInfo
+            {
+                ServiceId = serviceId,
+                StubName = "test-game",
+                DisplayName = "Test Game",
+                IsActive = true
+            });
+
+        // Mock: No existing subscriptions
+        _mockListStore
+            .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid>());
+        _mockListStore
+            .Setup(s => s.GetAsync($"service-subscriptions:{serviceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid>());
+
+        // Mock: Entity session registry throws exception (client event publish failure)
+        _mockEntitySessionRegistry
+            .Setup(r => r.PublishToEntitySessionsAsync(
+                It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<BaseClientEvent>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("WebSocket connection unavailable"));
+
+        // Act - Should succeed despite client event failure
+        var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
+
+        // Assert - Operation succeeds; client event failure is swallowed (best-effort)
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal("test-game", response.StubName);
+        Assert.True(response.IsActive);
+    }
+
     #endregion
 }
 

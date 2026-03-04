@@ -1374,6 +1374,1425 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
     #endregion
 
+    #region CreateCharacter Tests
+
+    [Fact]
+    public async Task CreateCharacterAsync_ValidRequest_ShouldCreateAndPublishEvents()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var speciesId = Guid.NewGuid();
+        SetupSpeciesInRealm(speciesId, realmId);
+
+        var request = new CreateCharacterRequest
+        {
+            Name = "New Hero",
+            RealmId = realmId,
+            SpeciesId = speciesId,
+            BirthDate = DateTimeOffset.UtcNow.AddYears(-20),
+            Status = CharacterStatus.Alive
+        };
+
+        // Capture saved model
+        CharacterModel? savedModel = null;
+        string? savedKey = null;
+        _mockCharacterStore
+            .Setup(s => s.SaveAsync(
+                It.Is<string>(k => k.StartsWith("character:")),
+                It.IsAny<CharacterModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterModel, StateOptions?, CancellationToken>((k, m, _, _) =>
+            {
+                savedKey = k;
+                savedModel = m;
+            })
+            .ReturnsAsync("etag");
+
+        // Setup realm index (empty initially)
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((List<string>?)null, (string?)null));
+        _mockListStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Capture published events
+        var publishedTopics = new List<string>();
+        var publishedEvents = new List<object>();
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<CharacterCreatedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterCreatedEvent, PublishOptions?, Guid?, CancellationToken>(
+                (t, e, _, _, _) => { publishedTopics.Add(t); publishedEvents.Add(e); })
+            .ReturnsAsync(true);
+
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<CharacterRealmJoinedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterRealmJoinedEvent, PublishOptions?, Guid?, CancellationToken>(
+                (t, e, _, _, _) => { publishedTopics.Add(t); publishedEvents.Add(e); })
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.CreateCharacterAsync(request);
+
+        // Assert - Response
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("New Hero", response.Name);
+        Assert.Equal(realmId, response.RealmId);
+        Assert.Equal(speciesId, response.SpeciesId);
+        Assert.Equal(CharacterStatus.Alive, response.Status);
+        Assert.Null(response.DeathDate);
+
+        // Assert - State was saved correctly
+        Assert.NotNull(savedModel);
+        Assert.NotNull(savedKey);
+        Assert.Equal("New Hero", savedModel.Name);
+        Assert.Equal(realmId, savedModel.RealmId);
+        Assert.Equal(speciesId, savedModel.SpeciesId);
+        Assert.Equal(CharacterStatus.Alive, savedModel.Status);
+        Assert.StartsWith("character:", savedKey);
+
+        // Assert - character.created event published
+        Assert.Contains("character.created", publishedTopics);
+        var createdEvent = publishedEvents.OfType<CharacterCreatedEvent>().Single();
+        Assert.Equal("New Hero", createdEvent.Name);
+        Assert.Equal(realmId, createdEvent.RealmId);
+        Assert.Equal(speciesId, createdEvent.SpeciesId);
+
+        // Assert - character.realm.joined event published
+        Assert.Contains("character.realm.joined", publishedTopics);
+        var joinedEvent = publishedEvents.OfType<CharacterRealmJoinedEvent>().Single();
+        Assert.Equal(realmId, joinedEvent.RealmId);
+        Assert.Null(joinedEvent.PreviousRealmId);
+    }
+
+    [Fact]
+    public async Task CreateCharacterAsync_RealmNotFound_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        _mockRealmClient
+            .Setup(r => r.RealmExistsAsync(
+                It.Is<RealmExistsRequest>(req => req.RealmId == realmId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RealmExistsResponse { Exists = false, IsActive = false });
+
+        var request = new CreateCharacterRequest
+        {
+            Name = "Test",
+            RealmId = realmId,
+            SpeciesId = Guid.NewGuid(),
+            BirthDate = DateTimeOffset.UtcNow,
+            Status = CharacterStatus.Alive
+        };
+
+        // Act
+        var (status, response) = await service.CreateCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+
+        // Verify no state was saved
+        _mockCharacterStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<CharacterModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateCharacterAsync_RealmDeprecated_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+
+        _mockRealmClient
+            .Setup(r => r.RealmExistsAsync(
+                It.Is<RealmExistsRequest>(req => req.RealmId == realmId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RealmExistsResponse { Exists = true, IsActive = false });
+
+        var request = new CreateCharacterRequest
+        {
+            Name = "Test",
+            RealmId = realmId,
+            SpeciesId = Guid.NewGuid(),
+            BirthDate = DateTimeOffset.UtcNow,
+            Status = CharacterStatus.Alive
+        };
+
+        // Act
+        var (status, response) = await service.CreateCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CreateCharacterAsync_SpeciesNotFound_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var speciesId = Guid.NewGuid();
+
+        _mockSpeciesClient
+            .Setup(s => s.GetSpeciesAsync(
+                It.Is<GetSpeciesRequest>(r => r.SpeciesId == speciesId),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
+
+        var request = new CreateCharacterRequest
+        {
+            Name = "Test",
+            RealmId = realmId,
+            SpeciesId = speciesId,
+            BirthDate = DateTimeOffset.UtcNow,
+            Status = CharacterStatus.Alive
+        };
+
+        // Act
+        var (status, response) = await service.CreateCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CreateCharacterAsync_SpeciesNotInRealm_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var speciesId = Guid.NewGuid();
+        var differentRealmId = Guid.NewGuid();
+
+        // Species exists but is in a different realm
+        _mockSpeciesClient
+            .Setup(s => s.GetSpeciesAsync(
+                It.Is<GetSpeciesRequest>(r => r.SpeciesId == speciesId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SpeciesResponse
+            {
+                SpeciesId = speciesId,
+                Code = "TEST",
+                Name = "Test Species",
+                RealmIds = new List<Guid> { differentRealmId },
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        var request = new CreateCharacterRequest
+        {
+            Name = "Test",
+            RealmId = realmId,
+            SpeciesId = speciesId,
+            BirthDate = DateTimeOffset.UtcNow,
+            Status = CharacterStatus.Alive
+        };
+
+        // Act
+        var (status, response) = await service.CreateCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CreateCharacterAsync_WithDeadStatus_ShouldAutoSetDeathDate()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var speciesId = Guid.NewGuid();
+        SetupSpeciesInRealm(speciesId, realmId);
+
+        var request = new CreateCharacterRequest
+        {
+            Name = "Dead On Arrival",
+            RealmId = realmId,
+            SpeciesId = speciesId,
+            BirthDate = DateTimeOffset.UtcNow.AddYears(-50),
+            Status = CharacterStatus.Dead
+        };
+
+        // Capture saved model
+        CharacterModel? savedModel = null;
+        _mockCharacterStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<CharacterModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
+        // Setup realm index
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((List<string>?)null, (string?)null));
+        _mockListStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Act
+        var (status, response) = await service.CreateCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(CharacterStatus.Dead, response.Status);
+        Assert.NotNull(response.DeathDate);
+
+        // Assert - Saved model has DeathDate auto-set
+        Assert.NotNull(savedModel);
+        Assert.NotNull(savedModel.DeathDate);
+        Assert.Equal(CharacterStatus.Dead, savedModel.Status);
+    }
+
+    #endregion
+
+    #region DeleteCharacter Tests
+
+    [Fact]
+    public async Task DeleteCharacterAsync_ValidCharacter_ShouldDeleteAndPublishEvents()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new DeleteCharacterRequest { CharacterId = characterId };
+
+        SetupCharacterExists(characterId, realmId);
+
+        // Setup lib-resource returns no references
+        _mockResourceClient
+            .Setup(r => r.CheckReferencesAsync(It.IsAny<Resource.CheckReferencesRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CheckReferencesResponse
+            {
+                ResourceType = "character",
+                ResourceId = characterId,
+                RefCount = 0,
+                Sources = new List<ResourceReference>()
+            });
+
+        // Setup realm index for removal
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string> { characterId.ToString() }, "etag1"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag2");
+
+        // Capture published events
+        var publishedTopics = new List<string>();
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<CharacterRealmLeftEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterRealmLeftEvent, PublishOptions?, Guid?, CancellationToken>(
+                (t, _, _, _, _) => publishedTopics.Add(t))
+            .ReturnsAsync(true);
+
+        CharacterDeletedEvent? capturedDeletedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<CharacterDeletedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterDeletedEvent, PublishOptions?, Guid?, CancellationToken>(
+                (t, e, _, _, _) => { publishedTopics.Add(t); capturedDeletedEvent = e; })
+            .ReturnsAsync(true);
+
+        // Act
+        var status = await service.DeleteCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Assert - Character was deleted from store
+        _mockCharacterStore.Verify(s => s.DeleteAsync(
+            It.Is<string>(k => k.Contains(characterId.ToString())),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert - Global index was deleted
+        _mockStringStore.Verify(s => s.DeleteAsync(
+            $"character-global-index:{characterId}",
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert - character.realm.left event published with Deletion reason
+        Assert.Contains("character.realm.left", publishedTopics);
+
+        // Assert - character.deleted event published
+        Assert.Contains("character.deleted", publishedTopics);
+        Assert.NotNull(capturedDeletedEvent);
+        Assert.Equal(characterId, capturedDeletedEvent.CharacterId);
+    }
+
+    [Fact]
+    public async Task DeleteCharacterAsync_CharacterNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new DeleteCharacterRequest { CharacterId = Guid.NewGuid() };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var status = await service.DeleteCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task DeleteCharacterAsync_WithL4References_ShouldExecuteCleanupBeforeDeleting()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new DeleteCharacterRequest { CharacterId = characterId };
+
+        SetupCharacterExists(characterId, realmId);
+
+        // Setup lib-resource returns references
+        _mockResourceClient
+            .Setup(r => r.CheckReferencesAsync(It.IsAny<Resource.CheckReferencesRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CheckReferencesResponse
+            {
+                ResourceType = "character",
+                ResourceId = characterId,
+                RefCount = 2,
+                Sources = new List<ResourceReference>
+                {
+                    new() { SourceType = "actor", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow }
+                }
+            });
+
+        // Setup cleanup succeeds
+        _mockResourceClient
+            .Setup(r => r.ExecuteCleanupAsync(
+                It.Is<Resource.ExecuteCleanupRequest>(req =>
+                    req.ResourceType == "character" && req.ResourceId == characterId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ExecuteCleanupResponse
+            {
+                ResourceType = "character",
+                ResourceId = characterId,
+                Success = true,
+                CallbackResults = new List<CleanupCallbackResult>
+                {
+                    new() { SourceType = "actor", ServiceName = "actor", Endpoint = "cleanup", Success = true }
+                }
+            });
+
+        // Setup realm index removal
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string> { characterId.ToString() }, "etag1"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag2");
+
+        // Act
+        var status = await service.DeleteCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify cleanup was executed
+        _mockResourceClient.Verify(r => r.ExecuteCleanupAsync(
+            It.Is<Resource.ExecuteCleanupRequest>(req =>
+                req.ResourceType == "character" && req.ResourceId == characterId),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteCharacterAsync_CleanupBlocked_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new DeleteCharacterRequest { CharacterId = characterId };
+
+        SetupCharacterExists(characterId, realmId);
+
+        // Setup lib-resource returns references
+        _mockResourceClient
+            .Setup(r => r.CheckReferencesAsync(It.IsAny<Resource.CheckReferencesRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CheckReferencesResponse
+            {
+                ResourceType = "character",
+                ResourceId = characterId,
+                RefCount = 1,
+                Sources = new List<ResourceReference>
+                {
+                    new() { SourceType = "actor", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow }
+                }
+            });
+
+        // Cleanup fails (RESTRICT policy blocked it)
+        _mockResourceClient
+            .Setup(r => r.ExecuteCleanupAsync(It.IsAny<Resource.ExecuteCleanupRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ExecuteCleanupResponse
+            {
+                ResourceType = "character",
+                ResourceId = characterId,
+                Success = false,
+                AbortReason = "RESTRICT policy blocked cleanup",
+                CallbackResults = new List<CleanupCallbackResult>()
+            });
+
+        // Act
+        var status = await service.DeleteCharacterAsync(request);
+
+        // Assert - Deletion blocked
+        Assert.Equal(StatusCodes.Conflict, status);
+
+        // Verify character was NOT deleted
+        _mockCharacterStore.Verify(s => s.DeleteAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteCharacterAsync_ResourceClient404_ShouldProceedWithDeletion()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new DeleteCharacterRequest { CharacterId = characterId };
+
+        SetupCharacterExists(characterId, realmId);
+
+        // Setup lib-resource throws 404 (no references registered - normal)
+        _mockResourceClient
+            .Setup(r => r.CheckReferencesAsync(It.IsAny<Resource.CheckReferencesRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
+
+        // Setup realm index removal
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string> { characterId.ToString() }, "etag1"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag2");
+
+        // Act
+        var status = await service.DeleteCharacterAsync(request);
+
+        // Assert - Deletion proceeded (404 = no references, safe to delete)
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify character was deleted
+        _mockCharacterStore.Verify(s => s.DeleteAsync(
+            It.Is<string>(k => k.Contains(characterId.ToString())),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteCharacterAsync_ResourceClientUnavailable_ShouldReturnServiceUnavailable()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new DeleteCharacterRequest { CharacterId = characterId };
+
+        SetupCharacterExists(characterId, realmId);
+
+        // Setup lib-resource throws 503 (service unavailable - NOT 404)
+        _mockResourceClient
+            .Setup(r => r.CheckReferencesAsync(It.IsAny<Resource.CheckReferencesRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Service unavailable", 503, null, null, null));
+
+        // Act
+        var status = await service.DeleteCharacterAsync(request);
+
+        // Assert - Fail closed to protect referential integrity
+        Assert.Equal(StatusCodes.ServiceUnavailable, status);
+
+        // Verify character was NOT deleted
+        _mockCharacterStore.Verify(s => s.DeleteAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        // Verify error event was published
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
+            "character",
+            "DeleteCharacter",
+            "resource_service_unavailable",
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region TransferCharacterToRealm Tests
+
+    [Fact]
+    public async Task TransferCharacterToRealmAsync_ValidTransfer_ShouldTransferAndPublishEvents()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var sourceRealmId = Guid.NewGuid();
+        var targetRealmId = Guid.NewGuid();
+        var speciesId = Guid.NewGuid();
+
+        var request = new TransferCharacterToRealmRequest
+        {
+            CharacterId = characterId,
+            TargetRealmId = targetRealmId
+        };
+
+        // Setup target realm validation
+        _mockRealmClient
+            .Setup(r => r.RealmExistsAsync(
+                It.Is<RealmExistsRequest>(req => req.RealmId == targetRealmId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RealmExistsResponse { Exists = true, IsActive = true });
+
+        // Setup character exists in source realm
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceRealmId.ToString());
+
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"character:{sourceRealmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Traveler",
+                RealmId = sourceRealmId,
+                SpeciesId = speciesId,
+                Status = CharacterStatus.Alive,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-30),
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-10),
+                UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+            });
+
+        // Capture save for new realm key
+        CharacterModel? savedModel = null;
+        string? savedKey = null;
+        _mockCharacterStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<CharacterModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterModel, StateOptions?, CancellationToken>((k, m, _, _) =>
+            {
+                savedKey = k;
+                savedModel = m;
+            })
+            .ReturnsAsync("etag");
+
+        // Setup realm index operations
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string> { characterId.ToString() }, "etag1"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag2");
+        _mockListStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag3");
+
+        // Capture published events
+        var publishedTopics = new List<string>();
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<CharacterRealmLeftEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterRealmLeftEvent, PublishOptions?, Guid?, CancellationToken>(
+                (t, _, _, _, _) => publishedTopics.Add(t))
+            .ReturnsAsync(true);
+
+        CharacterRealmJoinedEvent? joinedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<CharacterRealmJoinedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterRealmJoinedEvent, PublishOptions?, Guid?, CancellationToken>(
+                (t, e, _, _, _) => { publishedTopics.Add(t); joinedEvent = e; })
+            .ReturnsAsync(true);
+
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<CharacterUpdatedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterUpdatedEvent, PublishOptions?, Guid?, CancellationToken>(
+                (t, _, _, _, _) => publishedTopics.Add(t))
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.TransferCharacterToRealmAsync(request);
+
+        // Assert - Response
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(characterId, response.CharacterId);
+        Assert.Equal(targetRealmId, response.RealmId);
+
+        // Assert - Saved with new realm key
+        Assert.NotNull(savedModel);
+        Assert.NotNull(savedKey);
+        Assert.Equal(targetRealmId, savedModel.RealmId);
+        Assert.Contains(targetRealmId.ToString(), savedKey);
+
+        // Assert - Old key was deleted
+        _mockCharacterStore.Verify(s => s.DeleteAsync(
+            It.Is<string>(k => k.Contains(sourceRealmId.ToString())),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert - Events published
+        Assert.Contains("character.realm.left", publishedTopics);
+        Assert.Contains("character.realm.joined", publishedTopics);
+        Assert.Contains("character.updated", publishedTopics);
+
+        // Assert - Joined event references previous realm
+        Assert.NotNull(joinedEvent);
+        Assert.Equal(targetRealmId, joinedEvent.RealmId);
+        Assert.Equal(sourceRealmId, joinedEvent.PreviousRealmId);
+
+        // Assert - Client event published for realm transfer
+        _mockEntitySessionRegistry.Verify(r => r.PublishToEntitySessionsAsync(
+            "character",
+            characterId,
+            It.Is<CharacterRealmTransferredClientEvent>(e =>
+                e.CharacterId == characterId &&
+                e.PreviousRealmId == sourceRealmId &&
+                e.NewRealmId == targetRealmId),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task TransferCharacterToRealmAsync_TargetRealmNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new TransferCharacterToRealmRequest
+        {
+            CharacterId = Guid.NewGuid(),
+            TargetRealmId = Guid.NewGuid()
+        };
+
+        _mockRealmClient
+            .Setup(r => r.RealmExistsAsync(
+                It.Is<RealmExistsRequest>(req => req.RealmId == request.TargetRealmId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RealmExistsResponse { Exists = false, IsActive = false });
+
+        // Act
+        var (status, response) = await service.TransferCharacterToRealmAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task TransferCharacterToRealmAsync_TargetRealmDeprecated_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new TransferCharacterToRealmRequest
+        {
+            CharacterId = Guid.NewGuid(),
+            TargetRealmId = Guid.NewGuid()
+        };
+
+        _mockRealmClient
+            .Setup(r => r.RealmExistsAsync(
+                It.Is<RealmExistsRequest>(req => req.RealmId == request.TargetRealmId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RealmExistsResponse { Exists = true, IsActive = false });
+
+        // Act
+        var (status, response) = await service.TransferCharacterToRealmAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task TransferCharacterToRealmAsync_SameRealm_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+
+        var request = new TransferCharacterToRealmRequest
+        {
+            CharacterId = characterId,
+            TargetRealmId = realmId
+        };
+
+        // Target realm exists and active
+        _mockRealmClient
+            .Setup(r => r.RealmExistsAsync(
+                It.Is<RealmExistsRequest>(req => req.RealmId == realmId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RealmExistsResponse { Exists = true, IsActive = true });
+
+        // Character is already in the target realm
+        SetupCharacterExistsInRealm(characterId, realmId);
+
+        // Act
+        var (status, response) = await service.TransferCharacterToRealmAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task TransferCharacterToRealmAsync_CharacterNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var targetRealmId = Guid.NewGuid();
+
+        var request = new TransferCharacterToRealmRequest
+        {
+            CharacterId = Guid.NewGuid(),
+            TargetRealmId = targetRealmId
+        };
+
+        _mockRealmClient
+            .Setup(r => r.RealmExistsAsync(
+                It.Is<RealmExistsRequest>(req => req.RealmId == targetRealmId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RealmExistsResponse { Exists = true, IsActive = true });
+
+        // Character not found in global index
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, response) = await service.TransferCharacterToRealmAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task TransferCharacterToRealmAsync_LockFailed_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var targetRealmId = Guid.NewGuid();
+
+        var request = new TransferCharacterToRealmRequest
+        {
+            CharacterId = characterId,
+            TargetRealmId = targetRealmId
+        };
+
+        _mockRealmClient
+            .Setup(r => r.RealmExistsAsync(
+                It.Is<RealmExistsRequest>(req => req.RealmId == targetRealmId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RealmExistsResponse { Exists = true, IsActive = true });
+
+        // Lock acquisition fails
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.Is<string>(s => s == characterId.ToString()),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        // Act
+        var (status, response) = await service.TransferCharacterToRealmAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region GetEnrichedCharacter Tests
+
+    [Fact]
+    public async Task GetEnrichedCharacterAsync_ValidCharacter_ShouldReturnEnrichedResponse()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var speciesId = Guid.NewGuid();
+
+        var request = new GetEnrichedCharacterRequest
+        {
+            CharacterId = characterId,
+            IncludeFamilyTree = false
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"character:{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Enriched Hero",
+                RealmId = realmId,
+                SpeciesId = speciesId,
+                Status = CharacterStatus.Alive,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-25),
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-5),
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.GetEnrichedCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(characterId, response.CharacterId);
+        Assert.Equal("Enriched Hero", response.Name);
+        Assert.Equal(realmId, response.RealmId);
+        Assert.Equal(speciesId, response.SpeciesId);
+        Assert.Null(response.FamilyTree);
+    }
+
+    [Fact]
+    public async Task GetEnrichedCharacterAsync_WithFamilyTree_ShouldBuildFamilyTree()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var parentId = Guid.NewGuid();
+        var parentTypeId = Guid.NewGuid();
+
+        var request = new GetEnrichedCharacterRequest
+        {
+            CharacterId = characterId,
+            IncludeFamilyTree = true
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"character:{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Child Character",
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
+                Status = CharacterStatus.Alive,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-10),
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Setup relationship client returns parent relationship
+        _mockRelationshipClient
+            .Setup(c => c.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RelationshipListResponse
+            {
+                Relationships = new List<RelationshipResponse>
+                {
+                    new RelationshipResponse
+                    {
+                        RelationshipId = Guid.NewGuid(),
+                        Entity1Id = parentId,
+                        Entity1Type = EntityType.Character,
+                        Entity2Id = characterId,
+                        Entity2Type = EntityType.Character,
+                        RelationshipTypeId = parentTypeId,
+                        StartedAt = DateTimeOffset.UtcNow.AddYears(-10),
+                        CreatedAt = DateTimeOffset.UtcNow.AddYears(-10)
+                    }
+                },
+                TotalCount = 1,
+                PageSize = 100,
+                Page = 1
+            });
+
+        // Setup relationship type lookup
+        _mockRelationshipClient
+            .Setup(c => c.GetRelationshipTypeAsync(
+                It.Is<GetRelationshipTypeRequest>(r => r.RelationshipTypeId == parentTypeId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RelationshipTypeResponse { RelationshipTypeId = parentTypeId, Code = "PARENT" });
+
+        // Setup bulk load for parent character
+        var globalIndexDict = new Dictionary<string, string>
+        {
+            [$"character-global-index:{parentId}"] = realmId.ToString()
+        };
+        _mockStringStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, string>)globalIndexDict);
+
+        var characterDict = new Dictionary<string, CharacterModel>
+        {
+            [$"character:{realmId}:{parentId}"] = new CharacterModel
+            {
+                CharacterId = parentId,
+                Name = "Parent Character",
+                RealmId = realmId,
+                Status = CharacterStatus.Alive
+            }
+        };
+        SetupBulkStateAsync(characterDict);
+
+        // Act
+        var (status, response) = await service.GetEnrichedCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(response.FamilyTree);
+        Assert.NotNull(response.FamilyTree.Parents);
+        Assert.Single(response.FamilyTree.Parents);
+        Assert.Equal(parentId, response.FamilyTree.Parents.First().CharacterId);
+        Assert.Equal("Parent Character", response.FamilyTree.Parents.First().Name);
+    }
+
+    [Fact]
+    public async Task GetEnrichedCharacterAsync_CharacterNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new GetEnrichedCharacterRequest
+        {
+            CharacterId = Guid.NewGuid(),
+            IncludeFamilyTree = true
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, response) = await service.GetEnrichedCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetEnrichedCharacterAsync_RelationshipApi404_ShouldReturnEmptyFamilyTree()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+
+        var request = new GetEnrichedCharacterRequest
+        {
+            CharacterId = characterId,
+            IncludeFamilyTree = true
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"character:{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Lonely Hero",
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
+                Status = CharacterStatus.Alive,
+                BirthDate = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Relationship service returns 404
+        _mockRelationshipClient
+            .Setup(c => c.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
+
+        // Act
+        var (status, response) = await service.GetEnrichedCharacterAsync(request);
+
+        // Assert - Graceful degradation: empty family tree, not error
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(response.FamilyTree);
+    }
+
+    #endregion
+
+    #region CompressCharacter Tests
+
+    [Fact]
+    public async Task CompressCharacterAsync_DeadCharacter_ShouldCompressAndPublishEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var speciesId = Guid.NewGuid();
+        var deathDate = DateTimeOffset.UtcNow.AddDays(-5);
+
+        var request = new CompressCharacterRequest
+        {
+            CharacterId = characterId,
+            DeleteSourceData = false
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"character:{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Dead Hero",
+                RealmId = realmId,
+                SpeciesId = speciesId,
+                Status = CharacterStatus.Dead,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-60),
+                DeathDate = deathDate,
+                CreatedAt = DateTimeOffset.UtcNow.AddYears(-60),
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Setup relationship client for family summary
+        _mockRelationshipClient
+            .Setup(c => c.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RelationshipListResponse
+            {
+                Relationships = new List<RelationshipResponse>(),
+                TotalCount = 0,
+                PageSize = 100,
+                Page = 1
+            });
+
+        // Capture archive save
+        CharacterArchiveModel? savedArchive = null;
+        string? savedArchiveKey = null;
+        _mockArchiveStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<CharacterArchiveModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterArchiveModel, StateOptions?, CancellationToken>((k, m, _, _) =>
+            {
+                savedArchiveKey = k;
+                savedArchive = m;
+            })
+            .ReturnsAsync("etag");
+
+        // Capture compression event
+        CharacterCompressedEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<CharacterCompressedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterCompressedEvent, PublishOptions?, Guid?, CancellationToken>(
+                (_, e, _, _, _) => capturedEvent = e)
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.CompressCharacterAsync(request);
+
+        // Assert - Response
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(characterId, response.CharacterId);
+        Assert.Equal("Dead Hero", response.Name);
+        Assert.Equal(realmId, response.RealmId);
+        Assert.Equal(speciesId, response.SpeciesId);
+
+        // Assert - Archive was saved
+        Assert.NotNull(savedArchive);
+        Assert.NotNull(savedArchiveKey);
+        Assert.Equal($"archive:{characterId}", savedArchiveKey);
+        Assert.Equal(characterId, savedArchive.CharacterId);
+        Assert.Equal("Dead Hero", savedArchive.Name);
+
+        // Assert - PersonalitySummary and backstory are null per SERVICE_HIERARCHY
+        Assert.Null(response.PersonalitySummary);
+        Assert.Null(response.KeyBackstoryPoints);
+        Assert.Null(response.MajorLifeEvents);
+
+        // Assert - Compression event published
+        Assert.NotNull(capturedEvent);
+        Assert.Equal(characterId, capturedEvent.CharacterId);
+        Assert.False(capturedEvent.DeletedSourceData);
+    }
+
+    [Fact]
+    public async Task CompressCharacterAsync_AliveCharacter_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+
+        var request = new CompressCharacterRequest
+        {
+            CharacterId = characterId,
+            DeleteSourceData = false
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"character:{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Still Alive",
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
+                Status = CharacterStatus.Alive,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-20),
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.CompressCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+
+        // Verify no archive was saved
+        _mockArchiveStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<CharacterArchiveModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CompressCharacterAsync_DeadWithoutDeathDate_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+
+        var request = new CompressCharacterRequest
+        {
+            CharacterId = characterId,
+            DeleteSourceData = false
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"character:{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Paradox",
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
+                Status = CharacterStatus.Dead,
+                DeathDate = null, // Missing death date despite Dead status
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-30),
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.CompressCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CompressCharacterAsync_CharacterNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CompressCharacterRequest
+        {
+            CharacterId = Guid.NewGuid(),
+            DeleteSourceData = false
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, response) = await service.CompressCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CompressCharacterAsync_LockFailed_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+
+        var request = new CompressCharacterRequest
+        {
+            CharacterId = characterId,
+            DeleteSourceData = false
+        };
+
+        // Lock acquisition fails
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.Is<string>(s => s == characterId.ToString()),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        // Act
+        var (status, response) = await service.CompressCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CompressCharacterAsync_WithDeleteSourceData_ShouldSetFlagInEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+
+        var request = new CompressCharacterRequest
+        {
+            CharacterId = characterId,
+            DeleteSourceData = true
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"character:{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Dead Hero",
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
+                Status = CharacterStatus.Dead,
+                DeathDate = DateTimeOffset.UtcNow.AddDays(-1),
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-50),
+                CreatedAt = DateTimeOffset.UtcNow.AddYears(-50),
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Setup relationship client
+        _mockRelationshipClient
+            .Setup(c => c.ListRelationshipsByEntityAsync(It.IsAny<ListRelationshipsByEntityRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RelationshipListResponse
+            {
+                Relationships = new List<RelationshipResponse>(),
+                TotalCount = 0,
+                PageSize = 100,
+                Page = 1
+            });
+
+        _mockArchiveStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CharacterArchiveModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Capture event
+        CharacterCompressedEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<CharacterCompressedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterCompressedEvent, PublishOptions?, Guid?, CancellationToken>(
+                (_, e, _, _, _) => capturedEvent = e)
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.CompressCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(capturedEvent);
+        Assert.True(capturedEvent.DeletedSourceData);
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static CharacterModel CreateCharacterModel(Guid characterId, Guid realmId, string name)
@@ -1389,6 +2808,31 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
+    }
+
+    /// <summary>
+    /// Sets up a character that exists in a specific realm.
+    /// Similar to SetupCharacterExists but allows explicit realm.
+    /// </summary>
+    private void SetupCharacterExistsInRealm(Guid characterId, Guid realmId)
+    {
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"character:{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Test Character",
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
+                Status = CharacterStatus.Alive,
+                BirthDate = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
     }
 
     /// <summary>

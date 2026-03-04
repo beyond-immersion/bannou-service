@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Collection.ClientEvents;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Collection;
@@ -2489,6 +2490,1255 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 It.IsAny<string>(),
                 It.IsAny<Func<IServiceProvider, AccountDeletedEvent, Task>>()),
             Times.Once);
+    }
+
+    #endregion
+
+    #region Milestone Boundary Tests
+
+    [Fact]
+    public async Task GrantEntry_Milestone25Percent_PublishesMilestoneEvent()
+    {
+        // Arrange - 0 of 4 templates unlocked, granting the 1st reaches 25%
+        var template1 = CreateTestTemplate(entryTemplateId: Guid.NewGuid(), code: "entry_one");
+        var template2 = CreateTestTemplate(entryTemplateId: Guid.NewGuid(), code: "entry_two");
+        var template3 = CreateTestTemplate(entryTemplateId: Guid.NewGuid(), code: "entry_three");
+        var template4 = CreateTestTemplate(entryTemplateId: Guid.NewGuid(), code: "entry_four");
+        var collection = CreateTestCollection();
+
+        // Empty cache (no unlocked entries yet)
+        var cache = CreateTestCache();
+
+        _mockCollectionStore
+            .Setup(s => s.GetAsync(
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:{"bestiary"}",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(
+                $"tpl:{TestGameServiceId}:{"bestiary"}:entry_one",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template1);
+
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cache);
+
+        _mockCollectionCache
+            .Setup(s => s.GetWithETagAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((cache, "etag-1"));
+
+        _mockCollectionCache
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        // Return 4 total templates for milestone calculation
+        _mockTemplateStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<EntryTemplateModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<EntryTemplateModel> { template1, template2, template3, template4 });
+
+        _mockItemClient
+            .Setup(c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = Guid.NewGuid() });
+
+        var capturedMilestones = new List<CollectionMilestoneReachedEvent>();
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(CollectionTopics.MilestoneReached, It.IsAny<CollectionMilestoneReachedEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((_, evt, _) => capturedMilestones.Add((CollectionMilestoneReachedEvent)evt))
+            .ReturnsAsync(true);
+
+        var service = CreateService();
+
+        // Act
+        var (status, _) = await service.GrantEntryAsync(
+            new GrantEntryRequest
+            {
+                OwnerId = TestOwnerId,
+                OwnerType = EntityType.Character,
+                GameServiceId = TestGameServiceId,
+                CollectionType = "bestiary",
+                EntryCode = "entry_one"
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // 1/4 = 25%, should trigger exactly the 25% milestone
+        Assert.Single(capturedMilestones);
+        Assert.Equal("25%", capturedMilestones[0].Milestone);
+        Assert.Equal(25.0, capturedMilestones[0].CompletionPercentage);
+        Assert.Equal(collection.CollectionId, capturedMilestones[0].CollectionId);
+        Assert.Equal(collection.OwnerId, capturedMilestones[0].OwnerId);
+    }
+
+    [Fact]
+    public async Task GrantEntry_Milestone75Percent_PublishesMilestoneEvent()
+    {
+        // Arrange - 2 of 4 templates unlocked, granting the 3rd reaches 75%
+        var template1 = CreateTestTemplate(entryTemplateId: Guid.NewGuid(), code: "entry_one");
+        var template2 = CreateTestTemplate(entryTemplateId: Guid.NewGuid(), code: "entry_two");
+        var template3 = CreateTestTemplate(entryTemplateId: Guid.NewGuid(), code: "entry_three");
+        var template4 = CreateTestTemplate(entryTemplateId: Guid.NewGuid(), code: "entry_four");
+        var collection = CreateTestCollection();
+
+        // Already have 2 unlocked entries
+        var cache = CreateTestCache(unlockedEntries: new List<UnlockedEntryRecord>
+        {
+            new UnlockedEntryRecord { Code = "entry_one", EntryTemplateId = template1.EntryTemplateId, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow },
+            new UnlockedEntryRecord { Code = "entry_two", EntryTemplateId = template2.EntryTemplateId, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow }
+        });
+
+        _mockCollectionStore
+            .Setup(s => s.GetAsync(
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:{"bestiary"}",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(
+                $"tpl:{TestGameServiceId}:{"bestiary"}:entry_three",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template3);
+
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cache);
+
+        _mockCollectionCache
+            .Setup(s => s.GetWithETagAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((cache, "etag-1"));
+
+        _mockCollectionCache
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        _mockTemplateStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<EntryTemplateModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<EntryTemplateModel> { template1, template2, template3, template4 });
+
+        _mockItemClient
+            .Setup(c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = Guid.NewGuid() });
+
+        var capturedMilestones = new List<CollectionMilestoneReachedEvent>();
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(CollectionTopics.MilestoneReached, It.IsAny<CollectionMilestoneReachedEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((_, evt, _) => capturedMilestones.Add((CollectionMilestoneReachedEvent)evt))
+            .ReturnsAsync(true);
+
+        var service = CreateService();
+
+        // Act
+        var (status, _) = await service.GrantEntryAsync(
+            new GrantEntryRequest
+            {
+                OwnerId = TestOwnerId,
+                OwnerType = EntityType.Character,
+                GameServiceId = TestGameServiceId,
+                CollectionType = "bestiary",
+                EntryCode = "entry_three"
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // 3/4 = 75%, should trigger exactly the 75% milestone
+        Assert.Single(capturedMilestones);
+        Assert.Equal("75%", capturedMilestones[0].Milestone);
+        Assert.Equal(75.0, capturedMilestones[0].CompletionPercentage);
+    }
+
+    [Fact]
+    public async Task GrantEntry_NoMilestoneCrossed_PublishesNoMilestoneEvent()
+    {
+        // Arrange - 2 of 8 templates already unlocked (25%), granting the 3rd = 37.5%, crosses no milestone
+        // Previous: 2/8 = 25% (25% milestone already crossed), New: 3/8 = 37.5% (below 50%)
+        var templates = Enumerable.Range(1, 8).Select(i =>
+            CreateTestTemplate(entryTemplateId: Guid.NewGuid(), code: $"entry_{i}")).ToList();
+        var collection = CreateTestCollection();
+
+        var cache = CreateTestCache(unlockedEntries: new List<UnlockedEntryRecord>
+        {
+            new UnlockedEntryRecord { Code = "entry_1", EntryTemplateId = templates[0].EntryTemplateId, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow },
+            new UnlockedEntryRecord { Code = "entry_2", EntryTemplateId = templates[1].EntryTemplateId, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow }
+        });
+
+        _mockCollectionStore
+            .Setup(s => s.GetAsync(
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:{"bestiary"}",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(
+                $"tpl:{TestGameServiceId}:{"bestiary"}:entry_3",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(templates[2]);
+
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cache);
+
+        _mockCollectionCache
+            .Setup(s => s.GetWithETagAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((cache, "etag-1"));
+
+        _mockCollectionCache
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        _mockTemplateStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<EntryTemplateModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(templates);
+
+        _mockItemClient
+            .Setup(c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = Guid.NewGuid() });
+
+        var service = CreateService();
+
+        // Act
+        var (status, _) = await service.GrantEntryAsync(
+            new GrantEntryRequest
+            {
+                OwnerId = TestOwnerId,
+                OwnerType = EntityType.Character,
+                GameServiceId = TestGameServiceId,
+                CollectionType = "bestiary",
+                EntryCode = "entry_3"
+            },
+            CancellationToken.None);
+
+        // Assert - 3/8 = 37.5%, no milestone should be published (25% already crossed, 50% not yet)
+        Assert.Equal(StatusCodes.OK, status);
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(CollectionTopics.MilestoneReached, It.IsAny<CollectionMilestoneReachedEvent>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    #endregion
+
+    #region Unlock Listener Dispatch Tests
+
+    [Fact]
+    public async Task GrantEntry_WithListeners_DispatchesToAllListeners()
+    {
+        // Arrange
+        var collection = CreateTestCollection();
+        var template = CreateTestTemplate();
+        SetupGrantScenario(collection, template);
+
+        var listener1 = new Mock<ICollectionUnlockListener>();
+        var listener2 = new Mock<ICollectionUnlockListener>();
+        listener1.Setup(l => l.OnEntryUnlockedAsync(It.IsAny<CollectionUnlockNotification>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        listener2.Setup(l => l.OnEntryUnlockedAsync(It.IsAny<CollectionUnlockNotification>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var service = new CollectionService(
+            _mockMessageBus.Object,
+            _mockStateStoreFactory.Object,
+            _mockLogger.Object,
+            Configuration,
+            _mockEventConsumer.Object,
+            _mockInventoryClient.Object,
+            _mockItemClient.Object,
+            _mockGameServiceClient.Object,
+            _mockLockProvider.Object,
+            _mockResourceClient.Object,
+            _mockTelemetryProvider.Object,
+            _mockEntitySessionRegistry.Object,
+            new[] { listener1.Object, listener2.Object });
+
+        // Act
+        var (status, _) = await service.GrantEntryAsync(
+            new GrantEntryRequest
+            {
+                OwnerId = TestOwnerId,
+                OwnerType = EntityType.Character,
+                GameServiceId = TestGameServiceId,
+                CollectionType = "bestiary",
+                EntryCode = "boss_dragon"
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        listener1.Verify(l => l.OnEntryUnlockedAsync(
+            It.Is<CollectionUnlockNotification>(n =>
+                n.EntryCode == "boss_dragon" &&
+                n.CollectionId == collection.CollectionId &&
+                n.OwnerId == TestOwnerId &&
+                n.CollectionType == "bestiary"),
+            It.IsAny<CancellationToken>()), Times.Once);
+        listener2.Verify(l => l.OnEntryUnlockedAsync(
+            It.Is<CollectionUnlockNotification>(n => n.EntryCode == "boss_dragon"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GrantEntry_ListenerThrows_OtherListenersStillCalled()
+    {
+        // Arrange
+        var collection = CreateTestCollection();
+        var template = CreateTestTemplate();
+        SetupGrantScenario(collection, template);
+
+        var failingListener = new Mock<ICollectionUnlockListener>();
+        failingListener.Setup(l => l.OnEntryUnlockedAsync(It.IsAny<CollectionUnlockNotification>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Listener failure"));
+
+        var successListener = new Mock<ICollectionUnlockListener>();
+        successListener.Setup(l => l.OnEntryUnlockedAsync(It.IsAny<CollectionUnlockNotification>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var service = new CollectionService(
+            _mockMessageBus.Object,
+            _mockStateStoreFactory.Object,
+            _mockLogger.Object,
+            Configuration,
+            _mockEventConsumer.Object,
+            _mockInventoryClient.Object,
+            _mockItemClient.Object,
+            _mockGameServiceClient.Object,
+            _mockLockProvider.Object,
+            _mockResourceClient.Object,
+            _mockTelemetryProvider.Object,
+            _mockEntitySessionRegistry.Object,
+            new[] { failingListener.Object, successListener.Object });
+
+        // Act
+        var (status, response) = await service.GrantEntryAsync(
+            new GrantEntryRequest
+            {
+                OwnerId = TestOwnerId,
+                OwnerType = EntityType.Character,
+                GameServiceId = TestGameServiceId,
+                CollectionType = "bestiary",
+                EntryCode = "boss_dragon"
+            },
+            CancellationToken.None);
+
+        // Assert - grant still succeeds even though first listener threw
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.AlreadyUnlocked);
+
+        // Both listeners were called despite the first one throwing
+        failingListener.Verify(l => l.OnEntryUnlockedAsync(
+            It.IsAny<CollectionUnlockNotification>(), It.IsAny<CancellationToken>()), Times.Once);
+        successListener.Verify(l => l.OnEntryUnlockedAsync(
+            It.IsAny<CollectionUnlockNotification>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Lock Failure Handling Tests
+
+    [Fact]
+    public async Task GrantEntry_LockFails_ReturnsConflict()
+    {
+        // Arrange
+        var collection = CreateTestCollection();
+        var template = CreateTestTemplate();
+
+        _mockCollectionStore
+            .Setup(s => s.GetAsync(
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:{"bestiary"}",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(
+                $"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Lock acquisition fails
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        failedLock.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.GrantEntryAsync(
+            new GrantEntryRequest
+            {
+                OwnerId = TestOwnerId,
+                OwnerType = EntityType.Character,
+                GameServiceId = TestGameServiceId,
+                CollectionType = "bestiary",
+                EntryCode = "boss_dragon"
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+
+        // Verify no item was created
+        _mockItemClient.Verify(
+            c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateEntryMetadata_LockFails_ReturnsConflict()
+    {
+        // Arrange
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        failedLock.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.UpdateEntryMetadataAsync(
+            new UpdateEntryMetadataRequest
+            {
+                CollectionId = TestCollectionId,
+                EntryCode = "boss_dragon",
+                PlayCount = 10
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task DeleteCollection_LockFails_ReturnsConflict()
+    {
+        // Arrange
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        failedLock.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.DeleteCollectionAsync(
+            new DeleteCollectionRequest { CollectionId = TestCollectionId },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region Cache ETag Conflict Retry Tests
+
+    [Fact]
+    public async Task GrantEntry_CacheETagConflict_RetriesAndSucceeds()
+    {
+        // Arrange
+        var collection = CreateTestCollection();
+        var template = CreateTestTemplate();
+
+        _mockCollectionStore
+            .Setup(s => s.GetAsync(
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:{"bestiary"}",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(
+                $"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestCache());
+
+        // First GetWithETagAsync returns etag-1
+        var getWithETagCallCount = 0;
+        _mockCollectionCache
+            .Setup(s => s.GetWithETagAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                getWithETagCallCount++;
+                return (CreateTestCache(), $"etag-{getWithETagCallCount}");
+            });
+
+        // First TrySave fails (null = conflict), second succeeds
+        var trySaveCallCount = 0;
+        _mockCollectionCache
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                trySaveCallCount++;
+                return trySaveCallCount == 1 ? null : "etag-new";
+            });
+
+        _mockTemplateStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<EntryTemplateModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<EntryTemplateModel> { template });
+
+        _mockItemClient
+            .Setup(c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = Guid.NewGuid() });
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.GrantEntryAsync(
+            new GrantEntryRequest
+            {
+                OwnerId = TestOwnerId,
+                OwnerType = EntityType.Character,
+                GameServiceId = TestGameServiceId,
+                CollectionType = "bestiary",
+                EntryCode = "boss_dragon"
+            },
+            CancellationToken.None);
+
+        // Assert - should succeed after retry
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // GetWithETagAsync was called twice (first try + retry)
+        Assert.Equal(2, getWithETagCallCount);
+        // TrySave was called twice (first failed, second succeeded)
+        Assert.Equal(2, trySaveCallCount);
+    }
+
+    #endregion
+
+    #region Owner Type Mapping Edge Cases
+
+    [Fact]
+    public async Task CreateCollection_LocationOwnerType_MapsCorrectly()
+    {
+        // Arrange
+        _mockGameServiceClient
+            .Setup(c => c.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceInfo { ServiceId = TestGameServiceId });
+        _mockInventoryClient
+            .Setup(c => c.CreateContainerAsync(It.IsAny<CreateContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContainerResponse { ContainerId = TestContainerId });
+
+        var service = CreateService();
+        var request = new CreateCollectionRequest
+        {
+            OwnerId = TestOwnerId,
+            OwnerType = EntityType.Location,
+            CollectionType = "bestiary",
+            GameServiceId = TestGameServiceId
+        };
+
+        // Act
+        var (status, response) = await service.CreateCollectionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify container created with Location owner type mapping
+        _mockInventoryClient.Verify(
+            c => c.CreateContainerAsync(
+                It.Is<CreateContainerRequest>(r =>
+                    r.OwnerType == ContainerOwnerType.Location),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateCollection_GuildOwnerType_MapsCorrectly()
+    {
+        // Arrange
+        _mockGameServiceClient
+            .Setup(c => c.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceInfo { ServiceId = TestGameServiceId });
+        _mockInventoryClient
+            .Setup(c => c.CreateContainerAsync(It.IsAny<CreateContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContainerResponse { ContainerId = TestContainerId });
+
+        var service = CreateService();
+        var request = new CreateCollectionRequest
+        {
+            OwnerId = TestOwnerId,
+            OwnerType = EntityType.Guild,
+            CollectionType = "bestiary",
+            GameServiceId = TestGameServiceId
+        };
+
+        // Act
+        var (status, response) = await service.CreateCollectionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        _mockInventoryClient.Verify(
+            c => c.CreateContainerAsync(
+                It.Is<CreateContainerRequest>(r =>
+                    r.OwnerType == ContainerOwnerType.Guild),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task GrantEntry_UnmappableOwnerType_ReturnsBadRequest()
+    {
+        // Arrange - EntityType.Monster cannot map to ContainerOwnerType
+        var service = CreateService();
+        var request = new GrantEntryRequest
+        {
+            OwnerId = TestOwnerId,
+            OwnerType = EntityType.Monster,
+            GameServiceId = TestGameServiceId,
+            CollectionType = "bestiary",
+            EntryCode = "boss_dragon"
+        };
+
+        // Act
+        var (status, response) = await service.GrantEntryAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region Client Event Publishing Tests
+
+    [Fact]
+    public async Task GrantEntry_PublishesClientEventToOwnerSessions()
+    {
+        // Arrange
+        var collection = CreateTestCollection();
+        var template = CreateTestTemplate();
+        SetupGrantScenario(collection, template);
+
+        CollectionEntryUnlockedClientEvent? capturedClientEvent = null;
+        _mockEntitySessionRegistry
+            .Setup(r => r.PublishToEntitySessionsAsync(
+                It.IsAny<string>(), It.IsAny<Guid>(),
+                It.IsAny<CollectionEntryUnlockedClientEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, Guid, CollectionEntryUnlockedClientEvent, CancellationToken>(
+                (_, _, evt, _) => capturedClientEvent = evt)
+            .ReturnsAsync(1);
+
+        var service = CreateService();
+
+        // Act
+        var (status, _) = await service.GrantEntryAsync(
+            new GrantEntryRequest
+            {
+                OwnerId = TestOwnerId,
+                OwnerType = EntityType.Character,
+                GameServiceId = TestGameServiceId,
+                CollectionType = "bestiary",
+                EntryCode = "boss_dragon"
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(capturedClientEvent);
+        Assert.Equal("boss_dragon", capturedClientEvent.EntryCode);
+        Assert.Equal("Dragon Boss", capturedClientEvent.DisplayName);
+        Assert.Equal("bestiary", capturedClientEvent.CollectionType);
+        Assert.Equal(collection.CollectionId, capturedClientEvent.CollectionId);
+
+        // Verify entity type string was lowercased for session lookup
+        _mockEntitySessionRegistry.Verify(
+            r => r.PublishToEntitySessionsAsync(
+                "character", TestOwnerId,
+                It.IsAny<CollectionEntryUnlockedClientEvent>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task AdvanceDiscovery_PublishesClientEventToOwnerSessions()
+    {
+        // Arrange
+        var collection = CreateTestCollection();
+        var template = CreateTestTemplate(
+            discoveryLevels: new List<DiscoveryLevelEntry>
+            {
+                new DiscoveryLevelEntry { Level = 0, Reveals = new List<string> { "name" } },
+                new DiscoveryLevelEntry { Level = 1, Reveals = new List<string> { "habitat", "weakness" } }
+            });
+
+        var cache = CreateTestCache(unlockedEntries: new List<UnlockedEntryRecord>
+        {
+            new UnlockedEntryRecord
+            {
+                Code = "boss_dragon",
+                EntryTemplateId = TestEntryTemplateId,
+                ItemInstanceId = Guid.NewGuid(),
+                UnlockedAt = DateTimeOffset.UtcNow,
+                Metadata = new EntryMetadataModel { DiscoveryLevel = 0 }
+            }
+        });
+
+        _mockCollectionStore
+            .Setup(s => s.GetAsync($"col:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cache);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(
+                $"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockCollectionCache
+            .Setup(s => s.GetWithETagAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((cache, "etag-1"));
+        _mockCollectionCache
+            .Setup(s => s.TrySaveAsync($"cache:{TestCollectionId}", It.IsAny<CollectionCacheModel>(), "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        CollectionDiscoveryAdvancedClientEvent? capturedClientEvent = null;
+        _mockEntitySessionRegistry
+            .Setup(r => r.PublishToEntitySessionsAsync(
+                It.IsAny<string>(), It.IsAny<Guid>(),
+                It.IsAny<CollectionDiscoveryAdvancedClientEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, Guid, CollectionDiscoveryAdvancedClientEvent, CancellationToken>(
+                (_, _, evt, _) => capturedClientEvent = evt)
+            .ReturnsAsync(1);
+
+        var service = CreateService();
+
+        // Act
+        var (status, _) = await service.AdvanceDiscoveryAsync(
+            new AdvanceDiscoveryRequest { CollectionId = TestCollectionId, EntryCode = "boss_dragon" },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(capturedClientEvent);
+        Assert.Equal("boss_dragon", capturedClientEvent.EntryCode);
+        Assert.Equal(1, capturedClientEvent.NewDiscoveryLevel);
+        Assert.NotNull(capturedClientEvent.RevealedKeys);
+        Assert.Contains("habitat", capturedClientEvent.RevealedKeys);
+        Assert.Contains("weakness", capturedClientEvent.RevealedKeys);
+    }
+
+    #endregion
+
+    #region Event Handler Error Scenarios
+
+    [Fact]
+    public async Task HandleAccountDeleted_CleanupFails_PublishesErrorEvent()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+
+        // Query throws to simulate infrastructure failure
+        _mockCollectionStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<CollectionInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Redis connection lost"));
+
+        var service = CreateService();
+
+        // Act - should not throw (event handler has try-catch)
+        await service.HandleAccountDeletedAsync(new AccountDeletedEvent { AccountId = accountId });
+
+        // Assert - error event published via TryPublishErrorAsync
+        _mockMessageBus.Verify(
+            m => m.TryPublishErrorAsync(
+                "collection",
+                "CleanupCollectionsForAccount",
+                "cleanup_failed",
+                It.Is<string>(msg => msg.Contains("Redis connection lost")),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<ServiceErrorEventSeverity>(),
+                It.IsAny<object?>(),
+                It.IsAny<string?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CleanupCollectionsForOwner_PartialFailure_ContinuesAndReturnsPartialCount()
+    {
+        // Arrange
+        var ownerId = Guid.NewGuid();
+        var collection1 = CreateTestCollection(collectionId: Guid.NewGuid(), ownerId: ownerId, ownerType: EntityType.Character);
+        var collection2 = CreateTestCollection(collectionId: Guid.NewGuid(), ownerId: ownerId, ownerType: EntityType.Character,
+            collectionType: "music_library");
+
+        _mockCollectionStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<CollectionInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<CollectionInstanceModel> { collection1, collection2 });
+
+        // First container delete succeeds, second throws
+        var callCount = 0;
+        _mockInventoryClient
+            .Setup(c => c.DeleteContainerAsync(It.IsAny<DeleteContainerRequest>(), It.IsAny<CancellationToken>()))
+            .Returns<DeleteContainerRequest, CancellationToken>((req, _) =>
+            {
+                callCount++;
+                if (callCount == 2)
+                    throw new ApiException("Service unavailable", 503, null, null, null);
+                return Task.FromResult(new DeleteContainerResponse());
+            });
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.CleanupByCharacterAsync(
+            new CleanupByCharacterRequest { CharacterId = ownerId },
+            CancellationToken.None);
+
+        // Assert - partial cleanup succeeds
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.DeletedCount); // Only 1 of 2 succeeded
+    }
+
+    #endregion
+
+    #region Resource Reference Registration Tests
+
+    [Fact]
+    public async Task CreateCollection_CharacterOwner_RegistersCharacterReference()
+    {
+        // Arrange
+        _mockGameServiceClient
+            .Setup(c => c.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceInfo { ServiceId = TestGameServiceId });
+        _mockInventoryClient
+            .Setup(c => c.CreateContainerAsync(It.IsAny<CreateContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContainerResponse { ContainerId = TestContainerId });
+
+        var service = CreateService();
+        var request = new CreateCollectionRequest
+        {
+            OwnerId = TestOwnerId,
+            OwnerType = EntityType.Character,
+            CollectionType = "bestiary",
+            GameServiceId = TestGameServiceId
+        };
+
+        // Act
+        var (status, response) = await service.CreateCollectionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify character reference registered with lib-resource
+        _mockResourceClient.Verify(
+            c => c.RegisterReferenceAsync(
+                It.Is<RegisterReferenceRequest>(r =>
+                    r.ResourceType == "character" &&
+                    r.ResourceId == TestOwnerId &&
+                    r.SourceType == "collection"),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateCollection_AccountOwner_DoesNotRegisterCharacterReference()
+    {
+        // Arrange
+        _mockGameServiceClient
+            .Setup(c => c.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceInfo { ServiceId = TestGameServiceId });
+        _mockInventoryClient
+            .Setup(c => c.CreateContainerAsync(It.IsAny<CreateContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContainerResponse { ContainerId = TestContainerId });
+
+        var service = CreateService();
+        var request = new CreateCollectionRequest
+        {
+            OwnerId = TestOwnerId,
+            OwnerType = EntityType.Account,
+            CollectionType = "bestiary",
+            GameServiceId = TestGameServiceId
+        };
+
+        // Act
+        var (status, response) = await service.CreateCollectionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify no reference registration (only for character-owned)
+        _mockResourceClient.Verify(
+            c => c.RegisterReferenceAsync(It.IsAny<RegisterReferenceRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteCollection_CharacterOwner_UnregistersCharacterReference()
+    {
+        // Arrange
+        var collection = CreateTestCollection(ownerType: EntityType.Character);
+        _mockCollectionStore
+            .Setup(s => s.GetAsync($"col:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+
+        _mockInventoryClient
+            .Setup(c => c.DeleteContainerAsync(It.IsAny<DeleteContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeleteContainerResponse());
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.DeleteCollectionAsync(
+            new DeleteCollectionRequest { CollectionId = TestCollectionId },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify character reference unregistered with lib-resource
+        _mockResourceClient.Verify(
+            c => c.UnregisterReferenceAsync(
+                It.Is<UnregisterReferenceRequest>(r =>
+                    r.ResourceType == "character" &&
+                    r.ResourceId == TestOwnerId &&
+                    r.SourceType == "collection"),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteCollection_AccountOwner_DoesNotUnregisterCharacterReference()
+    {
+        // Arrange
+        var collection = CreateTestCollection(ownerType: EntityType.Account);
+        _mockCollectionStore
+            .Setup(s => s.GetAsync($"col:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+
+        _mockInventoryClient
+            .Setup(c => c.DeleteContainerAsync(It.IsAny<DeleteContainerRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeleteContainerResponse());
+
+        var service = CreateService();
+
+        // Act
+        var (status, _) = await service.DeleteCollectionAsync(
+            new DeleteCollectionRequest { CollectionId = TestCollectionId },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        _mockResourceClient.Verify(
+            c => c.UnregisterReferenceAsync(It.IsAny<UnregisterReferenceRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    #endregion
+
+    #region SelectContentForArea Advanced Tests
+
+    [Fact]
+    public async Task SelectContentForArea_AllEntriesNoThemes_ReturnsDefault()
+    {
+        // Arrange - entries exist but have no theme tags
+        var areaConfig = CreateTestAreaConfig(themes: new List<string> { "forest", "peaceful" });
+        _mockAreaContentStore
+            .Setup(s => s.GetAsync(
+                $"acc:{TestGameServiceId}:music_library:enchanted_forest",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(areaConfig);
+
+        var collection = CreateTestCollection(collectionType: "music_library");
+        _mockCollectionStore
+            .Setup(s => s.GetAsync(
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:music_library",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+
+        // Entry without themes
+        var entryNoThemes = CreateTestTemplate(
+            entryTemplateId: Guid.NewGuid(),
+            code: "themeless_track",
+            collectionType: "music_library",
+            displayName: "Themeless Track",
+            themes: null);
+
+        _mockTemplateStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<EntryTemplateModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<EntryTemplateModel> { entryNoThemes });
+
+        var cache = CreateTestCache(collectionId: collection.CollectionId, unlockedEntries: new List<UnlockedEntryRecord>
+        {
+            new UnlockedEntryRecord { Code = "themeless_track", EntryTemplateId = entryNoThemes.EntryTemplateId, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow }
+        });
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{collection.CollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cache);
+
+        // Default entry for fallback
+        var defaultEntry = CreateTestTemplate(
+            code: "forest_ambient",
+            collectionType: "music_library",
+            displayName: "Forest Ambience");
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(
+                $"tpl:{TestGameServiceId}:music_library:forest_ambient",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(defaultEntry);
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.SelectContentForAreaAsync(
+            new SelectContentForAreaRequest
+            {
+                OwnerId = TestOwnerId,
+                OwnerType = EntityType.Character,
+                GameServiceId = TestGameServiceId,
+                CollectionType = "music_library",
+                AreaCode = "enchanted_forest"
+            },
+            CancellationToken.None);
+
+        // Assert - falls back to default since no theme overlap
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("forest_ambient", response.EntryCode);
+        Assert.Empty(response.MatchedThemes);
+    }
+
+    [Fact]
+    public async Task SelectContentForArea_EmptyCollection_ReturnsDefault()
+    {
+        // Arrange
+        var areaConfig = CreateTestAreaConfig();
+        _mockAreaContentStore
+            .Setup(s => s.GetAsync(
+                $"acc:{TestGameServiceId}:music_library:enchanted_forest",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(areaConfig);
+
+        var collection = CreateTestCollection(collectionType: "music_library");
+        _mockCollectionStore
+            .Setup(s => s.GetAsync(
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:music_library",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+
+        // Empty cache (no unlocked entries)
+        var cache = CreateTestCache(collectionId: collection.CollectionId);
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{collection.CollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cache);
+
+        var defaultEntry = CreateTestTemplate(
+            code: "forest_ambient",
+            collectionType: "music_library",
+            displayName: "Forest Ambience");
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(
+                $"tpl:{TestGameServiceId}:music_library:forest_ambient",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(defaultEntry);
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.SelectContentForAreaAsync(
+            new SelectContentForAreaRequest
+            {
+                OwnerId = TestOwnerId,
+                OwnerType = EntityType.Character,
+                GameServiceId = TestGameServiceId,
+                CollectionType = "music_library",
+                AreaCode = "enchanted_forest"
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("forest_ambient", response.EntryCode);
+    }
+
+    [Fact]
+    public async Task SelectContentForArea_MultipleMatchingEntries_WeightsHigherThemeOverlap()
+    {
+        // Arrange - one entry has 1 theme match, another has 3 theme matches
+        var areaConfig = CreateTestAreaConfig(
+            themes: new List<string> { "forest", "peaceful", "magical" },
+            collectionType: "music_library");
+        _mockAreaContentStore
+            .Setup(s => s.GetAsync(
+                $"acc:{TestGameServiceId}:music_library:enchanted_forest",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(areaConfig);
+
+        var collection = CreateTestCollection(collectionType: "music_library");
+        _mockCollectionStore
+            .Setup(s => s.GetAsync(
+                $"col:{TestOwnerId}:character:{TestGameServiceId}:music_library",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(collection);
+
+        // Entry with 1 theme match
+        var lowMatch = CreateTestTemplate(
+            entryTemplateId: Guid.NewGuid(),
+            code: "wind_theme",
+            collectionType: "music_library",
+            displayName: "Wind Theme",
+            themes: new List<string> { "peaceful" });
+
+        // Entry with 3 theme matches (higher weight)
+        var highMatch = CreateTestTemplate(
+            entryTemplateId: Guid.NewGuid(),
+            code: "enchanted_melody",
+            collectionType: "music_library",
+            displayName: "Enchanted Melody",
+            themes: new List<string> { "forest", "peaceful", "magical" });
+
+        _mockTemplateStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<EntryTemplateModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<EntryTemplateModel> { lowMatch, highMatch });
+
+        var cache = CreateTestCache(collectionId: collection.CollectionId, unlockedEntries: new List<UnlockedEntryRecord>
+        {
+            new UnlockedEntryRecord { Code = "wind_theme", EntryTemplateId = lowMatch.EntryTemplateId, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow },
+            new UnlockedEntryRecord { Code = "enchanted_melody", EntryTemplateId = highMatch.EntryTemplateId, ItemInstanceId = Guid.NewGuid(), UnlockedAt = DateTimeOffset.UtcNow }
+        });
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{collection.CollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cache);
+
+        var service = CreateService();
+
+        // Act - run multiple times to verify that the higher-weighted entry is selected
+        // With weights 1 and 3 (total=4), enchanted_melody should be selected ~75% of the time
+        var results = new Dictionary<string, int>();
+        for (var i = 0; i < 100; i++)
+        {
+            var (status, response) = await service.SelectContentForAreaAsync(
+                new SelectContentForAreaRequest
+                {
+                    OwnerId = TestOwnerId,
+                    OwnerType = EntityType.Character,
+                    GameServiceId = TestGameServiceId,
+                    CollectionType = "music_library",
+                    AreaCode = "enchanted_forest"
+                },
+                CancellationToken.None);
+
+            Assert.Equal(StatusCodes.OK, status);
+            Assert.NotNull(response);
+            results.TryGetValue(response.EntryCode, out var count);
+            results[response.EntryCode] = count + 1;
+        }
+
+        // Assert - both entries should be selected at least once (probabilistic)
+        Assert.True(results.ContainsKey("enchanted_melody"), "Higher-weighted entry should be selected at least once");
+        // The higher-weighted entry (3 themes matched) should be selected more often
+        Assert.True(results["enchanted_melody"] > results.GetValueOrDefault("wind_theme", 0),
+            "Entry with more theme overlap should be selected more frequently");
+    }
+
+    #endregion
+
+    #region GrantEntry Global First Unlock Tests
+
+    [Fact]
+    public async Task GrantEntry_FirstGlobalUnlock_SetsIsFirstGlobalTrue()
+    {
+        // Arrange
+        var collection = CreateTestCollection();
+        var template = CreateTestTemplate();
+        SetupGrantScenario(collection, template);
+
+        // AddToSetAsync returns true (newly added = first global unlock)
+        _mockCacheableCollectionCache
+            .Setup(c => c.AddToSetAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        CollectionEntryUnlockedEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(CollectionTopics.EntryUnlocked, It.IsAny<CollectionEntryUnlockedEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((_, evt, _) => capturedEvent = (CollectionEntryUnlockedEvent)evt)
+            .ReturnsAsync(true);
+
+        var service = CreateService();
+
+        // Act
+        var (status, _) = await service.GrantEntryAsync(
+            new GrantEntryRequest
+            {
+                OwnerId = TestOwnerId,
+                OwnerType = EntityType.Character,
+                GameServiceId = TestGameServiceId,
+                CollectionType = "bestiary",
+                EntryCode = "boss_dragon"
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(capturedEvent);
+        Assert.True(capturedEvent.IsFirstGlobal);
+    }
+
+    [Fact]
+    public async Task GrantEntry_NotFirstGlobalUnlock_SetsIsFirstGlobalFalse()
+    {
+        // Arrange
+        var collection = CreateTestCollection();
+        var template = CreateTestTemplate();
+        SetupGrantScenario(collection, template);
+
+        // AddToSetAsync returns false (already exists = not first global unlock)
+        _mockCacheableCollectionCache
+            .Setup(c => c.AddToSetAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        CollectionEntryUnlockedEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(CollectionTopics.EntryUnlocked, It.IsAny<CollectionEntryUnlockedEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((_, evt, _) => capturedEvent = (CollectionEntryUnlockedEvent)evt)
+            .ReturnsAsync(true);
+
+        var service = CreateService();
+
+        // Act
+        var (status, _) = await service.GrantEntryAsync(
+            new GrantEntryRequest
+            {
+                OwnerId = TestOwnerId,
+                OwnerType = EntityType.Character,
+                GameServiceId = TestGameServiceId,
+                CollectionType = "bestiary",
+                EntryCode = "boss_dragon"
+            },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(capturedEvent);
+        Assert.False(capturedEvent.IsFirstGlobal);
     }
 
     #endregion

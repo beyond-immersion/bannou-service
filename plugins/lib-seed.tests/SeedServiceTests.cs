@@ -3860,5 +3860,902 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         Assert.Equal(StatusCodes.BadRequest, status);
     }
 
+    /// <summary>
+    /// Tests that initiating a bond between seeds of different types returns BadRequest.
+    /// </summary>
+    [Fact]
+    public async Task InitiateBond_DifferentSeedTypes_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var initiatorId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var initiator = CreateTestSeed(seedId: initiatorId, seedTypeCode: "guardian", status: SeedStatus.Active);
+        var target = CreateTestSeed(seedId: targetId, seedTypeCode: "dungeon_core", status: SeedStatus.Active);
+
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{initiatorId}", It.IsAny<CancellationToken>())).ReturnsAsync(initiator);
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{targetId}", It.IsAny<CancellationToken>())).ReturnsAsync(target);
+
+        // Act
+        var (status, _) = await service.InitiateBondAsync(
+            new InitiateBondRequest { InitiatorSeedId = initiatorId, TargetSeedId = targetId },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+
+        // Bond should not be saved
+        _mockBondStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<SeedBondModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region CreateSeed Cross-Game and DisplayName Tests
+
+    /// <summary>
+    /// Tests creating a seed with a cross-game type (null GameServiceId).
+    /// The game service validation should be skipped for cross-game types.
+    /// </summary>
+    [Fact]
+    public async Task CreateSeed_CrossGameType_SkipsGameServiceValidation()
+    {
+        // Arrange
+        var service = CreateService();
+        var crossGameType = CreateTestSeedType(seedTypeCode: "universal");
+        crossGameType.GameServiceId = null;
+
+        _mockTypeStore
+            .Setup(s => s.GetAsync("type:cross-game:universal", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(crossGameType);
+
+        SetupSeedQueryPagedAsync(new List<SeedModel>(), 0);
+
+        SeedModel? savedSeed = null;
+        _mockSeedStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedModel, StateOptions?, CancellationToken>((_, m, _, _) => savedSeed = m)
+            .ReturnsAsync("etag");
+
+        var request = new CreateSeedRequest
+        {
+            OwnerId = _testOwnerId,
+            OwnerType = EntityType.Character,
+            SeedTypeCode = "universal",
+            GameServiceId = null,
+            DisplayName = "Universal Seed"
+        };
+
+        // Act
+        var (status, response) = await service.CreateSeedAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Null(response.GameServiceId);
+
+        Assert.NotNull(savedSeed);
+        Assert.Null(savedSeed.GameServiceId);
+
+        // Game service client should NOT be called for cross-game types
+        _mockGameServiceClient.Verify(c => c.GetServiceAsync(
+            It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Tests that when DisplayName is null, a generated name is used as fallback.
+    /// </summary>
+    [Fact]
+    public async Task CreateSeed_NoDisplayName_GeneratesFallbackName()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedType = CreateTestSeedType();
+
+        _mockTypeStore
+            .Setup(s => s.GetAsync($"type:{_testGameServiceId}:guardian", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+
+        SetupSeedQueryPagedAsync(new List<SeedModel>(), 0);
+
+        SeedModel? savedSeed = null;
+        _mockSeedStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedModel, StateOptions?, CancellationToken>((_, m, _, _) => savedSeed = m)
+            .ReturnsAsync("etag");
+
+        var request = new CreateSeedRequest
+        {
+            OwnerId = _testOwnerId,
+            OwnerType = EntityType.Character,
+            SeedTypeCode = "guardian",
+            GameServiceId = _testGameServiceId,
+            DisplayName = null
+        };
+
+        // Act
+        var (status, response) = await service.CreateSeedAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(savedSeed);
+
+        // Fallback name starts with the seed type code and is 20 chars
+        Assert.StartsWith("guardian-", savedSeed.DisplayName);
+        Assert.Equal(20, savedSeed.DisplayName.Length);
+    }
+
+    #endregion
+
+    #region RegisterSeedType Edge Cases
+
+    /// <summary>
+    /// Tests that registering a seed type with empty growth phases is valid.
+    /// The service stores whatever phases are provided (including none).
+    /// </summary>
+    [Fact]
+    public async Task RegisterSeedType_EmptyGrowthPhases_SavesSuccessfully()
+    {
+        // Arrange
+        var service = CreateService();
+        SetupTypeQueryPagedAsync(new List<SeedTypeDefinitionModel>(), 0);
+
+        SeedTypeDefinitionModel? savedType = null;
+        _mockTypeStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedTypeDefinitionModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedTypeDefinitionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedType = m)
+            .ReturnsAsync("etag");
+
+        var request = new RegisterSeedTypeRequest
+        {
+            SeedTypeCode = "minimal",
+            GameServiceId = _testGameServiceId,
+            DisplayName = "Minimal Type",
+            Description = "A type with no phases",
+            MaxPerOwner = 5,
+            AllowedOwnerTypes = new List<EntityType> { EntityType.Account },
+            GrowthPhases = new List<GrowthPhaseDefinition>(),
+            BondCardinality = 0,
+            BondPermanent = false,
+            CapabilityRules = null,
+            SameOwnerGrowthMultiplier = 0f
+        };
+
+        // Act
+        var (status, response) = await service.RegisterSeedTypeAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.GrowthPhases);
+        Assert.Null(response.CapabilityRules);
+
+        Assert.NotNull(savedType);
+        Assert.Empty(savedType.GrowthPhases);
+        Assert.Null(savedType.CapabilityRules);
+    }
+
+    /// <summary>
+    /// Tests that registering a cross-game type (null GameServiceId) skips game service validation
+    /// and uses the "cross-game" key pattern.
+    /// </summary>
+    [Fact]
+    public async Task RegisterSeedType_CrossGame_UsesCorrectKeyPattern()
+    {
+        // Arrange
+        var service = CreateService();
+        SetupTypeQueryPagedAsync(new List<SeedTypeDefinitionModel>(), 0);
+
+        _mockTypeStore
+            .Setup(s => s.GetAsync("type:cross-game:shared", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SeedTypeDefinitionModel?)null);
+
+        _mockTypeStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedTypeDefinitionModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new RegisterSeedTypeRequest
+        {
+            SeedTypeCode = "shared",
+            GameServiceId = null,
+            DisplayName = "Shared Type",
+            Description = "Cross-game seed type",
+            MaxPerOwner = 1,
+            AllowedOwnerTypes = new List<EntityType> { EntityType.Account },
+            GrowthPhases = new List<GrowthPhaseDefinition>
+            {
+                new GrowthPhaseDefinition { PhaseCode = "nascent", DisplayName = "Nascent", MinTotalGrowth = 0 }
+            },
+            BondCardinality = 0,
+            BondPermanent = false,
+            SameOwnerGrowthMultiplier = 0f
+        };
+
+        // Act
+        var (status, response) = await service.RegisterSeedTypeAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Null(response.GameServiceId);
+
+        // Should save with cross-game key pattern
+        _mockTypeStore.Verify(s => s.SaveAsync(
+            "type:cross-game:shared",
+            It.IsAny<SeedTypeDefinitionModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
+
+        // Game service client should NOT be called
+        _mockGameServiceClient.Verify(c => c.GetServiceAsync(
+            It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region UpdateSeedType Capability Rules and Additional Update Tests
+
+    /// <summary>
+    /// Tests that updating only capability rules (not phases) triggers recomputation
+    /// and invalidates capability caches.
+    /// </summary>
+    [Fact]
+    public async Task UpdateSeedType_CapabilityRulesChanged_TriggersRecomputation()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedType = CreateTestSeedType();
+        _mockTypeStore
+            .Setup(s => s.GetAsync($"type:{_testGameServiceId}:guardian", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+        _mockTypeStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedTypeDefinitionModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        var seedId = Guid.NewGuid();
+        var existingSeed = CreateTestSeed(seedId: seedId);
+        existingSeed.TotalGrowth = 15f;
+        existingSeed.GrowthPhase = "awakening";
+
+        SetupSeedQueryPagedAsync(new List<SeedModel> { existingSeed }, 1);
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        // Update only capability rules, NOT phases
+        var newRules = new List<CapabilityRule>
+        {
+            new CapabilityRule { CapabilityCode = "combat.magic", Domain = "combat.magic", UnlockThreshold = 3f, FidelityFormula = "logarithmic" }
+        };
+
+        // Act
+        var (status, response) = await service.UpdateSeedTypeAsync(
+            new UpdateSeedTypeRequest
+            {
+                SeedTypeCode = "guardian",
+                GameServiceId = _testGameServiceId,
+                CapabilityRules = newRules
+            }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Capability cache should be invalidated for affected seeds
+        _mockCapabilitiesStore.Verify(s => s.DeleteAsync(
+            $"cap:{seedId}", It.IsAny<CancellationToken>()), Times.Once);
+
+        // Event should include capabilityRules in changedFields
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "seed.type.updated",
+            It.Is<SeedTypeUpdatedEvent>(e => e.ChangedFields.Contains("capabilityRules")),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Tests that updating a seed type with no actual changes still saves and publishes
+    /// an event with an empty changedFields list (per the conditional null checks).
+    /// </summary>
+    [Fact]
+    public async Task UpdateSeedType_NoChanges_SavesWithEmptyChangedFields()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedType = CreateTestSeedType();
+        _mockTypeStore
+            .Setup(s => s.GetAsync($"type:{_testGameServiceId}:guardian", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+
+        SeedTypeDefinitionModel? savedType = null;
+        _mockTypeStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedTypeDefinitionModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedTypeDefinitionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedType = m)
+            .ReturnsAsync("etag");
+
+        // Act - send request with no optional fields set
+        var (status, response) = await service.UpdateSeedTypeAsync(
+            new UpdateSeedTypeRequest
+            {
+                SeedTypeCode = "guardian",
+                GameServiceId = _testGameServiceId
+            }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Type was saved (even with no changes)
+        Assert.NotNull(savedType);
+
+        // No recomputation should occur (no phases or capability rules changed)
+        _mockCapabilitiesStore.Verify(s => s.DeleteAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        // Event should have empty changedFields
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "seed.type.updated",
+            It.Is<SeedTypeUpdatedEvent>(e => e.ChangedFields.Count == 0),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Tests that updating CollectionGrowthMappings saves the mappings correctly.
+    /// </summary>
+    [Fact]
+    public async Task UpdateSeedType_CollectionGrowthMappings_SavesMappings()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedType = CreateTestSeedType();
+        seedType.CollectionGrowthMappings = null;
+
+        _mockTypeStore
+            .Setup(s => s.GetAsync($"type:{_testGameServiceId}:guardian", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+
+        SeedTypeDefinitionModel? savedType = null;
+        _mockTypeStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedTypeDefinitionModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedTypeDefinitionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedType = m)
+            .ReturnsAsync("etag");
+
+        var mappings = new List<CollectionGrowthMapping>
+        {
+            new CollectionGrowthMapping
+            {
+                CollectionType = "bestiary",
+                DomainMappings = new List<CollectionDomainMapping>
+                {
+                    new CollectionDomainMapping { TagPrefix = "combat:", BaseAmount = 1.5f, DiscoveryBonusPerLevel = 0.5f }
+                }
+            }
+        };
+
+        // Act
+        var (status, response) = await service.UpdateSeedTypeAsync(
+            new UpdateSeedTypeRequest
+            {
+                SeedTypeCode = "guardian",
+                GameServiceId = _testGameServiceId,
+                CollectionGrowthMappings = mappings
+            }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedType);
+        Assert.NotNull(savedType.CollectionGrowthMappings);
+        Assert.Single(savedType.CollectionGrowthMappings);
+        Assert.Equal("bestiary", savedType.CollectionGrowthMappings[0].CollectionType);
+        Assert.Single(savedType.CollectionGrowthMappings[0].DomainMappings);
+        Assert.Equal("combat:", savedType.CollectionGrowthMappings[0].DomainMappings[0].TagPrefix);
+        Assert.Equal(1.5f, savedType.CollectionGrowthMappings[0].DomainMappings[0].BaseAmount);
+        Assert.Equal(0.5f, savedType.CollectionGrowthMappings[0].DomainMappings[0].DiscoveryBonusPerLevel);
+    }
+
+    /// <summary>
+    /// Tests that updating GrowthDecayEnabled saves the override value correctly.
+    /// </summary>
+    [Fact]
+    public async Task UpdateSeedType_GrowthDecayEnabled_SavesOverrideValue()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedType = CreateTestSeedType();
+        seedType.GrowthDecayEnabled = null;
+
+        _mockTypeStore
+            .Setup(s => s.GetAsync($"type:{_testGameServiceId}:guardian", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+
+        SeedTypeDefinitionModel? savedType = null;
+        _mockTypeStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedTypeDefinitionModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedTypeDefinitionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedType = m)
+            .ReturnsAsync("etag");
+
+        // Act
+        var (status, response) = await service.UpdateSeedTypeAsync(
+            new UpdateSeedTypeRequest
+            {
+                SeedTypeCode = "guardian",
+                GameServiceId = _testGameServiceId,
+                GrowthDecayEnabled = true
+            }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedType);
+        Assert.True(savedType.GrowthDecayEnabled);
+
+        // Event should include growthDecayEnabled in changedFields
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "seed.type.updated",
+            It.Is<SeedTypeUpdatedEvent>(e => e.ChangedFields.Contains("growthDecayEnabled")),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region ListSeeds Filter Tests
+
+    /// <summary>
+    /// Tests that ListSeeds with only GrowthPhase filter adds the correct condition.
+    /// </summary>
+    [Fact]
+    public async Task ListSeeds_GrowthPhaseFilter_AddsGrowthPhaseCondition()
+    {
+        // Arrange
+        var service = CreateService();
+        var seed = CreateTestSeed();
+        seed.GrowthPhase = "awakening";
+        SetupSeedQueryPagedAsync(new List<SeedModel> { seed }, 1);
+
+        // Act
+        var (status, response) = await service.ListSeedsAsync(
+            new ListSeedsRequest { GrowthPhase = "awakening" }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Seeds);
+
+        _mockSeedQueryStore.Verify(s => s.JsonQueryPagedAsync(
+            It.Is<IReadOnlyList<QueryCondition>>(c =>
+                c.Any(q => q.Path == "$.GrowthPhase" &&
+                           q.Operator == QueryOperator.Equals &&
+                           q.Value.ToString() == "awakening")),
+            It.IsAny<int>(), It.IsAny<int>(),
+            It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Tests that ListSeeds with only Status filter adds the correct condition.
+    /// </summary>
+    [Fact]
+    public async Task ListSeeds_StatusFilter_AddsStatusCondition()
+    {
+        // Arrange
+        var service = CreateService();
+        var seed = CreateTestSeed(status: SeedStatus.Active);
+        SetupSeedQueryPagedAsync(new List<SeedModel> { seed }, 1);
+
+        // Act
+        var (status, response) = await service.ListSeedsAsync(
+            new ListSeedsRequest { Status = SeedStatus.Active }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Seeds);
+
+        _mockSeedQueryStore.Verify(s => s.JsonQueryPagedAsync(
+            It.Is<IReadOnlyList<QueryCondition>>(c =>
+                c.Any(q => q.Path == "$.Status" &&
+                           q.Operator == QueryOperator.Equals)),
+            It.IsAny<int>(), It.IsAny<int>(),
+            It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Tests that ListSeeds with no optional filters still returns results and uses only the existence condition.
+    /// </summary>
+    [Fact]
+    public async Task ListSeeds_NoFilters_AppliesOnlyExistenceCondition()
+    {
+        // Arrange
+        var service = CreateService();
+        var seed = CreateTestSeed();
+        SetupSeedQueryPagedAsync(new List<SeedModel> { seed }, 1);
+
+        // Act
+        var (status, response) = await service.ListSeedsAsync(
+            new ListSeedsRequest(), CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Seeds);
+
+        // Only the existence condition should be present (no filter conditions)
+        _mockSeedQueryStore.Verify(s => s.JsonQueryPagedAsync(
+            It.Is<IReadOnlyList<QueryCondition>>(c =>
+                c.Count == 1 &&
+                c[0].Path == "$.SeedId" &&
+                c[0].Operator == QueryOperator.Exists),
+            It.IsAny<int>(), It.IsAny<int>(),
+            It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Growth Recording Edge Cases
+
+    /// <summary>
+    /// Tests that recording growth on a dormant seed returns BadRequest.
+    /// </summary>
+    [Fact]
+    public async Task RecordGrowth_DormantSeed_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedId = Guid.NewGuid();
+        var seed = CreateTestSeed(seedId: seedId, status: SeedStatus.Dormant);
+
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seed);
+
+        // Act
+        var (status, response) = await service.RecordGrowthAsync(
+            new RecordGrowthRequest
+            {
+                SeedId = seedId,
+                Domain = "combat.melee",
+                Amount = 5f,
+                Source = "test"
+            }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+
+        // Growth should NOT be saved
+        _mockGrowthStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Tests that recording growth on an archived seed returns BadRequest.
+    /// </summary>
+    [Fact]
+    public async Task RecordGrowth_ArchivedSeed_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedId = Guid.NewGuid();
+        var seed = CreateTestSeed(seedId: seedId, status: SeedStatus.Archived);
+
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seed);
+
+        // Act
+        var (status, response) = await service.RecordGrowthAsync(
+            new RecordGrowthRequest
+            {
+                SeedId = seedId,
+                Domain = "combat.melee",
+                Amount = 5f,
+                Source = "test"
+            }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    /// <summary>
+    /// Tests that growth recording with no bond (BondId = null) does not apply the bond multiplier.
+    /// </summary>
+    [Fact]
+    public async Task RecordGrowth_NoBond_DoesNotApplyBondMultiplier()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedId = Guid.NewGuid();
+        var seed = CreateTestSeed(seedId: seedId, status: SeedStatus.Active);
+        seed.BondId = null;
+
+        var seedType = CreateTestSeedType();
+        seedType.SameOwnerGrowthMultiplier = 0f;
+
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seed);
+        _mockTypeStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+
+        SeedGrowthModel? savedGrowth = null;
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SeedGrowthModel { SeedId = seedId, Domains = new() });
+        _mockGrowthStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedGrowthModel, StateOptions?, CancellationToken>((_, m, _, _) => savedGrowth = m)
+            .ReturnsAsync("etag");
+
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        SetupSeedQueryPagedAsync(new List<SeedModel>(), 0);
+
+        // Act
+        var (status, response) = await service.RecordGrowthAsync(
+            new RecordGrowthRequest
+            {
+                SeedId = seedId,
+                Domain = "combat.melee",
+                Amount = 10f,
+                Source = "test"
+            }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        Assert.NotNull(savedGrowth);
+        Assert.Equal(10f, savedGrowth.Domains["combat.melee"].Depth);
+
+        // Bond store should NOT be read or written
+        _mockBondStore.Verify(s => s.GetAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockBondStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<SeedBondModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Tests that growth recording with multiple domains records each domain correctly.
+    /// </summary>
+    [Fact]
+    public async Task RecordGrowthBatch_MultipleDomains_RecordsEachDomain()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedId = Guid.NewGuid();
+        var seed = CreateTestSeed(seedId: seedId, status: SeedStatus.Active);
+        seed.BondId = null;
+
+        var seedType = CreateTestSeedType();
+        seedType.SameOwnerGrowthMultiplier = 0f;
+
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seed);
+        _mockTypeStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+
+        SeedGrowthModel? savedGrowth = null;
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SeedGrowthModel { SeedId = seedId, Domains = new() });
+        _mockGrowthStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedGrowthModel, StateOptions?, CancellationToken>((_, m, _, _) => savedGrowth = m)
+            .ReturnsAsync("etag");
+
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        SetupSeedQueryPagedAsync(new List<SeedModel>(), 0);
+
+        // Act
+        var (status, response) = await service.RecordGrowthBatchAsync(
+            new RecordGrowthBatchRequest
+            {
+                SeedId = seedId,
+                Source = "test",
+                Entries = new List<GrowthEntry>
+                {
+                    new GrowthEntry { Domain = "combat.melee", Amount = 5f },
+                    new GrowthEntry { Domain = "knowledge.lore", Amount = 3f },
+                    new GrowthEntry { Domain = "social.trade", Amount = 2f }
+                }
+            }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(10f, response.TotalGrowth);
+
+        Assert.NotNull(savedGrowth);
+        Assert.Equal(3, savedGrowth.Domains.Count);
+        Assert.Equal(5f, savedGrowth.Domains["combat.melee"].Depth);
+        Assert.Equal(3f, savedGrowth.Domains["knowledge.lore"].Depth);
+        Assert.Equal(2f, savedGrowth.Domains["social.trade"].Depth);
+
+        // Three growth events published (one per domain)
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "seed.growth.updated",
+            It.IsAny<SeedGrowthUpdatedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Exactly(3));
+    }
+
+    #endregion
+
+    #region Cross-Pollination Additional Tests
+
+    /// <summary>
+    /// Tests that cross-pollination delivers growth to multiple siblings.
+    /// </summary>
+    [Fact]
+    public async Task RecordGrowth_MultipleSiblings_CrossPollinatesAllSiblings()
+    {
+        // Arrange
+        var service = CreateService();
+        var seedId = Guid.NewGuid();
+        var sibling1Id = Guid.NewGuid();
+        var sibling2Id = Guid.NewGuid();
+
+        var seed = CreateTestSeed(seedId: seedId, status: SeedStatus.Active);
+        seed.BondId = null;
+
+        var sibling1 = CreateTestSeed(seedId: sibling1Id, ownerId: seed.OwnerId, status: SeedStatus.Active);
+        var sibling2 = CreateTestSeed(seedId: sibling2Id, ownerId: seed.OwnerId, status: SeedStatus.Active);
+
+        var seedType = CreateTestSeedType();
+        seedType.SameOwnerGrowthMultiplier = 0.5f;
+
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seed);
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{sibling1Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sibling1);
+        _mockSeedStore
+            .Setup(s => s.GetAsync($"seed:{sibling2Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sibling2);
+        _mockTypeStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seedType);
+
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SeedGrowthModel { SeedId = seedId, Domains = new() });
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{sibling1Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SeedGrowthModel { SeedId = sibling1Id, Domains = new() });
+        _mockGrowthStore
+            .Setup(s => s.GetAsync($"growth:{sibling2Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SeedGrowthModel { SeedId = sibling2Id, Domains = new() });
+        _mockGrowthStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        // Sibling query returns the source seed + two siblings
+        SetupSeedQueryPagedAsync(new List<SeedModel> { seed, sibling1, sibling2 }, 3);
+
+        // Act
+        var (status, response) = await service.RecordGrowthAsync(
+            new RecordGrowthRequest
+            {
+                SeedId = seedId,
+                Domain = "combat.melee",
+                Amount = 10f,
+                Source = "test"
+            }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Growth should be saved for both siblings (cross-pollinated at 50% = 5.0 each)
+        _mockGrowthStore.Verify(s => s.SaveAsync(
+            $"growth:{sibling1Id}",
+            It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockGrowthStore.Verify(s => s.SaveAsync(
+            $"growth:{sibling2Id}",
+            It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
+
+        // Cross-pollinated growth events published for both siblings
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "seed.growth.updated",
+            It.Is<SeedGrowthUpdatedEvent>(e => e.CrossPollinated == true),
+            It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    #endregion
+
+    #region ConfirmBond Multi-Participant Tests
+
+    /// <summary>
+    /// Tests that confirming all participants in a 3-participant bond activates the bond
+    /// and updates all seeds with the bond reference.
+    /// </summary>
+    [Fact]
+    public async Task ConfirmBond_AllThreeParticipantsConfirmed_ActivatesBond()
+    {
+        // Arrange
+        var service = CreateService();
+        var bondId = Guid.NewGuid();
+        var seed1Id = Guid.NewGuid();
+        var seed2Id = Guid.NewGuid();
+        var seed3Id = Guid.NewGuid();
+
+        var bond = new SeedBondModel
+        {
+            BondId = bondId,
+            SeedTypeCode = "guardian",
+            Status = BondStatus.PendingConfirmation,
+            Participants = new List<BondParticipantEntry>
+            {
+                new() { SeedId = seed1Id, JoinedAt = DateTimeOffset.UtcNow, Confirmed = true },
+                new() { SeedId = seed2Id, JoinedAt = DateTimeOffset.UtcNow, Confirmed = true },
+                new() { SeedId = seed3Id, JoinedAt = DateTimeOffset.UtcNow, Confirmed = false }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        var seed1 = CreateTestSeed(seedId: seed1Id, status: SeedStatus.Active);
+        var seed2 = CreateTestSeed(seedId: seed2Id, status: SeedStatus.Active);
+        var seed3 = CreateTestSeed(seedId: seed3Id, status: SeedStatus.Active);
+
+        _mockBondStore
+            .Setup(s => s.GetAsync($"bond:{bondId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bond);
+
+        SeedBondModel? savedBond = null;
+        _mockBondStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedBondModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedBondModel, StateOptions?, CancellationToken>((_, m, _, _) => savedBond = m)
+            .ReturnsAsync("etag");
+
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{seed1Id}", It.IsAny<CancellationToken>())).ReturnsAsync(seed1);
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{seed2Id}", It.IsAny<CancellationToken>())).ReturnsAsync(seed2);
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{seed3Id}", It.IsAny<CancellationToken>())).ReturnsAsync(seed3);
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
+
+        // Act - seed3 confirms, completing the bond
+        var (status, response) = await service.ConfirmBondAsync(
+            new ConfirmBondRequest { BondId = bondId, ConfirmingSeedId = seed3Id },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(BondStatus.Active, response.Status);
+
+        Assert.NotNull(savedBond);
+        Assert.Equal(BondStatus.Active, savedBond.Status);
+        Assert.True(savedBond.Participants.All(p => p.Confirmed));
+
+        // All three seeds should have their BondId updated
+        _mockSeedStore.Verify(s => s.SaveAsync(
+            It.Is<string>(k => k == $"seed:{seed1Id}" || k == $"seed:{seed2Id}" || k == $"seed:{seed3Id}"),
+            It.IsAny<SeedModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
+
+        // Bond formed event should be published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "seed.bond.formed",
+            It.Is<SeedBondFormedEvent>(e =>
+                e.BondId == bondId && e.ParticipantSeedIds.Count == 3),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     #endregion
 }

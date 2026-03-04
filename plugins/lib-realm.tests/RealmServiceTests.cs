@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Events;
@@ -833,6 +834,1527 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         // Verify event was published via IMessageBus (3-param convenience overload)
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region CreateRealm Tests
+
+    [Fact]
+    public async Task CreateRealmAsync_WhenValid_ShouldCreateAndReturnOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var gameServiceId = Guid.NewGuid();
+        var request = new CreateRealmRequest
+        {
+            Code = "new_realm",
+            Name = "New Realm",
+            GameServiceId = gameServiceId,
+            Description = "A new realm",
+            Category = "test",
+            IsActive = true,
+            IsSystemType = false
+        };
+
+        // Code index returns null (no duplicate)
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Capture saved realm model
+        string? savedRealmKey = null;
+        RealmModel? savedModel = null;
+        _mockRealmStore
+            .Setup(s => s.SaveAsync(
+                It.Is<string>(k => k.StartsWith(REALM_KEY_PREFIX)),
+                It.IsAny<RealmModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, RealmModel, StateOptions?, CancellationToken>((k, m, _, _) =>
+            {
+                savedRealmKey = k;
+                savedModel = m;
+            })
+            .ReturnsAsync("etag-1");
+
+        // Capture saved code index
+        string? savedCodeKey = null;
+        string? savedCodeValue = null;
+        _mockStringStore
+            .Setup(s => s.SaveAsync(
+                It.Is<string>(k => k.StartsWith(CODE_INDEX_PREFIX)),
+                It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, StateOptions?, CancellationToken>((k, v, _, _) =>
+            {
+                savedCodeKey = k;
+                savedCodeValue = v;
+            })
+            .ReturnsAsync("etag-2");
+
+        // Setup realm list store for AddToRealmListAsync
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((List<Guid>?)new List<Guid>(), "list-etag"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("list-etag-2");
+
+        // Capture published event
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((t, e, _) =>
+            {
+                capturedTopic = t;
+                capturedEvent = e;
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.CreateRealmAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("NEW_REALM", response.Code); // Code normalized to uppercase
+        Assert.Equal("New Realm", response.Name);
+        Assert.Equal(gameServiceId, response.GameServiceId);
+        Assert.Equal("A new realm", response.Description);
+        Assert.Equal("test", response.Category);
+        Assert.True(response.IsActive);
+        Assert.False(response.IsSystemType);
+        Assert.False(response.IsDeprecated);
+
+        // Assert on captured state - realm model
+        Assert.NotNull(savedRealmKey);
+        Assert.StartsWith(REALM_KEY_PREFIX, savedRealmKey);
+        Assert.NotNull(savedModel);
+        Assert.Equal("NEW_REALM", savedModel.Code);
+        Assert.Equal("New Realm", savedModel.Name);
+        Assert.Equal(gameServiceId, savedModel.GameServiceId);
+        Assert.False(savedModel.IsDeprecated);
+
+        // Assert on captured state - code index
+        Assert.Equal($"{CODE_INDEX_PREFIX}NEW_REALM", savedCodeKey);
+        Assert.NotNull(savedCodeValue);
+        Assert.True(Guid.TryParse(savedCodeValue, out _));
+
+        // Assert on captured event
+        Assert.Equal("realm.created", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<RealmCreatedEvent>(capturedEvent);
+        Assert.Equal(response.RealmId, typedEvent.RealmId);
+        Assert.Equal("NEW_REALM", typedEvent.Code);
+        Assert.True(typedEvent.Timestamp > DateTimeOffset.UtcNow.AddSeconds(-5));
+    }
+
+    [Fact]
+    public async Task CreateRealmAsync_WhenDuplicateCode_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateRealmRequest
+        {
+            Code = "EXISTING",
+            Name = "Existing Realm",
+            GameServiceId = Guid.NewGuid()
+        };
+
+        // Code index returns an existing ID (duplicate)
+        _mockStringStore
+            .Setup(s => s.GetAsync($"{CODE_INDEX_PREFIX}EXISTING", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Guid.NewGuid().ToString());
+
+        // Act
+        var (status, response) = await service.CreateRealmAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+
+        // Verify no save occurred
+        _mockRealmStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<RealmModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateRealmAsync_CodeNormalization_ShouldUppercaseCode()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateRealmRequest
+        {
+            Code = "lower_case_realm",
+            Name = "Realm",
+            GameServiceId = Guid.NewGuid()
+        };
+
+        // No duplicate
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Capture code index key
+        string? savedCodeKey = null;
+        _mockStringStore
+            .Setup(s => s.SaveAsync(
+                It.Is<string>(k => k.StartsWith(CODE_INDEX_PREFIX)),
+                It.IsAny<string>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, StateOptions?, CancellationToken>((k, _, _, _) => savedCodeKey = k)
+            .ReturnsAsync("etag-1");
+
+        _mockRealmStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<RealmModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        // Setup realm list for AddToRealmListAsync
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((List<Guid>?)new List<Guid>(), "list-etag"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("list-etag-2");
+
+        // Act
+        var (status, response) = await service.CreateRealmAsync(request);
+
+        // Assert - code normalized to uppercase
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("LOWER_CASE_REALM", response.Code);
+        Assert.Equal($"{CODE_INDEX_PREFIX}LOWER_CASE_REALM", savedCodeKey);
+    }
+
+    [Fact]
+    public async Task CreateRealmAsync_ShouldAddToAllRealmsList()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateRealmRequest
+        {
+            Code = "LISTED",
+            Name = "Listed Realm",
+            GameServiceId = Guid.NewGuid()
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+        _mockRealmStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<RealmModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+        _mockStringStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        // Capture all-realms list save
+        List<Guid>? savedList = null;
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((List<Guid>?)new List<Guid>(), "list-etag"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, List<Guid>, string, CancellationToken>((_, list, _, _) => savedList = list)
+            .ReturnsAsync("list-etag-2");
+
+        // Act
+        var (status, _) = await service.CreateRealmAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedList);
+        Assert.Single(savedList);
+    }
+
+    [Fact]
+    public async Task CreateRealmAsync_WithAutoInitializeWorldstateClock_ShouldCallWorldstateClient()
+    {
+        // Arrange
+        Configuration.AutoInitializeWorldstateClock = true;
+        Configuration.DefaultCalendarTemplateCode = "standard-arcadia";
+
+        var service = CreateService();
+        var request = new CreateRealmRequest
+        {
+            Code = "CLOCK_REALM",
+            Name = "Clock Realm",
+            GameServiceId = Guid.NewGuid()
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+        _mockRealmStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<RealmModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+        _mockStringStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((List<Guid>?)new List<Guid>(), "list-etag"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("list-etag-2");
+
+        // Capture worldstate client call
+        InitializeRealmClockRequest? capturedClockRequest = null;
+        _mockWorldstateClient
+            .Setup(w => w.InitializeRealmClockAsync(It.IsAny<InitializeRealmClockRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<InitializeRealmClockRequest, CancellationToken>((r, _) => capturedClockRequest = r)
+            .Returns(Task.FromResult(new InitializeRealmClockResponse()));
+
+        // Act
+        var (status, response) = await service.CreateRealmAsync(request);
+
+        // Assert - realm created successfully and worldstate clock initialized
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(capturedClockRequest);
+        Assert.Equal(response.RealmId, capturedClockRequest.RealmId);
+        Assert.Equal("standard-arcadia", capturedClockRequest.CalendarTemplateCode);
+    }
+
+    [Fact]
+    public async Task CreateRealmAsync_WithAutoInitializeWorldstateClock_WhenWorldstateFails_ShouldStillSucceed()
+    {
+        // Arrange
+        Configuration.AutoInitializeWorldstateClock = true;
+        Configuration.DefaultCalendarTemplateCode = "standard-arcadia";
+
+        var service = CreateService();
+        var request = new CreateRealmRequest
+        {
+            Code = "CLOCK_FAIL",
+            Name = "Clock Fail Realm",
+            GameServiceId = Guid.NewGuid()
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+        _mockRealmStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<RealmModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+        _mockStringStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((List<Guid>?)new List<Guid>(), "list-etag"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("list-etag-2");
+
+        // Worldstate client throws ApiException
+        _mockWorldstateClient
+            .Setup(w => w.InitializeRealmClockAsync(It.IsAny<InitializeRealmClockRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Worldstate unavailable", 503, null, null, null));
+
+        // Act
+        var (status, response) = await service.CreateRealmAsync(request);
+
+        // Assert - realm creation still succeeds despite worldstate failure
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("CLOCK_FAIL", response.Code);
+    }
+
+    #endregion
+
+    #region ListRealms Tests
+
+    [Fact]
+    public async Task ListRealmsAsync_WhenNoRealms_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListRealmsRequest
+        {
+            Page = 1,
+            PageSize = 20
+        };
+
+        _mockListStore
+            .Setup(s => s.GetAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<Guid>?)null);
+
+        // Act
+        var (status, response) = await service.ListRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Realms);
+        Assert.Equal(0, response.TotalCount);
+        Assert.Equal(1, response.Page);
+        Assert.Equal(20, response.PageSize);
+    }
+
+    [Fact]
+    public async Task ListRealmsAsync_WithPagination_ShouldReturnCorrectPage()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmIds = Enumerable.Range(0, 5).Select(_ => Guid.NewGuid()).ToList();
+        var request = new ListRealmsRequest
+        {
+            Page = 2,
+            PageSize = 2
+        };
+
+        _mockListStore
+            .Setup(s => s.GetAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmIds);
+
+        // Build bulk results
+        var bulkResults = new Dictionary<string, RealmModel?>();
+        for (var i = 0; i < realmIds.Count; i++)
+        {
+            bulkResults[$"{REALM_KEY_PREFIX}{realmIds[i]}"] = CreateTestRealmModel(
+                realmIds[i], $"REALM_{i}", $"Realm {i}");
+        }
+        _mockRealmStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bulkResults);
+
+        // Act
+        var (status, response) = await service.ListRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Realms.Count); // pageSize = 2
+        Assert.Equal(5, response.TotalCount);
+        Assert.Equal(2, response.Page);
+        Assert.True(response.HasNextPage);
+        Assert.True(response.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task ListRealmsAsync_WithCategoryFilter_ShouldFilterByCategory()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId1 = Guid.NewGuid();
+        var realmId2 = Guid.NewGuid();
+        var realmIds = new List<Guid> { realmId1, realmId2 };
+        var request = new ListRealmsRequest
+        {
+            Category = "physical",
+            Page = 1,
+            PageSize = 20
+        };
+
+        _mockListStore
+            .Setup(s => s.GetAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmIds);
+
+        var model1 = CreateTestRealmModel(realmId1, "PHYSICAL_1", "Physical Realm");
+        model1.Category = "physical";
+        var model2 = CreateTestRealmModel(realmId2, "SYSTEM_1", "System Realm");
+        model2.Category = "system";
+
+        var bulkResults = new Dictionary<string, RealmModel?>
+        {
+            [$"{REALM_KEY_PREFIX}{realmId1}"] = model1,
+            [$"{REALM_KEY_PREFIX}{realmId2}"] = model2
+        };
+        _mockRealmStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bulkResults);
+
+        // Act
+        var (status, response) = await service.ListRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Realms);
+        Assert.Equal("PHYSICAL_1", response.Realms.First().Code);
+        Assert.Equal(1, response.TotalCount);
+    }
+
+    [Fact]
+    public async Task ListRealmsAsync_WithIsActiveFilter_ShouldFilterByActiveStatus()
+    {
+        // Arrange
+        var service = CreateService();
+        var activeId = Guid.NewGuid();
+        var inactiveId = Guid.NewGuid();
+        var realmIds = new List<Guid> { activeId, inactiveId };
+        var request = new ListRealmsRequest
+        {
+            IsActive = false,
+            Page = 1,
+            PageSize = 20
+        };
+
+        _mockListStore
+            .Setup(s => s.GetAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmIds);
+
+        var activeModel = CreateTestRealmModel(activeId, "ACTIVE", isActive: true);
+        var inactiveModel = CreateTestRealmModel(inactiveId, "INACTIVE", isActive: false);
+
+        var bulkResults = new Dictionary<string, RealmModel?>
+        {
+            [$"{REALM_KEY_PREFIX}{activeId}"] = activeModel,
+            [$"{REALM_KEY_PREFIX}{inactiveId}"] = inactiveModel
+        };
+        _mockRealmStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bulkResults);
+
+        // Act
+        var (status, response) = await service.ListRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Realms);
+        Assert.Equal("INACTIVE", response.Realms.First().Code);
+    }
+
+    [Fact]
+    public async Task ListRealmsAsync_WithIncludeDeprecatedFalse_ShouldExcludeDeprecated()
+    {
+        // Arrange
+        var service = CreateService();
+        var normalId = Guid.NewGuid();
+        var deprecatedId = Guid.NewGuid();
+        var realmIds = new List<Guid> { normalId, deprecatedId };
+        var request = new ListRealmsRequest
+        {
+            IncludeDeprecated = false,
+            Page = 1,
+            PageSize = 20
+        };
+
+        _mockListStore
+            .Setup(s => s.GetAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmIds);
+
+        var normalModel = CreateTestRealmModel(normalId, "NORMAL", isDeprecated: false);
+        var deprecatedModel = CreateTestRealmModel(deprecatedId, "DEPRECATED", isDeprecated: true);
+
+        var bulkResults = new Dictionary<string, RealmModel?>
+        {
+            [$"{REALM_KEY_PREFIX}{normalId}"] = normalModel,
+            [$"{REALM_KEY_PREFIX}{deprecatedId}"] = deprecatedModel
+        };
+        _mockRealmStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bulkResults);
+
+        // Act
+        var (status, response) = await service.ListRealmsAsync(request);
+
+        // Assert - deprecated realm excluded
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Realms);
+        Assert.Equal("NORMAL", response.Realms.First().Code);
+        Assert.Equal(1, response.TotalCount);
+    }
+
+    [Fact]
+    public async Task ListRealmsAsync_WithIncludeDeprecatedTrue_ShouldIncludeDeprecated()
+    {
+        // Arrange
+        var service = CreateService();
+        var normalId = Guid.NewGuid();
+        var deprecatedId = Guid.NewGuid();
+        var realmIds = new List<Guid> { normalId, deprecatedId };
+        var request = new ListRealmsRequest
+        {
+            IncludeDeprecated = true,
+            Page = 1,
+            PageSize = 20
+        };
+
+        _mockListStore
+            .Setup(s => s.GetAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmIds);
+
+        var normalModel = CreateTestRealmModel(normalId, "NORMAL", isDeprecated: false);
+        var deprecatedModel = CreateTestRealmModel(deprecatedId, "DEPRECATED", isDeprecated: true);
+
+        var bulkResults = new Dictionary<string, RealmModel?>
+        {
+            [$"{REALM_KEY_PREFIX}{normalId}"] = normalModel,
+            [$"{REALM_KEY_PREFIX}{deprecatedId}"] = deprecatedModel
+        };
+        _mockRealmStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bulkResults);
+
+        // Act
+        var (status, response) = await service.ListRealmsAsync(request);
+
+        // Assert - both realms included
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Realms.Count);
+        Assert.Equal(2, response.TotalCount);
+    }
+
+    [Fact]
+    public async Task ListRealmsAsync_WithCombinedFilters_ShouldApplyAllFilters()
+    {
+        // Arrange
+        var service = CreateService();
+        var matchId = Guid.NewGuid();
+        var noMatchCategory = Guid.NewGuid();
+        var noMatchActive = Guid.NewGuid();
+        var realmIds = new List<Guid> { matchId, noMatchCategory, noMatchActive };
+        var request = new ListRealmsRequest
+        {
+            Category = "physical",
+            IsActive = true,
+            IncludeDeprecated = true,
+            Page = 1,
+            PageSize = 20
+        };
+
+        _mockListStore
+            .Setup(s => s.GetAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmIds);
+
+        var matchModel = CreateTestRealmModel(matchId, "MATCH", isActive: true);
+        matchModel.Category = "physical";
+
+        var wrongCategoryModel = CreateTestRealmModel(noMatchCategory, "WRONG_CAT", isActive: true);
+        wrongCategoryModel.Category = "system";
+
+        var inactiveModel = CreateTestRealmModel(noMatchActive, "INACTIVE", isActive: false);
+        inactiveModel.Category = "physical";
+
+        var bulkResults = new Dictionary<string, RealmModel?>
+        {
+            [$"{REALM_KEY_PREFIX}{matchId}"] = matchModel,
+            [$"{REALM_KEY_PREFIX}{noMatchCategory}"] = wrongCategoryModel,
+            [$"{REALM_KEY_PREFIX}{noMatchActive}"] = inactiveModel
+        };
+        _mockRealmStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bulkResults);
+
+        // Act
+        var (status, response) = await service.ListRealmsAsync(request);
+
+        // Assert - only the matching realm returned
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Realms);
+        Assert.Equal("MATCH", response.Realms.First().Code);
+    }
+
+    #endregion
+
+    #region MergeRealms Tests
+
+    /// <summary>
+    /// Helper to create a mock lock response.
+    /// </summary>
+    private static Mock<ILockResponse> CreateMockLock(bool success)
+    {
+        var mockLock = new Mock<ILockResponse>();
+        mockLock.Setup(l => l.Success).Returns(success);
+        mockLock.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        return mockLock;
+    }
+
+    [Fact]
+    public async Task MergeRealmsAsync_WhenSourceEqualsTarget_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var request = new MergeRealmsRequest
+        {
+            SourceRealmId = realmId,
+            TargetRealmId = realmId
+        };
+
+        // Act
+        var (status, response) = await service.MergeRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task MergeRealmsAsync_WhenLockFails_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var request = new MergeRealmsRequest
+        {
+            SourceRealmId = sourceId,
+            TargetRealmId = targetId
+        };
+
+        // Lock acquisition fails
+        var failedLock = CreateMockLock(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        // Act
+        var (status, response) = await service.MergeRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task MergeRealmsAsync_WhenSourceNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var request = new MergeRealmsRequest
+        {
+            SourceRealmId = sourceId,
+            TargetRealmId = targetId
+        };
+
+        var successLock = CreateMockLock(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLock.Object);
+
+        // Source realm not found
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{sourceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RealmModel?)null);
+
+        // Act
+        var (status, response) = await service.MergeRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task MergeRealmsAsync_WhenSourceNotDeprecated_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var request = new MergeRealmsRequest
+        {
+            SourceRealmId = sourceId,
+            TargetRealmId = targetId
+        };
+
+        var successLock = CreateMockLock(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLock.Object);
+
+        // Source realm exists but is NOT deprecated
+        var sourceModel = CreateTestRealmModel(sourceId, "SOURCE", isDeprecated: false);
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{sourceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceModel);
+
+        // Act
+        var (status, response) = await service.MergeRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task MergeRealmsAsync_WhenSourceIsSystemType_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var request = new MergeRealmsRequest
+        {
+            SourceRealmId = sourceId,
+            TargetRealmId = targetId
+        };
+
+        var successLock = CreateMockLock(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLock.Object);
+
+        // Source realm is deprecated but is a system realm
+        var sourceModel = CreateTestRealmModel(sourceId, "VOID", isDeprecated: true);
+        sourceModel.IsSystemType = true;
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{sourceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceModel);
+
+        // Act
+        var (status, response) = await service.MergeRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task MergeRealmsAsync_WhenTargetNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var request = new MergeRealmsRequest
+        {
+            SourceRealmId = sourceId,
+            TargetRealmId = targetId
+        };
+
+        var successLock = CreateMockLock(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLock.Object);
+
+        // Source realm found and deprecated
+        var sourceModel = CreateTestRealmModel(sourceId, "SOURCE", isDeprecated: true);
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{sourceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceModel);
+
+        // Target realm not found
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{targetId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RealmModel?)null);
+
+        // Act
+        var (status, response) = await service.MergeRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task MergeRealmsAsync_WithAllEmptyEntities_ShouldSucceedWithZeroCounts()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var request = new MergeRealmsRequest
+        {
+            SourceRealmId = sourceId,
+            TargetRealmId = targetId
+        };
+
+        var successLock = CreateMockLock(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLock.Object);
+
+        var sourceModel = CreateTestRealmModel(sourceId, "SOURCE", isDeprecated: true);
+        var targetModel = CreateTestRealmModel(targetId, "TARGET");
+
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{sourceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceModel);
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{targetId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(targetModel);
+
+        // All entity lists return empty
+        _mockSpeciesClient
+            .Setup(s => s.ListSpeciesByRealmAsync(It.IsAny<ListSpeciesByRealmRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SpeciesListResponse { Species = new List<SpeciesResponse>(), TotalCount = 0 });
+        _mockLocationClient
+            .Setup(l => l.ListRootLocationsAsync(It.IsAny<ListRootLocationsRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new LocationListResponse
+            {
+                Locations = new List<LocationResponse>(),
+                TotalCount = 0,
+                Page = 1,
+                PageSize = 50,
+                HasNextPage = false,
+                HasPreviousPage = false
+            });
+        _mockCharacterClient
+            .Setup(c => c.GetCharactersByRealmAsync(It.IsAny<GetCharactersByRealmRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterListResponse
+            {
+                Characters = new List<CharacterResponse>(),
+                TotalCount = 0,
+                Page = 1,
+                PageSize = 50,
+                HasNextPage = false,
+                HasPreviousPage = false
+            });
+
+        // Capture published merge event
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((t, e, _) =>
+            {
+                capturedTopic = t;
+                capturedEvent = e;
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.MergeRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.SpeciesMigrated);
+        Assert.Equal(0, response.SpeciesFailed);
+        Assert.Equal(0, response.LocationsMigrated);
+        Assert.Equal(0, response.LocationsFailed);
+        Assert.Equal(0, response.CharactersMigrated);
+        Assert.Equal(0, response.CharactersFailed);
+        Assert.False(response.SourceDeleted);
+
+        // Assert merge event published
+        Assert.Equal("realm.merged", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var mergedEvent = Assert.IsType<RealmMergedEvent>(capturedEvent);
+        Assert.Equal(sourceId, mergedEvent.SourceRealmId);
+        Assert.Equal(targetId, mergedEvent.TargetRealmId);
+    }
+
+    [Fact]
+    public async Task MergeRealmsAsync_WithEntities_ShouldReportMigrationCounts()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var request = new MergeRealmsRequest
+        {
+            SourceRealmId = sourceId,
+            TargetRealmId = targetId
+        };
+
+        var successLock = CreateMockLock(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLock.Object);
+
+        var sourceModel = CreateTestRealmModel(sourceId, "SOURCE", isDeprecated: true);
+        var targetModel = CreateTestRealmModel(targetId, "TARGET");
+
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{sourceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceModel);
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{targetId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(targetModel);
+
+        // Species: 1 species, successfully migrated, then empty on second call
+        var speciesCallCount = 0;
+        _mockSpeciesClient
+            .Setup(s => s.ListSpeciesByRealmAsync(It.IsAny<ListSpeciesByRealmRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                speciesCallCount++;
+                if (speciesCallCount == 1)
+                {
+                    return new SpeciesListResponse
+                    {
+                        Species = new List<SpeciesResponse>
+                        {
+                            new SpeciesResponse { SpeciesId = Guid.NewGuid(), Code = "HUMAN", Name = "Human" }
+                        },
+                        TotalCount = 1
+                    };
+                }
+                return new SpeciesListResponse { Species = new List<SpeciesResponse>(), TotalCount = 0 };
+            });
+
+        // Locations: empty (no root locations)
+        _mockLocationClient
+            .Setup(l => l.ListRootLocationsAsync(It.IsAny<ListRootLocationsRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new LocationListResponse
+            {
+                Locations = new List<LocationResponse>(),
+                TotalCount = 0,
+                Page = 1,
+                PageSize = 50,
+                HasNextPage = false,
+                HasPreviousPage = false
+            });
+
+        // Characters: 1 character, successfully migrated, then empty on second call
+        var charCallCount = 0;
+        _mockCharacterClient
+            .Setup(c => c.GetCharactersByRealmAsync(It.IsAny<GetCharactersByRealmRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                charCallCount++;
+                if (charCallCount == 1)
+                {
+                    return new CharacterListResponse
+                    {
+                        Characters = new List<CharacterResponse>
+                        {
+                            new CharacterResponse
+                            {
+                                CharacterId = Guid.NewGuid(),
+                                Name = "Hero",
+                                RealmId = sourceId,
+                                SpeciesId = Guid.NewGuid(),
+                                BirthDate = DateTimeOffset.UtcNow,
+                                Status = CharacterStatus.Alive,
+                                CreatedAt = DateTimeOffset.UtcNow
+                            }
+                        },
+                        TotalCount = 1,
+                        Page = 1,
+                        PageSize = 50,
+                        HasNextPage = false,
+                        HasPreviousPage = false
+                    };
+                }
+                return new CharacterListResponse
+                {
+                    Characters = new List<CharacterResponse>(),
+                    TotalCount = 0,
+                    Page = 1,
+                    PageSize = 50,
+                    HasNextPage = false,
+                    HasPreviousPage = false
+                };
+            });
+
+        // Act
+        var (status, response) = await service.MergeRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.SpeciesMigrated);
+        Assert.Equal(0, response.SpeciesFailed);
+        Assert.Equal(0, response.LocationsMigrated);
+        Assert.Equal(0, response.LocationsFailed);
+        Assert.Equal(1, response.CharactersMigrated);
+        Assert.Equal(0, response.CharactersFailed);
+    }
+
+    [Fact]
+    public async Task MergeRealmsAsync_WithDeleteAfterMerge_WhenNoFailures_ShouldDeleteSource()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var request = new MergeRealmsRequest
+        {
+            SourceRealmId = sourceId,
+            TargetRealmId = targetId,
+            DeleteAfterMerge = true
+        };
+
+        var successLock = CreateMockLock(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLock.Object);
+
+        var sourceModel = CreateTestRealmModel(sourceId, "SOURCE", isDeprecated: true);
+        var targetModel = CreateTestRealmModel(targetId, "TARGET");
+
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{sourceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceModel);
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{targetId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(targetModel);
+
+        // All empty entities
+        _mockSpeciesClient
+            .Setup(s => s.ListSpeciesByRealmAsync(It.IsAny<ListSpeciesByRealmRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SpeciesListResponse { Species = new List<SpeciesResponse>(), TotalCount = 0 });
+        _mockLocationClient
+            .Setup(l => l.ListRootLocationsAsync(It.IsAny<ListRootLocationsRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new LocationListResponse
+            {
+                Locations = new List<LocationResponse>(),
+                TotalCount = 0,
+                Page = 1,
+                PageSize = 50,
+                HasNextPage = false,
+                HasPreviousPage = false
+            });
+        _mockCharacterClient
+            .Setup(c => c.GetCharactersByRealmAsync(It.IsAny<GetCharactersByRealmRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterListResponse
+            {
+                Characters = new List<CharacterResponse>(),
+                TotalCount = 0,
+                Page = 1,
+                PageSize = 50,
+                HasNextPage = false,
+                HasPreviousPage = false
+            });
+
+        // Setup for delete operation (called after merge)
+        // CheckReferences returns 404 (no references)
+        _mockResourceClient
+            .Setup(r => r.CheckReferencesAsync(It.IsAny<BeyondImmersion.BannouService.Resource.CheckReferencesRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
+
+        // Setup for RemoveFromRealmListAsync
+        _mockListStore
+            .Setup(s => s.GetAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { sourceId });
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((List<Guid>?)new List<Guid> { sourceId }, "list-etag"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("list-etag-2");
+
+        // Act
+        var (status, response) = await service.MergeRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.SourceDeleted);
+
+        // Verify delete operations occurred
+        _mockRealmStore.Verify(s => s.DeleteAsync(
+            $"{REALM_KEY_PREFIX}{sourceId}", It.IsAny<CancellationToken>()), Times.Once);
+        _mockStringStore.Verify(s => s.DeleteAsync(
+            $"{CODE_INDEX_PREFIX}SOURCE", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region SeedRealms Tests
+
+    [Fact]
+    public async Task SeedRealmsAsync_WhenEmptyList_ShouldReturnZeroCounts()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new SeedRealmsRequest
+        {
+            Realms = new List<SeedRealm>()
+        };
+
+        // Act
+        var (status, response) = await service.SeedRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.Created);
+        Assert.Equal(0, response.Updated);
+        Assert.Equal(0, response.Skipped);
+        Assert.Empty(response.Errors);
+    }
+
+    [Fact]
+    public async Task SeedRealmsAsync_WithNewRealm_ShouldCreateIt()
+    {
+        // Arrange
+        var service = CreateService();
+        var gameServiceId = Guid.NewGuid();
+        var request = new SeedRealmsRequest
+        {
+            Realms = new List<SeedRealm>
+            {
+                new SeedRealm
+                {
+                    Code = "omega",
+                    Name = "Omega",
+                    GameServiceId = gameServiceId,
+                    Description = "The Omega realm",
+                    Category = "physical",
+                    IsActive = true,
+                    IsSystemType = false
+                }
+            }
+        };
+
+        // No existing realm for this code
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Setup for CreateRealmAsync
+        _mockRealmStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<RealmModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+        _mockStringStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((List<Guid>?)new List<Guid>(), "list-etag"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("list-etag-2");
+
+        // Act
+        var (status, response) = await service.SeedRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.Created);
+        Assert.Equal(0, response.Updated);
+        Assert.Equal(0, response.Skipped);
+        Assert.Empty(response.Errors);
+    }
+
+    [Fact]
+    public async Task SeedRealmsAsync_WithExistingRealm_WhenUpdateExistingFalse_ShouldSkip()
+    {
+        // Arrange
+        var service = CreateService();
+        var existingId = Guid.NewGuid();
+        var request = new SeedRealmsRequest
+        {
+            Realms = new List<SeedRealm>
+            {
+                new SeedRealm
+                {
+                    Code = "EXISTING",
+                    Name = "Existing",
+                    GameServiceId = Guid.NewGuid()
+                }
+            },
+            UpdateExisting = false
+        };
+
+        // Code index returns existing ID
+        _mockStringStore
+            .Setup(s => s.GetAsync($"{CODE_INDEX_PREFIX}EXISTING", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingId.ToString());
+
+        // Act
+        var (status, response) = await service.SeedRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.Created);
+        Assert.Equal(0, response.Updated);
+        Assert.Equal(1, response.Skipped);
+        Assert.Empty(response.Errors);
+
+        // Verify no save was attempted
+        _mockRealmStore.Verify(s => s.TrySaveAsync(
+            It.IsAny<string>(), It.IsAny<RealmModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SeedRealmsAsync_WithExistingRealm_WhenUpdateExistingTrue_ShouldUpdate()
+    {
+        // Arrange
+        var service = CreateService();
+        var existingId = Guid.NewGuid();
+        var gameServiceId = Guid.NewGuid();
+        var request = new SeedRealmsRequest
+        {
+            Realms = new List<SeedRealm>
+            {
+                new SeedRealm
+                {
+                    Code = "EXISTING",
+                    Name = "Updated Name",
+                    GameServiceId = gameServiceId,
+                    Category = "updated-category",
+                    IsActive = true,
+                    IsSystemType = false
+                }
+            },
+            UpdateExisting = true
+        };
+
+        // Code index returns existing ID
+        _mockStringStore
+            .Setup(s => s.GetAsync($"{CODE_INDEX_PREFIX}EXISTING", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingId.ToString());
+
+        // Existing model with different values
+        var existingModel = CreateTestRealmModel(existingId, "EXISTING", "Old Name");
+        existingModel.GameServiceId = Guid.NewGuid(); // Different game service
+        existingModel.Category = "old-category";
+        _mockRealmStore
+            .Setup(s => s.GetWithETagAsync($"{REALM_KEY_PREFIX}{existingId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingModel, "mock-etag"));
+
+        // Capture saved model
+        RealmModel? savedModel = null;
+        _mockRealmStore
+            .Setup(s => s.TrySaveAsync(
+                $"{REALM_KEY_PREFIX}{existingId}", It.IsAny<RealmModel>(), "mock-etag", It.IsAny<CancellationToken>()))
+            .Callback<string, RealmModel, string, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("new-etag");
+
+        // Act
+        var (status, response) = await service.SeedRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.Created);
+        Assert.Equal(1, response.Updated);
+        Assert.Equal(0, response.Skipped);
+        Assert.Empty(response.Errors);
+
+        // Assert the model was updated
+        Assert.NotNull(savedModel);
+        Assert.Equal("Updated Name", savedModel.Name);
+        Assert.Equal(gameServiceId, savedModel.GameServiceId);
+        Assert.Equal("updated-category", savedModel.Category);
+    }
+
+    [Fact]
+    public async Task SeedRealmsAsync_WithExistingRealmNoChanges_WhenUpdateExistingTrue_ShouldCountAsUpdated()
+    {
+        // Arrange
+        var service = CreateService();
+        var existingId = Guid.NewGuid();
+        var gameServiceId = Guid.NewGuid();
+        var request = new SeedRealmsRequest
+        {
+            Realms = new List<SeedRealm>
+            {
+                new SeedRealm
+                {
+                    Code = "EXISTING",
+                    Name = "Same Name",
+                    GameServiceId = gameServiceId,
+                    IsActive = true,
+                    IsSystemType = false
+                }
+            },
+            UpdateExisting = true
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync($"{CODE_INDEX_PREFIX}EXISTING", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingId.ToString());
+
+        // Existing model with SAME values
+        var existingModel = CreateTestRealmModel(existingId, "EXISTING", "Same Name");
+        existingModel.GameServiceId = gameServiceId;
+        _mockRealmStore
+            .Setup(s => s.GetWithETagAsync($"{REALM_KEY_PREFIX}{existingId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingModel, "mock-etag"));
+
+        // Act
+        var (status, response) = await service.SeedRealmsAsync(request);
+
+        // Assert - no changes means seedUpdated = true (skips save but counts as updated)
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.Created);
+        Assert.Equal(1, response.Updated);
+        Assert.Equal(0, response.Skipped);
+        Assert.Empty(response.Errors);
+
+        // Verify no save was attempted (no changes to persist)
+        _mockRealmStore.Verify(s => s.TrySaveAsync(
+            It.IsAny<string>(), It.IsAny<RealmModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SeedRealmsAsync_WithETagConflict_ShouldRetryAndReportError()
+    {
+        // Arrange
+        Configuration.OptimisticRetryAttempts = 2;
+        var service = CreateService();
+        var existingId = Guid.NewGuid();
+        var request = new SeedRealmsRequest
+        {
+            Realms = new List<SeedRealm>
+            {
+                new SeedRealm
+                {
+                    Code = "CONFLICT",
+                    Name = "Updated Name",
+                    GameServiceId = Guid.NewGuid(),
+                    IsActive = true,
+                    IsSystemType = false
+                }
+            },
+            UpdateExisting = true
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync($"{CODE_INDEX_PREFIX}CONFLICT", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingId.ToString());
+
+        // Return a fresh model on each call to avoid mutation across retries
+        _mockRealmStore
+            .Setup(s => s.GetWithETagAsync($"{REALM_KEY_PREFIX}{existingId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => (CreateTestRealmModel(existingId, "CONFLICT", "Old Name"), "mock-etag"));
+
+        // TrySaveAsync always returns null (ETag conflict)
+        _mockRealmStore
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(), It.IsAny<RealmModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, response) = await service.SeedRealmsAsync(request);
+
+        // Assert - error reported for the conflict
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.Created);
+        Assert.Equal(0, response.Updated);
+        Assert.Equal(0, response.Skipped);
+        Assert.Single(response.Errors);
+        Assert.Contains("concurrent modification", response.Errors.First());
+    }
+
+    [Fact]
+    public async Task SeedRealmsAsync_PartialSuccess_ShouldReportMixedResults()
+    {
+        // Arrange
+        var service = CreateService();
+        var existingId = Guid.NewGuid();
+        var request = new SeedRealmsRequest
+        {
+            Realms = new List<SeedRealm>
+            {
+                new SeedRealm
+                {
+                    Code = "new_realm",
+                    Name = "New Realm",
+                    GameServiceId = Guid.NewGuid(),
+                    IsActive = true,
+                    IsSystemType = false
+                },
+                new SeedRealm
+                {
+                    Code = "EXISTING_SKIP",
+                    Name = "Existing",
+                    GameServiceId = Guid.NewGuid(),
+                    IsActive = true,
+                    IsSystemType = false
+                }
+            },
+            UpdateExisting = false
+        };
+
+        // First realm: code not found (create)
+        // Second realm: code found (skip)
+        _mockStringStore
+            .Setup(s => s.GetAsync($"{CODE_INDEX_PREFIX}NEW_REALM", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+        _mockStringStore
+            .Setup(s => s.GetAsync($"{CODE_INDEX_PREFIX}EXISTING_SKIP", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingId.ToString());
+
+        // Setup for CreateRealmAsync (first realm)
+        _mockRealmStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<RealmModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+        _mockStringStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((List<Guid>?)new List<Guid>(), "list-etag"));
+        _mockListStore
+            .Setup(s => s.TrySaveAsync(ALL_REALMS_KEY, It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("list-etag-2");
+
+        // Act
+        var (status, response) = await service.SeedRealmsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.Created);
+        Assert.Equal(0, response.Updated);
+        Assert.Equal(1, response.Skipped);
+        Assert.Empty(response.Errors);
+    }
+
+    [Fact]
+    public async Task SeedRealmsAsync_WhenExceptionOccurs_ShouldCollectError()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new SeedRealmsRequest
+        {
+            Realms = new List<SeedRealm>
+            {
+                new SeedRealm
+                {
+                    Code = "ERROR_REALM",
+                    Name = "Error Realm",
+                    GameServiceId = Guid.NewGuid(),
+                    IsActive = true,
+                    IsSystemType = false
+                }
+            }
+        };
+
+        // Code index check throws an exception
+        _mockStringStore
+            .Setup(s => s.GetAsync($"{CODE_INDEX_PREFIX}ERROR_REALM", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("State store failure"));
+
+        // Act
+        var (status, response) = await service.SeedRealmsAsync(request);
+
+        // Assert - error collected, not thrown
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.Created);
+        Assert.Equal(0, response.Updated);
+        Assert.Equal(0, response.Skipped);
+        Assert.Single(response.Errors);
+        Assert.Contains("ERROR_REALM", response.Errors.First());
+        Assert.Contains("State store failure", response.Errors.First());
     }
 
     #endregion

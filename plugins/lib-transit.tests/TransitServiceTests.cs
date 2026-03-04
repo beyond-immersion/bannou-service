@@ -2034,4 +2034,2039 @@ public class TransitServiceTests
     }
 
     #endregion
+
+    #region ListModesAsync Tests
+
+    /// <summary>
+    /// ListModesAsync should return all non-deprecated modes when no filters specified.
+    /// </summary>
+    [Fact]
+    public async Task ListModesAsync_ShouldReturnNonDeprecatedModes_WhenNoFilters()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListModesRequest { IncludeDeprecated = false };
+
+        var activeMode = CreateTestModeModel("walking");
+        var deprecatedMode = CreateTestModeModel("horseback", isDeprecated: true, deprecationReason: "Obsolete");
+
+        _mockModeStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitModeModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitModeModel> { activeMode, deprecatedMode });
+
+        // Act
+        var (statusCode, response) = await service.ListModesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.Modes);
+        Assert.Equal("walking", response.Modes.First().Code);
+    }
+
+    /// <summary>
+    /// ListModesAsync should include deprecated modes when IncludeDeprecated is true.
+    /// </summary>
+    [Fact]
+    public async Task ListModesAsync_ShouldIncludeDeprecated_WhenFlagIsTrue()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListModesRequest { IncludeDeprecated = true };
+
+        var activeMode = CreateTestModeModel("walking");
+        var deprecatedMode = CreateTestModeModel("horseback", isDeprecated: true, deprecationReason: "Obsolete");
+
+        _mockModeStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitModeModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitModeModel> { activeMode, deprecatedMode });
+
+        // Act
+        var (statusCode, response) = await service.ListModesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Modes.Count);
+    }
+
+    /// <summary>
+    /// ListModesAsync should filter by terrain type when specified.
+    /// </summary>
+    [Fact]
+    public async Task ListModesAsync_ShouldFilterByTerrainType()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListModesRequest { TerrainType = "water" };
+
+        var landMode = CreateTestModeModel("walking");
+        landMode.CompatibleTerrainTypes = new List<string> { "road", "trail" };
+
+        var waterMode = CreateTestModeModel("boat");
+        waterMode.CompatibleTerrainTypes = new List<string> { "water", "river" };
+
+        var anyTerrainMode = CreateTestModeModel("flying");
+        anyTerrainMode.CompatibleTerrainTypes = new List<string>(); // Empty = all terrain
+
+        _mockModeStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitModeModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitModeModel> { landMode, waterMode, anyTerrainMode });
+
+        // Act
+        var (statusCode, response) = await service.ListModesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        // Should include "boat" (has water) and "flying" (empty = all terrain)
+        Assert.Equal(2, response.Modes.Count);
+        Assert.Contains(response.Modes, m => m.Code == "boat");
+        Assert.Contains(response.Modes, m => m.Code == "flying");
+    }
+
+    /// <summary>
+    /// ListModesAsync should filter by realm restrictions when RealmId specified.
+    /// </summary>
+    [Fact]
+    public async Task ListModesAsync_ShouldFilterByRealmRestrictions()
+    {
+        // Arrange
+        var service = CreateService();
+        var targetRealmId = Guid.NewGuid();
+        var request = new ListModesRequest { RealmId = targetRealmId };
+
+        var unrestrictedMode = CreateTestModeModel("walking");
+        unrestrictedMode.RealmRestrictions = null; // No restrictions
+
+        var restrictedMatch = CreateTestModeModel("horseback");
+        restrictedMatch.RealmRestrictions = new List<Guid> { targetRealmId, Guid.NewGuid() };
+
+        var restrictedNoMatch = CreateTestModeModel("boat");
+        restrictedNoMatch.RealmRestrictions = new List<Guid> { Guid.NewGuid() }; // Different realm
+
+        _mockModeStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitModeModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitModeModel> { unrestrictedMode, restrictedMatch, restrictedNoMatch });
+
+        // Act
+        var (statusCode, response) = await service.ListModesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Modes.Count);
+        Assert.Contains(response.Modes, m => m.Code == "walking");
+        Assert.Contains(response.Modes, m => m.Code == "horseback");
+        Assert.DoesNotContain(response.Modes, m => m.Code == "boat");
+    }
+
+    /// <summary>
+    /// ListModesAsync should filter by tags requiring all specified tags present.
+    /// </summary>
+    [Fact]
+    public async Task ListModesAsync_ShouldFilterByTags_RequiringAll()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListModesRequest { Tags = new List<string> { "fast", "land" } };
+
+        var mode1 = CreateTestModeModel("walking");
+        mode1.Tags = new List<string> { "slow", "land" }; // Missing "fast"
+
+        var mode2 = CreateTestModeModel("horseback");
+        mode2.Tags = new List<string> { "fast", "land", "mounted" }; // Has both
+
+        _mockModeStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitModeModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitModeModel> { mode1, mode2 });
+
+        // Act
+        var (statusCode, response) = await service.ListModesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.Modes);
+        Assert.Equal("horseback", response.Modes.First().Code);
+    }
+
+    #endregion
+
+    #region UpdateModeAsync Tests
+
+    /// <summary>
+    /// UpdateModeAsync should update fields and publish event when mode exists.
+    /// </summary>
+    [Fact]
+    public async Task UpdateModeAsync_ShouldUpdateFieldsAndPublishEvent_WhenModeExists()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateModeRequest
+        {
+            Code = "walking",
+            Name = "Fast Walking",
+            BaseSpeedKmPerGameHour = 7.0m
+        };
+
+        var model = CreateTestModeModel("walking");
+
+        _mockModeStore.Setup(s => s.GetWithETagAsync("mode:walking", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((model, "etag-1"));
+
+        TransitModeModel? capturedModel = null;
+        _mockModeStore.Setup(s => s.TrySaveAsync(
+            "mode:walking", It.IsAny<TransitModeModel>(),
+            "etag-1", It.IsAny<CancellationToken>()))
+            .Callback<string, TransitModeModel, string, CancellationToken>((_, m, _, _) => capturedModel = m)
+            .ReturnsAsync("etag-2");
+
+        // Act
+        var (statusCode, response) = await service.UpdateModeAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.NotNull(capturedModel);
+        Assert.Equal("Fast Walking", capturedModel.Name);
+        Assert.Equal(7.0m, capturedModel.BaseSpeedKmPerGameHour);
+
+        // Assert event published
+        var updatedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.mode.updated");
+        Assert.NotNull(updatedEvent.Event);
+        var typedEvent = Assert.IsType<TransitModeUpdatedEvent>(updatedEvent.Event);
+        Assert.Contains("name", typedEvent.ChangedFields);
+        Assert.Contains("baseSpeedKmPerGameHour", typedEvent.ChangedFields);
+    }
+
+    /// <summary>
+    /// UpdateModeAsync should return NotFound when mode code does not exist.
+    /// </summary>
+    [Fact]
+    public async Task UpdateModeAsync_ShouldReturnNotFound_WhenMissing()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateModeRequest { Code = "nonexistent", Name = "Test" };
+
+        _mockModeStore.Setup(s => s.GetWithETagAsync("mode:nonexistent", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((TransitModeModel?)null, (string?)null));
+
+        // Act
+        var (statusCode, response) = await service.UpdateModeAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, statusCode);
+        Assert.Null(response);
+    }
+
+    /// <summary>
+    /// UpdateModeAsync should skip save and event when no fields changed.
+    /// </summary>
+    [Fact]
+    public async Task UpdateModeAsync_ShouldSkipSave_WhenNoFieldsChanged()
+    {
+        // Arrange
+        var service = CreateService();
+        // Request with no updatable fields set (only Code is required)
+        var request = new UpdateModeRequest { Code = "walking" };
+
+        var model = CreateTestModeModel("walking");
+
+        _mockModeStore.Setup(s => s.GetWithETagAsync("mode:walking", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((model, "etag-1"));
+
+        // Act
+        var (statusCode, response) = await service.UpdateModeAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+
+        // Should NOT have called TrySaveAsync (no changes)
+        _mockModeStore.Verify(s => s.TrySaveAsync(
+            It.IsAny<string>(), It.IsAny<TransitModeModel>(),
+            It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never());
+
+        // Should NOT have published any events
+        Assert.Empty(_capturedEvents);
+    }
+
+    /// <summary>
+    /// UpdateModeAsync should return Conflict on concurrent modification (ETag mismatch).
+    /// </summary>
+    [Fact]
+    public async Task UpdateModeAsync_ShouldReturnConflict_OnETagMismatch()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateModeRequest { Code = "walking", Name = "Updated" };
+
+        var model = CreateTestModeModel("walking");
+
+        _mockModeStore.Setup(s => s.GetWithETagAsync("mode:walking", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((model, "etag-1"));
+
+        // Simulate ETag mismatch: TrySaveAsync returns null
+        _mockModeStore.Setup(s => s.TrySaveAsync(
+            "mode:walking", It.IsAny<TransitModeModel>(),
+            "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (statusCode, response) = await service.UpdateModeAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, statusCode);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region GetConnectionAsync Tests
+
+    /// <summary>
+    /// GetConnectionAsync should return connection when found by ID.
+    /// </summary>
+    [Fact]
+    public async Task GetConnectionAsync_ShouldReturnConnection_WhenFoundById()
+    {
+        // Arrange
+        var service = CreateService();
+        var connectionId = Guid.NewGuid();
+        var request = new GetConnectionRequest { ConnectionId = connectionId };
+
+        var model = CreateTestConnectionModel(connectionId: connectionId);
+
+        _mockConnectionStore.Setup(s => s.GetAsync(
+            TransitService.BuildConnectionKey(connectionId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        // Act
+        var (statusCode, response) = await service.GetConnectionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(connectionId, response.Connection.Id);
+    }
+
+    /// <summary>
+    /// GetConnectionAsync should return connection when found by code.
+    /// </summary>
+    [Fact]
+    public async Task GetConnectionAsync_ShouldReturnConnection_WhenFoundByCode()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new GetConnectionRequest { Code = "ironforge-stormwind" };
+
+        var model = CreateTestConnectionModel();
+        model.Code = "ironforge-stormwind";
+
+        _mockConnectionStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitConnectionModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitConnectionModel> { model });
+
+        // Act
+        var (statusCode, response) = await service.GetConnectionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+    }
+
+    /// <summary>
+    /// GetConnectionAsync should return NotFound when neither ID nor code matches.
+    /// </summary>
+    [Fact]
+    public async Task GetConnectionAsync_ShouldReturnNotFound_WhenMissing()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new GetConnectionRequest { ConnectionId = Guid.NewGuid() };
+
+        _mockConnectionStore.Setup(s => s.GetAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TransitConnectionModel?)null);
+
+        // Act
+        var (statusCode, response) = await service.GetConnectionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, statusCode);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region QueryConnectionsAsync Tests
+
+    /// <summary>
+    /// QueryConnectionsAsync should return all connections with no filters.
+    /// </summary>
+    [Fact]
+    public async Task QueryConnectionsAsync_ShouldReturnAll_WhenNoFilters()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new QueryConnectionsRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            IncludeSeasonalClosed = true
+        };
+
+        var conn1 = CreateTestConnectionModel(connectionId: Guid.NewGuid());
+        var conn2 = CreateTestConnectionModel(connectionId: Guid.NewGuid());
+
+        _mockConnectionStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitConnectionModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitConnectionModel> { conn1, conn2 });
+
+        // Act
+        var (statusCode, response) = await service.QueryConnectionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Connections.Count);
+        Assert.Equal(2, response.TotalCount);
+    }
+
+    /// <summary>
+    /// QueryConnectionsAsync should filter by locationId matching either from or to.
+    /// </summary>
+    [Fact]
+    public async Task QueryConnectionsAsync_ShouldFilterByLocationId()
+    {
+        // Arrange
+        var service = CreateService();
+        var targetLocationId = Guid.NewGuid();
+        var request = new QueryConnectionsRequest
+        {
+            LocationId = targetLocationId,
+            Page = 1,
+            PageSize = 20,
+            IncludeSeasonalClosed = true
+        };
+
+        var matchFrom = CreateTestConnectionModel(connectionId: Guid.NewGuid(), fromLocationId: targetLocationId);
+        var matchTo = CreateTestConnectionModel(connectionId: Guid.NewGuid(), toLocationId: targetLocationId);
+        var noMatch = CreateTestConnectionModel(connectionId: Guid.NewGuid());
+
+        _mockConnectionStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitConnectionModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitConnectionModel> { matchFrom, matchTo, noMatch });
+
+        // Act
+        var (statusCode, response) = await service.QueryConnectionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.TotalCount);
+    }
+
+    /// <summary>
+    /// QueryConnectionsAsync should exclude seasonal_closed connections by default.
+    /// </summary>
+    [Fact]
+    public async Task QueryConnectionsAsync_ShouldExcludeSeasonalClosed_ByDefault()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new QueryConnectionsRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            IncludeSeasonalClosed = false
+        };
+
+        var openConn = CreateTestConnectionModel(connectionId: Guid.NewGuid(), status: ConnectionStatus.Open);
+        var closedConn = CreateTestConnectionModel(connectionId: Guid.NewGuid(), status: ConnectionStatus.SeasonalClosed);
+
+        _mockConnectionStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitConnectionModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitConnectionModel> { openConn, closedConn });
+
+        // Act
+        var (statusCode, response) = await service.QueryConnectionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.Connections);
+        Assert.Equal(1, response.TotalCount);
+    }
+
+    /// <summary>
+    /// QueryConnectionsAsync should paginate results correctly.
+    /// </summary>
+    [Fact]
+    public async Task QueryConnectionsAsync_ShouldPaginateResults()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new QueryConnectionsRequest
+        {
+            Page = 2,
+            PageSize = 1,
+            IncludeSeasonalClosed = true
+        };
+
+        var conn1 = CreateTestConnectionModel(connectionId: Guid.NewGuid());
+        var conn2 = CreateTestConnectionModel(connectionId: Guid.NewGuid());
+        var conn3 = CreateTestConnectionModel(connectionId: Guid.NewGuid());
+
+        _mockConnectionStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitConnectionModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitConnectionModel> { conn1, conn2, conn3 });
+
+        // Act
+        var (statusCode, response) = await service.QueryConnectionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.Connections);
+        Assert.Equal(3, response.TotalCount); // Total is 3, but page 2 with size 1 returns 1
+    }
+
+    #endregion
+
+    #region UpdateConnectionAsync Tests
+
+    /// <summary>
+    /// UpdateConnectionAsync should update fields, invalidate graph cache, and publish event.
+    /// </summary>
+    [Fact]
+    public async Task UpdateConnectionAsync_ShouldUpdateAndPublishEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var connectionId = Guid.NewGuid();
+        var request = new UpdateConnectionRequest
+        {
+            ConnectionId = connectionId,
+            DistanceKm = 25.0m,
+            TerrainType = "mountain"
+        };
+
+        var model = CreateTestConnectionModel(connectionId: connectionId);
+
+        _mockConnectionStore.Setup(s => s.GetWithETagAsync(
+            TransitService.BuildConnectionKey(connectionId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((model, "etag-1"));
+
+        TransitConnectionModel? capturedModel = null;
+        _mockConnectionStore.Setup(s => s.TrySaveAsync(
+            TransitService.BuildConnectionKey(connectionId), It.IsAny<TransitConnectionModel>(),
+            "etag-1", It.IsAny<CancellationToken>()))
+            .Callback<string, TransitConnectionModel, string, CancellationToken>((_, m, _, _) => capturedModel = m)
+            .ReturnsAsync("etag-2");
+
+        // Act
+        var (statusCode, response) = await service.UpdateConnectionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.NotNull(capturedModel);
+        Assert.Equal(25.0m, capturedModel.DistanceKm);
+        Assert.Equal("mountain", capturedModel.TerrainType);
+
+        // Verify graph cache was invalidated
+        _mockGraphCache.Verify(g => g.InvalidateAsync(
+            It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()), Times.Once());
+    }
+
+    /// <summary>
+    /// UpdateConnectionAsync should return NotFound when connection does not exist.
+    /// </summary>
+    [Fact]
+    public async Task UpdateConnectionAsync_ShouldReturnNotFound_WhenMissing()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateConnectionRequest
+        {
+            ConnectionId = Guid.NewGuid(),
+            DistanceKm = 25.0m
+        };
+
+        _mockConnectionStore.Setup(s => s.GetWithETagAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((TransitConnectionModel?)null, (string?)null));
+
+        // Act
+        var (statusCode, response) = await service.UpdateConnectionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, statusCode);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region ArriveJourneyAsync Tests
+
+    /// <summary>
+    /// ArriveJourneyAsync should mark journey as Arrived, skip remaining legs, and publish event.
+    /// </summary>
+    [Fact]
+    public async Task ArriveJourneyAsync_ShouldArriveJourney_WhenInTransit()
+    {
+        // Arrange
+        var service = CreateService();
+        var journeyId = Guid.NewGuid();
+        var request = new ArriveJourneyRequest
+        {
+            JourneyId = journeyId,
+            ArrivedAtGameTime = 150.0m,
+            Reason = "teleportation"
+        };
+
+        var journey = CreateTestJourneyModel(journeyId: journeyId, status: JourneyStatus.InTransit, legCount: 3);
+        journey.Legs[0].Status = JourneyLegStatus.Completed;
+        journey.CurrentLegIndex = 1;
+        journey.Legs[1].Status = JourneyLegStatus.InProgress;
+
+        _mockJourneyStore.Setup(s => s.GetAsync(
+            TransitService.BuildJourneyKey(journeyId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(journey);
+
+        // Mock location client for ResolveLocationRealmIdAsync
+        _mockLocationClient.Setup(c => c.GetLocationAsync(
+            It.IsAny<Location.GetLocationRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Location.LocationResponse { RealmId = TestRealmId });
+
+        TransitJourneyModel? capturedJourney = null;
+        _mockJourneyStore.Setup(s => s.SaveAsync(
+            TransitService.BuildJourneyKey(journeyId), It.IsAny<TransitJourneyModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, TransitJourneyModel, StateOptions?, CancellationToken>((_, j, _, _) => capturedJourney = j)
+            .ReturnsAsync("etag-1");
+
+        // Act
+        var (statusCode, response) = await service.ArriveJourneyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.NotNull(capturedJourney);
+        Assert.Equal(JourneyStatus.Arrived, capturedJourney.Status);
+        Assert.Equal("teleportation", capturedJourney.StatusReason);
+        Assert.Equal(150.0m, capturedJourney.ActualArrivalGameTime);
+
+        // Remaining legs should be skipped
+        Assert.Equal(JourneyLegStatus.Completed, capturedJourney.Legs[0].Status); // Already completed
+        Assert.Equal(JourneyLegStatus.Skipped, capturedJourney.Legs[1].Status);
+        Assert.Equal(JourneyLegStatus.Skipped, capturedJourney.Legs[2].Status);
+
+        // Should publish arrived event
+        var arrivedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.journey.arrived");
+        Assert.NotNull(arrivedEvent.Event);
+    }
+
+    /// <summary>
+    /// ArriveJourneyAsync should return BadRequest when journey status is not InTransit or AtWaypoint.
+    /// </summary>
+    [Fact]
+    public async Task ArriveJourneyAsync_ShouldReturnBadRequest_WhenStatusInvalid()
+    {
+        // Arrange
+        var service = CreateService();
+        var journeyId = Guid.NewGuid();
+        var request = new ArriveJourneyRequest
+        {
+            JourneyId = journeyId,
+            ArrivedAtGameTime = 150.0m,
+            Reason = "teleportation"
+        };
+
+        var journey = CreateTestJourneyModel(journeyId: journeyId, status: JourneyStatus.Preparing);
+
+        _mockJourneyStore.Setup(s => s.GetAsync(
+            TransitService.BuildJourneyKey(journeyId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(journey);
+
+        // Act
+        var (statusCode, response) = await service.ArriveJourneyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Null(response);
+    }
+
+    /// <summary>
+    /// ArriveJourneyAsync should return NotFound when journey does not exist.
+    /// </summary>
+    [Fact]
+    public async Task ArriveJourneyAsync_ShouldReturnNotFound_WhenMissing()
+    {
+        // Arrange
+        var service = CreateService();
+        var journeyId = Guid.NewGuid();
+        var request = new ArriveJourneyRequest
+        {
+            JourneyId = journeyId,
+            ArrivedAtGameTime = 150.0m,
+            Reason = "teleportation"
+        };
+
+        _mockJourneyStore.Setup(s => s.GetAsync(
+            TransitService.BuildJourneyKey(journeyId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TransitJourneyModel?)null);
+
+        // Act
+        var (statusCode, response) = await service.ArriveJourneyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, statusCode);
+        Assert.Null(response);
+    }
+
+    /// <summary>
+    /// ArriveJourneyAsync should return Conflict when lock cannot be acquired.
+    /// </summary>
+    [Fact]
+    public async Task ArriveJourneyAsync_ShouldReturnConflict_WhenLockFails()
+    {
+        // Arrange
+        var service = CreateService();
+        var journeyId = Guid.NewGuid();
+        var request = new ArriveJourneyRequest
+        {
+            JourneyId = journeyId,
+            ArrivedAtGameTime = 150.0m,
+            Reason = "teleportation"
+        };
+
+        // Override default lock to fail
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        failedLock.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider.Setup(l => l.LockAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        // Act
+        var (statusCode, response) = await service.ArriveJourneyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, statusCode);
+        Assert.Null(response);
+
+        // Restore default lock for other tests
+        _mockLockProvider.Setup(l => l.LockAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_mockLockResponse.Object);
+    }
+
+    #endregion
+
+    #region GetJourneyAsync Tests
+
+    /// <summary>
+    /// GetJourneyAsync should return journey from Redis when found in active store.
+    /// </summary>
+    [Fact]
+    public async Task GetJourneyAsync_ShouldReturnFromRedis_WhenActive()
+    {
+        // Arrange
+        var service = CreateService();
+        var journeyId = Guid.NewGuid();
+        var request = new GetJourneyRequest { JourneyId = journeyId };
+
+        var journey = CreateTestJourneyModel(journeyId: journeyId, status: JourneyStatus.InTransit);
+
+        _mockJourneyStore.Setup(s => s.GetAsync(
+            TransitService.BuildJourneyKey(journeyId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(journey);
+
+        // Act
+        var (statusCode, response) = await service.GetJourneyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(journeyId, response.Journey.Id);
+    }
+
+    /// <summary>
+    /// GetJourneyAsync should fall back to archive store when not in Redis.
+    /// </summary>
+    [Fact]
+    public async Task GetJourneyAsync_ShouldFallbackToArchive_WhenNotInRedis()
+    {
+        // Arrange
+        var service = CreateService();
+        var journeyId = Guid.NewGuid();
+        var request = new GetJourneyRequest { JourneyId = journeyId };
+
+        // Redis returns null
+        _mockJourneyStore.Setup(s => s.GetAsync(
+            TransitService.BuildJourneyKey(journeyId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TransitJourneyModel?)null);
+
+        // Archive has it
+        var archivedJourney = new JourneyArchiveModel
+        {
+            Id = journeyId,
+            EntityId = TestEntityId,
+            EntityType = "character",
+            Legs = new List<TransitJourneyLegModel>(),
+            CurrentLegIndex = 0,
+            PrimaryModeCode = "walking",
+            EffectiveSpeedKmPerGameHour = 5.0m,
+            PlannedDepartureGameTime = 100.0m,
+            OriginLocationId = TestLocationAId,
+            DestinationLocationId = TestLocationBId,
+            CurrentLocationId = TestLocationBId,
+            Status = JourneyStatus.Arrived,
+            Interruptions = new List<TransitInterruptionModel>(),
+            PartySize = 1,
+            CargoWeightKg = 0m,
+            RealmId = TestRealmId,
+            CreatedAt = DateTimeOffset.UtcNow,
+            ModifiedAt = DateTimeOffset.UtcNow,
+            ArchivedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockJourneyArchiveStore.Setup(s => s.GetAsync(
+            TransitService.BuildJourneyArchiveKey(journeyId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(archivedJourney);
+
+        // Act
+        var (statusCode, response) = await service.GetJourneyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(journeyId, response.Journey.Id);
+    }
+
+    /// <summary>
+    /// GetJourneyAsync should return NotFound when journey is in neither store.
+    /// </summary>
+    [Fact]
+    public async Task GetJourneyAsync_ShouldReturnNotFound_WhenInNeitherStore()
+    {
+        // Arrange
+        var service = CreateService();
+        var journeyId = Guid.NewGuid();
+        var request = new GetJourneyRequest { JourneyId = journeyId };
+
+        _mockJourneyStore.Setup(s => s.GetAsync(
+            TransitService.BuildJourneyKey(journeyId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TransitJourneyModel?)null);
+
+        _mockJourneyArchiveStore.Setup(s => s.GetAsync(
+            TransitService.BuildJourneyArchiveKey(journeyId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((JourneyArchiveModel?)null);
+
+        // Act
+        var (statusCode, response) = await service.GetJourneyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, statusCode);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region ListJourneysAsync Tests
+
+    /// <summary>
+    /// ListJourneysAsync should return filtered journeys from archive store.
+    /// </summary>
+    [Fact]
+    public async Task ListJourneysAsync_ShouldReturnFilteredJourneys()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListJourneysRequest
+        {
+            EntityId = TestEntityId,
+            ActiveOnly = false,
+            Page = 1,
+            PageSize = 20
+        };
+
+        var archived = new List<JourneyArchiveModel>
+        {
+            CreateTestArchiveModel(status: JourneyStatus.Arrived),
+            CreateTestArchiveModel(status: JourneyStatus.InTransit)
+        };
+
+        _mockJourneyArchiveStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<JourneyArchiveModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(archived);
+
+        // Act
+        var (statusCode, response) = await service.ListJourneysAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.TotalCount);
+        Assert.Equal(2, response.Journeys.Count);
+    }
+
+    /// <summary>
+    /// ListJourneysAsync should paginate results correctly.
+    /// </summary>
+    [Fact]
+    public async Task ListJourneysAsync_ShouldPaginateResults()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListJourneysRequest
+        {
+            ActiveOnly = false,
+            Page = 1,
+            PageSize = 1
+        };
+
+        var archived = new List<JourneyArchiveModel>
+        {
+            CreateTestArchiveModel(status: JourneyStatus.Arrived),
+            CreateTestArchiveModel(status: JourneyStatus.Abandoned)
+        };
+
+        _mockJourneyArchiveStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<JourneyArchiveModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(archived);
+
+        // Act
+        var (statusCode, response) = await service.ListJourneysAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.TotalCount);
+        Assert.Single(response.Journeys); // PageSize = 1
+    }
+
+    #endregion
+
+    #region QueryJourneysByConnectionAsync Tests
+
+    /// <summary>
+    /// QueryJourneysByConnectionAsync should return matching journeys when connection exists.
+    /// </summary>
+    [Fact]
+    public async Task QueryJourneysByConnectionAsync_ShouldReturnMatches_WhenConnectionExists()
+    {
+        // Arrange
+        var service = CreateService();
+        var connectionId = Guid.NewGuid();
+        var request = new QueryJourneysByConnectionRequest
+        {
+            ConnectionId = connectionId,
+            Page = 1,
+            PageSize = 20
+        };
+
+        // Connection exists
+        _mockConnectionStore.Setup(s => s.GetAsync(
+            TransitService.BuildConnectionKey(connectionId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestConnectionModel(connectionId: connectionId));
+
+        // Archive has matching journeys
+        var archived = new List<JourneyArchiveModel>
+        {
+            CreateTestArchiveModel(status: JourneyStatus.Arrived)
+        };
+
+        _mockJourneyArchiveStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<JourneyArchiveModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(archived);
+
+        // Act
+        var (statusCode, response) = await service.QueryJourneysByConnectionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.TotalCount);
+    }
+
+    /// <summary>
+    /// QueryJourneysByConnectionAsync should return NotFound when connection does not exist.
+    /// </summary>
+    [Fact]
+    public async Task QueryJourneysByConnectionAsync_ShouldReturnNotFound_WhenConnectionMissing()
+    {
+        // Arrange
+        var service = CreateService();
+        var connectionId = Guid.NewGuid();
+        var request = new QueryJourneysByConnectionRequest
+        {
+            ConnectionId = connectionId,
+            Page = 1,
+            PageSize = 20
+        };
+
+        _mockConnectionStore.Setup(s => s.GetAsync(
+            TransitService.BuildConnectionKey(connectionId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TransitConnectionModel?)null);
+
+        // Act
+        var (statusCode, response) = await service.QueryJourneysByConnectionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, statusCode);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region AdvanceBatchJourneysAsync Tests
+
+    /// <summary>
+    /// AdvanceBatchJourneysAsync should process each entry and return results.
+    /// </summary>
+    [Fact]
+    public async Task AdvanceBatchJourneysAsync_ShouldProcessAllEntries()
+    {
+        // Arrange
+        var service = CreateService();
+        var journeyId1 = Guid.NewGuid();
+        var journeyId2 = Guid.NewGuid();
+        var request = new AdvanceBatchRequest
+        {
+            Advances = new List<BatchAdvanceEntry>
+            {
+                new BatchAdvanceEntry { JourneyId = journeyId1, ArrivedAtGameTime = 110.0m },
+                new BatchAdvanceEntry { JourneyId = journeyId2, ArrivedAtGameTime = 120.0m }
+            }
+        };
+
+        // Journey 1: InTransit with one leg, will advance successfully
+        var journey1 = CreateTestJourneyModel(journeyId: journeyId1, status: JourneyStatus.InTransit, legCount: 1);
+        journey1.Legs[0].Status = JourneyLegStatus.InProgress;
+
+        _mockJourneyStore.Setup(s => s.GetAsync(
+            TransitService.BuildJourneyKey(journeyId1), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(journey1);
+
+        // Journey 2: Not found
+        _mockJourneyStore.Setup(s => s.GetAsync(
+            TransitService.BuildJourneyKey(journeyId2), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TransitJourneyModel?)null);
+
+        // Mock location client for arrive events
+        _mockLocationClient.Setup(c => c.GetLocationAsync(
+            It.IsAny<Location.GetLocationRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Location.LocationResponse { RealmId = TestRealmId });
+
+        // Act
+        var (statusCode, response) = await service.AdvanceBatchJourneysAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Results.Count);
+
+        // First should succeed
+        var result1 = response.Results.First(r => r.JourneyId == journeyId1);
+        Assert.Null(result1.Error);
+
+        // Second should fail (not found)
+        var result2 = response.Results.First(r => r.JourneyId == journeyId2);
+        Assert.NotNull(result2.Error);
+    }
+
+    #endregion
+
+    #region CalculateRouteAsync (Public API) Tests
+
+    /// <summary>
+    /// CalculateRouteAsync should validate locations and delegate to route calculator.
+    /// </summary>
+    [Fact]
+    public async Task CalculateRouteAsync_ShouldDelegateToCalculator_WhenLocationsValid()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CalculateRouteRequest
+        {
+            FromLocationId = TestLocationAId,
+            ToLocationId = TestLocationBId,
+            ModeCode = "walking",
+            PreferMultiModal = false,
+            SortBy = RouteSortBy.Fastest
+        };
+
+        // Mock location client
+        _mockLocationClient.Setup(c => c.GetLocationAsync(
+            It.Is<Location.GetLocationRequest>(r => r.LocationId == TestLocationAId),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Location.LocationResponse
+            {
+                LocationId = TestLocationAId,
+                RealmId = TestRealmId,
+                Code = "location-a",
+                Name = "Location A"
+            });
+
+        _mockLocationClient.Setup(c => c.GetLocationAsync(
+            It.Is<Location.GetLocationRequest>(r => r.LocationId == TestLocationBId),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Location.LocationResponse
+            {
+                LocationId = TestLocationBId,
+                RealmId = TestRealmId,
+                Code = "location-b",
+                Name = "Location B"
+            });
+
+        // Mock worldstate for time ratio
+        _mockWorldstateClient.Setup(c => c.GetRealmTimeAsync(
+            It.IsAny<Worldstate.GetRealmTimeRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Worldstate.GameTimeSnapshot
+            {
+                RealmId = TestRealmId,
+                TimeRatio = 24.0f,
+                Season = "spring"
+            });
+
+        // Mock route calculator to return one route
+        _mockRouteCalculator.Setup(c => c.CalculateAsync(
+            It.IsAny<RouteCalculationRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<RouteCalculationResult>
+            {
+                new RouteCalculationResult(
+                    Waypoints: new List<Guid> { TestLocationAId, TestLocationBId },
+                    Connections: new List<Guid> { TestConnectionId },
+                    LegModes: new List<string> { "walking" },
+                    PrimaryModeCode: "walking",
+                    TotalDistanceKm: 10.0m,
+                    TotalGameHours: 2.0m,
+                    TotalRealMinutes: 5.0m,
+                    AverageRisk: 0.1m,
+                    MaxLegRisk: 0.1m,
+                    AllLegsOpen: true,
+                    SeasonalWarnings: null)
+            });
+
+        // Act
+        var (statusCode, response) = await service.CalculateRouteAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.Options);
+        Assert.Equal("walking", response.Options.First().PrimaryModeCode);
+    }
+
+    /// <summary>
+    /// CalculateRouteAsync should return BadRequest when from location does not exist.
+    /// </summary>
+    [Fact]
+    public async Task CalculateRouteAsync_ShouldReturnBadRequest_WhenFromLocationMissing()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CalculateRouteRequest
+        {
+            FromLocationId = Guid.NewGuid(),
+            ToLocationId = TestLocationBId
+        };
+
+        _mockLocationClient.Setup(c => c.GetLocationAsync(
+            It.Is<Location.GetLocationRequest>(r => r.LocationId == request.FromLocationId),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404));
+
+        // Act
+        var (statusCode, response) = await service.CalculateRouteAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Null(response);
+    }
+
+    /// <summary>
+    /// CalculateRouteAsync should return BadRequest when to location does not exist.
+    /// </summary>
+    [Fact]
+    public async Task CalculateRouteAsync_ShouldReturnBadRequest_WhenToLocationMissing()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CalculateRouteRequest
+        {
+            FromLocationId = TestLocationAId,
+            ToLocationId = Guid.NewGuid()
+        };
+
+        // From location exists
+        _mockLocationClient.Setup(c => c.GetLocationAsync(
+            It.Is<Location.GetLocationRequest>(r => r.LocationId == TestLocationAId),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Location.LocationResponse
+            {
+                LocationId = TestLocationAId,
+                RealmId = TestRealmId,
+                Code = "a",
+                Name = "A"
+            });
+
+        // To location does not exist
+        _mockLocationClient.Setup(c => c.GetLocationAsync(
+            It.Is<Location.GetLocationRequest>(r => r.LocationId == request.ToLocationId),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404));
+
+        // Act
+        var (statusCode, response) = await service.CalculateRouteAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region ListDiscoveriesAsync Tests
+
+    /// <summary>
+    /// ListDiscoveriesAsync should return all discoveries for an entity without realm filter.
+    /// </summary>
+    [Fact]
+    public async Task ListDiscoveriesAsync_ShouldReturnAllDiscoveries_WhenNoRealmFilter()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListDiscoveriesRequest { EntityId = TestEntityId };
+
+        var conn1Id = Guid.NewGuid();
+        var conn2Id = Guid.NewGuid();
+
+        _mockDiscoveryStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitDiscoveryModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitDiscoveryModel>
+            {
+                new TransitDiscoveryModel { EntityId = TestEntityId, ConnectionId = conn1Id, Source = "travel", DiscoveredAt = DateTimeOffset.UtcNow },
+                new TransitDiscoveryModel { EntityId = TestEntityId, ConnectionId = conn2Id, Source = "guide", DiscoveredAt = DateTimeOffset.UtcNow }
+            });
+
+        // Act
+        var (statusCode, response) = await service.ListDiscoveriesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.ConnectionIds.Count);
+        Assert.Contains(conn1Id, response.ConnectionIds);
+        Assert.Contains(conn2Id, response.ConnectionIds);
+    }
+
+    /// <summary>
+    /// ListDiscoveriesAsync should filter by realm when RealmId specified.
+    /// </summary>
+    [Fact]
+    public async Task ListDiscoveriesAsync_ShouldFilterByRealm_WhenRealmIdSpecified()
+    {
+        // Arrange
+        var service = CreateService();
+        var targetRealmId = Guid.NewGuid();
+        var request = new ListDiscoveriesRequest { EntityId = TestEntityId, RealmId = targetRealmId };
+
+        var conn1Id = Guid.NewGuid();
+        var conn2Id = Guid.NewGuid();
+
+        _mockDiscoveryStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitDiscoveryModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitDiscoveryModel>
+            {
+                new TransitDiscoveryModel { EntityId = TestEntityId, ConnectionId = conn1Id, Source = "travel", DiscoveredAt = DateTimeOffset.UtcNow },
+                new TransitDiscoveryModel { EntityId = TestEntityId, ConnectionId = conn2Id, Source = "guide", DiscoveredAt = DateTimeOffset.UtcNow }
+            });
+
+        // Connection 1 is in target realm
+        _mockConnectionStore.Setup(s => s.GetAsync(
+            TransitService.BuildConnectionKey(conn1Id), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TransitConnectionModel
+            {
+                Id = conn1Id,
+                FromRealmId = targetRealmId,
+                ToRealmId = targetRealmId,
+                FromLocationId = TestLocationAId,
+                ToLocationId = TestLocationBId,
+                DistanceKm = 10m,
+                TerrainType = "road",
+                CompatibleModes = new List<string> { "walking" },
+                Status = ConnectionStatus.Open,
+                StatusChangedAt = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                ModifiedAt = DateTimeOffset.UtcNow
+            });
+
+        // Connection 2 is in a different realm
+        _mockConnectionStore.Setup(s => s.GetAsync(
+            TransitService.BuildConnectionKey(conn2Id), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TransitConnectionModel
+            {
+                Id = conn2Id,
+                FromRealmId = Guid.NewGuid(), // Different realm
+                ToRealmId = Guid.NewGuid(),
+                FromLocationId = TestLocationAId,
+                ToLocationId = TestLocationCId,
+                DistanceKm = 10m,
+                TerrainType = "road",
+                CompatibleModes = new List<string> { "walking" },
+                Status = ConnectionStatus.Open,
+                StatusChangedAt = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                ModifiedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (statusCode, response) = await service.ListDiscoveriesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.ConnectionIds);
+        Assert.Contains(conn1Id, response.ConnectionIds);
+    }
+
+    #endregion
+
+    #region CheckDiscoveriesAsync Tests
+
+    /// <summary>
+    /// CheckDiscoveriesAsync should return discovery status for each requested connection.
+    /// </summary>
+    [Fact]
+    public async Task CheckDiscoveriesAsync_ShouldReturnPerConnectionStatus()
+    {
+        // Arrange
+        var service = CreateService();
+        var conn1Id = Guid.NewGuid();
+        var conn2Id = Guid.NewGuid();
+        var request = new CheckDiscoveriesRequest
+        {
+            EntityId = TestEntityId,
+            ConnectionIds = new List<Guid> { conn1Id, conn2Id }
+        };
+
+        // Connection 1 has been discovered
+        _mockDiscoveryStore.Setup(s => s.GetAsync(
+            $"discovery:{TestEntityId}:{conn1Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TransitDiscoveryModel
+            {
+                EntityId = TestEntityId,
+                ConnectionId = conn1Id,
+                Source = "travel",
+                DiscoveredAt = DateTimeOffset.UtcNow.AddDays(-1)
+            });
+
+        // Connection 2 has NOT been discovered
+        _mockDiscoveryStore.Setup(s => s.GetAsync(
+            $"discovery:{TestEntityId}:{conn2Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TransitDiscoveryModel?)null);
+
+        // Act
+        var (statusCode, response) = await service.CheckDiscoveriesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Results.Count);
+
+        var result1 = response.Results.First(r => r.ConnectionId == conn1Id);
+        Assert.True(result1.Discovered);
+        Assert.NotNull(result1.DiscoveredAt);
+        Assert.Equal("travel", result1.Source);
+
+        var result2 = response.Results.First(r => r.ConnectionId == conn2Id);
+        Assert.False(result2.Discovered);
+        Assert.Null(result2.DiscoveredAt);
+        Assert.Null(result2.Source);
+    }
+
+    #endregion
+
+    #region CleanupByLocationAsync Tests
+
+    /// <summary>
+    /// CleanupByLocationAsync should close connections and interrupt archived journeys for deleted location.
+    /// </summary>
+    [Fact]
+    public async Task CleanupByLocationAsync_ShouldCloseConnectionsAndInterruptJourneys()
+    {
+        // Arrange
+        var service = CreateService();
+        var deletedLocationId = Guid.NewGuid();
+        var request = new CleanupByLocationRequest { LocationId = deletedLocationId };
+
+        var connectionId = Guid.NewGuid();
+        var affectedConnection = CreateTestConnectionModel(
+            connectionId: connectionId,
+            fromLocationId: deletedLocationId,
+            status: ConnectionStatus.Open);
+
+        // Step 1: Find connections referencing deleted location
+        _mockConnectionStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitConnectionModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitConnectionModel> { affectedConnection });
+
+        // Step 2: Fresh read for optimistic concurrency
+        _mockConnectionStore.Setup(s => s.GetWithETagAsync(
+            TransitService.BuildConnectionKey(connectionId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((affectedConnection, "etag-1"));
+
+        _mockConnectionStore.Setup(s => s.TrySaveAsync(
+            TransitService.BuildConnectionKey(connectionId), It.IsAny<TransitConnectionModel>(),
+            "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        // Step 4: No archived journeys
+        _mockJourneyArchiveStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<JourneyArchiveModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JourneyArchiveModel>());
+
+        // Step 5: No Redis journeys
+        _mockJourneyIndexStore.Setup(s => s.GetAsync(
+            TransitService.JOURNEY_INDEX_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<Guid>?)null);
+
+        // Act
+        var statusCode = await service.CleanupByLocationAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+
+        // Verify connection was closed via status-changed event
+        var statusEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.connection.status-changed");
+        Assert.NotNull(statusEvent.Event);
+
+        // Verify graph cache was invalidated
+        _mockGraphCache.Verify(g => g.InvalidateAsync(
+            It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce());
+    }
+
+    /// <summary>
+    /// CleanupByLocationAsync should skip already-closed connections.
+    /// </summary>
+    [Fact]
+    public async Task CleanupByLocationAsync_ShouldSkipAlreadyClosedConnections()
+    {
+        // Arrange
+        var service = CreateService();
+        var deletedLocationId = Guid.NewGuid();
+        var request = new CleanupByLocationRequest { LocationId = deletedLocationId };
+
+        var closedConnection = CreateTestConnectionModel(
+            connectionId: Guid.NewGuid(),
+            fromLocationId: deletedLocationId,
+            status: ConnectionStatus.Closed);
+
+        _mockConnectionStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitConnectionModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitConnectionModel> { closedConnection });
+
+        _mockJourneyArchiveStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<JourneyArchiveModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JourneyArchiveModel>());
+
+        _mockJourneyIndexStore.Setup(s => s.GetAsync(
+            TransitService.JOURNEY_INDEX_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<Guid>?)null);
+
+        // Act
+        var statusCode = await service.CleanupByLocationAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+
+        // Should NOT have called TrySaveAsync on connection store (already closed)
+        _mockConnectionStore.Verify(s => s.TrySaveAsync(
+            It.IsAny<string>(), It.IsAny<TransitConnectionModel>(),
+            It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never());
+    }
+
+    #endregion
+
+    #region CleanupByCharacterAsync Tests
+
+    /// <summary>
+    /// CleanupByCharacterAsync should delete discoveries, invalidate cache, and abandon archived journeys.
+    /// </summary>
+    [Fact]
+    public async Task CleanupByCharacterAsync_ShouldDeleteDiscoveriesAndAbandonJourneys()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var request = new CleanupByCharacterRequest { CharacterId = characterId };
+
+        // Step 1: Discovery records to delete
+        var discovery1 = new TransitDiscoveryModel
+        {
+            EntityId = characterId,
+            ConnectionId = Guid.NewGuid(),
+            Source = "travel",
+            DiscoveredAt = DateTimeOffset.UtcNow
+        };
+
+        _mockDiscoveryStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitDiscoveryModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitDiscoveryModel> { discovery1 });
+
+        _mockDiscoveryStore.Setup(s => s.DeleteAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Step 2: Discovery cache delete
+        _mockDiscoveryCacheStore.Setup(s => s.DeleteAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Step 3: Active archived journey to abandon
+        var journeyId = Guid.NewGuid();
+        var activeJourney = CreateTestArchiveModel(status: JourneyStatus.InTransit);
+        activeJourney.Id = journeyId;
+        activeJourney.EntityId = characterId;
+
+        _mockJourneyArchiveStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<JourneyArchiveModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JourneyArchiveModel> { activeJourney });
+
+        _mockJourneyArchiveStore.Setup(s => s.GetWithETagAsync(
+            TransitService.BuildJourneyArchiveKey(journeyId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((activeJourney, "etag-1"));
+
+        _mockJourneyArchiveStore.Setup(s => s.TrySaveAsync(
+            TransitService.BuildJourneyArchiveKey(journeyId), It.IsAny<JourneyArchiveModel>(),
+            "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        // Step 4: No Redis journeys
+        _mockJourneyIndexStore.Setup(s => s.GetAsync(
+            TransitService.JOURNEY_INDEX_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<Guid>?)null);
+
+        // Act
+        var statusCode = await service.CleanupByCharacterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+
+        // Verify discovery was deleted
+        _mockDiscoveryStore.Verify(s => s.DeleteAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once());
+
+        // Verify cache was invalidated
+        _mockDiscoveryCacheStore.Verify(s => s.DeleteAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once());
+
+        // Verify journey was abandoned via event
+        var abandonedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.journey.abandoned");
+        Assert.NotNull(abandonedEvent.Event);
+    }
+
+    /// <summary>
+    /// CleanupByCharacterAsync should also scan and abandon active Redis journeys.
+    /// </summary>
+    [Fact]
+    public async Task CleanupByCharacterAsync_ShouldAbandonRedisJourneys()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var request = new CleanupByCharacterRequest { CharacterId = characterId };
+
+        // No discoveries
+        _mockDiscoveryStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitDiscoveryModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitDiscoveryModel>());
+
+        _mockDiscoveryCacheStore.Setup(s => s.DeleteAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // No archived journeys
+        _mockJourneyArchiveStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<JourneyArchiveModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<JourneyArchiveModel>());
+
+        // Redis has an active journey for this character
+        var journeyId = Guid.NewGuid();
+        _mockJourneyIndexStore.Setup(s => s.GetAsync(
+            TransitService.JOURNEY_INDEX_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { journeyId });
+
+        var redisJourney = CreateTestJourneyModel(journeyId: journeyId, status: JourneyStatus.InTransit);
+        redisJourney.EntityId = characterId;
+
+        _mockJourneyStore.Setup(s => s.GetAsync(
+            TransitService.BuildJourneyKey(journeyId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(redisJourney);
+
+        TransitJourneyModel? capturedJourney = null;
+        _mockJourneyStore.Setup(s => s.SaveAsync(
+            TransitService.BuildJourneyKey(journeyId), It.IsAny<TransitJourneyModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, TransitJourneyModel, StateOptions?, CancellationToken>((_, j, _, _) => capturedJourney = j)
+            .ReturnsAsync("etag-1");
+
+        // Act
+        var statusCode = await service.CleanupByCharacterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(capturedJourney);
+        Assert.Equal(JourneyStatus.Abandoned, capturedJourney.Status);
+        Assert.Equal("character_deleted", capturedJourney.StatusReason);
+    }
+
+    #endregion
+
+    #region TransitVariableProvider Tests
+
+    /// <summary>
+    /// TransitVariableProvider.Empty should return default/null values for most paths.
+    /// journey.active returns false (not null) because it is always a boolean.
+    /// </summary>
+    [Fact]
+    public void TransitVariableProvider_Empty_ShouldReturnDefaultValuesForAllPaths()
+    {
+        // Arrange
+        var provider = Transit.Providers.TransitVariableProvider.Empty;
+
+        // Act & Assert
+        // journey.active is a boolean that returns false when no journey (not null)
+        Assert.Equal(false, provider.GetValue(new[] { "journey", "active" }.AsSpan()));
+        // journey.mode returns null when no active journey
+        Assert.Null(provider.GetValue(new[] { "journey", "mode" }.AsSpan()));
+        // mode with unknown code returns null
+        Assert.Null(provider.GetValue(new[] { "mode", "walking", "available" }.AsSpan()));
+        // discovered_connections returns 0 (empty set count)
+        Assert.Equal(0, provider.GetValue(new[] { "discovered_connections" }.AsSpan()));
+        // unknown connection code returns null
+        Assert.Null(provider.GetValue(new[] { "connection", "test", "discovered" }.AsSpan()));
+    }
+
+    /// <summary>
+    /// TransitVariableProvider should return journey.active=true when journey exists.
+    /// </summary>
+    [Fact]
+    public void TransitVariableProvider_ShouldReturnJourneyActive_WhenJourneyExists()
+    {
+        // Arrange
+        var journey = CreateTestJourneyModel(status: JourneyStatus.InTransit, legCount: 2);
+        journey.Legs[0].Status = JourneyLegStatus.Completed;
+        journey.Legs[1].Status = JourneyLegStatus.InProgress;
+        journey.Legs[1].EstimatedDurationGameHours = 3.0m;
+        journey.Legs[1].WaypointTransferTimeGameHours = 0.5m;
+        journey.CurrentLegIndex = 1;
+
+        var provider = new Transit.Providers.TransitVariableProvider(
+            journey,
+            "ironforge",
+            new HashSet<Guid> { Guid.NewGuid(), Guid.NewGuid() },
+            new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase),
+            new Dictionary<string, Transit.Providers.TransitModeSnapshot>(StringComparer.OrdinalIgnoreCase));
+
+        // Act & Assert
+        Assert.Equal(true, provider.GetValue(new[] { "journey", "active" }.AsSpan()));
+        Assert.Equal("walking", provider.GetValue(new[] { "journey", "mode" }.AsSpan()));
+        Assert.Equal("ironforge", provider.GetValue(new[] { "journey", "destination_code" }.AsSpan()));
+        Assert.Equal(2, provider.GetValue(new[] { "discovered_connections" }.AsSpan()));
+    }
+
+    /// <summary>
+    /// TransitVariableProvider should compute ETA hours from remaining legs.
+    /// </summary>
+    [Fact]
+    public void TransitVariableProvider_ShouldComputeEtaHours()
+    {
+        // Arrange
+        var journey = CreateTestJourneyModel(status: JourneyStatus.InTransit, legCount: 3);
+        journey.Legs[0].Status = JourneyLegStatus.Completed;
+        journey.Legs[0].EstimatedDurationGameHours = 2.0m;
+        journey.Legs[1].Status = JourneyLegStatus.InProgress;
+        journey.Legs[1].EstimatedDurationGameHours = 3.0m;
+        journey.Legs[1].WaypointTransferTimeGameHours = 0.5m;
+        journey.Legs[2].Status = JourneyLegStatus.Pending;
+        journey.Legs[2].EstimatedDurationGameHours = 1.0m;
+        journey.CurrentLegIndex = 1;
+
+        var provider = new Transit.Providers.TransitVariableProvider(
+            journey, null,
+            new HashSet<Guid>(),
+            new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase),
+            new Dictionary<string, Transit.Providers.TransitModeSnapshot>(StringComparer.OrdinalIgnoreCase));
+
+        // Act
+        var etaHours = provider.GetValue(new[] { "journey", "eta_hours" }.AsSpan());
+
+        // Assert: Remaining = leg1 (3.0 + 0.5) + leg2 (1.0) = 4.5
+        Assert.Equal(4.5m, etaHours);
+    }
+
+    /// <summary>
+    /// TransitVariableProvider should compute progress as ratio of completed legs.
+    /// </summary>
+    [Fact]
+    public void TransitVariableProvider_ShouldComputeProgress()
+    {
+        // Arrange
+        var journey = CreateTestJourneyModel(status: JourneyStatus.InTransit, legCount: 4);
+        journey.Legs[0].Status = JourneyLegStatus.Completed;
+        journey.Legs[1].Status = JourneyLegStatus.Skipped;
+        journey.Legs[2].Status = JourneyLegStatus.InProgress;
+        journey.Legs[3].Status = JourneyLegStatus.Pending;
+        journey.CurrentLegIndex = 2;
+
+        var provider = new Transit.Providers.TransitVariableProvider(
+            journey, null,
+            new HashSet<Guid>(),
+            new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase),
+            new Dictionary<string, Transit.Providers.TransitModeSnapshot>(StringComparer.OrdinalIgnoreCase));
+
+        // Act
+        var progress = provider.GetValue(new[] { "journey", "progress" }.AsSpan());
+
+        // Assert: 2 completed/skipped out of 4 = 0.5
+        Assert.Equal(0.5m, progress);
+    }
+
+    /// <summary>
+    /// TransitVariableProvider should return mode availability data.
+    /// </summary>
+    [Fact]
+    public void TransitVariableProvider_ShouldReturnModeAvailability()
+    {
+        // Arrange
+        var modes = new Dictionary<string, Transit.Providers.TransitModeSnapshot>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["walking"] = new Transit.Providers.TransitModeSnapshot(Available: true, EffectiveSpeed: 5.0m, PreferenceCost: 0.0m),
+            ["horseback"] = new Transit.Providers.TransitModeSnapshot(Available: true, EffectiveSpeed: 15.0m, PreferenceCost: 0.5m)
+        };
+
+        var provider = new Transit.Providers.TransitVariableProvider(
+            null, null,
+            new HashSet<Guid>(),
+            new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase),
+            modes);
+
+        // Act & Assert
+        Assert.Equal(true, provider.GetValue(new[] { "mode", "walking", "available" }.AsSpan()));
+        Assert.Equal(5.0m, provider.GetValue(new[] { "mode", "walking", "speed" }.AsSpan()));
+        Assert.Equal(0.0m, provider.GetValue(new[] { "mode", "walking", "preference_cost" }.AsSpan()));
+        Assert.Equal(15.0m, provider.GetValue(new[] { "mode", "horseback", "speed" }.AsSpan()));
+        Assert.Null(provider.GetValue(new[] { "mode", "nonexistent", "available" }.AsSpan()));
+    }
+
+    /// <summary>
+    /// TransitVariableProvider should return connection discovery status by code.
+    /// </summary>
+    [Fact]
+    public void TransitVariableProvider_ShouldReturnConnectionDiscoveryStatus()
+    {
+        // Arrange
+        var codes = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["ironforge-stormwind"] = true,
+            ["darkshore-ashenvale"] = false
+        };
+
+        var provider = new Transit.Providers.TransitVariableProvider(
+            null, null,
+            new HashSet<Guid>(),
+            codes,
+            new Dictionary<string, Transit.Providers.TransitModeSnapshot>(StringComparer.OrdinalIgnoreCase));
+
+        // Act & Assert
+        Assert.Equal(true, provider.GetValue(new[] { "connection", "ironforge-stormwind", "discovered" }.AsSpan()));
+        Assert.Equal(false, provider.GetValue(new[] { "connection", "darkshore-ashenvale", "discovered" }.AsSpan()));
+        Assert.Null(provider.GetValue(new[] { "connection", "nonexistent", "discovered" }.AsSpan()));
+    }
+
+    /// <summary>
+    /// TransitVariableProvider.CanResolve should correctly identify valid paths.
+    /// </summary>
+    [Fact]
+    public void TransitVariableProvider_CanResolve_ShouldValidatePaths()
+    {
+        // Arrange
+        var provider = Transit.Providers.TransitVariableProvider.Empty;
+
+        // Act & Assert
+        Assert.True(provider.CanResolve(new[] { "journey", "active" }.AsSpan()));
+        Assert.True(provider.CanResolve(new[] { "journey", "mode" }.AsSpan()));
+        Assert.True(provider.CanResolve(new[] { "mode", "walking", "available" }.AsSpan()));
+        Assert.True(provider.CanResolve(new[] { "discovered_connections" }.AsSpan()));
+        Assert.True(provider.CanResolve(new[] { "connection", "test", "discovered" }.AsSpan()));
+
+        // Invalid paths
+        Assert.False(provider.CanResolve(new[] { "invalid" }.AsSpan()));
+        Assert.False(provider.CanResolve(new[] { "journey", "invalid_field" }.AsSpan()));
+        Assert.False(provider.CanResolve(new[] { "mode", "walking", "invalid_prop" }.AsSpan()));
+        Assert.False(provider.CanResolve(new[] { "connection", "test" }.AsSpan())); // Missing "discovered"
+    }
+
+    /// <summary>
+    /// TransitVariableProvider should return remaining legs count.
+    /// </summary>
+    [Fact]
+    public void TransitVariableProvider_ShouldReturnRemainingLegs()
+    {
+        // Arrange
+        var journey = CreateTestJourneyModel(status: JourneyStatus.InTransit, legCount: 3);
+        journey.Legs[0].Status = JourneyLegStatus.Completed;
+        journey.Legs[1].Status = JourneyLegStatus.InProgress;
+        journey.Legs[2].Status = JourneyLegStatus.Pending;
+
+        var provider = new Transit.Providers.TransitVariableProvider(
+            journey, null,
+            new HashSet<Guid>(),
+            new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase),
+            new Dictionary<string, Transit.Providers.TransitModeSnapshot>(StringComparer.OrdinalIgnoreCase));
+
+        // Act
+        var remainingLegs = provider.GetValue(new[] { "journey", "remaining_legs" }.AsSpan());
+
+        // Assert: 2 non-completed/skipped legs
+        Assert.Equal(2, remainingLegs);
+    }
+
+    #endregion
+
+    #region HandleSeasonChangedAsync Tests
+
+    /// <summary>
+    /// HandleSeasonChangedAsync should close connections and open connections based on seasonal availability.
+    /// </summary>
+    [Fact]
+    public async Task HandleSeasonChangedAsync_ShouldUpdateConnectionStatuses()
+    {
+        // Arrange
+        var service = CreateService();
+        var evt = new WorldstateSeasonChangedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RealmId = TestRealmId,
+            PreviousSeason = "summer",
+            CurrentSeason = "winter"
+        };
+
+        // Connection that should close in winter
+        var connectionToClose = CreateTestConnectionModel(connectionId: Guid.NewGuid(), status: ConnectionStatus.Open);
+        connectionToClose.SeasonalAvailability = new List<SeasonalAvailabilityModel>
+        {
+            new SeasonalAvailabilityModel { Season = "winter", Available = false }
+        };
+        connectionToClose.FromRealmId = TestRealmId;
+
+        // Connection that should open in winter (currently seasonal_closed)
+        var connectionToOpen = CreateTestConnectionModel(connectionId: Guid.NewGuid(), status: ConnectionStatus.SeasonalClosed);
+        connectionToOpen.SeasonalAvailability = new List<SeasonalAvailabilityModel>
+        {
+            new SeasonalAvailabilityModel { Season = "winter", Available = true }
+        };
+        connectionToOpen.FromRealmId = TestRealmId;
+
+        _mockConnectionStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitConnectionModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitConnectionModel> { connectionToClose, connectionToOpen });
+
+        // Act
+        await service.HandleSeasonChangedAsync(evt);
+
+        // Assert: Both connections should have been saved
+        _mockConnectionStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<TransitConnectionModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+
+        // Assert: Graph cache should be invalidated
+        _mockGraphCache.Verify(g => g.InvalidateAsync(
+            It.Is<IEnumerable<Guid>>(ids => ids.Contains(TestRealmId)),
+            It.IsAny<CancellationToken>()), Times.Once());
+    }
+
+    #endregion
+
+    #region Edge Cases
+
+    /// <summary>
+    /// ArriveJourneyAsync should handle AtWaypoint status (not just InTransit).
+    /// </summary>
+    [Fact]
+    public async Task ArriveJourneyAsync_ShouldSucceed_WhenAtWaypoint()
+    {
+        // Arrange
+        var service = CreateService();
+        var journeyId = Guid.NewGuid();
+        var request = new ArriveJourneyRequest
+        {
+            JourneyId = journeyId,
+            ArrivedAtGameTime = 150.0m,
+            Reason = "fast_travel"
+        };
+
+        var journey = CreateTestJourneyModel(journeyId: journeyId, status: JourneyStatus.AtWaypoint, legCount: 2);
+        journey.Legs[0].Status = JourneyLegStatus.Completed;
+        journey.CurrentLegIndex = 1;
+
+        _mockJourneyStore.Setup(s => s.GetAsync(
+            TransitService.BuildJourneyKey(journeyId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(journey);
+
+        _mockLocationClient.Setup(c => c.GetLocationAsync(
+            It.IsAny<Location.GetLocationRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Location.LocationResponse { RealmId = TestRealmId });
+
+        // Act
+        var (statusCode, response) = await service.ArriveJourneyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(JourneyStatus.Arrived, response.Journey.Status);
+    }
+
+    /// <summary>
+    /// QueryConnectionsAsync should filter by status correctly.
+    /// </summary>
+    [Fact]
+    public async Task QueryConnectionsAsync_ShouldFilterByStatus()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new QueryConnectionsRequest
+        {
+            Status = ConnectionStatus.Blocked,
+            Page = 1,
+            PageSize = 20,
+            IncludeSeasonalClosed = true
+        };
+
+        var openConn = CreateTestConnectionModel(connectionId: Guid.NewGuid(), status: ConnectionStatus.Open);
+        var blockedConn = CreateTestConnectionModel(connectionId: Guid.NewGuid(), status: ConnectionStatus.Blocked);
+
+        _mockConnectionStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitConnectionModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitConnectionModel> { openConn, blockedConn });
+
+        // Act
+        var (statusCode, response) = await service.QueryConnectionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.Connections);
+        Assert.Equal(1, response.TotalCount);
+    }
+
+    /// <summary>
+    /// QueryConnectionsAsync should filter by mode code compatibility.
+    /// </summary>
+    [Fact]
+    public async Task QueryConnectionsAsync_ShouldFilterByModeCode()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new QueryConnectionsRequest
+        {
+            ModeCode = "boat",
+            Page = 1,
+            PageSize = 20,
+            IncludeSeasonalClosed = true
+        };
+
+        var landConn = CreateTestConnectionModel(connectionId: Guid.NewGuid());
+        landConn.CompatibleModes = new List<string> { "walking", "horseback" };
+
+        var waterConn = CreateTestConnectionModel(connectionId: Guid.NewGuid());
+        waterConn.CompatibleModes = new List<string> { "boat", "swimming" };
+
+        _mockConnectionStore.Setup(s => s.QueryAsync(
+            It.IsAny<Expression<Func<TransitConnectionModel, bool>>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TransitConnectionModel> { landConn, waterConn });
+
+        // Act
+        var (statusCode, response) = await service.QueryConnectionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.Connections);
+    }
+
+    #endregion
+
+    #region Test Helpers
+
+    /// <summary>
+    /// Creates a minimal JourneyArchiveModel for test setup.
+    /// </summary>
+    private static JourneyArchiveModel CreateTestArchiveModel(
+        JourneyStatus status = JourneyStatus.Arrived,
+        Guid? journeyId = null)
+    {
+        return new JourneyArchiveModel
+        {
+            Id = journeyId ?? Guid.NewGuid(),
+            EntityId = TestEntityId,
+            EntityType = "character",
+            Legs = new List<TransitJourneyLegModel>(),
+            CurrentLegIndex = 0,
+            PrimaryModeCode = "walking",
+            EffectiveSpeedKmPerGameHour = 5.0m,
+            PlannedDepartureGameTime = 100.0m,
+            OriginLocationId = TestLocationAId,
+            DestinationLocationId = TestLocationBId,
+            CurrentLocationId = TestLocationBId,
+            Status = status,
+            Interruptions = new List<TransitInterruptionModel>(),
+            PartySize = 1,
+            CargoWeightKg = 0m,
+            RealmId = TestRealmId,
+            CreatedAt = DateTimeOffset.UtcNow,
+            ModifiedAt = DateTimeOffset.UtcNow,
+            ArchivedAt = DateTimeOffset.UtcNow
+        };
+    }
+
+    #endregion
 }

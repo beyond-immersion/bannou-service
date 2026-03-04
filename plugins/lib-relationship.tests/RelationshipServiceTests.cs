@@ -654,6 +654,1156 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
 
     #endregion
 
+    #region GetRelationshipsBetween Tests
+
+    [Fact]
+    public async Task GetRelationshipsBetweenAsync_NoRelationshipsForEntity1_ReturnsEmptyList()
+    {
+        // Arrange
+        var service = CreateService();
+        var entity1Id = Guid.NewGuid();
+        var entity2Id = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entity1Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<Guid>?)null);
+
+        var request = new GetRelationshipsBetweenRequest
+        {
+            Entity1Id = entity1Id,
+            Entity1Type = EntityType.Character,
+            Entity2Id = entity2Id,
+            Entity2Type = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.GetRelationshipsBetweenAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Relationships);
+        Assert.Equal(0, response.TotalCount);
+    }
+
+    [Fact]
+    public async Task GetRelationshipsBetweenAsync_WithMatchingRelationships_ReturnsFiltered()
+    {
+        // Arrange
+        var service = CreateService();
+        var entity1Id = Guid.NewGuid();
+        var entity2Id = Guid.NewGuid();
+        var unrelatedEntityId = Guid.NewGuid();
+
+        var matchingRelId = Guid.NewGuid();
+        var unrelatedRelId = Guid.NewGuid();
+
+        var matchingModel = CreateTestRelationshipModel(matchingRelId);
+        matchingModel.Entity1Id = entity1Id;
+        matchingModel.Entity2Id = entity2Id;
+
+        var unrelatedModel = CreateTestRelationshipModel(unrelatedRelId);
+        unrelatedModel.Entity1Id = entity1Id;
+        unrelatedModel.Entity2Id = unrelatedEntityId;
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entity1Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { matchingRelId, unrelatedRelId });
+
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{matchingRelId}"] = matchingModel,
+            [$"rel:{unrelatedRelId}"] = unrelatedModel
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        var request = new GetRelationshipsBetweenRequest
+        {
+            Entity1Id = entity1Id,
+            Entity1Type = EntityType.Character,
+            Entity2Id = entity2Id,
+            Entity2Type = EntityType.Character,
+            IncludeEnded = true
+        };
+
+        // Act
+        var (status, response) = await service.GetRelationshipsBetweenAsync(request);
+
+        // Assert - Only the matching relationship between entity1 and entity2 is returned
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Relationships);
+        Assert.Equal(matchingRelId, response.Relationships.First().RelationshipId);
+        Assert.Equal(1, response.TotalCount);
+    }
+
+    [Fact]
+    public async Task GetRelationshipsBetweenAsync_FiltersEndedByDefault()
+    {
+        // Arrange
+        var service = CreateService();
+        var entity1Id = Guid.NewGuid();
+        var entity2Id = Guid.NewGuid();
+
+        var activeRelId = Guid.NewGuid();
+        var endedRelId = Guid.NewGuid();
+
+        var activeModel = CreateTestRelationshipModel(activeRelId);
+        activeModel.Entity1Id = entity1Id;
+        activeModel.Entity2Id = entity2Id;
+        activeModel.EndedAt = null;
+
+        var endedModel = CreateTestRelationshipModel(endedRelId);
+        endedModel.Entity1Id = entity1Id;
+        endedModel.Entity2Id = entity2Id;
+        endedModel.EndedAt = DateTimeOffset.UtcNow.AddDays(-1);
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entity1Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { activeRelId, endedRelId });
+
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{activeRelId}"] = activeModel,
+            [$"rel:{endedRelId}"] = endedModel
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        var request = new GetRelationshipsBetweenRequest
+        {
+            Entity1Id = entity1Id,
+            Entity1Type = EntityType.Character,
+            Entity2Id = entity2Id,
+            Entity2Type = EntityType.Character,
+            IncludeEnded = false
+        };
+
+        // Act
+        var (status, response) = await service.GetRelationshipsBetweenAsync(request);
+
+        // Assert - Only the active relationship is returned (ended filtered out)
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Relationships);
+        Assert.Equal(activeRelId, response.Relationships.First().RelationshipId);
+    }
+
+    [Fact]
+    public async Task GetRelationshipsBetweenAsync_WithTypeFilter_FiltersCorrectly()
+    {
+        // Arrange
+        var service = CreateService();
+        var entity1Id = Guid.NewGuid();
+        var entity2Id = Guid.NewGuid();
+        var friendTypeId = Guid.NewGuid();
+        var enemyTypeId = Guid.NewGuid();
+
+        var friendRelId = Guid.NewGuid();
+        var enemyRelId = Guid.NewGuid();
+
+        var friendModel = CreateTestRelationshipModel(friendRelId);
+        friendModel.Entity1Id = entity1Id;
+        friendModel.Entity2Id = entity2Id;
+        friendModel.RelationshipTypeId = friendTypeId;
+
+        var enemyModel = CreateTestRelationshipModel(enemyRelId);
+        enemyModel.Entity1Id = entity1Id;
+        enemyModel.Entity2Id = entity2Id;
+        enemyModel.RelationshipTypeId = enemyTypeId;
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entity1Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { friendRelId, enemyRelId });
+
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{friendRelId}"] = friendModel,
+            [$"rel:{enemyRelId}"] = enemyModel
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        var request = new GetRelationshipsBetweenRequest
+        {
+            Entity1Id = entity1Id,
+            Entity1Type = EntityType.Character,
+            Entity2Id = entity2Id,
+            Entity2Type = EntityType.Character,
+            RelationshipTypeId = friendTypeId,
+            IncludeEnded = true
+        };
+
+        // Act
+        var (status, response) = await service.GetRelationshipsBetweenAsync(request);
+
+        // Assert - Only the friend relationship is returned
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Relationships);
+        Assert.Equal(friendRelId, response.Relationships.First().RelationshipId);
+        Assert.Equal(friendTypeId, response.Relationships.First().RelationshipTypeId);
+    }
+
+    [Fact]
+    public async Task GetRelationshipsBetweenAsync_DataInconsistency_SkipsNullAndEmitsError()
+    {
+        // Arrange
+        var service = CreateService();
+        var entity1Id = Guid.NewGuid();
+        var entity2Id = Guid.NewGuid();
+        var orphanedRelId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entity1Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { orphanedRelId });
+
+        // Return null for the relationship (simulates data inconsistency)
+        var bulkResults = new Dictionary<string, RelationshipModel>();
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        var request = new GetRelationshipsBetweenRequest
+        {
+            Entity1Id = entity1Id,
+            Entity1Type = EntityType.Character,
+            Entity2Id = entity2Id,
+            Entity2Type = EntityType.Character,
+            IncludeEnded = true
+        };
+
+        // Act
+        var (status, response) = await service.GetRelationshipsBetweenAsync(request);
+
+        // Assert - Returns empty (orphaned entry was skipped), no crash
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Relationships);
+    }
+
+    [Fact]
+    public async Task GetRelationshipsBetweenAsync_Pagination_ReturnsCorrectPage()
+    {
+        // Arrange
+        var service = CreateService();
+        var entity1Id = Guid.NewGuid();
+        var entity2Id = Guid.NewGuid();
+
+        // Create 3 relationships between entity1 and entity2 at different times
+        var relIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
+        var bulkResults = new Dictionary<string, RelationshipModel>();
+
+        for (int i = 0; i < relIds.Count; i++)
+        {
+            var model = CreateTestRelationshipModel(relIds[i]);
+            model.Entity1Id = entity1Id;
+            model.Entity2Id = entity2Id;
+            model.CreatedAt = DateTimeOffset.UtcNow.AddHours(-i);
+            bulkResults[$"rel:{relIds[i]}"] = model;
+        }
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entity1Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(relIds);
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        var request = new GetRelationshipsBetweenRequest
+        {
+            Entity1Id = entity1Id,
+            Entity1Type = EntityType.Character,
+            Entity2Id = entity2Id,
+            Entity2Type = EntityType.Character,
+            IncludeEnded = true,
+            Page = 1,
+            PageSize = 2
+        };
+
+        // Act
+        var (status, response) = await service.GetRelationshipsBetweenAsync(request);
+
+        // Assert - Page 1 with size 2 returns 2 items, total count 3, has next page
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Relationships.Count);
+        Assert.Equal(3, response.TotalCount);
+        Assert.True(response.HasNextPage);
+        Assert.False(response.HasPreviousPage);
+    }
+
+    #endregion
+
+    #region ListRelationshipsByType Tests
+
+    [Fact]
+    public async Task ListRelationshipsByTypeAsync_NoRelationships_ReturnsEmptyList()
+    {
+        // Arrange
+        var service = CreateService();
+        var typeId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"type-idx:{typeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<Guid>?)null);
+
+        var request = new ListRelationshipsByTypeRequest
+        {
+            RelationshipTypeId = typeId
+        };
+
+        // Act
+        var (status, response) = await service.ListRelationshipsByTypeAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Relationships);
+        Assert.Equal(0, response.TotalCount);
+    }
+
+    [Fact]
+    public async Task ListRelationshipsByTypeAsync_WithRelationships_ReturnsList()
+    {
+        // Arrange
+        var service = CreateService();
+        var typeId = Guid.NewGuid();
+        var relId1 = Guid.NewGuid();
+        var relId2 = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"type-idx:{typeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { relId1, relId2 });
+
+        var model1 = CreateTestRelationshipModel(relId1);
+        model1.RelationshipTypeId = typeId;
+        var model2 = CreateTestRelationshipModel(relId2);
+        model2.RelationshipTypeId = typeId;
+
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{relId1}"] = model1,
+            [$"rel:{relId2}"] = model2
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        var request = new ListRelationshipsByTypeRequest
+        {
+            RelationshipTypeId = typeId,
+            IncludeEnded = true
+        };
+
+        // Act
+        var (status, response) = await service.ListRelationshipsByTypeAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Relationships.Count);
+        Assert.Equal(2, response.TotalCount);
+    }
+
+    [Fact]
+    public async Task ListRelationshipsByTypeAsync_FiltersEndedByDefault()
+    {
+        // Arrange
+        var service = CreateService();
+        var typeId = Guid.NewGuid();
+        var activeRelId = Guid.NewGuid();
+        var endedRelId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"type-idx:{typeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { activeRelId, endedRelId });
+
+        var activeModel = CreateTestRelationshipModel(activeRelId);
+        activeModel.RelationshipTypeId = typeId;
+        activeModel.EndedAt = null;
+
+        var endedModel = CreateTestRelationshipModel(endedRelId);
+        endedModel.RelationshipTypeId = typeId;
+        endedModel.EndedAt = DateTimeOffset.UtcNow.AddDays(-1);
+
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{activeRelId}"] = activeModel,
+            [$"rel:{endedRelId}"] = endedModel
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        var request = new ListRelationshipsByTypeRequest
+        {
+            RelationshipTypeId = typeId,
+            IncludeEnded = false
+        };
+
+        // Act
+        var (status, response) = await service.ListRelationshipsByTypeAsync(request);
+
+        // Assert - Only active relationship returned
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Relationships);
+        Assert.Equal(activeRelId, response.Relationships.First().RelationshipId);
+    }
+
+    [Fact]
+    public async Task ListRelationshipsByTypeAsync_FiltersByEntity1Type()
+    {
+        // Arrange
+        var service = CreateService();
+        var typeId = Guid.NewGuid();
+        var charRelId = Guid.NewGuid();
+        var actorRelId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"type-idx:{typeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { charRelId, actorRelId });
+
+        var charModel = CreateTestRelationshipModel(charRelId);
+        charModel.RelationshipTypeId = typeId;
+        charModel.Entity1Type = EntityType.Character;
+
+        var actorModel = CreateTestRelationshipModel(actorRelId);
+        actorModel.RelationshipTypeId = typeId;
+        actorModel.Entity1Type = EntityType.Actor;
+
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{charRelId}"] = charModel,
+            [$"rel:{actorRelId}"] = actorModel
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        var request = new ListRelationshipsByTypeRequest
+        {
+            RelationshipTypeId = typeId,
+            Entity1Type = EntityType.Character,
+            IncludeEnded = true
+        };
+
+        // Act
+        var (status, response) = await service.ListRelationshipsByTypeAsync(request);
+
+        // Assert - Only character-entity1 relationship returned
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Relationships);
+        Assert.Equal(charRelId, response.Relationships.First().RelationshipId);
+    }
+
+    [Fact]
+    public async Task ListRelationshipsByTypeAsync_FiltersByEntity2Type()
+    {
+        // Arrange
+        var service = CreateService();
+        var typeId = Guid.NewGuid();
+        var realmRelId = Guid.NewGuid();
+        var charRelId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"type-idx:{typeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { realmRelId, charRelId });
+
+        var realmModel = CreateTestRelationshipModel(realmRelId);
+        realmModel.RelationshipTypeId = typeId;
+        realmModel.Entity2Type = EntityType.Realm;
+
+        var charModel = CreateTestRelationshipModel(charRelId);
+        charModel.RelationshipTypeId = typeId;
+        charModel.Entity2Type = EntityType.Character;
+
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{realmRelId}"] = realmModel,
+            [$"rel:{charRelId}"] = charModel
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        var request = new ListRelationshipsByTypeRequest
+        {
+            RelationshipTypeId = typeId,
+            Entity2Type = EntityType.Realm,
+            IncludeEnded = true
+        };
+
+        // Act
+        var (status, response) = await service.ListRelationshipsByTypeAsync(request);
+
+        // Assert - Only realm-entity2 relationship returned
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Relationships);
+        Assert.Equal(realmRelId, response.Relationships.First().RelationshipId);
+    }
+
+    [Fact]
+    public async Task ListRelationshipsByTypeAsync_DataInconsistency_SkipsNullAndContinues()
+    {
+        // Arrange
+        var service = CreateService();
+        var typeId = Guid.NewGuid();
+        var validRelId = Guid.NewGuid();
+        var orphanedRelId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"type-idx:{typeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { validRelId, orphanedRelId });
+
+        var validModel = CreateTestRelationshipModel(validRelId);
+        validModel.RelationshipTypeId = typeId;
+
+        // Only return the valid relationship (orphaned one is missing from store)
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{validRelId}"] = validModel
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        var request = new ListRelationshipsByTypeRequest
+        {
+            RelationshipTypeId = typeId,
+            IncludeEnded = true
+        };
+
+        // Act
+        var (status, response) = await service.ListRelationshipsByTypeAsync(request);
+
+        // Assert - Only the valid relationship returned (orphaned skipped)
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Relationships);
+        Assert.Equal(validRelId, response.Relationships.First().RelationshipId);
+    }
+
+    #endregion
+
+    #region CleanupByEntity Tests
+
+    [Fact]
+    public async Task CleanupByEntityAsync_NoRelationships_ReturnsZeroCounts()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<Guid>?)null);
+
+        var request = new CleanupByEntityRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.CleanupByEntityAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.RelationshipsEnded);
+        Assert.Equal(0, response.AlreadyEnded);
+    }
+
+    [Fact]
+    public async Task CleanupByEntityAsync_ActiveRelationships_EndsThemAll()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var relId1 = Guid.NewGuid();
+        var relId2 = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { relId1, relId2 });
+
+        var model1 = CreateTestRelationshipModel(relId1);
+        model1.Entity1Id = entityId;
+        model1.Entity1Type = EntityType.Character;
+        model1.EndedAt = null;
+
+        var model2 = CreateTestRelationshipModel(relId2);
+        model2.Entity1Id = entityId;
+        model2.Entity1Type = EntityType.Character;
+        model2.EndedAt = null;
+
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{relId1}"] = model1,
+            [$"rel:{relId2}"] = model2
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        // Setup per-relationship re-fetch after lock (cleanup does a re-read under lock)
+        _mockRelationshipStore
+            .Setup(s => s.GetAsync($"rel:{relId1}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model1);
+        _mockRelationshipStore
+            .Setup(s => s.GetAsync($"rel:{relId2}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model2);
+
+        // Capture saved models to verify EndedAt was set
+        var savedModels = new Dictionary<string, RelationshipModel>();
+        _mockRelationshipStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<RelationshipModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, RelationshipModel, StateOptions?, CancellationToken>((k, m, _, _) => savedModels[k] = m)
+            .ReturnsAsync("etag");
+
+        var request = new CleanupByEntityRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.CleanupByEntityAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.RelationshipsEnded);
+        Assert.Equal(0, response.AlreadyEnded);
+
+        // Verify EndedAt was set on saved models
+        Assert.True(savedModels.ContainsKey($"rel:{relId1}"));
+        Assert.NotNull(savedModels[$"rel:{relId1}"].EndedAt);
+        Assert.True(savedModels.ContainsKey($"rel:{relId2}"));
+        Assert.NotNull(savedModels[$"rel:{relId2}"].EndedAt);
+    }
+
+    [Fact]
+    public async Task CleanupByEntityAsync_AlreadyEndedRelationships_CountsCorrectly()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var activeRelId = Guid.NewGuid();
+        var endedRelId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { activeRelId, endedRelId });
+
+        var activeModel = CreateTestRelationshipModel(activeRelId);
+        activeModel.Entity1Id = entityId;
+        activeModel.Entity1Type = EntityType.Character;
+        activeModel.EndedAt = null;
+
+        var endedModel = CreateTestRelationshipModel(endedRelId);
+        endedModel.Entity1Id = entityId;
+        endedModel.Entity1Type = EntityType.Character;
+        endedModel.EndedAt = DateTimeOffset.UtcNow.AddDays(-1);
+
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{activeRelId}"] = activeModel,
+            [$"rel:{endedRelId}"] = endedModel
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        // Re-fetch for active relationship under lock
+        _mockRelationshipStore
+            .Setup(s => s.GetAsync($"rel:{activeRelId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(activeModel);
+
+        _mockRelationshipStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<RelationshipModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new CleanupByEntityRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.CleanupByEntityAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.RelationshipsEnded);
+        Assert.Equal(1, response.AlreadyEnded);
+    }
+
+    [Fact]
+    public async Task CleanupByEntityAsync_PublishesDeletedEventPerRelationship()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var relId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { relId });
+
+        var model = CreateTestRelationshipModel(relId);
+        model.Entity1Id = entityId;
+        model.Entity1Type = EntityType.Character;
+        model.EndedAt = null;
+
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{relId}"] = model
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        _mockRelationshipStore
+            .Setup(s => s.GetAsync($"rel:{relId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        _mockRelationshipStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<RelationshipModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Capture the published event
+        RelationshipDeletedEvent? capturedEvent = null;
+        string? capturedTopic = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<RelationshipDeletedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, RelationshipDeletedEvent, PublishOptions?, Guid?, CancellationToken>((t, e, _, _, _) =>
+            {
+                capturedTopic = t;
+                capturedEvent = e;
+            })
+            .ReturnsAsync(true);
+
+        var request = new CleanupByEntityRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.CleanupByEntityAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.RelationshipsEnded);
+
+        // Assert event was published with correct content
+        Assert.NotNull(capturedEvent);
+        Assert.Equal("relationship.deleted", capturedTopic);
+        Assert.Equal(relId, capturedEvent.RelationshipId);
+        Assert.Equal("Entity deleted (cascade cleanup)", capturedEvent.DeletedReason);
+    }
+
+    [Fact]
+    public async Task CleanupByEntityAsync_ClearsCompositeKeyForEndedRelationships()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var relId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { relId });
+
+        var model = CreateTestRelationshipModel(relId);
+        model.Entity1Id = entityId;
+        model.Entity1Type = EntityType.Character;
+        model.EndedAt = null;
+
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{relId}"] = model
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        _mockRelationshipStore
+            .Setup(s => s.GetAsync($"rel:{relId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        _mockRelationshipStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<RelationshipModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Track composite key deletion
+        string? deletedKey = null;
+        _mockStringStore
+            .Setup(s => s.DeleteAsync(It.Is<string>(k => k.StartsWith("composite:")), It.IsAny<CancellationToken>()))
+            .Callback<string, CancellationToken>((k, _) => deletedKey = k)
+            .ReturnsAsync(true);
+
+        var request = new CleanupByEntityRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.CleanupByEntityAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.RelationshipsEnded);
+
+        // Verify composite key was deleted to allow future recreation
+        Assert.NotNull(deletedKey);
+        Assert.StartsWith("composite:", deletedKey);
+    }
+
+    #endregion
+
+    #region CreateRelationship Edge Cases
+
+    [Fact]
+    public async Task CreateRelationshipAsync_SelfReferencing_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+
+        var request = new CreateRelationshipRequest
+        {
+            Entity1Id = entityId,
+            Entity1Type = EntityType.Character,
+            Entity2Id = entityId,
+            Entity2Type = EntityType.Character,
+            RelationshipTypeId = Guid.NewGuid(),
+            StartedAt = DateTimeOffset.UtcNow
+        };
+
+        // Act
+        var (status, response) = await service.CreateRelationshipAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CreateRelationshipAsync_DeprecatedType_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var entity1Id = Guid.NewGuid();
+        var entity2Id = Guid.NewGuid();
+        var typeId = Guid.NewGuid();
+
+        // Setup a deprecated relationship type
+        _mockRtModelStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RelationshipTypeModel
+            {
+                RelationshipTypeId = typeId,
+                Code = "DEPRECATED_TYPE",
+                Name = "Deprecated",
+                IsBidirectional = true,
+                IsDeprecated = true,
+                DeprecatedAt = DateTimeOffset.UtcNow.AddDays(-7),
+                DeprecationReason = "Replaced by newer type",
+                Depth = 0,
+                CreatedAt = DateTimeOffset.UtcNow.AddMonths(-1),
+                UpdatedAt = DateTimeOffset.UtcNow.AddDays(-7)
+            });
+
+        var request = new CreateRelationshipRequest
+        {
+            Entity1Id = entity1Id,
+            Entity1Type = EntityType.Character,
+            Entity2Id = entity2Id,
+            Entity2Type = EntityType.Character,
+            RelationshipTypeId = typeId,
+            StartedAt = DateTimeOffset.UtcNow
+        };
+
+        // Act
+        var (status, response) = await service.CreateRelationshipAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CreateRelationshipAsync_NonExistentType_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var typeId = Guid.NewGuid();
+
+        _mockRtModelStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RelationshipTypeModel?)null);
+
+        var request = new CreateRelationshipRequest
+        {
+            Entity1Id = Guid.NewGuid(),
+            Entity1Type = EntityType.Character,
+            Entity2Id = Guid.NewGuid(),
+            Entity2Type = EntityType.Character,
+            RelationshipTypeId = typeId,
+            StartedAt = DateTimeOffset.UtcNow
+        };
+
+        // Act
+        var (status, response) = await service.CreateRelationshipAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region ListRelationshipsByEntity Edge Cases
+
+    [Fact]
+    public async Task ListRelationshipsByEntityAsync_WithTypeFilter_FiltersCorrectly()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var friendTypeId = Guid.NewGuid();
+        var enemyTypeId = Guid.NewGuid();
+        var friendRelId = Guid.NewGuid();
+        var enemyRelId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { friendRelId, enemyRelId });
+
+        var friendModel = CreateTestRelationshipModel(friendRelId);
+        friendModel.RelationshipTypeId = friendTypeId;
+        var enemyModel = CreateTestRelationshipModel(enemyRelId);
+        enemyModel.RelationshipTypeId = enemyTypeId;
+
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{friendRelId}"] = friendModel,
+            [$"rel:{enemyRelId}"] = enemyModel
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        var request = new ListRelationshipsByEntityRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            RelationshipTypeId = friendTypeId,
+            IncludeEnded = true
+        };
+
+        // Act
+        var (status, response) = await service.ListRelationshipsByEntityAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Relationships);
+        Assert.Equal(friendRelId, response.Relationships.First().RelationshipId);
+    }
+
+    [Fact]
+    public async Task ListRelationshipsByEntityAsync_FiltersEndedByDefault()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var activeRelId = Guid.NewGuid();
+        var endedRelId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { activeRelId, endedRelId });
+
+        var activeModel = CreateTestRelationshipModel(activeRelId);
+        activeModel.EndedAt = null;
+        var endedModel = CreateTestRelationshipModel(endedRelId);
+        endedModel.EndedAt = DateTimeOffset.UtcNow.AddDays(-1);
+
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{activeRelId}"] = activeModel,
+            [$"rel:{endedRelId}"] = endedModel
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        var request = new ListRelationshipsByEntityRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            IncludeEnded = false
+        };
+
+        // Act
+        var (status, response) = await service.ListRelationshipsByEntityAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Relationships);
+        Assert.Equal(activeRelId, response.Relationships.First().RelationshipId);
+    }
+
+    [Fact]
+    public async Task ListRelationshipsByEntityAsync_WithOtherEntityTypeFilter_FiltersCorrectly()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var charPartnerId = Guid.NewGuid();
+        var realmPartnerId = Guid.NewGuid();
+        var charRelId = Guid.NewGuid();
+        var realmRelId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { charRelId, realmRelId });
+
+        var charModel = CreateTestRelationshipModel(charRelId);
+        charModel.Entity1Id = entityId;
+        charModel.Entity1Type = EntityType.Character;
+        charModel.Entity2Id = charPartnerId;
+        charModel.Entity2Type = EntityType.Character;
+
+        var realmModel = CreateTestRelationshipModel(realmRelId);
+        realmModel.Entity1Id = entityId;
+        realmModel.Entity1Type = EntityType.Character;
+        realmModel.Entity2Id = realmPartnerId;
+        realmModel.Entity2Type = EntityType.Realm;
+
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{charRelId}"] = charModel,
+            [$"rel:{realmRelId}"] = realmModel
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        var request = new ListRelationshipsByEntityRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            OtherEntityType = EntityType.Realm,
+            IncludeEnded = true
+        };
+
+        // Act
+        var (status, response) = await service.ListRelationshipsByEntityAsync(request);
+
+        // Assert - Only the realm relationship is returned
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Relationships);
+        Assert.Equal(realmRelId, response.Relationships.First().RelationshipId);
+    }
+
+    #endregion
+
+    #region UpdateRelationship Edge Cases
+
+    [Fact]
+    public async Task UpdateRelationshipAsync_EndedRelationship_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var relationshipId = Guid.NewGuid();
+        var model = CreateTestRelationshipModel(relationshipId);
+        model.EndedAt = DateTimeOffset.UtcNow.AddDays(-1);
+
+        _mockRelationshipStore
+            .Setup(s => s.GetAsync($"rel:{relationshipId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        var request = new UpdateRelationshipRequest
+        {
+            RelationshipId = relationshipId,
+            Metadata = new Dictionary<string, object> { { "test", true } }
+        };
+
+        // Act
+        var (status, response) = await service.UpdateRelationshipAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region EndRelationship Edge Cases
+
+    [Fact]
+    public async Task EndRelationshipAsync_AlreadyEnded_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var relationshipId = Guid.NewGuid();
+        var model = CreateTestRelationshipModel(relationshipId);
+        model.EndedAt = DateTimeOffset.UtcNow.AddDays(-1);
+
+        _mockRelationshipStore
+            .Setup(s => s.GetAsync($"rel:{relationshipId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        var request = new EndRelationshipRequest { RelationshipId = relationshipId };
+
+        // Act
+        var status = await service.EndRelationshipAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+    }
+
+    #endregion
+
     #region Permission Registration Tests
 
     [Fact]

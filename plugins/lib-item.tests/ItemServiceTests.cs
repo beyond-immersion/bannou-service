@@ -3312,6 +3312,914 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
     #endregion
 
+    #region AddToList/RemoveFromList Optimistic Concurrency Tests
+
+    [Fact]
+    public async Task AddToListAsync_OptimisticConcurrencyConflict_RetriesAndSucceeds()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = CreateValidTemplateRequest();
+        request.Code = "retry_add_item";
+
+        // Simulate TrySaveAsync returning null (conflict) on first call to AddToListAsync
+        // for the game index key, then succeeding on retry.
+        var gameIndexCallCount = 0;
+        _mockTemplateStringStore
+            .Setup(s => s.GetWithETagAsync(It.Is<string>(k => k.StartsWith("tpl-game:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((string?)null, (string?)null));
+        _mockTemplateStringStore
+            .Setup(s => s.TrySaveAsync(
+                It.Is<string>(k => k.StartsWith("tpl-game:")),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<string, string, string, CancellationToken>((_, _, _, _) =>
+            {
+                gameIndexCallCount++;
+                // First attempt conflicts, second succeeds
+                return Task.FromResult<string?>(gameIndexCallCount > 1 ? "etag-2" : null);
+            });
+
+        // Template code claim succeeds
+        _mockTemplateStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        _mockTemplateStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Act
+        var (status, response) = await service.CreateItemTemplateAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        // Verify the game index TrySaveAsync was called more than once (retry occurred)
+        Assert.True(gameIndexCallCount >= 2, "Expected at least 2 attempts due to optimistic concurrency retry");
+    }
+
+    [Fact]
+    public async Task CreateItemTemplateAsync_AddToListExhaustsRetries_StillCreatesTemplate()
+    {
+        // Arrange
+        // Set low retries to trigger exhaustion
+        Configuration.ListOperationMaxRetries = 2;
+        var service = CreateService();
+        var request = CreateValidTemplateRequest();
+        request.Code = "exhaust_retries_item";
+
+        // Game index TrySaveAsync always returns null (perpetual conflict)
+        _mockTemplateStringStore
+            .Setup(s => s.TrySaveAsync(
+                It.Is<string>(k => k.StartsWith("tpl-game:")),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // All-templates TrySaveAsync always conflicts too
+        _mockTemplateStringStore
+            .Setup(s => s.TrySaveAsync(
+                It.Is<string>(k => k == "all-templates"),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        _mockTemplateStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Act - template creation itself still succeeds (list add failure is non-fatal)
+        var (status, response) = await service.CreateItemTemplateAsync(request);
+
+        // Assert - template created successfully despite list operation failures
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
+    [Fact]
+    public async Task DestroyItemInstanceAsync_RemoveFromList_EmptyListDeletesKey()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var containerId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var model = CreateStoredInstanceModel(instanceId);
+        model.ContainerId = containerId;
+        model.TemplateId = templateId;
+
+        var template = CreateStoredTemplateModel(templateId);
+        template.Destroyable = true;
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockInstanceStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Container index has only this one instance
+        _mockInstanceStringStore
+            .Setup(s => s.GetWithETagAsync($"inst-container:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BannouJson.Serialize(new List<string> { instanceId.ToString() }), "etag-1"));
+
+        // Template index has only this one instance
+        _mockInstanceStringStore
+            .Setup(s => s.GetWithETagAsync($"inst-template:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BannouJson.Serialize(new List<string> { instanceId.ToString() }), "etag-2"));
+
+        var deletedKeys = new List<string>();
+        _mockInstanceStringStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CancellationToken>((k, _) => deletedKeys.Add(k))
+            .ReturnsAsync(true);
+
+        var request = new DestroyItemInstanceRequest
+        {
+            InstanceId = instanceId,
+            Reason = DestroyReason.Destroyed
+        };
+
+        // Act
+        var (status, response) = await service.DestroyItemInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        // When the last item is removed from a list, the key should be deleted
+        Assert.Contains($"inst-container:{containerId}", deletedKeys);
+        Assert.Contains($"inst-template:{templateId}", deletedKeys);
+    }
+
+    [Fact]
+    public async Task RemoveFromListAsync_OptimisticConcurrencyConflict_Retries()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var otherId = Guid.NewGuid();
+        var containerId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var model = CreateStoredInstanceModel(instanceId);
+        model.ContainerId = containerId;
+        model.TemplateId = templateId;
+
+        var template = CreateStoredTemplateModel(templateId);
+        template.Destroyable = true;
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockInstanceStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Container index has two instances
+        var listJson = BannouJson.Serialize(new List<string> { instanceId.ToString(), otherId.ToString() });
+        _mockInstanceStringStore
+            .Setup(s => s.GetWithETagAsync($"inst-container:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((listJson, "etag-1"));
+
+        // Template index - single item (will be deleted)
+        _mockInstanceStringStore
+            .Setup(s => s.GetWithETagAsync($"inst-template:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BannouJson.Serialize(new List<string> { instanceId.ToString() }), "etag-t"));
+        _mockInstanceStringStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Container index TrySaveAsync: first call conflicts, second succeeds
+        var containerSaveCount = 0;
+        _mockInstanceStringStore
+            .Setup(s => s.TrySaveAsync(
+                It.Is<string>(k => k.StartsWith("inst-container:")),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<string, string, string, CancellationToken>((_, _, _, _) =>
+            {
+                containerSaveCount++;
+                return Task.FromResult<string?>(containerSaveCount > 1 ? "etag-new" : null);
+            });
+
+        var request = new DestroyItemInstanceRequest
+        {
+            InstanceId = instanceId,
+            Reason = DestroyReason.Destroyed
+        };
+
+        // Act
+        var (status, _) = await service.DestroyItemInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.True(containerSaveCount >= 2, "Expected at least 2 attempts on container index due to concurrency retry");
+    }
+
+    #endregion
+
+    #region QuantityModel Edge Case Tests
+
+    [Fact]
+    public async Task CreateItemInstanceAsync_ContinuousQuantityModel_AllowsFractionalQuantity()
+    {
+        // Arrange
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var template = CreateStoredTemplateModel(templateId);
+        template.QuantityModel = QuantityModel.Continuous;
+        template.MaxStackSize = 100;
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        ItemInstanceModel? savedModel = null;
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ItemInstanceModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
+        var request = new CreateItemInstanceRequest
+        {
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 3.75,
+            OriginType = ItemOriginType.Craft
+        };
+
+        // Act
+        var (status, response) = await service.CreateItemInstanceAsync(request);
+
+        // Assert - Continuous model preserves fractional quantities (no flooring)
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedModel);
+        Assert.Equal(3.75, savedModel.Quantity);
+    }
+
+    [Fact]
+    public async Task CreateItemInstanceAsync_DiscreteQuantity_AtMaxStackSize_NoClamp()
+    {
+        // Arrange
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var template = CreateStoredTemplateModel(templateId);
+        template.QuantityModel = QuantityModel.Discrete;
+        template.MaxStackSize = 50;
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        ItemInstanceModel? savedModel = null;
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ItemInstanceModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
+        var request = new CreateItemInstanceRequest
+        {
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 50,  // Exactly at boundary
+            OriginType = ItemOriginType.Loot
+        };
+
+        // Act
+        await service.CreateItemInstanceAsync(request);
+
+        // Assert - Quantity at exactly max boundary should not be clamped
+        Assert.NotNull(savedModel);
+        Assert.Equal(50, savedModel.Quantity);
+    }
+
+    [Fact]
+    public async Task CreateItemInstanceAsync_DiscreteQuantity_FractionalFloored()
+    {
+        // Arrange
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var template = CreateStoredTemplateModel(templateId);
+        template.QuantityModel = QuantityModel.Discrete;
+        template.MaxStackSize = 100;
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        ItemInstanceModel? savedModel = null;
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ItemInstanceModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
+        var request = new CreateItemInstanceRequest
+        {
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 7.9,  // Fractional for discrete
+            OriginType = ItemOriginType.Loot
+        };
+
+        // Act
+        await service.CreateItemInstanceAsync(request);
+
+        // Assert - Discrete model floors fractional quantities
+        Assert.NotNull(savedModel);
+        Assert.Equal(7, savedModel.Quantity);  // Math.Floor(7.9) = 7
+    }
+
+    [Fact]
+    public async Task CreateItemInstanceAsync_DiscreteQuantity_OneOverMaxStackSize_ClampsToMax()
+    {
+        // Arrange
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var template = CreateStoredTemplateModel(templateId);
+        template.QuantityModel = QuantityModel.Discrete;
+        template.MaxStackSize = 10;
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        ItemInstanceModel? savedModel = null;
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ItemInstanceModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
+        var request = new CreateItemInstanceRequest
+        {
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 11,  // One over max
+            OriginType = ItemOriginType.Loot
+        };
+
+        // Act
+        await service.CreateItemInstanceAsync(request);
+
+        // Assert
+        Assert.NotNull(savedModel);
+        Assert.Equal(10, savedModel.Quantity);  // Clamped to MaxStackSize
+    }
+
+    #endregion
+
+    #region UseItem Contract Failure Edge Cases
+
+    [Fact]
+    public async Task UseItemAsync_ContractApiException_DoesNotConsumeItem_DefaultBehavior()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var contractTemplateId = Guid.NewGuid();
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 5,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "no_destroy_on_fail",
+            GameId = "game1",
+            Name = "No Destroy On Fail",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Discrete,
+            MaxStackSize = 99,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = contractTemplateId,
+            ItemUseBehavior = ItemUseBehavior.DestroyOnSuccess  // Default: only consume on success
+        };
+
+        var request = new UseItemRequest
+        {
+            InstanceId = instanceId,
+            UserId = Guid.NewGuid(),
+            UserType = EntityType.Character
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Contract creation throws ApiException (e.g., template not found)
+        _mockContractClient
+            .Setup(c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Contract template not found", 404, "", null, null));
+
+        // Act
+        var (status, response) = await service.UseItemAsync(request);
+
+        // Assert - Contract failure returns BadRequest and does NOT consume item
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+
+        // Verify instance was NOT deleted or modified (no consumption on contract failure)
+        _mockInstanceStore.Verify(
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _mockInstanceStore.Verify(
+            s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task UseItemAsync_DestroyAlways_ContractCreationFails_DoesNotDestroyItem()
+    {
+        // Arrange
+        // When contract CREATION fails (step 6), the item is never consumed
+        // regardless of ItemUseBehavior. DestroyAlways only triggers on
+        // milestone failure (step 7), not contract creation failure.
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var contractTemplateId = Guid.NewGuid();
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 1,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "destroy_always_item",
+            GameId = "game1",
+            Name = "Destroy Always Item",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Unique,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = contractTemplateId,
+            ItemUseBehavior = ItemUseBehavior.DestroyAlways
+        };
+
+        var request = new UseItemRequest
+        {
+            InstanceId = instanceId,
+            UserId = Guid.NewGuid(),
+            UserType = EntityType.Character
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Contract creation fails
+        _mockContractClient
+            .Setup(c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Contract creation failed", 500));
+
+        // Act
+        var (status, _) = await service.UseItemAsync(request);
+
+        // Assert - Item NOT consumed because contract creation failed (step 6)
+        // DestroyAlways only applies at milestone failure (step 7)
+        Assert.Equal(StatusCodes.BadRequest, status);
+        _mockInstanceStore.Verify(
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    #endregion
+
+    #region UseItemStep Partial Contract Failure Tests
+
+    [Fact]
+    public async Task UseItemStepAsync_FirstStep_ContractCreationFails_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var contractTemplateId = Guid.NewGuid();
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 1,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow
+            // No ContractInstanceId = first step
+        };
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "failed_contract_step",
+            GameId = "game1",
+            Name = "Failed Contract Step",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Unique,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = contractTemplateId
+        };
+
+        var request = new UseItemStepRequest
+        {
+            InstanceId = instanceId,
+            UserId = Guid.NewGuid(),
+            UserType = EntityType.Character,
+            MilestoneCode = "step_1"
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // For lock re-read
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-1"));
+
+        // Contract creation fails with ApiException
+        _mockContractClient
+            .Setup(c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Contract template not found", 404, "", null, null));
+
+        // Act
+        var (status, response) = await service.UseItemStepAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+
+        // No contract instance should have been stored on the item
+        _mockInstanceStore.Verify(
+            s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task UseItemStepAsync_MilestoneCompletionThrowsApiException_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var contractTemplateId = Guid.NewGuid();
+        var existingContractId = Guid.NewGuid();
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 1,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow,
+            ContractInstanceId = existingContractId,
+            ContractBindingType = ContractBindingType.Session
+        };
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "api_exception_step",
+            GameId = "game1",
+            Name = "API Exception Step",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Unique,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = contractTemplateId
+        };
+
+        var request = new UseItemStepRequest
+        {
+            InstanceId = instanceId,
+            UserId = Guid.NewGuid(),
+            UserType = EntityType.Character,
+            MilestoneCode = "invalid_step"
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // For lock re-read
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-1"));
+
+        // CompleteMilestone throws ApiException (e.g., milestone code doesn't exist)
+        _mockContractClient
+            .Setup(c => c.CompleteMilestoneAsync(It.IsAny<CompleteMilestoneRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Milestone not found", 404, "", null, null));
+
+        // Act
+        var (status, response) = await service.UseItemStepAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UseItemStepAsync_FirstStep_OptimisticConcurrencyOnSave_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var contractTemplateId = Guid.NewGuid();
+        var contractInstanceId = Guid.NewGuid();
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 1,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow
+            // No ContractInstanceId = first step
+        };
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "occ_fail_item",
+            GameId = "game1",
+            Name = "OCC Fail Item",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Unique,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = contractTemplateId
+        };
+
+        var request = new UseItemStepRequest
+        {
+            InstanceId = instanceId,
+            UserId = Guid.NewGuid(),
+            UserType = EntityType.Character,
+            MilestoneCode = "step_1"
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Lock re-read returns instance
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-1"));
+
+        // Contract creation succeeds
+        _mockContractClient
+            .Setup(c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContractInstanceResponse { ContractId = contractInstanceId });
+
+        // Optimistic concurrency failure when saving contract to instance
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, response) = await service.UseItemStepAsync(request);
+
+        // Assert - Optimistic concurrency failure returns Conflict
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region Deprecation Lifecycle Edge Cases
+
+    [Fact]
+    public async Task DeprecateItemTemplateAsync_AlreadyDeprecated_StillSucceedsIdempotent()
+    {
+        // Arrange
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var migrationTargetId = Guid.NewGuid();
+        var model = CreateStoredTemplateModel(templateId);
+        // Already deprecated
+        model.IsDeprecated = true;
+        model.DeprecatedAt = DateTimeOffset.UtcNow.AddDays(-1);
+        model.DeprecationReason = "Original reason";
+        model.MigrationTargetId = Guid.NewGuid();
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        ItemTemplateModel? savedModel = null;
+        _mockTemplateStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ItemTemplateModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
+        var request = new DeprecateItemTemplateRequest
+        {
+            TemplateId = templateId,
+            Reason = "New reason",
+            MigrationTargetId = migrationTargetId
+        };
+
+        // Act
+        var (status, response) = await service.DeprecateItemTemplateAsync(request);
+
+        // Assert - Per IMPLEMENTATION TENETS: idempotent deprecation returns OK
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.IsDeprecated);
+        // Updated with new values
+        Assert.NotNull(savedModel);
+        Assert.Equal(migrationTargetId, savedModel.MigrationTargetId);
+    }
+
+    [Fact]
+    public async Task DeprecateItemTemplateAsync_WithMigrationTarget_EventIncludesMigrationTargetInChangedFields()
+    {
+        // Arrange
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var migrationTargetId = Guid.NewGuid();
+        var model = CreateStoredTemplateModel(templateId);
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+        _mockTemplateStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
+        var request = new DeprecateItemTemplateRequest
+        {
+            TemplateId = templateId,
+            Reason = "Replaced by better item",
+            MigrationTargetId = migrationTargetId
+        };
+
+        // Act
+        await service.DeprecateItemTemplateAsync(request);
+
+        // Assert
+        Assert.Equal("item.template.updated", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<ItemTemplateUpdatedEvent>(capturedEvent);
+        Assert.True(typedEvent.IsDeprecated);
+        Assert.Equal(migrationTargetId, typedEvent.MigrationTargetId);
+        Assert.Equal("Replaced by better item", typedEvent.DeprecationReason);
+        // Verify all deprecation fields are in changedFields
+        Assert.Contains("isDeprecated", typedEvent.ChangedFields);
+        Assert.Contains("deprecatedAt", typedEvent.ChangedFields);
+        Assert.Contains("deprecationReason", typedEvent.ChangedFields);
+        Assert.Contains("migrationTargetId", typedEvent.ChangedFields);
+    }
+
+    [Fact]
+    public async Task DeprecateItemTemplateAsync_InvalidatesCacheAfterWrite()
+    {
+        // Arrange
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var model = CreateStoredTemplateModel(templateId);
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+        _mockTemplateStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new DeprecateItemTemplateRequest
+        {
+            TemplateId = templateId
+        };
+
+        // Act
+        await service.DeprecateItemTemplateAsync(request);
+
+        // Assert - cache must be invalidated after deprecation write
+        _mockTemplateCacheStore.Verify(
+            s => s.DeleteAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
+
+    #region Template Code Index Edge Cases
+
+    [Fact]
+    public async Task CreateItemTemplateAsync_ConcurrentCodeClaim_ReturnsConflict()
+    {
+        // Arrange - Another process claims the code between our GetWithETagAsync and TrySaveAsync
+        var service = CreateService();
+        var request = CreateValidTemplateRequest();
+        request.Code = "concurrent_code";
+
+        // GetWithETagAsync returns empty (code not taken yet)
+        _mockTemplateStringStore
+            .Setup(s => s.GetWithETagAsync(It.Is<string>(k => k.StartsWith("tpl-code:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((string?)null, (string?)null));
+
+        // But TrySaveAsync returns null (someone else claimed it between get and save)
+        _mockTemplateStringStore
+            .Setup(s => s.TrySaveAsync(
+                It.Is<string>(k => k.StartsWith("tpl-code:")),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, response) = await service.CreateItemTemplateAsync(request);
+
+        // Assert - Conflict because code was atomically claimed by another process
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CreateItemTemplateAsync_CodeAlreadyExists_ReturnsConflictBeforeSave()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = CreateValidTemplateRequest();
+        var existingTemplateId = Guid.NewGuid();
+
+        // GetWithETagAsync returns an existing ID (code already claimed)
+        _mockTemplateStringStore
+            .Setup(s => s.GetWithETagAsync(It.Is<string>(k => k.StartsWith("tpl-code:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingTemplateId.ToString(), "existing-etag"));
+
+        // Act
+        var (status, response) = await service.CreateItemTemplateAsync(request);
+
+        // Assert - early exit: template store save was never called
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+        _mockTemplateStore.Verify(
+            s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static CreateItemTemplateRequest CreateValidTemplateRequest()
