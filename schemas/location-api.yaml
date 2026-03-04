@@ -42,6 +42,15 @@ info:
     resourceType: location
     gracePeriodSeconds: 604800              # 7 days
     cleanupPolicy: ALL_REQUIRED            # Abort deletion if any cleanup callback fails
+  # Compression callback for resource archival (see SCHEMA-RULES.md "x-compression-callback")
+  x-compression-callback:
+    resourceType: location
+    sourceType: location-base
+    compressEndpoint: /location/get-compress-data
+    compressPayloadTemplate: '{"locationId": "{{resourceId}}"}'
+    priority: 0
+    templateNamespace: location
+    description: Base location data (name, code, type, realm, hierarchy, spatial data, parent context)
 x-service-layer: GameFoundation
 servers:
 - url: http://localhost:5012
@@ -732,6 +741,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClearEntityPositionResponse'
+
+  # ===========================================================================
+  # Compression Endpoint (Resource Service Integration)
+  # ===========================================================================
+
+  /location/get-compress-data:
+    post:
+      summary: Get location base data for compression
+      operationId: getLocationCompressData
+      tags:
+      - Location Compression
+      description: |
+        Called by Resource service during compression.
+        Returns core location data (name, type, hierarchy, spatial, parent context).
+        Returns BadRequest if location is not deprecated - only deprecated locations can be compressed.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLocationCompressDataRequest'
+      responses:
+        '200':
+          description: Location base data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationBaseArchive'
+        '400':
+          description: Location is not deprecated (cannot compress active locations)
+        '404':
+          description: Location not found
 
 components:
   schemas:
@@ -1734,3 +1777,131 @@ components:
           format: uuid
           nullable: true
           description: Location the entity was removed from (null if entity had no active presence)
+
+    # ===========================================================================
+    # Compression Models (Resource Service Integration)
+    # ===========================================================================
+
+    GetLocationCompressDataRequest:
+      description: Request to get location base data for compression archive
+      type: object
+      additionalProperties: false
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to compress
+
+    LocationBaseArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Core location data for archive storage and content flywheel consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The locationId field equals resourceId for convenience.
+        Includes one level of parent context to avoid hierarchy walking during archive queries.
+      allOf:
+        - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+        - locationId
+        - name
+        - code
+        - locationType
+        - realmId
+        - depth
+        - childrenCount
+        - createdAt
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Unique identifier for the location (equals resourceId)
+        name:
+          type: string
+          description: Display name of the location
+        code:
+          type: string
+          description: Unique code identifier for the location
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of the location
+        locationType:
+          allOf:
+          - $ref: '#/components/schemas/LocationType'
+          description: Category of location (Region, City, Building, Room, etc.)
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this location belongs to
+        parentLocationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent location ID (null for root locations)
+        depth:
+          type: integer
+          description: Depth in the location hierarchy (0 for root)
+        parentName:
+          type: string
+          nullable: true
+          description: Parent location name (one level of context, null if root)
+        parentCode:
+          type: string
+          nullable: true
+          description: Parent location code (one level of context, null if root)
+        parentLocationType:
+          allOf:
+          - $ref: '#/components/schemas/LocationType'
+          nullable: true
+          description: Parent location type (one level of context, null if root)
+        childrenCount:
+          type: integer
+          description: Number of immediate child locations
+        childrenCodes:
+          type: array
+          nullable: true
+          description: Codes of immediate child locations (null if no children)
+          items:
+            type: string
+        bounds:
+          allOf:
+          - $ref: './common-api.yaml#/components/schemas/BoundingBox3D'
+          nullable: true
+          description: Spatial bounding box of the location
+        boundsPrecision:
+          allOf:
+          - $ref: '#/components/schemas/BoundsPrecision'
+          nullable: true
+          description: Precision level of the spatial bounds
+        coordinateMode:
+          allOf:
+          - $ref: '#/components/schemas/CoordinateMode'
+          nullable: true
+          description: Coordinate system used for spatial data
+        localOrigin:
+          allOf:
+          - $ref: './common-api.yaml#/components/schemas/Position3D'
+          nullable: true
+          description: Local coordinate origin point
+        createdAt:
+          type: string
+          format: date-time
+          description: Real-world creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Real-world last update timestamp
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the location was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation

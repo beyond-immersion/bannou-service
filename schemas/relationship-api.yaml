@@ -42,6 +42,13 @@ info:
       cleanup:
         endpoint: /relationship/cleanup-by-entity
         payloadTemplate: '{"entityId": "{{resourceId}}", "entityType": "Realm"}'
+    - target: location
+      sourceType: relationship
+      field: entity1Id/entity2Id
+      onDelete: cascade
+      cleanup:
+        endpoint: /relationship/cleanup-by-entity
+        payloadTemplate: '{"entityId": "{{resourceId}}", "entityType": "Location"}'
 x-service-layer: GameFoundation
 servers:
 - url: http://localhost:5012

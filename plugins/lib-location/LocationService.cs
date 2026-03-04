@@ -2198,6 +2198,104 @@ public partial class LocationService : ILocationService
 
     #endregion
 
+    #region Compression
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, LocationBaseArchive?)> GetLocationCompressDataAsync(
+        GetLocationCompressDataRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Getting compress data for location {LocationId}", body.LocationId);
+
+        var locationKey = BuildLocationKey(body.LocationId);
+        var model = await GetLocationWithCacheAsync(locationKey, cancellationToken);
+
+        if (model == null)
+        {
+            _logger.LogDebug("Location not found for compression: {LocationId}", body.LocationId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        if (!model.IsDeprecated)
+        {
+            _logger.LogDebug("Cannot compress non-deprecated location: {LocationId}", body.LocationId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Load parent context (one level up) if parent exists
+        string? parentName = null;
+        string? parentCode = null;
+        LocationType? parentLocationType = null;
+
+        if (model.ParentLocationId.HasValue)
+        {
+            var parentKey = BuildLocationKey(model.ParentLocationId.Value);
+            var parentModel = await GetLocationWithCacheAsync(parentKey, cancellationToken);
+            if (parentModel != null)
+            {
+                parentName = parentModel.Name;
+                parentCode = parentModel.Code;
+                parentLocationType = parentModel.LocationType;
+            }
+        }
+
+        // Load children via parent index to get count and codes
+        var parentIndexKey = BuildParentIndexKey(model.RealmId, body.LocationId);
+        var childIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location)
+            .GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
+
+        var childrenCount = childIds.Count;
+        List<string>? childrenCodes = null;
+
+        if (childIds.Count > 0)
+        {
+            childrenCodes = new List<string>();
+            foreach (var childId in childIds)
+            {
+                var childKey = BuildLocationKey(childId);
+                var childModel = await GetLocationWithCacheAsync(childKey, cancellationToken);
+                if (childModel != null)
+                {
+                    childrenCodes.Add(childModel.Code);
+                }
+            }
+        }
+
+        var archive = new LocationBaseArchive
+        {
+            ResourceId = model.LocationId,
+            ResourceType = "location",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            LocationId = model.LocationId,
+            Name = model.Name,
+            Code = model.Code,
+            Description = model.Description,
+            LocationType = model.LocationType,
+            RealmId = model.RealmId,
+            ParentLocationId = model.ParentLocationId,
+            Depth = model.Depth,
+            ParentName = parentName,
+            ParentCode = parentCode,
+            ParentLocationType = parentLocationType,
+            ChildrenCount = childrenCount,
+            ChildrenCodes = childrenCodes,
+            Bounds = model.Bounds,
+            BoundsPrecision = model.BoundsPrecision == BoundsPrecision.None ? null : model.BoundsPrecision,
+            CoordinateMode = model.CoordinateMode == CoordinateMode.Inherit ? null : model.CoordinateMode,
+            LocalOrigin = model.LocalOrigin,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason
+        };
+
+        _logger.LogDebug("Generated compress data for location {LocationId}", body.LocationId);
+        return (StatusCodes.OK, archive);
+    }
+
+    #endregion
+
     #region Cache Methods
 
     /// <summary>

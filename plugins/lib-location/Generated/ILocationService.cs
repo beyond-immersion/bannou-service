@@ -149,4 +149,9 @@ public partial interface ILocationService : IBannouService
         /// </summary>
         Task<(StatusCodes, ClearEntityPositionResponse?)> ClearEntityPositionAsync(ClearEntityPositionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// GetLocationCompressData operation
+        /// </summary>
+        Task<(StatusCodes, LocationBaseArchive?)> GetLocationCompressDataAsync(GetLocationCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

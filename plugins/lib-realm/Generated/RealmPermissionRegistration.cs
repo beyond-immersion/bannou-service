@@ -225,6 +225,21 @@ public static class RealmPermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/realm/get-location-compress-context",
+            Method = ServiceEndpointMethod.Post,
+            Description = "getLocationCompressContext",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

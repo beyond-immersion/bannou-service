@@ -23,7 +23,7 @@ The Realm service (L2 GameFoundation) manages top-level persistent worlds in the
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events and error events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
 | lib-telemetry (`ITelemetryProvider`) | Distributed tracing spans on all async helper methods |
-| lib-resource (`IResourceClient`) | Reference checking before deletion to verify no external dependencies |
+| lib-resource (`IResourceClient`) | Reference checking before deletion to verify no external dependencies; compression callback registration providing realm context (name, code, description) for location archives |
 | lib-species (`ISpeciesClient`) | Species migration during realm merge (add to target, remove from source) |
 | lib-location (`ILocationClient`) | Location tree migration during realm merge (transfer + re-parent) |
 | lib-character (`ICharacterClient`) | Character migration during realm merge (transfer to target realm) |
@@ -145,6 +145,10 @@ Standard read operations with two lookup strategies. **GetByCode** uses a two-st
 ### Seed Operation (1 endpoint)
 
 Idempotent bulk creation with optional `updateExisting` flag. Processes each realm independently with per-item error handling (failures don't stop the batch). Returns counts of created, updated, skipped, and error messages. When `updateExisting=true`, seed updates now publish `realm.updated` events with proper `changedFields` tracking (same as regular Update).
+
+### Compression Context (1 endpoint)
+
+- **GetLocationCompressContext** (`/realm/get-location-compress-context`): Compression callback providing realm context for location archives. Takes a `locationId`, resolves the location's `realmId` via `ILocationClient`, loads the realm, and returns `RealmLocationArchiveContext` with realm name, code, and description. Follows the multi-callback pattern (like Character-Personality providing context for Character archives). Developer role only.
 
 ---
 
@@ -279,6 +283,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-02-26**: T31 deprecation lifecycle compliance — Deprecate and Undeprecate are now idempotent per IMPLEMENTATION TENETS.
 - **2026-02-28**: Production hardening audit — comprehensive tenet compliance pass (schema, T6, T7, T8, T9, T21, T30) and post-audit code review fixes (ETag concurrency for seed update, ApiException handling in migration helpers).
 - **2026-02-28**: Fixed `SeedRealmsAsync` creation path omitting `IsSystemType` — system realms now correctly seeded on first run.
+- **2026-03-04**: Added `GetLocationCompressContext` endpoint and compression callback registration providing realm context (name, code, description) for location archives. Fixed `x-resource-lifecycle` placement (was at YAML root level instead of inside `info:` block, causing generators to silently skip it). Also registered `RealmContextTemplate` as `IResourceTemplate` for ABML path validation.
 
 ### Ready for Implementation
 

@@ -405,6 +405,21 @@ public static class LocationPermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/location/get-compress-data",
+            Method = ServiceEndpointMethod.Post,
+            Description = "getLocationCompressData",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

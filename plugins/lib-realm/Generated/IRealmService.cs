@@ -89,4 +89,9 @@ public partial interface IRealmService : IBannouService
         /// </summary>
         Task<(StatusCodes, SeedRealmsResponse?)> SeedRealmsAsync(SeedRealmsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// GetLocationCompressContext operation
+        /// </summary>
+        Task<(StatusCodes, RealmLocationArchiveContext?)> GetLocationCompressContextAsync(GetLocationCompressContextRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

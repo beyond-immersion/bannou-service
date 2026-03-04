@@ -2728,3 +2728,312 @@ public class LocationConfigurationTests
         Assert.NotNull(config);
     }
 }
+
+/// <summary>
+/// Tests for location compression data retrieval.
+/// </summary>
+public class LocationCompressionTests : ServiceTestBase<LocationServiceConfiguration>
+{
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<LocationService.LocationModel>> _mockLocationStore;
+    private readonly Mock<IStateStore<LocationService.LocationModel>> _mockLocationCacheStore;
+    private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IStateStore<List<Guid>>> _mockListStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ILogger<LocationService>> _mockLogger;
+    private readonly Mock<IRealmClient> _mockRealmClient;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
+
+    private const string STATE_STORE = "location-statestore";
+    private const string CACHE_STORE = "location-cache";
+    private const string LOCATION_KEY_PREFIX = "location:";
+    private const string PARENT_INDEX_PREFIX = "parent-index:";
+
+    public LocationCompressionTests()
+    {
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockLocationStore = new Mock<IStateStore<LocationService.LocationModel>>();
+        _mockLocationCacheStore = new Mock<IStateStore<LocationService.LocationModel>>();
+        _mockStringStore = new Mock<IStateStore<string>>();
+        _mockListStore = new Mock<IStateStore<List<Guid>>>();
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockLogger = new Mock<ILogger<LocationService>>();
+        _mockRealmClient = new Mock<IRealmClient>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockResourceClient = new Mock<IResourceClient>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
+
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<LocationService.LocationModel>(STATE_STORE))
+            .Returns(_mockLocationStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<LocationService.LocationModel>(CACHE_STORE))
+            .Returns(_mockLocationCacheStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<string>(STATE_STORE))
+            .Returns(_mockStringStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
+            .Returns(_mockListStore.Object);
+    }
+
+    private LocationService CreateService()
+    {
+        return new LocationService(
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            Configuration,
+            _mockRealmClient.Object,
+            _mockLockProvider.Object,
+            _mockResourceClient.Object,
+            _mockTelemetryProvider.Object,
+            _mockEntitySessionRegistry.Object);
+    }
+
+    [Fact]
+    public async Task GetLocationCompressDataAsync_WhenDeprecated_ReturnsArchive()
+    {
+        // Arrange
+        var locationId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var model = new LocationService.LocationModel
+        {
+            LocationId = locationId,
+            RealmId = realmId,
+            Code = "CITY_A",
+            Name = "City A",
+            Description = "A test city",
+            LocationType = LocationType.City,
+            Depth = 1,
+            IsDeprecated = true,
+            DeprecatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            DeprecationReason = "Destroyed by dragon",
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-30),
+            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+        };
+
+        _mockLocationCacheStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+        _mockListStore
+            .Setup(s => s.GetAsync($"{PARENT_INDEX_PREFIX}{realmId}:{locationId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid>());
+
+        var service = CreateService();
+
+        // Act
+        var (status, result) = await service.GetLocationCompressDataAsync(
+            new GetLocationCompressDataRequest { LocationId = locationId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(locationId, result.LocationId);
+        Assert.Equal(locationId, result.ResourceId);
+        Assert.Equal("location", result.ResourceType);
+        Assert.Equal("CITY_A", result.Code);
+        Assert.Equal("City A", result.Name);
+        Assert.Equal(LocationType.City, result.LocationType);
+        Assert.Equal(realmId, result.RealmId);
+        Assert.Equal(1, result.Depth);
+        Assert.Equal(0, result.ChildrenCount);
+        Assert.Equal("Destroyed by dragon", result.DeprecationReason);
+    }
+
+    [Fact]
+    public async Task GetLocationCompressDataAsync_WhenNotDeprecated_ReturnsBadRequest()
+    {
+        // Arrange
+        var locationId = Guid.NewGuid();
+        var model = new LocationService.LocationModel
+        {
+            LocationId = locationId,
+            RealmId = Guid.NewGuid(),
+            Code = "ACTIVE",
+            Name = "Active Location",
+            LocationType = LocationType.Region,
+            IsDeprecated = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockLocationCacheStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        var service = CreateService();
+
+        // Act
+        var (status, result) = await service.GetLocationCompressDataAsync(
+            new GetLocationCompressDataRequest { LocationId = locationId });
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetLocationCompressDataAsync_WhenNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var locationId = Guid.NewGuid();
+
+        _mockLocationCacheStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((LocationService.LocationModel?)null);
+        _mockLocationStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((LocationService.LocationModel?)null);
+
+        var service = CreateService();
+
+        // Act
+        var (status, result) = await service.GetLocationCompressDataAsync(
+            new GetLocationCompressDataRequest { LocationId = locationId });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetLocationCompressDataAsync_IncludesParentContext_WhenParentExists()
+    {
+        // Arrange
+        var parentId = Guid.NewGuid();
+        var locationId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+
+        var parentModel = new LocationService.LocationModel
+        {
+            LocationId = parentId,
+            RealmId = realmId,
+            Code = "REGION_A",
+            Name = "Region A",
+            LocationType = LocationType.Region,
+            Depth = 0,
+            IsDeprecated = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        var childModel = new LocationService.LocationModel
+        {
+            LocationId = locationId,
+            RealmId = realmId,
+            Code = "CITY_B",
+            Name = "City B",
+            LocationType = LocationType.City,
+            ParentLocationId = parentId,
+            Depth = 1,
+            IsDeprecated = true,
+            DeprecatedAt = DateTimeOffset.UtcNow,
+            DeprecationReason = "Abandoned",
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-30),
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockLocationCacheStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(childModel);
+        _mockLocationCacheStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{parentId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(parentModel);
+        _mockListStore
+            .Setup(s => s.GetAsync($"{PARENT_INDEX_PREFIX}{realmId}:{locationId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid>());
+
+        var service = CreateService();
+
+        // Act
+        var (status, result) = await service.GetLocationCompressDataAsync(
+            new GetLocationCompressDataRequest { LocationId = locationId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(parentId, result.ParentLocationId);
+        Assert.Equal("Region A", result.ParentName);
+        Assert.Equal("REGION_A", result.ParentCode);
+        Assert.Equal(LocationType.Region, result.ParentLocationType);
+    }
+
+    [Fact]
+    public async Task GetLocationCompressDataAsync_IncludesChildrenSummary()
+    {
+        // Arrange
+        var locationId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var child1Id = Guid.NewGuid();
+        var child2Id = Guid.NewGuid();
+
+        var model = new LocationService.LocationModel
+        {
+            LocationId = locationId,
+            RealmId = realmId,
+            Code = "REGION_A",
+            Name = "Region A",
+            LocationType = LocationType.Region,
+            Depth = 0,
+            IsDeprecated = true,
+            DeprecatedAt = DateTimeOffset.UtcNow,
+            DeprecationReason = "Merged",
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-30),
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        var child1Model = new LocationService.LocationModel
+        {
+            LocationId = child1Id,
+            RealmId = realmId,
+            Code = "CITY_1",
+            Name = "City 1",
+            LocationType = LocationType.City,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        var child2Model = new LocationService.LocationModel
+        {
+            LocationId = child2Id,
+            RealmId = realmId,
+            Code = "CITY_2",
+            Name = "City 2",
+            LocationType = LocationType.City,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockLocationCacheStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+        _mockLocationCacheStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{child1Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(child1Model);
+        _mockLocationCacheStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{child2Id}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(child2Model);
+        _mockListStore
+            .Setup(s => s.GetAsync($"{PARENT_INDEX_PREFIX}{realmId}:{locationId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { child1Id, child2Id });
+
+        var service = CreateService();
+
+        // Act
+        var (status, result) = await service.GetLocationCompressDataAsync(
+            new GetLocationCompressDataRequest { LocationId = locationId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(2, result.ChildrenCount);
+        Assert.NotNull(result.ChildrenCodes);
+        Assert.Contains("CITY_1", result.ChildrenCodes);
+        Assert.Contains("CITY_2", result.ChildrenCodes);
+    }
+}

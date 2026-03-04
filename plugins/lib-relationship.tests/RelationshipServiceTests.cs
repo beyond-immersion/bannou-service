@@ -1893,6 +1893,291 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
     #endregion
 }
 
+/// <summary>
+/// Tests for Location entity reference tracking in RelationshipService.
+/// Validates that lib-resource references are registered/unregistered for Location entities.
+/// </summary>
+public class RelationshipLocationReferenceTests : ServiceTestBase<RelationshipServiceConfiguration>
+{
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<RelationshipModel>> _mockRelationshipStore;
+    private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IStateStore<List<Guid>>> _mockListStore;
+    private readonly Mock<IStateStore<RelationshipTypeModel>> _mockRtModelStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<ILogger<RelationshipService>> _mockLogger;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<IRelationshipDataCache> _mockRelationshipCache;
+
+    private const string STATE_STORE = "relationship-statestore";
+
+    public RelationshipLocationReferenceTests()
+    {
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockRelationshipStore = new Mock<IStateStore<RelationshipModel>>();
+        _mockStringStore = new Mock<IStateStore<string>>();
+        _mockListStore = new Mock<IStateStore<List<Guid>>>();
+        _mockRtModelStore = new Mock<IStateStore<RelationshipTypeModel>>();
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockLogger = new Mock<ILogger<RelationshipService>>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockResourceClient = new Mock<IResourceClient>();
+        _mockRelationshipCache = new Mock<IRelationshipDataCache>();
+
+        _mockStateStoreFactory.Setup(f => f.GetStore<RelationshipModel>(STATE_STORE)).Returns(_mockRelationshipStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE)).Returns(_mockStringStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE)).Returns(_mockListStore.Object);
+
+        _mockStateStoreFactory.Setup(f => f.GetStore<RelationshipTypeModel>("relationship-type-statestore")).Returns(_mockRtModelStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<string>("relationship-type-statestore")).Returns(new Mock<IStateStore<string>>().Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>("relationship-type-statestore")).Returns(new Mock<IStateStore<List<Guid>>>().Object);
+
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+    }
+
+    private RelationshipService CreateService()
+    {
+        return new RelationshipService(
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            Configuration,
+            _mockLockProvider.Object,
+            _mockEventConsumer.Object,
+            _mockTelemetryProvider.Object,
+            _mockResourceClient.Object,
+            _mockRelationshipCache.Object);
+    }
+
+    private void SetupCreateRelationshipMocks(Guid entity1Id, Guid entity2Id, Guid relationshipTypeId)
+    {
+        _mockRtModelStore
+            .Setup(s => s.GetAsync($"type:{relationshipTypeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RelationshipTypeModel
+            {
+                RelationshipTypeId = relationshipTypeId,
+                Code = "LOCATION_BOND",
+                Name = "Location Bond",
+                IsBidirectional = true,
+                IsDeprecated = false,
+                Depth = 0,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("composite:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        _mockListStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("entity-idx:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid>());
+
+        _mockListStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("type-idx:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid>());
+
+        _mockListStore
+            .Setup(s => s.GetAsync("all-relationships", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid>());
+
+        _mockRelationshipStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<RelationshipModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+    }
+
+    [Fact]
+    public async Task CreateRelationshipAsync_RegistersLocationReference_WhenEntityIsLocation()
+    {
+        // Arrange
+        var service = CreateService();
+        var locationId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var typeId = Guid.NewGuid();
+
+        SetupCreateRelationshipMocks(locationId, characterId, typeId);
+
+        var request = new CreateRelationshipRequest
+        {
+            Entity1Id = locationId,
+            Entity1Type = EntityType.Location,
+            Entity2Id = characterId,
+            Entity2Type = EntityType.Character,
+            RelationshipTypeId = typeId,
+            StartedAt = DateTimeOffset.UtcNow
+        };
+
+        // Act
+        var (status, _) = await service.CreateRelationshipAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify location reference was registered via lib-resource
+        _mockResourceClient.Verify(r => r.RegisterReferenceAsync(
+            It.Is<RegisterReferenceRequest>(req =>
+                req.ResourceType == "location" &&
+                req.ResourceId == locationId &&
+                req.SourceType == "relationship"),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify character reference was also registered
+        _mockResourceClient.Verify(r => r.RegisterReferenceAsync(
+            It.Is<RegisterReferenceRequest>(req =>
+                req.ResourceType == "character" &&
+                req.ResourceId == characterId &&
+                req.SourceType == "relationship"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task EndRelationshipAsync_UnregistersLocationReference()
+    {
+        // Arrange
+        var service = CreateService();
+        var relationshipId = Guid.NewGuid();
+        var locationId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+
+        var model = new RelationshipModel
+        {
+            RelationshipId = relationshipId,
+            Entity1Id = locationId,
+            Entity1Type = EntityType.Location,
+            Entity2Id = characterId,
+            Entity2Type = EntityType.Character,
+            RelationshipTypeId = Guid.NewGuid(),
+            EndedAt = null,
+            StartedAt = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetAsync($"rel:{relationshipId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        _mockRelationshipStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<RelationshipModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new EndRelationshipRequest
+        {
+            RelationshipId = relationshipId,
+            Reason = "Location demolished"
+        };
+
+        // Act
+        var status = await service.EndRelationshipAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify location reference was unregistered
+        _mockResourceClient.Verify(r => r.UnregisterReferenceAsync(
+            It.Is<UnregisterReferenceRequest>(req =>
+                req.ResourceType == "location" &&
+                req.ResourceId == locationId &&
+                req.SourceType == "relationship"),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify character reference was also unregistered
+        _mockResourceClient.Verify(r => r.UnregisterReferenceAsync(
+            It.Is<UnregisterReferenceRequest>(req =>
+                req.ResourceType == "character" &&
+                req.ResourceId == characterId &&
+                req.SourceType == "relationship"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CleanupByEntityAsync_EndsLocationRelationships()
+    {
+        // Arrange
+        var service = CreateService();
+        var locationId = Guid.NewGuid();
+        var relationshipId = Guid.NewGuid();
+        var otherEntityId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Location}:{locationId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { relationshipId });
+
+        var model = new RelationshipModel
+        {
+            RelationshipId = relationshipId,
+            Entity1Id = locationId,
+            Entity1Type = EntityType.Location,
+            Entity2Id = otherEntityId,
+            Entity2Type = EntityType.Character,
+            RelationshipTypeId = Guid.NewGuid(),
+            EndedAt = null,
+            StartedAt = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        var bulkResults = new Dictionary<string, RelationshipModel>
+        {
+            [$"rel:{relationshipId}"] = model
+        };
+
+        _mockRelationshipStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipModel>)bulkResults);
+
+        _mockRelationshipStore
+            .Setup(s => s.GetAsync($"rel:{relationshipId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        _mockRelationshipStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<RelationshipModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new CleanupByEntityRequest
+        {
+            EntityId = locationId,
+            EntityType = EntityType.Location
+        };
+
+        // Act
+        var (status, response) = await service.CleanupByEntityAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.RelationshipsEnded);
+
+        // Verify location reference was unregistered
+        _mockResourceClient.Verify(r => r.UnregisterReferenceAsync(
+            It.Is<UnregisterReferenceRequest>(req =>
+                req.ResourceType == "location" &&
+                req.ResourceId == locationId &&
+                req.SourceType == "relationship"),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify character reference for the other entity was also unregistered
+        _mockResourceClient.Verify(r => r.UnregisterReferenceAsync(
+            It.Is<UnregisterReferenceRequest>(req =>
+                req.ResourceType == "character" &&
+                req.ResourceId == otherEntityId &&
+                req.SourceType == "relationship"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+}
+
 public class RelationshipConfigurationTests
 {
     [Fact]

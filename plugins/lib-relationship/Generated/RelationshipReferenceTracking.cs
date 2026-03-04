@@ -116,6 +116,52 @@ public partial class RelationshipService
             cancellationToken);
     }
 
+    /// <summary>
+    /// Registers a reference from a relationship entity to a location resource.
+    /// Call this after creating an entity that references the resource.
+    /// </summary>
+    /// <param name="relationshipId">The ID of the relationship entity holding the reference.</param>
+    /// <param name="locationId">The ID of the location resource being referenced.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    protected async Task RegisterLocationReferenceAsync(
+        string relationshipId,
+        Guid locationId,
+        CancellationToken cancellationToken = default)
+    {
+        await _resourceClient.RegisterReferenceAsync(
+            new RegisterReferenceRequest
+            {
+                ResourceType = "location",
+                ResourceId = locationId,
+                SourceType = "relationship",
+                SourceId = relationshipId
+            },
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Unregisters a reference from a relationship entity to a location resource.
+    /// Call this before deleting an entity that references the resource.
+    /// </summary>
+    /// <param name="relationshipId">The ID of the relationship entity releasing the reference.</param>
+    /// <param name="locationId">The ID of the location resource being dereferenced.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    protected async Task UnregisterLocationReferenceAsync(
+        string relationshipId,
+        Guid locationId,
+        CancellationToken cancellationToken = default)
+    {
+        await _resourceClient.UnregisterReferenceAsync(
+            new UnregisterReferenceRequest
+            {
+                ResourceType = "location",
+                ResourceId = locationId,
+                SourceType = "relationship",
+                SourceId = relationshipId
+            },
+            cancellationToken);
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // Cleanup Callback Registration
     // ═══════════════════════════════════════════════════════════════════════════
@@ -167,6 +213,27 @@ public partial class RelationshipService
                     CallbackEndpoint = "/relationship/cleanup-by-entity",
                     PayloadTemplate = "{\"entityId\": \"{{resourceId}}\", \"entityType\": \"Realm\"}",
                     Description = "Cleanup relationship entities referencing deleted realm"
+                },
+                cancellationToken);
+        }
+        catch (ApiException)
+        {
+            allSucceeded = false;
+        }
+
+        // Register cleanup callback for location references
+        try
+        {
+            await resourceClient.DefineCleanupCallbackAsync(
+                new DefineCleanupRequest
+                {
+                    ResourceType = "location",
+                    SourceType = "relationship",
+                    OnDeleteAction = OnDeleteAction.Cascade,
+                    ServiceName = "relationship",
+                    CallbackEndpoint = "/relationship/cleanup-by-entity",
+                    PayloadTemplate = "{\"entityId\": \"{{resourceId}}\", \"entityType\": \"Location\"}",
+                    Description = "Cleanup relationship entities referencing deleted location"
                 },
                 cancellationToken);
         }

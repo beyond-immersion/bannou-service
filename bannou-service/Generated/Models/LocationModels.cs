@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Location;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Location;
 
@@ -1476,6 +1491,178 @@ public partial class ClearEntityPositionResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousLocationId")]
     public System.Guid? PreviousLocationId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to get location base data for compression archive
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetLocationCompressDataRequest
+{
+
+    /// <summary>
+    /// ID of the location to compress
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid LocationId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Core location data for archive storage and content flywheel consumption.
+/// <br/>Inherits base archive properties from ResourceArchiveBase.
+/// <br/>The locationId field equals resourceId for convenience.
+/// <br/>Includes one level of parent context to avoid hierarchy walking during archive queries.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class LocationBaseArchive : ResourceArchiveBase
+{
+
+    /// <summary>
+    /// Unique identifier for the location (equals resourceId)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid LocationId { get; set; } = default!;
+
+    /// <summary>
+    /// Display name of the location
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Unique code identifier for the location
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description of the location
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Category of location (Region, City, Building, Room, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public LocationType LocationType { get; set; } = default!;
+
+    /// <summary>
+    /// Realm this location belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Parent location ID (null for root locations)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentLocationId")]
+    public System.Guid? ParentLocationId { get; set; } = default!;
+
+    /// <summary>
+    /// Depth in the location hierarchy (0 for root)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("depth")]
+    public int Depth { get; set; } = default!;
+
+    /// <summary>
+    /// Parent location name (one level of context, null if root)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentName")]
+    public string? ParentName { get; set; } = default!;
+
+    /// <summary>
+    /// Parent location code (one level of context, null if root)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentCode")]
+    public string? ParentCode { get; set; } = default!;
+
+    /// <summary>
+    /// Parent location type (one level of context, null if root)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentLocationType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public LocationType? ParentLocationType { get; set; } = default!;
+
+    /// <summary>
+    /// Number of immediate child locations
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("childrenCount")]
+    public int ChildrenCount { get; set; } = default!;
+
+    /// <summary>
+    /// Codes of immediate child locations (null if no children)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("childrenCodes")]
+    public System.Collections.Generic.ICollection<string>? ChildrenCodes { get; set; } = default!;
+
+    /// <summary>
+    /// Spatial bounding box of the location
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
+    public BoundingBox3D? Bounds { get; set; } = default!;
+
+    /// <summary>
+    /// Precision level of the spatial bounds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BoundsPrecision? BoundsPrecision { get; set; } = default!;
+
+    /// <summary>
+    /// Coordinate system used for spatial data
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CoordinateMode? CoordinateMode { get; set; } = default!;
+
+    /// <summary>
+    /// Local coordinate origin point
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("localOrigin")]
+    public Position3D? LocalOrigin { get; set; } = default!;
+
+    /// <summary>
+    /// Real-world creation timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Real-world last update timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the location was deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    public string? DeprecationReason { get; set; } = default!;
 
 }
 

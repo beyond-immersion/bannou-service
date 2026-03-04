@@ -486,16 +486,20 @@ public partial class RelationshipService : IRelationshipService
         // Update type index
         await AddToTypeIndexAsync(body.RelationshipTypeId, relationshipId, cancellationToken);
 
-        // Register resource references for character and realm entities (per x-references)
+        // Register resource references for character, realm, and location entities (per x-references)
         if (body.Entity1Type == EntityType.Character)
             await RegisterCharacterReferenceAsync(relationshipId.ToString(), body.Entity1Id, cancellationToken);
         else if (body.Entity1Type == EntityType.Realm)
             await RegisterRealmReferenceAsync(relationshipId.ToString(), body.Entity1Id, cancellationToken);
+        else if (body.Entity1Type == EntityType.Location)
+            await RegisterLocationReferenceAsync(relationshipId.ToString(), body.Entity1Id, cancellationToken);
 
         if (body.Entity2Type == EntityType.Character)
             await RegisterCharacterReferenceAsync(relationshipId.ToString(), body.Entity2Id, cancellationToken);
         else if (body.Entity2Type == EntityType.Realm)
             await RegisterRealmReferenceAsync(relationshipId.ToString(), body.Entity2Id, cancellationToken);
+        else if (body.Entity2Type == EntityType.Location)
+            await RegisterLocationReferenceAsync(relationshipId.ToString(), body.Entity2Id, cancellationToken);
 
         // Publish relationship created event
         await PublishRelationshipCreatedEventAsync(model, cancellationToken);
@@ -652,16 +656,20 @@ public partial class RelationshipService : IRelationshipService
         await _relationshipStringStore
             .DeleteAsync(compositeKey, cancellationToken);
 
-        // Unregister resource references for character and realm entities (per x-references)
+        // Unregister resource references for character, realm, and location entities (per x-references)
         if (model.Entity1Type == EntityType.Character)
             await UnregisterCharacterReferenceAsync(body.RelationshipId.ToString(), model.Entity1Id, cancellationToken);
         else if (model.Entity1Type == EntityType.Realm)
             await UnregisterRealmReferenceAsync(body.RelationshipId.ToString(), model.Entity1Id, cancellationToken);
+        else if (model.Entity1Type == EntityType.Location)
+            await UnregisterLocationReferenceAsync(body.RelationshipId.ToString(), model.Entity1Id, cancellationToken);
 
         if (model.Entity2Type == EntityType.Character)
             await UnregisterCharacterReferenceAsync(body.RelationshipId.ToString(), model.Entity2Id, cancellationToken);
         else if (model.Entity2Type == EntityType.Realm)
             await UnregisterRealmReferenceAsync(body.RelationshipId.ToString(), model.Entity2Id, cancellationToken);
+        else if (model.Entity2Type == EntityType.Location)
+            await UnregisterLocationReferenceAsync(body.RelationshipId.ToString(), model.Entity2Id, cancellationToken);
 
         // Publish relationship deleted/ended event
         await PublishRelationshipDeletedEventAsync(model, body.Reason ?? "Relationship ended", cancellationToken);
@@ -766,16 +774,20 @@ public partial class RelationshipService : IRelationshipService
             await _relationshipStringStore
                 .DeleteAsync(compositeKey, cancellationToken);
 
-            // Unregister resource references for character and realm entities (per x-references)
+            // Unregister resource references for character, realm, and location entities (per x-references)
             if (latestModel.Entity1Type == EntityType.Character)
                 await UnregisterCharacterReferenceAsync(latestModel.RelationshipId.ToString(), latestModel.Entity1Id, cancellationToken);
             else if (latestModel.Entity1Type == EntityType.Realm)
                 await UnregisterRealmReferenceAsync(latestModel.RelationshipId.ToString(), latestModel.Entity1Id, cancellationToken);
+            else if (latestModel.Entity1Type == EntityType.Location)
+                await UnregisterLocationReferenceAsync(latestModel.RelationshipId.ToString(), latestModel.Entity1Id, cancellationToken);
 
             if (latestModel.Entity2Type == EntityType.Character)
                 await UnregisterCharacterReferenceAsync(latestModel.RelationshipId.ToString(), latestModel.Entity2Id, cancellationToken);
             else if (latestModel.Entity2Type == EntityType.Realm)
                 await UnregisterRealmReferenceAsync(latestModel.RelationshipId.ToString(), latestModel.Entity2Id, cancellationToken);
+            else if (latestModel.Entity2Type == EntityType.Location)
+                await UnregisterLocationReferenceAsync(latestModel.RelationshipId.ToString(), latestModel.Entity2Id, cancellationToken);
 
             // Publish deletion event for each ended relationship
             await PublishRelationshipDeletedEventAsync(latestModel, "Entity deleted (cascade cleanup)", cancellationToken);

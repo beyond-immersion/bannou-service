@@ -1587,4 +1587,55 @@ public partial class RealmService : IRealmService
     #region Permission Registration
 
     #endregion
+
+    #region Compression
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, RealmLocationArchiveContext?)> GetLocationCompressContextAsync(
+        GetLocationCompressContextRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Getting realm context for location archive: {LocationId}", body.LocationId);
+
+        // Resolve the location to get its realmId
+        LocationResponse locationResponse;
+        try
+        {
+            locationResponse = await _locationClient.GetLocationAsync(
+                new GetLocationRequest { LocationId = body.LocationId },
+                cancellationToken);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogDebug("Location not found for compression context: {LocationId}", body.LocationId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Load the realm
+        var realmKey = BuildRealmKey(locationResponse.RealmId);
+        var model = await _realmStore.GetAsync(realmKey, cancellationToken);
+
+        if (model == null)
+        {
+            _logger.LogDebug("Realm not found for location {LocationId}: {RealmId}", body.LocationId, locationResponse.RealmId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var context = new RealmLocationArchiveContext
+        {
+            ResourceId = body.LocationId,
+            ResourceType = "location",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            RealmId = model.RealmId,
+            RealmName = model.Name,
+            RealmCode = model.Code,
+            RealmDescription = model.Description
+        };
+
+        _logger.LogDebug("Generated realm context for location archive: {LocationId}, realm {RealmCode}", body.LocationId, model.Code);
+        return (StatusCodes.OK, context);
+    }
+
+    #endregion
 }

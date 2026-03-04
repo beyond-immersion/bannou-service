@@ -36,7 +36,7 @@ The `${relationship.*}` ABML variable namespace ([#147](https://github.com/beyon
 | lib-state (`IDistributedLockProvider`) | Distributed locks for composite uniqueness enforcement and index read-modify-write operations |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events and error events |
 | lib-messaging (`IEventConsumer`) | Event registration infrastructure (no current handlers) |
-| lib-resource (`IResourceClient`) | Cleanup callback registration for character and realm reference tracking (via `x-references`). Organization and Faction coverage planned ([#564](https://github.com/beyond-immersion/bannou-service/issues/564)) |
+| lib-resource (`IResourceClient`) | Cleanup callback registration for character, realm, and location reference tracking (via `x-references`). Organization and Faction coverage planned ([#564](https://github.com/beyond-immersion/bannou-service/issues/564)) |
 
 ---
 
@@ -161,7 +161,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 - **End** (`/relationship/end`): Soft-deletes by setting `EndedAt` timestamp. Returns Conflict if already ended. Deletes the composite uniqueness key (allowing the same relationship to be recreated later). Does NOT remove from entity or type indexes (keeping history queryable). Publishes `relationship.deleted` with optional reason from the request (defaults to "Relationship ended" when null).
 
-- **CleanupByEntity** (`/relationship/cleanup-by-entity`): Called by lib-resource during cascading entity deletion. Loads the entity index for the deleted entity, bulk-fetches all relationships, and soft-deletes (ends) each active relationship. Skips already-ended relationships. Clears composite uniqueness keys for ended relationships to allow future recreation. Publishes `relationship.deleted` events for each ended relationship with reason "Entity deleted (cascade cleanup)". Returns counts of ended and already-ended relationships. Requires `developer` role (internal service-to-service only). Registered via `x-references` for character and realm targets.
+- **CleanupByEntity** (`/relationship/cleanup-by-entity`): Called by lib-resource during cascading entity deletion. Loads the entity index for the deleted entity, bulk-fetches all relationships, and soft-deletes (ends) each active relationship. Skips already-ended relationships. Clears composite uniqueness keys for ended relationships to allow future recreation. Publishes `relationship.deleted` events for each ended relationship with reason "Entity deleted (cascade cleanup)". Returns counts of ended and already-ended relationships. Requires `developer` role (internal service-to-service only). Registered via `x-references` for character, realm, and location targets.
 
 ### Relationship Type Endpoints (13 endpoints)
 
@@ -417,3 +417,7 @@ State Store Layout
 - [#510](https://github.com/beyond-immersion/bannou-service/issues/510): Unbounded index growth from ended relationships — entity and type indexes accumulate IDs indefinitely, includes orphaned entity-idx after cascade deletion (Design Consideration #2). Orphaned entity-idx cleanup in `CleanupByEntityAsync` is trivially fixable independent of the broader design
 - [#544](https://github.com/beyond-immersion/bannou-service/issues/544): Game-time auto-population for `startedAt`/`endedAt` fields — cross-cutting with Character Encounter. Key open question: relationships are cross-realm (no single clock applies), so game-time may not be applicable here
 - [#564](https://github.com/beyond-immersion/bannou-service/issues/564): Expand `x-references` cleanup to cover Organization and Faction entity types (when those plugins are implemented)
+
+### Completed
+
+- **2026-03-04**: Added Location to `x-references` cleanup alongside Character and Realm. `CreateRelationshipAsync`, `EndRelationshipAsync`, and `CleanupByEntityAsync` now register/unregister lib-resource references for `EntityType.Location` entities.

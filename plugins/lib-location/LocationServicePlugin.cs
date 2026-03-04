@@ -1,9 +1,12 @@
+using BeyondImmersion.Bannou.BehaviorCompiler.Templates;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Contract;
+using BeyondImmersion.BannouService.Generated.ResourceTemplates;
 using BeyondImmersion.BannouService.Location.Caching;
 using BeyondImmersion.BannouService.Location.Providers;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Resource;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -44,6 +47,34 @@ public class LocationServicePlugin : StandardServicePlugin<ILocationService>
         await base.OnRunningAsync();
 
         await RegisterTerritoryClauseTypeAsync(CancellationToken.None);
+        await RegisterCompressionCallbackAsync(CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Registers the location resource template and compression callback with lib-resource.
+    /// IResourceTemplateRegistry is L0 infrastructure and IResourceClient is L1 — both guaranteed available.
+    /// </summary>
+    private async Task RegisterCompressionCallbackAsync(CancellationToken cancellationToken)
+    {
+        var serviceProvider = ServiceProvider ?? throw new InvalidOperationException(
+            "ServiceProvider not available during OnRunningAsync");
+
+        // Register resource template for ABML compile-time path validation.
+        var templateRegistry = serviceProvider.GetRequiredService<IResourceTemplateRegistry>();
+        templateRegistry.Register(new LocationBaseTemplate());
+        Logger?.LogDebug("Registered location resource template with namespace 'location'");
+
+        // Register compression callback with lib-resource.
+        using var scope = serviceProvider.CreateScope();
+        var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
+        if (await LocationCompressionCallbacks.RegisterAsync(resourceClient, cancellationToken))
+        {
+            Logger?.LogInformation("Registered location compression callback with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register location compression callback with lib-resource");
+        }
     }
 
     /// <summary>

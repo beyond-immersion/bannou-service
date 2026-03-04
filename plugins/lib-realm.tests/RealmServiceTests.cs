@@ -2372,3 +2372,180 @@ public class RealmConfigurationTests
         Assert.NotNull(config);
     }
 }
+
+/// <summary>
+/// Tests for realm location compression context retrieval.
+/// </summary>
+public class RealmLocationCompressionTests : ServiceTestBase<RealmServiceConfiguration>
+{
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<RealmModel>> _mockRealmStore;
+    private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IStateStore<List<Guid>>> _mockListStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ILogger<RealmService>> _mockLogger;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<ISpeciesClient> _mockSpeciesClient;
+    private readonly Mock<ILocationClient> _mockLocationClient;
+    private readonly Mock<ICharacterClient> _mockCharacterClient;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IWorldstateClient> _mockWorldstateClient;
+
+    private const string STATE_STORE = "realm-statestore";
+    private const string REALM_KEY_PREFIX = "realm:";
+
+    public RealmLocationCompressionTests()
+    {
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockRealmStore = new Mock<IStateStore<RealmModel>>();
+        _mockStringStore = new Mock<IStateStore<string>>();
+        _mockListStore = new Mock<IStateStore<List<Guid>>>();
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockLogger = new Mock<ILogger<RealmService>>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockResourceClient = new Mock<IResourceClient>();
+        _mockSpeciesClient = new Mock<ISpeciesClient>();
+        _mockLocationClient = new Mock<ILocationClient>();
+        _mockCharacterClient = new Mock<ICharacterClient>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockWorldstateClient = new Mock<IWorldstateClient>();
+
+        _mockStateStoreFactory.Setup(f => f.GetStore<RealmModel>(STATE_STORE)).Returns(_mockRealmStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE)).Returns(_mockStringStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE)).Returns(_mockListStore.Object);
+
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+    }
+
+    private RealmService CreateService()
+    {
+        return new RealmService(
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            Configuration,
+            _mockEventConsumer.Object,
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object,
+            _mockResourceClient.Object,
+            _mockSpeciesClient.Object,
+            _mockLocationClient.Object,
+            _mockCharacterClient.Object,
+            _mockWorldstateClient.Object);
+    }
+
+    [Fact]
+    public async Task GetLocationCompressContextAsync_ReturnsRealmContext()
+    {
+        // Arrange
+        var locationId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+
+        _mockLocationClient
+            .Setup(c => c.GetLocationAsync(It.IsAny<GetLocationRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new LocationResponse
+            {
+                LocationId = locationId,
+                RealmId = realmId,
+                Code = "CITY_A",
+                Name = "City A",
+                LocationType = LocationType.City,
+                Depth = 1,
+                IsDeprecated = true,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RealmModel
+            {
+                RealmId = realmId,
+                Code = "OMEGA",
+                Name = "Omega Realm",
+                Description = "The primary realm",
+                GameServiceId = Guid.NewGuid(),
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        var service = CreateService();
+
+        // Act
+        var (status, result) = await service.GetLocationCompressContextAsync(
+            new GetLocationCompressContextRequest { LocationId = locationId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(locationId, result.ResourceId);
+        Assert.Equal("location", result.ResourceType);
+        Assert.Equal(realmId, result.RealmId);
+        Assert.Equal("Omega Realm", result.RealmName);
+        Assert.Equal("OMEGA", result.RealmCode);
+        Assert.Equal("The primary realm", result.RealmDescription);
+    }
+
+    [Fact]
+    public async Task GetLocationCompressContextAsync_WhenLocationNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var locationId = Guid.NewGuid();
+
+        _mockLocationClient
+            .Setup(c => c.GetLocationAsync(It.IsAny<GetLocationRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
+
+        var service = CreateService();
+
+        // Act
+        var (status, result) = await service.GetLocationCompressContextAsync(
+            new GetLocationCompressContextRequest { LocationId = locationId });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetLocationCompressContextAsync_WhenRealmNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var locationId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+
+        _mockLocationClient
+            .Setup(c => c.GetLocationAsync(It.IsAny<GetLocationRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new LocationResponse
+            {
+                LocationId = locationId,
+                RealmId = realmId,
+                Code = "ORPHAN",
+                Name = "Orphaned Location",
+                LocationType = LocationType.Other,
+                Depth = 0,
+                IsDeprecated = true,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RealmModel?)null);
+
+        var service = CreateService();
+
+        // Act
+        var (status, result) = await service.GetLocationCompressContextAsync(
+            new GetLocationCompressContextRequest { LocationId = locationId });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+}

@@ -1,0 +1,1027 @@
+openapi: 3.0.4
+info:
+  title: Bannou Realm Service API
+  description: |
+    Realm management service for game worlds.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    Realms are the top-level persistent worlds (independent world instances).
+    Each realm operates as an independent peer with distinct characteristics, species populations,
+    and cultural contexts.
+
+    **Flat Structure**: Realms have no hierarchical relationships - each is a peer world.
+
+    **Realm Association**: Characters, species, and locations reference realms via realmId.
+
+    **Deprecation System**: Realms can be deprecated instead of deleted directly.
+    Deprecated realms remain queryable but prevent new entity creation.
+    The special VOID realm serves as a sink for entities whose realm should be removed.
+
+    **Two-Step Deletion**:
+    1. Deprecate the realm (soft delete, prevents new usage)
+    2. Optionally hard-delete the deprecated realm after all references are removed
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-resource-lifecycle:
+    resourceType: realm
+    cleanupPolicy: BEST_EFFORT
+  # Compression callback providing realm context for location archives (see SCHEMA-RULES.md "x-compression-callback")
+  x-compression-callback:
+    resourceType: location
+    sourceType: realm-context
+    compressEndpoint: /realm/get-location-compress-context
+    compressPayloadTemplate: '{"locationId": "{{resourceId}}"}'
+    priority: 5
+    templateNamespace: realm
+    description: Realm context for location archives (realm name, code, description)
+x-service-layer: GameFoundation
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+# NOTE: x-lifecycle moved to realm-events.yaml
+
+paths:
+  /realm/get:
+    post:
+      summary: Get realm by ID
+      operationId: getRealm
+      tags:
+      - Realm
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRealmRequest'
+      responses:
+        '200':
+          description: Realm retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmResponse'
+        '404':
+          description: Realm not found
+
+  /realm/get-by-code:
+    post:
+      summary: Get realm by code
+      description: Retrieve a realm using its unique code (e.g., "REALM_1", "REALM_2")
+      operationId: getRealmByCode
+      tags:
+      - Realm
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRealmByCodeRequest'
+      responses:
+        '200':
+          description: Realm retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmResponse'
+        '404':
+          description: Realm not found
+
+  /realm/list:
+    post:
+      summary: List all realms
+      description: Retrieve all realms with optional filtering
+      operationId: listRealms
+      tags:
+      - Realm
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListRealmsRequest'
+      responses:
+        '200':
+          description: Realms retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmListResponse'
+
+  /realm/create:
+    post:
+      summary: Create new realm
+      operationId: createRealm
+      tags:
+      - Realm Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRealmRequest'
+      responses:
+        '200':
+          description: Realm created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmResponse'
+        '400':
+          description: Invalid realm data
+        '409':
+          description: Realm with this code already exists
+
+  /realm/update:
+    post:
+      summary: Update realm
+      operationId: updateRealm
+      tags:
+      - Realm Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRealmRequest'
+      responses:
+        '200':
+          description: Realm updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmResponse'
+        '404':
+          description: Realm not found
+        '400':
+          description: Invalid update data
+
+  /realm/delete:
+    post:
+      summary: Delete realm
+      description: |
+        Hard delete a realm. This will fail if the realm is still in use.
+        For safe removal, first deprecate the realm, then delete after all
+        references are removed. Only deprecated realms with zero references
+        can be deleted.
+      operationId: deleteRealm
+      tags:
+      - Realm Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteRealmRequest'
+      responses:
+        '200':
+          description: Realm deleted successfully
+        '404':
+          description: Realm not found
+        '409':
+          description: Cannot delete - realm is in use by characters, species, or locations
+
+  /realm/deprecate:
+    post:
+      summary: Deprecate a realm
+      description: |
+        Soft-delete a realm by marking it as deprecated.
+        Deprecated realms:
+        - Remain queryable for historical data
+        - Cannot be used for creating new entities (characters, locations, etc.)
+        - Can be hard-deleted after all references are removed
+      operationId: deprecateRealm
+      tags:
+      - Realm Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateRealmRequest'
+      responses:
+        '200':
+          description: Realm deprecated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmResponse'
+        '404':
+          description: Realm not found
+
+  /realm/undeprecate:
+    post:
+      summary: Restore a deprecated realm
+      description: |
+        Remove the deprecated status from a realm, making it
+        available for new entities again.
+      operationId: undeprecateRealm
+      tags:
+      - Realm Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UndeprecateRealmRequest'
+      responses:
+        '200':
+          description: Realm restored successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmResponse'
+        '404':
+          description: Realm not found
+
+  /realm/merge:
+    post:
+      summary: Merge a deprecated realm into another realm
+      description: |
+        Migrates all entities (species, locations, characters) from a deprecated
+        source realm into a target realm. Migration order: species first (add target
+        realm association), then locations (root-first tree moves), then characters
+        (bulk transfer). Continues on individual failures, reporting per-entity-type
+        counts. Optionally deletes the source realm after successful migration
+        (skipped if any failures occurred).
+
+        Merge from VOID realm is blocked (VOID is system infrastructure).
+        Merge into VOID realm is allowed (intentionally orphaning entities).
+      operationId: mergeRealms
+      tags:
+      - Realm Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeRealmsRequest'
+      responses:
+        '200':
+          description: Merge completed (check response for per-entity-type results)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MergeRealmsResponse'
+        '404':
+          description: Source or target realm not found
+        '400':
+          description: Source realm must be deprecated, or merge from VOID blocked
+
+  /realm/exists:
+    post:
+      summary: Check if realm exists and is active
+      description: |
+        Fast validation endpoint for other services to check realm validity.
+        Returns true if realm exists and is not deprecated, false otherwise.
+      operationId: realmExists
+      tags:
+      - Realm
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RealmExistsRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmExistsResponse'
+
+  /realm/exists-batch:
+    post:
+      summary: Check if multiple realms exist and are active
+      description: |
+        Batch validation endpoint for services creating multi-realm entities.
+        Returns validation results for each realm ID in a single call, avoiding
+        N+1 API calls when validating multiple realms.
+      operationId: realmsExistBatch
+      tags:
+      - Realm
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RealmsExistBatchRequest'
+      responses:
+        '200':
+          description: Validation results for all requested realms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmsExistBatchResponse'
+
+  /realm/seed:
+    post:
+      summary: Seed realms from configuration
+      description: |
+        Idempotent operation to seed realms from provided data.
+        Creates realms that don't exist, optionally updates existing realms.
+        Typically called at service startup with YAML-defined realms.
+      operationId: seedRealms
+      tags:
+      - Realm Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedRealmsRequest'
+      responses:
+        '200':
+          description: Seed operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedRealmsResponse'
+        '400':
+          description: Invalid seed data
+
+  /realm/get-location-compress-context:
+    post:
+      summary: Get realm context for location archive
+      operationId: getLocationCompressContext
+      tags:
+      - Realm Compression
+      description: |
+        Called by Resource service during location compression.
+        Resolves the location's realm and returns realm context (name, code, description)
+        for inclusion in the location archive.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLocationCompressContextRequest'
+      responses:
+        '200':
+          description: Realm context for location archive returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmLocationArchiveContext'
+        '404':
+          description: Location or realm not found
+
+components:
+  schemas:
+    GetRealmRequest:
+      description: Request to retrieve a specific realm by its unique identifier
+      type: object
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Unique identifier of the realm
+
+    GetRealmByCodeRequest:
+      description: Request to retrieve a realm by its unique code identifier
+      type: object
+      additionalProperties: false
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '^[A-Z][A-Z0-9_]*$'
+          description: Unique code for the realm (e.g., "REALM_1", "REALM_2")
+
+    ListRealmsRequest:
+      description: Request to list realms with optional filtering and pagination
+      type: object
+      additionalProperties: false
+      properties:
+        category:
+          type: string
+          nullable: true
+          description: Filter by category (e.g., "MAIN", "SPECIAL", "TEST")
+        isActive:
+          type: boolean
+          nullable: true
+          description: Filter by active status
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated realms in the response
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination (1-indexed)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of realms to return per page
+
+    CreateRealmRequest:
+      description: Request to create a new realm with the specified properties
+      type: object
+      additionalProperties: false
+      required:
+      - code
+      - name
+      - gameServiceId
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '^[A-Z][A-Z0-9_]*$'
+          description: Unique code for the realm (e.g., "REALM_1", "REALM_2")
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Display name for the realm
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service this realm belongs to
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: Description of the realm
+        category:
+          type: string
+          minLength: 1
+          maxLength: 50
+          nullable: true
+          description: Category for grouping (e.g., "MAIN", "SPECIAL")
+        isActive:
+          type: boolean
+          default: true
+          description: Whether the realm is currently active for gameplay
+        isSystemType:
+          type: boolean
+          default: false
+          description: Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged 
+            as source.
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+
+    UpdateRealmRequest:
+      description: Request to update an existing realm's properties
+      type: object
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to update
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the game service this realm belongs to
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          nullable: true
+          description: Display name for the realm
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: Description of the realm
+        category:
+          type: string
+          minLength: 1
+          maxLength: 50
+          nullable: true
+          description: Category for grouping
+        isActive:
+          type: boolean
+          nullable: true
+          description: Whether the realm is currently active
+        isSystemType:
+          type: boolean
+          nullable: true
+          description: Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged 
+            as source.
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+
+    DeleteRealmRequest:
+      description: Request to permanently delete a realm from the system
+      type: object
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to delete
+
+    DeprecateRealmRequest:
+      description: Request to mark a realm as deprecated, preventing new entity creation
+      type: object
+      additionalProperties: false
+      required:
+      - realmId
+      - reason
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to deprecate
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Reason for deprecation (mandatory for Category A world-building definitions per FOUNDATION 
+            TENETS)
+
+    UndeprecateRealmRequest:
+      description: Request to restore a deprecated realm to active status
+      type: object
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to restore
+
+    RealmExistsRequest:
+      description: Request to check if a realm exists and is available for use
+      type: object
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to validate
+
+    RealmExistsResponse:
+      description: Response indicating whether a realm exists and its active status
+      type: object
+      additionalProperties: false
+      required:
+      - exists
+      - isActive
+      properties:
+        exists:
+          type: boolean
+          description: Whether the realm exists
+        isActive:
+          type: boolean
+          description: Whether the realm is active (false if deprecated or not found)
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: The realm ID if found
+
+    RealmsExistBatchRequest:
+      description: Request to check if multiple realms exist and are available for use
+      type: object
+      additionalProperties: false
+      required:
+      - realmIds
+      properties:
+        realmIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: List of realm IDs to validate (max 100)
+
+    RealmsExistBatchResponse:
+      description: Batch validation results for multiple realms
+      type: object
+      additionalProperties: false
+      required:
+      - results
+      - allExist
+      - allActive
+      - invalidRealmIds
+      - deprecatedRealmIds
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RealmExistsResponse'
+          description: Validation result for each requested realm ID (in same order as request)
+        allExist:
+          type: boolean
+          description: True if all requested realms exist
+        allActive:
+          type: boolean
+          description: True if all requested realms exist AND are active (not deprecated)
+        invalidRealmIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of realm IDs that do not exist (empty if all exist)
+        deprecatedRealmIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of realm IDs that exist but are deprecated (empty if none deprecated)
+
+    SeedRealmsRequest:
+      description: Request to seed multiple realms from configuration data
+      type: object
+      additionalProperties: false
+      required:
+      - realms
+      properties:
+        realms:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeedRealm'
+          description: List of realms to seed
+        updateExisting:
+          type: boolean
+          default: false
+          description: Whether to update realms that already exist
+
+    SeedRealm:
+      description: Realm data used for seeding operations during service initialization
+      type: object
+      additionalProperties: false
+      required:
+      - code
+      - name
+      - gameServiceId
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '^[A-Z][A-Z0-9_]*$'
+          description: Unique code for the realm (e.g., "REALM_1", "REALM_2")
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Display name for the realm
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service this realm belongs to
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: Detailed description of the realm and its characteristics
+        category:
+          type: string
+          minLength: 1
+          maxLength: 50
+          nullable: true
+          description: Category for grouping realms (e.g., "MAIN", "SPECIAL", "TEST")
+        isActive:
+          type: boolean
+          default: true
+          description: Whether the realm is currently active for gameplay
+        isSystemType:
+          type: boolean
+          default: false
+          description: Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged 
+            as source.
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+
+    RealmResponse:
+      description: Complete realm information returned from API operations
+      type: object
+      additionalProperties: false
+      required:
+      - realmId
+      - code
+      - name
+      - gameServiceId
+      - isActive
+      - isSystemType
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Unique identifier of the realm
+        code:
+          type: string
+          description: Unique code for the realm (e.g., "REALM_1", "REALM_2")
+        name:
+          type: string
+          description: Display name for the realm
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service this realm belongs to
+        description:
+          type: string
+          nullable: true
+          description: Detailed description of the realm
+        category:
+          type: string
+          nullable: true
+          description: Category for grouping realms
+        isActive:
+          type: boolean
+          description: Whether the realm is currently active for gameplay
+        isSystemType:
+          type: boolean
+          description: Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged 
+            as source.
+        isDeprecated:
+          type: boolean
+          description: Whether this realm is deprecated and cannot be used for new entities
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when this realm was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Optional reason for deprecation
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the realm was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the realm was last updated
+
+    RealmListResponse:
+      description: Paginated list of realms with metadata for navigation
+      type: object
+      additionalProperties: false
+      required:
+      - realms
+      - totalCount
+      - page
+      - pageSize
+      - hasNextPage
+      - hasPreviousPage
+      properties:
+        realms:
+          type: array
+          items:
+            $ref: '#/components/schemas/RealmResponse'
+          description: List of realms matching the query criteria
+        totalCount:
+          type: integer
+          description: Total number of realms matching the query (before pagination)
+        page:
+          type: integer
+          description: Current page number (1-indexed)
+        pageSize:
+          type: integer
+          description: Number of realms per page
+        hasNextPage:
+          type: boolean
+          description: Whether there are more realms available on the next page
+        hasPreviousPage:
+          type: boolean
+          description: Whether there are realms available on the previous page
+
+    SeedRealmsResponse:
+      description: Summary of a realm seeding operation including counts and errors
+      type: object
+      additionalProperties: false
+      required:
+      - created
+      - updated
+      - skipped
+      - errors
+      properties:
+        created:
+          type: integer
+          description: Number of new realms created
+        updated:
+          type: integer
+          description: Number of existing realms updated
+        skipped:
+          type: integer
+          description: Number of realms skipped (already exist, updateExisting=false)
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of error messages for realms that failed to seed
+
+    MergeRealmsRequest:
+      description: Request to migrate all entities from a deprecated realm into a target realm
+      type: object
+      additionalProperties: false
+      required:
+      - sourceRealmId
+      - targetRealmId
+      properties:
+        sourceRealmId:
+          type: string
+          format: uuid
+          description: ID of the deprecated realm to merge from (must be deprecated)
+        targetRealmId:
+          type: string
+          format: uuid
+          description: ID of the realm to merge into (must exist)
+        deleteAfterMerge:
+          type: boolean
+          default: false
+          description: If true, hard-delete the source realm after successful merge (skipped if any failures)
+
+    MergeRealmsResponse:
+      description: Result of a realm merge operation including per-entity-type migration statistics
+      type: object
+      additionalProperties: false
+      required:
+      - speciesMigrated
+      - speciesFailed
+      - locationsMigrated
+      - locationsFailed
+      - charactersMigrated
+      - charactersFailed
+      - sourceDeleted
+      properties:
+        speciesMigrated:
+          type: integer
+          description: Number of species successfully added to target realm and removed from source
+        speciesFailed:
+          type: integer
+          description: Number of species that failed to migrate
+        locationsMigrated:
+          type: integer
+          description: Number of locations successfully transferred to target realm
+        locationsFailed:
+          type: integer
+          description: Number of locations that failed to transfer
+        charactersMigrated:
+          type: integer
+          description: Number of characters successfully transferred to target realm
+        charactersFailed:
+          type: integer
+          description: Number of characters that failed to transfer
+        sourceDeleted:
+          type: boolean
+          description: Whether the source realm was hard-deleted after merge
+
+    GetLocationCompressContextRequest:
+      description: Request to get realm context for a location's compression archive
+      type: object
+      additionalProperties: false
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location being compressed (used to resolve realm)
+
+    RealmLocationArchiveContext:
+      type: object
+      x-archive-type: true
+      description: |
+        Realm context included in location compression archives.
+        Provides realm identity and description for content flywheel consumption
+        without requiring realm lookups during archive processing.
+        Inherits base archive properties from ResourceArchiveBase.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - realmId
+      - realmName
+      - realmCode
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Unique identifier of the realm
+        realmName:
+          type: string
+          description: Display name of the realm
+        realmCode:
+          type: string
+          description: Unique code identifier for the realm
+        realmDescription:
+          type: string
+          nullable: true
+          description: Detailed description of the realm and its characteristics
+    ResourceArchiveBase:
+      type: object
+      description: |
+        Base schema for all resource archives that can be stored in
+        the resource service's archive bundles and consumed by the
+        storyline SDK's ArchiveExtractor.
+
+        Archives implementing this base schema are marked with
+        x-archive-type: true and are automatically collected by
+        the archive generation script for SDK model generation.
+      required:
+      - resourceId
+      - resourceType
+      - archivedAt
+      - schemaVersion
+      properties:
+        resourceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the archived resource
+        resourceType:
+          type: string
+          description: Type identifier (e.g., "character", "character-personality", "realm-history")
+        archivedAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        schemaVersion:
+          type: integer
+          minimum: 1
+          description: Schema version for forward compatibility migration
+        nestedArchives:
+          type: array
+          description: Child archives from dependent resources (populated by lib-resource compression)
+          items:
+            $ref: '#/components/schemas/ResourceArchiveBase'
+x-inlined-types:
+- ResourceArchiveBase
