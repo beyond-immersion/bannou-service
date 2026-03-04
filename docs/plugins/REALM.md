@@ -39,6 +39,7 @@ The Realm service (L2 GameFoundation) manages top-level persistent worlds in the
 | lib-character | Calls `RealmExistsAsync` via `IRealmClient` to validate realm before character creation |
 | lib-faction | Calls `RealmExistsAsync` via `IRealmClient` to validate realm before faction operations |
 | lib-analytics | Subscribes to `realm.updated` event for cache invalidation (realm-to-gameService resolution cache) |
+| lib-worldstate | Calls `RealmExistsAsync` via `IRealmClient` to validate realm before clock initialization |
 | lib-puppetmaster | Subscribes to `realm.created`, `realm.updated`, and `realm.deleted` events for regional watcher lifecycle management |
 
 ---
@@ -258,7 +259,11 @@ None identified. Realm merge has been implemented (see [#167](https://github.com
 
 ### Design Considerations
 
-None outstanding. Reference counting for safe deletion was resolved via lib-resource integration (see [#170](https://github.com/beyond-immersion/bannou-service/issues/170), closed). Realm statistics was evaluated and closed as wrong-layer — entity statistics belong in Analytics (L4), not Realm (L2) (see [#169](https://github.com/beyond-immersion/bannou-service/issues/169), closed).
+1. **System realms are an architectural keystone**: The `isSystemType` flag on realms enables the **actor-bound entity pattern** — the single most powerful architectural pattern in Bannou (per VISION.md). System realms are non-physical conceptual spaces where metaphysical entities exist as first-class Characters, gaining the entire L2/L4 entity stack (personality, memory, history, growth, bonds, cognition) for free. Planned system realms: **PANTHEON** (gods/deities for content flywheel orchestration), **NEXIUS** (guardian spirits for progressive agency), **DUNGEON_CORES** (sentient dungeons), **SENTIENT_ARMS** (living weapons), **UNDERWORLD** (dead characters for afterlife gameplay). System realms are seeded via `/realm/seed` with `isSystemType: true`, protected from merge (merge validation rejects system realm sources), and the Realm service is **intentionally agnostic** to their semantics — it stores the flag; consuming services (Character, Puppetmaster, Gardener, Divine, Dungeon, etc.) interpret what "system realm" means for their domain. See [#268](https://github.com/beyond-immersion/bannou-service/issues/268) (closed — realm hierarchy explicitly not part of the flat-peer-world design).
+
+2. **Realm deletion safety depends on L2 reference registration**: The intended deletion workflow is deprecate → merge → delete, with merge migrating all species, locations, and characters before deletion. Realm's delete flow checks lib-resource for active references. For this safety net to work, L2 services that reference realms (Species, Location, Character) should register RESTRICT references with lib-resource. See [#369](https://github.com/beyond-immersion/bannou-service/issues/369) (open, tracked against Species).
+
+Other design considerations resolved: Reference counting for safe deletion implemented via lib-resource integration (see [#170](https://github.com/beyond-immersion/bannou-service/issues/170), closed). Realm statistics evaluated and closed as wrong-layer — entity statistics belong in Analytics (L4), not Realm (L2) (see [#169](https://github.com/beyond-immersion/bannou-service/issues/169), closed).
 
 ---
 

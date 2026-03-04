@@ -464,7 +464,8 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 6. **Custom handler invocation**: Handlers are registered with deposit/release/refund/validate endpoints, but the escrow service never actually invokes these endpoints during deposit or release flows. The handler registry is purely declarative.
 
-7. **Asset transfer execution**: Release and refund operations set status and publish events but do not call currency/inventory services to execute actual transfers. The service is purely a coordination/tracking layer that assumes downstream consumers handle the physical movements.
+7. **Asset transfer execution**: Release and refund operations set status and publish events but do not call currency/inventory services to execute actual transfers. The service is purely a coordination/tracking layer that assumes downstream consumers handle the physical movements. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153) for the cross-cutting integration issue.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/153 -->
 
 8. **Releasing state**: Now used for event-driven confirmation flow. When `ReleaseMode` is not `immediate`, escrows transition to `Releasing` and wait for service/party confirmations before completing to `Released`. The `EscrowConfirmationTimeoutService` background service handles expired confirmation deadlines.
 
@@ -497,7 +498,7 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 3. **Token hash double-hashing**: Tokens are first generated as SHA-256 hash of random bytes + context, then stored by hashing the token again. Validation requires SHA-256(submitted_token) lookup, providing one-way token storage.
 
-4. **Escrow service calls foundation services directly**: When deposits, releases, or refunds occur, Escrow calls lib-currency (`/currency/debit`, `/currency/credit`, `/currency/transfer`) and lib-inventory (`/inventory/transfer`) APIs directly. Events like `escrow.released` and `escrow.refunded` are published for observability and analytics, NOT for triggering asset movements. This respects the service hierarchy: Escrow (L4) depends on Currency/Inventory (L2), never the reverse.
+4. **Escrow service SHOULD call foundation services directly (not yet implemented)**: The intended design is that when deposits, releases, or refunds occur, Escrow calls lib-currency (`/currency/debit`, `/currency/credit`, `/currency/transfer`) and lib-inventory (`/inventory/transfer`) APIs directly. Events like `escrow.released` and `escrow.refunded` would be published for observability and analytics, NOT for triggering asset movements. This respects the service hierarchy: Escrow (L4) depends on Currency/Inventory (L2), never the reverse. **Currently unimplemented** — see stub #7 and [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
 
 5. **Contract event handlers are best-effort**: `HandleContractFulfilledAsync` and `HandleContractTerminatedAsync` use try-catch with error event emission but don't retry or queue failed operations.
 
@@ -540,7 +541,13 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 ### Pending Design Review
 
-1. **ValidateEscrow asset checking** - [Issue #213](https://github.com/beyond-immersion/bannou-service/issues/213) (2026-01-31)
+1. **Asset transfer integration** - [Issue #153](https://github.com/beyond-immersion/bannou-service/issues/153) (2026-01-31)
+   - Release and refund operations do not execute actual asset transfers (stub #7)
+   - Escrow should call lib-currency and lib-inventory directly (L4→L2, hierarchy-permitted)
+   - Events should be for observability, not for triggering asset movements (per T27)
+   - Inventory has zero escrow integration; Currency has endpoints but they're never called
+
+2. **ValidateEscrow asset checking** - [Issue #213](https://github.com/beyond-immersion/bannou-service/issues/213) (2026-01-31)
    - `ValidateEscrowAsync` contains placeholder logic - validation always passes
    - Needs to call ICurrencyClient/IItemClient to verify deposited assets still held
    - Design questions: contract validation, custom handler invocation, graceful degradation policy

@@ -40,6 +40,12 @@ Container and item placement management (L2 GameFoundation) for games. Handles c
 - lib-escrow (L4): Asset custody for items in escrow (placeholder exists, integration tracked by [#153](https://github.com/beyond-immersion/bannou-service/issues/153))
 - ABML action handlers: `inventory_add`/`inventory_has` handlers for NPC behavior ([#428](https://github.com/beyond-immersion/bannou-service/issues/428))
 
+**Natural L4 consumers** (standard L4→L2 API callers, no special integration needed):
+- lib-loot (L4): Places generated items into containers after drop resolution
+- lib-trade (L4): Cargo management, supply shipment inventory operations
+- lib-workshop (L4): Material consumption from source inventories, output placement to destination inventories
+- lib-dungeon (L4): Loot containers in dungeon rooms, treasure placement
+
 ---
 
 ## Type Field Classification
@@ -380,6 +386,8 @@ Stack Operations
 
 7. **No escrow integration**: lib-escrow has a placeholder comment mentioning inventory but no actual integration. Asset custody for items in escrow is not implemented. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/153 -->
+
+8. **Container orphan cleanup on owner deletion**: When an owner entity is deleted, its inventory containers are not automatically cleaned up. For L2 owners (Character, Location), the owning service can call `IInventoryClient.DeleteContainer()` directly (L2→L2, hierarchy-permitted). For **Account-owned containers** (L1→L2), there is a hierarchy problem: Account (L1) cannot depend on Inventory (L2), and T28's Account privacy exception prevents lib-resource registration for Account. No established mechanism exists for cleaning up account-owned containers on account deletion. This is a cross-cutting concern shared with other L2 services that have account-scoped data (Subscription, GameSession, Character). See [#156](https://github.com/beyond-immersion/bannou-service/issues/156) (Storage Garbage Collection Framework) for potential cross-cutting solution.
 
 ---
 

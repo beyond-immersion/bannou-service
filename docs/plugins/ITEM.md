@@ -145,7 +145,37 @@ This architecture enables:
 | lib-license | Uses item instances as license nodes on progression boards ([#281](https://github.com/beyond-immersion/bannou-service/issues/281)) |
 | lib-status | Uses item instances as status effects in per-entity containers ([#282](https://github.com/beyond-immersion/bannou-service/issues/282)) |
 | lib-escrow | Planned: item-backed exchanges ([#153](https://github.com/beyond-immersion/bannou-service/issues/153)), `IItemClient` not yet integrated |
-| lib-affix | Planned (L4): per-item modifier data — plugin not yet created |
+| lib-affix | Planned (L4): per-item modifier data via `IItemInstanceDestructionListener` for cleanup — plugin not yet created |
+
+---
+
+## DI Listener Dispatch: IItemInstanceDestructionListener
+
+Item is the **dispatcher** side of the `IItemInstanceDestructionListener` DI Listener pattern (defined in `bannou-service/Providers/`). When `DestroyItemInstanceAsync` destroys an instance, it must call all registered `IItemInstanceDestructionListener` implementations to notify L4 services that own per-item data (e.g., lib-affix owns modifier instances keyed by itemInstanceId).
+
+This follows the **High-Frequency Instance Lifecycle Exception** to T28 (FOUNDATION TENETS): item instances are created and destroyed at loot/combat/trading frequency across 100K NPCs. Using lib-resource for per-instance cleanup would be prohibitively expensive. Using event subscriptions would violate T28 (no subscribing to `*.deleted` for dependent data cleanup). The DI Listener pattern provides in-process, zero-overhead notification.
+
+```
+DestroyItemInstanceAsync
+    │
+    ├── 1. Validate instance exists, check Destroyable flag
+    ├── 2. Remove from container/template indexes
+    ├── 3. Delete from store, invalidate cache
+    ├── 4. Publish item.instance.destroyed event (broadcast)
+    └── 5. Dispatch to IItemInstanceDestructionListener implementations
+            ├── lib-affix: deletes affix instances from own state store
+            ├── (future): lib-socket, lib-enchantment, etc.
+            └── Graceful degradation: log warning on listener failure, don't fail the destroy
+```
+
+**Implementation requirements:**
+- Discover listeners via `IEnumerable<IItemInstanceDestructionListener>` constructor injection
+- Dispatch AFTER the destroy succeeds and event is published (listeners are optimization, not rollback)
+- Each listener failure is isolated — one failing doesn't prevent others or fail the destroy
+- Listeners must write to distributed state (Redis/MySQL) for multi-node consistency per SERVICE-HIERARCHY distributed safety rules
+
+**Current status:** The interface is architecturally specified but not yet implemented in code. Neither `IItemInstanceDestructionListener` in `bannou-service/Providers/` nor the dispatch logic in `DestroyItemInstanceAsync` exist yet.
+<!-- AUDIT:NEEDS_IMPLEMENTATION:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/490 -->
 
 ---
 
@@ -272,7 +302,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **ModifyItemInstance** (`/item/instance/modify`): Updates durability (delta), quantityDelta, customStats, customName, instanceMetadata, container/slot position. Container changes use distributed lock via `item-lock` store to prevent race conditions on index updates. Non-container changes skip locking. Invalidates instance cache. Publishes `item.instance.modified`.
 - **BindItemInstance** (`/item/instance/bind`): Binds instance to character ID. Checks `BindingAllowAdminOverride` for rebinding. Enriches event with template code (fallback: `missing:{templateId}` if template not found). Publishes `item.instance.bound`.
 - **UnbindItemInstance** (`/item/instance/unbind`): Admin-only. Clears `BoundToId` and `BoundAt`. Returns BadRequest if item is not bound. Publishes `item.instance.unbound` with reason and previous character ID.
-- **DestroyItemInstance** (`/item/instance/destroy`): Validates template's `Destroyable` flag unless reason="admin". Removes from container and template indexes. Invalidates cache. Publishes `item.instance.destroyed`.
+- **DestroyItemInstance** (`/item/instance/destroy`): Validates template's `Destroyable` flag unless reason="admin". Removes from container and template indexes. Invalidates cache. Publishes `item.instance.destroyed`. **Planned**: Will dispatch to registered `IItemInstanceDestructionListener` implementations for L4 per-item data cleanup (see DI Listener Dispatch section above).
 - **UseItem** (`/item/use`): Executes item behavior via Contract service delegation. See detailed flow below.
 - **UseItemStep** (`/item/use-step`): Multi-step item use via session contract bindings. Creates or continues a contract session: first call creates contract instance and stores `contractInstanceId` on the item; subsequent calls complete individual milestones. Uses distributed lock (`UseStepLockTimeoutSeconds`). Supports CanUse pre-validation and OnUseFailed handlers. Consumes item when all milestones complete (based on `ItemUseBehavior`). Publishes `item.use-step-completed` or `item.use-step-failed`.
 
@@ -494,14 +524,16 @@ Contract Binding Patterns
 
 ## Stubs & Unimplemented Features
 
-1. **Deprecation without cascade**: Deprecating a template doesn't automatically migrate, disable, or destroy existing instances. Admin must manage instances separately.
+1. **Deprecation without cascade**: Deprecating a template doesn't automatically migrate, disable, or destroy existing instances. Admin must manage instances separately. Related: [#489](https://github.com/beyond-immersion/bannou-service/issues/489) (template migration) is a sub-question of this design.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/486 -->
+2. **`IItemInstanceDestructionListener` dispatch**: `DestroyItemInstanceAsync` does not yet dispatch to registered listeners for L4 per-item data cleanup. The interface and dispatch logic need to be implemented. See DI Listener Dispatch section above.
+<!-- AUDIT:NEEDS_IMPLEMENTATION:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/490 -->
 
 ---
 
 ## Potential Extensions
 
-1. **Template migration**: When deprecating with `migrationTargetId`, automatically upgrade instances to the new template.
+1. **Template migration** ([#489](https://github.com/beyond-immersion/bannou-service/issues/489)): When deprecating with `migrationTargetId`, automatically upgrade instances to the new template. This is a sub-question of [#486](https://github.com/beyond-immersion/bannou-service/issues/486) (deprecation cascade) — the two issues share open questions about quantity model mismatches, contract-bound instances, and sync vs async execution.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/489 -->
 2. **Affix system**: Random or crafted modifiers applied to instances (prefixes/suffixes). See lib-affix for the L4 modifier service.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/490 -->
@@ -511,6 +543,8 @@ Contract Binding Patterns
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/407 -->
 5. **Item Sockets** ([#430](https://github.com/beyond-immersion/bannou-service/issues/430)): Future L4 plugin (lib-socket) for socket, linking, and gem placement systems on item instances.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/430 -->
+6. **Batch item destruction** ([#559](https://github.com/beyond-immersion/bannou-service/issues/559)): No batch destroy endpoint exists. For high-frequency scenarios (lib-resource CASCADE cleanup, inventory wipe, character death) calling destroy per-item is expensive. Given that `IItemInstanceDestructionListener` acknowledges item destruction is high-frequency across 100K NPCs, batch support in the destroy path should be considered.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/559 -->
 
 ---
 
@@ -518,7 +552,7 @@ Contract Binding Patterns
 
 ### Bugs
 
-No bugs identified.
+1. **MaxDurability ceiling not enforced** ([#491](https://github.com/beyond-immersion/bannou-service/issues/491)): `ModifyItemInstanceAsync` applies `Math.Max(0, current + delta)` for durability changes but does not cap positive deltas against the template's `MaxDurability`. A `durabilityDelta: 1000` on an item with `maxDurability: 100` sets `CurrentDurability` to 1100. Fix: add `Math.Min(maxDurability, ...)` ceiling when applying positive deltas. This is independent of the repair endpoint design in #491.
 
 ### Intentional Quirks
 
@@ -528,7 +562,8 @@ No bugs identified.
 
 3. **Optimistic concurrency doesn't fail requests**: If all retries for list operations (index updates) are exhausted, the operation logs a warning but the main create/destroy still succeeds. The index may be temporarily inconsistent.
 
-4. **Update doesn't track changedFields**: Unlike other services that track which fields changed, `UpdateItemTemplateAsync` applies all provided changes without changedFields list in the event. Consumers can't tell which fields were actually modified.
+4. **Update doesn't track changedFields**: Unlike other services that track which fields changed, `UpdateItemTemplateAsync` applies all provided changes without changedFields list in the event. Consumers can't tell which fields were actually modified. This deviates from the standard `x-lifecycle` pattern where `*UpdatedEvent` includes `changedFields` automatically.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/558 -->
 
 5. **ListItemsByContainer doesn't support pagination**: Unlike `ListItemsByTemplate` which uses Offset/Limit from the request, `ListItemsByContainer` just returns up to `MaxInstancesPerQuery` items with no offset support. The `wasTruncated` flag signals when items are capped, but callers cannot page through them.
 
@@ -575,9 +610,17 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **T29 `instanceMetadata` documentation cleanup**: Audited (2026-02-26). Code audit confirmed zero T29 violations — no plugin reads `instanceMetadata` keys by convention. Removed inaccurate claim about `instanceMetadata.affixes` violations (lib-affix stores data in its own state store per T29). Added AUDIT marker pointing to systemic #308.
 - **T31 deprecation lifecycle compliance** (2026-02-26): Three changes: (1) Deprecated event replaced with `item.template.updated` + `changedFields`, (2) `DeprecationReason` field added to schema and model, (3) `CreateItemInstanceAsync` now guards against deprecated templates. Quirks #7 and #8 resolved; quirk #9 reworded as standard Category B behavior.
 
+### Active
+- **MaxDurability ceiling bug** (2026-03-04): Identified via [#491](https://github.com/beyond-immersion/bannou-service/issues/491). `ModifyItemInstanceAsync` doesn't cap positive durability deltas against `MaxDurability`. Added to Bugs section.
+- **`IItemInstanceDestructionListener` dispatch** (2026-03-04): Architecturally specified in SERVICE-HIERARCHY.md and AFFIX.md but not yet implemented. Added to Stubs section and DI Listener Dispatch section. Tracked via [#490](https://github.com/beyond-immersion/bannou-service/issues/490).
+- **changedFields gap on template updates** (2026-03-04): Quirk #4 deviation from standard `x-lifecycle` pattern. Tracked via [#558](https://github.com/beyond-immersion/bannou-service/issues/558).
+- **Batch item destruction** (2026-03-04): No batch destroy endpoint for high-frequency scenarios. Tracked via [#559](https://github.com/beyond-immersion/bannou-service/issues/559). See Potential Extensions #6.
+
 ### Related (Cross-Service)
 - **[#153](https://github.com/beyond-immersion/bannou-service/issues/153)**: Escrow Asset Transfer Integration Broken - Affects lib-escrow's ability to use `IItemClient` for item-backed exchanges.
 - **[#164](https://github.com/beyond-immersion/bannou-service/issues/164)**: Item Removal/Drop Behavior - Owned by lib-inventory, but affects lib-item's container index and event patterns. See Intentional Quirks #11 and #12.
 - **[#308](https://github.com/beyond-immersion/bannou-service/issues/308)**: Replace `additionalProperties:true` metadata pattern with typed schemas - Affects `instanceMetadata` field. See Design Considerations #3.
 - **[#407](https://github.com/beyond-immersion/bannou-service/issues/407)**: Item Decay/Expiration System - Time-based item lifecycle. Dependency for lib-status ([#417](https://github.com/beyond-immersion/bannou-service/issues/417)). See Potential Extensions #4.
 - **[#430](https://github.com/beyond-immersion/bannou-service/issues/430)**: lib-socket - Item socket, linking, and gem placement system. See Potential Extensions #5.
+- **[#486](https://github.com/beyond-immersion/bannou-service/issues/486)**: Deprecation cascade behavior - Design question for what happens to instances. See Stubs #1.
+- **[#489](https://github.com/beyond-immersion/bannou-service/issues/489)**: Template migration on deprecation - Sub-question of #486. See Potential Extensions #1.
