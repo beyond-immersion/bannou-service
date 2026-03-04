@@ -76,7 +76,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Voice](#voice-status) | L3 | 95% | 0 | L3-hardened. Full TENET audit (2 rounds): NRT-compliant schemas, distributed locks on all read-modify-write paths (6 methods), T7/T8/T9/T16/T21/T25 compliant, dead code removed. 89 tests. |
 | [Website](#website-status) | L3 | 5% | 0 | Complete stub. All 14 endpoints return NotImplemented. No state stores, no logic. |
 | [Broadcast](#broadcast-status) | L3 | 0% | 0 | Pre-implementation. Deep dive L3-audited: x-lifecycle events, Redis tracking IDs, camera API endpoints, nullable configs, codec enums, worker intervals, T15 webhook exception. No schema, no code. |
-| [Agency](#agency-status) | L4 | 0% | 0 | Pre-implementation. Guardian spirit progressive agency and UX manifest engine spec. No schema, no code. |
+| [Agency](#agency-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-03): 5 critical schema/tenet findings, 16 warnings, 7/9 design considerations resolved. No schema, no code. |
 | [Achievement](#achievement-status) | L4 | 90% | 1 | Production-hardened. T25/T29/T31/T8/T6/T26/T30/T17 compliant, typed fields, client events, Category B deprecation. 1 T16 Pattern A topic bug. Xbox/PS stubs remain. |
 | [Analytics](#analytics-status) | L4 | 82% | 0 | Robust pipeline. Glicko-2 ratings, event ingestion, summaries. Rating decay missing. |
 | [Behavior](#behavior-status) | L4 | 80% | 0 | ABML compiler + GOAP planner work. 6 stubs: cinematics, bundles, embeddings. |
@@ -1194,28 +1194,33 @@ gh issue list --search "Website:" --state open
 
 ### Production Readiness: 0%
 
-Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for the guardian spirit's progressive agency system -- the bridge between Seed's abstract capability data and the client's concrete UX module rendering. Three subsystems: **UX Module Registry** (definitions of available UI elements/interaction modes, their capability requirements, and fidelity curves), **Manifest Engine** (computes per-seed UX manifests from seed capabilities, caches in Redis, pushes updates when capabilities change), and **Influence Registry** (spirit influence types that the player can send to their possessed character, with compliance factors and rate limiting). Domains are opaque string codes (combat, crafting, social, trade, exploration, magic -- extensible without schema changes). Implements `IVariableProviderFactory` providing the `${spirit.*}` namespace for ABML behavior expressions (compliance base, available influences, manifest fidelity). Integrates with Disposition (L4, soft) for compliance computation and Gardener (L4, soft) for manifest push routing. Specifies 22 planned endpoints, 6 state stores, 6 published events, 3 consumed events, 13 configuration properties, 1 background worker (manifest recompute with debouncing), and a 5-phase implementation plan. No endpoints, no generated code, no service implementation exists.
+Pre-implementation. No schema, no code. L4-audited (2026-03-03): deep dive spec is comprehensive and well-designed, but has 5 critical findings and 16 warnings that must be addressed before schema creation. 7 of 9 design considerations resolved (manifest push, influence execution path, module ownership, fidelity curve format, compliance computation, Entity Session Registry, influence persistence). 1 open design question (cross-seed pollination redundancy with Seed's internal `SameOwnerGrowthMultiplier`). 1 deferred (realm-specific module sets). No blocking GitHub issues — Entity Session Registry (#426) prerequisite is complete. 10 cross-cutting issues inform design; 5 new issues should be created.
+
+**Critical findings (must resolve before writing schemas):** (1) Missing `x-lifecycle` events for 3 CRUD entity types (domains, modules, influences), (2) missing `x-permissions` on all 22 endpoints, (3) ComplianceFactors must use typed array not `additionalProperties: true`, (4) Actor→Agency event hierarchy violation fixed (Actor publishes `actor.spirit-nudge.resisted`, Agency relays), (5) missing lib-resource integration for seed-keyed persistent data (`agency-manifest-history`).
+
+**Key warnings:** Redis-based debouncing for ManifestRecomputeWorker (T9), compliance formula magic numbers extracted to config (T21), rolling window made configurable (T21), influence counters must use Redis (T9), Category A deprecation lifecycle on definition entities (T31), consistent naming (register/unregister vs create/delete per T16), telemetry spans on all helpers (T30).
 
 ### Bug Count: 0
 
-No implementation exists to have bugs.
+No implementation exists to have bugs. 5 critical design findings documented for pre-implementation resolution.
 
 ### Top 3 Bugs
 
-*(None -- pre-implementation)*
+*(None -- pre-implementation. 5 critical pre-implementation audit findings documented in deep dive.)*
 
 ### Top 3 Enhancements
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Phase 2 - Manifest Engine** | Implement manifest computation from seed capabilities, Redis caching, manifest get/recompute/diff/history endpoints, `seed.capability.updated` event subscription, and ManifestRecomputeWorker with debouncing. | No issue |
-| 2 | **Phase 3 - Influence System** | Implement influence register/update/get/list/delete, evaluate and execute endpoints, Redis rate limiting, and influence execution/rejection/resistance event publishing. | No issue |
-| 3 | **Phase 4 - Variable Provider Factory** | Implement `SpiritProviderFactory` for the `${spirit.*}` ABML namespace, Disposition integration for compliance computation, and influence history tracking in Redis. | No issue |
+| 1 | **Full implementation (5 phases)** | All 22 endpoints, 6+ state stores, manifest engine, influence system, variable provider factory, Gardener/Disposition integration. | No issue (create tracking issue) |
+| 2 | **Cross-seed pollination clarification** | Resolve overlap between Agency's `CrossSeedPollinationFactor` and Seed's internal `SameOwnerGrowthMultiplier`. May be redundant for same-type scenarios. | No issue |
+| 3 | **Client events design** | Define how manifest updates and influence outcomes route through Gardener to clients via Entity Session Registry. Coordinate with #497 (Seed client events) and #502 (Meta client event rollout). | No issue |
 
 ### GH Issues
 
 ```bash
 gh issue list --search "Agency:" --state open
+gh issue list --search "guardian spirit" --state open  # Cross-cutting
 ```
 
 ---

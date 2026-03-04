@@ -190,8 +190,70 @@ fi
 SUBSCRIPTION_COUNT=$(echo "$SUBSCRIPTIONS_JSON" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
 echo -e "  📊 Found $SUBSCRIPTION_COUNT event subscription(s)"
 
+# Validate that each subscribed event type exists in some event schema's components/schemas
+VALIDATION_ERRORS=$(echo "$SUBSCRIPTIONS_JSON" | python3 -c "
+import sys, json, os, glob
+
+subscriptions = json.load(sys.stdin)
+if not subscriptions:
+    sys.exit(0)
+
+try:
+    import yaml
+except ImportError:
+    # Cannot validate without PyYAML - skip silently
+    sys.exit(0)
+
+# Build registry of all known event type names from all event schemas
+schemas_dir = os.path.join(os.path.dirname(os.path.abspath('$EVENTS_SCHEMA')), '')
+if not schemas_dir or schemas_dir == '/':
+    schemas_dir = '${SCRIPT_DIR}/../schemas/'
+
+known_types = set()
+for schema_file in glob.glob(os.path.join(schemas_dir, '*-events.yaml')) + \
+                   glob.glob(os.path.join(schemas_dir, 'common-events.yaml')):
+    try:
+        with open(schema_file, 'r') as f:
+            schema = yaml.safe_load(f)
+        schemas_section = (schema or {}).get('components', {}).get('schemas', {})
+        known_types.update(schemas_section.keys())
+    except Exception:
+        continue
+
+# Also check Generated lifecycle events
+for schema_file in glob.glob(os.path.join(schemas_dir, 'Generated', '*-lifecycle-events.yaml')):
+    try:
+        with open(schema_file, 'r') as f:
+            schema = yaml.safe_load(f)
+        schemas_section = (schema or {}).get('components', {}).get('schemas', {})
+        known_types.update(schemas_section.keys())
+    except Exception:
+        continue
+
+# Validate each subscription's event type
+errors = []
+for sub in subscriptions:
+    event_type = sub.get('event', '')
+    topic = sub.get('topic', '')
+    if event_type and event_type not in known_types:
+        errors.append(f'{event_type} (topic: {topic})')
+
+if errors:
+    for e in errors:
+        print(e)
+" 2>/dev/null)
+
+if [ -n "$VALIDATION_ERRORS" ]; then
+    echo -e "${RED}❌ Event type validation failed! The following event types in x-event-subscriptions${NC}"
+    echo -e "${RED}   were not found in any *-events.yaml or common-events.yaml schema:${NC}"
+    while IFS= read -r line; do
+        echo -e "${RED}   - $line${NC}"
+    done <<< "$VALIDATION_ERRORS"
+    echo -e "${RED}   Ensure each 'event' class name matches a type in some schema's components/schemas.${NC}"
+    exit 1
+fi
+
 # Generate {Service}ServiceEvents.cs (only if it doesn't exist)
-# NOTE: EventsController generation was removed - events flow via IEventConsumer/MassTransit
 if [ -f "$SERVICE_EVENTS_FILE" ]; then
     echo -e "${YELLOW}📝 ServiceEvents file already exists, skipping: $SERVICE_EVENTS_FILE${NC}"
     echo -e "${YELLOW}    To regenerate, delete the file and run this script again.${NC}"

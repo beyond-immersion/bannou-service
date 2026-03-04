@@ -241,82 +241,6 @@ public {% if hasControllerOnlyMethods %}abstract{% else %}partial{% endif %} cla
 {%-         endif %}
 
 {%     endfor -%}
-
-{%- comment -%}
-Generate event handler methods from x-event-subscriptions in OpenAPI spec
-{%- endcomment -%}
-{%- if ExtensionData["x-event-subscriptions"] -%}
-{%-     for subscription in ExtensionData["x-event-subscriptions"] -%}
-{%-         comment -%}
-            Convert topic name to PascalCase method name
-            Handle both dots and hyphens as word separators
-            e.g., "permissions.capabilities-updated" -> "PermissionsCapabilitiesUpdated"
-{%-         endcomment -%}
-{%-         assign normalizedTopic = subscription.topic | replace: "-", "." -%}
-{%-         assign topicParts = normalizedTopic | split: "." -%}
-{%-         assign eventName = "" -%}
-{%-         for part in topicParts -%}
-{%-             assign capitalizedPart = part | capitalize -%}
-{%-             assign eventName = eventName | append: capitalizedPart -%}
-{%-         endfor -%}
-{%-         assign methodName = "Handle" | append: eventName | append: "Event" -%}
-
-    /// <summary>
-    /// Event handler for {{ subscription.topic }} events
-    /// </summary>
-    /// <remarks>
-    /// {{ subscription.description }}
-    /// </remarks>
-    [BeyondImmersion.BannouService.Attributes.Topic("{{ subscription.pubsub }}", "{{ subscription.topic }}")]
-    [{{ AspNetNamespace }}.HttpPost("{{ subscription.path }}")]
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> {{ methodName }}([{{ AspNetNamespace }}.FromBody] object eventData)
-    {
-        try
-        {
-            var logger = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<{{ Class }}Controller>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogDebug(logger, "Processing pub/sub event: {Topic}", "{{ subscription.topic }}");
-
-            // Use BannouJson for consistent serialization with generated models
-            var serializedData = BeyondImmersion.Bannou.Core.BannouJson.Serialize(eventData);
-
-{%-         comment -%}
-            Extract event type information from schema $ref
-            Format: 'account-events.yaml#/components/schemas/AccountDeletedEvent'
-{%-         endcomment -%}
-{%-         assign schemaRef = subscription.schema["$ref"] -%}
-{%-         assign refParts = schemaRef | split: "#/components/schemas/" -%}
-{%-         assign sourceFile = refParts[0] | remove: ".yaml" | remove: "'" -%}
-{%-         assign eventTypeName = refParts[1] -%}
-{%-         comment -%}
-            Map source file to namespace - account-events -> Account
-{%-         endcomment -%}
-{%-         assign serviceName = sourceFile | split: "-" | first | capitalize -%}
-{%-         assign fullTypeName = "BeyondImmersion.BannouService." | append: serviceName | append: "." | append: eventTypeName -%}
-
-            // Deserialize using BannouJson for consistent handling
-            var typedEventData = BeyondImmersion.Bannou.Core.BannouJson.Deserialize<{{ fullTypeName }}>(serializedData);
-
-            if (typedEventData != null)
-            {
-                Microsoft.Extensions.Logging.LoggerExtensions.LogInformation(logger, "Processing {{ subscription.topic }} event for entity: {EntityId}", typedEventData.AccountId);
-                await _implementation.OnEventReceivedAsync("{{ subscription.topic }}", typedEventData);
-            }
-            else
-            {
-                Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger, "Failed to deserialize {{ subscription.topic }} event data");
-            }
-            return Ok();
-        }
-        catch (System.Exception ex)
-        {
-            var logger = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<{{ Class }}Controller>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger, ex, "Failed to process {{ subscription.topic }} event");
-            return StatusCode(500, new { error = "Event processing failed" });
-        }
-    }
-
-{%-     endfor -%}
-{%- endif -%}
 }
 {% elsif GenerateAbstractControllers -%}
 {% template Controller.Class.Annotations %}
@@ -349,36 +273,5 @@ public abstract class {{ Class }}ControllerBase : {% if HasBaseClass %}{{ BaseCl
     public abstract {%  if operation.WrapResponse %}System.Threading.Tasks.Task<System.Net.Http.HttpResponseMessage>{% else %}{{ operation.ResultType }}{% endif %} {{ operation.ActualOperationName }}({% for parameter in operation.Parameters %}{% if parameter.IsQuery %}[{{ AspNetNamespace }}.{% if IsAspNetCore -%}FromQuery{% else -%}FromUri{%- endif %}{% if parameter.IsValidIdentifier == false %}(Name = "{{ parameter.Name }}"){% endif %}] {% endif %}{% if parameter.IsHeader %}[{% if IsAspNetCore -%}{{ AspNetNamespace }}.{%- endif %}FromHeader{% if parameter.IsValidIdentifier == false %}(Name = "{{ parameter.Name }}"){% endif %}] {% endif %}{% if parameter.IsBody and parameter.IsBinaryBody == false %}[{{ AspNetNamespace }}.FromBody] {% endif %}{% if GenerateModelValidationAttributes and parameter.IsRequired %}[{{ RequiredAttributeType }}] {% endif %}{{ parameter.Type }} {{ parameter.VariableName }}{% if parameter.HasDefault %} = {{parameter.Default}}{% endif %}{% if GenerateOptionalParameters and parameter.IsOptional and parameter.HasDefault == false %} = null{% endif %}{% if parameter.IsLast == false or UseCancellationToken %}, {% endif %}{% endfor %}{% if UseCancellationToken %}System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken){% endif %});
 
 {%     endfor -%}
-{%- comment -%}
-Generate event handler methods from x-event-subscriptions in OpenAPI spec (for abstract controllers)
-{%- endcomment -%}
-{%- if ExtensionData["x-event-subscriptions"] -%}
-{%-     for subscription in ExtensionData["x-event-subscriptions"] -%}
-{%-         comment -%}
-            Convert topic name to PascalCase method name
-            Handle both dots and hyphens as word separators
-            e.g., "permissions.capabilities-updated" -> "PermissionsCapabilitiesUpdated"
-{%-         endcomment -%}
-{%-         assign normalizedTopic = subscription.topic | replace: "-", "." -%}
-{%-         assign topicParts = normalizedTopic | split: "." -%}
-{%-         assign eventName = "" -%}
-{%-         for part in topicParts -%}
-{%-             assign capitalizedPart = part | capitalize -%}
-{%-             assign eventName = eventName | append: capitalizedPart -%}
-{%-         endfor -%}
-{%-         assign methodName = "Handle" | append: eventName | append: "Event" -%}
-
-    /// <summary>
-    /// Event handler for {{ subscription.topic }} events
-    /// </summary>
-    /// <remarks>
-    /// {{ subscription.description }}
-    /// </remarks>
-    [BeyondImmersion.BannouService.Attributes.Topic("{{ subscription.pubsub }}", "{{ subscription.topic }}")]
-    [{{ AspNetNamespace }}.HttpPost("{{ subscription.path }}")]
-    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> {{ methodName }}([{{ AspNetNamespace }}.FromBody] object eventData);
-
-{%-     endfor -%}
-{%- endif -%}
 }
 {%- endif %}

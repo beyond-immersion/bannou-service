@@ -59,7 +59,7 @@ Run `make generate` or `scripts/generate-all-services.sh` to execute the full pi
 | 8. Service API | `{service}-api.yaml` | Controllers, models, clients, interfaces |
 | 9. Configuration | `{service}-configuration.yaml` | `{Service}ServiceConfiguration.cs` |
 | 10. Permissions | `x-permissions` in api.yaml | `{Service}PermissionRegistration.cs` |
-| 11. Event Subscriptions | `x-event-subscriptions` | `{Service}EventsController.cs` |
+| 11. Event Subscriptions | `x-event-subscriptions` | `{Service}ServiceEvents.cs` (one-time template) |
 
 **Order matters**: State stores and events must be generated before service APIs.
 
@@ -92,7 +92,7 @@ Running `generate-service.sh {service}` bootstraps an entire new plugin from scr
    - `{Service}Controller.Meta.cs` - runtime schema introspection
    - `{Service}ServiceConfiguration.cs` - typed config class
    - `{Service}PermissionRegistration.cs` - permission matrix
-   - `{Service}EventsController.cs` - event subscription handlers (from `x-event-subscriptions`)
+   - `{Service}ServiceEvents.cs` - event consumer registration and handler stubs (one-time template from `x-event-subscriptions`, never overwritten)
 
 3. **Generates shared code** into `bannou-service/Generated/`:
    - `Models/{Service}Models.cs` - request/response models (inspect with `make print-models PLUGIN="service"`)
@@ -233,10 +233,10 @@ info:
 ```
 
 - `topic`: RabbitMQ routing key
-- `event`: Event model class name (must exist in a `components/schemas` section — either in this file or a referenced lifecycle events file)
+- `event`: Event model class name. Must be a valid C# class in the `BeyondImmersion.BannouService.Events` namespace — generated from any `*-events.yaml` or `common-events.yaml` schema. The generator validates that the type exists in at least one event schema's `components/schemas` section at generation time.
 - `handler`: Handler method name (without `Async` suffix)
 
-**Generated output**: `{Service}EventsController.cs` (handlers) and `{Service}ServiceEvents.cs` (registration template).
+**Generated output**: `{Service}ServiceEvents.cs` (one-time template with `RegisterEventConsumers` method and handler stubs; never overwritten if the file already exists).
 
 ### x-event-publications (Event Publication Registry)
 
