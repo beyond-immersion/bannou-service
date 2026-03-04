@@ -31,6 +31,8 @@ public class AssetServiceTests
     private readonly Mock<IStateStore<UploadSession>> _mockUploadSessionStore = new();
     private readonly Mock<IStateStore<BundleUploadSession>> _mockBundleUploadSessionStore = new();
     private readonly Mock<IStateStore<MetabundleJob>> _mockJobStore = new();
+    private readonly Mock<ICacheableStateStore<StoredBundleVersionRecord>> _mockVersionStore = new();
+    private readonly Mock<ICacheableStateStore<BundleMetadata>> _mockCacheableBundleStore = new();
     private readonly Mock<IMessageBus> _mockMessageBus = new();
     private readonly Mock<ILogger<AssetService>> _mockLogger = new();
     private readonly AssetServiceConfiguration _configuration = new();
@@ -53,6 +55,8 @@ public class AssetServiceTests
         _mockStateStoreFactory.Setup(f => f.GetStore<BundleUploadSession>(STATE_STORE)).Returns(_mockBundleUploadSessionStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<MetabundleJob>(STATE_STORE)).Returns(_mockJobStore.Object);
         _mockStateStoreFactory.Setup(f => f.SupportsSearch(STATE_STORE)).Returns(false);
+        _mockStateStoreFactory.Setup(f => f.GetCacheableStore<StoredBundleVersionRecord>(STATE_STORE)).Returns(_mockVersionStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetCacheableStore<BundleMetadata>(STATE_STORE)).Returns(_mockCacheableBundleStore.Object);
     }
 
     #region Constructor Tests
@@ -2816,7 +2820,1224 @@ public class AssetServiceTests
 
     #endregion
 
+    #region UpdateBundleAsync Tests
+
+    [Fact]
+    public async Task UpdateBundleAsync_WithEmptyBundleId_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateBundleRequest { BundleId = "" };
+
+        // Act
+        var (status, result) = await service.UpdateBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task UpdateBundleAsync_WhenBundleNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateBundleRequest { BundleId = "missing-bundle" };
+
+        _mockBundleStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((BundleMetadata?)null, (string?)null));
+
+        // Act
+        var (status, result) = await service.UpdateBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task UpdateBundleAsync_WhenBundleIsDeleted_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateBundleRequest { BundleId = "deleted-bundle", Name = "New Name" };
+
+        var deletedBundle = CreateTestBundle("deleted-bundle", lifecycleStatus: BundleLifecycleStatus.Deleted);
+
+        _mockBundleStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((deletedBundle, "etag-1"));
+
+        // Act
+        var (status, result) = await service.UpdateBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task UpdateBundleAsync_WithNameChange_ShouldReturnUpdatedVersionAndCaptureChanges()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateBundleRequest
+        {
+            BundleId = "test-bundle",
+            Name = "New Bundle Name",
+            Reason = "Rename for clarity"
+        };
+
+        var existingBundle = CreateTestBundle("test-bundle");
+        existingBundle.Name = "Old Name";
+
+        _mockBundleStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingBundle, "etag-1"));
+
+        _mockBundleStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        // Capture published event
+        string? capturedTopic = null;
+        BeyondImmersion.BannouService.Events.BundleUpdatedEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.Is<string>(t => t == "asset.bundle.updated"),
+                It.IsAny<BeyondImmersion.BannouService.Events.BundleUpdatedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, BeyondImmersion.BannouService.Events.BundleUpdatedEvent, PublishOptions?, Guid?, CancellationToken>(
+                (topic, evt, _, _, _) => { capturedTopic = topic; capturedEvent = evt; })
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, result) = await service.UpdateBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Version);
+        Assert.Equal(1, result.PreviousVersion);
+        Assert.Contains("name changed", result.Changes);
+
+        // Verify event was published with correct data
+        Assert.Equal("asset.bundle.updated", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        Assert.Equal("test-bundle", capturedEvent.BundleId);
+        Assert.Equal(2, capturedEvent.Version);
+        Assert.Equal(1, capturedEvent.PreviousVersion);
+        Assert.Equal("Rename for clarity", capturedEvent.Reason);
+    }
+
+    [Fact]
+    public async Task UpdateBundleAsync_WithNoActualChanges_ShouldReturnOkWithNoChangesMessage()
+    {
+        // Arrange
+        var service = CreateService();
+        var existingBundle = CreateTestBundle("test-bundle");
+        existingBundle.Name = "Existing Name";
+
+        var request = new UpdateBundleRequest
+        {
+            BundleId = "test-bundle",
+            Name = "Existing Name" // Same name, no change
+        };
+
+        _mockBundleStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingBundle, "etag-1"));
+
+        // Act
+        var (status, result) = await service.UpdateBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Contains("no changes", result.Changes);
+        Assert.Equal(result.Version, result.PreviousVersion);
+    }
+
+    [Fact]
+    public async Task UpdateBundleAsync_WithConcurrentModification_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateBundleRequest
+        {
+            BundleId = "test-bundle",
+            Description = "Updated description"
+        };
+
+        var existingBundle = CreateTestBundle("test-bundle");
+
+        _mockBundleStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingBundle, "etag-1"));
+
+        // Simulate ETag mismatch (concurrent modification)
+        _mockBundleStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, result) = await service.UpdateBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task UpdateBundleAsync_WithTagOperations_ShouldApplyAddAndRemoveTags()
+    {
+        // Arrange
+        var service = CreateService();
+        var existingBundle = CreateTestBundle("test-bundle");
+        existingBundle.Tags = new Dictionary<string, string> { { "env", "prod" }, { "region", "us" } };
+
+        var request = new UpdateBundleRequest
+        {
+            BundleId = "test-bundle",
+            AddTags = new Dictionary<string, string> { { "version", "2.0" } },
+            RemoveTags = new List<string> { "region" }
+        };
+
+        _mockBundleStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingBundle, "etag-1"));
+
+        BundleMetadata? savedBundle = null;
+        _mockBundleStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<CancellationToken>()))
+            .Callback<string, BundleMetadata, string, CancellationToken>((_, bundle, _, _) => savedBundle = bundle)
+            .ReturnsAsync("etag-2");
+
+        // Act
+        var (status, result) = await service.UpdateBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.NotNull(savedBundle);
+        Assert.True(savedBundle.Tags?.ContainsKey("env") ?? false);
+        Assert.True(savedBundle.Tags?.ContainsKey("version") ?? false);
+        Assert.False(savedBundle.Tags?.ContainsKey("region") ?? true);
+    }
+
+    #endregion
+
+    #region DeleteBundleAsync Tests
+
+    [Fact]
+    public async Task DeleteBundleAsync_WithEmptyBundleId_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new DeleteBundleRequest { BundleId = "" };
+
+        // Act
+        var (status, result) = await service.DeleteBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task DeleteBundleAsync_WhenBundleNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new DeleteBundleRequest { BundleId = "missing-bundle" };
+
+        _mockBundleStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((BundleMetadata?)null, (string?)null));
+
+        // Act
+        var (status, result) = await service.DeleteBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task DeleteBundleAsync_SoftDelete_ShouldReturnDeletedStatusWithRetention()
+    {
+        // Arrange
+        _configuration.DeletedBundleRetentionDays = 30;
+        var service = CreateService();
+        var request = new DeleteBundleRequest
+        {
+            BundleId = "test-bundle",
+            Permanent = false,
+            Reason = "No longer needed"
+        };
+
+        var existingBundle = CreateTestBundle("test-bundle");
+
+        _mockBundleStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingBundle, "etag-1"));
+
+        _mockBundleStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        // Capture published event
+        BeyondImmersion.BannouService.Events.BundleDeletedEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.Is<string>(t => t == "asset.bundle.deleted"),
+                It.IsAny<BeyondImmersion.BannouService.Events.BundleDeletedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, BeyondImmersion.BannouService.Events.BundleDeletedEvent, PublishOptions?, Guid?, CancellationToken>(
+                (_, evt, _, _, _) => capturedEvent = evt)
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, result) = await service.DeleteBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(DeletionStatus.Deleted, result.Status);
+        Assert.NotNull(result.RetentionUntil);
+        Assert.True(result.RetentionUntil.Value > DateTimeOffset.UtcNow);
+
+        // Verify event was published
+        Assert.NotNull(capturedEvent);
+        Assert.False(capturedEvent.Permanent);
+        Assert.Equal("No longer needed", capturedEvent.Reason);
+        Assert.NotNull(capturedEvent.RetentionUntil);
+    }
+
+    [Fact]
+    public async Task DeleteBundleAsync_PermanentDelete_ShouldDeleteStorageAndMetadata()
+    {
+        // Arrange
+        _configuration.StorageBucket = "test-bucket";
+        var service = CreateService();
+        var request = new DeleteBundleRequest
+        {
+            BundleId = "test-bundle",
+            Permanent = true
+        };
+
+        var existingBundle = CreateTestBundle("test-bundle");
+
+        _mockBundleStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingBundle, "etag-1"));
+
+        _mockStorageProvider
+            .Setup(s => s.DeleteObjectAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (status, result) = await service.DeleteBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(DeletionStatus.PermanentlyDeleted, result.Status);
+        Assert.Null(result.RetentionUntil);
+
+        // Verify storage was deleted
+        _mockStorageProvider.Verify(
+            s => s.DeleteObjectAsync(
+                It.IsAny<string>(),
+                existingBundle.StorageKey,
+                It.IsAny<string?>()),
+            Times.Once);
+
+        // Verify metadata was deleted
+        _mockBundleStore.Verify(
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteBundleAsync_SoftDeleteConcurrentModification_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new DeleteBundleRequest { BundleId = "test-bundle" };
+
+        var existingBundle = CreateTestBundle("test-bundle");
+
+        _mockBundleStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingBundle, "etag-1"));
+
+        // Simulate concurrent modification
+        _mockBundleStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, result) = await service.DeleteBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task DeleteBundleAsync_PermanentDelete_WhenStorageFails_ShouldStillDeleteMetadata()
+    {
+        // Arrange
+        _configuration.StorageBucket = "test-bucket";
+        var service = CreateService();
+        var request = new DeleteBundleRequest
+        {
+            BundleId = "test-bundle",
+            Permanent = true
+        };
+
+        var existingBundle = CreateTestBundle("test-bundle");
+
+        _mockBundleStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingBundle, "etag-1"));
+
+        // Storage deletion fails
+        _mockStorageProvider
+            .Setup(s => s.DeleteObjectAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .ThrowsAsync(new InvalidOperationException("Storage unavailable"));
+
+        // Act
+        var (status, result) = await service.DeleteBundleAsync(request, CancellationToken.None);
+
+        // Assert - Should still succeed and delete metadata
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(DeletionStatus.PermanentlyDeleted, result.Status);
+
+        // Verify metadata was still deleted despite storage failure
+        _mockBundleStore.Verify(
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
+
+    #region RestoreBundleAsync Tests
+
+    [Fact]
+    public async Task RestoreBundleAsync_WithEmptyBundleId_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new RestoreBundleRequest { BundleId = "" };
+
+        // Act
+        var (status, result) = await service.RestoreBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task RestoreBundleAsync_WhenBundleNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new RestoreBundleRequest { BundleId = "missing-bundle" };
+
+        _mockBundleStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((BundleMetadata?)null, (string?)null));
+
+        // Act
+        var (status, result) = await service.RestoreBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task RestoreBundleAsync_WhenBundleNotDeleted_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new RestoreBundleRequest { BundleId = "active-bundle" };
+
+        var activeBundle = CreateTestBundle("active-bundle");
+
+        _mockBundleStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((activeBundle, "etag-1"));
+
+        // Act
+        var (status, result) = await service.RestoreBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task RestoreBundleAsync_WithDeletedBundle_ShouldRestoreAndPublishEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new RestoreBundleRequest
+        {
+            BundleId = "deleted-bundle",
+            Reason = "Restored by admin"
+        };
+
+        var deletedBundle = CreateTestBundle("deleted-bundle", lifecycleStatus: BundleLifecycleStatus.Deleted);
+        deletedBundle.DeletedAt = DateTimeOffset.UtcNow.AddDays(-1);
+        deletedBundle.MetadataVersion = 3;
+
+        _mockBundleStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((deletedBundle, "etag-1"));
+
+        _mockBundleStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
+        // Capture event
+        BeyondImmersion.BannouService.Events.BundleRestoredEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.Is<string>(t => t == "asset.bundle.restored"),
+                It.IsAny<BeyondImmersion.BannouService.Events.BundleRestoredEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, BeyondImmersion.BannouService.Events.BundleRestoredEvent, PublishOptions?, Guid?, CancellationToken>(
+                (_, evt, _, _, _) => capturedEvent = evt)
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, result) = await service.RestoreBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(BundleLifecycle.Active, result.Status);
+        Assert.Equal(3, result.RestoredFromVersion);
+
+        // Verify event content
+        Assert.NotNull(capturedEvent);
+        Assert.Equal("deleted-bundle", capturedEvent.BundleId);
+        Assert.Equal(3, capturedEvent.RestoredFromVersion);
+        Assert.Equal("Restored by admin", capturedEvent.Reason);
+    }
+
+    [Fact]
+    public async Task RestoreBundleAsync_WithConcurrentModification_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new RestoreBundleRequest { BundleId = "deleted-bundle" };
+
+        var deletedBundle = CreateTestBundle("deleted-bundle", lifecycleStatus: BundleLifecycleStatus.Deleted);
+        deletedBundle.DeletedAt = DateTimeOffset.UtcNow.AddDays(-1);
+
+        _mockBundleStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((deletedBundle, "etag-1"));
+
+        _mockBundleStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BundleMetadata>(), "etag-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, result) = await service.RestoreBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(result);
+    }
+
+    #endregion
+
+    #region QueryBundlesAsync Tests
+
+    [Fact]
+    public async Task QueryBundlesAsync_WithoutOwner_ShouldReturnEmptyResult()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new QueryBundlesRequest { Owner = null };
+
+        // Act
+        var (status, result) = await service.QueryBundlesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Empty(result.Bundles);
+        Assert.Equal(0, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task QueryBundlesAsync_WithOwnerButNoBundles_ShouldReturnEmptyResult()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new QueryBundlesRequest { Owner = "test-owner" };
+
+        _mockCacheableBundleStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        // Act
+        var (status, result) = await service.QueryBundlesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Empty(result.Bundles);
+        Assert.Equal(0, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task QueryBundlesAsync_WithOwnerAndBundles_ShouldReturnFilteredResults()
+    {
+        // Arrange
+        _configuration.BundleKeyPrefix = "bundle:";
+        var service = CreateService();
+
+        var bundle1 = CreateTestBundle("bundle-1");
+        bundle1.Name = "Alpha Bundle";
+        var bundle2 = CreateTestBundle("bundle-2", lifecycleStatus: BundleLifecycleStatus.Deleted);
+        bundle2.Name = "Deleted Bundle";
+
+        var request = new QueryBundlesRequest
+        {
+            Owner = "test-owner",
+            IncludeDeleted = false
+        };
+
+        _mockCacheableBundleStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "bundle-1", "bundle-2" });
+
+        _mockCacheableBundleStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, BundleMetadata>
+            {
+                { "bundle:bundle-1", bundle1 },
+                { "bundle:bundle-2", bundle2 }
+            });
+
+        // Act
+        var (status, result) = await service.QueryBundlesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(1, result.TotalCount); // Only active bundle
+        Assert.Single(result.Bundles);
+        Assert.Equal("bundle-1", result.Bundles.First().BundleId);
+    }
+
+    [Fact]
+    public async Task QueryBundlesAsync_WithNameContainsFilter_ShouldFilterByName()
+    {
+        // Arrange
+        _configuration.BundleKeyPrefix = "bundle:";
+        var service = CreateService();
+
+        var bundle1 = CreateTestBundle("bundle-1");
+        bundle1.Name = "Adventure Pack";
+        var bundle2 = CreateTestBundle("bundle-2");
+        bundle2.Name = "Combat Assets";
+
+        var request = new QueryBundlesRequest
+        {
+            Owner = "test-owner",
+            NameContains = "Adventure"
+        };
+
+        _mockCacheableBundleStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "bundle-1", "bundle-2" });
+
+        _mockCacheableBundleStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, BundleMetadata>
+            {
+                { "bundle:bundle-1", bundle1 },
+                { "bundle:bundle-2", bundle2 }
+            });
+
+        // Act
+        var (status, result) = await service.QueryBundlesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(1, result.TotalCount);
+        Assert.Single(result.Bundles);
+        Assert.Equal("bundle-1", result.Bundles.First().BundleId);
+    }
+
+    [Fact]
+    public async Task QueryBundlesAsync_WithSorting_ShouldReturnSortedResults()
+    {
+        // Arrange
+        _configuration.BundleKeyPrefix = "bundle:";
+        _configuration.MaxQueryLimit = 100;
+        var service = CreateService();
+
+        var bundle1 = CreateTestBundle("bundle-1", createdAt: DateTimeOffset.UtcNow.AddDays(-2));
+        bundle1.Name = "Zebra";
+        var bundle2 = CreateTestBundle("bundle-2", createdAt: DateTimeOffset.UtcNow.AddDays(-1));
+        bundle2.Name = "Alpha";
+
+        var request = new QueryBundlesRequest
+        {
+            Owner = "test-owner",
+            SortField = BundleSortField.Name,
+            SortOrder = SortOrder.Asc
+        };
+
+        _mockCacheableBundleStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "bundle-1", "bundle-2" });
+
+        _mockCacheableBundleStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, BundleMetadata>
+            {
+                { "bundle:bundle-1", bundle1 },
+                { "bundle:bundle-2", bundle2 }
+            });
+
+        // Act
+        var (status, result) = await service.QueryBundlesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal("bundle-2", result.Bundles.First().BundleId); // Alpha first
+        Assert.Equal("bundle-1", result.Bundles.Last().BundleId); // Zebra last
+    }
+
+    #endregion
+
+    #region ListBundleVersionsAsync Tests
+
+    [Fact]
+    public async Task ListBundleVersionsAsync_WithEmptyBundleId_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListBundleVersionsRequest { BundleId = "" };
+
+        // Act
+        var (status, result) = await service.ListBundleVersionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ListBundleVersionsAsync_WhenBundleNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListBundleVersionsRequest { BundleId = "missing-bundle" };
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BundleMetadata?)null);
+
+        // Act
+        var (status, result) = await service.ListBundleVersionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ListBundleVersionsAsync_WithVersions_ShouldReturnPaginatedVersionList()
+    {
+        // Arrange
+        _configuration.BundleKeyPrefix = "bundle:";
+        _configuration.DefaultListLimit = 50;
+        var service = CreateService();
+
+        var existingBundle = CreateTestBundle("test-bundle");
+        existingBundle.MetadataVersion = 3;
+
+        var request = new ListBundleVersionsRequest
+        {
+            BundleId = "test-bundle",
+            Limit = 10,
+            Offset = 0
+        };
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBundle);
+
+        _mockVersionStore
+            .Setup(s => s.GetSetAsync<int>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<int> { 1, 2, 3 });
+
+        var v1 = new StoredBundleVersionRecord
+        {
+            BundleId = "test-bundle",
+            Version = 1,
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-2),
+            CreatedBy = "system",
+            Changes = new List<string> { "initial creation" }
+        };
+        var v2 = new StoredBundleVersionRecord
+        {
+            BundleId = "test-bundle",
+            Version = 2,
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            CreatedBy = "test-user",
+            Changes = new List<string> { "name changed" }
+        };
+        var v3 = new StoredBundleVersionRecord
+        {
+            BundleId = "test-bundle",
+            Version = 3,
+            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedBy = "admin",
+            Changes = new List<string> { "description changed" }
+        };
+
+        _mockVersionStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, StoredBundleVersionRecord>
+            {
+                { "bundle-version:test-bundle:3", v3 },
+                { "bundle-version:test-bundle:2", v2 },
+                { "bundle-version:test-bundle:1", v1 }
+            });
+
+        // Act
+        var (status, result) = await service.ListBundleVersionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal("test-bundle", result.BundleId);
+        Assert.Equal(3, result.CurrentVersion);
+        Assert.Equal(3, result.TotalCount);
+        Assert.Equal(3, result.Versions.Count);
+        // Versions are ordered descending (newest first)
+        Assert.Equal(3, result.Versions.First().Version);
+        Assert.Equal(1, result.Versions.Last().Version);
+    }
+
+    [Fact]
+    public async Task ListBundleVersionsAsync_WithPagination_ShouldApplyOffsetAndLimit()
+    {
+        // Arrange
+        _configuration.BundleKeyPrefix = "bundle:";
+        _configuration.DefaultListLimit = 50;
+        var service = CreateService();
+
+        var existingBundle = CreateTestBundle("test-bundle");
+        existingBundle.MetadataVersion = 5;
+
+        var request = new ListBundleVersionsRequest
+        {
+            BundleId = "test-bundle",
+            Limit = 2,
+            Offset = 1 // Skip newest version
+        };
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBundle);
+
+        _mockVersionStore
+            .Setup(s => s.GetSetAsync<int>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<int> { 1, 2, 3, 4, 5 });
+
+        var v4 = new StoredBundleVersionRecord
+        {
+            BundleId = "test-bundle", Version = 4,
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1), CreatedBy = "user",
+            Changes = new List<string> { "update" }
+        };
+        var v3 = new StoredBundleVersionRecord
+        {
+            BundleId = "test-bundle", Version = 3,
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-2), CreatedBy = "user",
+            Changes = new List<string> { "update" }
+        };
+
+        _mockVersionStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, StoredBundleVersionRecord>
+            {
+                { "bundle-version:test-bundle:4", v4 },
+                { "bundle-version:test-bundle:3", v3 }
+            });
+
+        // Act
+        var (status, result) = await service.ListBundleVersionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(5, result.TotalCount);
+        Assert.Equal(2, result.Versions.Count);
+        Assert.Equal(4, result.Versions.First().Version); // Offset=1 skips version 5
+    }
+
+    #endregion
+
+    #region BulkGetAssetsAsync Extended Tests
+
+    [Fact]
+    public async Task BulkGetAssetsAsync_ExceedingBatchLimit_ShouldReturnBadRequest()
+    {
+        // Arrange
+        _configuration.MaxBulkGetAssets = 5;
+        var service = CreateService();
+        var request = new BulkGetAssetsRequest
+        {
+            AssetIds = Enumerable.Range(1, 10).Select(i => $"asset-{i}").ToList()
+        };
+
+        // Act
+        var (status, result) = await service.BulkGetAssetsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task BulkGetAssetsAsync_WithPartialMisses_ShouldReturnFoundAndNotFoundLists()
+    {
+        // Arrange
+        _configuration.AssetKeyPrefix = "asset:";
+        _configuration.MaxBulkGetAssets = 100;
+        _configuration.DownloadTokenTtlSeconds = 3600;
+        var service = CreateService();
+
+        var existingAsset = new InternalAssetRecord
+        {
+            AssetId = "existing-asset",
+            ContentHash = "hash1",
+            Filename = "test.png",
+            ContentType = "image/png",
+            Size = 1024,
+            Bucket = "test-bucket",
+            StorageKey = "assets/test.png",
+            AssetType = AssetType.Texture,
+            Realm = "test-realm",
+            ProcessingStatus = ProcessingStatus.Complete,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAssetStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("existing-asset")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingAsset);
+        _mockAssetStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("missing-asset")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((InternalAssetRecord?)null);
+
+        var request = new BulkGetAssetsRequest
+        {
+            AssetIds = new List<string> { "existing-asset", "missing-asset" },
+            IncludeDownloadUrls = false
+        };
+
+        // Act
+        var (status, result) = await service.BulkGetAssetsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Single(result.Assets);
+        Assert.Equal("existing-asset", result.Assets.First().AssetId);
+        Assert.Single(result.NotFound);
+        Assert.Equal("missing-asset", result.NotFound.First());
+    }
+
+    #endregion
+
+    #region CreateBundleAsync Extended Tests
+
+    [Fact]
+    public async Task CreateBundleAsync_LargeBundle_ShouldQueueAsyncProcessingJob()
+    {
+        // Arrange
+        _configuration.StorageBucket = "test-bucket";
+        _configuration.LargeFileThresholdMb = 1; // 1 MB threshold
+        var service = CreateService();
+        var bundleId = Guid.NewGuid().ToString();
+        var request = new CreateBundleRequest
+        {
+            BundleId = bundleId,
+            AssetIds = new List<string> { "large-asset" }
+        };
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BundleMetadata?)null);
+
+        var largeAsset = new InternalAssetRecord
+        {
+            AssetId = "large-asset",
+            Filename = "large-model.glb",
+            ContentType = "model/gltf-binary",
+            ContentHash = "largehash",
+            Size = 10 * 1024 * 1024, // 10 MB (exceeds threshold)
+            AssetType = AssetType.Model,
+            Realm = "test-realm",
+            StorageKey = "assets/model/large-model.glb",
+            Bucket = "test-bucket",
+            ProcessingStatus = ProcessingStatus.Complete,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAssetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(largeAsset);
+
+        // Mock the BundleCreationJob store needed for async queueing path
+        var mockJobStore = new Mock<IStateStore<BundleCreationJob>>();
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<BundleCreationJob>(STATE_STORE))
+            .Returns(mockJobStore.Object);
+
+        // Capture the saved job to verify queueing behavior
+        BundleCreationJob? capturedJob = null;
+        mockJobStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<BundleCreationJob>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, BundleCreationJob, StateOptions?, CancellationToken>((_, job, _, _) => capturedJob = job)
+            .ReturnsAsync("etag-job");
+
+        // Capture the published job-queued event
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((topic, evt, _, _, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, result) = await service.CreateBundleAsync(request, CancellationToken.None);
+
+        // Assert - Large bundles are queued for async processing
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(BundleStatus.Queued, result.Status);
+
+        // Verify job was saved
+        Assert.NotNull(capturedJob);
+        Assert.Equal(bundleId, capturedJob.BundleId);
+        Assert.Equal(BundleCreationStatus.Queued, capturedJob.Status);
+        Assert.Contains("large-asset", capturedJob.AssetIds);
+
+        // Verify job-queued event was published
+        Assert.Equal("asset.bundle.create", capturedTopic);
+        Assert.NotNull(capturedEvent);
+    }
+
+    #endregion
+
+    #region CreateMetabundleAsync Extended Tests
+
+    [Fact]
+    public async Task CreateMetabundleAsync_WithValidSourceBundles_ShouldQueueAsyncJob()
+    {
+        // Arrange - force async path by setting threshold low
+        _configuration.StorageBucket = "test-bucket";
+        _configuration.MetabundleAsyncSourceBundleThreshold = 1; // 1 source bundle triggers async
+        _configuration.MetabundleJobTtlSeconds = 3600;
+        var service = CreateService();
+        var request = new CreateMetabundleRequest
+        {
+            MetabundleId = "new-metabundle",
+            SourceBundleIds = new List<string> { "source-1" },
+            Owner = "test-owner",
+            Realm = "test-realm"
+        };
+
+        // Metabundle doesn't exist
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("new-metabundle")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BundleMetadata?)null);
+
+        var sourceBundle = new BundleMetadata
+        {
+            BundleId = "source-1",
+            Version = "1.0.0",
+            Bucket = "test-bucket",
+            StorageKey = "bundles/source-1.bundle",
+            BundleType = BundleType.Source,
+            AssetIds = new List<string> { "asset-1", "asset-2" },
+            SizeBytes = 500,
+            Status = BundleStatus.Ready,
+            Realm = "test-realm",
+            Assets = new List<StoredBundleAssetEntry>
+            {
+                new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "h1", Filename = "a1.json", ContentType = "application/json", Size = 200 },
+                new StoredBundleAssetEntry { AssetId = "asset-2", ContentHash = "h2", Filename = "a2.json", ContentType = "application/json", Size = 300 }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("source-1")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceBundle);
+
+        // Mock MetabundleJob store for async queueing
+        var mockJobStore = new Mock<IStateStore<MetabundleJob>>();
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<MetabundleJob>(STATE_STORE))
+            .Returns(mockJobStore.Object);
+
+        MetabundleJob? capturedJob = null;
+        mockJobStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<MetabundleJob>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, MetabundleJob, StateOptions?, CancellationToken>((_, job, _, _) => capturedJob = job)
+            .ReturnsAsync("etag-job");
+
+        // Capture event published
+        string? capturedTopic = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((topic, _, _, _, _) =>
+            {
+                capturedTopic = topic;
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+
+        // Assert - async path returns OK with Queued status
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(BundleStatus.Queued, result.Status);
+        Assert.Equal("new-metabundle", result.MetabundleId);
+        Assert.Equal(2, result.AssetCount);
+
+        // Verify job was saved
+        Assert.NotNull(capturedJob);
+        Assert.Equal("new-metabundle", capturedJob.MetabundleId);
+        Assert.Equal(BundleStatus.Queued, capturedJob.Status);
+        Assert.NotNull(capturedJob.Request);
+
+        // Verify job-queued event was published
+        Assert.Equal("asset.metabundle.job.queued", capturedTopic);
+    }
+
+    #endregion
+
+    #region CompleteUploadAsync Extended Tests
+
+    [Fact]
+    public async Task CompleteUploadAsync_WhenStorageProviderFails_ShouldPropagateFailure()
+    {
+        // Arrange
+        _configuration.StorageBucket = "test-bucket";
+        var service = CreateService();
+        var uploadId = Guid.NewGuid();
+        var request = new CompleteUploadRequest { UploadId = uploadId };
+
+        var session = new UploadSession
+        {
+            UploadId = uploadId,
+            Filename = "test.png",
+            Size = 1024,
+            ContentType = "image/png",
+            Owner = "test-account",
+            StorageKey = $"temp/{uploadId:N}/test.png",
+            IsMultipart = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
+        };
+
+        _mockUploadSessionStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session);
+
+        // File exists check succeeds but object metadata retrieval fails
+        _mockStorageProvider
+            .Setup(s => s.ObjectExistsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .ReturnsAsync(true);
+
+        // GetObjectAsync for SHA256 hash throws
+        _mockStorageProvider
+            .Setup(s => s.GetObjectAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .ThrowsAsync(new InvalidOperationException("Storage read failure"));
+
+        // Act & Assert - Exception propagates to generated controller (per FOUNDATION TENETS)
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.CompleteUploadAsync(request, CancellationToken.None));
+    }
+
+    #endregion
+
     #region Helper Methods
+
+    /// <summary>
+    /// Creates a test BundleMetadata with sensible defaults for unit testing.
+    /// </summary>
+    private static BundleMetadata CreateTestBundle(
+        string bundleId,
+        BundleLifecycleStatus lifecycleStatus = BundleLifecycleStatus.Active,
+        DateTimeOffset? createdAt = null)
+    {
+        return new BundleMetadata
+        {
+            BundleId = bundleId,
+            Version = "1.0.0",
+            BundleType = BundleType.Source,
+            Realm = "test-realm",
+            AssetIds = new List<string> { "asset-1" },
+            StorageKey = $"bundles/current/{bundleId}.bundle",
+            Bucket = "test-bucket",
+            SizeBytes = 1024,
+            CreatedAt = createdAt ?? DateTimeOffset.UtcNow,
+            Status = BundleStatus.Ready,
+            LifecycleStatus = lifecycleStatus,
+            Owner = "test-owner",
+            MetadataVersion = 1
+        };
+    }
 
     private AssetService CreateService()
     {

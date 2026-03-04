@@ -2505,3 +2505,1708 @@ public class PresetLoaderTests
 
     #endregion
 }
+
+/// <summary>
+/// Tests for TeardownAsync covering dry-run, infrastructure teardown, and event publication.
+/// </summary>
+public class OrchestratorTeardownTests
+{
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
+    private readonly Mock<ILoggerFactory> _mockLoggerFactory;
+    private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly Mock<IOrchestratorStateManager> _mockStateManager;
+    private readonly Mock<IOrchestratorEventManager> _mockEventManager;
+    private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
+    private readonly Mock<ISmartRestartManager> _mockRestartManager;
+    private readonly Mock<IBackendDetector> _mockBackendDetector;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly AppConfiguration _appConfiguration;
+
+    public OrchestratorTeardownTests()
+    {
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockLogger = new Mock<ILogger<OrchestratorService>>();
+        _mockLoggerFactory = new Mock<ILoggerFactory>();
+        _mockLoggerFactory
+            .Setup(f => f.CreateLogger(It.IsAny<string>()))
+            .Returns(new Mock<ILogger>().Object);
+        _configuration = new OrchestratorServiceConfiguration
+        {
+            RedisConnectionString = "redis:6379",
+            HeartbeatTimeoutSeconds = 90,
+            DegradationThresholdMinutes = 5
+        };
+        _appConfiguration = new AppConfiguration();
+        _mockStateManager = new Mock<IOrchestratorStateManager>();
+        _mockEventManager = new Mock<IOrchestratorEventManager>();
+        _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
+        _mockRestartManager = new Mock<ISmartRestartManager>();
+        _mockBackendDetector = new Mock<IBackendDetector>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+
+        _mockHttpClientFactory
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(() => new HttpClient());
+
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+    }
+
+    private OrchestratorService CreateService()
+    {
+        return new OrchestratorService(
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            _mockLoggerFactory.Object,
+            _configuration,
+            _appConfiguration,
+            _mockStateManager.Object,
+            _mockEventManager.Object,
+            _mockHealthMonitor.Object,
+            _mockRestartManager.Object,
+            _mockBackendDetector.Object,
+            _mockLockProvider.Object,
+            _mockHttpClientFactory.Object,
+            _mockTelemetryProvider.Object,
+            _mockEventConsumer.Object);
+    }
+
+    private Mock<IContainerOrchestrator> SetupOrchestrator()
+    {
+        var mockOrchestrator = new Mock<IContainerOrchestrator>();
+        mockOrchestrator.Setup(x => x.BackendType).Returns(BackendType.Compose);
+        _mockBackendDetector
+            .Setup(x => x.CreateBestOrchestratorAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockOrchestrator.Object);
+        return mockOrchestrator;
+    }
+
+    #region TeardownAsync Tests
+
+    [Fact]
+    public async Task TeardownAsync_DryRun_ShouldReturnPreviewWithoutExecuting()
+    {
+        // Arrange
+        var mockOrchestrator = SetupOrchestrator();
+        mockOrchestrator
+            .Setup(x => x.ListContainersAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ContainerStatus>
+            {
+                new() { AppName = "bannou-auth", Status = ContainerStatusType.Running, Instances = 1 },
+                new() { AppName = "bannou-account", Status = ContainerStatusType.Running, Instances = 1 }
+            });
+        mockOrchestrator
+            .Setup(x => x.ListInfrastructureServicesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "redis", "rabbitmq" });
+
+        var service = CreateService();
+        var request = new TeardownRequest { DryRun = true, IncludeInfrastructure = false };
+
+        // Act
+        var (statusCode, response) = await service.TeardownAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.NotNull(response.StoppedContainers);
+        Assert.Contains("bannou-auth", response.StoppedContainers);
+        Assert.Contains("bannou-account", response.StoppedContainers);
+        // Dry run should NOT publish deployment events
+        _mockEventManager.Verify(
+            x => x.PublishDeploymentEventAsync(It.IsAny<DeploymentEvent>()),
+            Times.Never);
+        // Dry run should NOT call teardown
+        mockOrchestrator.Verify(
+            x => x.TeardownServiceAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task TeardownAsync_WithInfrastructure_ShouldTeardownInfraAndPublishEvents()
+    {
+        // Arrange
+        var mockOrchestrator = SetupOrchestrator();
+        mockOrchestrator
+            .Setup(x => x.ListContainersAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ContainerStatus>
+            {
+                new() { AppName = "bannou-auth", Status = ContainerStatusType.Running, Instances = 1 }
+            });
+        mockOrchestrator
+            .Setup(x => x.ListInfrastructureServicesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "redis" });
+        mockOrchestrator
+            .Setup(x => x.TeardownServiceAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TeardownServiceResult
+            {
+                Success = true,
+                StoppedContainers = new List<string> { "container-1" },
+                RemovedVolumes = new List<string>()
+            });
+
+        // Capture deployment events
+        var capturedEvents = new List<DeploymentEvent>();
+        _mockEventManager
+            .Setup(x => x.PublishDeploymentEventAsync(It.IsAny<DeploymentEvent>()))
+            .Callback<DeploymentEvent>(evt => capturedEvents.Add(evt))
+            .Returns(Task.CompletedTask);
+
+        var service = CreateService();
+        var request = new TeardownRequest { DryRun = false, IncludeInfrastructure = true };
+
+        // Act
+        var (statusCode, response) = await service.TeardownAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        // Should publish started and completed events
+        Assert.Equal(2, capturedEvents.Count);
+        Assert.Equal(DeploymentAction.TopologyChanged, capturedEvents[0].Action);
+        Assert.Equal(DeploymentAction.Completed, capturedEvents[1].Action);
+    }
+
+    [Fact]
+    public async Task TeardownAsync_NoContainers_ShouldReturnEmptyResult()
+    {
+        // Arrange
+        var mockOrchestrator = SetupOrchestrator();
+        mockOrchestrator
+            .Setup(x => x.ListContainersAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ContainerStatus>());
+        mockOrchestrator
+            .Setup(x => x.ListInfrastructureServicesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var service = CreateService();
+        var request = new TeardownRequest { DryRun = false };
+
+        // Act
+        var (statusCode, response) = await service.TeardownAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.NotNull(response.StoppedContainers);
+        Assert.Empty(response.StoppedContainers);
+        Assert.Equal("0s", response.Duration);
+    }
+
+    [Fact]
+    public async Task TeardownAsync_FailedTeardown_ShouldPublishFailedEvent()
+    {
+        // Arrange
+        var mockOrchestrator = SetupOrchestrator();
+        mockOrchestrator
+            .Setup(x => x.ListContainersAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ContainerStatus>
+            {
+                new() { AppName = "bannou-auth", Status = ContainerStatusType.Running, Instances = 1 }
+            });
+        mockOrchestrator
+            .Setup(x => x.ListInfrastructureServicesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+        mockOrchestrator
+            .Setup(x => x.TeardownServiceAsync("bannou-auth", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TeardownServiceResult
+            {
+                Success = false,
+                Message = "Container busy"
+            });
+
+        var capturedEvents = new List<DeploymentEvent>();
+        _mockEventManager
+            .Setup(x => x.PublishDeploymentEventAsync(It.IsAny<DeploymentEvent>()))
+            .Callback<DeploymentEvent>(evt => capturedEvents.Add(evt))
+            .Returns(Task.CompletedTask);
+
+        var service = CreateService();
+        var request = new TeardownRequest { DryRun = false };
+
+        // Act
+        var (statusCode, response) = await service.TeardownAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        var errors = response.Errors ?? throw new InvalidOperationException("Expected non-null Errors");
+        Assert.Single(errors);
+        // Second event should be Failed
+        Assert.Equal(2, capturedEvents.Count);
+        Assert.Equal(DeploymentAction.Failed, capturedEvents[1].Action);
+        Assert.NotNull(capturedEvents[1].Error);
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Tests for UpdateTopologyAsync covering different TopologyChangeAction types.
+/// </summary>
+public class OrchestratorUpdateTopologyTests
+{
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
+    private readonly Mock<ILoggerFactory> _mockLoggerFactory;
+    private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly Mock<IOrchestratorStateManager> _mockStateManager;
+    private readonly Mock<IOrchestratorEventManager> _mockEventManager;
+    private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
+    private readonly Mock<ISmartRestartManager> _mockRestartManager;
+    private readonly Mock<IBackendDetector> _mockBackendDetector;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly AppConfiguration _appConfiguration;
+
+    public OrchestratorUpdateTopologyTests()
+    {
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockLogger = new Mock<ILogger<OrchestratorService>>();
+        _mockLoggerFactory = new Mock<ILoggerFactory>();
+        _mockLoggerFactory
+            .Setup(f => f.CreateLogger(It.IsAny<string>()))
+            .Returns(new Mock<ILogger>().Object);
+        _configuration = new OrchestratorServiceConfiguration
+        {
+            RedisConnectionString = "redis:6379",
+            HeartbeatTimeoutSeconds = 90,
+            DegradationThresholdMinutes = 5
+        };
+        _appConfiguration = new AppConfiguration();
+        _mockStateManager = new Mock<IOrchestratorStateManager>();
+        _mockEventManager = new Mock<IOrchestratorEventManager>();
+        _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
+        _mockRestartManager = new Mock<ISmartRestartManager>();
+        _mockBackendDetector = new Mock<IBackendDetector>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+
+        _mockHttpClientFactory
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(() => new HttpClient());
+
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+    }
+
+    private OrchestratorService CreateService()
+    {
+        return new OrchestratorService(
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            _mockLoggerFactory.Object,
+            _configuration,
+            _appConfiguration,
+            _mockStateManager.Object,
+            _mockEventManager.Object,
+            _mockHealthMonitor.Object,
+            _mockRestartManager.Object,
+            _mockBackendDetector.Object,
+            _mockLockProvider.Object,
+            _mockHttpClientFactory.Object,
+            _mockTelemetryProvider.Object,
+            _mockEventConsumer.Object);
+    }
+
+    private Mock<IContainerOrchestrator> SetupOrchestrator()
+    {
+        var mockOrchestrator = new Mock<IContainerOrchestrator>();
+        mockOrchestrator.Setup(x => x.BackendType).Returns(BackendType.Compose);
+        _mockBackendDetector
+            .Setup(x => x.CreateBestOrchestratorAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockOrchestrator.Object);
+        return mockOrchestrator;
+    }
+
+    #region UpdateTopologyAsync Tests
+
+    [Fact]
+    public async Task UpdateTopologyAsync_EmptyChanges_ShouldReturnBadRequest()
+    {
+        // Arrange
+        SetupOrchestrator();
+        var service = CreateService();
+        var request = new TopologyUpdateRequest { Changes = new List<TopologyChange>() };
+
+        // Act
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateTopologyAsync_AddNode_ShouldDeployServicesAndSetRouting()
+    {
+        // Arrange
+        var mockOrchestrator = SetupOrchestrator();
+        mockOrchestrator
+            .Setup(x => x.DeployServiceAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeployServiceResult { Success = true, AppId = "bannou-auth-node2" });
+
+        var service = CreateService();
+        var request = new TopologyUpdateRequest
+        {
+            Changes = new List<TopologyChange>
+            {
+                new()
+                {
+                    Action = TopologyChangeAction.AddNode,
+                    NodeName = "node2",
+                    NodeConfig = new TopologyNode(),
+                    Services = new List<string> { "auth" },
+                    Environment = new Dictionary<string, string> { ["CUSTOM_VAR"] = "value" }
+                }
+            }
+        };
+
+        // Act
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.AppliedChanges);
+        Assert.True(response.AppliedChanges.First().Success);
+        // Verify routing was set
+        _mockHealthMonitor.Verify(
+            x => x.SetServiceRoutingAsync("auth", "bannou-auth-node2"),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateTopologyAsync_AddNode_MissingNodeConfig_ShouldSetError()
+    {
+        // Arrange
+        SetupOrchestrator();
+        var service = CreateService();
+        var request = new TopologyUpdateRequest
+        {
+            Changes = new List<TopologyChange>
+            {
+                new()
+                {
+                    Action = TopologyChangeAction.AddNode,
+                    NodeName = "node2",
+                    NodeConfig = null,
+                    Services = new List<string> { "auth" }
+                }
+            }
+        };
+
+        // Act
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.AppliedChanges);
+        Assert.False(response.AppliedChanges.First().Success);
+        Assert.Contains("required", response.AppliedChanges.First().Error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task UpdateTopologyAsync_RemoveNode_ShouldTeardownAndRestoreRouting()
+    {
+        // Arrange
+        var mockOrchestrator = SetupOrchestrator();
+        mockOrchestrator
+            .Setup(x => x.TeardownServiceAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TeardownServiceResult { Success = true });
+
+        var service = CreateService();
+        var request = new TopologyUpdateRequest
+        {
+            Changes = new List<TopologyChange>
+            {
+                new()
+                {
+                    Action = TopologyChangeAction.RemoveNode,
+                    NodeName = "node2",
+                    Services = new List<string> { "auth", "account" }
+                }
+            }
+        };
+
+        // Act
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.AppliedChanges);
+        Assert.True(response.AppliedChanges.First().Success);
+        _mockHealthMonitor.Verify(
+            x => x.RestoreServiceRoutingToDefaultAsync("auth"), Times.Once);
+        _mockHealthMonitor.Verify(
+            x => x.RestoreServiceRoutingToDefaultAsync("account"), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateTopologyAsync_MoveService_ShouldUpdateRouting()
+    {
+        // Arrange
+        SetupOrchestrator();
+        var service = CreateService();
+        var request = new TopologyUpdateRequest
+        {
+            Changes = new List<TopologyChange>
+            {
+                new()
+                {
+                    Action = TopologyChangeAction.MoveService,
+                    NodeName = "node3",
+                    Services = new List<string> { "auth" }
+                }
+            }
+        };
+
+        // Act
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.AppliedChanges);
+        Assert.True(response.AppliedChanges.First().Success);
+        _mockHealthMonitor.Verify(
+            x => x.SetServiceRoutingAsync("auth", "bannou-auth-node3"), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateTopologyAsync_Scale_WithoutReplicas_ShouldSetError()
+    {
+        // Arrange
+        SetupOrchestrator();
+        var service = CreateService();
+        var request = new TopologyUpdateRequest
+        {
+            Changes = new List<TopologyChange>
+            {
+                new()
+                {
+                    Action = TopologyChangeAction.Scale,
+                    NodeName = "node1",
+                    Services = new List<string> { "auth" },
+                    Replicas = null
+                }
+            }
+        };
+
+        // Act
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.AppliedChanges);
+        Assert.False(response.AppliedChanges.First().Success);
+        Assert.Contains("replicas", response.AppliedChanges.First().Error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task UpdateTopologyAsync_Scale_WithReplicas_ShouldCallScaleService()
+    {
+        // Arrange
+        var mockOrchestrator = SetupOrchestrator();
+        mockOrchestrator
+            .Setup(x => x.ScaleServiceAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ScaleServiceResult { Success = true });
+
+        var service = CreateService();
+        var request = new TopologyUpdateRequest
+        {
+            Changes = new List<TopologyChange>
+            {
+                new()
+                {
+                    Action = TopologyChangeAction.Scale,
+                    NodeName = "node1",
+                    Services = new List<string> { "auth" },
+                    Replicas = 3
+                }
+            }
+        };
+
+        // Act
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.AppliedChanges);
+        Assert.True(response.AppliedChanges.First().Success);
+        mockOrchestrator.Verify(
+            x => x.ScaleServiceAsync("bannou-auth-node1", 3, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateTopologyAsync_UpdateEnv_ShouldRedeployWithNewEnvironment()
+    {
+        // Arrange
+        var mockOrchestrator = SetupOrchestrator();
+        mockOrchestrator
+            .Setup(x => x.DeployServiceAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeployServiceResult { Success = true, ContainerId = "abc123" });
+
+        var service = CreateService();
+        var request = new TopologyUpdateRequest
+        {
+            Changes = new List<TopologyChange>
+            {
+                new()
+                {
+                    Action = TopologyChangeAction.UpdateEnv,
+                    NodeName = "node1",
+                    Services = new List<string> { "auth" },
+                    Environment = new Dictionary<string, string> { ["LOG_LEVEL"] = "Debug" }
+                }
+            }
+        };
+
+        // Act
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Single(response.AppliedChanges);
+        Assert.True(response.AppliedChanges.First().Success);
+        mockOrchestrator.Verify(
+            x => x.DeployServiceAsync(
+                "auth",
+                "bannou-auth-node1",
+                It.Is<Dictionary<string, string>>(env => env["LOG_LEVEL"] == "Debug"),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Tests for RollbackConfigurationAsync and GetConfigVersionAsync.
+/// </summary>
+public class OrchestratorConfigVersionTests
+{
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
+    private readonly Mock<ILoggerFactory> _mockLoggerFactory;
+    private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly Mock<IOrchestratorStateManager> _mockStateManager;
+    private readonly Mock<IOrchestratorEventManager> _mockEventManager;
+    private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
+    private readonly Mock<ISmartRestartManager> _mockRestartManager;
+    private readonly Mock<IBackendDetector> _mockBackendDetector;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly AppConfiguration _appConfiguration;
+
+    public OrchestratorConfigVersionTests()
+    {
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockLogger = new Mock<ILogger<OrchestratorService>>();
+        _mockLoggerFactory = new Mock<ILoggerFactory>();
+        _mockLoggerFactory
+            .Setup(f => f.CreateLogger(It.IsAny<string>()))
+            .Returns(new Mock<ILogger>().Object);
+        _configuration = new OrchestratorServiceConfiguration
+        {
+            RedisConnectionString = "redis:6379",
+            HeartbeatTimeoutSeconds = 90,
+            DegradationThresholdMinutes = 5
+        };
+        _appConfiguration = new AppConfiguration();
+        _mockStateManager = new Mock<IOrchestratorStateManager>();
+        _mockEventManager = new Mock<IOrchestratorEventManager>();
+        _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
+        _mockRestartManager = new Mock<ISmartRestartManager>();
+        _mockBackendDetector = new Mock<IBackendDetector>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+
+        _mockHttpClientFactory
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(() => new HttpClient());
+
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+    }
+
+    private OrchestratorService CreateService()
+    {
+        return new OrchestratorService(
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            _mockLoggerFactory.Object,
+            _configuration,
+            _appConfiguration,
+            _mockStateManager.Object,
+            _mockEventManager.Object,
+            _mockHealthMonitor.Object,
+            _mockRestartManager.Object,
+            _mockBackendDetector.Object,
+            _mockLockProvider.Object,
+            _mockHttpClientFactory.Object,
+            _mockTelemetryProvider.Object,
+            _mockEventConsumer.Object);
+    }
+
+    #region RollbackConfigurationAsync Tests
+
+    [Fact]
+    public async Task RollbackConfigurationAsync_AtVersion1_ShouldReturnBadRequest()
+    {
+        // Arrange
+        _mockStateManager.Setup(x => x.GetConfigVersionAsync()).ReturnsAsync(1);
+        _mockStateManager.Setup(x => x.GetCurrentConfigurationAsync())
+            .ReturnsAsync(new DeploymentConfiguration());
+
+        var service = CreateService();
+        var request = new ConfigRollbackRequest { Reason = "test" };
+
+        // Act
+        var (statusCode, response) = await service.RollbackConfigurationAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task RollbackConfigurationAsync_AtVersion0_ShouldReturnBadRequest()
+    {
+        // Arrange
+        _mockStateManager.Setup(x => x.GetConfigVersionAsync()).ReturnsAsync(0);
+        _mockStateManager.Setup(x => x.GetCurrentConfigurationAsync())
+            .ReturnsAsync((DeploymentConfiguration?)null);
+
+        var service = CreateService();
+        var request = new ConfigRollbackRequest { Reason = "test" };
+
+        // Act
+        var (statusCode, response) = await service.RollbackConfigurationAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task RollbackConfigurationAsync_InvalidTargetVersion_ShouldReturnBadRequest()
+    {
+        // Arrange
+        _mockStateManager.Setup(x => x.GetConfigVersionAsync()).ReturnsAsync(5);
+        _mockStateManager.Setup(x => x.GetCurrentConfigurationAsync())
+            .ReturnsAsync(new DeploymentConfiguration());
+
+        var service = CreateService();
+        // Target version >= current version is invalid
+        var request = new ConfigRollbackRequest { Reason = "test", TargetVersion = 5 };
+
+        // Act
+        var (statusCode, response) = await service.RollbackConfigurationAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task RollbackConfigurationAsync_TargetVersionNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        _mockStateManager.Setup(x => x.GetConfigVersionAsync()).ReturnsAsync(5);
+        _mockStateManager.Setup(x => x.GetCurrentConfigurationAsync())
+            .ReturnsAsync(new DeploymentConfiguration());
+        _mockStateManager.Setup(x => x.GetConfigurationVersionAsync(3))
+            .ReturnsAsync((DeploymentConfiguration?)null);
+
+        var service = CreateService();
+        var request = new ConfigRollbackRequest { Reason = "test", TargetVersion = 3 };
+
+        // Act
+        var (statusCode, response) = await service.RollbackConfigurationAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task RollbackConfigurationAsync_RestoreFails_ShouldReturnInternalServerError()
+    {
+        // Arrange
+        _mockStateManager.Setup(x => x.GetConfigVersionAsync()).ReturnsAsync(5);
+        _mockStateManager.Setup(x => x.GetCurrentConfigurationAsync())
+            .ReturnsAsync(new DeploymentConfiguration());
+        _mockStateManager.Setup(x => x.GetConfigurationVersionAsync(4))
+            .ReturnsAsync(new DeploymentConfiguration());
+        _mockStateManager.Setup(x => x.RestoreConfigurationVersionAsync(4))
+            .ReturnsAsync(false);
+
+        var service = CreateService();
+        var request = new ConfigRollbackRequest { Reason = "test" };
+
+        // Act
+        var (statusCode, response) = await service.RollbackConfigurationAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task RollbackConfigurationAsync_Success_ShouldReturnVersionInfo()
+    {
+        // Arrange
+        var currentConfig = new DeploymentConfiguration
+        {
+            Services = new Dictionary<string, ServiceDeploymentConfig>
+            {
+                ["auth"] = new() { Enabled = true }
+            },
+            EnvironmentVariables = new Dictionary<string, string>
+            {
+                ["AUTH_LOG_LEVEL"] = "Information"
+            }
+        };
+        var previousConfig = new DeploymentConfiguration
+        {
+            Services = new Dictionary<string, ServiceDeploymentConfig>
+            {
+                ["auth"] = new() { Enabled = false }
+            },
+            EnvironmentVariables = new Dictionary<string, string>
+            {
+                ["AUTH_LOG_LEVEL"] = "Debug"
+            }
+        };
+
+        _mockStateManager.Setup(x => x.GetConfigVersionAsync()).ReturnsAsync(5);
+        _mockStateManager.Setup(x => x.GetCurrentConfigurationAsync()).ReturnsAsync(currentConfig);
+        _mockStateManager.Setup(x => x.GetConfigurationVersionAsync(4)).ReturnsAsync(previousConfig);
+        _mockStateManager.Setup(x => x.RestoreConfigurationVersionAsync(4)).ReturnsAsync(true);
+        // After restore, version becomes 6
+        _mockStateManager.SetupSequence(x => x.GetConfigVersionAsync())
+            .ReturnsAsync(5)  // First call (before rollback)
+            .ReturnsAsync(6); // Second call (after rollback)
+
+        var service = CreateService();
+        var request = new ConfigRollbackRequest { Reason = "test rollback" };
+
+        // Act
+        var (statusCode, response) = await service.RollbackConfigurationAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(5, response.PreviousVersion);
+        Assert.Equal(6, response.CurrentVersion);
+        var changedKeys = response.ChangedKeys ?? throw new InvalidOperationException("Expected non-null ChangedKeys");
+        Assert.NotEmpty(changedKeys);
+    }
+
+    #endregion
+
+    #region GetConfigVersionAsync Tests
+
+    [Fact]
+    public async Task GetConfigVersionAsync_WithConfig_ShouldReturnVersionAndPrefixes()
+    {
+        // Arrange
+        var config = new DeploymentConfiguration
+        {
+            Services = new Dictionary<string, ServiceDeploymentConfig>
+            {
+                ["auth"] = new() { Enabled = true }
+            },
+            EnvironmentVariables = new Dictionary<string, string>
+            {
+                ["AUTH_LOG_LEVEL"] = "Debug"
+            },
+            Timestamp = DateTimeOffset.UtcNow
+        };
+
+        _mockStateManager.Setup(x => x.GetConfigVersionAsync()).ReturnsAsync(3);
+        _mockStateManager.Setup(x => x.GetCurrentConfigurationAsync()).ReturnsAsync(config);
+        _mockStateManager.Setup(x => x.GetConfigurationVersionAsync(2)).ReturnsAsync(new DeploymentConfiguration());
+
+        var service = CreateService();
+
+        // Act
+        var (statusCode, response) = await service.GetConfigVersionAsync(new GetConfigVersionRequest(), CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(3, response.Version);
+        Assert.True(response.HasPreviousConfig);
+        Assert.Equal(2, response.KeyCount); // 1 service + 1 env var
+        var keyPrefixes = response.KeyPrefixes ?? throw new InvalidOperationException("Expected non-null KeyPrefixes");
+        Assert.Contains("services", keyPrefixes);
+    }
+
+    [Fact]
+    public async Task GetConfigVersionAsync_NoPreviousConfig_ShouldReturnHasPreviousFalse()
+    {
+        // Arrange
+        _mockStateManager.Setup(x => x.GetConfigVersionAsync()).ReturnsAsync(1);
+        _mockStateManager.Setup(x => x.GetCurrentConfigurationAsync()).ReturnsAsync((DeploymentConfiguration?)null);
+
+        var service = CreateService();
+
+        // Act
+        var (statusCode, response) = await service.GetConfigVersionAsync(new GetConfigVersionRequest(), CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.Version);
+        Assert.False(response.HasPreviousConfig);
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Tests for RequestContainerRestartAsync and GetLogsAsync.
+/// </summary>
+public class OrchestratorContainerOpsTests
+{
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
+    private readonly Mock<ILoggerFactory> _mockLoggerFactory;
+    private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly Mock<IOrchestratorStateManager> _mockStateManager;
+    private readonly Mock<IOrchestratorEventManager> _mockEventManager;
+    private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
+    private readonly Mock<ISmartRestartManager> _mockRestartManager;
+    private readonly Mock<IBackendDetector> _mockBackendDetector;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly AppConfiguration _appConfiguration;
+
+    public OrchestratorContainerOpsTests()
+    {
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockLogger = new Mock<ILogger<OrchestratorService>>();
+        _mockLoggerFactory = new Mock<ILoggerFactory>();
+        _mockLoggerFactory
+            .Setup(f => f.CreateLogger(It.IsAny<string>()))
+            .Returns(new Mock<ILogger>().Object);
+        _configuration = new OrchestratorServiceConfiguration
+        {
+            RedisConnectionString = "redis:6379",
+            HeartbeatTimeoutSeconds = 90,
+            DegradationThresholdMinutes = 5
+        };
+        _appConfiguration = new AppConfiguration();
+        _mockStateManager = new Mock<IOrchestratorStateManager>();
+        _mockEventManager = new Mock<IOrchestratorEventManager>();
+        _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
+        _mockRestartManager = new Mock<ISmartRestartManager>();
+        _mockBackendDetector = new Mock<IBackendDetector>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+
+        _mockHttpClientFactory
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(() => new HttpClient());
+
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+    }
+
+    private OrchestratorService CreateService()
+    {
+        return new OrchestratorService(
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            _mockLoggerFactory.Object,
+            _configuration,
+            _appConfiguration,
+            _mockStateManager.Object,
+            _mockEventManager.Object,
+            _mockHealthMonitor.Object,
+            _mockRestartManager.Object,
+            _mockBackendDetector.Object,
+            _mockLockProvider.Object,
+            _mockHttpClientFactory.Object,
+            _mockTelemetryProvider.Object,
+            _mockEventConsumer.Object);
+    }
+
+    private Mock<IContainerOrchestrator> SetupOrchestrator()
+    {
+        var mockOrchestrator = new Mock<IContainerOrchestrator>();
+        mockOrchestrator.Setup(x => x.BackendType).Returns(BackendType.Compose);
+        _mockBackendDetector
+            .Setup(x => x.CreateBestOrchestratorAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockOrchestrator.Object);
+        return mockOrchestrator;
+    }
+
+    #region RequestContainerRestartAsync Tests
+
+    [Fact]
+    public async Task RequestContainerRestartAsync_Accepted_ShouldReturnOK()
+    {
+        // Arrange
+        var mockOrchestrator = SetupOrchestrator();
+        mockOrchestrator
+            .Setup(x => x.RestartContainerAsync(
+                "bannou",
+                It.IsAny<ContainerRestartRequest>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContainerRestartResponse
+            {
+                Accepted = true
+            });
+
+        var service = CreateService();
+        var request = new ContainerRestartRequestBody
+        {
+            AppName = "bannou",
+            Reason = "Test restart"
+        };
+
+        // Act
+        var (statusCode, response) = await service.RequestContainerRestartAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.True(response.Accepted);
+    }
+
+    [Fact]
+    public async Task RequestContainerRestartAsync_NotAccepted_ShouldReturnInternalServerError()
+    {
+        // Arrange
+        var mockOrchestrator = SetupOrchestrator();
+        mockOrchestrator
+            .Setup(x => x.RestartContainerAsync(
+                "bannou",
+                It.IsAny<ContainerRestartRequest>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContainerRestartResponse
+            {
+                Accepted = false
+            });
+
+        var service = CreateService();
+        var request = new ContainerRestartRequestBody
+        {
+            AppName = "bannou",
+            Reason = "Test restart"
+        };
+
+        // Act
+        var (statusCode, response) = await service.RequestContainerRestartAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task RequestContainerRestartAsync_WithPriority_ShouldPassPriorityToOrchestrator()
+    {
+        // Arrange
+        var mockOrchestrator = SetupOrchestrator();
+        ContainerRestartRequest? capturedRequest = null;
+        mockOrchestrator
+            .Setup(x => x.RestartContainerAsync(
+                "bannou",
+                It.IsAny<ContainerRestartRequest>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, ContainerRestartRequest, CancellationToken>((_, req, _) => capturedRequest = req)
+            .ReturnsAsync(new ContainerRestartResponse { Accepted = true });
+
+        var service = CreateService();
+        var request = new ContainerRestartRequestBody
+        {
+            AppName = "bannou",
+            Reason = "Urgent restart",
+            Priority = RestartPriority.Immediate
+        };
+
+        // Act
+        var (statusCode, _) = await service.RequestContainerRestartAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(capturedRequest);
+        Assert.Equal(RestartPriority.Immediate, capturedRequest.Priority);
+        Assert.Equal("Urgent restart", capturedRequest.Reason);
+    }
+
+    #endregion
+
+    #region GetLogsAsync Tests
+
+    [Fact]
+    public async Task GetLogsAsync_ShouldParseTimestampedLogs()
+    {
+        // Arrange
+        var mockOrchestrator = SetupOrchestrator();
+        var logText = "2024-01-15T12:00:00.000Z Starting service\n2024-01-15T12:00:01.000Z Service ready";
+
+        mockOrchestrator
+            .Setup(x => x.GetContainerLogsAsync(
+                "bannou",
+                It.IsAny<int>(),
+                It.IsAny<DateTimeOffset?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(logText);
+
+        var service = CreateService();
+        var request = new GetLogsRequest { Service = "bannou", Tail = 100 };
+
+        // Act
+        var (statusCode, response) = await service.GetLogsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Logs.Count);
+        var logs = response.Logs.ToList();
+        Assert.Equal("Starting service", logs[0].Message);
+        Assert.Equal("Service ready", logs[1].Message);
+        Assert.Equal(LogStreamType.Stdout, logs[0].Stream);
+    }
+
+    [Fact]
+    public async Task GetLogsAsync_ShouldHandleStderrMarker()
+    {
+        // Arrange
+        var mockOrchestrator = SetupOrchestrator();
+        var logText = "2024-01-15T12:00:00.000Z Normal log\n[STDERR]\n2024-01-15T12:00:01.000Z Error message";
+
+        mockOrchestrator
+            .Setup(x => x.GetContainerLogsAsync(
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<DateTimeOffset?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(logText);
+
+        var service = CreateService();
+        var request = new GetLogsRequest { Service = "bannou" };
+
+        // Act
+        var (statusCode, response) = await service.GetLogsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Logs.Count);
+        var logs = response.Logs.ToList();
+        Assert.Equal(LogStreamType.Stdout, logs[0].Stream);
+        Assert.Equal(LogStreamType.Stderr, logs[1].Stream);
+    }
+
+    [Fact]
+    public async Task GetLogsAsync_ContinuationLines_ShouldInheritTimestamp()
+    {
+        // Arrange
+        var mockOrchestrator = SetupOrchestrator();
+        // Continuation line (stack trace) without timestamp should inherit preceding timestamp
+        var logText = "2024-01-15T12:00:00.000Z Exception occurred\n   at MyClass.Method()";
+
+        mockOrchestrator
+            .Setup(x => x.GetContainerLogsAsync(
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<DateTimeOffset?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(logText);
+
+        var service = CreateService();
+        var request = new GetLogsRequest { Service = "bannou" };
+
+        // Act
+        var (statusCode, response) = await service.GetLogsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Logs.Count);
+        var logs = response.Logs.ToList();
+        // Continuation line should inherit the timestamp of the previous line
+        Assert.Equal(logs[0].Timestamp, logs[1].Timestamp);
+        Assert.Equal("   at MyClass.Method()", logs[1].Message);
+    }
+
+    [Fact]
+    public async Task GetLogsAsync_UsesContainerWhenNoService()
+    {
+        // Arrange
+        var mockOrchestrator = SetupOrchestrator();
+        mockOrchestrator
+            .Setup(x => x.GetContainerLogsAsync(
+                "my-container",
+                It.IsAny<int>(),
+                It.IsAny<DateTimeOffset?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("2024-01-15T12:00:00.000Z Hello");
+
+        var service = CreateService();
+        // Service is null, container is specified
+        var request = new GetLogsRequest { Service = null, Container = "my-container" };
+
+        // Act
+        var (statusCode, response) = await service.GetLogsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal("my-container", response.Service);
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Tests for AcquireProcessorAsync, ReleaseProcessorAsync, GetPoolStatusAsync, and CleanupPoolAsync.
+/// </summary>
+public class OrchestratorPoolManagementTests
+{
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
+    private readonly Mock<ILoggerFactory> _mockLoggerFactory;
+    private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly Mock<IOrchestratorStateManager> _mockStateManager;
+    private readonly Mock<IOrchestratorEventManager> _mockEventManager;
+    private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
+    private readonly Mock<ISmartRestartManager> _mockRestartManager;
+    private readonly Mock<IBackendDetector> _mockBackendDetector;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly AppConfiguration _appConfiguration;
+
+    public OrchestratorPoolManagementTests()
+    {
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockLogger = new Mock<ILogger<OrchestratorService>>();
+        _mockLoggerFactory = new Mock<ILoggerFactory>();
+        _mockLoggerFactory
+            .Setup(f => f.CreateLogger(It.IsAny<string>()))
+            .Returns(new Mock<ILogger>().Object);
+        _configuration = new OrchestratorServiceConfiguration
+        {
+            RedisConnectionString = "redis:6379",
+            HeartbeatTimeoutSeconds = 90,
+            DegradationThresholdMinutes = 5,
+            DefaultPoolLeaseTimeoutSeconds = 300
+        };
+        _appConfiguration = new AppConfiguration();
+        _mockStateManager = new Mock<IOrchestratorStateManager>();
+        _mockEventManager = new Mock<IOrchestratorEventManager>();
+        _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
+        _mockRestartManager = new Mock<ISmartRestartManager>();
+        _mockBackendDetector = new Mock<IBackendDetector>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+
+        _mockHttpClientFactory
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(() => new HttpClient());
+
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+    }
+
+    private OrchestratorService CreateService()
+    {
+        return new OrchestratorService(
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            _mockLoggerFactory.Object,
+            _configuration,
+            _appConfiguration,
+            _mockStateManager.Object,
+            _mockEventManager.Object,
+            _mockHealthMonitor.Object,
+            _mockRestartManager.Object,
+            _mockBackendDetector.Object,
+            _mockLockProvider.Object,
+            _mockHttpClientFactory.Object,
+            _mockTelemetryProvider.Object,
+            _mockEventConsumer.Object);
+    }
+
+    private Mock<IContainerOrchestrator> SetupOrchestrator()
+    {
+        var mockOrchestrator = new Mock<IContainerOrchestrator>();
+        mockOrchestrator.Setup(x => x.BackendType).Returns(BackendType.Compose);
+        _mockBackendDetector
+            .Setup(x => x.CreateBestOrchestratorAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockOrchestrator.Object);
+        return mockOrchestrator;
+    }
+
+    #region AcquireProcessorAsync Tests
+
+    [Fact]
+    public async Task AcquireProcessorAsync_EmptyPoolType_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new AcquireProcessorRequest { PoolType = "" };
+
+        // Act
+        var (statusCode, response) = await service.AcquireProcessorAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task AcquireProcessorAsync_NoAvailableProcessors_ShouldReturnServiceUnavailable()
+    {
+        // Arrange
+        _mockStateManager.Setup(x => x.GetAvailableProcessorsAsync("actor-shared"))
+            .ReturnsAsync(new List<ProcessorInstance>());
+        _mockStateManager.Setup(x => x.GetLeasesAsync("actor-shared"))
+            .ReturnsAsync(new Dictionary<string, ProcessorLease>());
+
+        var service = CreateService();
+        var request = new AcquireProcessorRequest { PoolType = "actor-shared" };
+
+        // Act
+        var (statusCode, response) = await service.AcquireProcessorAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.ServiceUnavailable, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task AcquireProcessorAsync_Success_ShouldReturnLeaseAndRemoveFromAvailable()
+    {
+        // Arrange
+        var processor = new ProcessorInstance
+        {
+            ProcessorId = "proc-001",
+            AppId = "bannou-pool-actor-shared-0001",
+            PoolType = "actor-shared",
+            Status = ProcessorStatus.Available
+        };
+        _mockStateManager.Setup(x => x.GetAvailableProcessorsAsync("actor-shared"))
+            .ReturnsAsync(new List<ProcessorInstance> { processor });
+        _mockStateManager.Setup(x => x.GetLeasesAsync("actor-shared"))
+            .ReturnsAsync(new Dictionary<string, ProcessorLease>());
+
+        // Capture updated available list
+        List<ProcessorInstance>? capturedAvailable = null;
+        _mockStateManager
+            .Setup(x => x.SetAvailableProcessorsAsync("actor-shared", It.IsAny<List<ProcessorInstance>>()))
+            .Callback<string, List<ProcessorInstance>>((_, list) => capturedAvailable = list)
+            .Returns(Task.CompletedTask);
+
+        // Capture stored leases
+        Dictionary<string, ProcessorLease>? capturedLeases = null;
+        _mockStateManager
+            .Setup(x => x.SetLeasesAsync("actor-shared", It.IsAny<Dictionary<string, ProcessorLease>>()))
+            .Callback<string, Dictionary<string, ProcessorLease>>((_, leases) => capturedLeases = leases)
+            .Returns(Task.CompletedTask);
+
+        var service = CreateService();
+        var request = new AcquireProcessorRequest { PoolType = "actor-shared", Priority = 5 };
+
+        // Act
+        var (statusCode, response) = await service.AcquireProcessorAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal("proc-001", response.ProcessorId);
+        Assert.Equal("bannou-pool-actor-shared-0001", response.AppId);
+        Assert.NotEqual(Guid.Empty, response.LeaseId);
+        // Processor should have been removed from available list
+        Assert.NotNull(capturedAvailable);
+        Assert.Empty(capturedAvailable);
+        // Lease should have been stored
+        Assert.NotNull(capturedLeases);
+        Assert.Single(capturedLeases);
+    }
+
+    #endregion
+
+    #region ReleaseProcessorAsync Tests
+
+    [Fact]
+    public async Task ReleaseProcessorAsync_LeaseNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        _mockStateManager.Setup(x => x.GetKnownPoolTypesAsync())
+            .ReturnsAsync(new List<string> { "actor-shared" });
+        _mockStateManager.Setup(x => x.GetLeasesAsync("actor-shared"))
+            .ReturnsAsync(new Dictionary<string, ProcessorLease>());
+
+        var service = CreateService();
+        var request = new ReleaseProcessorRequest { LeaseId = Guid.NewGuid(), Success = true };
+
+        // Act
+        var (statusCode, response) = await service.ReleaseProcessorAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ReleaseProcessorAsync_Success_ShouldReturnProcessorToAvailableAndPublishEvent()
+    {
+        // Arrange
+        var leaseId = Guid.NewGuid();
+        var poolType = "actor-shared";
+        var processorId = "proc-001";
+
+        _mockStateManager.Setup(x => x.GetKnownPoolTypesAsync())
+            .ReturnsAsync(new List<string> { poolType });
+        var lease = new ProcessorLease
+        {
+            LeaseId = leaseId,
+            ProcessorId = processorId,
+            AppId = "bannou-pool-actor-shared-0001",
+            PoolType = poolType,
+            AcquiredAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5)
+        };
+        _mockStateManager.Setup(x => x.GetLeasesAsync(poolType))
+            .ReturnsAsync(new Dictionary<string, ProcessorLease> { [leaseId.ToString()] = lease });
+        _mockStateManager.Setup(x => x.GetAvailableProcessorsAsync(poolType))
+            .ReturnsAsync(new List<ProcessorInstance>());
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Capture restored available list
+        List<ProcessorInstance>? capturedAvailable = null;
+        _mockStateManager
+            .Setup(x => x.SetAvailableProcessorsAsync(poolType, It.IsAny<List<ProcessorInstance>>()))
+            .Callback<string, List<ProcessorInstance>>((_, list) => capturedAvailable = list)
+            .Returns(Task.CompletedTask);
+
+        var service = CreateService();
+        var request = new ReleaseProcessorRequest { LeaseId = leaseId, Success = true };
+
+        // Act
+        var (statusCode, response) = await service.ReleaseProcessorAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(processorId, response.ProcessorId);
+        // Processor should be back in available list
+        Assert.NotNull(capturedAvailable);
+        Assert.Single(capturedAvailable);
+        Assert.Equal(processorId, capturedAvailable[0].ProcessorId);
+        // Event should be published
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(
+                "orchestrator.processor.released",
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
+
+    #region GetPoolStatusAsync Tests
+
+    [Fact]
+    public async Task GetPoolStatusAsync_EmptyPoolType_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new GetPoolStatusRequest { PoolType = "" };
+
+        // Act
+        var (statusCode, response) = await service.GetPoolStatusAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetPoolStatusAsync_ShouldReturnInstanceCounts()
+    {
+        // Arrange
+        var instances = new List<ProcessorInstance>
+        {
+            new() { ProcessorId = "proc-1", PoolType = "actor-shared" },
+            new() { ProcessorId = "proc-2", PoolType = "actor-shared" },
+            new() { ProcessorId = "proc-3", PoolType = "actor-shared" }
+        };
+        var available = new List<ProcessorInstance>
+        {
+            new() { ProcessorId = "proc-1", PoolType = "actor-shared" }
+        };
+        var leases = new Dictionary<string, ProcessorLease>
+        {
+            ["lease-1"] = new() { ProcessorId = "proc-2" },
+            ["lease-2"] = new() { ProcessorId = "proc-3" }
+        };
+
+        _mockStateManager.Setup(x => x.GetPoolInstancesAsync("actor-shared")).ReturnsAsync(instances);
+        _mockStateManager.Setup(x => x.GetAvailableProcessorsAsync("actor-shared")).ReturnsAsync(available);
+        _mockStateManager.Setup(x => x.GetLeasesAsync("actor-shared")).ReturnsAsync(leases);
+        _mockStateManager.Setup(x => x.GetPoolConfigurationAsync("actor-shared"))
+            .ReturnsAsync(new PoolConfiguration { MinInstances = 2, MaxInstances = 10 });
+
+        var service = CreateService();
+        var request = new GetPoolStatusRequest { PoolType = "actor-shared", IncludeMetrics = false };
+
+        // Act
+        var (statusCode, response) = await service.GetPoolStatusAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(3, response.TotalInstances);
+        Assert.Equal(1, response.AvailableInstances);
+        Assert.Equal(2, response.BusyInstances);
+        Assert.Equal(2, response.MinInstances);
+        Assert.Equal(10, response.MaxInstances);
+    }
+
+    [Fact]
+    public async Task GetPoolStatusAsync_WithMetrics_ShouldIncludeMetricsData()
+    {
+        // Arrange
+        _mockStateManager.Setup(x => x.GetPoolInstancesAsync("actor-shared"))
+            .ReturnsAsync(new List<ProcessorInstance>());
+        _mockStateManager.Setup(x => x.GetAvailableProcessorsAsync("actor-shared"))
+            .ReturnsAsync(new List<ProcessorInstance>());
+        _mockStateManager.Setup(x => x.GetLeasesAsync("actor-shared"))
+            .ReturnsAsync(new Dictionary<string, ProcessorLease>());
+        _mockStateManager.Setup(x => x.GetPoolConfigurationAsync("actor-shared"))
+            .ReturnsAsync((PoolConfiguration?)null);
+        _mockStateManager.Setup(x => x.GetPoolMetricsAsync("actor-shared"))
+            .ReturnsAsync(new PoolMetricsData
+            {
+                JobsCompleted1h = 42,
+                JobsFailed1h = 3,
+                AvgProcessingTimeMs = 1500
+            });
+
+        var service = CreateService();
+        var request = new GetPoolStatusRequest { PoolType = "actor-shared", IncludeMetrics = true };
+
+        // Act
+        var (statusCode, response) = await service.GetPoolStatusAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        var metrics = response.RecentMetrics ?? throw new InvalidOperationException("Expected non-null RecentMetrics");
+        Assert.Equal(42, metrics.JobsCompleted1h);
+        Assert.Equal(3, metrics.JobsFailed1h);
+        Assert.Equal(1500, metrics.AvgProcessingTimeMs);
+    }
+
+    #endregion
+
+    #region CleanupPoolAsync Tests
+
+    [Fact]
+    public async Task CleanupPoolAsync_EmptyPoolType_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CleanupPoolRequest { PoolType = "" };
+
+        // Act
+        var (statusCode, response) = await service.CleanupPoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CleanupPoolAsync_NothingToRemove_ShouldReturnZeroRemoved()
+    {
+        // Arrange
+        _mockStateManager.Setup(x => x.GetPoolInstancesAsync("actor-shared"))
+            .ReturnsAsync(new List<ProcessorInstance>
+            {
+                new() { ProcessorId = "proc-1", AppId = "app-1", PoolType = "actor-shared" }
+            });
+        _mockStateManager.Setup(x => x.GetAvailableProcessorsAsync("actor-shared"))
+            .ReturnsAsync(new List<ProcessorInstance>
+            {
+                new() { ProcessorId = "proc-1", AppId = "app-1", PoolType = "actor-shared" }
+            });
+        _mockStateManager.Setup(x => x.GetPoolConfigurationAsync("actor-shared"))
+            .ReturnsAsync(new PoolConfiguration { MinInstances = 1 });
+
+        var service = CreateService();
+        // PreserveMinimum = true, 1 available, 1 min = 0 to remove
+        var request = new CleanupPoolRequest { PoolType = "actor-shared", PreserveMinimum = true };
+
+        // Act
+        var (statusCode, response) = await service.CleanupPoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.InstancesRemoved);
+    }
+
+    [Fact]
+    public async Task CleanupPoolAsync_PreserveMinimum_ShouldKeepMinInstances()
+    {
+        // Arrange
+        var availableInstances = new List<ProcessorInstance>
+        {
+            new() { ProcessorId = "proc-1", AppId = "app-1", PoolType = "actor-shared" },
+            new() { ProcessorId = "proc-2", AppId = "app-2", PoolType = "actor-shared" },
+            new() { ProcessorId = "proc-3", AppId = "app-3", PoolType = "actor-shared" }
+        };
+        _mockStateManager.Setup(x => x.GetPoolInstancesAsync("actor-shared"))
+            .ReturnsAsync(new List<ProcessorInstance>(availableInstances));
+        _mockStateManager.Setup(x => x.GetAvailableProcessorsAsync("actor-shared"))
+            .ReturnsAsync(availableInstances);
+        _mockStateManager.Setup(x => x.GetPoolConfigurationAsync("actor-shared"))
+            .ReturnsAsync(new PoolConfiguration { MinInstances = 1 });
+
+        var mockOrchestrator = SetupOrchestrator();
+        mockOrchestrator
+            .Setup(x => x.TeardownServiceAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TeardownServiceResult { Success = true });
+
+        var service = CreateService();
+        // 3 available, min 1, preserve = true -> remove 2
+        var request = new CleanupPoolRequest { PoolType = "actor-shared", PreserveMinimum = true };
+
+        // Act
+        var (statusCode, response) = await service.CleanupPoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.InstancesRemoved);
+        // 1 instance should remain
+        Assert.Equal(1, response.CurrentInstances);
+    }
+
+    [Fact]
+    public async Task CleanupPoolAsync_NoPreserve_ShouldRemoveAll()
+    {
+        // Arrange
+        var availableInstances = new List<ProcessorInstance>
+        {
+            new() { ProcessorId = "proc-1", AppId = "app-1", PoolType = "actor-shared" },
+            new() { ProcessorId = "proc-2", AppId = "app-2", PoolType = "actor-shared" }
+        };
+        _mockStateManager.Setup(x => x.GetPoolInstancesAsync("actor-shared"))
+            .ReturnsAsync(new List<ProcessorInstance>(availableInstances));
+        _mockStateManager.Setup(x => x.GetAvailableProcessorsAsync("actor-shared"))
+            .ReturnsAsync(availableInstances);
+        _mockStateManager.Setup(x => x.GetPoolConfigurationAsync("actor-shared"))
+            .ReturnsAsync(new PoolConfiguration { MinInstances = 1 });
+
+        var mockOrchestrator = SetupOrchestrator();
+        mockOrchestrator
+            .Setup(x => x.TeardownServiceAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TeardownServiceResult { Success = true });
+
+        var service = CreateService();
+        // PreserveMinimum = false -> target = 0, remove all 2
+        var request = new CleanupPoolRequest { PoolType = "actor-shared", PreserveMinimum = false };
+
+        // Act
+        var (statusCode, response) = await service.CleanupPoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.InstancesRemoved);
+        Assert.Equal(0, response.CurrentInstances);
+    }
+
+    #endregion
+}

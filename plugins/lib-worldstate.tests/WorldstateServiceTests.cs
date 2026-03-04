@@ -994,7 +994,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
 
         _mockGameServiceClient
             .Setup(c => c.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceResponse { ServiceId = _testGameServiceId });
+            .ReturnsAsync(new ServiceInfo { ServiceId = _testGameServiceId, StubName = "test-game", DisplayName = "Test Game", IsActive = true, CreatedAt = DateTimeOffset.UtcNow });
         _mockCalendarStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((CalendarTemplateModel?)null);
@@ -1091,7 +1091,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         var service = CreateService();
         _mockGameServiceClient
             .Setup(c => c.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceResponse { ServiceId = _testGameServiceId });
+            .ReturnsAsync(new ServiceInfo { ServiceId = _testGameServiceId, StubName = "test-game", DisplayName = "Test Game", IsActive = true, CreatedAt = DateTimeOffset.UtcNow });
         _mockCalendarStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestCalendar());
@@ -1121,7 +1121,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         var service = CreateService();
         _mockGameServiceClient
             .Setup(c => c.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceResponse { ServiceId = _testGameServiceId });
+            .ReturnsAsync(new ServiceInfo { ServiceId = _testGameServiceId, StubName = "test-game", DisplayName = "Test Game", IsActive = true, CreatedAt = DateTimeOffset.UtcNow });
         _mockCalendarStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((CalendarTemplateModel?)null);
@@ -1166,7 +1166,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
 
         _mockGameServiceClient
             .Setup(c => c.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceResponse { ServiceId = _testGameServiceId });
+            .ReturnsAsync(new ServiceInfo { ServiceId = _testGameServiceId, StubName = "test-game", DisplayName = "Test Game", IsActive = true, CreatedAt = DateTimeOffset.UtcNow });
         _mockCalendarStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((CalendarTemplateModel?)null);
@@ -1325,7 +1325,13 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         {
             GameServiceId = _testGameServiceId,
             TemplateCode = "standard",
-            GameHoursPerDay = 48
+            GameHoursPerDay = 48,
+            DayPeriods = new List<DayPeriodDefinition>
+            {
+                new DayPeriodDefinition { Code = "dawn", StartHour = 0, EndHour = 12, IsDaylight = false },
+                new DayPeriodDefinition { Code = "day", StartHour = 12, EndHour = 36, IsDaylight = true },
+                new DayPeriodDefinition { Code = "dusk", StartHour = 36, EndHour = 48, IsDaylight = false }
+            }
         };
 
         // Act
@@ -1343,7 +1349,8 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
             "worldstate.calendar-template.updated",
             It.Is<CalendarTemplateUpdatedEvent>(e =>
                 e.TemplateCode == "standard" &&
-                e.ChangedFields.Contains("gameHoursPerDay")),
+                e.ChangedFields.Contains("gameHoursPerDay") &&
+                e.ChangedFields.Contains("dayPeriods")),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
