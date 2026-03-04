@@ -362,6 +362,8 @@ Tenets are organized into categories based on when they're needed:
 | Subscribing to `*.deleted` for dependent data cleanup | T28 | Register with lib-resource; implement cleanup callback via `ISeededResourceProvider` |
 | Event-based cleanup for persistent dependent data | T28 | Use lib-resource with CASCADE/RESTRICT/DETACH policy |
 | Cleanup handler in `*ServiceEvents.cs` for another service's entity | T28 | Move to lib-resource cleanup callback; remove event subscription |
+| Using lib-resource for high-frequency instance cleanup (items at scale) | T28 | Use DI Listener (`IItemInstanceDestructionListener`) + orphan reconciliation worker (T28 exception) |
+| Event subscription for high-frequency instance cleanup | T28 | Use DI Listener pattern, not event subscription — same T28 exception, but DI listener is the required mechanism |
 | Async helper method without `StartActivity` span | T30 | Add `using var activity = _telemetryProvider.StartActivity(...)` |
 | Manually adding spans to generated code | T30 | Add to code generation templates, not generated files |
 | Missing `ITelemetryProvider` in helper service constructor | T30 | Add constructor parameter for span creation |

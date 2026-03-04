@@ -440,13 +440,17 @@ Subscription Cache Architecture
 
 1. ~~**Session-list removal in cleanup service lacks distributed lock**~~: **FIXED** (2026-02-25) - `CancelExpiredSessionAsync` now acquires the `SESSION_LIST_KEY` distributed lock before the session-list read-modify-write, matching the pattern used in `CreateGameSessionAsync` and `GetOrCreateLobbySessionAsync`. On lock failure, logs warning and skips removal (best-effort, session data is already deleted).
 
+2. **Kicked player retains `in_game` permission state**: `KickPlayerAsync` removes the player from the session and publishes `player-left` with `Kicked=true`, but does NOT call `_permissionClient.ClearSessionStateAsync`. The kicked player retains elevated `game-session:in_game` permissions until session expiry. Fix: add `ClearSessionStateAsync` to kick path (same best-effort pattern as Leave). Combined with chat quirk #3 below, kicked players can continue sending messages to the session.
+<!-- AUDIT:BUG:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/154 -->
+
+3. **Chat allows messages from non-members** (security): `SendChatMessageAsync` looks up the sender in the player list but doesn't fail if not found. A sender who isn't in the session can still broadcast messages — `SenderName` will be null but the message is delivered. Combined with bug #2 (kicked players retain `in_game` permission state), kicked players can continue messaging the session they were removed from. Fix: return `Forbidden` if sender is not in the session's player list.
+<!-- AUDIT:BUG:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/154 -->
+
 ### Intentional Quirks
 
 1. **Lobby stored twice**: Auto-created lobbies are saved under both `session:{sessionId}` and `lobby:{stubName}` keys. The lobby key enables O(1) lookup by game type; the session key enables the standard session operations. Potential for drift if one write fails.
 
 2. **Null session timeout = no expiry**: `DefaultSessionTimeoutSeconds` is `int?` (nullable). When null (the default), `SessionTtlOptions` is null and no TTL is applied to state store saves. Sessions persist indefinitely until explicitly deleted or cleaned up.
-
-3. **Chat allows messages from non-members**: `SendChatMessageAsync` looks up the sender in the player list but doesn't fail if not found. A sender who isn't in the session can still broadcast messages - `SenderName` will be null but the message is delivered.
 
 4. **Whisper to non-existent target silently succeeds**: If the whisper target isn't in the session (or has left), the whisper is silently not delivered to them. The sender still receives their copy. No error returned.
 
@@ -457,8 +461,10 @@ Subscription Cache Architecture
 ### Design Considerations (Requires Planning)
 
 1. **Session list is a single key**: All session IDs are stored in one `session-list` key (a `List<string>`). Listing loads ALL IDs then loads each session individually. No database-level pagination. With thousands of sessions, this becomes a bottleneck.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/557 -->
 
 2. **No cleanup of finished lobbies from session-list**: When a lobby's status becomes `Finished`, it remains in the `session-list` key. The cleanup service only handles matchmade session reservations, not lobby lifecycle.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/557 -->
 
 3. **Join validates subscriber session but Leave does not**: `JoinGameSessionAsync` calls `IsValidSubscriberSessionAsync` to verify authorization, but leave operations only check player membership in the session. A player whose subscription expires while in a game can still leave.
 

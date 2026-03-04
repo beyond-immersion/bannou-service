@@ -576,6 +576,8 @@ The DI inversion patterns above come in two forms: **Providers** (pull) and **Li
 | `ISeededResourceProvider` | L4→L1 pull | Provider | Always safe | Consumer initiates; reads distributed state |
 | `ISeedEvolutionListener` | L2→L4 push | Listener | Safe\* | \*Only when reaction writes to distributed state |
 | `ICollectionUnlockListener` | L2→L4 push | Listener | Safe\* | \*Only when reaction writes to distributed state |
+| `ISessionActivityListener` | L1→L1 push | Listener | Safe\* | \*Permission writes to Redis (distributed state); heartbeat frequency prohibits event bus |
+| `IItemInstanceDestructionListener` | L2→L4 push | Listener | Safe\* | \*Affix deletes from MySQL/Redis (distributed state); item instance frequency prohibits lib-resource (see T28 exception) |
 
 ### Rules for Listener Patterns
 
@@ -597,6 +599,8 @@ The DI inversion patterns above come in two forms: **Providers** (pull) and **Li
 | L2 wants to notify L4 of mutations | **Listener** (push) + events — listener is optimization |
 | Any service needs to react to another's state changes | **Events** (IMessageBus) — distributed guarantee |
 | L4 needs to invalidate local cache across all nodes | **Events only** — listeners cannot reach other nodes |
+| High-frequency instance cleanup (T28 exception) | **Listener** (push) + orphan reconciliation worker — lib-resource overhead prohibitive |
+| High-frequency session lifecycle (heartbeats) | **Listener** (push) — event bus overhead prohibitive at per-session frequency |
 
 ---
 

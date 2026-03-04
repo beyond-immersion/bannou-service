@@ -1,6 +1,6 @@
 # Plugin Production Readiness Status
 
-> **Last Updated**: 2026-03-02
+> **Last Updated**: 2026-03-03
 > **Scope**: All Bannou service plugins
 
 ---
@@ -103,7 +103,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Scene](#scene-status) | L4 | 82% | 0 | All 19 endpoints done. Checkout/commit workflow. No version content snapshots or real search. |
 | [Status](#status-status) | L4 | 78% | 0 | All 16 endpoints done. Dual-source effects query. Blocked on Item decay system (#407). |
 | [Storyline](#storyline-status) | L4 | 55% | 0 | SDK wrapper works for MVP. 3/15 endpoints done. No iterative composition or event integration. |
-| [Affix](#affix-status) | L4 | 0% | 0 | Pre-implementation. Item modifier definition and generation spec. No schema, no code. |
+| [Affix](#affix-status) | L4 | 0% | 0 | Pre-implementation. Spec L4-audited: Pattern C topics, Category B deprecation, T31 instance guard, typed spawnTagModifiers, hard IInventoryClient, orphan reconciliation worker, x-permissions on all groups. No schema, no code. |
 | [Arbitration](#arbitration-status) | L4 | 0% | 0 | Pre-implementation. Dispute resolution orchestration spec. No schema, no code. |
 | [Craft](#craft-status) | L4 | 0% | 0 | Pre-implementation. Recipe-based crafting orchestration spec. No schema, no code. |
 | [Disposition](#disposition-status) | L4 | 0% | 0 | Pre-implementation. Emotional synthesis and aspirational drive spec. No schema, no code. |
@@ -2134,6 +2134,8 @@ gh issue list --search "Storyline:" --state open
 
 Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." This is a detailed architectural specification for an item modifier definition and generation service (weighted random affix generation, mod group exclusivity, tier gating, stat computation, variable provider factory for NPC GOAP) based on the Path of Exile item system as a complexity benchmark. No endpoints, no generated code, no service implementation exists.
 
+**Spec audit complete (2026-03-03)**: Deep dive L4-audited for TENET compliance. Fixes applied: all event topics normalized to Pattern C (`affix.modifier.applied`, not `affix.applied`), Category B deprecation lifecycle (no delete, no undeprecate), T31 instance creation guard on ApplyAffix (rejects deprecated definitions), `spawnTagModifiers` typed as array (not freeform object), `isActive` removed (redundant with deprecation), `effectiveRarity` documented as Category B opaque string, IInventoryClient reclassified from soft to hard dependency (L2), ITelemetryProvider and IResourceClient added to hard dependencies, orphan reconciliation background worker added for event-based cleanup durability, `x-permissions` specified on all endpoint groups, consumed event topics fixed (`item.instance.destroyed` not `item-instance.destroyed`).
+
 ### Bug Count: 0
 
 No implementation exists to have bugs.
@@ -2146,9 +2148,9 @@ No implementation exists to have bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Phase 1 - Definition Infrastructure** | Create schemas, generate code, implement affix definition CRUD and implicit mapping management as the foundational layer. | No issue |
-| 2 | **Phase 2 - Generation Engine** | Implement weighted random pool generation with cached pools for 100K NPC item evaluation scale. | No issue |
-| 3 | **Phase 3 - Affix Application** | Implement validated apply/remove/reroll primitives with mod group rules, slot limits, and item state checks. | No issue |
+| 1 | **Phase 1 - Definition Infrastructure** | Create schemas, generate code, implement affix definition CRUD and implicit mapping management as the foundational layer. | [#490](https://github.com/beyond-immersion/bannou-service/issues/490) |
+| 2 | **Phase 2 - Instance Store and Core Operations** | Implement instance MySQL store, InitializeItemAffixes, ApplyAffix with full validation, event-based cleanup with orphan reconciliation worker. | [#490](https://github.com/beyond-immersion/bannou-service/issues/490) |
+| 3 | **Phase 3 - Generation Engine** | Implement weighted random pool generation with cached pools for 100K NPC item evaluation scale. | [#490](https://github.com/beyond-immersion/bannou-service/issues/490) |
 
 ### GH Issues
 

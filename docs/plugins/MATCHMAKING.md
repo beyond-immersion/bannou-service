@@ -272,7 +272,7 @@ Reconnection Support
 
 ### Bugs (Fix Immediately)
 
-1. **Reconnection does not republish accept/decline shortcuts**: When a player reconnects to a pending match via `HandleSessionReconnectedAsync`, the service sends `MatchFoundEvent` but does NOT call `PublishMatchShortcutsAsync`. The player receives the match notification but has no pre-bound shortcuts to accept or decline - they must manually call the API endpoints with the full request body.
+1. ~~**Reconnection does not republish accept/decline shortcuts**~~: **FIXED** (2026-03-03) - Added `PublishMatchShortcutsAsync` call after the `MatchFoundClientEvent` publish in `HandleSessionReconnectedAsync`. Players now receive both the match notification and pre-bound shortcuts on reconnection.
 
 ### Intentional Quirks
 
@@ -304,4 +304,6 @@ Reconnection Support
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-*No items currently being tracked.*
+### Completed
+
+- **2026-03-03**: Issue [#154](https://github.com/beyond-immersion/bannou-service/issues/154) - Added missing `PublishMatchShortcutsAsync` call in reconnection handler so players get accept/decline shortcuts alongside the match notification.

@@ -50,7 +50,7 @@ No services subscribe to game-service events.
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `game-service:{serviceId}` | `GameServiceRegistryModel` | Service data (name, stub, description, active status) |
+| `game-service:{serviceId}` | `GameServiceRegistryModel` | Service data (name, stub, description, active status, autoLobbyEnabled) |
 | `game-service-stub:{stubName}` | `string` | Stub name → service ID lookup index |
 | `game-service-list` | `List<Guid>` | Master list of all service IDs |
 
@@ -151,9 +151,8 @@ None. The service is feature-complete for its scope.
 
 ## Potential Extensions
 
-1. **Service metadata schema validation**: The `metadata` field could support schema validation per service type.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/228 -->
-2. **Service versioning**: Track deployment versions to inform clients of compatibility.
+1. ~~**Service metadata schema validation**~~: **CLOSED** (2026-03-03) — [#228](https://github.com/beyond-immersion/bannou-service/issues/228). No metadata field exists and adding a general-purpose `additionalProperties: true` bag would violate T29 (No Metadata Bag Contracts). If specific typed fields are needed in the future, they should be added individually as typed schema properties via focused issues.
+2. **Service versioning**: Track client compatibility versions to inform clients. Deployment version tracking belongs in Orchestrator (L3); a `minimumClientVersion` typed field could live here as a property of the game definition itself. No current consumer needs this.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/480 -->
 
 ---
@@ -188,6 +187,7 @@ No bugs identified.
 
 ### Completed
 
+- **2026-03-03**: Review — Closed #228 (metadata validation) as architecturally invalid per T29; added direction comment to #480 (versioning); fixed `autoLobbyEnabled` omission in state storage description; updated Potential Extensions with closure rationale and versioning direction
 - **2026-02-25**: Audit — "No concurrency control on updates" moved from Design Considerations to Intentional Quirks (appropriate for admin-only, low-frequency operations with no correctness invariant)
 - **2026-02-25**: GameSession now consumes `autoLobbyEnabled` flag — added lib-game-session to Dependents table, Design Consideration #3 resolved
 - **2026-02-25**: Audit — "No event consumers" moved from Design Considerations to Intentional Quirks (correct per T5: publish events even without consumers)

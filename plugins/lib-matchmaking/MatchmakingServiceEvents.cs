@@ -158,6 +158,9 @@ public partial class MatchmakingService
                             AcceptTimeoutSeconds = remainingSeconds,
                             AverageSkillRating = match.AverageSkillRating
                         }, CancellationToken.None);
+
+                        // Re-publish accept/decline shortcuts (cleared on disconnect)
+                        await PublishMatchShortcutsAsync(evt.SessionId, accountId, match.MatchId, CancellationToken.None);
                     }
                 }
             }

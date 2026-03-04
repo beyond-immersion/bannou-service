@@ -446,7 +446,7 @@ When a lower-layer service uses DI Provider interfaces (`IVariableProviderFactor
 
 ### DI Interface Pattern Reference
 
-Five established provider/listener patterns exist (interfaces in `bannou-service/Providers/`):
+Eight established provider/listener patterns exist (interfaces in `bannou-service/Providers/`):
 
 | Interface | Direction | Purpose |
 |-----------|-----------|---------|
@@ -455,6 +455,9 @@ Five established provider/listener patterns exist (interfaces in `bannou-service
 | `IBehaviorDocumentProvider` | L4 → L2 (data pull) | Actor pulls behavior docs from L4 providers |
 | `ISeededResourceProvider` | L4 → L1 (data pull) | Resource pulls compression data from L4 providers |
 | `ISeedEvolutionListener` | L2 → L4 (notification push) | Seed pushes evolution notifications to L4 listeners |
+| `ICollectionUnlockListener` | L2 → L4 (notification push) | Collection pushes unlock notifications to L4 listeners |
+| `ISessionActivityListener` | L1 → L1 (lifecycle push) | Connect pushes session lifecycle to Permission (high-frequency heartbeats) |
+| `IItemInstanceDestructionListener` | L2 → L4 (cleanup push) | Item pushes instance destruction to L4 data owners (high-frequency T28 exception) |
 
 All follow the same shape: interface defined in shared code (`bannou-service/Providers/`), higher-layer implements and registers as Singleton, lower-layer discovers via `IEnumerable<T>` with graceful degradation on failure.
 
@@ -486,6 +489,8 @@ await _messageBus.PublishAsync("permission.service-registered", registrationEven
 | L2 needs data from optional L4 | DI Provider interface | Actor uses `IVariableProviderFactory` |
 | L2 needs to notify optional L4 | DI Listener interface | Seed uses `ISeedEvolutionListener` |
 | Something happened, anyone can react | Broadcast event | `seed.phase.changed`, `character.created` |
+| High-frequency instance cleanup (T28 exception) | DI Listener + orphan worker | Item uses `IItemInstanceDestructionListener` |
+| High-frequency session lifecycle | DI Listener (heartbeats DI-only) | Connect uses `ISessionActivityListener` |
 
 ---
 
@@ -581,13 +586,69 @@ Auth's subscription to `account.deleted` for session invalidation is acceptable 
 
 This exception does not extend to other L1 resources. It is specific to Account due to the privacy constraint.
 
+### High-Frequency Instance Lifecycle Exception
+
+lib-resource cleanup is the correct default for persistent dependent data. However, when dependent data follows a **high-frequency template→instance pattern**, per-instance resource reference registration creates unacceptable overhead on the reference store and becomes the bottleneck itself.
+
+**When this exception applies** (ALL criteria must be met):
+
+1. **Instance frequency**: The parent entity instances are created and destroyed at rates where per-instance resource registration would flood the reference store (thousands/minute at scale — e.g., item instances across 100K NPCs in loot, crafting, trading, combat, decay)
+2. **1:1 keying**: The dependent data is keyed directly by the parent entity's instance ID (one dependent record per parent instance, not a fan-out of many references per parent)
+3. **Transient lifecycle**: Instances are relatively short-lived game objects, not persistent definitional entities that exist for the life of the deployment
+4. **No RESTRICT requirement**: The dependent service never needs to block parent deletion (CASCADE-only — if the parent is destroyed, dependent data should always be cleaned up, never preserved)
+
+**When this exception does NOT apply**:
+
+- Character→CharacterPersonality: Characters are long-lived, low-frequency entities. Use lib-resource.
+- Character→CharacterEncounter: Same. Encounters are created frequently but keyed by character (long-lived parent). Use lib-resource.
+- GameService→AffixDefinitions: Game services are deployment-level entities, not transient instances. Use lib-resource.
+
+**Required pattern**: Use a **DI Listener interface** (not event subscription, not lib-resource) for cleanup notification:
+
+```csharp
+// bannou-service/Providers/IItemInstanceDestructionListener.cs
+public interface IItemInstanceDestructionListener
+{
+    /// <summary>
+    /// Called by Item (L2) after an item instance is destroyed.
+    /// Implementors clean up their own dependent data keyed by itemInstanceId.
+    /// </summary>
+    /// <remarks>
+    /// LOCAL-ONLY FAN-OUT: This listener fires only on the node that processed
+    /// the deletion request. Reactions MUST write to distributed state (MySQL/Redis
+    /// deletes). The broadcast event (item.instance.destroyed) is still published
+    /// via IMessageBus for distributed consumers.
+    ///
+    /// Implementing services MUST provide an orphan reconciliation worker as the
+    /// durability guarantee for missed listener notifications.
+    /// </remarks>
+    Task OnItemInstanceDestroyedAsync(Guid itemInstanceId, Guid gameServiceId, CancellationToken ct);
+}
+```
+
+**Required safeguards**:
+
+1. **DI Listener writes to distributed state** — MySQL deletes, Redis cache invalidation. Distributed safety per SERVICE-HIERARCHY.md § "DI Provider vs Listener."
+2. **Broadcast event still published** — `item.instance.destroyed` via IMessageBus for any distributed consumer that needs it. The listener is an optimization, not a replacement.
+3. **Orphan reconciliation worker** — Background worker periodically scans dependent records, batch-checks parent existence via the parent service's client, and deletes orphaned records. This is the durability guarantee that makes the pattern safe even when listeners miss notifications.
+4. **Cache TTL as secondary safety net** — Redis-cached dependent data expires naturally even if both listener and reconciliation miss a deletion.
+
+**Why DI Listener instead of event subscription**: This follows the established DI Listener pattern (ISeedEvolutionListener, ICollectionUnlockListener, ISessionActivityListener) rather than creating a new category of "acceptable event-based cleanup." The parent service (Item L2) dispatches to co-located listeners after the mutation — zero RabbitMQ overhead, guaranteed in-process delivery, graceful degradation if no listeners are registered (L4 not enabled). Event subscription for cleanup remains forbidden per the base T28 rule.
+
+**Current instances**:
+
+| Interface | Direction | Parent → Dependent | Justification |
+|-----------|-----------|-------------------|---------------|
+| `ISessionActivityListener` | L1→L1 (Connect→Permission) | Session→Permission state | Heartbeats every 30s per session; event bus overhead unacceptable |
+| `IItemInstanceDestructionListener` | L2→L4 (Item→Affix, future item-data-owners) | ItemInstance→AffixInstance | Items created/destroyed at loot/combat/trading frequency across 100K NPCs |
+
 ### Enforcement
 
 When adding a new service that stores data keyed by another service's entity:
 
-1. Register references with lib-resource API when creating dependent data
-2. Implement `ISeededResourceProvider` for cleanup callbacks
-3. Do NOT add `x-event-subscriptions` for the parent entity's `*.deleted` event
+1. **Default**: Register references with lib-resource API when creating dependent data, implement `ISeededResourceProvider` for cleanup callbacks
+2. **Exception**: If ALL four criteria of the High-Frequency Instance Lifecycle Exception are met, use DI Listener + orphan reconciliation instead
+3. Do NOT add `x-event-subscriptions` for the parent entity's `*.deleted` event for cleanup purposes (regardless of which path you use)
 4. Do NOT add event handler methods for parent entity deletion
 
 ---

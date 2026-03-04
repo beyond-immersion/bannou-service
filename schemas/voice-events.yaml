@@ -5,7 +5,8 @@ info:
     Service-to-service pub/sub events for the Voice service.
     These events enable asynchronous communication between Voice service
     and other services via RabbitMQ. Voice publishes room lifecycle events
-    and broadcast consent events. Voice does not consume external events.
+    and broadcast consent events. Subscribes to session lifecycle events
+    from Connect (L1) for participant cleanup and state restoration.
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
     1. Read docs/reference/SCHEMA-RULES.md
@@ -15,7 +16,13 @@ info:
   version: 2.0.0
   contact:
     name: Bannou Development Team
-  x-event-subscriptions: []
+  x-event-subscriptions:
+    - topic: session.disconnected
+      event: SessionDisconnectedEvent
+      handler: HandleSessionDisconnected
+    - topic: session.reconnected
+      event: SessionReconnectedEvent
+      handler: HandleSessionReconnected
   x-event-publications:
     - topic: voice.room.created
       event: VoiceRoomCreatedEvent

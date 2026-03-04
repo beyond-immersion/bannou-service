@@ -38,7 +38,7 @@ lib-item is L2 (GameFoundation) because every game needs items. lib-affix is L4 
 **What they share is identity, not storage**: lib-affix uses the `itemInstanceId` from lib-item as its foreign key. When lib-affix stores affix data for an item, the key is the item instance ID. This means:
 - lib-item owns the item lifecycle (create, destroy)
 - lib-affix owns the modifier lifecycle (initialize, apply, remove, reroll)
-- lib-affix subscribes to `item-instance.destroyed` events to clean up its own state
+- lib-affix implements `IItemInstanceDestructionListener` to clean up its own state when items are destroyed (DI Listener pattern, not event subscription — high-frequency T28 exception)
 - Other services call lib-affix's API for modifier data, not lib-item's metadata
 
 This follows the same ownership pattern as other L4 services: lib-character-personality owns personality data keyed by characterId, lib-character-encounter owns encounter data keyed by characterId. lib-affix owns affix data keyed by itemInstanceId.
@@ -106,14 +106,15 @@ AffixDefinition:
 
   # Generation
   spawnWeight: int             # Base weight for weighted random selection (1000 typical)
-  spawnTagModifiers: object    # Per-tag weight multipliers (e.g., {"amulet": 0, "ring": 1500})
+  spawnTagModifiers:           # Per-tag weight multipliers (typed array, not freeform object)
+    - tag: string              #   e.g., "amulet", "ring"
+      weightMultiplier: int    #   e.g., 0 (can't appear), 1500 (more likely)
 
   # Display
   displayName: string          # "of the Godslayer" (suffix), "Blazing" (prefix)
   displayOrder: int            # Sorting priority within slot type
 
-  # Metadata
-  isActive: bool
+  # Deprecation (Category B -- deprecate-only, no delete, no undeprecate)
   isDeprecated: bool
   deprecatedAt: DateTimeOffset?
   deprecationReason: string?
@@ -127,7 +128,11 @@ AffixDefinition:
 
 3. **Stat grants are a list** (not a single stat): Hybrid mods grant multiple stats from one affix. "Subterranean" prefix grants +Life AND +Mana. One prefix slot, two stat lines. This is fundamental to interesting modifier design.
 
-4. **Spawn tag modifiers** allow per-context weight overrides. A mod might have base weight 1000 but weight 0 on amulets (can't appear there) and weight 1500 on rings (more likely there). This replaces a rigid "valid item classes" list with a weighted probability system.
+4. **Spawn tag modifiers** allow per-context weight overrides. A mod might have base weight 1000 but weight 0 on amulets (can't appear there) and weight 1500 on rings (more likely there). This replaces a rigid "valid item classes" list with a weighted probability system. Modeled as a typed array of `{ tag, weightMultiplier }` objects (not freeform `object`/`additionalProperties: true`).
+
+5. **Affix definitions are Category B deprecation** (per IMPLEMENTATION TENETS T31). Definitions are templates where applied affix instances permanently reference the definition ID. Definitions must remain readable forever. No delete endpoint, no undeprecate endpoint. Deprecated definitions cannot be applied to new items (see ApplyAffix deprecation guard below). The `isActive` field is redundant with deprecation and is NOT included -- deprecation IS the mechanism for marking a definition as inactive.
+
+6. **Effective rarity is an opaque string** (Category B per T14 decision tree -- game designers define new rarity tiers at deployment time). Default conventions are "normal", "magic", "rare", "unique", but games may define "common/uncommon/rare/legendary" or any other rarity scheme. Not an enum.
 
 ### Affix Instance Data (The Instance Layer)
 
@@ -137,7 +142,7 @@ Each item managed by lib-affix has a corresponding record in Affix's own instanc
 AffixInstanceModel:
   itemInstanceId: Guid         # Foreign key to lib-item (NOT a Guid owned by Affix)
   gameServiceId: Guid
-  effectiveRarity: string      # "normal", "magic", "rare", "unique", or custom
+  effectiveRarity: string      # Opaque string (Category B per T14 -- game-configurable rarity codes; defaults: "normal", "magic", "rare", "unique")
   itemLevel: int               # Set at creation time (from source level)
 
   implicitSlots: [AffixSlotModel]
@@ -167,9 +172,9 @@ AffixStatesModel:
 **Lifecycle**:
 - **Created** by `InitializeItemAffixes` (called by lib-loot after creating the item) or by `ApplyAffix` on an item that has no affix instance yet
 - **Modified** by `ApplyAffix`, `RemoveAffix`, `RerollValues`, and state-change operations
-- **Destroyed** when lib-affix handles the `item-instance.destroyed` event (cleanup of orphaned affix data)
+- **Destroyed** when lib-affix's `IItemInstanceDestructionListener` receives in-process cleanup notification from lib-item (high-frequency T28 exception; orphan reconciliation worker as durability guarantee)
 
-**Why this matters for T29 compliance**: Every service that needs affix data calls lib-affix's API. lib-craft calls `/affix/apply` to add modifiers during crafting. lib-loot calls `/affix/generate/set` then `/affix/initialize` to create affixed items. lib-market subscribes to `affix.applied` events to maintain its trade index. No service parses metadata blobs. No service knows affix key names by convention. If Affix restructures its internal model, no other service breaks.
+**Why this matters for T29 compliance**: Every service that needs affix data calls lib-affix's API. lib-craft calls `/affix/apply` to add modifiers during crafting. lib-loot calls `/affix/generate/set` then `/affix/initialize` to create affixed items. lib-market subscribes to `affix.modifier.applied` events to maintain its trade index. No service parses metadata blobs. No service knows affix key names by convention. If Affix restructures its internal model, no other service breaks.
 
 ### Affix Slots and Limits
 
@@ -300,15 +305,17 @@ Sockets are purely a stat computation concern for lib-affix. The physical contai
 | lib-state (`IStateStoreFactory`) | Affix definitions (MySQL), implicit mappings (MySQL), affix instances (MySQL), pool cache (Redis), definition cache (Redis), instance cache (Redis), distributed locks (Redis) |
 | lib-state (`IDistributedLockProvider`) | Distributed locks for definition mutations and per-item affix modification |
 | lib-messaging (`IMessageBus`) | Publishing affix lifecycle events, application events, state change events, error events |
-| lib-messaging (`IEventConsumer`) | Subscribing to `item-instance.destroyed` for instance cleanup |
+| lib-messaging (`IEventConsumer`) | Subscribing to `item.template.created` and `item.template.updated` for pool cache warming/invalidation |
+| lib-telemetry (`ITelemetryProvider`) | Telemetry span instrumentation on all async methods per IMPLEMENTATION TENETS (T30) |
 | lib-item (`IItemClient`) | Reading item templates for item class resolution and validation; verifying item existence before affix operations (L2) |
 | lib-game-service (`IGameServiceClient`) | Validating game service existence for definition scoping (L2) |
+| lib-inventory (`IInventoryClient`) | Equipment container queries for stat computation and socket stat aggregation (L2) |
+| lib-resource (`IResourceClient`) | Cleanup callback registration for game-service deletion (L1, resolved in plugin `OnRunningAsync`) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
 | Dependency | Usage | Behavior When Missing |
 |------------|-------|-----------------------|
-| lib-inventory (`IInventoryClient`) | Equipment container queries for variable provider and socket stat computation (determining which items are equipped and what gems are socketed) | Variable provider returns empty results; per-item stat computation still works but excludes socket contributions |
 | lib-analytics (`IAnalyticsClient`) | Publishing affix generation statistics for economy monitoring | Statistics not collected; generation works normally |
 
 ---
@@ -319,7 +326,7 @@ Sockets are purely a stat computation concern for lib-affix. The physical contai
 |-----------|-------------|
 | lib-craft (L4, future) | Calls `/affix/apply`, `/affix/remove`, `/affix/reroll-values`, `/affix/state/set` for crafting modification workflows |
 | lib-loot (L4, future) | Calls `/affix/generate/set`, `/affix/generate/batch`, `/affix/initialize` for loot drop creation with affixes. Soft dependency -- falls back to unaffixed items if lib-affix unavailable |
-| lib-market (L4, future) | Calls `/affix/item/get`, `/affix/item/compute-stats`, `/affix/item/estimate-value` for search indexing and price estimation. Subscribes to `affix.applied` and `affix.removed` events for trade index maintenance |
+| lib-market (L4, future) | Calls `/affix/item/get`, `/affix/item/compute-stats`, `/affix/item/estimate-value` for search indexing and price estimation. Subscribes to `affix.modifier.applied` and `affix.modifier.removed` events for trade index maintenance |
 | NPC Actor runtime (L2, via Variable Provider) | `${affix.*}` variables for item evaluation in GOAP economic/combat decisions |
 
 ---
@@ -402,31 +409,53 @@ This is the T29-compliant alternative to the metadata convention. lib-affix owns
 
 ### Published Events
 
+**Lifecycle events** (auto-generated via `x-lifecycle` in `affix-events.yaml`):
+
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `affix-definition.created` | `AffixDefinitionCreatedEvent` | Affix definition created (lifecycle) |
-| `affix-definition.updated` | `AffixDefinitionUpdatedEvent` | Affix definition updated (lifecycle); includes `ChangedFields` (covers deprecation via `isDeprecated`, `deprecatedAt`, `deprecationReason` in changedFields) |
-| `affix.initialized` | `AffixInitializedEvent` | Affix instance created for an item (full affix set attached) |
-| `affix.applied` | `AffixAppliedEvent` | Single affix added to an item instance; includes definition code, rolled values, slot type |
-| `affix.removed` | `AffixRemovedEvent` | Single affix removed from an item instance; includes definition code, slot type |
-| `affix.rerolled` | `AffixRerolledEvent` | Affix values rerolled (same definition, new rolled values) |
-| `affix.state-changed` | `AffixStateChangedEvent` | Item state flag changed (corrupted, mirrored, fractured, etc.); includes which flag and old/new value |
-| `affix.generated` | `AffixBatchGeneratedEvent` | Batch event for generated affix sets (deduped by source, configurable window) |
-| `item-rarity.changed` | `ItemRarityChangedEvent` | Effective rarity changed (normal -> magic -> rare) |
+| `affix.definition.created` | `AffixDefinitionCreatedEvent` | Affix definition created (lifecycle, auto-generated) |
+| `affix.definition.updated` | `AffixDefinitionUpdatedEvent` | Affix definition updated (lifecycle, auto-generated); includes `ChangedFields` (covers deprecation via `isDeprecated`, `deprecatedAt`, `deprecationReason` in changedFields) |
+
+**Custom events** (manually defined in `affix-events.yaml`):
+
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `affix.instance.initialized` | `AffixInstanceInitializedEvent` | Affix instance created for an item (full affix set attached) |
+| `affix.modifier.applied` | `AffixModifierAppliedEvent` | Single affix added to an item instance; includes definition code, rolled values, slot type |
+| `affix.modifier.removed` | `AffixModifierRemovedEvent` | Single affix removed from an item instance; includes definition code, slot type |
+| `affix.modifier.rerolled` | `AffixModifierRerolledEvent` | Affix values rerolled (same definition, new rolled values) |
+| `affix.instance.state-changed` | `AffixInstanceStateChangedEvent` | Item state flag changed (corrupted, mirrored, fractured, etc.); includes which flag and old/new value |
+| `affix.batch.generated` | `AffixBatchGeneratedEvent` | Batch event for generated affix sets (deduped by source, configurable window) |
+| `affix.rarity.changed` | `AffixRarityChangedEvent` | Effective rarity changed (normal -> magic -> rare) |
+
+All custom event types must be listed in `x-event-publications` in `affix-events.yaml`.
 
 ### Consumed Events
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `item-instance.destroyed` | `HandleItemInstanceDestroyed` | Delete affix instance record and invalidate instance cache for the destroyed item |
-| `item-template.created` | `HandleItemTemplateCreated` | Check if the new template has implicit mappings defined; warm pool cache for the template's category |
-| `item-template.deprecated` | `HandleItemTemplateDeprecated` | Invalidate pool cache entries referencing the deprecated template's category |
+| `item.template.created` | `HandleItemTemplateCreated` | Check if the new template has implicit mappings defined; warm pool cache for the template's category |
+| `item.template.updated` | `HandleItemTemplateUpdated` | Filter for `changedFields` containing `isDeprecated`; invalidate pool cache entries referencing the deprecated template's category |
+
+### DI Listener: Item Instance Destruction
+
+lib-affix implements `IItemInstanceDestructionListener` (defined in `bannou-service/Providers/`) to receive in-process cleanup notifications from lib-item when item instances are destroyed. This follows the **High-Frequency Instance Lifecycle Exception** to T28 (FOUNDATION TENETS):
+
+- Item instances are created/destroyed at loot/combat/trading frequency across 100K NPCs — per-instance lib-resource reference registration would flood the reference store
+- The relationship is 1:1 (one `AffixInstanceModel` per `itemInstanceId`), CASCADE-only (no RESTRICT needed)
+- The listener deletes the affix instance from MySQL and invalidates the Redis instance cache — both distributed state operations, safe for multi-node deployment
+- The orphan reconciliation worker (see Design Considerations #6) provides the durability guarantee for missed notifications
+- lib-item still publishes `item.instance.destroyed` via IMessageBus for distributed consumers; the DI listener is an optimization for co-located cleanup
+
+This pattern is analogous to `ISessionActivityListener` (Connect→Permission), where high-frequency session lifecycle notifications use DI instead of events. Future L4 services that own per-item data (e.g., a hypothetical lib-enchantment) would register as additional `IItemInstanceDestructionListener` implementations — Item dispatches to all registered listeners, each cleans up its own data.
 
 ### Resource Cleanup (T28)
 
 | Target Resource | Source Type | On Delete | Cleanup Endpoint |
 |----------------|-------------|-----------|-----------------|
 | game-service | affix | CASCADE | `/affix/cleanup-by-game-service` |
+
+The `affix-api.yaml` schema must include `x-references` declaring the game-service cleanup relationship. lib-affix implements `ISeededResourceProvider` with `SourceType => "affix"` for the cleanup callback.
 
 ---
 
@@ -450,6 +479,8 @@ This is the T29-compliant alternative to the metadata convention. lib-affix owns
 | `MaxDefinitionsPerGameService` | `AFFIX_MAX_DEFINITIONS_PER_GAME_SERVICE` | `5000` | Safety limit for definition count per game service |
 | `MaxAffixesPerItem` | `AFFIX_MAX_AFFIXES_PER_ITEM` | `12` | Hard cap on total affixes per item (across all slot types) |
 | `IncludeSocketStatsInEquipment` | `AFFIX_INCLUDE_SOCKET_STATS_IN_EQUIPMENT` | `true` | Whether equipment stat computation includes socketed gem contributions |
+| `OrphanReconciliationIntervalMinutes` | `AFFIX_ORPHAN_RECONCILIATION_INTERVAL_MINUTES` | `60` | Interval for background orphan instance cleanup worker |
+| `OrphanReconciliationBatchSize` | `AFFIX_ORPHAN_RECONCILIATION_BATCH_SIZE` | `500` | Items checked per reconciliation cycle |
 
 ---
 
@@ -461,17 +492,27 @@ This is the T29-compliant alternative to the metadata convention. lib-affix owns
 | `AffixServiceConfiguration` | Typed configuration access |
 | `IStateStoreFactory` | State store access (creates 7 stores) |
 | `IMessageBus` | Event publishing |
-| `IEventConsumer` | Event subscription for item destruction cleanup |
+| `IEventConsumer` | Event subscription for item template lifecycle events (pool cache warming/invalidation) |
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
+| `ITelemetryProvider` | Telemetry span instrumentation (`"bannou.affix"` component) |
 | `IItemClient` | Item template lookups, item existence validation (L2 hard) |
 | `IGameServiceClient` | Game service existence validation (L2 hard) |
-| `IServiceProvider` | Runtime resolution of soft L4 dependencies |
+| `IInventoryClient` | Equipment container queries, socket container detection (L2 hard) |
+| `IResourceClient` | Cleanup callback registration for game-service deletion (L1 hard, `OnRunningAsync`) |
+| `IServiceProvider` | Runtime resolution of soft L4 dependencies (Analytics only) |
+
+### DI Registrations (Plugin Startup)
+
+| Registration | Interface | Purpose |
+|-------------|-----------|---------|
+| `services.AddSingleton<IItemInstanceDestructionListener, AffixItemDestructionListener>()` | `IItemInstanceDestructionListener` | Receives in-process cleanup notifications from Item (L2) when instances are destroyed. High-frequency T28 exception — see DI Listener section above. |
+| `services.AddSingleton<IVariableProviderFactory, AffixItemEvaluationProviderFactory>()` | `IVariableProviderFactory` | Provides `${affix.*}` variables to the Actor (L2) behavior system for NPC item evaluation. |
 
 ### Variable Provider Factories
 
 | Factory | Namespace | Data Source | Registration |
 |---------|-----------|-------------|--------------|
-| `AffixItemEvaluationProviderFactory` | `${affix.*}` | Reads equipped items (via `IInventoryClient` soft), loads their affix instances from own store, computes aggregate power scores and modifier presence | `IVariableProviderFactory` (DI singleton) |
+| `AffixItemEvaluationProviderFactory` | `${affix.*}` | Reads equipped items (via `IInventoryClient`), loads their affix instances from own store, computes aggregate power scores and modifier presence | `IVariableProviderFactory` (DI singleton) |
 
 **Variables exposed**:
 
@@ -491,17 +532,17 @@ This is the T29-compliant alternative to the metadata convention. lib-affix owns
 
 ### Definition Management (7 endpoints)
 
-All endpoints require `developer` role.
+All endpoints require `developer` role (`x-permissions: [{ role: developer }]`).
 
-- **CreateDefinition** (`/affix/definition/create`): Validates game service existence. Validates code uniqueness per game service. Enforces `MaxDefinitionsPerGameService`. Validates `statGrants` has at least one entry. Saves to MySQL with dual keys (ID + code). Populates definition cache. Invalidates pool cache for affected item classes. Publishes `affix-definition.created`.
+- **CreateDefinition** (`/affix/definition/create`): Validates game service existence. Validates code uniqueness per game service. Enforces `MaxDefinitionsPerGameService`. Validates `statGrants` has at least one entry. Saves to MySQL with dual keys (ID + code). Populates definition cache. Invalidates pool cache for affected item classes. Publishes `affix.definition.created` (lifecycle).
 
 - **GetDefinition** (`/affix/definition/get`): Cache read-through (Redis -> MySQL -> populate cache). Supports lookup by definitionId or by gameServiceId + code.
 
-- **ListDefinitions** (`/affix/definition/list`): Paged JSON query with required gameServiceId filter. Optional filters: slotType, modGroup, category, tags (any match), tier range, requiredInfluence, isActive, includeDeprecated (boolean, default: false). Sorted by modGroup then tier ascending.
+- **ListDefinitions** (`/affix/definition/list`): Paged JSON query with required gameServiceId filter. Optional filters: slotType, modGroup, category, tags (any match), tier range, requiredInfluence, includeDeprecated (boolean, default: false). Sorted by modGroup then tier ascending.
 
-- **UpdateDefinition** (`/affix/definition/update`): Acquires distributed lock. Partial update -- only non-null fields applied. **Cannot change**: code, gameServiceId, slotType, modGroup (these are identity-level properties). Invalidates definition and pool caches. Publishes `affix-definition.updated` with `changedFields`.
+- **UpdateDefinition** (`/affix/definition/update`): Acquires distributed lock. Partial update -- only non-null fields applied. **Cannot change**: code, gameServiceId, slotType, modGroup (these are identity-level properties). Invalidates definition and pool caches. Publishes `affix.definition.updated` (lifecycle) with `changedFields`.
 
-- **DeprecateDefinition** (`/affix/definition/deprecate`): Sets `isDeprecated: true`, `deprecatedAt` to current timestamp, and `deprecationReason` from the request. Marks inactive. Optional `migrationTargetCode` for directing future generation to a replacement. Existing items with this affix are unaffected. Idempotent: returns OK if already deprecated. Invalidates caches. Publishes `affix-definition.updated` with `changedFields` containing the deprecation fields.
+- **DeprecateDefinition** (`/affix/definition/deprecate`): Sets `isDeprecated: true`, `deprecatedAt` to current timestamp, and `deprecationReason` from the request. Optional `migrationTargetCode` for directing future generation to a replacement. Existing items with this affix are unaffected. Idempotent: returns OK if already deprecated. No undeprecate endpoint (Category B -- one-way). No delete endpoint (Category B -- definitions persist forever). Invalidates caches. Publishes `affix.definition.updated` (lifecycle) with `changedFields` containing the deprecation fields.
 
 - **SeedDefinitions** (`/affix/definition/seed`): Bulk creation, skipping definitions whose code already exists (idempotent). Validates game service once. Returns created/skipped counts. Invalidates pool cache once at end.
 
@@ -509,7 +550,7 @@ All endpoints require `developer` role.
 
 ### Implicit Mapping Management (4 endpoints)
 
-All endpoints require `developer` role.
+All endpoints require `developer` role (`x-permissions: [{ role: developer }]`).
 
 - **CreateImplicitMapping** (`/affix/implicit/create`): Maps an item template code to a list of implicit affix definition IDs with optional roll range overrides. Validates all referenced definitions exist and have `slotType: "implicit"`. Saves to MySQL.
 
@@ -521,25 +562,27 @@ All endpoints require `developer` role.
 
 ### Instance Management (2 endpoints)
 
-- **InitializeItemAffixes** (`/affix/initialize`): Creates the affix instance record for an item. Takes: itemInstanceId, gameServiceId, affixSetData (pre-generated via `/affix/generate/set` or manually specified). Validates item exists via `IItemClient`. Creates `AffixInstanceModel` in MySQL. Populates instance cache. Publishes `affix.initialized`. This is the entry point for lib-loot and any other item creator that needs affixes.
+All endpoints require `developer` role (`x-permissions: [{ role: developer }]`).
+
+- **InitializeItemAffixes** (`/affix/initialize`): Creates the affix instance record for an item. Takes: itemInstanceId, gameServiceId, affixSetData (pre-generated via `/affix/generate/set` or manually specified). Validates item exists via `IItemClient`. Creates `AffixInstanceModel` in MySQL. Populates instance cache. Publishes `affix.instance.initialized`. This is the entry point for lib-loot and any other item creator that needs affixes.
 
 - **GetAffixInstance** (`/affix/instance/get`): Loads affix instance by itemInstanceId. Cache read-through (Redis -> MySQL -> populate cache). Returns raw affix instance data. 404 if item has no affix instance (item exists but is not affix-managed).
 
 ### Affix Application (4 endpoints)
 
-All require `developer` role. These are **validated primitives** -- they enforce mod group rules, slot limits, and item state checks. Higher-level operations that compose these primitives (reroll-all, fracture, corruption, identification) belong in lib-craft.
+All require `developer` role (`x-permissions: [{ role: developer }]`). These are **validated primitives** -- they enforce mod group rules, slot limits, and item state checks. Higher-level operations that compose these primitives (reroll-all, fracture, corruption, identification) belong in lib-craft.
 
-- **ApplyAffix** (`/affix/apply`): The core modification operation. Acquires item lock. Loads affix instance (creates one if needed for first affix on an unmanaged item). Validates: not corrupted, not mirrored, slot type has capacity, mod group not occupied, item class valid for definition, item level sufficient. Rolls values from definition stat grants. Updates instance in MySQL. Invalidates instance and computed stats caches. Updates effective rarity if needed. Publishes `affix.applied`, optionally `item-rarity.changed`.
+- **ApplyAffix** (`/affix/apply`): The core modification operation. Acquires item lock. Loads affix instance (creates one if needed for first affix on an unmanaged item). Validates: not corrupted, not mirrored, slot type has capacity, mod group not occupied, item class valid for definition, item level sufficient, **definition not deprecated** (rejects deprecated definitions with BadRequest per IMPLEMENTATION TENETS T31 Category B instance creation guard). Rolls values from definition stat grants. Updates instance in MySQL. Invalidates instance and computed stats caches. Updates effective rarity if needed. Publishes `affix.modifier.applied`, optionally `affix.rarity.changed`.
 
-- **RemoveAffix** (`/affix/remove`): Acquires item lock. Validates: not corrupted, not mirrored, target affix not fractured. Removes affix from the appropriate slot array. Recalculates effective rarity. Updates instance. Invalidates caches. Publishes `affix.removed`, optionally `item-rarity.changed`.
+- **RemoveAffix** (`/affix/remove`): Acquires item lock. Validates: not corrupted, not mirrored, target affix not fractured. Removes affix from the appropriate slot array. Recalculates effective rarity. Updates instance. Invalidates caches. Publishes `affix.modifier.removed`, optionally `affix.rarity.changed`.
 
-- **RerollValues** (`/affix/reroll-values`): Acquires item lock. Validates: not corrupted, not mirrored. Re-rolls values for a specific affix on the item (same definition, new random values within stat grant ranges). Updates instance. Invalidates caches. Publishes `affix.rerolled`.
+- **RerollValues** (`/affix/reroll-values`): Acquires item lock. Validates: not corrupted, not mirrored. Re-rolls values for a specific affix on the item (same definition, new random values within stat grant ranges). Updates instance. Invalidates caches. Publishes `affix.modifier.rerolled`.
 
-- **SetItemState** (`/affix/state/set`): Acquires item lock. Sets one or more state flags (corrupted, mirrored, fractured, etc.) on the affix instance. Validates state transition legality (e.g., cannot uncorrupt). Updates instance. Invalidates caches. Publishes `affix.state-changed`.
+- **SetItemState** (`/affix/state/set`): Acquires item lock. Sets one or more state flags (corrupted, mirrored, fractured, etc.) on the affix instance. Validates state transition legality (e.g., cannot uncorrupt). Updates instance. Invalidates caches. Publishes `affix.instance.state-changed`.
 
 ### Generation (3 endpoints)
 
-All require `developer` role.
+All require `developer` role (`x-permissions: [{ role: developer }]`).
 
 - **GenerateAffixPool** (`/affix/generate/pool`): Returns the valid affix pool for a given context (gameServiceId, itemClass, itemLevel, slotType, existingModGroups, influences, externalWeightModifiers). Uses cached pool with in-memory filtering. Response includes each definition's effective weight and stat grant ranges. Used by crafting UI for "preview possible outcomes" and by lib-craft for pool-based operations.
 
@@ -549,17 +592,21 @@ All require `developer` role.
 
 ### Query and Computation (5 endpoints)
 
+All endpoints require `developer` role (`x-permissions: [{ role: developer }]`).
+
 - **GetItemAffixes** (`/affix/item/get`): Loads affix instance, enriches each slot with full definition data (display names, tier info, mod group, stat grant ranges). Returns structured affix information for display. This is the typed API replacement for the old metadata convention -- consumers call this instead of parsing metadata blobs.
 
 - **ComputeItemStats** (`/affix/item/compute-stats`): Loads affix instance. Loads item template (via `IItemClient`) for base stats. Computes aggregate: base stats + implicit values + explicit affix values + quality modifier. If `IncludeSocketStatsInEquipment` and item has socket containers (via `IInventoryClient`): loads socketed gems' affix instances and adds their stat contributions. Returns a map of stat codes to computed values. Caches result (TTL: `ComputedStatsCacheTtlSeconds`).
 
-- **ComputeEquipmentStats** (`/affix/equipment/compute`): Takes entityId + entityType. Queries equipment containers via `IInventoryClient` (soft dependency -- returns empty if unavailable). For each equipped item with an affix instance: computes item stats (including socket contributions). Aggregates across all equipment into a unified stat map. Caches result (TTL: `EquipmentStatsCacheTtlSeconds`). Returns `EquipmentStatsModel` with per-stat totals and per-item breakdown.
+- **ComputeEquipmentStats** (`/affix/equipment/compute`): Takes entityId + entityType. Queries equipment containers via `IInventoryClient`. For each equipped item with an affix instance: computes item stats (including socket contributions). Aggregates across all equipment into a unified stat map. Caches result (TTL: `EquipmentStatsCacheTtlSeconds`). Returns `EquipmentStatsModel` with per-stat totals and per-item breakdown.
 
 - **CompareItems** (`/affix/item/compare`): Takes two item instance IDs. Loads both affix instances, computes stats for each, returns a diff showing which stats are higher/lower/equal. Used by NPC GOAP for equipment upgrade decisions.
 
 - **EstimateItemValue** (`/affix/item/estimate-value`): Heuristic value estimation based on affix quality: tier levels, rolled value percentiles (how close to max roll), rarity, influence count, mod group synergies. Returns a normalized score (0-1) and a suggested currency value. Used by NPC GOAP for economic decisions and by lib-market for price guidance.
 
 ### Cleanup (1 endpoint)
+
+Internal endpoint (called by lib-resource cleanup callback, not directly by clients). `x-permissions: []` (empty — service-to-service only).
 
 - **CleanupByGameService** (`/affix/cleanup-by-game-service`): Deletes all definitions, implicit mappings, affix instances, and cached data for a game service. Called by lib-resource on game service deletion.
 
@@ -636,7 +683,7 @@ Loot Drop Creation Flow (Orchestrated by lib-loot)
        +-- 3. /affix/initialize
        |      (itemInstanceId, affixSetData)
        |      Creates AffixInstanceModel in lib-affix's store
-       |      Publishes affix.initialized
+       |      Publishes affix.instance.initialized
        |
        +-- Item now exists in lib-item; affixes exist in lib-affix
            Any service needing affix data calls lib-affix's API
@@ -698,7 +745,7 @@ Equipment Stat Computation Flow
 - Implement `affix-instance-cache` Redis store
 - Implement `InitializeItemAffixes` for batch affix instance creation
 - Implement `GetAffixInstance` with cache read-through
-- Implement `item-instance.destroyed` event handler for cleanup
+- Implement `IItemInstanceDestructionListener` for in-process instance cleanup (high-frequency T28 exception; register as `Singleton` in plugin startup)
 - Implement `ApplyAffix` with full validation (mod groups, slot limits, item states)
 - Implement `RemoveAffix` with state flag checks
 - Implement `RerollValues` for value re-randomization
@@ -725,10 +772,11 @@ Equipment Stat Computation Flow
 - Extend `ComputeItemStats` to include socketed gem contributions
 - Extend `ComputeEquipmentStats` for socket-aware equipment totals
 
-### Phase 6: Events and Cleanup
+### Phase 6: Events, Cleanup, and Background Workers
 - Implement all event publishing (lifecycle, application, state change, generation batch)
 - Implement event handlers for item template lifecycle events
-- Implement resource cleanup endpoint
+- Implement resource cleanup endpoint (`/affix/cleanup-by-game-service`)
+- Implement orphan reconciliation background worker (periodic scan + batch item existence check)
 - Wire analytics integration (soft dependency)
 - Integration testing with lib-item, lib-inventory
 
@@ -738,7 +786,7 @@ Equipment Stat Computation Flow
 
 1. **Rarity slot limit definitions as configurable entities**: Instead of hardcoded slot counts per rarity, expose a `RaritySlotLimit` definition API that games use to define their own rarity tiers with custom slot counts. A game could define "Legendary" rarity with 4 prefixes and 4 suffixes, or "Mythic" with unlimited slots but exponentially increasing generation cost.
 
-2. **Affix trade index (materialized view)**: A denormalized MySQL store that indexes `(gameServiceId, statCode, statValue, itemInstanceId)` for fast trade-site-style queries ("find all items with +90 life and +30 fire res"). Built asynchronously from `affix.applied` and `affix.removed` events. Used by lib-market for search.
+2. **Affix trade index (materialized view)**: A denormalized MySQL store that indexes `(gameServiceId, statCode, statValue, itemInstanceId)` for fast trade-site-style queries ("find all items with +90 life and +30 fire res"). Built asynchronously from `affix.modifier.applied` and `affix.modifier.removed` events. Used by lib-market for search.
 
 3. **Unique item definitions**: A `UniqueItemDefinition` entity that maps an item template code to a fixed set of affix definitions with predetermined roll ranges. When a unique item drops, its affixes come from the unique definition (not weighted random). The unique definition is owned by lib-affix, not lib-item.
 
@@ -780,9 +828,9 @@ None. Plugin is aspirational -- no code exists to have bugs.
 
 9. **Batch generation does not guarantee uniqueness**: `BatchGenerateAffixSets` generates each item independently. Two items in the same batch might get identical affix sets if the RNG produces the same sequence. Statistically unlikely but not prevented.
 
-10. **Generation events are batched, not per-item**: To prevent event flooding during mass loot generation (dungeon clear, batch NPC crafting), generation events are deduped by source and published in batches. Individual `affix.applied` events still fire for each application through the application endpoints.
+10. **Generation events are batched, not per-item**: To prevent event flooding during mass loot generation (dungeon clear, batch NPC crafting), generation events are deduped by source and published in batches. Individual `affix.modifier.applied` events still fire for each application through the application endpoints.
 
-11. **Instance cleanup is event-driven, not synchronous**: When lib-item destroys an item, lib-affix learns about it via the `item-instance.destroyed` event. There is a brief window (event delivery latency) where the affix instance exists for a destroyed item. Queries during this window return data for a non-existent item. The affix instance cache TTL (5 minutes) means stale entries are cleaned up even if the event is lost.
+11. **Instance cleanup is DI-listener-driven, not synchronous**: When lib-item destroys an item, lib-affix's `IItemInstanceDestructionListener` implementation receives an in-process notification on the same node. There is a brief window where other nodes may still see cached affix data for a destroyed item. The affix instance cache TTL (5 minutes) means stale entries expire naturally. The orphan reconciliation worker (see Design Consideration #6) provides the durability guarantee for any missed notifications.
 
 ### Design Considerations (Requires Planning)
 
@@ -794,9 +842,9 @@ None. Plugin is aspirational -- no code exists to have bugs.
 
 4. **Influence application mechanism**: lib-affix tracks influences on items and gates affix pools by influence requirements, but the mechanism for GIVING an item an influence is via `/affix/influence/set`. In PoE, influences come from specific content (Shaper items drop from Shaper). In Arcadia, they might come from leyline exposure. The trigger is game-specific; lib-affix provides the storage and validation.
 
-5. **Variable provider equipment detection**: The `AffixItemEvaluationProviderFactory` needs to know which items are "equipped" for a character. This requires querying lib-inventory for equipment-type containers and their contents. If lib-inventory is unavailable (soft dependency), the variable provider returns empty. The definition of "equipped" is game-specific (which container types count as equipment slots).
+5. **Variable provider equipment detection**: The `AffixItemEvaluationProviderFactory` needs to know which items are "equipped" for a character. This requires querying lib-inventory for equipment-type containers and their contents (via `IInventoryClient`, hard dependency). The definition of "equipped" is game-specific (which container types count as equipment slots).
 
-6. **Orphaned affix instances**: If the `item-instance.destroyed` event is lost (RabbitMQ delivery failure), affix instances become orphaned -- they reference items that no longer exist. The instance cache TTL provides some protection (stale entries expire), but the MySQL records persist. A periodic cleanup job or reconciliation endpoint would detect and remove orphaned instances by checking item existence.
+6. **Orphan reconciliation worker (planned)**: The `IItemInstanceDestructionListener` provides guaranteed in-process delivery on the node that processes the deletion, but if the deletion occurs on a node where lib-affix is not loaded (unusual but possible in partitioned deployments), or if the listener throws an unhandled exception, affix instances become orphaned -- they reference items that no longer exist. The instance cache TTL provides some protection (stale entries expire), but the MySQL records persist. A background worker must periodically scan affix instances, batch-check item existence via `IItemClient`, and delete orphaned records. This is the durability guarantee required by FOUNDATION TENETS (T28 High-Frequency Instance Lifecycle Exception). Configuration: `OrphanReconciliationIntervalMinutes` (default: 60), `OrphanReconciliationBatchSize` (default: 500).
 
 7. **Socket container detection**: Equipment stat computation needs to identify socket child containers within equipment containers. This relies on a container type convention (`"socket"`) in lib-inventory. If lib-inventory changes container type naming, socket detection breaks. This is a same-convention concern, mitigated by the fact that both lib-affix and the socket creation flow (orchestrated by the caller) agree on the container type string.
 

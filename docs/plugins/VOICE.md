@@ -192,7 +192,12 @@ Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a
 
 ### Consumed Events
 
-This plugin does not consume external events (`x-event-subscriptions: []`). Voice is a purely reactive service -- callers invoke its API, and it publishes events about what happened. This is a deliberate architectural choice: voice has no external dependencies to subscribe to, and its event model is unidirectional (publish-only).
+| Topic | Event Type | Handler | Purpose |
+|-------|-----------|---------|---------|
+| `session.disconnected` | `SessionDisconnectedEvent` | `HandleSessionDisconnectedAsync` | Cleans up voice room participation for disconnected sessions (unregister, clear permission, notify peers, handle broadcast consent, empty room grace period) |
+| `session.reconnected` | `SessionReconnectedEvent` | `HandleSessionReconnectedAsync` | Restores voice room state for reconnected sessions (re-set permission, publish VoiceRoomStateClientEvent with peers/STUN servers) |
+
+Subscribes to Connect (L1) session lifecycle events. L3 subscribing to L1 events is correct hierarchy direction per FOUNDATION TENETS. The ParticipantEvictionWorker remains as a safety net for missed events.
 
 ### Who Consumes These Events (Target Architecture)
 
@@ -446,7 +451,7 @@ SHOWTIME_SERVICE_ENABLED=true
 2. **RTP server pool allocation**: `AllocateRtpServerAsync` currently returns the single configured RTP server. The implementation notes "In production, this would select from a pool based on load."
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/258 -->
 
-3. **VoiceRoomStateEvent**: Defined in `voice-client-events.yaml` but never published by the service.
+3. **VoiceRoomStateEvent**: Defined in `voice-client-events.yaml`. Now published by `HandleSessionReconnectedAsync` for reconnection state restoration. Not yet published during normal join flow (still returns state via JoinVoiceRoomResponse).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/396 -->
 
 4. **lib-broadcast integration**: lib-broadcast does not exist yet. When implemented, it will subscribe to `voice.broadcast.approved` and `voice.broadcast.stopped` to manage RTMP output. The RTP audio endpoint metadata in the broadcast approved event enables this integration. **Voice's integration surface is complete** — all three broadcast events (`approved`, `declined`, `stopped`) are published with correct typed models. No voice code changes needed; blocked on lib-broadcast service implementation.
@@ -455,8 +460,8 @@ SHOWTIME_SERVICE_ENABLED=true
 5. **lib-showtime integration**: lib-showtime does not exist yet. When implemented, it will subscribe to voice room lifecycle events and orchestrate the game-session-to-voice-room lifecycle that previously lived in GameSession (L2). **Voice's integration surface is complete** — all four lifecycle events (`voice.room.created`, `voice.room.deleted`, `voice.peer.joined`, `voice.peer.left`) are published with correct typed models. No voice code changes needed; blocked on lib-showtime service implementation.
 <!-- AUDIT:BLOCKED:2026-03-01 -->
 
-6. **Session lifecycle event cleanup**: Voice service does not subscribe to `session.disconnected` or `session.reconnected` events. When a WebSocket session disconnects, the participant remains in the voice room until their heartbeat times out (eviction worker). The eviction worker is the safety net, not the primary cleanup mechanism.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-15:https://github.com/beyond-immersion/bannou-service/issues/154 -->
+6. ~~**Session lifecycle event cleanup**: Voice service does not subscribe to `session.disconnected` or `session.reconnected` events.~~: **FIXED** (2026-03-03) - Added `session.disconnected` and `session.reconnected` event subscriptions. Disconnect handler cleans up participation (unregister, clear permission, notify peers, handle broadcast consent, empty room grace period). Reconnect handler restores state (re-set permission, publish VoiceRoomStateClientEvent). Eviction worker remains as safety net.
+<!-- AUDIT:FIXED:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/154 -->
 
 ---
 
@@ -530,11 +535,11 @@ None identified.
 | 2026-02-11 | [#403](https://github.com/beyond-immersion/bannou-service/issues/403) | ICE trickle support -- relay vs accumulate, permission gating, P2P/SFU scope | Needs Design |
 | 2026-02-11 | [#404](https://github.com/beyond-immersion/bannou-service/issues/404) | RTPEngine UDP client: cookie mismatch correctness bug and retry strategy | Needs Design |
 | 2026-02-11 | [#405](https://github.com/beyond-immersion/bannou-service/issues/405) | SIP credential expiration enforcement -- Bannou vs Kamailio, rotation strategy | Needs Design |
-| 2026-02-15 | [#154](https://github.com/beyond-immersion/bannou-service/issues/154) | Session lifecycle event subscriptions (session.disconnected/reconnected) for participant cleanup -- eviction worker is safety net, not primary mechanism | Needs Design |
+| 2026-02-15 | [#154](https://github.com/beyond-immersion/bannou-service/issues/154) | Session lifecycle event subscriptions (session.disconnected/reconnected) for participant cleanup -- eviction worker is safety net, not primary mechanism | **Fixed** |
 | 2026-03-01 | [#547](https://github.com/beyond-immersion/bannou-service/issues/547) | Spatial audio: layer placement and position metadata design | Needs Design |
 | 2026-03-01 | [#548](https://github.com/beyond-immersion/bannou-service/issues/548) | Voice-to-text transcription: STT service, audio capture model, consent design | Needs Design |
 | 2026-03-01 | [#549](https://github.com/beyond-immersion/bannou-service/issues/549) | NPC voice integration: synthetic audio sources, layer placement, participant model | Needs Design |
 
 ### Completed
 
-*No completed items.*
+- **2026-03-03**: Issue [#154](https://github.com/beyond-immersion/bannou-service/issues/154) - Added session lifecycle event subscriptions (session.disconnected/reconnected) for participant cleanup and state restoration. Eviction worker remains as safety net.
