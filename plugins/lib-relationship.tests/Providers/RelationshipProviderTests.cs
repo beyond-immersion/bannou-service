@@ -16,7 +16,7 @@ public class RelationshipProviderTests
     }
 
     [Fact]
-    public void Empty_Has_ReturnsNull()
+    public void Empty_Has_ReturnsFalse()
     {
         var provider = RelationshipProvider.Empty;
         var result = provider.GetValue(ToSpan("has", "PARENT"));

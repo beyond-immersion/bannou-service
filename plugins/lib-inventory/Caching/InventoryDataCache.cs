@@ -24,6 +24,7 @@ public sealed class InventoryDataCache : IInventoryDataCache
     private readonly ILogger<InventoryDataCache> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly TimeSpan _cacheTtl;
+    private readonly int _queryPageSize;
     private readonly ConcurrentDictionary<Guid, CachedEntry> _cache = new();
 
     // Long-lived templateId→code mapping that persists across cache refreshes
@@ -32,6 +33,10 @@ public sealed class InventoryDataCache : IInventoryDataCache
     /// <summary>
     /// Creates a new inventory data cache.
     /// </summary>
+    /// <param name="scopeFactory">Service scope factory for creating scoped service clients.</param>
+    /// <param name="logger">Logger for diagnostic output.</param>
+    /// <param name="config">Service configuration with cache TTL and query page size.</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
     public InventoryDataCache(
         IServiceScopeFactory scopeFactory,
         ILogger<InventoryDataCache> logger,
@@ -43,6 +48,7 @@ public sealed class InventoryDataCache : IInventoryDataCache
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
         _cacheTtl = TimeSpan.FromSeconds(config.ProviderCacheTtlSeconds);
+        _queryPageSize = config.QueryPageSize;
     }
 
     /// <inheritdoc/>
@@ -87,7 +93,6 @@ public sealed class InventoryDataCache : IInventoryDataCache
             var itemCounts = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
             var totalItemCount = 0;
             var offset = 0;
-            const int pageSize = 200;
 
             while (true)
             {
@@ -97,7 +102,7 @@ public sealed class InventoryDataCache : IInventoryDataCache
                         OwnerId = characterId,
                         OwnerType = ContainerOwnerType.Character,
                         Offset = offset,
-                        Limit = pageSize,
+                        Limit = _queryPageSize,
                     },
                     ct);
 
@@ -123,10 +128,10 @@ public sealed class InventoryDataCache : IInventoryDataCache
                     }
                 }
 
-                if (itemsResponse.Items.Count < pageSize)
+                if (itemsResponse.Items.Count < _queryPageSize)
                     break;
 
-                offset += pageSize;
+                offset += _queryPageSize;
             }
 
             // Step 3: Compute aggregate container stats
@@ -205,6 +210,8 @@ public sealed class InventoryDataCache : IInventoryDataCache
     /// </summary>
     private async Task<string?> ResolveTemplateCodeAsync(Guid templateId, IItemClient itemClient, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.inventory", "InventoryDataCache.ResolveTemplateCode");
+
         if (_templateCodeCache.TryGetValue(templateId, out var code))
         {
             return code;

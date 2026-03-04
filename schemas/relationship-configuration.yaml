@@ -35,6 +35,14 @@ x-service-configuration:
       default: 30
 
     # Variable Provider Cache
+    ProviderQueryPageSize:
+      type: integer
+      minimum: 10
+      maximum: 500
+      default: 100
+      env: RELATIONSHIP_PROVIDER_QUERY_PAGE_SIZE
+      description: Number of relationships to fetch per page when loading provider cache data
+
     ProviderCacheTtlSeconds:
       type: integer
       minimum: 5

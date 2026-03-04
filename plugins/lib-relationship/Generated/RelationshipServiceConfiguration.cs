@@ -70,6 +70,13 @@ public class RelationshipServiceConfiguration : BaseServiceConfiguration
     public int LockTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
+    /// Number of relationships to fetch per page when loading provider cache data
+    /// Environment variable: RELATIONSHIP_PROVIDER_QUERY_PAGE_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 500)]
+    public int ProviderQueryPageSize { get; set; } = 100;
+
+    /// <summary>
     /// TTL in seconds for relationship variable provider in-memory cache entries
     /// Environment variable: RELATIONSHIP_PROVIDER_CACHE_TTL_SECONDS
     /// </summary>

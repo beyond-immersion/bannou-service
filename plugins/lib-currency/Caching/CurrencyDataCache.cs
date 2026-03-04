@@ -31,6 +31,10 @@ public sealed class CurrencyDataCache : ICurrencyDataCache
     /// <summary>
     /// Creates a new currency data cache.
     /// </summary>
+    /// <param name="scopeFactory">Service scope factory for creating scoped service clients.</param>
+    /// <param name="logger">Logger for diagnostic output.</param>
+    /// <param name="config">Service configuration with cache TTL.</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
     public CurrencyDataCache(
         IServiceScopeFactory scopeFactory,
         ILogger<CurrencyDataCache> logger,

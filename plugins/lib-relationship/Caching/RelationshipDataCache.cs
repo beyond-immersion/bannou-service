@@ -23,6 +23,7 @@ public sealed class RelationshipDataCache : IRelationshipDataCache
     private readonly ILogger<RelationshipDataCache> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly TimeSpan _cacheTtl;
+    private readonly int _queryPageSize;
     private readonly ConcurrentDictionary<Guid, CachedEntry> _cache = new();
 
     // Long-lived typeId→code mapping that persists across cache refreshes
@@ -45,6 +46,7 @@ public sealed class RelationshipDataCache : IRelationshipDataCache
         _logger = logger;
         _telemetryProvider = telemetryProvider;
         _cacheTtl = TimeSpan.FromSeconds(configuration.ProviderCacheTtlSeconds);
+        _queryPageSize = configuration.ProviderQueryPageSize;
     }
 
     /// <inheritdoc/>
@@ -69,7 +71,6 @@ public sealed class RelationshipDataCache : IRelationshipDataCache
             var countsByTypeCode = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             var totalCount = 0;
             var page = 1;
-            const int pageSize = 100;
 
             while (true)
             {
@@ -80,7 +81,7 @@ public sealed class RelationshipDataCache : IRelationshipDataCache
                         EntityType = EntityType.Character,
                         IncludeEnded = false,
                         Page = page,
-                        PageSize = pageSize,
+                        PageSize = _queryPageSize,
                     },
                     ct);
 
@@ -151,6 +152,8 @@ public sealed class RelationshipDataCache : IRelationshipDataCache
     /// </summary>
     private async Task<string?> ResolveTypeCodeAsync(Guid typeId, IRelationshipClient relationshipClient, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipDataCache.ResolveTypeCode");
+
         if (_typeCodeCache.TryGetValue(typeId, out var code))
         {
             return code;
