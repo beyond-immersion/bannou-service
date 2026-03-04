@@ -190,8 +190,8 @@ paths:
         format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n            \
         \        \"description\": \"How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n            \
         \    }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"active\",\n                \"\
-        dormant\",\n                \"archived\"\n            ]\n        }\n    }\n}"
+        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"Active\",\n                \"\
+        Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new deity\",\n    \"description\": \"Creates a deity entity with
         domain influences and personality traits.\\nProvisions a divinity currency wallet, a domain power seed, and optionally\\
         nstarts a deity watcher actor via Puppetmaster.\\n\",\n    \"tags\": [\n        \"Deity Management\"\n    ],\n   \
@@ -286,8 +286,8 @@ paths:
         format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n            \
         \        \"description\": \"How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n            \
         \    }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"active\",\n                \"\
-        dormant\",\n                \"archived\"\n            ]\n        }\n    }\n}"
+        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"Active\",\n                \"\
+        Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a deity by ID\",\n    \"description\": \"Returns a single deity entity
         by its unique identifier.\",\n    \"tags\": [\n        \"Deity Management\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"getDeity\"\n}"
@@ -383,8 +383,8 @@ paths:
         format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n            \
         \        \"description\": \"How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n            \
         \    }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"active\",\n                \"\
-        dormant\",\n                \"archived\"\n            ]\n        }\n    }\n}"
+        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"Active\",\n                \"\
+        Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a deity by code within a game service\",\n    \"description\": \"Looks
         up a deity by its unique code within a game service scope.\",\n    \"tags\": [\n        \"Deity Management\"\n   \
         \ ],\n    \"deprecated\": false,\n    \"operationId\": \"getDeityByCode\"\n}"
@@ -428,7 +428,7 @@ paths:
         \   \"maximum\": 100,\n                    \"default\": 50,\n                    \"description\": \"Number of results
         per page\"\n                }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Lifecycle status of a deity entity\",\n            \"enum\": [\n               \
-        \ \"active\",\n                \"dormant\",\n                \"archived\"\n            ]\n        }\n    }\n}"
+        \ \"Active\",\n                \"Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListDeitiesResponse\"\
         ,\n    \"$defs\": {\n        \"ListDeitiesResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Paginated list of deities\",\n            \"required\": [\n             \
@@ -500,7 +500,7 @@ paths:
         \  \"maximum\": 1.0,\n                    \"description\": \"How possessive the deity is of followers (0.0 tolerant,
         1.0 vengeful)\"\n                }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"\
         string\",\n            \"description\": \"Lifecycle status of a deity entity\",\n            \"enum\": [\n       \
-        \         \"active\",\n                \"dormant\",\n                \"archived\"\n            ]\n        }\n    }\n\
+        \         \"Active\",\n                \"Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n\
         }"
       x-endpoint-info-json: "{\n    \"summary\": \"List deities with optional filters\",\n    \"description\": \"Returns a
         paginated list of deities for a game service, optionally\\nfiltered by domain code and status.\\n\",\n    \"tags\"\
@@ -633,8 +633,8 @@ paths:
         format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n            \
         \        \"description\": \"How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n            \
         \    }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"active\",\n                \"\
-        dormant\",\n                \"archived\"\n            ]\n        }\n    }\n}"
+        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"Active\",\n                \"\
+        Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update deity properties\",\n    \"description\": \"Partial update of deity
         properties. Only non-null fields are applied.\\nRequires a distributed lock on the deity.\\n\",\n    \"tags\": [\n\
         \        \"Deity Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateDeity\"\n}"
@@ -732,8 +732,8 @@ paths:
         format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n            \
         \        \"description\": \"How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n            \
         \    }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"active\",\n                \"\
-        dormant\",\n                \"archived\"\n            ]\n        }\n    }\n}"
+        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"Active\",\n                \"\
+        Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Activate a dormant deity\",\n    \"description\": \"Sets the deity status
         to Active. If Puppetmaster is available and no\\nwatcher actor exists, starts one. Publishes a deity activated event.\\\
         n\",\n    \"tags\": [\n        \"Deity Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"activateDeity\"\
@@ -832,8 +832,8 @@ paths:
         format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n            \
         \        \"description\": \"How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n            \
         \    }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"active\",\n                \"\
-        dormant\",\n                \"archived\"\n            ]\n        }\n    }\n}"
+        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"Active\",\n                \"\
+        Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deactivate an active deity\",\n    \"description\": \"Sets the deity status
         to Dormant. Stops the watcher actor if Puppetmaster\\nis available. Clears all attention slots. Publishes a deity
         dormant event.\\n\",\n    \"tags\": [\n        \"Deity Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -1157,8 +1157,8 @@ paths:
         \n                },\n                \"reason\": {\n                    \"type\": \"string\",\n                 \
         \   \"description\": \"Why the deity is granting this blessing\"\n                }\n            }\n        },\n \
         \       \"BlessingTier\": {\n            \"type\": \"string\",\n            \"description\": \"Tier of a blessing
-        determining its power, cost, and storage mechanism\",\n            \"enum\": [\n                \"minor\",\n     \
-        \           \"standard\",\n                \"greater\",\n                \"supreme\"\n            ]\n        }\n \
+        determining its power, cost, and storage mechanism\",\n            \"enum\": [\n                \"Minor\",\n     \
+        \           \"Standard\",\n                \"Greater\",\n                \"Supreme\"\n            ]\n        }\n \
         \   }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BlessingResponse\"\
         ,\n    \"$defs\": {\n        \"BlessingResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -1187,10 +1187,10 @@ paths:
         \       },\n                \"status\": {\n                    \"$ref\": \"#/$defs/BlessingStatus\",\n           \
         \         \"description\": \"Current status of the blessing\"\n                }\n            }\n        },\n    \
         \    \"BlessingTier\": {\n            \"type\": \"string\",\n            \"description\": \"Tier of a blessing determining
-        its power, cost, and storage mechanism\",\n            \"enum\": [\n                \"minor\",\n                \"\
-        standard\",\n                \"greater\",\n                \"supreme\"\n            ]\n        },\n        \"BlessingStatus\"\
+        its power, cost, and storage mechanism\",\n            \"enum\": [\n                \"Minor\",\n                \"\
+        Standard\",\n                \"Greater\",\n                \"Supreme\"\n            ]\n        },\n        \"BlessingStatus\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Current status of a granted blessing\",\n \
-        \           \"enum\": [\n                \"active\",\n                \"revoked\"\n            ]\n        }\n    }\n\
+        \           \"enum\": [\n                \"Active\",\n                \"Revoked\"\n            ]\n        }\n    }\n\
         }"
       x-endpoint-info-json: "{\n    \"summary\": \"Grant a blessing from a deity to an entity\",\n    \"description\": \"\
         Orchestrates the full blessing ceremony: validates deity is active, validates\\ntarget entity exists, checks blessing
@@ -1262,10 +1262,10 @@ paths:
         \       },\n                \"status\": {\n                    \"$ref\": \"#/$defs/BlessingStatus\",\n           \
         \         \"description\": \"Current status of the blessing\"\n                }\n            }\n        },\n    \
         \    \"BlessingTier\": {\n            \"type\": \"string\",\n            \"description\": \"Tier of a blessing determining
-        its power, cost, and storage mechanism\",\n            \"enum\": [\n                \"minor\",\n                \"\
-        standard\",\n                \"greater\",\n                \"supreme\"\n            ]\n        },\n        \"BlessingStatus\"\
+        its power, cost, and storage mechanism\",\n            \"enum\": [\n                \"Minor\",\n                \"\
+        Standard\",\n                \"Greater\",\n                \"Supreme\"\n            ]\n        },\n        \"BlessingStatus\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Current status of a granted blessing\",\n \
-        \           \"enum\": [\n                \"active\",\n                \"revoked\"\n            ]\n        }\n    }\n\
+        \           \"enum\": [\n                \"Active\",\n                \"Revoked\"\n            ]\n        }\n    }\n\
         }"
       x-endpoint-info-json: "{\n    \"summary\": \"Revoke an active blessing\",\n    \"description\": \"Revokes a blessing.
         For status-type blessings (Minor/Standard), removes\\nthe status item. For permanent blessings (Greater/Supreme),
@@ -1339,10 +1339,10 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/BlessingStatus\",\n                    \"description\": \"Current status
         of the blessing\"\n                }\n            }\n        },\n        \"BlessingTier\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Tier of a blessing determining its power, cost, and storage mechanism\"\
-        ,\n            \"enum\": [\n                \"minor\",\n                \"standard\",\n                \"greater\"\
-        ,\n                \"supreme\"\n            ]\n        },\n        \"BlessingStatus\": {\n            \"type\": \"\
+        ,\n            \"enum\": [\n                \"Minor\",\n                \"Standard\",\n                \"Greater\"\
+        ,\n                \"Supreme\"\n            ]\n        },\n        \"BlessingStatus\": {\n            \"type\": \"\
         string\",\n            \"description\": \"Current status of a granted blessing\",\n            \"enum\": [\n     \
-        \           \"active\",\n                \"revoked\"\n            ]\n        }\n    }\n}"
+        \           \"Active\",\n                \"Revoked\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List blessings for an entity\",\n    \"description\": \"Returns paginated
         blessings granted to a specific entity.\",\n    \"tags\": [\n        \"Blessing Orchestration\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"listBlessingsByEntity\"\n}"
@@ -1382,8 +1382,8 @@ paths:
         \   \"maximum\": 100,\n                    \"default\": 50,\n                    \"description\": \"Number of results
         per page\"\n                }\n            }\n        },\n        \"BlessingTier\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Tier of a blessing determining its power, cost, and storage mechanism\",\n     \
-        \       \"enum\": [\n                \"minor\",\n                \"standard\",\n                \"greater\",\n   \
-        \             \"supreme\"\n            ]\n        }\n    }\n}"
+        \       \"enum\": [\n                \"Minor\",\n                \"Standard\",\n                \"Greater\",\n   \
+        \             \"Supreme\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListBlessingsResponse\"\
         ,\n    \"$defs\": {\n        \"ListBlessingsResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Paginated list of blessings\",\n            \"required\": [\n           \
@@ -1416,10 +1416,10 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/BlessingStatus\",\n                    \"description\": \"Current status
         of the blessing\"\n                }\n            }\n        },\n        \"BlessingTier\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Tier of a blessing determining its power, cost, and storage mechanism\"\
-        ,\n            \"enum\": [\n                \"minor\",\n                \"standard\",\n                \"greater\"\
-        ,\n                \"supreme\"\n            ]\n        },\n        \"BlessingStatus\": {\n            \"type\": \"\
+        ,\n            \"enum\": [\n                \"Minor\",\n                \"Standard\",\n                \"Greater\"\
+        ,\n                \"Supreme\"\n            ]\n        },\n        \"BlessingStatus\": {\n            \"type\": \"\
         string\",\n            \"description\": \"Current status of a granted blessing\",\n            \"enum\": [\n     \
-        \           \"active\",\n                \"revoked\"\n            ]\n        }\n    }\n}"
+        \           \"Active\",\n                \"Revoked\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List blessings granted by a deity\",\n    \"description\": \"Returns paginated
         blessings granted by a specific deity, optionally filtered by tier.\",\n    \"tags\": [\n        \"Blessing Orchestration\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listBlessingsByDeity\"\n}"
@@ -1480,10 +1480,10 @@ paths:
         \       },\n                \"status\": {\n                    \"$ref\": \"#/$defs/BlessingStatus\",\n           \
         \         \"description\": \"Current status of the blessing\"\n                }\n            }\n        },\n    \
         \    \"BlessingTier\": {\n            \"type\": \"string\",\n            \"description\": \"Tier of a blessing determining
-        its power, cost, and storage mechanism\",\n            \"enum\": [\n                \"minor\",\n                \"\
-        standard\",\n                \"greater\",\n                \"supreme\"\n            ]\n        },\n        \"BlessingStatus\"\
+        its power, cost, and storage mechanism\",\n            \"enum\": [\n                \"Minor\",\n                \"\
+        Standard\",\n                \"Greater\",\n                \"Supreme\"\n            ]\n        },\n        \"BlessingStatus\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Current status of a granted blessing\",\n \
-        \           \"enum\": [\n                \"active\",\n                \"revoked\"\n            ]\n        }\n    }\n\
+        \           \"enum\": [\n                \"Active\",\n                \"Revoked\"\n            ]\n        }\n    }\n\
         }"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a blessing by ID\",\n    \"description\": \"Returns a single blessing
         record by its unique identifier.\",\n    \"tags\": [\n        \"Blessing Orchestration\"\n    ],\n    \"deprecated\"\
@@ -1713,31 +1713,31 @@ components:
       type: string
       description: Lifecycle status of a deity entity
       enum:
-      - active
-      - dormant
-      - archived
+      - Active
+      - Dormant
+      - Archived
     BlessingTier:
       type: string
       description: Tier of a blessing determining its power, cost, and storage mechanism
       enum:
-      - minor
-      - standard
-      - greater
-      - supreme
+      - Minor
+      - Standard
+      - Greater
+      - Supreme
     BlessingStatus:
       type: string
       description: Current status of a granted blessing
       enum:
-      - active
-      - revoked
+      - Active
+      - Revoked
     AttentionPriority:
       type: string
       description: Priority level for a deity's attention toward a character
       enum:
-      - low
-      - medium
-      - high
-      - critical
+      - Low
+      - Medium
+      - High
+      - Critical
     DomainInfluence:
       type: object
       additionalProperties: false

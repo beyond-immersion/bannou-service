@@ -57,7 +57,7 @@ public class StatusServicePlugin : StandardServicePlugin<IStatusService>
                 {
                     ResourceType = "character",
                     SourceType = "status",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "status",
                     CallbackEndpoint = "/status/cleanup-by-owner",
                     PayloadTemplate = "{\"ownerType\": \"character\", \"ownerId\": \"{{resourceId}}\"}",
@@ -79,7 +79,7 @@ public class StatusServicePlugin : StandardServicePlugin<IStatusService>
                 {
                     ResourceType = "account",
                     SourceType = "status",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "status",
                     CallbackEndpoint = "/status/cleanup-by-owner",
                     PayloadTemplate = "{\"ownerType\": \"account\", \"ownerId\": \"{{resourceId}}\"}",

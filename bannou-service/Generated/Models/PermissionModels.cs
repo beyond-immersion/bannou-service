@@ -471,10 +471,10 @@ public partial class RegisteredServiceInfo
 public enum CapabilityUpdateType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"full")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Full")]
     Full = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"delta")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Delta")]
     Delta = 1,
 
 }
@@ -488,19 +488,19 @@ public enum CapabilityUpdateType
 public enum CapabilityUpdateReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"session_created")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SessionCreated")]
     SessionCreated = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"session_state_changed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SessionStateChanged")]
     SessionStateChanged = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"role_changed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"RoleChanged")]
     RoleChanged = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"service_registered")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ServiceRegistered")]
     ServiceRegistered = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"manual_refresh")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ManualRefresh")]
     ManualRefresh = 4,
 
 }

@@ -86,7 +86,7 @@ paths:
         \n                        }\n                    ],\n                    \"default\": \"alive\",\n               \
         \     \"description\": \"Initial lifecycle status for the character\"\n                }\n            }\n        },\n\
         \        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle
-        status\",\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\
+        status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n                \"Dormant\"\
         \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterResponse\"\
         ,\n    \"$defs\": {\n        \"CharacterResponse\": {\n            \"description\": \"Complete character data returned
@@ -113,8 +113,8 @@ paths:
         type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
         \                 \"description\": \"Real-world last update timestamp\"\n                }\n            }\n      \
         \  },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character
-        lifecycle status\",\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n            \
-        \    \"dormant\"\n            ]\n        }\n    }\n}"
+        lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n            \
+        \    \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new character\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createCharacter\"\n}"
   /character/get:
@@ -173,8 +173,8 @@ paths:
         type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
         \                 \"description\": \"Real-world last update timestamp\"\n                }\n            }\n      \
         \  },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character
-        lifecycle status\",\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n            \
-        \    \"dormant\"\n            ]\n        }\n    }\n}"
+        lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n            \
+        \    \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get character by ID\",\n    \"description\": \"\",\n    \"tags\": [\n \
         \       \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getCharacter\"\n}"
   /character/update:
@@ -220,8 +220,8 @@ paths:
         {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
         \ \"nullable\": true,\n                    \"description\": \"In-game death timestamp (sets status to dead)\"\n  \
         \              }\n            }\n        },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n \
-        \           \"description\": \"Character lifecycle status\",\n            \"enum\": [\n                \"alive\",\n\
-        \                \"dead\",\n                \"dormant\"\n            ]\n        }\n    }\n}"
+        \           \"description\": \"Character lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n\
+        \                \"Dead\",\n                \"Dormant\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterResponse\"\
         ,\n    \"$defs\": {\n        \"CharacterResponse\": {\n            \"description\": \"Complete character data returned
         from character operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
@@ -247,8 +247,8 @@ paths:
         type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
         \                 \"description\": \"Real-world last update timestamp\"\n                }\n            }\n      \
         \  },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character
-        lifecycle status\",\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n            \
-        \    \"dormant\"\n            ]\n        }\n    }\n}"
+        lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n            \
+        \    \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update character\",\n    \"description\": \"\",\n    \"tags\": [\n    \
         \    \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateCharacter\"\n}"
   /character/delete:
@@ -321,7 +321,7 @@ paths:
         \      \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n            \
         \        \"description\": \"Number of results per page\"\n                }\n            }\n        },\n        \"\
         CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle status\"\
-        ,\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\n \
+        ,\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n                \"Dormant\"\n \
         \           ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterListResponse\"\
         ,\n    \"$defs\": {\n        \"CharacterListResponse\": {\n            \"description\": \"Paginated list of characters
@@ -363,8 +363,8 @@ paths:
         type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
         \                 \"description\": \"Real-world last update timestamp\"\n                }\n            }\n      \
         \  },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character
-        lifecycle status\",\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n            \
-        \    \"dormant\"\n            ]\n        }\n    }\n}"
+        lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n            \
+        \    \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List characters with filtering\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listCharacters\"\
         \n}"
@@ -434,7 +434,7 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Family relationships (included
         if includeFamilyTree=true)\"\n                }\n            }\n        },\n        \"CharacterStatus\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n            \"enum\"\
-        : [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\n            ]\n        },\n\
+        : [\n                \"Alive\",\n                \"Dead\",\n                \"Dormant\"\n            ]\n        },\n\
         \        \"FamilyTreeResponse\": {\n            \"description\": \"Family relationships for a character\",\n     \
         \       \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
         \         \"parents\",\n                \"children\",\n                \"siblings\",\n                \"spouses\"\
@@ -719,7 +719,7 @@ paths:
         \                 \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n \
         \                   \"description\": \"Number of results per page\"\n                }\n            }\n        },\n\
         \        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle
-        status\",\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\
+        status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n                \"Dormant\"\
         \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterListResponse\"\
         ,\n    \"$defs\": {\n        \"CharacterListResponse\": {\n            \"description\": \"Paginated list of characters
@@ -761,8 +761,8 @@ paths:
         type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
         \                 \"description\": \"Real-world last update timestamp\"\n                }\n            }\n      \
         \  },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character
-        lifecycle status\",\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n            \
-        \    \"dormant\"\n            ]\n        }\n    }\n}"
+        lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n            \
+        \    \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get all characters in a realm (primary query pattern)\",\n    \"description\"\
         : \"\",\n    \"tags\": [\n        \"Character Lookup\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
         getCharactersByRealm\"\n}"
@@ -832,8 +832,8 @@ paths:
         type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
         \                 \"description\": \"Real-world last update timestamp\"\n                }\n            }\n      \
         \  },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character
-        lifecycle status\",\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n            \
-        \    \"dormant\"\n            ]\n        }\n    }\n}"
+        lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n            \
+        \    \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Transfer character to a different realm\",\n    \"description\": \"Moves
         a character from their current realm to a new target realm.\\nUpdates all indexes, validates the target realm exists
         and is active,\\nand publishes realm transition events.\\n\",\n    \"tags\": [\n        \"Character Management\"\n\
@@ -906,7 +906,7 @@ paths:
         \  \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Real-world
         last update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\": {\n          \
         \  \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n            \"enum\": [\n\
-        \                \"alive\",\n                \"dead\",\n                \"dormant\"\n            ]\n        }\n  \
+        \                \"Alive\",\n                \"Dead\",\n                \"Dormant\"\n            ]\n        }\n  \
         \  }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get character base data for compression\",\n    \"description\": \"Called
         by Resource service during compression.\\nReturns core character data (name, dates, family summary).\\nReturns BadRequest
@@ -918,9 +918,9 @@ components:
       type: string
       description: Character lifecycle status
       enum:
-      - alive
-      - dead
-      - dormant
+      - Alive
+      - Dead
+      - Dormant
     CreateCharacterRequest:
       description: Request payload for creating a new character in the game world
       type: object
@@ -1173,8 +1173,8 @@ components:
       type: string
       description: Reason a character left a realm
       enum:
-      - deletion
-      - transfer
+      - Deletion
+      - Transfer
     GetEnrichedCharacterRequest:
       description: |
         Request payload for retrieving a character with optional related data.

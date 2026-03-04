@@ -141,7 +141,7 @@ public partial class RelationshipService
                 {
                     ResourceType = "character",
                     SourceType = "relationship",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "relationship",
                     CallbackEndpoint = "/relationship/cleanup-by-entity",
                     PayloadTemplate = "{\"entityId\": \"{{resourceId}}\", \"entityType\": \"Character\"}",
@@ -162,7 +162,7 @@ public partial class RelationshipService
                 {
                     ResourceType = "realm",
                     SourceType = "relationship",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "relationship",
                     CallbackEndpoint = "/relationship/cleanup-by-entity",
                     PayloadTemplate = "{\"entityId\": \"{{resourceId}}\", \"entityType\": \"Realm\"}",

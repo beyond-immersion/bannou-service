@@ -9,6 +9,8 @@ This document lists all typed events available for subscription in the Bannou Cl
 
 | Event Type | Event Name | Description |
 |------------|------------|-------------|
+| `AchievementProgressMilestoneClientEvent` | `achievement.progress.milestone-reached` | Sent to the entity's WebSocket sessions when a significant p... |
+| `AchievementUnlockedClientEvent` | `achievement.unlocked` | Sent to the unlocking entity's WebSocket sessions when an ac... |
 | `BundleCreationCompleteClientEvent` | `asset.bundle.creation.complete` | Sent when bundle creation from asset_ids completes. |
 | `BundleValidationCompleteClientEvent` | `asset.bundle.validation.complete` | Sent when a bundle upload has been validated and processed. |
 | `BundleValidationFailedClientEvent` | `asset.bundle.validation.failed` | Sent when bundle validation fails. Includes detailed error i... |
@@ -113,6 +115,49 @@ using var matchSub = client.OnEvent<MatchFoundEvent>(evt =>
 var eventName = ClientEventRegistry.GetEventName<ChatMessageReceivedEvent>();
 // Returns: "game_session.chat_received"
 ```
+
+---
+
+## Achievement Client Events API
+
+Server-to-client push events for the Achievement service. These events notify clients of achievement unlocks and progress milestones delivered via WebSocket through entity-session routing.
+
+### `AchievementProgressMilestoneClientEvent`
+
+**Event Name**: `achievement.progress.milestone-reached`
+
+Sent to the entity's WebSocket sessions when a significant progress milestone
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `achievementId` | ID of the achievement with progress |
+| `currentProgress` | Current progress value |
+| `displayName` | Achievement display name |
+| `gameServiceId` | Game service owning the achievement |
+| `percentComplete` | Completion percentage (0-100) |
+| `targetProgress` | Target to unlock |
+
+### `AchievementUnlockedClientEvent`
+
+**Event Name**: `achievement.unlocked`
+
+Sent to the unlocking entity's WebSocket sessions when an achievement is unlocked.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `achievementId` | ID of the unlocked achievement |
+| `description` | Achievement description |
+| `displayName` | Achievement display name for toast notification |
+| `gameServiceId` | Game service where the achievement was earned |
+| `iconUrl` | Achievement icon URL for toast notification |
+| `isRare` | Whether this is a rare achievement (for special ce |
+| `points` | Points earned from this achievement |
+| `rarity` | Percentage of entities who have earned this (0-100 |
+| `totalPoints` | Entity's new total achievement points |
 
 ---
 
@@ -1427,8 +1472,8 @@ Published on period-changed boundaries, ratio changes, admin clock advancement, 
 
 ## Summary
 
-- **Total event types**: 77
-- **Services with events**: 16
+- **Total event types**: 79
+- **Services with events**: 17
 
 ---
 

@@ -38,25 +38,25 @@ using System = global::System;
 public enum AssetType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"texture")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Texture")]
     Texture = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"model")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Model")]
     Model = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"audio")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Audio")]
     Audio = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"behavior")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Behavior")]
     Behavior = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"bundle")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Bundle")]
     Bundle = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"prefab")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Prefab")]
     Prefab = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"other")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Other")]
     Other = 6,
 
 }
@@ -70,16 +70,16 @@ public enum AssetType
 public enum ProcessingStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"pending")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Pending")]
     Pending = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Processing")]
     Processing = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"complete")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Complete")]
     Complete = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Failed")]
     Failed = 3,
 
 }
@@ -93,13 +93,13 @@ public enum ProcessingStatus
 public enum CompressionType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"lz4")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Lz4")]
     Lz4 = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"lzma")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Lzma")]
     Lzma = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    [System.Runtime.Serialization.EnumMember(Value = @"None")]
     None = 2,
 
 }
@@ -113,10 +113,10 @@ public enum CompressionType
 public enum BundleFormat
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"bannou")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Bannou")]
     Bannou = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"zip")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Zip")]
     Zip = 1,
 
 }
@@ -133,10 +133,10 @@ public enum BundleFormat
 public enum BundleType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"source")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Source")]
     Source = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"metabundle")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Metabundle")]
     Metabundle = 1,
 
 }
@@ -153,10 +153,10 @@ public enum BundleType
 public enum DeletionStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"deleted")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Deleted")]
     Deleted = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"permanently_deleted")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PermanentlyDeleted")]
     PermanentlyDeleted = 1,
 
 }
@@ -170,16 +170,16 @@ public enum DeletionStatus
 public enum BundleSortField
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"created_at")]
+    [System.Runtime.Serialization.EnumMember(Value = @"CreatedAt")]
     CreatedAt = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"updated_at")]
+    [System.Runtime.Serialization.EnumMember(Value = @"UpdatedAt")]
     UpdatedAt = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"name")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Name")]
     Name = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"size")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Size")]
     Size = 3,
 
 }
@@ -193,10 +193,10 @@ public enum BundleSortField
 public enum SortOrder
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"asc")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Asc")]
     Asc = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"desc")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Desc")]
     Desc = 1,
 
 }
@@ -210,19 +210,19 @@ public enum SortOrder
 public enum StorageProvider
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"minio")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Minio")]
     Minio = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"s3")]
+    [System.Runtime.Serialization.EnumMember(Value = @"S3")]
     S3 = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"r2")]
+    [System.Runtime.Serialization.EnumMember(Value = @"R2")]
     R2 = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"azure")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Azure")]
     Azure = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"filesystem")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Filesystem")]
     Filesystem = 4,
 
 }
@@ -240,13 +240,13 @@ public enum StorageProvider
 public enum ProcessingMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"api")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Api")]
     Api = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"worker")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Worker")]
     Worker = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"both")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Both")]
     Both = 2,
 
 }
@@ -260,13 +260,13 @@ public enum ProcessingMode
 public enum AudioOutputFormat
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"mp3")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Mp3")]
     Mp3 = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"opus")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Opus")]
     Opus = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"aac")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Aac")]
     Aac = 2,
 
 }
@@ -280,22 +280,22 @@ public enum AudioOutputFormat
 public enum ProcessingType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"mipmaps")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Mipmaps")]
     Mipmaps = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"lod_generation")]
+    [System.Runtime.Serialization.EnumMember(Value = @"LodGeneration")]
     LodGeneration = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"transcode")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Transcode")]
     Transcode = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"compression")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Compression")]
     Compression = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"validation")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Validation")]
     Validation = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"behavior_compile")]
+    [System.Runtime.Serialization.EnumMember(Value = @"BehaviorCompile")]
     BehaviorCompile = 5,
 
 }
@@ -309,20 +309,20 @@ public enum ProcessingType
 public enum UploadErrorCode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"VALIDATION_FAILED")]
-    VALIDATION_FAILED = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"ValidationFailed")]
+    ValidationFailed = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"HASH_MISMATCH")]
-    HASH_MISMATCH = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"HashMismatch")]
+    HashMismatch = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"SIZE_EXCEEDED")]
-    SIZE_EXCEEDED = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"SizeExceeded")]
+    SizeExceeded = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"STORAGE_ERROR")]
-    STORAGE_ERROR = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"StorageError")]
+    StorageError = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TIMEOUT")]
-    TIMEOUT = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Timeout")]
+    Timeout = 4,
 
 }
 #pragma warning restore CS1591
@@ -335,20 +335,20 @@ public enum UploadErrorCode
 public enum ProcessingErrorCode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"PROCESSING_FAILED")]
-    PROCESSING_FAILED = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"ProcessingFailed")]
+    ProcessingFailed = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"INVALID_FORMAT")]
-    INVALID_FORMAT = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"InvalidFormat")]
+    InvalidFormat = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"RESOURCE_EXHAUSTED")]
-    RESOURCE_EXHAUSTED = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"ResourceExhausted")]
+    ResourceExhausted = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TIMEOUT")]
-    TIMEOUT = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Timeout")]
+    Timeout = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"PROCESSOR_UNAVAILABLE")]
-    PROCESSOR_UNAVAILABLE = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"ProcessorUnavailable")]
+    ProcessorUnavailable = 4,
 
 }
 #pragma warning restore CS1591
@@ -361,29 +361,29 @@ public enum ProcessingErrorCode
 public enum ValidationErrorCode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"INVALID_ARCHIVE")]
-    INVALID_ARCHIVE = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"InvalidArchive")]
+    InvalidArchive = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"MISSING_MANIFEST")]
-    MISSING_MANIFEST = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"MissingManifest")]
+    MissingManifest = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"INVALID_MANIFEST")]
-    INVALID_MANIFEST = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"InvalidManifest")]
+    InvalidManifest = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"HASH_MISMATCH")]
-    HASH_MISMATCH = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"HashMismatch")]
+    HashMismatch = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"PATH_TRAVERSAL")]
-    PATH_TRAVERSAL = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"PathTraversal")]
+    PathTraversal = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"SIZE_EXCEEDED")]
-    SIZE_EXCEEDED = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"SizeExceeded")]
+    SizeExceeded = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"DUPLICATE_ASSET_ID")]
-    DUPLICATE_ASSET_ID = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"DuplicateAssetId")]
+    DuplicateAssetId = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"MISSING_DEPENDENCY")]
-    MISSING_DEPENDENCY = 7,
+    [System.Runtime.Serialization.EnumMember(Value = @"MissingDependency")]
+    MissingDependency = 7,
 
 }
 #pragma warning restore CS1591
@@ -396,35 +396,35 @@ public enum ValidationErrorCode
 public enum MetabundleErrorCode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"SOURCE_BUNDLE_NOT_FOUND")]
-    SOURCE_BUNDLE_NOT_FOUND = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"SourceBundleNotFound")]
+    SourceBundleNotFound = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"SOURCE_BUNDLE_NOT_READY")]
-    SOURCE_BUNDLE_NOT_READY = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"SourceBundleNotReady")]
+    SourceBundleNotReady = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"STANDALONE_ASSET_NOT_FOUND")]
-    STANDALONE_ASSET_NOT_FOUND = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"StandaloneAssetNotFound")]
+    StandaloneAssetNotFound = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"STANDALONE_ASSET_NOT_READY")]
-    STANDALONE_ASSET_NOT_READY = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"StandaloneAssetNotReady")]
+    StandaloneAssetNotReady = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"REALM_MISMATCH")]
-    REALM_MISMATCH = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"RealmMismatch")]
+    RealmMismatch = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ASSET_CONFLICT")]
-    ASSET_CONFLICT = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"AssetConflict")]
+    AssetConflict = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"STORAGE_ERROR")]
-    STORAGE_ERROR = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"StorageError")]
+    StorageError = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TIMEOUT")]
-    TIMEOUT = 7,
+    [System.Runtime.Serialization.EnumMember(Value = @"Timeout")]
+    Timeout = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CANCELLED")]
-    CANCELLED = 8,
+    [System.Runtime.Serialization.EnumMember(Value = @"Cancelled")]
+    Cancelled = 8,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"INTERNAL_ERROR")]
-    INTERNAL_ERROR = 9,
+    [System.Runtime.Serialization.EnumMember(Value = @"InternalError")]
+    InternalError = 9,
 
 }
 #pragma warning restore CS1591
@@ -2244,19 +2244,19 @@ public partial class BulkGetAssetsResponse
 public enum BundleStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"queued")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Queued")]
     Queued = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Processing")]
     Processing = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ready")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Ready")]
     Ready = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Failed")]
     Failed = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Cancelled")]
     Cancelled = 4,
 
 }
@@ -2274,13 +2274,13 @@ public enum BundleStatus
 public enum BundleLifecycle
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"active")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Active")]
     Active = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"deleted")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Deleted")]
     Deleted = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Processing")]
     Processing = 2,
 
 }

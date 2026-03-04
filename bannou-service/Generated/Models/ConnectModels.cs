@@ -949,20 +949,20 @@ public partial class ClientRPCResponseEvent
 public enum HttpMethodType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"GET")]
-    GET = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Get")]
+    Get = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"POST")]
-    POST = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Post")]
+    Post = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"PUT")]
-    PUT = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Put")]
+    Put = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"DELETE")]
-    DELETE = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Delete")]
+    Delete = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"PATCH")]
-    PATCH = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Patch")]
+    Patch = 4,
 
 }
 #pragma warning restore CS1591

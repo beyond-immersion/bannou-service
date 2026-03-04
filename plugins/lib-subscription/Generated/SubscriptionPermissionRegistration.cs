@@ -48,7 +48,7 @@ public static class SubscriptionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/subscription/account/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getAccountSubscriptions",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class SubscriptionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/subscription/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getSubscription",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class SubscriptionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/subscription/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createSubscription",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class SubscriptionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/subscription/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateSubscription",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class SubscriptionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/subscription/cancel",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cancelSubscription",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class SubscriptionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/subscription/renew",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "renewSubscription",
             Permissions = new List<PermissionRequirement>
             {

@@ -94,8 +94,8 @@ public sealed class CurrencyProvider : IVariableProvider
 
         var firstSegment = path[0];
         return firstSegment.Equals("balance", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("locked", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("has_wallet", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("wallet_count", StringComparison.OrdinalIgnoreCase);
+                firstSegment.Equals("locked", StringComparison.OrdinalIgnoreCase) ||
+                firstSegment.Equals("has_wallet", StringComparison.OrdinalIgnoreCase) ||
+                firstSegment.Equals("wallet_count", StringComparison.OrdinalIgnoreCase);
     }
 }

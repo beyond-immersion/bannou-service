@@ -197,35 +197,35 @@ public partial class InventoryController
             "type": "string",
             "description": "Type of entity that owns this container",
             "enum": [
-                "character",
-                "account",
-                "location",
-                "vehicle",
-                "guild",
-                "escrow",
-                "mail",
-                "other"
+                "Character",
+                "Account",
+                "Location",
+                "Vehicle",
+                "Guild",
+                "Escrow",
+                "Mail",
+                "Other"
             ]
         },
         "ContainerConstraintModel": {
             "type": "string",
             "description": "Container capacity constraint type",
             "enum": [
-                "slot_only",
-                "weight_only",
-                "slot_and_weight",
-                "grid",
-                "volumetric",
-                "unlimited"
+                "SlotOnly",
+                "WeightOnly",
+                "SlotAndWeight",
+                "Grid",
+                "Volumetric",
+                "Unlimited"
             ]
         },
         "WeightContribution": {
             "type": "string",
             "description": "How container weight propagates to parent",
             "enum": [
-                "none",
-                "self_only",
-                "self_plus_contents"
+                "None",
+                "SelfOnly",
+                "SelfPlusContents"
             ]
         }
     }
@@ -446,35 +446,35 @@ public partial class InventoryController
             "type": "string",
             "description": "Type of entity that owns this container",
             "enum": [
-                "character",
-                "account",
-                "location",
-                "vehicle",
-                "guild",
-                "escrow",
-                "mail",
-                "other"
+                "Character",
+                "Account",
+                "Location",
+                "Vehicle",
+                "Guild",
+                "Escrow",
+                "Mail",
+                "Other"
             ]
         },
         "ContainerConstraintModel": {
             "type": "string",
             "description": "Container capacity constraint type",
             "enum": [
-                "slot_only",
-                "weight_only",
-                "slot_and_weight",
-                "grid",
-                "volumetric",
-                "unlimited"
+                "SlotOnly",
+                "WeightOnly",
+                "SlotAndWeight",
+                "Grid",
+                "Volumetric",
+                "Unlimited"
             ]
         },
         "WeightContribution": {
             "type": "string",
             "description": "How container weight propagates to parent",
             "enum": [
-                "none",
-                "self_only",
-                "self_plus_contents"
+                "None",
+                "SelfOnly",
+                "SelfPlusContents"
             ]
         }
     }
@@ -802,35 +802,35 @@ public partial class InventoryController
             "type": "string",
             "description": "Type of entity that owns this container",
             "enum": [
-                "character",
-                "account",
-                "location",
-                "vehicle",
-                "guild",
-                "escrow",
-                "mail",
-                "other"
+                "Character",
+                "Account",
+                "Location",
+                "Vehicle",
+                "Guild",
+                "Escrow",
+                "Mail",
+                "Other"
             ]
         },
         "ContainerConstraintModel": {
             "type": "string",
             "description": "Container capacity constraint type",
             "enum": [
-                "slot_only",
-                "weight_only",
-                "slot_and_weight",
-                "grid",
-                "volumetric",
-                "unlimited"
+                "SlotOnly",
+                "WeightOnly",
+                "SlotAndWeight",
+                "Grid",
+                "Volumetric",
+                "Unlimited"
             ]
         },
         "WeightContribution": {
             "type": "string",
             "description": "How container weight propagates to parent",
             "enum": [
-                "none",
-                "self_only",
-                "self_plus_contents"
+                "None",
+                "SelfOnly",
+                "SelfPlusContents"
             ]
         },
         "ContainerItem": {
@@ -1010,26 +1010,26 @@ public partial class InventoryController
             "type": "string",
             "description": "Type of entity that owns this container",
             "enum": [
-                "character",
-                "account",
-                "location",
-                "vehicle",
-                "guild",
-                "escrow",
-                "mail",
-                "other"
+                "Character",
+                "Account",
+                "Location",
+                "Vehicle",
+                "Guild",
+                "Escrow",
+                "Mail",
+                "Other"
             ]
         },
         "ContainerConstraintModel": {
             "type": "string",
             "description": "Container capacity constraint type",
             "enum": [
-                "slot_only",
-                "weight_only",
-                "slot_and_weight",
-                "grid",
-                "volumetric",
-                "unlimited"
+                "SlotOnly",
+                "WeightOnly",
+                "SlotAndWeight",
+                "Grid",
+                "Volumetric",
+                "Unlimited"
             ]
         }
     }
@@ -1250,35 +1250,35 @@ public partial class InventoryController
             "type": "string",
             "description": "Type of entity that owns this container",
             "enum": [
-                "character",
-                "account",
-                "location",
-                "vehicle",
-                "guild",
-                "escrow",
-                "mail",
-                "other"
+                "Character",
+                "Account",
+                "Location",
+                "Vehicle",
+                "Guild",
+                "Escrow",
+                "Mail",
+                "Other"
             ]
         },
         "ContainerConstraintModel": {
             "type": "string",
             "description": "Container capacity constraint type",
             "enum": [
-                "slot_only",
-                "weight_only",
-                "slot_and_weight",
-                "grid",
-                "volumetric",
-                "unlimited"
+                "SlotOnly",
+                "WeightOnly",
+                "SlotAndWeight",
+                "Grid",
+                "Volumetric",
+                "Unlimited"
             ]
         },
         "WeightContribution": {
             "type": "string",
             "description": "How container weight propagates to parent",
             "enum": [
-                "none",
-                "self_only",
-                "self_plus_contents"
+                "None",
+                "SelfOnly",
+                "SelfPlusContents"
             ]
         }
     }
@@ -1386,14 +1386,14 @@ public partial class InventoryController
             "type": "string",
             "description": "Type of entity that owns this container",
             "enum": [
-                "character",
-                "account",
-                "location",
-                "vehicle",
-                "guild",
-                "escrow",
-                "mail",
-                "other"
+                "Character",
+                "Account",
+                "Location",
+                "Vehicle",
+                "Guild",
+                "Escrow",
+                "Mail",
+                "Other"
             ]
         }
     }
@@ -1636,35 +1636,35 @@ public partial class InventoryController
             "type": "string",
             "description": "Type of entity that owns this container",
             "enum": [
-                "character",
-                "account",
-                "location",
-                "vehicle",
-                "guild",
-                "escrow",
-                "mail",
-                "other"
+                "Character",
+                "Account",
+                "Location",
+                "Vehicle",
+                "Guild",
+                "Escrow",
+                "Mail",
+                "Other"
             ]
         },
         "ContainerConstraintModel": {
             "type": "string",
             "description": "Container capacity constraint type",
             "enum": [
-                "slot_only",
-                "weight_only",
-                "slot_and_weight",
-                "grid",
-                "volumetric",
-                "unlimited"
+                "SlotOnly",
+                "WeightOnly",
+                "SlotAndWeight",
+                "Grid",
+                "Volumetric",
+                "Unlimited"
             ]
         },
         "WeightContribution": {
             "type": "string",
             "description": "How container weight propagates to parent",
             "enum": [
-                "none",
-                "self_only",
-                "self_plus_contents"
+                "None",
+                "SelfOnly",
+                "SelfPlusContents"
             ]
         }
     }
@@ -2035,35 +2035,35 @@ public partial class InventoryController
             "type": "string",
             "description": "Type of entity that owns this container",
             "enum": [
-                "character",
-                "account",
-                "location",
-                "vehicle",
-                "guild",
-                "escrow",
-                "mail",
-                "other"
+                "Character",
+                "Account",
+                "Location",
+                "Vehicle",
+                "Guild",
+                "Escrow",
+                "Mail",
+                "Other"
             ]
         },
         "ContainerConstraintModel": {
             "type": "string",
             "description": "Container capacity constraint type",
             "enum": [
-                "slot_only",
-                "weight_only",
-                "slot_and_weight",
-                "grid",
-                "volumetric",
-                "unlimited"
+                "SlotOnly",
+                "WeightOnly",
+                "SlotAndWeight",
+                "Grid",
+                "Volumetric",
+                "Unlimited"
             ]
         },
         "WeightContribution": {
             "type": "string",
             "description": "How container weight propagates to parent",
             "enum": [
-                "none",
-                "self_only",
-                "self_plus_contents"
+                "None",
+                "SelfOnly",
+                "SelfPlusContents"
             ]
         }
     }
@@ -2161,9 +2161,9 @@ public partial class InventoryController
             "type": "string",
             "description": "How to handle items when deleting a container",
             "enum": [
-                "destroy",
-                "transfer",
-                "error"
+                "Destroy",
+                "Transfer",
+                "Error"
             ]
         }
     }
@@ -3113,14 +3113,14 @@ public partial class InventoryController
             "type": "string",
             "description": "Type of entity that owns this container",
             "enum": [
-                "character",
-                "account",
-                "location",
-                "vehicle",
-                "guild",
-                "escrow",
-                "mail",
-                "other"
+                "Character",
+                "Account",
+                "Location",
+                "Vehicle",
+                "Guild",
+                "Escrow",
+                "Mail",
+                "Other"
             ]
         }
     }
@@ -3291,14 +3291,14 @@ public partial class InventoryController
             "type": "string",
             "description": "Type of entity that owns this container",
             "enum": [
-                "character",
-                "account",
-                "location",
-                "vehicle",
-                "guild",
-                "escrow",
-                "mail",
-                "other"
+                "Character",
+                "Account",
+                "Location",
+                "Vehicle",
+                "Guild",
+                "Escrow",
+                "Mail",
+                "Other"
             ]
         }
     }
@@ -3433,14 +3433,14 @@ public partial class InventoryController
             "type": "string",
             "description": "Type of entity that owns this container",
             "enum": [
-                "character",
-                "account",
-                "location",
-                "vehicle",
-                "guild",
-                "escrow",
-                "mail",
-                "other"
+                "Character",
+                "Account",
+                "Location",
+                "Vehicle",
+                "Guild",
+                "Escrow",
+                "Mail",
+                "Other"
             ]
         },
         "ItemRequirement": {
@@ -3634,14 +3634,14 @@ public partial class InventoryController
             "type": "string",
             "description": "Type of entity that owns this container",
             "enum": [
-                "character",
-                "account",
-                "location",
-                "vehicle",
-                "guild",
-                "escrow",
-                "mail",
-                "other"
+                "Character",
+                "Account",
+                "Location",
+                "Vehicle",
+                "Guild",
+                "Escrow",
+                "Mail",
+                "Other"
             ]
         }
     }

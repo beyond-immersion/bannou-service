@@ -48,7 +48,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listAccounts",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createAccount",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getAccount",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateAccount",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteAccount",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/by-email",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getAccountByEmail",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/auth-methods/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getAuthMethods",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/auth-methods/add",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "addAuthMethod",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/auth-methods/remove",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "removeAuthMethod",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/by-provider",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getAccountByProvider",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/profile/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateProfile",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/password/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updatePasswordHash",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/mfa/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateMfa",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/batch-get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "batchGetAccounts",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/count",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "countAccounts",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/roles/bulk-update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "bulkUpdateRoles",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/verification/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateVerificationStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class AccountPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/account/email/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateEmail",
             Permissions = new List<PermissionRequirement>
             {

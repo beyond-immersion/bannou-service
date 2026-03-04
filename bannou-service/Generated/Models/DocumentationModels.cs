@@ -38,34 +38,34 @@ using System = global::System;
 public enum DocumentCategory
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"getting-started")]
+    [System.Runtime.Serialization.EnumMember(Value = @"GettingStarted")]
     GettingStarted = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"api-reference")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ApiReference")]
     ApiReference = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"architecture")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Architecture")]
     Architecture = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"deployment")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Deployment")]
     Deployment = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"troubleshooting")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Troubleshooting")]
     Troubleshooting = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"tutorials")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Tutorials")]
     Tutorials = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"game-systems")]
+    [System.Runtime.Serialization.EnumMember(Value = @"GameSystems")]
     GameSystems = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"world-lore")]
+    [System.Runtime.Serialization.EnumMember(Value = @"WorldLore")]
     WorldLore = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"npc-ai")]
+    [System.Runtime.Serialization.EnumMember(Value = @"NpcAi")]
     NpcAi = 8,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"other")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Other")]
     Other = 9,
 
 }
@@ -107,13 +107,13 @@ public partial class CategoryCount
 public enum RelatedDepth
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    [System.Runtime.Serialization.EnumMember(Value = @"None")]
     None = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"direct")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Direct")]
     Direct = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"extended")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Extended")]
     Extended = 2,
 
 }
@@ -127,16 +127,16 @@ public enum RelatedDepth
 public enum SearchField
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"title")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Title")]
     Title = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"content")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Content")]
     Content = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"tags")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Tags")]
     Tags = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"summary")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Summary")]
     Summary = 3,
 
 }
@@ -150,13 +150,13 @@ public enum SearchField
 public enum ListSortField
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"created_at")]
+    [System.Runtime.Serialization.EnumMember(Value = @"CreatedAt")]
     CreatedAt = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"updated_at")]
+    [System.Runtime.Serialization.EnumMember(Value = @"UpdatedAt")]
     UpdatedAt = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"title")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Title")]
     Title = 2,
 
 }
@@ -170,16 +170,16 @@ public enum ListSortField
 public enum SuggestionSource
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"document_id")]
+    [System.Runtime.Serialization.EnumMember(Value = @"DocumentId")]
     DocumentId = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"slug")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Slug")]
     Slug = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"topic")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Topic")]
     Topic = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"category")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Category")]
     Category = 3,
 
 }
@@ -193,13 +193,13 @@ public enum SuggestionSource
 public enum ContentFormat
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"markdown")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Markdown")]
     Markdown = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"html")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Html")]
     Html = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    [System.Runtime.Serialization.EnumMember(Value = @"None")]
     None = 2,
 
 }
@@ -213,13 +213,13 @@ public enum ContentFormat
 public enum SearchSortBy
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"relevance")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Relevance")]
     Relevance = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"recency")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Recency")]
     Recency = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"alphabetical")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Alphabetical")]
     Alphabetical = 2,
 
 }
@@ -233,10 +233,10 @@ public enum SearchSortBy
 public enum TagMatchMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"all")]
+    [System.Runtime.Serialization.EnumMember(Value = @"All")]
     All = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"any")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Any")]
     Any = 1,
 
 }
@@ -250,10 +250,10 @@ public enum TagMatchMode
 public enum SortOrder
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"asc")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Asc")]
     Asc = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"desc")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Desc")]
     Desc = 1,
 
 }
@@ -267,13 +267,13 @@ public enum SortOrder
 public enum ConflictResolution
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"skip")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Skip")]
     Skip = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"update")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Update")]
     Update = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"fail")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Fail")]
     Fail = 2,
 
 }
@@ -1952,19 +1952,19 @@ public partial class DocumentResult
 public enum BindingStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"pending")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Pending")]
     Pending = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"syncing")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Syncing")]
     Syncing = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"synced")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Synced")]
     Synced = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"error")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Error")]
     Error = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"disabled")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Disabled")]
     Disabled = 4,
 
 }
@@ -1978,13 +1978,13 @@ public enum BindingStatus
 public enum SyncStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"success")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Success")]
     Success = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"partial")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Partial")]
     Partial = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Failed")]
     Failed = 2,
 
 }
@@ -1998,10 +1998,10 @@ public enum SyncStatus
 public enum SyncTrigger
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"manual")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Manual")]
     Manual = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"scheduled")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Scheduled")]
     Scheduled = 1,
 
 }

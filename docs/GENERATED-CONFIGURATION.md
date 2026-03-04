@@ -31,6 +31,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACHIEVEMENT_MOCK_PLATFORM_SYNC` | bool | `false` | Enable mock mode for platform sync (returns success without ... |
 | `ACHIEVEMENT_PLAYSTATION_CLIENT_ID` | string | **REQUIRED** | PlayStation Network client ID (optional - not implemented) |
 | `ACHIEVEMENT_PLAYSTATION_CLIENT_SECRET` | string | **REQUIRED** | PlayStation Network client secret (optional - not implemente... |
+| `ACHIEVEMENT_PROGRESS_MILESTONE_PERCENTS` | string[] | `[25, 50, 75]` | Progress percentage thresholds at which client milestone eve... |
 | `ACHIEVEMENT_PROGRESS_TTL_SECONDS` | int | `0` | TTL in seconds for progress data in Redis (0 = no expiry, pr... |
 | `ACHIEVEMENT_RARE_THRESHOLD_PERCENT` | double | `5.0` | Threshold percentage below which an achievement is considere... |
 | `ACHIEVEMENT_RARITY_CALCULATION_INTERVAL_MINUTES` | int | `60` | How often to recalculate achievement rarity percentages |
@@ -483,6 +484,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CURRENCY_IDEMPOTENCY_TTL_SECONDS` | int | `3600` | How long to cache idempotency keys in seconds |
 | `CURRENCY_INDEX_LOCK_MAX_RETRIES` | int | `3` | Maximum retry attempts for acquiring index update locks befo... |
 | `CURRENCY_INDEX_LOCK_TIMEOUT_SECONDS` | int | `15` | Timeout in seconds for index update distributed locks |
+| `CURRENCY_PROVIDER_CACHE_TTL_SECONDS` | int | `30` | TTL in seconds for currency variable provider in-memory cach... |
 | `CURRENCY_TRANSACTION_RETENTION_DAYS` | int | `365` | How many days to retain detailed transaction history |
 | `CURRENCY_WALLET_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for wallet-level distributed locks |
 
@@ -665,6 +667,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `INVENTORY_LIST_LOCK_TIMEOUT_SECONDS` | int | `15` | Timeout for owner/type index list modification locks (shorte... |
 | `INVENTORY_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout for container modification locks |
 | `INVENTORY_MAX_COUNT_QUERY_LIMIT` | int | `10000` | Maximum items to scan when counting items across containers |
+| `INVENTORY_PROVIDER_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for inventory variable provider in-memory cac... |
 | `INVENTORY_QUERY_PAGE_SIZE` | int | `200` | Number of items to fetch per query page for inventory operat... |
 
 ### Item
@@ -959,7 +962,7 @@ Final ... |
 | `QUEST_LOCK_EXPIRY_SECONDS` | int | `30` | Distributed lock expiry for quest mutations |
 | `QUEST_MAX_ACTIVE_QUESTS_PER_CHARACTER` | int | `25` | Maximum concurrent active quests per character |
 | `QUEST_MAX_CONCURRENCY_RETRIES` | int | `5` | ETag concurrency retry attempts |
-| `QUEST_PREREQUISITE_VALIDATION_MODE` | string | `CHECK_ALL` | Controls prerequisite validation behavior (FAIL_FAST stops o... |
+| `QUEST_PREREQUISITE_VALIDATION_MODE` | string | `CheckAll` | Controls prerequisite validation behavior (FailFast stops on... |
 | `QUEST_PROGRESS_CACHE_TTL_SECONDS` | int | `300` | TTL for objective progress cache |
 
 ### Realm
@@ -986,6 +989,7 @@ Final ... |
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `RELATIONSHIP_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed lock acquisition on index... |
+| `RELATIONSHIP_PROVIDER_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for relationship variable provider in-memory ... |
 | `RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH` | int | `20` | Maximum depth for hierarchy traversal to prevent infinite lo... |
 | `RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK` | int | `100` | Maximum number of individual migration error details to trac... |
 
@@ -997,8 +1001,8 @@ Final ... |
 | `RESOURCE_CLEANUP_LOCK_EXPIRY_SECONDS` | int | `300` | Distributed lock timeout during cleanup execution |
 | `RESOURCE_COMPRESSION_CALLBACK_TIMEOUT_SECONDS` | int | `60` | Timeout for each compression callback execution |
 | `RESOURCE_COMPRESSION_LOCK_EXPIRY_SECONDS` | int | `600` | Distributed lock timeout during compression execution |
-| `RESOURCE_DEFAULT_CLEANUP_POLICY` | string | `BEST_EFFORT` | Default cleanup policy when not specified per-resource-type |
-| `RESOURCE_DEFAULT_COMPRESSION_POLICY` | string | `ALL_REQUIRED` | Default compression policy when not specified per-request |
+| `RESOURCE_DEFAULT_CLEANUP_POLICY` | string | `BestEffort` | Default cleanup policy when not specified per-resource-type |
+| `RESOURCE_DEFAULT_COMPRESSION_POLICY` | string | `AllRequired` | Default compression policy when not specified per-request |
 | `RESOURCE_DEFAULT_GRACE_PERIOD_SECONDS` | int | `604800` | Default grace period in seconds before cleanup eligible (7 d... |
 | `RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS` | int | `3600` | Default TTL for snapshots when not specified in request (1 h... |
 | `RESOURCE_SNAPSHOT_MAX_TTL_SECONDS` | int | `86400` | Maximum allowed TTL for snapshots (24 hours default, max 7 d... |
@@ -1019,8 +1023,8 @@ Final ... |
 | `SAVE_LOAD_CONFLICT_DETECTION_ENABLED` | bool | `true` | Enable device-based conflict detection for cloud saves. Requ... |
 | `SAVE_LOAD_CONFLICT_DETECTION_WINDOW_MINUTES` | int | `5` | Time window for considering saves as potentially conflicting... |
 | `SAVE_LOAD_DEFAULT_COMPRESSION_BY_CATEGORY` | string | **REQUIRED** | Default compression per category as comma-separated KEY=VALU... |
-| `SAVE_LOAD_DEFAULT_COMPRESSION_TYPE` | string | `GZIP` | Default compression algorithm |
-| `SAVE_LOAD_DEFAULT_DELTA_ALGORITHM` | string | `JSON_PATCH` | Default algorithm for delta computation |
+| `SAVE_LOAD_DEFAULT_COMPRESSION_TYPE` | string | `Gzip` | Default compression algorithm |
+| `SAVE_LOAD_DEFAULT_DELTA_ALGORITHM` | string | `JsonPatch` | Default algorithm for delta computation |
 | `SAVE_LOAD_DEFAULT_MAX_VERSIONS_AUTO_SAVE` | int | `5` | Default max versions for AUTO_SAVE category |
 | `SAVE_LOAD_DEFAULT_MAX_VERSIONS_CHECKPOINT` | int | `20` | Default max versions for CHECKPOINT category |
 | `SAVE_LOAD_DEFAULT_MAX_VERSIONS_MANUAL_SAVE` | int | `10` | Default max versions for MANUAL_SAVE category |
@@ -1187,7 +1191,7 @@ Applied when... |
 | `TELEMETRY_DEPLOYMENT_ENVIRONMENT` | string | `development` | Deployment environment (development, staging, production) |
 | `TELEMETRY_METRICS_ENABLED` | bool | `true` | Enable metrics export via Prometheus scraping endpoint (/met... |
 | `TELEMETRY_OTLP_ENDPOINT` | string | `http://localhost:4317` | OTLP exporter endpoint (gRPC or HTTP) |
-| `TELEMETRY_OTLP_PROTOCOL` | string | `grpc` | OTLP transport protocol |
+| `TELEMETRY_OTLP_PROTOCOL` | string | `Grpc` | OTLP transport protocol |
 | `TELEMETRY_SERVICE_NAME` | string | **REQUIRED** | Service name for telemetry (defaults to effective app-id if ... |
 | `TELEMETRY_SERVICE_NAMESPACE` | string | `bannou` | Service namespace for telemetry grouping |
 | `TELEMETRY_TRACING_ENABLED` | bool | `true` | Enable distributed tracing export |
@@ -1264,9 +1268,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 968
+- **Total properties**: 972
 - **Required (no default)**: 59
-- **Optional (has default)**: 909
+- **Optional (has default)**: 913
 
 ## Environment Variable Naming Convention
 

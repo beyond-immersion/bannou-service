@@ -86,11 +86,11 @@ public partial class ConnectController
             "type": "string",
             "description": "HTTP method for endpoint invocation",
             "enum": [
-                "GET",
-                "POST",
-                "PUT",
-                "DELETE",
-                "PATCH"
+                "Get",
+                "Post",
+                "Put",
+                "Delete",
+                "Patch"
             ]
         }
     }
@@ -327,11 +327,11 @@ public partial class ConnectController
             "type": "string",
             "description": "HTTP method for endpoint invocation",
             "enum": [
-                "GET",
-                "POST",
-                "PUT",
-                "DELETE",
-                "PATCH"
+                "Get",
+                "Post",
+                "Put",
+                "Delete",
+                "Patch"
             ]
         },
         "ClientShortcut": {

@@ -320,13 +320,13 @@ public partial class TopicInfo
 public enum ExchangeType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"fanout")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Fanout")]
     Fanout = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"direct")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Direct")]
     Direct = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"topic")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Topic")]
     Topic = 2,
 
 }
@@ -340,10 +340,10 @@ public enum ExchangeType
 public enum DeadLetterOverflowBehavior
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"drop-head")]
+    [System.Runtime.Serialization.EnumMember(Value = @"DropHead")]
     DropHead = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"reject-publish")]
+    [System.Runtime.Serialization.EnumMember(Value = @"RejectPublish")]
     RejectPublish = 1,
 
 }

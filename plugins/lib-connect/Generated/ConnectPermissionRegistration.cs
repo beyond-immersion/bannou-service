@@ -48,7 +48,7 @@ public static class ConnectPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/client-capabilities",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getClientCapabilities",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class ConnectPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/connect/get-account-sessions",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getAccountSessions",
             Permissions = new List<PermissionRequirement>
             {

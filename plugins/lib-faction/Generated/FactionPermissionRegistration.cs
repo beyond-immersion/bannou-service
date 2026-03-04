@@ -48,7 +48,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createFaction",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getFaction",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/get-by-code",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getFactionByCode",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listFactions",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateFaction",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/deprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deprecateFaction",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/undeprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "undeprecateFaction",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteFaction",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/seed",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "seedFactions",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/designate-realm-baseline",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "designateRealmBaseline",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/get-realm-baseline",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getRealmBaseline",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/member/add",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "addMember",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/member/remove",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "removeMember",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/member/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listMembers",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/member/list-by-character",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listMembershipsByCharacter",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/member/update-role",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateMemberRole",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/member/check",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "checkMembership",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/territory/claim",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "claimTerritory",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/territory/release",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "releaseTerritory",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/territory/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listTerritoryClaims",
             Permissions = new List<PermissionRequirement>
             {
@@ -348,7 +348,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/territory/get-controlling",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getControllingFaction",
             Permissions = new List<PermissionRequirement>
             {
@@ -363,7 +363,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/norm/define",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "defineNorm",
             Permissions = new List<PermissionRequirement>
             {
@@ -378,7 +378,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/norm/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateNorm",
             Permissions = new List<PermissionRequirement>
             {
@@ -393,7 +393,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/norm/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteNorm",
             Permissions = new List<PermissionRequirement>
             {
@@ -408,7 +408,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/norm/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listNorms",
             Permissions = new List<PermissionRequirement>
             {
@@ -423,7 +423,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/cleanup-by-character",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cleanupByCharacter",
             Permissions = new List<PermissionRequirement>
             {
@@ -438,7 +438,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/cleanup-by-realm",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cleanupByRealm",
             Permissions = new List<PermissionRequirement>
             {
@@ -453,7 +453,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/cleanup-by-location",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cleanupByLocation",
             Permissions = new List<PermissionRequirement>
             {
@@ -468,7 +468,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/get-compress-data",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getCompressData",
             Permissions = new List<PermissionRequirement>
             {
@@ -483,7 +483,7 @@ public static class FactionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/faction/restore-from-archive",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "restoreFromArchive",
             Permissions = new List<PermissionRequirement>
             {

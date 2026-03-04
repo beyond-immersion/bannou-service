@@ -48,7 +48,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/mode/register",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "registerMode",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/mode/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getMode",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/mode/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listModes",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/mode/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateMode",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/mode/deprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deprecateMode",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/mode/undeprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "undeprecateMode",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/mode/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteMode",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/mode/check-availability",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "checkModeAvailability",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/connection/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createConnection",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/connection/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getConnection",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/connection/query",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryConnections",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/connection/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateConnection",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/connection/update-status",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateConnectionStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/connection/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteConnection",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/connection/bulk-seed",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "bulkSeedConnections",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/journey/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createJourney",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/journey/depart",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "departJourney",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/journey/resume",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "resumeJourney",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/journey/advance",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "advanceJourney",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/journey/advance-batch",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "advanceBatchJourneys",
             Permissions = new List<PermissionRequirement>
             {
@@ -348,7 +348,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/journey/arrive",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "arriveJourney",
             Permissions = new List<PermissionRequirement>
             {
@@ -363,7 +363,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/journey/interrupt",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "interruptJourney",
             Permissions = new List<PermissionRequirement>
             {
@@ -378,7 +378,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/journey/abandon",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "abandonJourney",
             Permissions = new List<PermissionRequirement>
             {
@@ -393,7 +393,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/journey/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getJourney",
             Permissions = new List<PermissionRequirement>
             {
@@ -408,7 +408,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/journey/query-by-connection",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryJourneysByConnection",
             Permissions = new List<PermissionRequirement>
             {
@@ -423,7 +423,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/journey/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listJourneys",
             Permissions = new List<PermissionRequirement>
             {
@@ -438,7 +438,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/journey/query-archive",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryJourneyArchive",
             Permissions = new List<PermissionRequirement>
             {
@@ -453,7 +453,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/route/calculate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "calculateRoute",
             Permissions = new List<PermissionRequirement>
             {
@@ -468,7 +468,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/discovery/reveal",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "revealDiscovery",
             Permissions = new List<PermissionRequirement>
             {
@@ -483,7 +483,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/discovery/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listDiscoveries",
             Permissions = new List<PermissionRequirement>
             {
@@ -498,7 +498,7 @@ public static class TransitPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/transit/discovery/check",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "checkDiscoveries",
             Permissions = new List<PermissionRequirement>
             {

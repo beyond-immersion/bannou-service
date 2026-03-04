@@ -59,7 +59,7 @@ paths:
         : \"Exchange name for routing\"\n                },\n                \"routingKey\": {\n                    \"type\"\
         : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Routing key for direct/topic
         exchanges (required for topic exchanges, ignored for fanout)\"\n                },\n                \"exchangeType\"\
-        : {\n                    \"$ref\": \"#/$defs/ExchangeType\",\n                    \"default\": \"topic\",\n      \
+        : {\n                    \"$ref\": \"#/$defs/ExchangeType\",\n                    \"default\": \"Topic\",\n      \
         \              \"nullable\": true,\n                    \"description\": \"Exchange type - determines how messages
         are routed (topic routes by routing key pattern)\"\n                },\n                \"persistent\": {\n      \
         \              \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
@@ -75,8 +75,8 @@ paths:
         \                    \"nullable\": true,\n                    \"description\": \"Caller-provided custom headers included
         with the message. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n     \
         \       }\n        },\n        \"ExchangeType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"RabbitMQ exchange type determining how messages are routed\",\n            \"enum\": [\n                \"fanout\"\
-        ,\n                \"direct\",\n                \"topic\"\n            ]\n        }\n    }\n}"
+        : \"RabbitMQ exchange type determining how messages are routed\",\n            \"enum\": [\n                \"Fanout\"\
+        ,\n                \"Direct\",\n                \"Topic\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PublishEventResponse\"\
         ,\n    \"$defs\": {\n        \"PublishEventResponse\": {\n            \"description\": \"Response confirming event
         publication with message identifier\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
@@ -256,7 +256,7 @@ components:
           description: Routing key for direct/topic exchanges (required for topic exchanges, ignored for fanout)
         exchangeType:
           $ref: '#/components/schemas/ExchangeType'
-          default: topic
+          default: Topic
           nullable: true
           description: Exchange type - determines how messages are routed (topic routes by routing key pattern)
         persistent:
@@ -414,13 +414,13 @@ components:
       type: string
       description: RabbitMQ exchange type determining how messages are routed
       enum:
-      - fanout
-      - direct
-      - topic
+      - Fanout
+      - Direct
+      - Topic
     DeadLetterOverflowBehavior:
       type: string
       description: Behavior when DLX queue exceeds max length (drop-head drops oldest, reject-publish blocks new 
         messages)
       enum:
-      - drop-head
-      - reject-publish
+      - DropHead
+      - RejectPublish

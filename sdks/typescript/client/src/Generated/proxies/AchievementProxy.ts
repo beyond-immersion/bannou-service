@@ -79,20 +79,21 @@ export class AchievementProxy {
   }
 
   /**
-   * Delete achievement definition
+   * Deprecate an achievement definition
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
-   * @returns Promise that completes when the event is sent.
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
    */
-  async achievementDeleteAchievementDefinitionEventAsync(
-    request: Schemas['DeleteAchievementDefinitionRequest'],
-    channel: number = 0
-  ): Promise<void> {
-    return this.client.sendEventAsync<Schemas['DeleteAchievementDefinitionRequest']>(
-      '/achievement/definition/delete',
-      request,
-      channel
-    );
+  async achievementDeprecateAchievementDefinitionAsync(
+    request: Schemas['DeprecateAchievementDefinitionRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['AchievementDefinitionResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['DeprecateAchievementDefinitionRequest'],
+      Schemas['AchievementDefinitionResponse']
+    >('/achievement/definition/deprecate', request, channel, timeout);
   }
 
   /**

@@ -506,7 +506,7 @@ public partial class RealmService : IRealmService
                     {
                         ResourceType = "realm",
                         ResourceId = body.RealmId,
-                        CleanupPolicy = CleanupPolicy.ALL_REQUIRED
+                        CleanupPolicy = CleanupPolicy.AllRequired
                     }, cancellationToken);
 
                 if (!cleanupResult.Success)

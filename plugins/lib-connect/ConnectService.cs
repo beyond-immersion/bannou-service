@@ -243,11 +243,11 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
         // Create HTTP request
         var httpMethod = body.Method switch
         {
-            HttpMethodType.GET => HttpMethod.Get,
-            HttpMethodType.POST => HttpMethod.Post,
-            HttpMethodType.PUT => HttpMethod.Put,
-            HttpMethodType.DELETE => HttpMethod.Delete,
-            HttpMethodType.PATCH => HttpMethod.Patch,
+            HttpMethodType.Get => HttpMethod.Get,
+            HttpMethodType.Post => HttpMethod.Post,
+            HttpMethodType.Put => HttpMethod.Put,
+            HttpMethodType.Delete => HttpMethod.Delete,
+            HttpMethodType.Patch => HttpMethod.Patch,
             _ => HttpMethod.Get
         };
 
@@ -258,8 +258,8 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
             // Route through Bannou service invocation
             HttpResponseMessage httpResponse;
 
-            if (body.Method == HttpMethodType.GET ||
-                body.Method == HttpMethodType.DELETE)
+            if (body.Method == HttpMethodType.Get ||
+                body.Method == HttpMethodType.Delete)
             {
                 // For GET/DELETE, no body
                 var request = _meshClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
@@ -509,7 +509,7 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
             Guid = api.ServiceGuid,
             Service = api.ServiceName,
             Endpoint = api.Path,
-            Method = HttpMethodType.POST
+            Method = HttpMethodType.Post
         }).ToList();
 
         // Build shortcuts using helper, removing expired/invalid ones

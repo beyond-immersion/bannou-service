@@ -1185,9 +1185,9 @@ paths:
         \          },\n                \"available\": {\n                    \"type\": \"boolean\",\n                    \"\
         description\": \"Whether the connection is open during this season\"\n                }\n            }\n        },\n\
         \        \"ConnectionStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Operational status
-        of a transit connection\",\n            \"enum\": [\n                \"open\",\n                \"closed\",\n    \
-        \            \"dangerous\",\n                \"blocked\",\n                \"seasonal_closed\"\n            ]\n  \
-        \      }\n    }\n}"
+        of a transit connection\",\n            \"enum\": [\n                \"Open\",\n                \"Closed\",\n    \
+        \            \"Dangerous\",\n                \"Blocked\",\n                \"SeasonalClosed\"\n            ]\n   \
+        \     }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a connection between two locations\",\n    \"description\": \"Create
         a directed or bidirectional connection between two locations.\\nfromRealmId, toRealmId, and crossRealm are derived
         from the locations\\nvia the Location service. Season keys in seasonalAvailability are\\nvalidated against the realm's
@@ -1298,9 +1298,9 @@ paths:
         \          },\n                \"available\": {\n                    \"type\": \"boolean\",\n                    \"\
         description\": \"Whether the connection is open during this season\"\n                }\n            }\n        },\n\
         \        \"ConnectionStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Operational status
-        of a transit connection\",\n            \"enum\": [\n                \"open\",\n                \"closed\",\n    \
-        \            \"dangerous\",\n                \"blocked\",\n                \"seasonal_closed\"\n            ]\n  \
-        \      }\n    }\n}"
+        of a transit connection\",\n            \"enum\": [\n                \"Open\",\n                \"Closed\",\n    \
+        \            \"Dangerous\",\n                \"Blocked\",\n                \"SeasonalClosed\"\n            ]\n   \
+        \     }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a connection by ID or code\",\n    \"description\": \"Retrieve a connection
         by its unique ID or code. One of connectionId or code must be provided.\",\n    \"tags\": [\n        \"Connection\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getConnection\"\n}"
@@ -1360,8 +1360,8 @@ paths:
         : 100,\n                    \"default\": 20,\n                    \"description\": \"Number of results per page\"\n\
         \                }\n            }\n        },\n        \"ConnectionStatus\": {\n            \"type\": \"string\",\n\
         \            \"description\": \"Operational status of a transit connection\",\n            \"enum\": [\n         \
-        \       \"open\",\n                \"closed\",\n                \"dangerous\",\n                \"blocked\",\n   \
-        \             \"seasonal_closed\"\n            ]\n        }\n    }\n}"
+        \       \"Open\",\n                \"Closed\",\n                \"Dangerous\",\n                \"Blocked\",\n   \
+        \             \"SeasonalClosed\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryConnectionsResponse\"\
         ,\n    \"$defs\": {\n        \"QueryConnectionsResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing a paginated list of connections\",\n            \"required\"\
@@ -1438,8 +1438,8 @@ paths:
         \  \"type\": \"boolean\",\n                    \"description\": \"Whether the connection is open during this season\"\
         \n                }\n            }\n        },\n        \"ConnectionStatus\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Operational status of a transit connection\",\n            \"enum\": [\n       \
-        \         \"open\",\n                \"closed\",\n                \"dangerous\",\n                \"blocked\",\n \
-        \               \"seasonal_closed\"\n            ]\n        }\n    }\n}"
+        \         \"Open\",\n                \"Closed\",\n                \"Dangerous\",\n                \"Blocked\",\n \
+        \               \"SeasonalClosed\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query connections by location, terrain, mode, or status\",\n    \"description\"\
         : \"Query connections with optional filters. All filters are optional;\\nan empty request returns all connections
         paginated.\\n\",\n    \"tags\": [\n        \"Connection\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -1581,9 +1581,9 @@ paths:
         \          },\n                \"available\": {\n                    \"type\": \"boolean\",\n                    \"\
         description\": \"Whether the connection is open during this season\"\n                }\n            }\n        },\n\
         \        \"ConnectionStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Operational status
-        of a transit connection\",\n            \"enum\": [\n                \"open\",\n                \"closed\",\n    \
-        \            \"dangerous\",\n                \"blocked\",\n                \"seasonal_closed\"\n            ]\n  \
-        \      }\n    }\n}"
+        of a transit connection\",\n            \"enum\": [\n                \"Open\",\n                \"Closed\",\n    \
+        \            \"Dangerous\",\n                \"Blocked\",\n                \"SeasonalClosed\"\n            ]\n   \
+        \     }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a connection's properties\",\n    \"description\": \"Update properties
         of an existing connection. Does not update status \\u2014\\nuse update-status for operational status changes. Only
         provided fields\\nare updated; null fields are left unchanged.\\n\",\n    \"tags\": [\n        \"Connection\"\n  \
@@ -1640,12 +1640,12 @@ paths:
         \                    \"default\": false,\n                    \"description\": \"When true, currentStatus is ignored
         and the status is set unconditionally. Use for administrative overrides.\"\n                }\n            }\n   \
         \     },\n        \"ConnectionStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Operational
-        status of a transit connection\",\n            \"enum\": [\n                \"open\",\n                \"closed\"\
-        ,\n                \"dangerous\",\n                \"blocked\",\n                \"seasonal_closed\"\n           \
-        \ ]\n        },\n        \"SettableConnectionStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        status of a transit connection\",\n            \"enum\": [\n                \"Open\",\n                \"Closed\"\
+        ,\n                \"Dangerous\",\n                \"Blocked\",\n                \"SeasonalClosed\"\n            ]\n\
+        \        },\n        \"SettableConnectionStatus\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is managed
-        by the Seasonal Connection Worker)\",\n            \"enum\": [\n                \"open\",\n                \"closed\"\
-        ,\n                \"dangerous\",\n                \"blocked\"\n            ]\n        }\n    }\n}"
+        by the Seasonal Connection Worker)\",\n            \"enum\": [\n                \"Open\",\n                \"Closed\"\
+        ,\n                \"Dangerous\",\n                \"Blocked\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ConnectionResponse\"\
         ,\n    \"$defs\": {\n        \"ConnectionResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing a single transit connection\",\n            \"required\"\
@@ -1719,9 +1719,9 @@ paths:
         \          },\n                \"available\": {\n                    \"type\": \"boolean\",\n                    \"\
         description\": \"Whether the connection is open during this season\"\n                }\n            }\n        },\n\
         \        \"ConnectionStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Operational status
-        of a transit connection\",\n            \"enum\": [\n                \"open\",\n                \"closed\",\n    \
-        \            \"dangerous\",\n                \"blocked\",\n                \"seasonal_closed\"\n            ]\n  \
-        \      }\n    }\n}"
+        of a transit connection\",\n            \"enum\": [\n                \"Open\",\n                \"Closed\",\n    \
+        \            \"Dangerous\",\n                \"Blocked\",\n                \"SeasonalClosed\"\n            ]\n   \
+        \     }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Transition a connection's operational status with optimistic concurrency\"\
         ,\n    \"description\": \"Transition a connection's operational status using optimistic concurrency.\\nCaller specifies
         currentStatus (what they believe the status is) and\\nnewStatus. If the actual status does not match currentStatus,
@@ -2009,11 +2009,11 @@ paths:
         : true,\n                    \"description\": \"Game-time when this leg was completed. Null if pending or in_progress.\"\
         \n                }\n            }\n        },\n        \"JourneyLegStatus\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Lifecycle status of a journey leg\",\n            \"enum\": [\n                \"\
-        pending\",\n                \"in_progress\",\n                \"completed\",\n                \"skipped\"\n      \
-        \      ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"preparing\",\n          \
-        \      \"in_transit\",\n                \"at_waypoint\",\n                \"arrived\",\n                \"interrupted\"\
-        ,\n                \"abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
+        Pending\",\n                \"InProgress\",\n                \"Completed\",\n                \"Skipped\"\n       \
+        \     ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"Preparing\",\n          \
+        \      \"InTransit\",\n                \"AtWaypoint\",\n                \"Arrived\",\n                \"Interrupted\"\
+        ,\n                \"Abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
         : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A recorded interruption
         during a journey\",\n            \"required\": [\n                \"legIndex\",\n                \"gameTime\",\n \
         \               \"reason\",\n                \"durationGameHours\",\n                \"resolved\"\n            ],\n\
@@ -2159,11 +2159,11 @@ paths:
         : true,\n                    \"description\": \"Game-time when this leg was completed. Null if pending or in_progress.\"\
         \n                }\n            }\n        },\n        \"JourneyLegStatus\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Lifecycle status of a journey leg\",\n            \"enum\": [\n                \"\
-        pending\",\n                \"in_progress\",\n                \"completed\",\n                \"skipped\"\n      \
-        \      ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"preparing\",\n          \
-        \      \"in_transit\",\n                \"at_waypoint\",\n                \"arrived\",\n                \"interrupted\"\
-        ,\n                \"abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
+        Pending\",\n                \"InProgress\",\n                \"Completed\",\n                \"Skipped\"\n       \
+        \     ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"Preparing\",\n          \
+        \      \"InTransit\",\n                \"AtWaypoint\",\n                \"Arrived\",\n                \"Interrupted\"\
+        ,\n                \"Abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
         : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A recorded interruption
         during a journey\",\n            \"required\": [\n                \"legIndex\",\n                \"gameTime\",\n \
         \               \"reason\",\n                \"durationGameHours\",\n                \"resolved\"\n            ],\n\
@@ -2308,11 +2308,11 @@ paths:
         : true,\n                    \"description\": \"Game-time when this leg was completed. Null if pending or in_progress.\"\
         \n                }\n            }\n        },\n        \"JourneyLegStatus\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Lifecycle status of a journey leg\",\n            \"enum\": [\n                \"\
-        pending\",\n                \"in_progress\",\n                \"completed\",\n                \"skipped\"\n      \
-        \      ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"preparing\",\n          \
-        \      \"in_transit\",\n                \"at_waypoint\",\n                \"arrived\",\n                \"interrupted\"\
-        ,\n                \"abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
+        Pending\",\n                \"InProgress\",\n                \"Completed\",\n                \"Skipped\"\n       \
+        \     ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"Preparing\",\n          \
+        \      \"InTransit\",\n                \"AtWaypoint\",\n                \"Arrived\",\n                \"Interrupted\"\
+        ,\n                \"Abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
         : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A recorded interruption
         during a journey\",\n            \"required\": [\n                \"legIndex\",\n                \"gameTime\",\n \
         \               \"reason\",\n                \"durationGameHours\",\n                \"resolved\"\n            ],\n\
@@ -2474,11 +2474,11 @@ paths:
         : true,\n                    \"description\": \"Game-time when this leg was completed. Null if pending or in_progress.\"\
         \n                }\n            }\n        },\n        \"JourneyLegStatus\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Lifecycle status of a journey leg\",\n            \"enum\": [\n                \"\
-        pending\",\n                \"in_progress\",\n                \"completed\",\n                \"skipped\"\n      \
-        \      ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"preparing\",\n          \
-        \      \"in_transit\",\n                \"at_waypoint\",\n                \"arrived\",\n                \"interrupted\"\
-        ,\n                \"abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
+        Pending\",\n                \"InProgress\",\n                \"Completed\",\n                \"Skipped\"\n       \
+        \     ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"Preparing\",\n          \
+        \      \"InTransit\",\n                \"AtWaypoint\",\n                \"Arrived\",\n                \"Interrupted\"\
+        ,\n                \"Abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
         : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A recorded interruption
         during a journey\",\n            \"required\": [\n                \"legIndex\",\n                \"gameTime\",\n \
         \               \"reason\",\n                \"durationGameHours\",\n                \"resolved\"\n            ],\n\
@@ -2653,11 +2653,11 @@ paths:
         : true,\n                    \"description\": \"Game-time when this leg was completed. Null if pending or in_progress.\"\
         \n                }\n            }\n        },\n        \"JourneyLegStatus\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Lifecycle status of a journey leg\",\n            \"enum\": [\n                \"\
-        pending\",\n                \"in_progress\",\n                \"completed\",\n                \"skipped\"\n      \
-        \      ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"preparing\",\n          \
-        \      \"in_transit\",\n                \"at_waypoint\",\n                \"arrived\",\n                \"interrupted\"\
-        ,\n                \"abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
+        Pending\",\n                \"InProgress\",\n                \"Completed\",\n                \"Skipped\"\n       \
+        \     ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"Preparing\",\n          \
+        \      \"InTransit\",\n                \"AtWaypoint\",\n                \"Arrived\",\n                \"Interrupted\"\
+        ,\n                \"Abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
         : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A recorded interruption
         during a journey\",\n            \"required\": [\n                \"legIndex\",\n                \"gameTime\",\n \
         \               \"reason\",\n                \"durationGameHours\",\n                \"resolved\"\n            ],\n\
@@ -2810,11 +2810,11 @@ paths:
         : true,\n                    \"description\": \"Game-time when this leg was completed. Null if pending or in_progress.\"\
         \n                }\n            }\n        },\n        \"JourneyLegStatus\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Lifecycle status of a journey leg\",\n            \"enum\": [\n                \"\
-        pending\",\n                \"in_progress\",\n                \"completed\",\n                \"skipped\"\n      \
-        \      ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"preparing\",\n          \
-        \      \"in_transit\",\n                \"at_waypoint\",\n                \"arrived\",\n                \"interrupted\"\
-        ,\n                \"abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
+        Pending\",\n                \"InProgress\",\n                \"Completed\",\n                \"Skipped\"\n       \
+        \     ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"Preparing\",\n          \
+        \      \"InTransit\",\n                \"AtWaypoint\",\n                \"Arrived\",\n                \"Interrupted\"\
+        ,\n                \"Abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
         : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A recorded interruption
         during a journey\",\n            \"required\": [\n                \"legIndex\",\n                \"gameTime\",\n \
         \               \"reason\",\n                \"durationGameHours\",\n                \"resolved\"\n            ],\n\
@@ -2966,11 +2966,11 @@ paths:
         : true,\n                    \"description\": \"Game-time when this leg was completed. Null if pending or in_progress.\"\
         \n                }\n            }\n        },\n        \"JourneyLegStatus\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Lifecycle status of a journey leg\",\n            \"enum\": [\n                \"\
-        pending\",\n                \"in_progress\",\n                \"completed\",\n                \"skipped\"\n      \
-        \      ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"preparing\",\n          \
-        \      \"in_transit\",\n                \"at_waypoint\",\n                \"arrived\",\n                \"interrupted\"\
-        ,\n                \"abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
+        Pending\",\n                \"InProgress\",\n                \"Completed\",\n                \"Skipped\"\n       \
+        \     ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"Preparing\",\n          \
+        \      \"InTransit\",\n                \"AtWaypoint\",\n                \"Arrived\",\n                \"Interrupted\"\
+        ,\n                \"Abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
         : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A recorded interruption
         during a journey\",\n            \"required\": [\n                \"legIndex\",\n                \"gameTime\",\n \
         \               \"reason\",\n                \"durationGameHours\",\n                \"resolved\"\n            ],\n\
@@ -3116,11 +3116,11 @@ paths:
         : true,\n                    \"description\": \"Game-time when this leg was completed. Null if pending or in_progress.\"\
         \n                }\n            }\n        },\n        \"JourneyLegStatus\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Lifecycle status of a journey leg\",\n            \"enum\": [\n                \"\
-        pending\",\n                \"in_progress\",\n                \"completed\",\n                \"skipped\"\n      \
-        \      ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"preparing\",\n          \
-        \      \"in_transit\",\n                \"at_waypoint\",\n                \"arrived\",\n                \"interrupted\"\
-        ,\n                \"abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
+        Pending\",\n                \"InProgress\",\n                \"Completed\",\n                \"Skipped\"\n       \
+        \     ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"Preparing\",\n          \
+        \      \"InTransit\",\n                \"AtWaypoint\",\n                \"Arrived\",\n                \"Interrupted\"\
+        ,\n                \"Abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
         : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A recorded interruption
         during a journey\",\n            \"required\": [\n                \"legIndex\",\n                \"gameTime\",\n \
         \               \"reason\",\n                \"durationGameHours\",\n                \"resolved\"\n            ],\n\
@@ -3259,11 +3259,11 @@ paths:
         : true,\n                    \"description\": \"Game-time when this leg was completed. Null if pending or in_progress.\"\
         \n                }\n            }\n        },\n        \"JourneyLegStatus\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Lifecycle status of a journey leg\",\n            \"enum\": [\n                \"\
-        pending\",\n                \"in_progress\",\n                \"completed\",\n                \"skipped\"\n      \
-        \      ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"preparing\",\n          \
-        \      \"in_transit\",\n                \"at_waypoint\",\n                \"arrived\",\n                \"interrupted\"\
-        ,\n                \"abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
+        Pending\",\n                \"InProgress\",\n                \"Completed\",\n                \"Skipped\"\n       \
+        \     ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"Preparing\",\n          \
+        \      \"InTransit\",\n                \"AtWaypoint\",\n                \"Arrived\",\n                \"Interrupted\"\
+        ,\n                \"Abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
         : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A recorded interruption
         during a journey\",\n            \"required\": [\n                \"legIndex\",\n                \"gameTime\",\n \
         \               \"reason\",\n                \"durationGameHours\",\n                \"resolved\"\n            ],\n\
@@ -3324,9 +3324,9 @@ paths:
         \                   \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n\
         \                    \"description\": \"Number of results per page\"\n                }\n            }\n        },\n\
         \        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Lifecycle status
-        of a transit journey\",\n            \"enum\": [\n                \"preparing\",\n                \"in_transit\",\n\
-        \                \"at_waypoint\",\n                \"arrived\",\n                \"interrupted\",\n              \
-        \  \"abandoned\"\n            ]\n        }\n    }\n}"
+        of a transit journey\",\n            \"enum\": [\n                \"Preparing\",\n                \"InTransit\",\n\
+        \                \"AtWaypoint\",\n                \"Arrived\",\n                \"Interrupted\",\n               \
+        \ \"Abandoned\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListJourneysResponse\"\
         ,\n    \"$defs\": {\n        \"ListJourneysResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing a paginated list of journeys\",\n            \"required\"\
@@ -3419,11 +3419,11 @@ paths:
         : true,\n                    \"description\": \"Game-time when this leg was completed. Null if pending or in_progress.\"\
         \n                }\n            }\n        },\n        \"JourneyLegStatus\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Lifecycle status of a journey leg\",\n            \"enum\": [\n                \"\
-        pending\",\n                \"in_progress\",\n                \"completed\",\n                \"skipped\"\n      \
-        \      ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"preparing\",\n          \
-        \      \"in_transit\",\n                \"at_waypoint\",\n                \"arrived\",\n                \"interrupted\"\
-        ,\n                \"abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
+        Pending\",\n                \"InProgress\",\n                \"Completed\",\n                \"Skipped\"\n       \
+        \     ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"Preparing\",\n          \
+        \      \"InTransit\",\n                \"AtWaypoint\",\n                \"Arrived\",\n                \"Interrupted\"\
+        ,\n                \"Abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
         : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A recorded interruption
         during a journey\",\n            \"required\": [\n                \"legIndex\",\n                \"gameTime\",\n \
         \               \"reason\",\n                \"durationGameHours\",\n                \"resolved\"\n            ],\n\
@@ -3490,9 +3490,9 @@ paths:
         \                   \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n\
         \                    \"description\": \"Number of results per page\"\n                }\n            }\n        },\n\
         \        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Lifecycle status
-        of a transit journey\",\n            \"enum\": [\n                \"preparing\",\n                \"in_transit\",\n\
-        \                \"at_waypoint\",\n                \"arrived\",\n                \"interrupted\",\n              \
-        \  \"abandoned\"\n            ]\n        }\n    }\n}"
+        of a transit journey\",\n            \"enum\": [\n                \"Preparing\",\n                \"InTransit\",\n\
+        \                \"AtWaypoint\",\n                \"Arrived\",\n                \"Interrupted\",\n               \
+        \ \"Abandoned\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListJourneysResponse\"\
         ,\n    \"$defs\": {\n        \"ListJourneysResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing a paginated list of journeys\",\n            \"required\"\
@@ -3585,11 +3585,11 @@ paths:
         : true,\n                    \"description\": \"Game-time when this leg was completed. Null if pending or in_progress.\"\
         \n                }\n            }\n        },\n        \"JourneyLegStatus\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Lifecycle status of a journey leg\",\n            \"enum\": [\n                \"\
-        pending\",\n                \"in_progress\",\n                \"completed\",\n                \"skipped\"\n      \
-        \      ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"preparing\",\n          \
-        \      \"in_transit\",\n                \"at_waypoint\",\n                \"arrived\",\n                \"interrupted\"\
-        ,\n                \"abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
+        Pending\",\n                \"InProgress\",\n                \"Completed\",\n                \"Skipped\"\n       \
+        \     ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"Preparing\",\n          \
+        \      \"InTransit\",\n                \"AtWaypoint\",\n                \"Arrived\",\n                \"Interrupted\"\
+        ,\n                \"Abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
         : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A recorded interruption
         during a journey\",\n            \"required\": [\n                \"legIndex\",\n                \"gameTime\",\n \
         \               \"reason\",\n                \"durationGameHours\",\n                \"resolved\"\n            ],\n\
@@ -3665,9 +3665,9 @@ paths:
         \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\"\
         : 20,\n                    \"description\": \"Number of results per page\"\n                }\n            }\n   \
         \     },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Lifecycle
-        status of a transit journey\",\n            \"enum\": [\n                \"preparing\",\n                \"in_transit\"\
-        ,\n                \"at_waypoint\",\n                \"arrived\",\n                \"interrupted\",\n            \
-        \    \"abandoned\"\n            ]\n        }\n    }\n}"
+        status of a transit journey\",\n            \"enum\": [\n                \"Preparing\",\n                \"InTransit\"\
+        ,\n                \"AtWaypoint\",\n                \"Arrived\",\n                \"Interrupted\",\n             \
+        \   \"Abandoned\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListJourneysResponse\"\
         ,\n    \"$defs\": {\n        \"ListJourneysResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing a paginated list of journeys\",\n            \"required\"\
@@ -3760,11 +3760,11 @@ paths:
         : true,\n                    \"description\": \"Game-time when this leg was completed. Null if pending or in_progress.\"\
         \n                }\n            }\n        },\n        \"JourneyLegStatus\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Lifecycle status of a journey leg\",\n            \"enum\": [\n                \"\
-        pending\",\n                \"in_progress\",\n                \"completed\",\n                \"skipped\"\n      \
-        \      ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"preparing\",\n          \
-        \      \"in_transit\",\n                \"at_waypoint\",\n                \"arrived\",\n                \"interrupted\"\
-        ,\n                \"abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
+        Pending\",\n                \"InProgress\",\n                \"Completed\",\n                \"Skipped\"\n       \
+        \     ]\n        },\n        \"JourneyStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a transit journey\",\n            \"enum\": [\n                \"Preparing\",\n          \
+        \      \"InTransit\",\n                \"AtWaypoint\",\n                \"Arrived\",\n                \"Interrupted\"\
+        ,\n                \"Abandoned\"\n            ]\n        },\n        \"TransitInterruption\": {\n            \"type\"\
         : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A recorded interruption
         during a journey\",\n            \"required\": [\n                \"legIndex\",\n                \"gameTime\",\n \
         \               \"reason\",\n                \"durationGameHours\",\n                \"resolved\"\n            ],\n\
@@ -3840,8 +3840,8 @@ paths:
         includeSeasonalClosed\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
         \                    \"description\": \"Whether to include currently seasonally closed routes\"\n                }\n\
         \            }\n        },\n        \"RouteSortBy\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Sort criteria for route calculation results\",\n            \"enum\": [\n                \"fastest\",\n      \
-        \          \"safest\",\n                \"shortest\"\n            ]\n        }\n    }\n}"
+        : \"Sort criteria for route calculation results\",\n            \"enum\": [\n                \"Fastest\",\n      \
+        \          \"Safest\",\n                \"Shortest\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CalculateRouteResponse\"\
         ,\n    \"$defs\": {\n        \"CalculateRouteResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing calculated route options\",\n            \"required\"\
@@ -4137,45 +4137,45 @@ components:
       type: string
       description: Operational status of a transit connection
       enum:
-      - open
-      - closed
-      - dangerous
-      - blocked
-      - seasonal_closed
+      - Open
+      - Closed
+      - Dangerous
+      - Blocked
+      - SeasonalClosed
     SettableConnectionStatus:
       type: string
       description: Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is
         managed by the Seasonal Connection Worker)
       enum:
-      - open
-      - closed
-      - dangerous
-      - blocked
+      - Open
+      - Closed
+      - Dangerous
+      - Blocked
     JourneyStatus:
       type: string
       description: Lifecycle status of a transit journey
       enum:
-      - preparing
-      - in_transit
-      - at_waypoint
-      - arrived
-      - interrupted
-      - abandoned
+      - Preparing
+      - InTransit
+      - AtWaypoint
+      - Arrived
+      - Interrupted
+      - Abandoned
     JourneyLegStatus:
       type: string
       description: Lifecycle status of a journey leg
       enum:
-      - pending
-      - in_progress
-      - completed
-      - skipped
+      - Pending
+      - InProgress
+      - Completed
+      - Skipped
     RouteSortBy:
       type: string
       description: Sort criteria for route calculation results
       enum:
-      - fastest
-      - safest
-      - shortest
+      - Fastest
+      - Safest
+      - Shortest
     TerrainSpeedModifier:
       type: object
       additionalProperties: false

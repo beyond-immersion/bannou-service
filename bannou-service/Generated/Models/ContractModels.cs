@@ -38,37 +38,37 @@ using System = global::System;
 public enum ContractStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"draft")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Draft")]
     Draft = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"proposed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Proposed")]
     Proposed = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"pending")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Pending")]
     Pending = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"active")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Active")]
     Active = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"fulfilled")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Fulfilled")]
     Fulfilled = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"expired")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Expired")]
     Expired = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"terminated")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Terminated")]
     Terminated = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"breached")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Breached")]
     Breached = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"suspended")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Suspended")]
     Suspended = 8,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"disputed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Disputed")]
     Disputed = 9,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"declined")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Declined")]
     Declined = 10,
 
 }
@@ -82,19 +82,19 @@ public enum ContractStatus
 public enum MilestoneStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"pending")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Pending")]
     Pending = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"active")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Active")]
     Active = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"completed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Completed")]
     Completed = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Failed")]
     Failed = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"skipped")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Skipped")]
     Skipped = 4,
 
 }
@@ -108,19 +108,19 @@ public enum MilestoneStatus
 public enum BreachType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"term_violation")]
+    [System.Runtime.Serialization.EnumMember(Value = @"TermViolation")]
     TermViolation = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"milestone_missed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"MilestoneMissed")]
     MilestoneMissed = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"milestone_deadline")]
+    [System.Runtime.Serialization.EnumMember(Value = @"MilestoneDeadline")]
     MilestoneDeadline = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"unauthorized_action")]
+    [System.Runtime.Serialization.EnumMember(Value = @"UnauthorizedAction")]
     UnauthorizedAction = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"non_payment")]
+    [System.Runtime.Serialization.EnumMember(Value = @"NonPayment")]
     NonPayment = 4,
 
 }
@@ -134,13 +134,13 @@ public enum BreachType
 public enum MilestoneDeadlineBehavior
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"skip")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Skip")]
     Skip = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"warn")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Warn")]
     Warn = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"breach")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Breach")]
     Breach = 2,
 
 }
@@ -154,22 +154,22 @@ public enum MilestoneDeadlineBehavior
 public enum BreachStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"detected")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Detected")]
     Detected = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cure_period")]
+    [System.Runtime.Serialization.EnumMember(Value = @"CurePeriod")]
     CurePeriod = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cured")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Cured")]
     Cured = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"consequences_applied")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ConsequencesApplied")]
     ConsequencesApplied = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"disputed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Disputed")]
     Disputed = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"forgiven")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Forgiven")]
     Forgiven = 5,
 
 }
@@ -183,16 +183,16 @@ public enum BreachStatus
 public enum ConsentStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"pending")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Pending")]
     Pending = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"consented")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Consented")]
     Consented = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"declined")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Declined")]
     Declined = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"implicit")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Implicit")]
     Implicit = 3,
 
 }
@@ -206,16 +206,16 @@ public enum ConsentStatus
 public enum EnforcementMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"advisory")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Advisory")]
     Advisory = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"event_only")]
+    [System.Runtime.Serialization.EnumMember(Value = @"EventOnly")]
     EventOnly = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"consequence_based")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ConsequenceBased")]
     ConsequenceBased = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"community")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Community")]
     Community = 3,
 
 }
@@ -229,16 +229,16 @@ public enum EnforcementMode
 public enum TerminationPolicy
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"mutual_consent")]
+    [System.Runtime.Serialization.EnumMember(Value = @"MutualConsent")]
     MutualConsent = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"unilateral_with_notice")]
+    [System.Runtime.Serialization.EnumMember(Value = @"UnilateralWithNotice")]
     UnilateralWithNotice = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"unilateral_immediate")]
+    [System.Runtime.Serialization.EnumMember(Value = @"UnilateralImmediate")]
     UnilateralImmediate = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"non_terminable")]
+    [System.Runtime.Serialization.EnumMember(Value = @"NonTerminable")]
     NonTerminable = 3,
 
 }
@@ -252,13 +252,13 @@ public enum TerminationPolicy
 public enum PaymentSchedule
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"one_time")]
+    [System.Runtime.Serialization.EnumMember(Value = @"OneTime")]
     OneTime = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"recurring")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Recurring")]
     Recurring = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"milestone_based")]
+    [System.Runtime.Serialization.EnumMember(Value = @"MilestoneBased")]
     MilestoneBased = 2,
 
 }
@@ -272,13 +272,13 @@ public enum PaymentSchedule
 public enum ConstraintType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"exclusivity")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Exclusivity")]
     Exclusivity = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"non_compete")]
+    [System.Runtime.Serialization.EnumMember(Value = @"NonCompete")]
     NonCompete = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"time_commitment")]
+    [System.Runtime.Serialization.EnumMember(Value = @"TimeCommitment")]
     TimeCommitment = 2,
 
 }
@@ -292,10 +292,10 @@ public enum ConstraintType
 public enum MetadataType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"instance_data")]
+    [System.Runtime.Serialization.EnumMember(Value = @"InstanceData")]
     InstanceData = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"runtime_state")]
+    [System.Runtime.Serialization.EnumMember(Value = @"RuntimeState")]
     RuntimeState = 1,
 
 }
@@ -309,10 +309,10 @@ public enum MetadataType
 public enum IndexLockFailureMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"warn")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Warn")]
     Warn = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"fail")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Fail")]
     Fail = 1,
 
 }
@@ -326,10 +326,10 @@ public enum IndexLockFailureMode
 public enum TermsMergeMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"shallow")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Shallow")]
     Shallow = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"deep")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Deep")]
     Deep = 1,
 
 }
@@ -343,13 +343,13 @@ public enum TermsMergeMode
 public enum PreboundApiExecutionMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"sync")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Sync")]
     Sync = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"async")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Async")]
     Async = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"fire_and_forget")]
+    [System.Runtime.Serialization.EnumMember(Value = @"FireAndForget")]
     FireAndForget = 2,
 
 }
@@ -363,10 +363,10 @@ public enum PreboundApiExecutionMode
 public enum ValidationOutcome
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"permanent_failure")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PermanentFailure")]
     PermanentFailure = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"transient_failure")]
+    [System.Runtime.Serialization.EnumMember(Value = @"TransientFailure")]
     TransientFailure = 1,
 
 }
@@ -380,10 +380,10 @@ public enum ValidationOutcome
 public enum TimeCommitmentType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"exclusive")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Exclusive")]
     Exclusive = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"partial")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Partial")]
     Partial = 1,
 
 }
@@ -2455,28 +2455,28 @@ public partial class ValidationCondition
 public enum ValidationConditionType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"statusCodeIn")]
+    [System.Runtime.Serialization.EnumMember(Value = @"StatusCodeIn")]
     StatusCodeIn = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"jsonPathEquals")]
+    [System.Runtime.Serialization.EnumMember(Value = @"JsonPathEquals")]
     JsonPathEquals = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"jsonPathNotEquals")]
+    [System.Runtime.Serialization.EnumMember(Value = @"JsonPathNotEquals")]
     JsonPathNotEquals = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"jsonPathExists")]
+    [System.Runtime.Serialization.EnumMember(Value = @"JsonPathExists")]
     JsonPathExists = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"jsonPathNotExists")]
+    [System.Runtime.Serialization.EnumMember(Value = @"JsonPathNotExists")]
     JsonPathNotExists = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"jsonPathGreaterThan")]
+    [System.Runtime.Serialization.EnumMember(Value = @"JsonPathGreaterThan")]
     JsonPathGreaterThan = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"jsonPathLessThan")]
+    [System.Runtime.Serialization.EnumMember(Value = @"JsonPathLessThan")]
     JsonPathLessThan = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"jsonPathContains")]
+    [System.Runtime.Serialization.EnumMember(Value = @"JsonPathContains")]
     JsonPathContains = 7,
 
 }
@@ -2490,22 +2490,22 @@ public enum ValidationConditionType
 public enum ComparisonOperator
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"eq")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Eq")]
     Eq = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ne")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Ne")]
     Ne = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"gt")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Gt")]
     Gt = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"gte")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Gte")]
     Gte = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"lt")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Lt")]
     Lt = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"lte")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Lte")]
     Lte = 5,
 
 }
@@ -2759,13 +2759,13 @@ public partial class TransferContractPartyResponse
 public enum ClauseCategory
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"validation")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Validation")]
     Validation = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"execution")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Execution")]
     Execution = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"both")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Both")]
     Both = 2,
 
 }

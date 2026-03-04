@@ -214,16 +214,16 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         }
@@ -338,16 +338,16 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         }
@@ -468,11 +468,11 @@ public partial class DocumentationController
         "RelatedDepth": {
             "type": "string",
             "enum": [
-                "none",
-                "direct",
-                "extended"
+                "None",
+                "Direct",
+                "Extended"
             ],
-            "default": "direct",
+            "default": "Direct",
             "description": "How deep to traverse related document links:\n- none: No related documents included\n- direct: Only directly linked documents (depth 1)\n- extended: Related documents + their related documents (depth 2)\n"
         }
     }
@@ -599,16 +599,16 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         },
@@ -663,9 +663,9 @@ public partial class DocumentationController
         "ContentFormat": {
             "type": "string",
             "enum": [
-                "markdown",
-                "html",
-                "none"
+                "Markdown",
+                "Html",
+                "None"
             ],
             "description": "Format of the content field in a document response"
         }
@@ -795,37 +795,37 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         },
         "SearchField": {
             "type": "string",
             "enum": [
-                "title",
-                "content",
-                "tags",
-                "summary"
+                "Title",
+                "Content",
+                "Tags",
+                "Summary"
             ],
             "description": "Fields that can be searched within documents"
         },
         "SearchSortBy": {
             "type": "string",
             "enum": [
-                "relevance",
-                "recency",
-                "alphabetical"
+                "Relevance",
+                "Recency",
+                "Alphabetical"
             ],
-            "default": "relevance",
+            "default": "Relevance",
             "description": "How to sort search results"
         }
     }
@@ -921,16 +921,16 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         }
@@ -1085,45 +1085,45 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         },
         "TagMatchMode": {
             "type": "string",
             "enum": [
-                "all",
-                "any"
+                "All",
+                "Any"
             ],
-            "default": "all",
+            "default": "All",
             "description": "Whether documents must match all specified tags or any tag"
         },
         "ListSortField": {
             "type": "string",
             "enum": [
-                "created_at",
-                "updated_at",
-                "title"
+                "CreatedAt",
+                "UpdatedAt",
+                "Title"
             ],
-            "default": "updated_at",
+            "default": "UpdatedAt",
             "description": "Fields available for sorting document lists"
         },
         "SortOrder": {
             "type": "string",
             "enum": [
-                "asc",
-                "desc"
+                "Asc",
+                "Desc"
             ],
-            "default": "desc",
+            "default": "Desc",
             "description": "Sort order direction"
         }
     }
@@ -1211,16 +1211,16 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         }
@@ -1336,10 +1336,10 @@ public partial class DocumentationController
         "SuggestionSource": {
             "type": "string",
             "enum": [
-                "document_id",
-                "slug",
-                "topic",
-                "category"
+                "DocumentId",
+                "Slug",
+                "Topic",
+                "Category"
             ],
             "description": "Source type for generating related topic suggestions"
         }
@@ -1421,16 +1421,16 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         }
@@ -1576,16 +1576,16 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         }
@@ -1767,16 +1767,16 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         }
@@ -2169,16 +2169,16 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         }
@@ -2534,27 +2534,27 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         },
         "ConflictResolution": {
             "type": "string",
             "enum": [
-                "skip",
-                "update",
-                "fail"
+                "Skip",
+                "Update",
+                "Fail"
             ],
-            "default": "skip",
+            "default": "Skip",
             "description": "How to handle documents with existing slugs during import"
         }
     }
@@ -2796,16 +2796,16 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         }
@@ -3075,16 +3075,16 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         }
@@ -3240,16 +3240,16 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         }
@@ -3306,11 +3306,11 @@ public partial class DocumentationController
         "BindingStatus": {
             "type": "string",
             "enum": [
-                "pending",
-                "syncing",
-                "synced",
-                "error",
-                "disabled"
+                "Pending",
+                "Syncing",
+                "Synced",
+                "Error",
+                "Disabled"
             ],
             "description": "Status of a repository binding"
         }
@@ -3576,9 +3576,9 @@ public partial class DocumentationController
         "SyncStatus": {
             "type": "string",
             "enum": [
-                "success",
-                "partial",
-                "failed"
+                "Success",
+                "Partial",
+                "Failed"
             ],
             "description": "Result status of a sync operation"
         }
@@ -3750,11 +3750,11 @@ public partial class DocumentationController
         "BindingStatus": {
             "type": "string",
             "enum": [
-                "pending",
-                "syncing",
-                "synced",
-                "error",
-                "disabled"
+                "Pending",
+                "Syncing",
+                "Synced",
+                "Error",
+                "Disabled"
             ],
             "description": "Status of a repository binding"
         },
@@ -3805,17 +3805,17 @@ public partial class DocumentationController
         "SyncStatus": {
             "type": "string",
             "enum": [
-                "success",
-                "partial",
-                "failed"
+                "Success",
+                "Partial",
+                "Failed"
             ],
             "description": "Result status of a sync operation"
         },
         "SyncTrigger": {
             "type": "string",
             "enum": [
-                "manual",
-                "scheduled"
+                "Manual",
+                "Scheduled"
             ],
             "description": "What triggered the sync operation"
         }
@@ -3911,11 +3911,11 @@ public partial class DocumentationController
         "BindingStatus": {
             "type": "string",
             "enum": [
-                "pending",
-                "syncing",
-                "synced",
-                "error",
-                "disabled"
+                "Pending",
+                "Syncing",
+                "Synced",
+                "Error",
+                "Disabled"
             ],
             "description": "Status of a repository binding"
         }
@@ -4011,11 +4011,11 @@ public partial class DocumentationController
         "BindingStatus": {
             "type": "string",
             "enum": [
-                "pending",
-                "syncing",
-                "synced",
-                "error",
-                "disabled"
+                "Pending",
+                "Syncing",
+                "Synced",
+                "Error",
+                "Disabled"
             ],
             "description": "Status of a repository binding"
         }
@@ -4150,16 +4150,16 @@ public partial class DocumentationController
         "DocumentCategory": {
             "type": "string",
             "enum": [
-                "getting-started",
-                "api-reference",
-                "architecture",
-                "deployment",
-                "troubleshooting",
-                "tutorials",
-                "game-systems",
-                "world-lore",
-                "npc-ai",
-                "other"
+                "GettingStarted",
+                "ApiReference",
+                "Architecture",
+                "Deployment",
+                "Troubleshooting",
+                "Tutorials",
+                "GameSystems",
+                "WorldLore",
+                "NpcAi",
+                "Other"
             ],
             "description": "Fixed categories for type-safe filtering"
         }
@@ -4247,11 +4247,11 @@ public partial class DocumentationController
         "BindingStatus": {
             "type": "string",
             "enum": [
-                "pending",
-                "syncing",
-                "synced",
-                "error",
-                "disabled"
+                "Pending",
+                "Syncing",
+                "Synced",
+                "Error",
+                "Disabled"
             ],
             "description": "Status of a repository binding"
         }

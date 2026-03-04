@@ -71,39 +71,39 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         },
         "NonAuthorityHandlingMode": {
             "type": "string",
             "description": "How to handle publish attempts from non-authority sources",
             "enum": [
-                "reject_and_alert",
-                "accept_and_alert",
-                "reject_silent"
+                "RejectAndAlert",
+                "AcceptAndAlert",
+                "RejectSilent"
             ],
-            "default": "reject_and_alert"
+            "default": "RejectAndAlert"
         },
         "AuthorityTakeoverMode": {
             "type": "string",
             "description": "Policy for handling authority takeover when creating a channel that\nalready has expired authority. Controls what happens to existing data.\n",
             "enum": [
-                "preserve_and_diff",
-                "reset",
-                "require_consume"
+                "PreserveAndDiff",
+                "Reset",
+                "RequireConsume"
             ],
-            "default": "preserve_and_diff"
+            "default": "PreserveAndDiff"
         },
         "NonAuthorityAlertConfig": {
             "type": "object",
@@ -258,18 +258,18 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         }
     }
@@ -644,10 +644,10 @@ public partial class MappingController
             "type": "string",
             "description": "Whether an update is incremental or a full snapshot",
             "enum": [
-                "delta",
-                "snapshot"
+                "Delta",
+                "Snapshot"
             ],
-            "default": "delta"
+            "default": "Delta"
         },
         "MapPayload": {
             "type": "object",
@@ -854,9 +854,9 @@ public partial class MappingController
             "type": "string",
             "description": "Type of change to a map object",
             "enum": [
-                "created",
-                "updated",
-                "deleted"
+                "Created",
+                "Updated",
+                "Deleted"
             ]
         },
         "Position3D": {
@@ -1041,18 +1041,18 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         },
         "Bounds": {
@@ -1203,18 +1203,18 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         },
         "Position3D": {
@@ -1388,18 +1388,18 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         }
     }
@@ -1500,18 +1500,18 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         },
         "Position3D": {
@@ -1704,18 +1704,18 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         }
     }
@@ -1815,18 +1815,18 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         },
         "Position3D": {
@@ -2109,18 +2109,18 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         },
         "Position3D": {
@@ -2307,15 +2307,15 @@ public partial class MappingController
             "type": "string",
             "description": "Well-known affordance types with predefined scoring logic.\nUse 'custom' for novel affordance definitions.\n",
             "enum": [
-                "ambush",
-                "shelter",
-                "vista",
-                "choke_point",
-                "gathering_spot",
-                "dramatic_reveal",
-                "hidden_path",
-                "defensible_position",
-                "custom"
+                "Ambush",
+                "Shelter",
+                "Vista",
+                "ChokePoint",
+                "GatheringSpot",
+                "DramaticReveal",
+                "HiddenPath",
+                "DefensiblePosition",
+                "Custom"
             ]
         },
         "CustomAffordance": {
@@ -2442,23 +2442,23 @@ public partial class MappingController
             "type": "string",
             "description": "Size classification affecting cover requirements and passage width",
             "enum": [
-                "tiny",
-                "small",
-                "medium",
-                "large",
-                "huge"
+                "Tiny",
+                "Small",
+                "Medium",
+                "Large",
+                "Huge"
             ],
-            "default": "medium"
+            "default": "Medium"
         },
         "AffordanceFreshness": {
             "type": "string",
             "description": "Controls caching behavior for affordance queries",
             "enum": [
-                "fresh",
-                "cached",
-                "aggressive_cache"
+                "Fresh",
+                "Cached",
+                "AggressiveCache"
             ],
-            "default": "cached"
+            "default": "Cached"
         }
     }
 }
@@ -2690,18 +2690,18 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         }
     }
@@ -2839,18 +2839,18 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         }
     }
@@ -2967,18 +2967,18 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         }
     }
@@ -3116,11 +3116,11 @@ public partial class MappingController
                 "storageMode": {
                     "type": "string",
                     "enum": [
-                        "durable",
-                        "cached",
-                        "ephemeral"
+                        "Durable",
+                        "Cached",
+                        "Ephemeral"
                     ],
-                    "default": "cached",
+                    "default": "Cached",
                     "description": "How this layer's data should be stored"
                 },
                 "ttlSeconds": {
@@ -3144,29 +3144,29 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         },
         "NonAuthorityHandlingMode": {
             "type": "string",
             "description": "How to handle publish attempts from non-authority sources",
             "enum": [
-                "reject_and_alert",
-                "accept_and_alert",
-                "reject_silent"
+                "RejectAndAlert",
+                "AcceptAndAlert",
+                "RejectSilent"
             ],
-            "default": "reject_and_alert"
+            "default": "RejectAndAlert"
         },
         "Bounds": {
             "type": "object",
@@ -3290,11 +3290,11 @@ public partial class MappingController
                 "storageMode": {
                     "type": "string",
                     "enum": [
-                        "durable",
-                        "cached",
-                        "ephemeral"
+                        "Durable",
+                        "Cached",
+                        "Ephemeral"
                     ],
-                    "default": "cached",
+                    "default": "Cached",
                     "description": "How this layer's data should be stored"
                 },
                 "ttlSeconds": {
@@ -3318,29 +3318,29 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         },
         "NonAuthorityHandlingMode": {
             "type": "string",
             "description": "How to handle publish attempts from non-authority sources",
             "enum": [
-                "reject_and_alert",
-                "accept_and_alert",
-                "reject_silent"
+                "RejectAndAlert",
+                "AcceptAndAlert",
+                "RejectSilent"
             ],
-            "default": "reject_and_alert"
+            "default": "RejectAndAlert"
         },
         "Bounds": {
             "type": "object",
@@ -3543,11 +3543,11 @@ public partial class MappingController
                 "storageMode": {
                     "type": "string",
                     "enum": [
-                        "durable",
-                        "cached",
-                        "ephemeral"
+                        "Durable",
+                        "Cached",
+                        "Ephemeral"
                     ],
-                    "default": "cached",
+                    "default": "Cached",
                     "description": "How this layer's data should be stored"
                 },
                 "ttlSeconds": {
@@ -3571,29 +3571,29 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         },
         "NonAuthorityHandlingMode": {
             "type": "string",
             "description": "How to handle publish attempts from non-authority sources",
             "enum": [
-                "reject_and_alert",
-                "accept_and_alert",
-                "reject_silent"
+                "RejectAndAlert",
+                "AcceptAndAlert",
+                "RejectSilent"
             ],
-            "default": "reject_and_alert"
+            "default": "RejectAndAlert"
         },
         "Bounds": {
             "type": "object",
@@ -3828,11 +3828,11 @@ public partial class MappingController
                 "storageMode": {
                     "type": "string",
                     "enum": [
-                        "durable",
-                        "cached",
-                        "ephemeral"
+                        "Durable",
+                        "Cached",
+                        "Ephemeral"
                     ],
-                    "default": "cached",
+                    "default": "Cached",
                     "description": "How this layer's data should be stored"
                 },
                 "ttlSeconds": {
@@ -3856,29 +3856,29 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         },
         "NonAuthorityHandlingMode": {
             "type": "string",
             "description": "How to handle publish attempts from non-authority sources",
             "enum": [
-                "reject_and_alert",
-                "accept_and_alert",
-                "reject_silent"
+                "RejectAndAlert",
+                "AcceptAndAlert",
+                "RejectSilent"
             ],
-            "default": "reject_and_alert"
+            "default": "RejectAndAlert"
         },
         "Bounds": {
             "type": "object",
@@ -4046,11 +4046,11 @@ public partial class MappingController
                 "storageMode": {
                     "type": "string",
                     "enum": [
-                        "durable",
-                        "cached",
-                        "ephemeral"
+                        "Durable",
+                        "Cached",
+                        "Ephemeral"
                     ],
-                    "default": "cached",
+                    "default": "Cached",
                     "description": "How this layer's data should be stored"
                 },
                 "ttlSeconds": {
@@ -4074,29 +4074,29 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         },
         "NonAuthorityHandlingMode": {
             "type": "string",
             "description": "How to handle publish attempts from non-authority sources",
             "enum": [
-                "reject_and_alert",
-                "accept_and_alert",
-                "reject_silent"
+                "RejectAndAlert",
+                "AcceptAndAlert",
+                "RejectSilent"
             ],
-            "default": "reject_and_alert"
+            "default": "RejectAndAlert"
         },
         "Bounds": {
             "type": "object",
@@ -4220,11 +4220,11 @@ public partial class MappingController
                 "storageMode": {
                     "type": "string",
                     "enum": [
-                        "durable",
-                        "cached",
-                        "ephemeral"
+                        "Durable",
+                        "Cached",
+                        "Ephemeral"
                     ],
-                    "default": "cached",
+                    "default": "Cached",
                     "description": "How this layer's data should be stored"
                 },
                 "ttlSeconds": {
@@ -4248,29 +4248,29 @@ public partial class MappingController
             "type": "string",
             "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
-                "terrain",
-                "static_geometry",
-                "navigation",
-                "resources",
-                "spawn_points",
-                "points_of_interest",
-                "dynamic_objects",
-                "hazards",
-                "weather_effects",
-                "ownership",
-                "combat_effects",
-                "visual_effects"
+                "Terrain",
+                "StaticGeometry",
+                "Navigation",
+                "Resources",
+                "SpawnPoints",
+                "PointsOfInterest",
+                "DynamicObjects",
+                "Hazards",
+                "WeatherEffects",
+                "Ownership",
+                "CombatEffects",
+                "VisualEffects"
             ]
         },
         "NonAuthorityHandlingMode": {
             "type": "string",
             "description": "How to handle publish attempts from non-authority sources",
             "enum": [
-                "reject_and_alert",
-                "accept_and_alert",
-                "reject_silent"
+                "RejectAndAlert",
+                "AcceptAndAlert",
+                "RejectSilent"
             ],
-            "default": "reject_and_alert"
+            "default": "RejectAndAlert"
         },
         "Bounds": {
             "type": "object",

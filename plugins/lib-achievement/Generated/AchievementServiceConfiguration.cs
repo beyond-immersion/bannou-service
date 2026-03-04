@@ -135,6 +135,12 @@ public class AchievementServiceConfiguration : BaseServiceConfiguration
     public int ProgressTtlSeconds { get; set; } = 0;
 
     /// <summary>
+    /// Progress percentage thresholds at which client milestone events are published (comma-separated in env var)
+    /// Environment variable: ACHIEVEMENT_PROGRESS_MILESTONE_PERCENTS
+    /// </summary>
+    public string[] ProgressMilestonePercents { get; set; } = ["25", "50", "75"];
+
+    /// <summary>
     /// Delay in seconds before first rarity calculation (allows services to start)
     /// Environment variable: ACHIEVEMENT_RARITY_CALCULATION_STARTUP_DELAY_SECONDS
     /// </summary>

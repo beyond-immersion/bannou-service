@@ -92,11 +92,11 @@ paths:
         \           },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                \
         \    \"format\": \"uuid\",\n                    \"description\": \"Game service this quest belongs to\"\n        \
         \        }\n            }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n         \
-        \   \"enum\": [\n                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n             \
-        \   \"DAILY\",\n                \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n          \
+        \   \"enum\": [\n                \"Main\",\n                \"Side\",\n                \"Bounty\",\n             \
+        \   \"Daily\",\n                \"Weekly\",\n                \"Event\",\n                \"Tutorial\"\n          \
         \  ],\n            \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"\
-        EASY\",\n                \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Trivial\",\n                \"\
+        Easy\",\n                \"Normal\",\n                \"Hard\",\n                \"Heroic\",\n                \"Legendary\"\
         \n            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Definition of a single quest objective with
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
@@ -125,12 +125,12 @@ paths:
         \      },\n                \"optional\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
         : false,\n                    \"description\": \"Whether objective is optional for completion\"\n                }\n\
         \            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n                \"TRAVEL\"\
-        ,\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n                \"ESCORT\"\
-        ,\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\": \"Type of
+        : [\n                \"Kill\",\n                \"Collect\",\n                \"Deliver\",\n                \"Travel\"\
+        ,\n                \"Discover\",\n                \"Talk\",\n                \"Craft\",\n                \"Escort\"\
+        ,\n                \"Defend\",\n                \"Custom\"\n            ],\n            \"description\": \"Type of
         objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\",\n    \
-        \            \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When a hidden
+        type\": \"string\",\n            \"enum\": [\n                \"Always\",\n                \"OnProgress\",\n     \
+        \           \"OnComplete\",\n                \"Never\"\n            ],\n            \"description\": \"When a hidden
         objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n            \"type\"\
         : \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\",\n   \
         \         \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n\
@@ -150,8 +150,8 @@ paths:
         type\"\n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n       \
         \             \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
         amount for CURRENCY_AMOUNT type\"\n                }\n            }\n        },\n        \"PrerequisiteType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"QUEST_COMPLETED\",\n              \
-        \  \"CHARACTER_LEVEL\",\n                \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"QuestCompleted\",\n               \
+        \ \"CharacterLevel\",\n                \"Reputation\",\n                \"ItemOwned\",\n                \"CurrencyAmount\"\
         \n            ],\n            \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n         \
@@ -167,8 +167,8 @@ paths:
         \ \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\": {\n       \
         \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        },\n        \"RewardType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"CURRENCY\",\n                \"ITEM\"\
-        ,\n                \"EXPERIENCE\",\n                \"REPUTATION\"\n            ],\n            \"description\": \"\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"Currency\",\n                \"Item\"\
+        ,\n                \"Experience\",\n                \"Reputation\"\n            ],\n            \"description\": \"\
         Type of reward granted on quest completion\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QuestDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"QuestDefinitionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -218,11 +218,11 @@ paths:
         \               },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n            \
         \        \"format\": \"uuid\",\n                    \"description\": \"Game service ID\"\n                }\n    \
         \        }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
-        \                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n                \"DAILY\",\n \
-        \               \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n            ],\n          \
+        \                \"Main\",\n                \"Side\",\n                \"Bounty\",\n                \"Daily\",\n \
+        \               \"Weekly\",\n                \"Event\",\n                \"Tutorial\"\n            ],\n          \
         \  \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\": {\n         \
-        \   \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"EASY\",\n    \
-        \            \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\n\
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"Trivial\",\n                \"Easy\",\n    \
+        \            \"Normal\",\n                \"Hard\",\n                \"Heroic\",\n                \"Legendary\"\n\
         \            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Definition of a single quest objective with
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
@@ -251,12 +251,12 @@ paths:
         \      },\n                \"optional\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
         : false,\n                    \"description\": \"Whether objective is optional for completion\"\n                }\n\
         \            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n                \"TRAVEL\"\
-        ,\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n                \"ESCORT\"\
-        ,\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\": \"Type of
+        : [\n                \"Kill\",\n                \"Collect\",\n                \"Deliver\",\n                \"Travel\"\
+        ,\n                \"Discover\",\n                \"Talk\",\n                \"Craft\",\n                \"Escort\"\
+        ,\n                \"Defend\",\n                \"Custom\"\n            ],\n            \"description\": \"Type of
         objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\",\n    \
-        \            \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When a hidden
+        type\": \"string\",\n            \"enum\": [\n                \"Always\",\n                \"OnProgress\",\n     \
+        \           \"OnComplete\",\n                \"Never\"\n            ],\n            \"description\": \"When a hidden
         objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n            \"type\"\
         : \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\",\n   \
         \         \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n\
@@ -276,8 +276,8 @@ paths:
         type\"\n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n       \
         \             \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
         amount for CURRENCY_AMOUNT type\"\n                }\n            }\n        },\n        \"PrerequisiteType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"QUEST_COMPLETED\",\n              \
-        \  \"CHARACTER_LEVEL\",\n                \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"QuestCompleted\",\n               \
+        \ \"CharacterLevel\",\n                \"Reputation\",\n                \"ItemOwned\",\n                \"CurrencyAmount\"\
         \n            ],\n            \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n         \
@@ -293,8 +293,8 @@ paths:
         \ \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\": {\n       \
         \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        },\n        \"RewardType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"CURRENCY\",\n                \"ITEM\"\
-        ,\n                \"EXPERIENCE\",\n                \"REPUTATION\"\n            ],\n            \"description\": \"\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"Currency\",\n                \"Item\"\
+        ,\n                \"Experience\",\n                \"Reputation\"\n            ],\n            \"description\": \"\
         Type of reward granted on quest completion\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new quest definition\",\n    \"description\": \"Creates a quest
         definition wrapping a contract template with quest metadata.\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n\
@@ -379,11 +379,11 @@ paths:
         \               },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n            \
         \        \"format\": \"uuid\",\n                    \"description\": \"Game service ID\"\n                }\n    \
         \        }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
-        \                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n                \"DAILY\",\n \
-        \               \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n            ],\n          \
+        \                \"Main\",\n                \"Side\",\n                \"Bounty\",\n                \"Daily\",\n \
+        \               \"Weekly\",\n                \"Event\",\n                \"Tutorial\"\n            ],\n          \
         \  \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\": {\n         \
-        \   \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"EASY\",\n    \
-        \            \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\n\
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"Trivial\",\n                \"Easy\",\n    \
+        \            \"Normal\",\n                \"Hard\",\n                \"Heroic\",\n                \"Legendary\"\n\
         \            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Definition of a single quest objective with
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
@@ -412,12 +412,12 @@ paths:
         \      },\n                \"optional\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
         : false,\n                    \"description\": \"Whether objective is optional for completion\"\n                }\n\
         \            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n                \"TRAVEL\"\
-        ,\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n                \"ESCORT\"\
-        ,\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\": \"Type of
+        : [\n                \"Kill\",\n                \"Collect\",\n                \"Deliver\",\n                \"Travel\"\
+        ,\n                \"Discover\",\n                \"Talk\",\n                \"Craft\",\n                \"Escort\"\
+        ,\n                \"Defend\",\n                \"Custom\"\n            ],\n            \"description\": \"Type of
         objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\",\n    \
-        \            \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When a hidden
+        type\": \"string\",\n            \"enum\": [\n                \"Always\",\n                \"OnProgress\",\n     \
+        \           \"OnComplete\",\n                \"Never\"\n            ],\n            \"description\": \"When a hidden
         objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n            \"type\"\
         : \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\",\n   \
         \         \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n\
@@ -437,8 +437,8 @@ paths:
         type\"\n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n       \
         \             \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
         amount for CURRENCY_AMOUNT type\"\n                }\n            }\n        },\n        \"PrerequisiteType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"QUEST_COMPLETED\",\n              \
-        \  \"CHARACTER_LEVEL\",\n                \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"QuestCompleted\",\n               \
+        \ \"CharacterLevel\",\n                \"Reputation\",\n                \"ItemOwned\",\n                \"CurrencyAmount\"\
         \n            ],\n            \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n         \
@@ -454,8 +454,8 @@ paths:
         \ \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\": {\n       \
         \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        },\n        \"RewardType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"CURRENCY\",\n                \"ITEM\"\
-        ,\n                \"EXPERIENCE\",\n                \"REPUTATION\"\n            ],\n            \"description\": \"\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"Currency\",\n                \"Item\"\
+        ,\n                \"Experience\",\n                \"Reputation\"\n            ],\n            \"description\": \"\
         Type of reward granted on quest completion\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get quest definition by ID or code\",\n    \"description\": \"Retrieves
         a quest definition by its unique identifier or code.\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n    \"\
@@ -503,12 +503,12 @@ paths:
         : \"Max results per page\"\n                },\n                \"offset\": {\n                    \"type\": \"integer\"\
         ,\n                    \"default\": 0,\n                    \"minimum\": 0,\n                    \"description\":
         \"Pagination offset\"\n                }\n            }\n        },\n        \"QuestCategory\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"MAIN\",\n                \"SIDE\",\n             \
-        \   \"BOUNTY\",\n                \"DAILY\",\n                \"WEEKLY\",\n                \"EVENT\",\n           \
-        \     \"TUTORIAL\"\n            ],\n            \"description\": \"Category of quest for organization\"\n        },\n\
-        \        \"QuestDifficulty\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\"\
-        ,\n                \"EASY\",\n                \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n\
-        \                \"LEGENDARY\"\n            ],\n            \"description\": \"Difficulty rating of the quest\"\n\
+        type\": \"string\",\n            \"enum\": [\n                \"Main\",\n                \"Side\",\n             \
+        \   \"Bounty\",\n                \"Daily\",\n                \"Weekly\",\n                \"Event\",\n           \
+        \     \"Tutorial\"\n            ],\n            \"description\": \"Category of quest for organization\"\n        },\n\
+        \        \"QuestDifficulty\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Trivial\"\
+        ,\n                \"Easy\",\n                \"Normal\",\n                \"Hard\",\n                \"Heroic\",\n\
+        \                \"Legendary\"\n            ],\n            \"description\": \"Difficulty rating of the quest\"\n\
         \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListQuestDefinitionsResponse\"\
         ,\n    \"$defs\": {\n        \"ListQuestDefinitionsResponse\": {\n            \"type\": \"object\",\n            \"\
@@ -565,11 +565,11 @@ paths:
         \               },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n            \
         \        \"format\": \"uuid\",\n                    \"description\": \"Game service ID\"\n                }\n    \
         \        }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
-        \                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n                \"DAILY\",\n \
-        \               \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n            ],\n          \
+        \                \"Main\",\n                \"Side\",\n                \"Bounty\",\n                \"Daily\",\n \
+        \               \"Weekly\",\n                \"Event\",\n                \"Tutorial\"\n            ],\n          \
         \  \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\": {\n         \
-        \   \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"EASY\",\n    \
-        \            \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\n\
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"Trivial\",\n                \"Easy\",\n    \
+        \            \"Normal\",\n                \"Hard\",\n                \"Heroic\",\n                \"Legendary\"\n\
         \            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Definition of a single quest objective with
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
@@ -598,12 +598,12 @@ paths:
         \      },\n                \"optional\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
         : false,\n                    \"description\": \"Whether objective is optional for completion\"\n                }\n\
         \            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n                \"TRAVEL\"\
-        ,\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n                \"ESCORT\"\
-        ,\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\": \"Type of
+        : [\n                \"Kill\",\n                \"Collect\",\n                \"Deliver\",\n                \"Travel\"\
+        ,\n                \"Discover\",\n                \"Talk\",\n                \"Craft\",\n                \"Escort\"\
+        ,\n                \"Defend\",\n                \"Custom\"\n            ],\n            \"description\": \"Type of
         objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\",\n    \
-        \            \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When a hidden
+        type\": \"string\",\n            \"enum\": [\n                \"Always\",\n                \"OnProgress\",\n     \
+        \           \"OnComplete\",\n                \"Never\"\n            ],\n            \"description\": \"When a hidden
         objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n            \"type\"\
         : \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\",\n   \
         \         \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n\
@@ -623,8 +623,8 @@ paths:
         type\"\n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n       \
         \             \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
         amount for CURRENCY_AMOUNT type\"\n                }\n            }\n        },\n        \"PrerequisiteType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"QUEST_COMPLETED\",\n              \
-        \  \"CHARACTER_LEVEL\",\n                \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"QuestCompleted\",\n               \
+        \ \"CharacterLevel\",\n                \"Reputation\",\n                \"ItemOwned\",\n                \"CurrencyAmount\"\
         \n            ],\n            \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n         \
@@ -640,8 +640,8 @@ paths:
         \ \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\": {\n       \
         \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        },\n        \"RewardType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"CURRENCY\",\n                \"ITEM\"\
-        ,\n                \"EXPERIENCE\",\n                \"REPUTATION\"\n            ],\n            \"description\": \"\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"Currency\",\n                \"Item\"\
+        ,\n                \"Experience\",\n                \"Reputation\"\n            ],\n            \"description\": \"\
         Type of reward granted on quest completion\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List quest definitions with filtering\",\n    \"description\": \"Lists
         quest definitions with optional filtering by category, difficulty, tags.\",\n    \"tags\": [\n        \"Definitions\"\
@@ -688,12 +688,12 @@ paths:
         \                \"tags\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
         \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
         \            \"description\": \"New tags\"\n                }\n            }\n        },\n        \"QuestCategory\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"MAIN\",\n                \"SIDE\"\
-        ,\n                \"BOUNTY\",\n                \"DAILY\",\n                \"WEEKLY\",\n                \"EVENT\"\
-        ,\n                \"TUTORIAL\"\n            ],\n            \"description\": \"Category of quest for organization\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Main\",\n                \"Side\"\
+        ,\n                \"Bounty\",\n                \"Daily\",\n                \"Weekly\",\n                \"Event\"\
+        ,\n                \"Tutorial\"\n            ],\n            \"description\": \"Category of quest for organization\"\
         \n        },\n        \"QuestDifficulty\": {\n            \"type\": \"string\",\n            \"enum\": [\n       \
-        \         \"TRIVIAL\",\n                \"EASY\",\n                \"NORMAL\",\n                \"HARD\",\n      \
-        \          \"HEROIC\",\n                \"LEGENDARY\"\n            ],\n            \"description\": \"Difficulty rating
+        \         \"Trivial\",\n                \"Easy\",\n                \"Normal\",\n                \"Hard\",\n      \
+        \          \"Heroic\",\n                \"Legendary\"\n            ],\n            \"description\": \"Difficulty rating
         of the quest\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QuestDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"QuestDefinitionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -743,11 +743,11 @@ paths:
         \               },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n            \
         \        \"format\": \"uuid\",\n                    \"description\": \"Game service ID\"\n                }\n    \
         \        }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
-        \                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n                \"DAILY\",\n \
-        \               \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n            ],\n          \
+        \                \"Main\",\n                \"Side\",\n                \"Bounty\",\n                \"Daily\",\n \
+        \               \"Weekly\",\n                \"Event\",\n                \"Tutorial\"\n            ],\n          \
         \  \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\": {\n         \
-        \   \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"EASY\",\n    \
-        \            \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\n\
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"Trivial\",\n                \"Easy\",\n    \
+        \            \"Normal\",\n                \"Hard\",\n                \"Heroic\",\n                \"Legendary\"\n\
         \            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Definition of a single quest objective with
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
@@ -776,12 +776,12 @@ paths:
         \      },\n                \"optional\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
         : false,\n                    \"description\": \"Whether objective is optional for completion\"\n                }\n\
         \            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n                \"TRAVEL\"\
-        ,\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n                \"ESCORT\"\
-        ,\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\": \"Type of
+        : [\n                \"Kill\",\n                \"Collect\",\n                \"Deliver\",\n                \"Travel\"\
+        ,\n                \"Discover\",\n                \"Talk\",\n                \"Craft\",\n                \"Escort\"\
+        ,\n                \"Defend\",\n                \"Custom\"\n            ],\n            \"description\": \"Type of
         objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\",\n    \
-        \            \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When a hidden
+        type\": \"string\",\n            \"enum\": [\n                \"Always\",\n                \"OnProgress\",\n     \
+        \           \"OnComplete\",\n                \"Never\"\n            ],\n            \"description\": \"When a hidden
         objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n            \"type\"\
         : \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\",\n   \
         \         \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n\
@@ -801,8 +801,8 @@ paths:
         type\"\n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n       \
         \             \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
         amount for CURRENCY_AMOUNT type\"\n                }\n            }\n        },\n        \"PrerequisiteType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"QUEST_COMPLETED\",\n              \
-        \  \"CHARACTER_LEVEL\",\n                \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"QuestCompleted\",\n               \
+        \ \"CharacterLevel\",\n                \"Reputation\",\n                \"ItemOwned\",\n                \"CurrencyAmount\"\
         \n            ],\n            \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n         \
@@ -818,8 +818,8 @@ paths:
         \ \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\": {\n       \
         \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        },\n        \"RewardType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"CURRENCY\",\n                \"ITEM\"\
-        ,\n                \"EXPERIENCE\",\n                \"REPUTATION\"\n            ],\n            \"description\": \"\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"Currency\",\n                \"Item\"\
+        ,\n                \"Experience\",\n                \"Reputation\"\n            ],\n            \"description\": \"\
         Type of reward granted on quest completion\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update quest definition metadata\",\n    \"description\": \"Updates quest
         metadata (not contract template - that's immutable).\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n    \"\
@@ -905,11 +905,11 @@ paths:
         \               },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n            \
         \        \"format\": \"uuid\",\n                    \"description\": \"Game service ID\"\n                }\n    \
         \        }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
-        \                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n                \"DAILY\",\n \
-        \               \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n            ],\n          \
+        \                \"Main\",\n                \"Side\",\n                \"Bounty\",\n                \"Daily\",\n \
+        \               \"Weekly\",\n                \"Event\",\n                \"Tutorial\"\n            ],\n          \
         \  \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\": {\n         \
-        \   \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"EASY\",\n    \
-        \            \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\n\
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"Trivial\",\n                \"Easy\",\n    \
+        \            \"Normal\",\n                \"Hard\",\n                \"Heroic\",\n                \"Legendary\"\n\
         \            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Definition of a single quest objective with
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
@@ -938,12 +938,12 @@ paths:
         \      },\n                \"optional\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
         : false,\n                    \"description\": \"Whether objective is optional for completion\"\n                }\n\
         \            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n                \"TRAVEL\"\
-        ,\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n                \"ESCORT\"\
-        ,\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\": \"Type of
+        : [\n                \"Kill\",\n                \"Collect\",\n                \"Deliver\",\n                \"Travel\"\
+        ,\n                \"Discover\",\n                \"Talk\",\n                \"Craft\",\n                \"Escort\"\
+        ,\n                \"Defend\",\n                \"Custom\"\n            ],\n            \"description\": \"Type of
         objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\",\n    \
-        \            \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When a hidden
+        type\": \"string\",\n            \"enum\": [\n                \"Always\",\n                \"OnProgress\",\n     \
+        \           \"OnComplete\",\n                \"Never\"\n            ],\n            \"description\": \"When a hidden
         objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n            \"type\"\
         : \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\",\n   \
         \         \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n\
@@ -963,8 +963,8 @@ paths:
         type\"\n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n       \
         \             \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
         amount for CURRENCY_AMOUNT type\"\n                }\n            }\n        },\n        \"PrerequisiteType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"QUEST_COMPLETED\",\n              \
-        \  \"CHARACTER_LEVEL\",\n                \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"QuestCompleted\",\n               \
+        \ \"CharacterLevel\",\n                \"Reputation\",\n                \"ItemOwned\",\n                \"CurrencyAmount\"\
         \n            ],\n            \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n         \
@@ -980,8 +980,8 @@ paths:
         \ \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\": {\n       \
         \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        },\n        \"RewardType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"CURRENCY\",\n                \"ITEM\"\
-        ,\n                \"EXPERIENCE\",\n                \"REPUTATION\"\n            ],\n            \"description\": \"\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"Currency\",\n                \"Item\"\
+        ,\n                \"Experience\",\n                \"Reputation\"\n            ],\n            \"description\": \"\
         Type of reward granted on quest completion\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Mark quest definition as deprecated\",\n    \"description\": \"Marks a
         quest definition as deprecated. No new instances can be created.\",\n    \"tags\": [\n        \"Definitions\"\n  \
@@ -1061,8 +1061,8 @@ paths:
         \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
         nullable\": true,\n                    \"description\": \"When completed\"\n                }\n            }\n   \
         \     },\n        \"QuestStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n               \
-        \ \"ACTIVE\",\n                \"COMPLETED\",\n                \"FAILED\",\n                \"ABANDONED\",\n     \
-        \           \"EXPIRED\"\n            ],\n            \"description\": \"Current status of a quest instance\"\n   \
+        \ \"Active\",\n                \"Completed\",\n                \"Failed\",\n                \"Abandoned\",\n     \
+        \           \"Expired\"\n            ],\n            \"description\": \"Current status of a quest instance\"\n   \
         \     },\n        \"ObjectiveProgress\": {\n            \"type\": \"object\",\n            \"description\": \"Current
         progress state of a quest objective\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
         \                \"code\",\n                \"name\",\n                \"objectiveType\",\n                \"currentCount\"\
@@ -1084,9 +1084,9 @@ paths:
         \             \"description\": \"Whether currently hidden\"\n                },\n                \"optional\": {\n\
         \                    \"type\": \"boolean\",\n                    \"description\": \"Whether optional\"\n         \
         \       }\n            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n          \
-        \  \"enum\": [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n          \
-        \      \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n       \
-        \         \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\"\
+        \  \"enum\": [\n                \"Kill\",\n                \"Collect\",\n                \"Deliver\",\n          \
+        \      \"Travel\",\n                \"Discover\",\n                \"Talk\",\n                \"Craft\",\n       \
+        \         \"Escort\",\n                \"Defend\",\n                \"Custom\"\n            ],\n            \"description\"\
         : \"Type of objective determining progress tracking logic\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Accept a quest\",\n    \"description\": \"Creates a contract instance and
         auto-consents for the questor. Returns the active quest.\",\n    \"tags\": [\n        \"Instances\"\n    ],\n    \"\
@@ -1157,8 +1157,8 @@ paths:
         \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
         nullable\": true,\n                    \"description\": \"When completed\"\n                }\n            }\n   \
         \     },\n        \"QuestStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n               \
-        \ \"ACTIVE\",\n                \"COMPLETED\",\n                \"FAILED\",\n                \"ABANDONED\",\n     \
-        \           \"EXPIRED\"\n            ],\n            \"description\": \"Current status of a quest instance\"\n   \
+        \ \"Active\",\n                \"Completed\",\n                \"Failed\",\n                \"Abandoned\",\n     \
+        \           \"Expired\"\n            ],\n            \"description\": \"Current status of a quest instance\"\n   \
         \     },\n        \"ObjectiveProgress\": {\n            \"type\": \"object\",\n            \"description\": \"Current
         progress state of a quest objective\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
         \                \"code\",\n                \"name\",\n                \"objectiveType\",\n                \"currentCount\"\
@@ -1180,9 +1180,9 @@ paths:
         \             \"description\": \"Whether currently hidden\"\n                },\n                \"optional\": {\n\
         \                    \"type\": \"boolean\",\n                    \"description\": \"Whether optional\"\n         \
         \       }\n            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n          \
-        \  \"enum\": [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n          \
-        \      \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n       \
-        \         \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\"\
+        \  \"enum\": [\n                \"Kill\",\n                \"Collect\",\n                \"Deliver\",\n          \
+        \      \"Travel\",\n                \"Discover\",\n                \"Talk\",\n                \"Craft\",\n       \
+        \         \"Escort\",\n                \"Defend\",\n                \"Custom\"\n            ],\n            \"description\"\
         : \"Type of objective determining progress tracking logic\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Abandon an active quest\",\n    \"description\": \"Terminates the underlying
         contract and marks the quest as abandoned.\",\n    \"tags\": [\n        \"Instances\"\n    ],\n    \"deprecated\"\
@@ -1248,8 +1248,8 @@ paths:
         \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
         nullable\": true,\n                    \"description\": \"When completed\"\n                }\n            }\n   \
         \     },\n        \"QuestStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n               \
-        \ \"ACTIVE\",\n                \"COMPLETED\",\n                \"FAILED\",\n                \"ABANDONED\",\n     \
-        \           \"EXPIRED\"\n            ],\n            \"description\": \"Current status of a quest instance\"\n   \
+        \ \"Active\",\n                \"Completed\",\n                \"Failed\",\n                \"Abandoned\",\n     \
+        \           \"Expired\"\n            ],\n            \"description\": \"Current status of a quest instance\"\n   \
         \     },\n        \"ObjectiveProgress\": {\n            \"type\": \"object\",\n            \"description\": \"Current
         progress state of a quest objective\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
         \                \"code\",\n                \"name\",\n                \"objectiveType\",\n                \"currentCount\"\
@@ -1271,9 +1271,9 @@ paths:
         \             \"description\": \"Whether currently hidden\"\n                },\n                \"optional\": {\n\
         \                    \"type\": \"boolean\",\n                    \"description\": \"Whether optional\"\n         \
         \       }\n            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n          \
-        \  \"enum\": [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n          \
-        \      \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n       \
-        \         \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\"\
+        \  \"enum\": [\n                \"Kill\",\n                \"Collect\",\n                \"Deliver\",\n          \
+        \      \"Travel\",\n                \"Discover\",\n                \"Talk\",\n                \"Craft\",\n       \
+        \         \"Escort\",\n                \"Defend\",\n                \"Custom\"\n            ],\n            \"description\"\
         : \"Type of objective determining progress tracking logic\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get quest instance details\",\n    \"description\": \"Retrieves detailed
         quest instance information including objectives.\",\n    \"tags\": [\n        \"Instances\"\n    ],\n    \"deprecated\"\
@@ -1314,8 +1314,8 @@ paths:
         \n                },\n                \"offset\": {\n                    \"type\": \"integer\",\n                \
         \    \"default\": 0,\n                    \"minimum\": 0,\n                    \"description\": \"Pagination offset\"\
         \n                }\n            }\n        },\n        \"QuestStatus\": {\n            \"type\": \"string\",\n  \
-        \          \"enum\": [\n                \"ACTIVE\",\n                \"COMPLETED\",\n                \"FAILED\",\n\
-        \                \"ABANDONED\",\n                \"EXPIRED\"\n            ],\n            \"description\": \"Current
+        \          \"enum\": [\n                \"Active\",\n                \"Completed\",\n                \"Failed\",\n\
+        \                \"Abandoned\",\n                \"Expired\"\n            ],\n            \"description\": \"Current
         status of a quest instance\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListQuestsResponse\"\
         ,\n    \"$defs\": {\n        \"ListQuestsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -1354,8 +1354,8 @@ paths:
         if none)\"\n                },\n                \"completedAt\": {\n                    \"type\": \"string\",\n  \
         \                  \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"When completed\"\n                }\n            }\n        },\n        \"QuestStatus\": {\n            \"type\"\
-        : \"string\",\n            \"enum\": [\n                \"ACTIVE\",\n                \"COMPLETED\",\n            \
-        \    \"FAILED\",\n                \"ABANDONED\",\n                \"EXPIRED\"\n            ],\n            \"description\"\
+        : \"string\",\n            \"enum\": [\n                \"Active\",\n                \"Completed\",\n            \
+        \    \"Failed\",\n                \"Abandoned\",\n                \"Expired\"\n            ],\n            \"description\"\
         : \"Current status of a quest instance\"\n        },\n        \"ObjectiveProgress\": {\n            \"type\": \"object\"\
         ,\n            \"description\": \"Current progress state of a quest objective\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"code\",\n                \"name\",\n                \"objectiveType\"\
@@ -1377,9 +1377,9 @@ paths:
         \      \"type\": \"boolean\",\n                    \"description\": \"Whether currently hidden\"\n               \
         \ },\n                \"optional\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
         : \"Whether optional\"\n                }\n            }\n        },\n        \"ObjectiveType\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"KILL\",\n                \"COLLECT\",\n          \
-        \      \"DELIVER\",\n                \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\",\n     \
-        \           \"CRAFT\",\n                \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\n   \
+        type\": \"string\",\n            \"enum\": [\n                \"Kill\",\n                \"Collect\",\n          \
+        \      \"Deliver\",\n                \"Travel\",\n                \"Discover\",\n                \"Talk\",\n     \
+        \           \"Craft\",\n                \"Escort\",\n                \"Defend\",\n                \"Custom\"\n   \
         \         ],\n            \"description\": \"Type of objective determining progress tracking logic\"\n        }\n\
         \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List character's quests\",\n    \"description\": \"Lists quests for a character
@@ -1471,12 +1471,12 @@ paths:
         format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n      \
         \          \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"Game service ID\"\n                }\n            }\n        },\n      \
-        \  \"QuestCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"MAIN\",\n \
-        \               \"SIDE\",\n                \"BOUNTY\",\n                \"DAILY\",\n                \"WEEKLY\",\n\
-        \                \"EVENT\",\n                \"TUTORIAL\"\n            ],\n            \"description\": \"Category
+        \  \"QuestCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Main\",\n \
+        \               \"Side\",\n                \"Bounty\",\n                \"Daily\",\n                \"Weekly\",\n\
+        \                \"Event\",\n                \"Tutorial\"\n            ],\n            \"description\": \"Category
         of quest for organization\"\n        },\n        \"QuestDifficulty\": {\n            \"type\": \"string\",\n     \
-        \       \"enum\": [\n                \"TRIVIAL\",\n                \"EASY\",\n                \"NORMAL\",\n      \
-        \          \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\n            ],\n            \"description\"\
+        \       \"enum\": [\n                \"Trivial\",\n                \"Easy\",\n                \"Normal\",\n      \
+        \          \"Hard\",\n                \"Heroic\",\n                \"Legendary\"\n            ],\n            \"description\"\
         : \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\": {\n            \"type\": \"object\"\
         ,\n            \"description\": \"Definition of a single quest objective with tracking parameters\",\n           \
         \ \"additionalProperties\": false,\n            \"required\": [\n                \"code\",\n                \"name\"\
@@ -1504,12 +1504,12 @@ paths:
         \n                        }\n                    ]\n                },\n                \"optional\": {\n        \
         \            \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
         : \"Whether objective is optional for completion\"\n                }\n            }\n        },\n        \"ObjectiveType\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"KILL\",\n                \"COLLECT\"\
-        ,\n                \"DELIVER\",\n                \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\"\
-        ,\n                \"CRAFT\",\n                \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Kill\",\n                \"Collect\"\
+        ,\n                \"Deliver\",\n                \"Travel\",\n                \"Discover\",\n                \"Talk\"\
+        ,\n                \"Craft\",\n                \"Escort\",\n                \"Defend\",\n                \"Custom\"\
         \n            ],\n            \"description\": \"Type of objective determining progress tracking logic\"\n       \
         \ },\n        \"ObjectiveRevealBehavior\": {\n            \"type\": \"string\",\n            \"enum\": [\n       \
-        \         \"ALWAYS\",\n                \"ON_PROGRESS\",\n                \"ON_COMPLETE\",\n                \"NEVER\"\
+        \         \"Always\",\n                \"OnProgress\",\n                \"OnComplete\",\n                \"Never\"\
         \n            ],\n            \"description\": \"When a hidden objective is revealed in the quest log\"\n        },\n\
         \        \"PrerequisiteDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Requirement
         that must be met before a quest can be accepted\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1530,26 +1530,26 @@ paths:
         \             \"minAmount\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
         \                    \"minimum\": 0,\n                    \"description\": \"Minimum amount for CURRENCY_AMOUNT type\"\
         \n                }\n            }\n        },\n        \"PrerequisiteType\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"QUEST_COMPLETED\",\n                \"CHARACTER_LEVEL\",\n         \
-        \       \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\n            ],\n  \
-        \          \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\": {\n        \
-        \    \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\",\n         \
-        \   \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n    \
-        \        \"properties\": {\n                \"type\": {\n                    \"description\": \"Type of reward\",\n\
-        \                    \"$ref\": \"#/$defs/RewardType\"\n                },\n                \"currencyCode\": {\n \
-        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Currency code for CURRENCY rewards\"\n                },\n                \"amount\": {\n                    \"\
-        type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n             \
-        \       \"description\": \"Amount for CURRENCY/EXPERIENCE rewards\"\n                },\n                \"itemCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Item code for ITEM rewards\"\n                },\n                \"quantity\": {\n                    \"type\"\
-        : \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n                   \
-        \ \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\": {\n       \
-        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        },\n        \"RewardType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"CURRENCY\",\n                \"ITEM\"\
-        ,\n                \"EXPERIENCE\",\n                \"REPUTATION\"\n            ],\n            \"description\": \"\
-        Type of reward granted on quest completion\"\n        }\n    }\n}"
+        ,\n            \"enum\": [\n                \"QuestCompleted\",\n                \"CharacterLevel\",\n           \
+        \     \"Reputation\",\n                \"ItemOwned\",\n                \"CurrencyAmount\"\n            ],\n      \
+        \      \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\": {\n            \"\
+        type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"type\"\n            ],\n            \"properties\": {\n \
+        \               \"type\": {\n                    \"description\": \"Type of reward\",\n                    \"$ref\"\
+        : \"#/$defs/RewardType\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY
+        rewards\"\n                },\n                \"amount\": {\n                    \"type\": \"integer\",\n       \
+        \             \"nullable\": true,\n                    \"minimum\": 1,\n                    \"description\": \"Amount
+        for CURRENCY/EXPERIENCE rewards\"\n                },\n                \"itemCode\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Item code for ITEM
+        rewards\"\n                },\n                \"quantity\": {\n                    \"type\": \"integer\",\n     \
+        \               \"nullable\": true,\n                    \"minimum\": 1,\n                    \"description\": \"\
+        Quantity for ITEM rewards\"\n                },\n                \"factionCode\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Faction code for REPUTATION
+        rewards\"\n                }\n            }\n        },\n        \"RewardType\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"Currency\",\n                \"Item\",\n                \"Experience\"\
+        ,\n                \"Reputation\"\n            ],\n            \"description\": \"Type of reward granted on quest
+        completion\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List quests available to accept\",\n    \"description\": \"Lists quests
         a character can accept (prerequisites met, not on cooldown, not active).\",\n    \"tags\": [\n        \"Instances\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listAvailableQuests\"\n}"
@@ -1584,9 +1584,9 @@ paths:
         : {\n                    \"description\": \"Filter active quests by category\",\n                    \"nullable\"\
         : true,\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/QuestCategory\"\
         \n                        }\n                    ]\n                }\n            }\n        },\n        \"QuestCategory\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"MAIN\",\n                \"SIDE\"\
-        ,\n                \"BOUNTY\",\n                \"DAILY\",\n                \"WEEKLY\",\n                \"EVENT\"\
-        ,\n                \"TUTORIAL\"\n            ],\n            \"description\": \"Category of quest for organization\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Main\",\n                \"Side\"\
+        ,\n                \"Bounty\",\n                \"Daily\",\n                \"Weekly\",\n                \"Event\"\
+        ,\n                \"Tutorial\"\n            ],\n            \"description\": \"Category of quest for organization\"\
         \n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QuestLogResponse\"\
         ,\n    \"$defs\": {\n        \"QuestLogResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -1620,11 +1620,11 @@ paths:
         \     },\n                \"acceptedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"date-time\",\n                    \"description\": \"When accepted\"\n                }\n            }\n     \
         \   },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n               \
-        \ \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n                \"DAILY\",\n                \"\
-        WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n            ],\n            \"description\":
+        \ \"Main\",\n                \"Side\",\n                \"Bounty\",\n                \"Daily\",\n                \"\
+        Weekly\",\n                \"Event\",\n                \"Tutorial\"\n            ],\n            \"description\":
         \"Category of quest for organization\"\n        },\n        \"QuestStatus\": {\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"ACTIVE\",\n                \"COMPLETED\",\n                \"FAILED\"\
-        ,\n                \"ABANDONED\",\n                \"EXPIRED\"\n            ],\n            \"description\": \"Current
+        \            \"enum\": [\n                \"Active\",\n                \"Completed\",\n                \"Failed\"\
+        ,\n                \"Abandoned\",\n                \"Expired\"\n            ],\n            \"description\": \"Current
         status of a quest instance\"\n        },\n        \"ObjectiveProgress\": {\n            \"type\": \"object\",\n  \
         \          \"description\": \"Current progress state of a quest objective\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"code\",\n                \"name\",\n                \"objectiveType\"\
@@ -1646,9 +1646,9 @@ paths:
         \      \"type\": \"boolean\",\n                    \"description\": \"Whether currently hidden\"\n               \
         \ },\n                \"optional\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
         : \"Whether optional\"\n                }\n            }\n        },\n        \"ObjectiveType\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"KILL\",\n                \"COLLECT\",\n          \
-        \      \"DELIVER\",\n                \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\",\n     \
-        \           \"CRAFT\",\n                \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\n   \
+        type\": \"string\",\n            \"enum\": [\n                \"Kill\",\n                \"Collect\",\n          \
+        \      \"Deliver\",\n                \"Travel\",\n                \"Discover\",\n                \"Talk\",\n     \
+        \           \"Craft\",\n                \"Escort\",\n                \"Defend\",\n                \"Custom\"\n   \
         \         ],\n            \"description\": \"Type of objective determining progress tracking logic\"\n        }\n\
         \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get player-facing quest log\",\n    \"description\": \"Returns UI-optimized
@@ -1722,9 +1722,9 @@ paths:
         \             \"description\": \"Whether currently hidden\"\n                },\n                \"optional\": {\n\
         \                    \"type\": \"boolean\",\n                    \"description\": \"Whether optional\"\n         \
         \       }\n            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n          \
-        \  \"enum\": [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n          \
-        \      \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n       \
-        \         \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\"\
+        \  \"enum\": [\n                \"Kill\",\n                \"Collect\",\n                \"Deliver\",\n          \
+        \      \"Travel\",\n                \"Discover\",\n                \"Talk\",\n                \"Craft\",\n       \
+        \         \"Escort\",\n                \"Defend\",\n                \"Custom\"\n            ],\n            \"description\"\
         : \"Type of objective determining progress tracking logic\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Report progress on an objective\",\n    \"description\": \"Manually reports
         progress on a quest objective. Used by game systems.\",\n    \"tags\": [\n        \"Objectives\"\n    ],\n    \"deprecated\"\
@@ -1792,9 +1792,9 @@ paths:
         \             \"description\": \"Whether currently hidden\"\n                },\n                \"optional\": {\n\
         \                    \"type\": \"boolean\",\n                    \"description\": \"Whether optional\"\n         \
         \       }\n            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n          \
-        \  \"enum\": [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n          \
-        \      \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n       \
-        \         \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\"\
+        \  \"enum\": [\n                \"Kill\",\n                \"Collect\",\n                \"Deliver\",\n          \
+        \      \"Travel\",\n                \"Discover\",\n                \"Talk\",\n                \"Craft\",\n       \
+        \         \"Escort\",\n                \"Defend\",\n                \"Custom\"\n            ],\n            \"description\"\
         : \"Type of objective determining progress tracking logic\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Force complete an objective (debug/GM)\",\n    \"description\": \"Immediately
         completes an objective regardless of progress. Admin only.\",\n    \"tags\": [\n        \"Objectives\"\n    ],\n \
@@ -1862,9 +1862,9 @@ paths:
         \             \"description\": \"Whether currently hidden\"\n                },\n                \"optional\": {\n\
         \                    \"type\": \"boolean\",\n                    \"description\": \"Whether optional\"\n         \
         \       }\n            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n          \
-        \  \"enum\": [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n          \
-        \      \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n       \
-        \         \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\"\
+        \  \"enum\": [\n                \"Kill\",\n                \"Collect\",\n                \"Deliver\",\n          \
+        \      \"Travel\",\n                \"Discover\",\n                \"Talk\",\n                \"Craft\",\n       \
+        \         \"Escort\",\n                \"Defend\",\n                \"Custom\"\n            ],\n            \"description\"\
         : \"Type of objective determining progress tracking logic\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get objective progress details\",\n    \"description\": \"Returns detailed
         progress information for a specific objective.\",\n    \"tags\": [\n        \"Objectives\"\n    ],\n    \"deprecated\"\
@@ -1994,8 +1994,8 @@ paths:
         \        },\n                \"category\": {\n                    \"$ref\": \"#/$defs/QuestCategory\",\n         \
         \           \"nullable\": true,\n                    \"description\": \"Quest category (if available)\"\n        \
         \        }\n            }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n         \
-        \   \"enum\": [\n                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n             \
-        \   \"DAILY\",\n                \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n          \
+        \   \"enum\": [\n                \"Main\",\n                \"Side\",\n                \"Bounty\",\n             \
+        \   \"Daily\",\n                \"Weekly\",\n                \"Event\",\n                \"Tutorial\"\n          \
         \  ],\n            \"description\": \"Category of quest for organization\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get quest data for compression\",\n    \"description\": \"Called by Resource
         service during character compression.\\nReturns active quests, completion counts, and category breakdown for archival.\\\
@@ -2006,69 +2006,69 @@ components:
     QuestStatus:
       type: string
       enum:
-      - ACTIVE
-      - COMPLETED
-      - FAILED
-      - ABANDONED
-      - EXPIRED
+      - Active
+      - Completed
+      - Failed
+      - Abandoned
+      - Expired
       description: Current status of a quest instance
     QuestCategory:
       type: string
       enum:
-      - MAIN
-      - SIDE
-      - BOUNTY
-      - DAILY
-      - WEEKLY
-      - EVENT
-      - TUTORIAL
+      - Main
+      - Side
+      - Bounty
+      - Daily
+      - Weekly
+      - Event
+      - Tutorial
       description: Category of quest for organization
     QuestDifficulty:
       type: string
       enum:
-      - TRIVIAL
-      - EASY
-      - NORMAL
-      - HARD
-      - HEROIC
-      - LEGENDARY
+      - Trivial
+      - Easy
+      - Normal
+      - Hard
+      - Heroic
+      - Legendary
       description: Difficulty rating of the quest
     ObjectiveType:
       type: string
       enum:
-      - KILL
-      - COLLECT
-      - DELIVER
-      - TRAVEL
-      - DISCOVER
-      - TALK
-      - CRAFT
-      - ESCORT
-      - DEFEND
-      - CUSTOM
+      - Kill
+      - Collect
+      - Deliver
+      - Travel
+      - Discover
+      - Talk
+      - Craft
+      - Escort
+      - Defend
+      - Custom
       description: Type of objective determining progress tracking logic
     ObjectiveRevealBehavior:
       type: string
       enum:
-      - ALWAYS
-      - ON_PROGRESS
-      - ON_COMPLETE
-      - NEVER
+      - Always
+      - OnProgress
+      - OnComplete
+      - Never
       description: When a hidden objective is revealed in the quest log
     PrerequisiteType:
       type: string
       enum:
-      - QUEST_COMPLETED
-      - CHARACTER_LEVEL
-      - REPUTATION
-      - ITEM_OWNED
-      - CURRENCY_AMOUNT
+      - QuestCompleted
+      - CharacterLevel
+      - Reputation
+      - ItemOwned
+      - CurrencyAmount
       description: Type of prerequisite check
     PrerequisiteValidationMode:
       type: string
       enum:
-      - FAIL_FAST
-      - CHECK_ALL
+      - FailFast
+      - CheckAll
       description: |
         Controls how prerequisite validation handles multiple prerequisites.
         FAIL_FAST: Stop on first failure, return that failure.
@@ -2076,10 +2076,10 @@ components:
     RewardType:
       type: string
       enum:
-      - CURRENCY
-      - ITEM
-      - EXPERIENCE
-      - REPUTATION
+      - Currency
+      - Item
+      - Experience
+      - Reputation
       description: Type of reward granted on quest completion
     CreateQuestDefinitionRequest:
       type: object

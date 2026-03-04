@@ -90,9 +90,9 @@ paths:
         tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
         type\": \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
         : \"Searchable tags for the asset (null to omit)\"\n                }\n            }\n        },\n        \"AssetType\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"texture\",\n                \"\
-        model\",\n                \"audio\",\n                \"behavior\",\n                \"bundle\",\n               \
-        \ \"prefab\",\n                \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Texture\",\n                \"\
+        Model\",\n                \"Audio\",\n                \"Behavior\",\n                \"Bundle\",\n               \
+        \ \"Prefab\",\n                \"Other\"\n            ],\n            \"description\": \"Type classification for assets\"\
         \n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"minLength\": 1,\n       \
         \     \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's
         stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available
@@ -215,14 +215,14 @@ paths:
         \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
         \      \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset was last updated\"\
         \n                }\n            }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n    \
-        \        \"enum\": [\n                \"texture\",\n                \"model\",\n                \"audio\",\n     \
-        \           \"behavior\",\n                \"bundle\",\n                \"prefab\",\n                \"other\"\n \
+        \        \"enum\": [\n                \"Texture\",\n                \"Model\",\n                \"Audio\",\n     \
+        \           \"Behavior\",\n                \"Bundle\",\n                \"Prefab\",\n                \"Other\"\n \
         \           ],\n            \"description\": \"Type classification for assets\"\n        },\n        \"GameRealm\"\
         : {\n            \"type\": \"string\",\n            \"minLength\": 1,\n            \"description\": \"Realm stub name
         (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\
         \", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available across all realms.\\n\"\n      \
         \  },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n             \
-        \   \"pending\",\n                \"processing\",\n                \"complete\",\n                \"failed\"\n   \
+        \   \"Pending\",\n                \"Processing\",\n                \"Complete\",\n                \"Failed\"\n   \
         \         ],\n            \"description\": \"Asset processing pipeline status\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Mark upload as complete, trigger processing\",\n    \"description\": \"\
         Called after the client has uploaded the file to the pre-signed URL.\\nTriggers the asset processing pipeline (texture
@@ -312,15 +312,15 @@ paths:
         : \"Timestamp when the asset was created\"\n                },\n                \"updatedAt\": {\n               \
         \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
         \"Timestamp when the asset was last updated\"\n                }\n            }\n        },\n        \"AssetType\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"texture\",\n                \"\
-        model\",\n                \"audio\",\n                \"behavior\",\n                \"bundle\",\n               \
-        \ \"prefab\",\n                \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Texture\",\n                \"\
+        Model\",\n                \"Audio\",\n                \"Behavior\",\n                \"Bundle\",\n               \
+        \ \"Prefab\",\n                \"Other\"\n            ],\n            \"description\": \"Type classification for assets\"\
         \n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"minLength\": 1,\n       \
         \     \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's
         stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available
         across all realms.\\n\"\n        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n        \
-        \    \"enum\": [\n                \"pending\",\n                \"processing\",\n                \"complete\",\n \
-        \               \"failed\"\n            ],\n            \"description\": \"Asset processing pipeline status\"\n  \
+        \    \"enum\": [\n                \"Pending\",\n                \"Processing\",\n                \"Complete\",\n \
+        \               \"Failed\"\n            ],\n            \"description\": \"Asset processing pipeline status\"\n  \
         \      }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get asset metadata and download URL\",\n    \"description\": \"Retrieve
         asset metadata and generate a pre-signed download URL.\\nSpecify version to download a specific version, or omit for
@@ -482,9 +482,9 @@ paths:
         Maximum number of results to return\"\n                },\n                \"offset\": {\n                    \"type\"\
         : \"integer\",\n                    \"default\": 0,\n                    \"minimum\": 0,\n                    \"description\"\
         : \"Number of results to skip for pagination\"\n                }\n            }\n        },\n        \"AssetType\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"texture\",\n                \"\
-        model\",\n                \"audio\",\n                \"behavior\",\n                \"bundle\",\n               \
-        \ \"prefab\",\n                \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Texture\",\n                \"\
+        Model\",\n                \"Audio\",\n                \"Behavior\",\n                \"Bundle\",\n               \
+        \ \"Prefab\",\n                \"Other\"\n            ],\n            \"description\": \"Type classification for assets\"\
         \n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"minLength\": 1,\n       \
         \     \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's
         stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available
@@ -529,15 +529,15 @@ paths:
         : \"Timestamp when the asset was created\"\n                },\n                \"updatedAt\": {\n               \
         \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
         \"Timestamp when the asset was last updated\"\n                }\n            }\n        },\n        \"AssetType\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"texture\",\n                \"\
-        model\",\n                \"audio\",\n                \"behavior\",\n                \"bundle\",\n               \
-        \ \"prefab\",\n                \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Texture\",\n                \"\
+        Model\",\n                \"Audio\",\n                \"Behavior\",\n                \"Bundle\",\n               \
+        \ \"Prefab\",\n                \"Other\"\n            ],\n            \"description\": \"Type classification for assets\"\
         \n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"minLength\": 1,\n       \
         \     \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's
         stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available
         across all realms.\\n\"\n        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n        \
-        \    \"enum\": [\n                \"pending\",\n                \"processing\",\n                \"complete\",\n \
-        \               \"failed\"\n            ],\n            \"description\": \"Asset processing pipeline status\"\n  \
+        \    \"enum\": [\n                \"Pending\",\n                \"Processing\",\n                \"Complete\",\n \
+        \               \"Failed\"\n            ],\n            \"description\": \"Asset processing pipeline status\"\n  \
         \      }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Search assets by tags, type, or realm\",\n    \"description\": \"Search
         assets using various filters with pagination.\\nAll filters are optional and combine with AND logic.\\n\",\n    \"\
@@ -603,7 +603,7 @@ paths:
         \    \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's
         stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available
         across all realms.\\n\"\n        },\n        \"CompressionType\": {\n            \"type\": \"string\",\n         \
-        \   \"enum\": [\n                \"lz4\",\n                \"lzma\",\n                \"none\"\n            ],\n \
+        \   \"enum\": [\n                \"Lz4\",\n                \"Lzma\",\n                \"None\"\n            ],\n \
         \           \"description\": \"Compression algorithm for bundles\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateBundleResponse\"\
         ,\n    \"$defs\": {\n        \"CreateBundleResponse\": {\n            \"description\": \"Response with bundle creation
@@ -615,8 +615,8 @@ paths:
         ,\n                    \"description\": \"Bundle creation status\"\n                },\n                \"estimatedSize\"\
         : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
         description\": \"Estimated bundle size in bytes\"\n                }\n            }\n        },\n        \"BundleStatus\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"queued\",\n                \"processing\"\
-        ,\n                \"ready\",\n                \"failed\",\n                \"cancelled\"\n            ],\n      \
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Queued\",\n                \"Processing\"\
+        ,\n                \"Ready\",\n                \"Failed\",\n                \"Cancelled\"\n            ],\n      \
         \      \"description\": \"Bundle processing status:\\n- queued: Bundle creation is queued for processing\\n- processing:
         Bundle is being processed\\n- ready: Bundle is ready for download\\n- failed: Bundle creation failed\\n- cancelled:
         Bundle creation was cancelled\\n\"\n        }\n    }\n}"
@@ -660,7 +660,7 @@ paths:
         \                },\n                \"format\": {\n                    \"$ref\": \"#/$defs/BundleFormat\",\n    \
         \                \"description\": \"Desired download format (bannou or zip)\"\n                }\n            }\n\
         \        },\n        \"BundleFormat\": {\n            \"type\": \"string\",\n            \"enum\": [\n           \
-        \     \"bannou\",\n                \"zip\"\n            ],\n            \"description\": \"Bundle file format\"\n\
+        \     \"Bannou\",\n                \"Zip\"\n            ],\n            \"description\": \"Bundle file format\"\n\
         \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BundleWithDownloadUrl\"\
         ,\n    \"$defs\": {\n        \"BundleWithDownloadUrl\": {\n            \"description\": \"Bundle metadata combined
@@ -682,8 +682,8 @@ paths:
         : \"integer\",\n                    \"description\": \"Number of assets contained in the bundle\"\n              \
         \  },\n                \"fromCache\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
         : \"True if ZIP format was served from conversion cache\"\n                }\n            }\n        },\n        \"\
-        BundleFormat\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"bannou\",\n     \
-        \           \"zip\"\n            ],\n            \"description\": \"Bundle file format\"\n        }\n    }\n}"
+        BundleFormat\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Bannou\",\n     \
+        \           \"Zip\"\n            ],\n            \"description\": \"Bundle file format\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get bundle manifest and download URL\",\n    \"description\": \"Retrieve
         bundle metadata and generate a pre-signed download URL.\\nSupports both native .bannou format and ZIP conversion (cached).\\\
         n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getBundle\"\
@@ -879,8 +879,8 @@ paths:
         \                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AssetConflict\"\
         \n                    },\n                    \"description\": \"Present if creation failed due to asset conflicts\"\
         \n                }\n            }\n        },\n        \"BundleStatus\": {\n            \"type\": \"string\",\n \
-        \           \"enum\": [\n                \"queued\",\n                \"processing\",\n                \"ready\",\n\
-        \                \"failed\",\n                \"cancelled\"\n            ],\n            \"description\": \"Bundle
+        \           \"enum\": [\n                \"Queued\",\n                \"Processing\",\n                \"Ready\",\n\
+        \                \"Failed\",\n                \"Cancelled\"\n            ],\n            \"description\": \"Bundle
         processing status:\\n- queued: Bundle creation is queued for processing\\n- processing: Bundle is being processed\\
         n- ready: Bundle is ready for download\\n- failed: Bundle creation failed\\n- cancelled: Bundle creation was cancelled\\\
         n\"\n        },\n        \"SourceBundleReference\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -990,8 +990,8 @@ paths:
         \                \"processingTimeMs\": {\n                    \"type\": \"integer\",\n                    \"format\"\
         : \"int64\",\n                    \"nullable\": true,\n                    \"description\": \"Total processing time
         in milliseconds (when complete)\"\n                }\n            }\n        },\n        \"BundleStatus\": {\n   \
-        \         \"type\": \"string\",\n            \"enum\": [\n                \"queued\",\n                \"processing\"\
-        ,\n                \"ready\",\n                \"failed\",\n                \"cancelled\"\n            ],\n      \
+        \         \"type\": \"string\",\n            \"enum\": [\n                \"Queued\",\n                \"Processing\"\
+        ,\n                \"Ready\",\n                \"Failed\",\n                \"Cancelled\"\n            ],\n      \
         \      \"description\": \"Bundle processing status:\\n- queued: Bundle creation is queued for processing\\n- processing:
         Bundle is being processed\\n- ready: Bundle is ready for download\\n- failed: Bundle creation failed\\n- cancelled:
         Bundle creation was cancelled\\n\"\n        },\n        \"SourceBundleReference\": {\n            \"type\": \"object\"\
@@ -1006,11 +1006,11 @@ paths:
         IDs contributed from this source bundle\"\n                },\n                \"contentHash\": {\n              \
         \      \"type\": \"string\",\n                    \"description\": \"Hash of source bundle at composition time (for
         integrity verification)\"\n                }\n            }\n        },\n        \"MetabundleErrorCode\": {\n    \
-        \        \"type\": \"string\",\n            \"enum\": [\n                \"SOURCE_BUNDLE_NOT_FOUND\",\n          \
-        \      \"SOURCE_BUNDLE_NOT_READY\",\n                \"STANDALONE_ASSET_NOT_FOUND\",\n                \"STANDALONE_ASSET_NOT_READY\"\
-        ,\n                \"REALM_MISMATCH\",\n                \"ASSET_CONFLICT\",\n                \"STORAGE_ERROR\",\n\
-        \                \"TIMEOUT\",\n                \"CANCELLED\",\n                \"INTERNAL_ERROR\"\n            ],\n\
-        \            \"description\": \"Error codes for metabundle creation failures\"\n        }\n    }\n}"
+        \        \"type\": \"string\",\n            \"enum\": [\n                \"SourceBundleNotFound\",\n             \
+        \   \"SourceBundleNotReady\",\n                \"StandaloneAssetNotFound\",\n                \"StandaloneAssetNotReady\"\
+        ,\n                \"RealmMismatch\",\n                \"AssetConflict\",\n                \"StorageError\",\n   \
+        \             \"Timeout\",\n                \"Cancelled\",\n                \"InternalError\"\n            ],\n  \
+        \          \"description\": \"Error codes for metabundle creation failures\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get async metabundle job status\",\n    \"description\": \"Poll the status
         of an async metabundle creation job.\\nUse the jobId returned from createMetabundle when status was 'queued'.\\n\\
         nClients can either poll this endpoint or wait for the\\nMetabundleCreationCompleteEvent via WebSocket for completion
@@ -1062,8 +1062,8 @@ paths:
         \           \"description\": \"Job identifier\"\n                },\n                \"status\": {\n             \
         \       \"$ref\": \"#/$defs/BundleStatus\",\n                    \"description\": \"Current job status after cancellation
         attempt\"\n                }\n            }\n        },\n        \"BundleStatus\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"queued\",\n                \"processing\",\n                \"ready\"\
-        ,\n                \"failed\",\n                \"cancelled\"\n            ],\n            \"description\": \"Bundle
+        ,\n            \"enum\": [\n                \"Queued\",\n                \"Processing\",\n                \"Ready\"\
+        ,\n                \"Failed\",\n                \"Cancelled\"\n            ],\n            \"description\": \"Bundle
         processing status:\\n- queued: Bundle creation is queued for processing\\n- processing: Bundle is being processed\\
         n- ready: Bundle is ready for download\\n- failed: Bundle creation failed\\n- cancelled: Bundle creation was cancelled\\\
         n\"\n        }\n    }\n}"
@@ -1156,8 +1156,8 @@ paths:
         \           },\n                \"assetsProvided\": {\n                    \"type\": \"array\",\n                \
         \    \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
         : \"Which of the requested assets this bundle provides\"\n                }\n            }\n        },\n        \"\
-        BundleType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"source\",\n       \
-        \         \"metabundle\"\n            ],\n            \"description\": \"Bundle category:\\n- source: Original bundle
+        BundleType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Source\",\n       \
+        \         \"Metabundle\"\n            ],\n            \"description\": \"Bundle category:\\n- source: Original bundle
         (uploaded or server-created from assets)\\n- metabundle: Composed from other bundles server-side\\n\"\n        },\n\
         \        \"ResolvedAsset\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n \
         \           \"description\": \"A standalone asset selected for download\",\n            \"required\": [\n        \
@@ -1237,7 +1237,7 @@ paths:
         description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name
         property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available across
         all realms.\\n\"\n        },\n        \"BundleType\": {\n            \"type\": \"string\",\n            \"enum\":
-        [\n                \"source\",\n                \"metabundle\"\n            ],\n            \"description\": \"Bundle
+        [\n                \"Source\",\n                \"Metabundle\"\n            ],\n            \"description\": \"Bundle
         category:\\n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed from other
         bundles server-side\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryBundlesByAssetResponse\"\
@@ -1268,7 +1268,7 @@ paths:
         bundles.\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n    \
         \                \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"When the bundle was created\"\n                }\n            }\n        },\n        \"BundleType\": {\n     \
-        \       \"type\": \"string\",\n            \"enum\": [\n                \"source\",\n                \"metabundle\"\
+        \       \"type\": \"string\",\n            \"enum\": [\n                \"Source\",\n                \"Metabundle\"\
         \n            ],\n            \"description\": \"Bundle category:\\n- source: Original bundle (uploaded or server-created
         from assets)\\n- metabundle: Composed from other bundles server-side\\n\"\n        },\n        \"GameRealm\": {\n\
         \            \"type\": \"string\",\n            \"minLength\": 1,\n            \"description\": \"Realm stub name
@@ -1410,7 +1410,7 @@ paths:
         \          \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"When soft-deleted bundle will be permanently removed (null for permanent deletes)\"\n                }\n     \
         \       }\n        },\n        \"DeletionStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
-        \                \"deleted\",\n                \"permanently_deleted\"\n            ],\n            \"description\"\
+        \                \"Deleted\",\n                \"PermanentlyDeleted\"\n            ],\n            \"description\"\
         : \"Result of a deletion operation:\\n- deleted: Soft-deleted (within retention period, can be restored)\\n- permanently_deleted:
         Permanently removed (unrecoverable)\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Soft-delete a bundle\",\n    \"description\": \"Soft-delete a bundle, marking
@@ -1470,8 +1470,8 @@ paths:
         : \"Current bundle lifecycle status after restoration (should be \\\"active\\\")\"\n                },\n         \
         \       \"restoredFromVersion\": {\n                    \"type\": \"integer\",\n                    \"description\"\
         : \"Version number the bundle was restored from\"\n                }\n            }\n        },\n        \"BundleLifecycle\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"active\",\n                \"deleted\"\
-        ,\n                \"processing\"\n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active:
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Active\",\n                \"Deleted\"\
+        ,\n                \"Processing\"\n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active:
         Bundle is available for use\\n- deleted: Bundle has been soft-deleted (within retention period)\\n- processing: Bundle
         is being processed (metabundle creation)\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Restore a soft-deleted bundle\",\n    \"description\": \"Restore a bundle
@@ -1554,20 +1554,20 @@ paths:
         \                \"includeDeleted\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
         : false,\n                    \"description\": \"Include soft-deleted bundles in results\"\n                }\n  \
         \          }\n        },\n        \"BundleLifecycle\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"active\",\n                \"deleted\",\n                \"processing\"\n            ],\n \
+        : [\n                \"Active\",\n                \"Deleted\",\n                \"Processing\"\n            ],\n \
         \           \"description\": \"Bundle lifecycle status:\\n- active: Bundle is available for use\\n- deleted: Bundle
         has been soft-deleted (within retention period)\\n- processing: Bundle is being processed (metabundle creation)\\\
         n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"minLength\": 1,\n    \
         \        \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's
         stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available
         across all realms.\\n\"\n        },\n        \"BundleType\": {\n            \"type\": \"string\",\n            \"\
-        enum\": [\n                \"source\",\n                \"metabundle\"\n            ],\n            \"description\"\
+        enum\": [\n                \"Source\",\n                \"Metabundle\"\n            ],\n            \"description\"\
         : \"Bundle category:\\n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed
         from other bundles server-side\\n\"\n        },\n        \"BundleSortField\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"created_at\",\n                \"updated_at\",\n                \"name\"\
-        ,\n                \"size\"\n            ],\n            \"description\": \"Fields available for sorting bundle query
+        ,\n            \"enum\": [\n                \"CreatedAt\",\n                \"UpdatedAt\",\n                \"Name\"\
+        ,\n                \"Size\"\n            ],\n            \"description\": \"Fields available for sorting bundle query
         results\"\n        },\n        \"SortOrder\": {\n            \"type\": \"string\",\n            \"enum\": [\n    \
-        \            \"asc\",\n                \"desc\"\n            ],\n            \"description\": \"Sort direction for
+        \            \"Asc\",\n                \"Desc\"\n            ],\n            \"description\": \"Sort direction for
         query results\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryBundlesResponse\"\
         ,\n    \"$defs\": {\n        \"QueryBundlesResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -1616,14 +1616,14 @@ paths:
         deletedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
         \              \"nullable\": true,\n                    \"description\": \"When the bundle was soft-deleted (null
         if active)\"\n                }\n            }\n        },\n        \"BundleType\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"source\",\n                \"metabundle\"\n            ],\n        \
+        ,\n            \"enum\": [\n                \"Source\",\n                \"Metabundle\"\n            ],\n        \
         \    \"description\": \"Bundle category:\\n- source: Original bundle (uploaded or server-created from assets)\\n-
         metabundle: Composed from other bundles server-side\\n\"\n        },\n        \"GameRealm\": {\n            \"type\"\
         : \"string\",\n            \"minLength\": 1,\n            \"description\": \"Realm stub name (lowercase string identifier)
         that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the
         Realm service.\\nNull for assets that are available across all realms.\\n\"\n        },\n        \"BundleLifecycle\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"active\",\n                \"deleted\"\
-        ,\n                \"processing\"\n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active:
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Active\",\n                \"Deleted\"\
+        ,\n                \"Processing\"\n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active:
         Bundle is available for use\\n- deleted: Bundle has been soft-deleted (within retention period)\\n- processing: Bundle
         is being processed (metabundle creation)\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query bundles with advanced filters\",\n    \"description\": \"Query bundles
@@ -1740,13 +1740,13 @@ paths:
         string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
         \       \"description\": \"When the bundle was soft-deleted (null if active)\"\n                }\n            }\n\
         \        },\n        \"BundleType\": {\n            \"type\": \"string\",\n            \"enum\": [\n             \
-        \   \"source\",\n                \"metabundle\"\n            ],\n            \"description\": \"Bundle category:\\
+        \   \"Source\",\n                \"Metabundle\"\n            ],\n            \"description\": \"Bundle category:\\
         n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed from other bundles server-side\\\
         n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"minLength\": 1,\n    \
         \        \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's
         stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available
         across all realms.\\n\"\n        },\n        \"BundleLifecycle\": {\n            \"type\": \"string\",\n         \
-        \   \"enum\": [\n                \"active\",\n                \"deleted\",\n                \"processing\"\n     \
+        \   \"enum\": [\n                \"Active\",\n                \"Deleted\",\n                \"Processing\"\n     \
         \       ],\n            \"description\": \"Bundle lifecycle status:\\n- active: Bundle is available for use\\n- deleted:
         Bundle has been soft-deleted (within retention period)\\n- processing: Bundle is being processed (metabundle creation)\\\
         n\"\n        }\n    }\n}"
@@ -1848,14 +1848,14 @@ paths:
         \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
         \      \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset was last updated\"\
         \n                }\n            }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n    \
-        \        \"enum\": [\n                \"texture\",\n                \"model\",\n                \"audio\",\n     \
-        \           \"behavior\",\n                \"bundle\",\n                \"prefab\",\n                \"other\"\n \
+        \        \"enum\": [\n                \"Texture\",\n                \"Model\",\n                \"Audio\",\n     \
+        \           \"Behavior\",\n                \"Bundle\",\n                \"Prefab\",\n                \"Other\"\n \
         \           ],\n            \"description\": \"Type classification for assets\"\n        },\n        \"GameRealm\"\
         : {\n            \"type\": \"string\",\n            \"minLength\": 1,\n            \"description\": \"Realm stub name
         (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\
         \", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available across all realms.\\n\"\n      \
         \  },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n             \
-        \   \"pending\",\n                \"processing\",\n                \"complete\",\n                \"failed\"\n   \
+        \   \"Pending\",\n                \"Processing\",\n                \"Complete\",\n                \"Failed\"\n   \
         \         ],\n            \"description\": \"Asset processing pipeline status\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Batch asset metadata lookup\",\n    \"description\": \"Retrieve metadata
         for multiple assets in a single request.\\nOptionally includes pre-signed download URLs.\\nMaximum 100 asset IDs per
@@ -1866,13 +1866,13 @@ components:
     AssetType:
       type: string
       enum:
-      - texture
-      - model
-      - audio
-      - behavior
-      - bundle
-      - prefab
-      - other
+      - Texture
+      - Model
+      - Audio
+      - Behavior
+      - Bundle
+      - Prefab
+      - Other
       description: Type classification for assets
     GameRealm:
       type: string
@@ -1884,29 +1884,29 @@ components:
     ProcessingStatus:
       type: string
       enum:
-      - pending
-      - processing
-      - complete
-      - failed
+      - Pending
+      - Processing
+      - Complete
+      - Failed
       description: Asset processing pipeline status
     CompressionType:
       type: string
       enum:
-      - lz4
-      - lzma
-      - none
+      - Lz4
+      - Lzma
+      - None
       description: Compression algorithm for bundles
     BundleFormat:
       type: string
       enum:
-      - bannou
-      - zip
+      - Bannou
+      - Zip
       description: Bundle file format
     BundleType:
       type: string
       enum:
-      - source
-      - metabundle
+      - Source
+      - Metabundle
       description: |
         Bundle category:
         - source: Original bundle (uploaded or server-created from assets)
@@ -1914,8 +1914,8 @@ components:
     DeletionStatus:
       type: string
       enum:
-      - deleted
-      - permanently_deleted
+      - Deleted
+      - PermanentlyDeleted
       description: |
         Result of a deletion operation:
         - deleted: Soft-deleted (within retention period, can be restored)
@@ -1923,32 +1923,32 @@ components:
     BundleSortField:
       type: string
       enum:
-      - created_at
-      - updated_at
-      - name
-      - size
+      - CreatedAt
+      - UpdatedAt
+      - Name
+      - Size
       description: Fields available for sorting bundle query results
     SortOrder:
       type: string
       enum:
-      - asc
-      - desc
+      - Asc
+      - Desc
       description: Sort direction for query results
     StorageProvider:
       type: string
       enum:
-      - minio
-      - s3
-      - r2
-      - azure
-      - filesystem
+      - Minio
+      - S3
+      - R2
+      - Azure
+      - Filesystem
       description: Storage backend type for asset persistence
     ProcessingMode:
       type: string
       enum:
-      - api
-      - worker
-      - both
+      - Api
+      - Worker
+      - Both
       description: |
         Service mode for asset processing:
         - api: Only handle API requests (no processing)
@@ -1957,63 +1957,63 @@ components:
     AudioOutputFormat:
       type: string
       enum:
-      - mp3
-      - opus
-      - aac
+      - Mp3
+      - Opus
+      - Aac
       description: Default audio transcoding output format
     ProcessingType:
       type: string
       enum:
-      - mipmaps
-      - lod_generation
-      - transcode
-      - compression
-      - validation
-      - behavior_compile
+      - Mipmaps
+      - LodGeneration
+      - Transcode
+      - Compression
+      - Validation
+      - BehaviorCompile
       description: Type of processing to be performed on an asset
     UploadErrorCode:
       type: string
       enum:
-      - VALIDATION_FAILED
-      - HASH_MISMATCH
-      - SIZE_EXCEEDED
-      - STORAGE_ERROR
-      - TIMEOUT
+      - ValidationFailed
+      - HashMismatch
+      - SizeExceeded
+      - StorageError
+      - Timeout
       description: Error codes for asset upload failures
     ProcessingErrorCode:
       type: string
       enum:
-      - PROCESSING_FAILED
-      - INVALID_FORMAT
-      - RESOURCE_EXHAUSTED
-      - TIMEOUT
-      - PROCESSOR_UNAVAILABLE
+      - ProcessingFailed
+      - InvalidFormat
+      - ResourceExhausted
+      - Timeout
+      - ProcessorUnavailable
       description: Error codes for asset processing failures
     ValidationErrorCode:
       type: string
       enum:
-      - INVALID_ARCHIVE
-      - MISSING_MANIFEST
-      - INVALID_MANIFEST
-      - HASH_MISMATCH
-      - PATH_TRAVERSAL
-      - SIZE_EXCEEDED
-      - DUPLICATE_ASSET_ID
-      - MISSING_DEPENDENCY
+      - InvalidArchive
+      - MissingManifest
+      - InvalidManifest
+      - HashMismatch
+      - PathTraversal
+      - SizeExceeded
+      - DuplicateAssetId
+      - MissingDependency
       description: Error codes for bundle validation failures
     MetabundleErrorCode:
       type: string
       enum:
-      - SOURCE_BUNDLE_NOT_FOUND
-      - SOURCE_BUNDLE_NOT_READY
-      - STANDALONE_ASSET_NOT_FOUND
-      - STANDALONE_ASSET_NOT_READY
-      - REALM_MISMATCH
-      - ASSET_CONFLICT
-      - STORAGE_ERROR
-      - TIMEOUT
-      - CANCELLED
-      - INTERNAL_ERROR
+      - SourceBundleNotFound
+      - SourceBundleNotReady
+      - StandaloneAssetNotFound
+      - StandaloneAssetNotReady
+      - RealmMismatch
+      - AssetConflict
+      - StorageError
+      - Timeout
+      - Cancelled
+      - InternalError
       description: Error codes for metabundle creation failures
     ProcessingOutput:
       type: object
@@ -3219,11 +3219,11 @@ components:
     BundleStatus:
       type: string
       enum:
-      - queued
-      - processing
-      - ready
-      - failed
-      - cancelled
+      - Queued
+      - Processing
+      - Ready
+      - Failed
+      - Cancelled
       description: |
         Bundle processing status:
         - queued: Bundle creation is queued for processing
@@ -3234,9 +3234,9 @@ components:
     BundleLifecycle:
       type: string
       enum:
-      - active
-      - deleted
-      - processing
+      - Active
+      - Deleted
+      - Processing
       description: |
         Bundle lifecycle status:
         - active: Bundle is available for use

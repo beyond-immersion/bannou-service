@@ -48,7 +48,7 @@ public static class LeaderboardPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/leaderboard/definition/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createLeaderboardDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class LeaderboardPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/leaderboard/definition/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateLeaderboardDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class LeaderboardPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/leaderboard/definition/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteLeaderboardDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class LeaderboardPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/leaderboard/rank/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getEntityRank",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class LeaderboardPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/leaderboard/rank/top",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getTopRanks",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class LeaderboardPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/leaderboard/rank/around",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getRanksAround",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class LeaderboardPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/leaderboard/season/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createSeason",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class LeaderboardPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/leaderboard/season/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getSeason",
             Permissions = new List<PermissionRequirement>
             {

@@ -54,9 +54,9 @@ internal class PersonalityData
 internal class CombatPreferencesData
 {
     public Guid CharacterId { get; set; }
-    public CombatStyle Style { get; set; } = CombatStyle.BALANCED;
-    public PreferredRange PreferredRange { get; set; } = PreferredRange.MEDIUM;
-    public GroupRole GroupRole { get; set; } = GroupRole.FRONTLINE;
+    public CombatStyle Style { get; set; } = CombatStyle.Balanced;
+    public PreferredRange PreferredRange { get; set; } = PreferredRange.Medium;
+    public GroupRole GroupRole { get; set; } = GroupRole.Frontline;
     public float RiskTolerance { get; set; } = 0.5f;
     public float RetreatThreshold { get; set; } = 0.3f;
     public bool ProtectAllies { get; set; } = true;

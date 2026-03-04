@@ -906,25 +906,25 @@ public enum CompileBehaviorRequestBehaviorCategory
 public enum ValidateGoapPlanResponseReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    [System.Runtime.Serialization.EnumMember(Value = @"None")]
     None = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"preconditionInvalidated")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PreconditionInvalidated")]
     PreconditionInvalidated = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"actionFailed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ActionFailed")]
     ActionFailed = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"betterGoalAvailable")]
+    [System.Runtime.Serialization.EnumMember(Value = @"BetterGoalAvailable")]
     BetterGoalAvailable = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"planCompleted")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PlanCompleted")]
     PlanCompleted = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"goalAlreadySatisfied")]
+    [System.Runtime.Serialization.EnumMember(Value = @"GoalAlreadySatisfied")]
     GoalAlreadySatisfied = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"suboptimalPlan")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SuboptimalPlan")]
     SuboptimalPlan = 6,
 
 }
@@ -935,13 +935,13 @@ public enum ValidateGoapPlanResponseReason
 public enum ValidateGoapPlanResponseSuggestedAction
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"continue")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Continue")]
     Continue = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"replan")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Replan")]
     Replan = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"abort")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Abort")]
     Abort = 2,
 
 }

@@ -48,7 +48,7 @@ public static class AnalyticsPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/analytics/summary/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getEntitySummary",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class AnalyticsPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/analytics/summary/query",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryEntitySummaries",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class AnalyticsPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/analytics/rating/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getSkillRating",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class AnalyticsPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/analytics/controller-history/query",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryControllerHistory",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class AnalyticsPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/analytics/controller-history/cleanup",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cleanupControllerHistory",
             Permissions = new List<PermissionRequirement>
             {

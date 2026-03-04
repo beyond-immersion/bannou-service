@@ -324,7 +324,7 @@ public partial class ResourceService : IResourceService
         {
             ResourceType = body.ResourceType,
             SourceType = body.SourceType,
-            OnDeleteAction = body.OnDeleteAction ?? OnDeleteAction.CASCADE,
+            OnDeleteAction = body.OnDeleteAction ?? OnDeleteAction.Cascade,
             ServiceName = serviceName,
             CallbackEndpoint = body.CallbackEndpoint,
             PayloadTemplate = body.PayloadTemplate,
@@ -362,14 +362,14 @@ public partial class ResourceService : IResourceService
         // Get callbacks early to determine RESTRICT vs CASCADE/DETACH behavior
         var callbacks = await GetCleanupCallbacksAsync(body.ResourceType, cancellationToken);
         var restrictedSourceTypes = callbacks
-            .Where(c => c.OnDeleteAction == OnDeleteAction.RESTRICT)
+            .Where(c => c.OnDeleteAction == OnDeleteAction.Restrict)
             .Select(c => c.SourceType)
             .ToHashSet();
 
         // Handle dry run - simulate full pre-check without executing callbacks
         if (body.DryRun == true)
         {
-            var hasRestrict = callbacks.Any(c => c.OnDeleteAction == OnDeleteAction.RESTRICT);
+            var hasRestrict = callbacks.Any(c => c.OnDeleteAction == OnDeleteAction.Restrict);
 
             // Run the same pre-check that real execution does
             var (dryCheckStatus, dryCheckResult) = await CheckReferencesAsync(
@@ -490,7 +490,7 @@ public partial class ResourceService : IResourceService
         {
             // Check if these refs have CASCADE/DETACH callbacks that will handle them
             var handledSourceTypes = callbacks
-                .Where(c => c.OnDeleteAction != OnDeleteAction.RESTRICT)
+                .Where(c => c.OnDeleteAction != OnDeleteAction.Restrict)
                 .Select(c => c.SourceType)
                 .ToHashSet();
 
@@ -596,7 +596,7 @@ public partial class ResourceService : IResourceService
 
         // Only execute CASCADE and DETACH callbacks (RESTRICT callbacks block, not execute)
         var executableCallbacks = callbacks
-            .Where(c => c.OnDeleteAction != OnDeleteAction.RESTRICT)
+            .Where(c => c.OnDeleteAction != OnDeleteAction.Restrict)
             .ToList();
 
         var context = new Dictionary<string, object?>
@@ -675,7 +675,7 @@ public partial class ResourceService : IResourceService
 
         // Check if we should abort due to failures
         var failedCallbacks = callbackResults.Where(r => !r.Success).ToList();
-        if (failedCallbacks.Count > 0 && cleanupPolicy == CleanupPolicy.ALL_REQUIRED)
+        if (failedCallbacks.Count > 0 && cleanupPolicy == CleanupPolicy.AllRequired)
         {
             stopwatch.Stop();
             return (StatusCodes.OK, new ExecuteCleanupResponse
@@ -1047,7 +1047,7 @@ public partial class ResourceService : IResourceService
                         cancellationToken);
 
                     // Abort if policy requires all callbacks
-                    if (compressionPolicy == CompressionPolicy.ALL_REQUIRED)
+                    if (compressionPolicy == CompressionPolicy.AllRequired)
                     {
                         stopwatch.Stop();
                         return (StatusCodes.OK, new ExecuteCompressResponse
@@ -1100,7 +1100,7 @@ public partial class ResourceService : IResourceService
                     },
                     cancellationToken);
 
-                if (compressionPolicy == CompressionPolicy.ALL_REQUIRED)
+                if (compressionPolicy == CompressionPolicy.AllRequired)
                 {
                     stopwatch.Stop();
                     return (StatusCodes.OK, new ExecuteCompressResponse
@@ -1883,7 +1883,7 @@ public partial class ResourceService : IResourceService
                         body.ResourceType, body.ResourceId);
 
                     // Abort if policy requires all callbacks
-                    if (compressionPolicy == CompressionPolicy.ALL_REQUIRED)
+                    if (compressionPolicy == CompressionPolicy.AllRequired)
                     {
                         stopwatch.Stop();
                         return (StatusCodes.OK, new ExecuteSnapshotResponse
@@ -1918,7 +1918,7 @@ public partial class ResourceService : IResourceService
                     DurationMs = (int)callbackStopwatch.ElapsedMilliseconds
                 });
 
-                if (compressionPolicy == CompressionPolicy.ALL_REQUIRED)
+                if (compressionPolicy == CompressionPolicy.AllRequired)
                 {
                     stopwatch.Stop();
                     return (StatusCodes.OK, new ExecuteSnapshotResponse

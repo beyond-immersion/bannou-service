@@ -115,7 +115,7 @@ public sealed class LocationDataCache : ILocationDataCache
             if (ancestorsResponse?.Locations is not null)
             {
                 var regionAncestor = ancestorsResponse.Locations
-                    .FirstOrDefault(a => a.LocationType == LocationType.REGION);
+                    .FirstOrDefault(a => a.LocationType == LocationType.Region);
                 regionCode = regionAncestor?.Code;
             }
 

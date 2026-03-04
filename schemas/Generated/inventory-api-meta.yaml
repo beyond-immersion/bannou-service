@@ -128,16 +128,15 @@ paths:
         \                    \"nullable\": true,\n                    \"description\": \"Game-specific container data. Client-only
         metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n\
         \        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Type of entity that owns this container\",\n            \"enum\": [\n                \"character\",\n            \
-        \    \"account\",\n                \"location\",\n                \"vehicle\",\n                \"guild\",\n     \
-        \           \"escrow\",\n                \"mail\",\n                \"other\"\n            ]\n        },\n       \
+        Type of entity that owns this container\",\n            \"enum\": [\n                \"Character\",\n            \
+        \    \"Account\",\n                \"Location\",\n                \"Vehicle\",\n                \"Guild\",\n     \
+        \           \"Escrow\",\n                \"Mail\",\n                \"Other\"\n            ]\n        },\n       \
         \ \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n            \"description\": \"Container capacity
-        constraint type\",\n            \"enum\": [\n                \"slot_only\",\n                \"weight_only\",\n  \
-        \              \"slot_and_weight\",\n                \"grid\",\n                \"volumetric\",\n                \"\
-        unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n            \"type\": \"string\",\n   \
-        \         \"description\": \"How container weight propagates to parent\",\n            \"enum\": [\n             \
-        \   \"none\",\n                \"self_only\",\n                \"self_plus_contents\"\n            ]\n        }\n\
-        \    }\n}"
+        constraint type\",\n            \"enum\": [\n                \"SlotOnly\",\n                \"WeightOnly\",\n    \
+        \            \"SlotAndWeight\",\n                \"Grid\",\n                \"Volumetric\",\n                \"Unlimited\"\
+        \n            ]\n        },\n        \"WeightContribution\": {\n            \"type\": \"string\",\n            \"\
+        description\": \"How container weight propagates to parent\",\n            \"enum\": [\n                \"None\",\n\
+        \                \"SelfOnly\",\n                \"SelfPlusContents\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContainerResponse\"\
         ,\n    \"$defs\": {\n        \"ContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Container details\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
@@ -213,14 +212,14 @@ paths:
         date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification\"\n\
         \                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
-        \      \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n\
-        \                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n \
+        \      \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n\
+        \                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n \
         \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"slot_only\"\
-        ,\n                \"weight_only\",\n                \"slot_and_weight\",\n                \"grid\",\n           \
-        \     \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
+        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"SlotOnly\"\
+        ,\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n                \"Grid\",\n              \
+        \  \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"How container weight propagates to parent\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"self_only\",\n                \"self_plus_contents\"\
+        \            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"SelfPlusContents\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new container\",\n    \"description\": \"Creates a new container
         with the specified constraint model and capacity.\\nContainer types are game-defined strings (e.g., \\\"inventory\\\
@@ -341,14 +340,14 @@ paths:
         date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification\"\n\
         \                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
-        \      \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n\
-        \                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n \
+        \      \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n\
+        \                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n \
         \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"slot_only\"\
-        ,\n                \"weight_only\",\n                \"slot_and_weight\",\n                \"grid\",\n           \
-        \     \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
+        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"SlotOnly\"\
+        ,\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n                \"Grid\",\n              \
+        \  \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"How container weight propagates to parent\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"self_only\",\n                \"self_plus_contents\"\
+        \            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"SelfPlusContents\"\
         \n            ]\n        },\n        \"ContainerItem\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Item in a container\",\n            \"additionalProperties\": false,\n            \"required\": [\n          \
         \      \"instanceId\",\n                \"templateId\",\n                \"quantity\"\n            ],\n          \
@@ -418,12 +417,12 @@ paths:
         type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
         \            \"description\": \"Realm for new container\"\n                }\n            }\n        },\n        \"\
         ContainerOwnerType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns
-        this container\",\n            \"enum\": [\n                \"character\",\n                \"account\",\n       \
-        \         \"location\",\n                \"vehicle\",\n                \"guild\",\n                \"escrow\",\n \
-        \               \"mail\",\n                \"other\"\n            ]\n        },\n        \"ContainerConstraintModel\"\
+        this container\",\n            \"enum\": [\n                \"Character\",\n                \"Account\",\n       \
+        \         \"Location\",\n                \"Vehicle\",\n                \"Guild\",\n                \"Escrow\",\n \
+        \               \"Mail\",\n                \"Other\"\n            ]\n        },\n        \"ContainerConstraintModel\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Container capacity constraint type\",\n   \
-        \         \"enum\": [\n                \"slot_only\",\n                \"weight_only\",\n                \"slot_and_weight\"\
-        ,\n                \"grid\",\n                \"volumetric\",\n                \"unlimited\"\n            ]\n    \
+        \         \"enum\": [\n                \"SlotOnly\",\n                \"WeightOnly\",\n                \"SlotAndWeight\"\
+        ,\n                \"Grid\",\n                \"Volumetric\",\n                \"Unlimited\"\n            ]\n    \
         \    }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContainerResponse\"\
         ,\n    \"$defs\": {\n        \"ContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -500,14 +499,14 @@ paths:
         date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification\"\n\
         \                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
-        \      \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n\
-        \                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n \
+        \      \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n\
+        \                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n \
         \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"slot_only\"\
-        ,\n                \"weight_only\",\n                \"slot_and_weight\",\n                \"grid\",\n           \
-        \     \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
+        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"SlotOnly\"\
+        ,\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n                \"Grid\",\n              \
+        \  \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"How container weight propagates to parent\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"self_only\",\n                \"self_plus_contents\"\
+        \            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"SelfPlusContents\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get container or create if not exists\",\n    \"description\": \"Enables
         lazy container creation for character inventories.\\nIf a container doesn't exist for the owner/type combination,
@@ -551,8 +550,8 @@ paths:
         : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by realm\"\n \
         \               }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
-        \      \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n\
-        \                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n \
+        \      \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n\
+        \                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n \
         \           ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListContainersResponse\"\
         ,\n    \"$defs\": {\n        \"ListContainersResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -636,14 +635,14 @@ paths:
         date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification\"\n\
         \                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
-        \      \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n\
-        \                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n \
+        \      \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n\
+        \                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n \
         \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"slot_only\"\
-        ,\n                \"weight_only\",\n                \"slot_and_weight\",\n                \"grid\",\n           \
-        \     \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
+        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"SlotOnly\"\
+        ,\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n                \"Grid\",\n              \
+        \  \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"How container weight propagates to parent\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"self_only\",\n                \"self_plus_contents\"\
+        \            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"SelfPlusContents\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List containers for owner\",\n    \"description\": \"Returns all containers
         owned by the specified entity.\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"deprecated\": false,\n  \
@@ -779,14 +778,14 @@ paths:
         date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification\"\n\
         \                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
-        \      \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n\
-        \                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n \
+        \      \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n\
+        \                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n \
         \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"slot_only\"\
-        ,\n                \"weight_only\",\n                \"slot_and_weight\",\n                \"grid\",\n           \
-        \     \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
+        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"SlotOnly\"\
+        ,\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n                \"Grid\",\n              \
+        \  \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"How container weight propagates to parent\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"self_only\",\n                \"self_plus_contents\"\
+        \            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"SelfPlusContents\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update container properties\",\n    \"description\": \"Updates mutable
         container properties like capacity limits and filtering.\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"\
@@ -831,8 +830,8 @@ paths:
         \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                \
         \    \"description\": \"Container to transfer items to (required if itemHandling is transfer)\"\n                }\n\
         \            }\n        },\n        \"ItemHandling\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How to handle items when deleting a container\",\n            \"enum\": [\n                \"destroy\",\n    \
-        \            \"transfer\",\n                \"error\"\n            ]\n        }\n    }\n}"
+        : \"How to handle items when deleting a container\",\n            \"enum\": [\n                \"Destroy\",\n    \
+        \            \"Transfer\",\n                \"Error\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteContainerResponse\"\
         ,\n    \"$defs\": {\n        \"DeleteContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after deleting container. HTTP 200 confirms deletion.\",\n            \"additionalProperties\": false,\n\
@@ -1227,9 +1226,9 @@ paths:
         \                    \"default\": 50,\n                    \"minimum\": 1,\n                    \"maximum\": 200,\n\
         \                    \"description\": \"Max results\"\n                }\n            }\n        },\n        \"ContainerOwnerType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns this container\",\n\
-        \            \"enum\": [\n                \"character\",\n                \"account\",\n                \"location\"\
-        ,\n                \"vehicle\",\n                \"guild\",\n                \"escrow\",\n                \"mail\"\
-        ,\n                \"other\"\n            ]\n        }\n    }\n}"
+        \            \"enum\": [\n                \"Character\",\n                \"Account\",\n                \"Location\"\
+        ,\n                \"Vehicle\",\n                \"Guild\",\n                \"Escrow\",\n                \"Mail\"\
+        ,\n                \"Other\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryItemsResponse\"\
         ,\n    \"$defs\": {\n        \"QueryItemsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Query results\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"\
@@ -1290,8 +1289,8 @@ paths:
         type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Template to
         count\"\n                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"\
         string\",\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n  \
-        \              \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\"\
-        ,\n                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n\
+        \              \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\"\
+        ,\n                \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n\
         \            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CountItemsResponse\"\
         ,\n    \"$defs\": {\n        \"CountItemsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -1342,9 +1341,9 @@ paths:
         \  \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ItemRequirement\"\
         \n                    },\n                    \"description\": \"Required items\"\n                }\n           \
         \ }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of entity that owns this container\",\n            \"enum\": [\n                \"character\",\n        \
-        \        \"account\",\n                \"location\",\n                \"vehicle\",\n                \"guild\",\n \
-        \               \"escrow\",\n                \"mail\",\n                \"other\"\n            ]\n        },\n   \
+        : \"Type of entity that owns this container\",\n            \"enum\": [\n                \"Character\",\n        \
+        \        \"Account\",\n                \"Location\",\n                \"Vehicle\",\n                \"Guild\",\n \
+        \               \"Escrow\",\n                \"Mail\",\n                \"Other\"\n            ]\n        },\n   \
         \     \"ItemRequirement\": {\n            \"type\": \"object\",\n            \"description\": \"Required item and
         quantity\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"templateId\"\
         ,\n                \"quantity\"\n            ],\n            \"properties\": {\n                \"templateId\": {\n\
@@ -1415,8 +1414,8 @@ paths:
         ,\n                    \"default\": true,\n                    \"description\": \"Prefer existing stacks\"\n     \
         \           }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\",\n \
         \           \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n             \
-        \   \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n  \
-        \              \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n   \
+        \   \"Character\",\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n  \
+        \              \"Guild\",\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n   \
         \         ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/FindSpaceResponse\"\
         ,\n    \"$defs\": {\n        \"FindSpaceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -1452,55 +1451,55 @@ components:
       type: string
       description: Container capacity constraint type
       enum:
-      - slot_only
-      - weight_only
-      - slot_and_weight
-      - grid
-      - volumetric
-      - unlimited
+      - SlotOnly
+      - WeightOnly
+      - SlotAndWeight
+      - Grid
+      - Volumetric
+      - Unlimited
     ConstraintLimitType:
       type: string
       description: Which specific capacity constraint was reached
       enum:
-      - slots
-      - weight
-      - volume
-      - grid
+      - Slots
+      - Weight
+      - Volume
+      - Grid
     WeightContribution:
       type: string
       description: How container weight propagates to parent
       enum:
-      - none
-      - self_only
-      - self_plus_contents
+      - None
+      - SelfOnly
+      - SelfPlusContents
     ContainerOwnerType:
       type: string
       description: Type of entity that owns this container
       enum:
-      - character
-      - account
-      - location
-      - vehicle
-      - guild
-      - escrow
-      - mail
-      - other
+      - Character
+      - Account
+      - Location
+      - Vehicle
+      - Guild
+      - Escrow
+      - Mail
+      - Other
     ItemHandling:
       type: string
       description: How to handle items when deleting a container
       enum:
-      - destroy
-      - transfer
-      - error
+      - Destroy
+      - Transfer
+      - Error
     InventoryItemChangeType:
       type: string
       description: Type of item change within an inventory container, used as discriminator for client events
       enum:
-      - placed
-      - removed
-      - moved
-      - stacked
-      - split
+      - Placed
+      - Removed
+      - Moved
+      - Stacked
+      - Split
     CreateContainerRequest:
       type: object
       description: Request to create a new container

@@ -38,16 +38,16 @@ using System = global::System;
 public enum Provider
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Google")]
     Google = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Discord")]
     Discord = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Twitch")]
     Twitch = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Steam")]
     Steam = 3,
 
 }
@@ -61,16 +61,16 @@ public enum Provider
 public enum EmailProvider
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    [System.Runtime.Serialization.EnumMember(Value = @"None")]
     None = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"sendgrid")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Sendgrid")]
     Sendgrid = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"smtp")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Smtp")]
     Smtp = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ses")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Ses")]
     Ses = 3,
 
 }
@@ -84,16 +84,16 @@ public enum EmailProvider
 public enum DeviceType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"desktop")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Desktop")]
     Desktop = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"mobile")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Mobile")]
     Mobile = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"tablet")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Tablet")]
     Tablet = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"console")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Console")]
     Console = 3,
 
 }
@@ -107,10 +107,10 @@ public enum DeviceType
 public enum AuthType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"oauth")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Oauth")]
     Oauth = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ticket")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Ticket")]
     Ticket = 1,
 
 }

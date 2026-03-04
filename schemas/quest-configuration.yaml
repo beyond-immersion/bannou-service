@@ -72,6 +72,6 @@ x-service-configuration:
     # === Prerequisite Validation Settings ===
     PrerequisiteValidationMode:
       $ref: 'quest-api.yaml#/components/schemas/PrerequisiteValidationMode'
-      default: CHECK_ALL
+      default: CheckAll
       env: QUEST_PREREQUISITE_VALIDATION_MODE
-      description: Controls prerequisite validation behavior (FAIL_FAST stops on first failure, CHECK_ALL evaluates all)
+      description: Controls prerequisite validation behavior (FailFast stops on first failure, CheckAll evaluates all)

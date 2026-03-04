@@ -40,40 +40,40 @@ using System = global::System;
 public enum MapKind
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"terrain")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Terrain")]
     Terrain = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"static_geometry")]
+    [System.Runtime.Serialization.EnumMember(Value = @"StaticGeometry")]
     StaticGeometry = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"navigation")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Navigation")]
     Navigation = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"resources")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Resources")]
     Resources = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"spawn_points")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SpawnPoints")]
     SpawnPoints = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"points_of_interest")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PointsOfInterest")]
     PointsOfInterest = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"dynamic_objects")]
+    [System.Runtime.Serialization.EnumMember(Value = @"DynamicObjects")]
     DynamicObjects = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"hazards")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Hazards")]
     Hazards = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"weather_effects")]
+    [System.Runtime.Serialization.EnumMember(Value = @"WeatherEffects")]
     WeatherEffects = 8,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ownership")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Ownership")]
     Ownership = 9,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"combat_effects")]
+    [System.Runtime.Serialization.EnumMember(Value = @"CombatEffects")]
     CombatEffects = 10,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"visual_effects")]
+    [System.Runtime.Serialization.EnumMember(Value = @"VisualEffects")]
     VisualEffects = 11,
 
 }
@@ -87,13 +87,13 @@ public enum MapKind
 public enum NonAuthorityHandlingMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"reject_and_alert")]
+    [System.Runtime.Serialization.EnumMember(Value = @"RejectAndAlert")]
     RejectAndAlert = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"accept_and_alert")]
+    [System.Runtime.Serialization.EnumMember(Value = @"AcceptAndAlert")]
     AcceptAndAlert = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"reject_silent")]
+    [System.Runtime.Serialization.EnumMember(Value = @"RejectSilent")]
     RejectSilent = 2,
 
 }
@@ -109,13 +109,13 @@ public enum NonAuthorityHandlingMode
 public enum AuthorityTakeoverMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"preserve_and_diff")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PreserveAndDiff")]
     PreserveAndDiff = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"reset")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Reset")]
     Reset = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"require_consume")]
+    [System.Runtime.Serialization.EnumMember(Value = @"RequireConsume")]
     RequireConsume = 2,
 
 }
@@ -131,31 +131,31 @@ public enum AuthorityTakeoverMode
 public enum AffordanceType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ambush")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Ambush")]
     Ambush = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"shelter")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Shelter")]
     Shelter = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"vista")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Vista")]
     Vista = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"choke_point")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ChokePoint")]
     ChokePoint = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"gathering_spot")]
+    [System.Runtime.Serialization.EnumMember(Value = @"GatheringSpot")]
     GatheringSpot = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"dramatic_reveal")]
+    [System.Runtime.Serialization.EnumMember(Value = @"DramaticReveal")]
     DramaticReveal = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"hidden_path")]
+    [System.Runtime.Serialization.EnumMember(Value = @"HiddenPath")]
     HiddenPath = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"defensible_position")]
+    [System.Runtime.Serialization.EnumMember(Value = @"DefensiblePosition")]
     DefensiblePosition = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Custom")]
     Custom = 8,
 
 }
@@ -169,13 +169,13 @@ public enum AffordanceType
 public enum AffordanceFreshness
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"fresh")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Fresh")]
     Fresh = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cached")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Cached")]
     Cached = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"aggressive_cache")]
+    [System.Runtime.Serialization.EnumMember(Value = @"AggressiveCache")]
     AggressiveCache = 2,
 
 }
@@ -189,19 +189,19 @@ public enum AffordanceFreshness
 public enum ActorSize
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"tiny")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Tiny")]
     Tiny = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"small")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Small")]
     Small = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"medium")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Medium")]
     Medium = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"large")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Large")]
     Large = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"huge")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Huge")]
     Huge = 4,
 
 }
@@ -215,10 +215,10 @@ public enum ActorSize
 public enum DeltaType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"delta")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Delta")]
     Delta = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"snapshot")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Snapshot")]
     Snapshot = 1,
 
 }
@@ -232,13 +232,13 @@ public enum DeltaType
 public enum ObjectAction
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"created")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Created")]
     Created = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"updated")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Updated")]
     Updated = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"deleted")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Deleted")]
     Deleted = 2,
 
 }
@@ -2442,13 +2442,13 @@ public partial class DeleteDefinitionResponse
 public enum LayerDefinitionStorageMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"durable")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Durable")]
     Durable = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cached")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Cached")]
     Cached = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ephemeral")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Ephemeral")]
     Ephemeral = 2,
 
 }

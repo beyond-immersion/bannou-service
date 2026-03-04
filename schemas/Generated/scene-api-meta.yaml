@@ -94,10 +94,10 @@ paths:
         \                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\
         \n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n    \
         \        \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have
-        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n       \
-        \         \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n      \
-        \          \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n  \
-        \              \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"Unknown\",\n       \
+        \         \"Region\",\n                \"City\",\n                \"District\",\n                \"Lot\",\n      \
+        \          \"Building\",\n                \"Room\",\n                \"Dungeon\",\n                \"Arena\",\n  \
+        \              \"Vehicle\",\n                \"Prefab\",\n                \"Cutscene\",\n                \"Other\"\
         \n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform
         relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\"\
@@ -151,8 +151,8 @@ paths:
         \           }\n        },\n        \"NodeType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Structural node type. Indicates what kind of data the node contains,\\nnot how it will be used at runtime. Consumers
         interpret nodes according\\nto their own needs via tags and annotations.\\n\",\n            \"enum\": [\n        \
-        \        \"group\",\n                \"mesh\",\n                \"marker\",\n                \"volume\",\n       \
-        \         \"emitter\",\n                \"reference\",\n                \"custom\"\n            ]\n        },\n  \
+        \        \"Group\",\n                \"Mesh\",\n                \"Marker\",\n                \"Volume\",\n       \
+        \         \"Emitter\",\n                \"Reference\",\n                \"Custom\"\n            ]\n        },\n  \
         \      \"Transform\": {\n            \"type\": \"object\",\n            \"description\": \"Position, rotation, and
         scale in 3D space\",\n            \"required\": [\n                \"position\",\n                \"rotation\",\n\
         \                \"scale\"\n            ],\n            \"properties\": {\n                \"position\": {\n     \
@@ -212,9 +212,9 @@ paths:
         keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
         can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
-        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
-        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
-        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        n\",\n            \"enum\": [\n                \"Walkable\",\n                \"Climbable\",\n                \"Sittable\"\
+        ,\n                \"Interactive\",\n                \"Collectible\",\n                \"Destructible\",\n       \
+        \         \"Container\",\n                \"Door\",\n                \"Teleport\"\n            ]\n        },\n   \
         \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
         types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
         scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
@@ -230,12 +230,12 @@ paths:
         \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
         this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
-        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
-        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
-        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
-        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
-        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
-        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
+        and other positional markers.\",\n            \"enum\": [\n                \"Generic\",\n                \"SpawnPoint\"\
+        ,\n                \"NpcSpawn\",\n                \"Waypoint\",\n                \"CameraPoint\",\n              \
+        \  \"LightPoint\",\n                \"AudioPoint\",\n                \"TriggerPoint\"\n            ]\n        },\n\
+        \        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume node
+        for spatial bounds\",\n            \"enum\": [\n                \"Box\",\n                \"Sphere\",\n          \
+        \      \"Capsule\",\n                \"Cylinder\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SceneResponse\"\
         ,\n    \"$defs\": {\n        \"SceneResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Standard response containing a scene\",\n            \"required\": [\n                \"scene\"\n            ],\n\
@@ -271,10 +271,10 @@ paths:
         \                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\
         \n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n    \
         \        \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have
-        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n       \
-        \         \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n      \
-        \          \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n  \
-        \              \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"Unknown\",\n       \
+        \         \"Region\",\n                \"City\",\n                \"District\",\n                \"Lot\",\n      \
+        \          \"Building\",\n                \"Room\",\n                \"Dungeon\",\n                \"Arena\",\n  \
+        \              \"Vehicle\",\n                \"Prefab\",\n                \"Cutscene\",\n                \"Other\"\
         \n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform
         relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\"\
@@ -328,8 +328,8 @@ paths:
         \           }\n        },\n        \"NodeType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Structural node type. Indicates what kind of data the node contains,\\nnot how it will be used at runtime. Consumers
         interpret nodes according\\nto their own needs via tags and annotations.\\n\",\n            \"enum\": [\n        \
-        \        \"group\",\n                \"mesh\",\n                \"marker\",\n                \"volume\",\n       \
-        \         \"emitter\",\n                \"reference\",\n                \"custom\"\n            ]\n        },\n  \
+        \        \"Group\",\n                \"Mesh\",\n                \"Marker\",\n                \"Volume\",\n       \
+        \         \"Emitter\",\n                \"Reference\",\n                \"Custom\"\n            ]\n        },\n  \
         \      \"Transform\": {\n            \"type\": \"object\",\n            \"description\": \"Position, rotation, and
         scale in 3D space\",\n            \"required\": [\n                \"position\",\n                \"rotation\",\n\
         \                \"scale\"\n            ],\n            \"properties\": {\n                \"position\": {\n     \
@@ -389,9 +389,9 @@ paths:
         keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
         can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
-        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
-        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
-        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        n\",\n            \"enum\": [\n                \"Walkable\",\n                \"Climbable\",\n                \"Sittable\"\
+        ,\n                \"Interactive\",\n                \"Collectible\",\n                \"Destructible\",\n       \
+        \         \"Container\",\n                \"Door\",\n                \"Teleport\"\n            ]\n        },\n   \
         \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
         types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
         scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
@@ -407,12 +407,12 @@ paths:
         \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
         this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
-        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
-        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
-        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
-        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
-        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
-        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
+        and other positional markers.\",\n            \"enum\": [\n                \"Generic\",\n                \"SpawnPoint\"\
+        ,\n                \"NpcSpawn\",\n                \"Waypoint\",\n                \"CameraPoint\",\n              \
+        \  \"LightPoint\",\n                \"AudioPoint\",\n                \"TriggerPoint\"\n            ]\n        },\n\
+        \        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume node
+        for spatial bounds\",\n            \"enum\": [\n                \"Box\",\n                \"Sphere\",\n          \
+        \      \"Capsule\",\n                \"Cylinder\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new scene document\",\n    \"description\": \"Creates a new scene
         document and stores it in lib-asset.\\nPublishes scene.created event on success.\\nReturns Conflict if a scene with
         the same sceneId already exists.\\n\",\n    \"tags\": [\n        \"Scene\"\n    ],\n    \"deprecated\": false,\n \
@@ -502,10 +502,10 @@ paths:
         : \"When the scene was last modified\"\n                }\n            }\n        },\n        \"SceneType\": {\n \
         \           \"type\": \"string\",\n            \"description\": \"Scene classification for querying and validation
         rule lookup.\\nDifferent types may have different validation requirements per game.\\n\",\n            \"enum\": [\n\
-        \                \"unknown\",\n                \"region\",\n                \"city\",\n                \"district\"\
-        ,\n                \"lot\",\n                \"building\",\n                \"room\",\n                \"dungeon\"\
-        ,\n                \"arena\",\n                \"vehicle\",\n                \"prefab\",\n                \"cutscene\"\
-        ,\n                \"other\"\n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\"\
+        \                \"Unknown\",\n                \"Region\",\n                \"City\",\n                \"District\"\
+        ,\n                \"Lot\",\n                \"Building\",\n                \"Room\",\n                \"Dungeon\"\
+        ,\n                \"Arena\",\n                \"Vehicle\",\n                \"Prefab\",\n                \"Cutscene\"\
+        ,\n                \"Other\"\n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\"\
         ,\n            \"description\": \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure.
         Each node has a local transform relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\"\
         ,\n                \"refId\",\n                \"name\",\n                \"nodeType\",\n                \"localTransform\"\
@@ -558,8 +558,8 @@ paths:
         \           }\n        },\n        \"NodeType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Structural node type. Indicates what kind of data the node contains,\\nnot how it will be used at runtime. Consumers
         interpret nodes according\\nto their own needs via tags and annotations.\\n\",\n            \"enum\": [\n        \
-        \        \"group\",\n                \"mesh\",\n                \"marker\",\n                \"volume\",\n       \
-        \         \"emitter\",\n                \"reference\",\n                \"custom\"\n            ]\n        },\n  \
+        \        \"Group\",\n                \"Mesh\",\n                \"Marker\",\n                \"Volume\",\n       \
+        \         \"Emitter\",\n                \"Reference\",\n                \"Custom\"\n            ]\n        },\n  \
         \      \"Transform\": {\n            \"type\": \"object\",\n            \"description\": \"Position, rotation, and
         scale in 3D space\",\n            \"required\": [\n                \"position\",\n                \"rotation\",\n\
         \                \"scale\"\n            ],\n            \"properties\": {\n                \"position\": {\n     \
@@ -619,9 +619,9 @@ paths:
         keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
         can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
-        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
-        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
-        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        n\",\n            \"enum\": [\n                \"Walkable\",\n                \"Climbable\",\n                \"Sittable\"\
+        ,\n                \"Interactive\",\n                \"Collectible\",\n                \"Destructible\",\n       \
+        \         \"Container\",\n                \"Door\",\n                \"Teleport\"\n            ]\n        },\n   \
         \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
         types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
         scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
@@ -637,14 +637,14 @@ paths:
         \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
         this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
-        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
-        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
-        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
-        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
-        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
-        \           \"capsule\",\n                \"cylinder\"\n            ]\n        },\n        \"ResolvedReference\":
-        {\n            \"type\": \"object\",\n            \"description\": \"A successfully resolved scene reference\",\n\
-        \            \"required\": [\n                \"nodeId\",\n                \"refId\",\n                \"referencedSceneId\"\
+        and other positional markers.\",\n            \"enum\": [\n                \"Generic\",\n                \"SpawnPoint\"\
+        ,\n                \"NpcSpawn\",\n                \"Waypoint\",\n                \"CameraPoint\",\n              \
+        \  \"LightPoint\",\n                \"AudioPoint\",\n                \"TriggerPoint\"\n            ]\n        },\n\
+        \        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume node
+        for spatial bounds\",\n            \"enum\": [\n                \"Box\",\n                \"Sphere\",\n          \
+        \      \"Capsule\",\n                \"Cylinder\"\n            ]\n        },\n        \"ResolvedReference\": {\n \
+        \           \"type\": \"object\",\n            \"description\": \"A successfully resolved scene reference\",\n   \
+        \         \"required\": [\n                \"nodeId\",\n                \"refId\",\n                \"referencedSceneId\"\
         ,\n                \"scene\"\n            ],\n            \"properties\": {\n                \"nodeId\": {\n     \
         \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Node ID containing the reference\"\n                },\n                \"refId\": {\n                    \"type\"\
@@ -671,8 +671,8 @@ paths:
         : true,\n                    \"description\": \"For circular references, the cycle path (sceneId chain)\"\n      \
         \          }\n            }\n        },\n        \"UnresolvedReferenceReason\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Reason why a scene reference could not be resolved\",\n            \"enum\": [\n\
-        \                \"not_found\",\n                \"circular_reference\",\n                \"depth_exceeded\",\n  \
-        \              \"access_denied\"\n            ]\n        }\n    }\n}"
+        \                \"NotFound\",\n                \"CircularReference\",\n                \"DepthExceeded\",\n     \
+        \           \"AccessDenied\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Retrieve a scene by ID\",\n    \"description\": \"Retrieves a scene document.
         Optionally resolves nested scene references\\nup to a configurable depth.\\n\",\n    \"tags\": [\n        \"Scene\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getScene\"\n}"
@@ -722,10 +722,10 @@ paths:
         \     \"description\": \"Maximum results to return\"\n                }\n            }\n        },\n        \"SceneType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Scene classification for querying and validation
         rule lookup.\\nDifferent types may have different validation requirements per game.\\n\",\n            \"enum\": [\n\
-        \                \"unknown\",\n                \"region\",\n                \"city\",\n                \"district\"\
-        ,\n                \"lot\",\n                \"building\",\n                \"room\",\n                \"dungeon\"\
-        ,\n                \"arena\",\n                \"vehicle\",\n                \"prefab\",\n                \"cutscene\"\
-        ,\n                \"other\"\n            ]\n        }\n    }\n}"
+        \                \"Unknown\",\n                \"Region\",\n                \"City\",\n                \"District\"\
+        ,\n                \"Lot\",\n                \"Building\",\n                \"Room\",\n                \"Dungeon\"\
+        ,\n                \"Arena\",\n                \"Vehicle\",\n                \"Prefab\",\n                \"Cutscene\"\
+        ,\n                \"Other\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListScenesResponse\"\
         ,\n    \"$defs\": {\n        \"ListScenesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response containing scene list and pagination info\",\n            \"required\": [\n                \"scenes\"\
@@ -760,10 +760,10 @@ paths:
         : \"boolean\",\n                    \"description\": \"Whether scene is currently checked out\"\n                }\n\
         \            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Scene classification for querying and validation rule lookup.\\nDifferent types may have different validation
-        requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n                \"region\",\n\
-        \                \"city\",\n                \"district\",\n                \"lot\",\n                \"building\"\
-        ,\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n                \"vehicle\"\
-        ,\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\n            ]\n        }\n\
+        requirements per game.\\n\",\n            \"enum\": [\n                \"Unknown\",\n                \"Region\",\n\
+        \                \"City\",\n                \"District\",\n                \"Lot\",\n                \"Building\"\
+        ,\n                \"Room\",\n                \"Dungeon\",\n                \"Arena\",\n                \"Vehicle\"\
+        ,\n                \"Prefab\",\n                \"Cutscene\",\n                \"Other\"\n            ]\n        }\n\
         \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List scenes with filtering\",\n    \"description\": \"Lists scenes matching
         the provided filters. Supports pagination.\\nResults are ordered by updatedAt descending (most recent first).\\n\"\
@@ -837,10 +837,10 @@ paths:
         \                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\
         \n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n    \
         \        \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have
-        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n       \
-        \         \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n      \
-        \          \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n  \
-        \              \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"Unknown\",\n       \
+        \         \"Region\",\n                \"City\",\n                \"District\",\n                \"Lot\",\n      \
+        \          \"Building\",\n                \"Room\",\n                \"Dungeon\",\n                \"Arena\",\n  \
+        \              \"Vehicle\",\n                \"Prefab\",\n                \"Cutscene\",\n                \"Other\"\
         \n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform
         relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\"\
@@ -894,8 +894,8 @@ paths:
         \           }\n        },\n        \"NodeType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Structural node type. Indicates what kind of data the node contains,\\nnot how it will be used at runtime. Consumers
         interpret nodes according\\nto their own needs via tags and annotations.\\n\",\n            \"enum\": [\n        \
-        \        \"group\",\n                \"mesh\",\n                \"marker\",\n                \"volume\",\n       \
-        \         \"emitter\",\n                \"reference\",\n                \"custom\"\n            ]\n        },\n  \
+        \        \"Group\",\n                \"Mesh\",\n                \"Marker\",\n                \"Volume\",\n       \
+        \         \"Emitter\",\n                \"Reference\",\n                \"Custom\"\n            ]\n        },\n  \
         \      \"Transform\": {\n            \"type\": \"object\",\n            \"description\": \"Position, rotation, and
         scale in 3D space\",\n            \"required\": [\n                \"position\",\n                \"rotation\",\n\
         \                \"scale\"\n            ],\n            \"properties\": {\n                \"position\": {\n     \
@@ -955,9 +955,9 @@ paths:
         keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
         can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
-        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
-        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
-        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        n\",\n            \"enum\": [\n                \"Walkable\",\n                \"Climbable\",\n                \"Sittable\"\
+        ,\n                \"Interactive\",\n                \"Collectible\",\n                \"Destructible\",\n       \
+        \         \"Container\",\n                \"Door\",\n                \"Teleport\"\n            ]\n        },\n   \
         \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
         types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
         scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
@@ -973,12 +973,12 @@ paths:
         \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
         this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
-        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
-        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
-        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
-        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
-        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
-        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
+        and other positional markers.\",\n            \"enum\": [\n                \"Generic\",\n                \"SpawnPoint\"\
+        ,\n                \"NpcSpawn\",\n                \"Waypoint\",\n                \"CameraPoint\",\n              \
+        \  \"LightPoint\",\n                \"AudioPoint\",\n                \"TriggerPoint\"\n            ]\n        },\n\
+        \        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume node
+        for spatial bounds\",\n            \"enum\": [\n                \"Box\",\n                \"Sphere\",\n          \
+        \      \"Capsule\",\n                \"Cylinder\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SceneResponse\"\
         ,\n    \"$defs\": {\n        \"SceneResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Standard response containing a scene\",\n            \"required\": [\n                \"scene\"\n            ],\n\
@@ -1014,10 +1014,10 @@ paths:
         \                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\
         \n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n    \
         \        \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have
-        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n       \
-        \         \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n      \
-        \          \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n  \
-        \              \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"Unknown\",\n       \
+        \         \"Region\",\n                \"City\",\n                \"District\",\n                \"Lot\",\n      \
+        \          \"Building\",\n                \"Room\",\n                \"Dungeon\",\n                \"Arena\",\n  \
+        \              \"Vehicle\",\n                \"Prefab\",\n                \"Cutscene\",\n                \"Other\"\
         \n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform
         relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\"\
@@ -1071,8 +1071,8 @@ paths:
         \           }\n        },\n        \"NodeType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Structural node type. Indicates what kind of data the node contains,\\nnot how it will be used at runtime. Consumers
         interpret nodes according\\nto their own needs via tags and annotations.\\n\",\n            \"enum\": [\n        \
-        \        \"group\",\n                \"mesh\",\n                \"marker\",\n                \"volume\",\n       \
-        \         \"emitter\",\n                \"reference\",\n                \"custom\"\n            ]\n        },\n  \
+        \        \"Group\",\n                \"Mesh\",\n                \"Marker\",\n                \"Volume\",\n       \
+        \         \"Emitter\",\n                \"Reference\",\n                \"Custom\"\n            ]\n        },\n  \
         \      \"Transform\": {\n            \"type\": \"object\",\n            \"description\": \"Position, rotation, and
         scale in 3D space\",\n            \"required\": [\n                \"position\",\n                \"rotation\",\n\
         \                \"scale\"\n            ],\n            \"properties\": {\n                \"position\": {\n     \
@@ -1132,9 +1132,9 @@ paths:
         keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
         can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
-        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
-        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
-        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        n\",\n            \"enum\": [\n                \"Walkable\",\n                \"Climbable\",\n                \"Sittable\"\
+        ,\n                \"Interactive\",\n                \"Collectible\",\n                \"Destructible\",\n       \
+        \         \"Container\",\n                \"Door\",\n                \"Teleport\"\n            ]\n        },\n   \
         \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
         types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
         scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
@@ -1150,12 +1150,12 @@ paths:
         \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
         this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
-        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
-        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
-        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
-        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
-        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
-        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
+        and other positional markers.\",\n            \"enum\": [\n                \"Generic\",\n                \"SpawnPoint\"\
+        ,\n                \"NpcSpawn\",\n                \"Waypoint\",\n                \"CameraPoint\",\n              \
+        \  \"LightPoint\",\n                \"AudioPoint\",\n                \"TriggerPoint\"\n            ]\n        },\n\
+        \        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume node
+        for spatial bounds\",\n            \"enum\": [\n                \"Box\",\n                \"Sphere\",\n          \
+        \      \"Capsule\",\n                \"Cylinder\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a scene document\",\n    \"description\": \"Updates an existing
         scene document. Scene must not be checked out by\\nanother user. Increments the PATCH version automatically.\\nPublishes
         scene.updated event on success.\\n\",\n    \"tags\": [\n        \"Scene\"\n    ],\n    \"deprecated\": false,\n  \
@@ -1275,10 +1275,10 @@ paths:
         \                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\
         \n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n    \
         \        \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have
-        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n       \
-        \         \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n      \
-        \          \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n  \
-        \              \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"Unknown\",\n       \
+        \         \"Region\",\n                \"City\",\n                \"District\",\n                \"Lot\",\n      \
+        \          \"Building\",\n                \"Room\",\n                \"Dungeon\",\n                \"Arena\",\n  \
+        \              \"Vehicle\",\n                \"Prefab\",\n                \"Cutscene\",\n                \"Other\"\
         \n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform
         relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\"\
@@ -1332,8 +1332,8 @@ paths:
         \           }\n        },\n        \"NodeType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Structural node type. Indicates what kind of data the node contains,\\nnot how it will be used at runtime. Consumers
         interpret nodes according\\nto their own needs via tags and annotations.\\n\",\n            \"enum\": [\n        \
-        \        \"group\",\n                \"mesh\",\n                \"marker\",\n                \"volume\",\n       \
-        \         \"emitter\",\n                \"reference\",\n                \"custom\"\n            ]\n        },\n  \
+        \        \"Group\",\n                \"Mesh\",\n                \"Marker\",\n                \"Volume\",\n       \
+        \         \"Emitter\",\n                \"Reference\",\n                \"Custom\"\n            ]\n        },\n  \
         \      \"Transform\": {\n            \"type\": \"object\",\n            \"description\": \"Position, rotation, and
         scale in 3D space\",\n            \"required\": [\n                \"position\",\n                \"rotation\",\n\
         \                \"scale\"\n            ],\n            \"properties\": {\n                \"position\": {\n     \
@@ -1393,9 +1393,9 @@ paths:
         keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
         can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
-        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
-        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
-        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        n\",\n            \"enum\": [\n                \"Walkable\",\n                \"Climbable\",\n                \"Sittable\"\
+        ,\n                \"Interactive\",\n                \"Collectible\",\n                \"Destructible\",\n       \
+        \         \"Container\",\n                \"Door\",\n                \"Teleport\"\n            ]\n        },\n   \
         \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
         types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
         scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
@@ -1411,12 +1411,12 @@ paths:
         \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
         this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
-        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
-        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
-        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
-        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
-        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
-        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
+        and other positional markers.\",\n            \"enum\": [\n                \"Generic\",\n                \"SpawnPoint\"\
+        ,\n                \"NpcSpawn\",\n                \"Waypoint\",\n                \"CameraPoint\",\n              \
+        \  \"LightPoint\",\n                \"AudioPoint\",\n                \"TriggerPoint\"\n            ]\n        },\n\
+        \        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume node
+        for spatial bounds\",\n            \"enum\": [\n                \"Box\",\n                \"Sphere\",\n          \
+        \      \"Capsule\",\n                \"Cylinder\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ValidationResult\"\
         ,\n    \"$defs\": {\n        \"ValidationResult\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of scene validation\",\n            \"required\": [\n                \"valid\"\n            ],\n      \
@@ -1444,7 +1444,7 @@ paths:
         \  \"description\": \"Client-only validation error context. No Bannou plugin reads specific keys from this field by
         convention.\"\n                }\n            }\n        },\n        \"ValidationSeverity\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Severity level of a validation issue\",\n            \"enum\": [\n \
-        \               \"error\",\n                \"warning\"\n            ]\n        }\n    }\n}"
+        \               \"Error\",\n                \"Warning\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Validate a scene structure\",\n    \"description\": \"Validates a scene
         document without saving it. Checks structural validity\\nand optionally applies game-specific validation rules.\\\
         n\",\n    \"tags\": [\n        \"Scene\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"validateScene\"\
@@ -1662,10 +1662,10 @@ paths:
         \                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\
         \n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n    \
         \        \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have
-        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n       \
-        \         \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n      \
-        \          \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n  \
-        \              \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"Unknown\",\n       \
+        \         \"Region\",\n                \"City\",\n                \"District\",\n                \"Lot\",\n      \
+        \          \"Building\",\n                \"Room\",\n                \"Dungeon\",\n                \"Arena\",\n  \
+        \              \"Vehicle\",\n                \"Prefab\",\n                \"Cutscene\",\n                \"Other\"\
         \n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform
         relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\"\
@@ -1719,8 +1719,8 @@ paths:
         \           }\n        },\n        \"NodeType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Structural node type. Indicates what kind of data the node contains,\\nnot how it will be used at runtime. Consumers
         interpret nodes according\\nto their own needs via tags and annotations.\\n\",\n            \"enum\": [\n        \
-        \        \"group\",\n                \"mesh\",\n                \"marker\",\n                \"volume\",\n       \
-        \         \"emitter\",\n                \"reference\",\n                \"custom\"\n            ]\n        },\n  \
+        \        \"Group\",\n                \"Mesh\",\n                \"Marker\",\n                \"Volume\",\n       \
+        \         \"Emitter\",\n                \"Reference\",\n                \"Custom\"\n            ]\n        },\n  \
         \      \"Transform\": {\n            \"type\": \"object\",\n            \"description\": \"Position, rotation, and
         scale in 3D space\",\n            \"required\": [\n                \"position\",\n                \"rotation\",\n\
         \                \"scale\"\n            ],\n            \"properties\": {\n                \"position\": {\n     \
@@ -1780,9 +1780,9 @@ paths:
         keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
         can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
-        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
-        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
-        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        n\",\n            \"enum\": [\n                \"Walkable\",\n                \"Climbable\",\n                \"Sittable\"\
+        ,\n                \"Interactive\",\n                \"Collectible\",\n                \"Destructible\",\n       \
+        \         \"Container\",\n                \"Door\",\n                \"Teleport\"\n            ]\n        },\n   \
         \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
         types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
         scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
@@ -1798,12 +1798,12 @@ paths:
         \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
         this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
-        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
-        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
-        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
-        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
-        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
-        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
+        and other positional markers.\",\n            \"enum\": [\n                \"Generic\",\n                \"SpawnPoint\"\
+        ,\n                \"NpcSpawn\",\n                \"Waypoint\",\n                \"CameraPoint\",\n              \
+        \  \"LightPoint\",\n                \"AudioPoint\",\n                \"TriggerPoint\"\n            ]\n        },\n\
+        \        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume node
+        for spatial bounds\",\n            \"enum\": [\n                \"Box\",\n                \"Sphere\",\n          \
+        \      \"Capsule\",\n                \"Cylinder\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Lock a scene for editing\",\n    \"description\": \"Acquires an exclusive
         lock on the scene for editing.\\nReturns a checkout token required for commit.\\nLock expires after TTL if not extended
         via heartbeat.\\n\",\n    \"tags\": [\n        \"Versioning\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -1878,10 +1878,10 @@ paths:
         format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\n            \
         \    }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Scene classification for querying and validation rule lookup.\\nDifferent types may have different validation
-        requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n                \"region\",\n\
-        \                \"city\",\n                \"district\",\n                \"lot\",\n                \"building\"\
-        ,\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n                \"vehicle\"\
-        ,\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\n            ]\n        },\n\
+        requirements per game.\\n\",\n            \"enum\": [\n                \"Unknown\",\n                \"Region\",\n\
+        \                \"City\",\n                \"District\",\n                \"Lot\",\n                \"Building\"\
+        ,\n                \"Room\",\n                \"Dungeon\",\n                \"Arena\",\n                \"Vehicle\"\
+        ,\n                \"Prefab\",\n                \"Cutscene\",\n                \"Other\"\n            ]\n        },\n\
         \        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\": \"A node in the scene hierarchy.
         Nodes can contain children to form\\na tree structure. Each node has a local transform relative to its parent.\\n\"\
         ,\n            \"required\": [\n                \"nodeId\",\n                \"refId\",\n                \"name\"\
@@ -1934,9 +1934,9 @@ paths:
         nodes.\\nOnly relevant when nodeType is 'reference'.\\n\"\n                }\n            }\n        },\n        \"\
         NodeType\": {\n            \"type\": \"string\",\n            \"description\": \"Structural node type. Indicates what
         kind of data the node contains,\\nnot how it will be used at runtime. Consumers interpret nodes according\\nto their
-        own needs via tags and annotations.\\n\",\n            \"enum\": [\n                \"group\",\n                \"\
-        mesh\",\n                \"marker\",\n                \"volume\",\n                \"emitter\",\n                \"\
-        reference\",\n                \"custom\"\n            ]\n        },\n        \"Transform\": {\n            \"type\"\
+        own needs via tags and annotations.\\n\",\n            \"enum\": [\n                \"Group\",\n                \"\
+        Mesh\",\n                \"Marker\",\n                \"Volume\",\n                \"Emitter\",\n                \"\
+        Reference\",\n                \"Custom\"\n            ]\n        },\n        \"Transform\": {\n            \"type\"\
         : \"object\",\n            \"description\": \"Position, rotation, and scale in 3D space\",\n            \"required\"\
         : [\n                \"position\",\n                \"rotation\",\n                \"scale\"\n            ],\n   \
         \         \"properties\": {\n                \"position\": {\n                    \"$ref\": \"#/$defs/Vector3\",\n\
@@ -1996,9 +1996,9 @@ paths:
         keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
         can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
-        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
-        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
-        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        n\",\n            \"enum\": [\n                \"Walkable\",\n                \"Climbable\",\n                \"Sittable\"\
+        ,\n                \"Interactive\",\n                \"Collectible\",\n                \"Destructible\",\n       \
+        \         \"Container\",\n                \"Door\",\n                \"Teleport\"\n            ]\n        },\n   \
         \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
         types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
         scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
@@ -2014,12 +2014,12 @@ paths:
         \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
         this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
-        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
-        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
-        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
-        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
-        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
-        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
+        and other positional markers.\",\n            \"enum\": [\n                \"Generic\",\n                \"SpawnPoint\"\
+        ,\n                \"NpcSpawn\",\n                \"Waypoint\",\n                \"CameraPoint\",\n              \
+        \  \"LightPoint\",\n                \"AudioPoint\",\n                \"TriggerPoint\"\n            ]\n        },\n\
+        \        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume node
+        for spatial bounds\",\n            \"enum\": [\n                \"Box\",\n                \"Sphere\",\n          \
+        \      \"Capsule\",\n                \"Cylinder\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CommitResponse\"\
         ,\n    \"$defs\": {\n        \"CommitResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response confirming commit\",\n            \"required\": [\n                \"committed\",\n                \"\
@@ -2059,10 +2059,10 @@ paths:
         format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\n            \
         \    }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Scene classification for querying and validation rule lookup.\\nDifferent types may have different validation
-        requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n                \"region\",\n\
-        \                \"city\",\n                \"district\",\n                \"lot\",\n                \"building\"\
-        ,\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n                \"vehicle\"\
-        ,\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\n            ]\n        },\n\
+        requirements per game.\\n\",\n            \"enum\": [\n                \"Unknown\",\n                \"Region\",\n\
+        \                \"City\",\n                \"District\",\n                \"Lot\",\n                \"Building\"\
+        ,\n                \"Room\",\n                \"Dungeon\",\n                \"Arena\",\n                \"Vehicle\"\
+        ,\n                \"Prefab\",\n                \"Cutscene\",\n                \"Other\"\n            ]\n        },\n\
         \        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\": \"A node in the scene hierarchy.
         Nodes can contain children to form\\na tree structure. Each node has a local transform relative to its parent.\\n\"\
         ,\n            \"required\": [\n                \"nodeId\",\n                \"refId\",\n                \"name\"\
@@ -2115,9 +2115,9 @@ paths:
         nodes.\\nOnly relevant when nodeType is 'reference'.\\n\"\n                }\n            }\n        },\n        \"\
         NodeType\": {\n            \"type\": \"string\",\n            \"description\": \"Structural node type. Indicates what
         kind of data the node contains,\\nnot how it will be used at runtime. Consumers interpret nodes according\\nto their
-        own needs via tags and annotations.\\n\",\n            \"enum\": [\n                \"group\",\n                \"\
-        mesh\",\n                \"marker\",\n                \"volume\",\n                \"emitter\",\n                \"\
-        reference\",\n                \"custom\"\n            ]\n        },\n        \"Transform\": {\n            \"type\"\
+        own needs via tags and annotations.\\n\",\n            \"enum\": [\n                \"Group\",\n                \"\
+        Mesh\",\n                \"Marker\",\n                \"Volume\",\n                \"Emitter\",\n                \"\
+        Reference\",\n                \"Custom\"\n            ]\n        },\n        \"Transform\": {\n            \"type\"\
         : \"object\",\n            \"description\": \"Position, rotation, and scale in 3D space\",\n            \"required\"\
         : [\n                \"position\",\n                \"rotation\",\n                \"scale\"\n            ],\n   \
         \         \"properties\": {\n                \"position\": {\n                    \"$ref\": \"#/$defs/Vector3\",\n\
@@ -2177,9 +2177,9 @@ paths:
         keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
         can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
-        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
-        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
-        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        n\",\n            \"enum\": [\n                \"Walkable\",\n                \"Climbable\",\n                \"Sittable\"\
+        ,\n                \"Interactive\",\n                \"Collectible\",\n                \"Destructible\",\n       \
+        \         \"Container\",\n                \"Door\",\n                \"Teleport\"\n            ]\n        },\n   \
         \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
         types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
         scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
@@ -2195,12 +2195,12 @@ paths:
         \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
         this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
-        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
-        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
-        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
-        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
-        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
-        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
+        and other positional markers.\",\n            \"enum\": [\n                \"Generic\",\n                \"SpawnPoint\"\
+        ,\n                \"NpcSpawn\",\n                \"Waypoint\",\n                \"CameraPoint\",\n              \
+        \  \"LightPoint\",\n                \"AudioPoint\",\n                \"TriggerPoint\"\n            ]\n        },\n\
+        \        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume node
+        for spatial bounds\",\n            \"enum\": [\n                \"Box\",\n                \"Sphere\",\n          \
+        \      \"Capsule\",\n                \"Cylinder\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Save changes and release lock\",\n    \"description\": \"Commits the changes
         made during checkout, increments version,\\nand releases the lock. Publishes scene.committed event.\\n\",\n    \"\
         tags\": [\n        \"Versioning\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"commitScene\"\n}"
@@ -2391,10 +2391,10 @@ paths:
         : \"#/$defs/ValidationRule\"\n                    },\n                    \"description\": \"Validation rules to register\"\
         \n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n    \
         \        \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have
-        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n       \
-        \         \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n      \
-        \          \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n  \
-        \              \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"Unknown\",\n       \
+        \         \"Region\",\n                \"City\",\n                \"District\",\n                \"Lot\",\n      \
+        \          \"Building\",\n                \"Room\",\n                \"Dungeon\",\n                \"Arena\",\n  \
+        \              \"Vehicle\",\n                \"Prefab\",\n                \"Cutscene\",\n                \"Other\"\
         \n            ]\n        },\n        \"ValidationRule\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"A validation rule definition\",\n            \"required\": [\n                \"ruleId\",\n                \"\
         description\",\n                \"severity\",\n                \"ruleType\"\n            ],\n            \"properties\"\
@@ -2408,13 +2408,13 @@ paths:
         #/$defs/ValidationRuleConfig\",\n                    \"nullable\": true,\n                    \"description\": \"\
         Rule-specific configuration\"\n                }\n            }\n        },\n        \"ValidationSeverity\": {\n \
         \           \"type\": \"string\",\n            \"description\": \"Severity level of a validation issue\",\n      \
-        \      \"enum\": [\n                \"error\",\n                \"warning\"\n            ]\n        },\n        \"\
+        \      \"enum\": [\n                \"Error\",\n                \"Warning\"\n            ]\n        },\n        \"\
         ValidationRuleType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of validation check
-        to perform\",\n            \"enum\": [\n                \"require_tag\",\n                \"require_node_type\",\n\
-        \                \"forbid_tag\",\n                \"require_annotation\",\n                \"custom_expression\"\n\
-        \            ]\n        },\n        \"ValidationRuleConfig\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Configuration for a validation rule\",\n            \"properties\": {\n                \"nodeType\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        to perform\",\n            \"enum\": [\n                \"RequireTag\",\n                \"RequireNodeType\",\n  \
+        \              \"ForbidTag\",\n                \"RequireAnnotation\",\n                \"CustomExpression\"\n    \
+        \        ]\n        },\n        \"ValidationRuleConfig\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Configuration for a validation rule\",\n            \"properties\": {\n                \"nodeType\": {\n     \
+        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Filter to nodes of this type (for require_tag)\"\n                },\n                \"tag\": {\n           \
         \         \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
         Tag to check for\"\n                },\n                \"minCount\": {\n                    \"type\": \"integer\"\
@@ -2470,10 +2470,10 @@ paths:
         sceneType\": {\n                    \"$ref\": \"#/$defs/SceneType\",\n                    \"description\": \"Scene
         type\"\n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n\
         \            \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may
-        have different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n  \
-        \              \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n \
-        \               \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\"\
-        ,\n                \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        have different validation requirements per game.\\n\",\n            \"enum\": [\n                \"Unknown\",\n  \
+        \              \"Region\",\n                \"City\",\n                \"District\",\n                \"Lot\",\n \
+        \               \"Building\",\n                \"Room\",\n                \"Dungeon\",\n                \"Arena\"\
+        ,\n                \"Vehicle\",\n                \"Prefab\",\n                \"Cutscene\",\n                \"Other\"\
         \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetValidationRulesResponse\"\
         ,\n    \"$defs\": {\n        \"GetValidationRulesResponse\": {\n            \"type\": \"object\",\n            \"\
@@ -2486,10 +2486,10 @@ paths:
         \ },\n                    \"description\": \"Registered rules (empty if none)\"\n                }\n            }\n\
         \        },\n        \"SceneType\": {\n            \"type\": \"string\",\n            \"description\": \"Scene classification
         for querying and validation rule lookup.\\nDifferent types may have different validation requirements per game.\\\
-        n\",\n            \"enum\": [\n                \"unknown\",\n                \"region\",\n                \"city\"\
-        ,\n                \"district\",\n                \"lot\",\n                \"building\",\n                \"room\"\
-        ,\n                \"dungeon\",\n                \"arena\",\n                \"vehicle\",\n                \"prefab\"\
-        ,\n                \"cutscene\",\n                \"other\"\n            ]\n        },\n        \"ValidationRule\"\
+        n\",\n            \"enum\": [\n                \"Unknown\",\n                \"Region\",\n                \"City\"\
+        ,\n                \"District\",\n                \"Lot\",\n                \"Building\",\n                \"Room\"\
+        ,\n                \"Dungeon\",\n                \"Arena\",\n                \"Vehicle\",\n                \"Prefab\"\
+        ,\n                \"Cutscene\",\n                \"Other\"\n            ]\n        },\n        \"ValidationRule\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"A validation rule definition\",\n         \
         \   \"required\": [\n                \"ruleId\",\n                \"description\",\n                \"severity\",\n\
         \                \"ruleType\"\n            ],\n            \"properties\": {\n                \"ruleId\": {\n    \
@@ -2502,11 +2502,11 @@ paths:
         \     },\n                \"config\": {\n                    \"$ref\": \"#/$defs/ValidationRuleConfig\",\n       \
         \             \"nullable\": true,\n                    \"description\": \"Rule-specific configuration\"\n        \
         \        }\n            }\n        },\n        \"ValidationSeverity\": {\n            \"type\": \"string\",\n    \
-        \        \"description\": \"Severity level of a validation issue\",\n            \"enum\": [\n                \"error\"\
-        ,\n                \"warning\"\n            ]\n        },\n        \"ValidationRuleType\": {\n            \"type\"\
+        \        \"description\": \"Severity level of a validation issue\",\n            \"enum\": [\n                \"Error\"\
+        ,\n                \"Warning\"\n            ]\n        },\n        \"ValidationRuleType\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Type of validation check to perform\",\n            \"enum\": [\n  \
-        \              \"require_tag\",\n                \"require_node_type\",\n                \"forbid_tag\",\n       \
-        \         \"require_annotation\",\n                \"custom_expression\"\n            ]\n        },\n        \"ValidationRuleConfig\"\
+        \              \"RequireTag\",\n                \"RequireNodeType\",\n                \"ForbidTag\",\n           \
+        \     \"RequireAnnotation\",\n                \"CustomExpression\"\n            ]\n        },\n        \"ValidationRuleConfig\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a validation rule\",\n  \
         \          \"properties\": {\n                \"nodeType\": {\n                    \"type\": \"string\",\n       \
         \             \"nullable\": true,\n                    \"description\": \"Filter to nodes of this type (for require_tag)\"\
@@ -2562,10 +2562,10 @@ paths:
         \                    \"type\": \"integer\",\n                    \"default\": 50,\n                    \"description\"\
         : \"Maximum results\"\n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent
-        types may have different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\"\
-        ,\n                \"region\",\n                \"city\",\n                \"district\",\n                \"lot\"\
-        ,\n                \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\"\
-        ,\n                \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        types may have different validation requirements per game.\\n\",\n            \"enum\": [\n                \"Unknown\"\
+        ,\n                \"Region\",\n                \"City\",\n                \"District\",\n                \"Lot\"\
+        ,\n                \"Building\",\n                \"Room\",\n                \"Dungeon\",\n                \"Arena\"\
+        ,\n                \"Vehicle\",\n                \"Prefab\",\n                \"Cutscene\",\n                \"Other\"\
         \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SearchScenesResponse\"\
         ,\n    \"$defs\": {\n        \"SearchScenesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -2605,13 +2605,13 @@ paths:
         : \"boolean\",\n                    \"description\": \"Whether scene is currently checked out\"\n                }\n\
         \            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Scene classification for querying and validation rule lookup.\\nDifferent types may have different validation
-        requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n                \"region\",\n\
-        \                \"city\",\n                \"district\",\n                \"lot\",\n                \"building\"\
-        ,\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n                \"vehicle\"\
-        ,\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\n            ]\n        },\n\
+        requirements per game.\\n\",\n            \"enum\": [\n                \"Unknown\",\n                \"Region\",\n\
+        \                \"City\",\n                \"District\",\n                \"Lot\",\n                \"Building\"\
+        ,\n                \"Room\",\n                \"Dungeon\",\n                \"Arena\",\n                \"Vehicle\"\
+        ,\n                \"Prefab\",\n                \"Cutscene\",\n                \"Other\"\n            ]\n        },\n\
         \        \"SearchMatchType\": {\n            \"type\": \"string\",\n            \"description\": \"Where the search
-        match was found\",\n            \"enum\": [\n                \"name\",\n                \"description\",\n       \
-        \         \"tag\",\n                \"node_name\"\n            ]\n        }\n    }\n}"
+        match was found\",\n            \"enum\": [\n                \"Name\",\n                \"Description\",\n       \
+        \         \"Tag\",\n                \"NodeName\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Full-text search across scenes\",\n    \"description\": \"Searches scene
         names, descriptions, tags, and node names\\nfor matching content.\\n\",\n    \"tags\": [\n        \"Query\"\n    ],\n\
         \    \"deprecated\": false,\n    \"operationId\": \"searchScenes\"\n}"
@@ -2720,9 +2720,9 @@ paths:
         \ \"description\": \"Type of the node\"\n                }\n            }\n        },\n        \"NodeType\": {\n \
         \           \"type\": \"string\",\n            \"description\": \"Structural node type. Indicates what kind of data
         the node contains,\\nnot how it will be used at runtime. Consumers interpret nodes according\\nto their own needs
-        via tags and annotations.\\n\",\n            \"enum\": [\n                \"group\",\n                \"mesh\",\n\
-        \                \"marker\",\n                \"volume\",\n                \"emitter\",\n                \"reference\"\
-        ,\n                \"custom\"\n            ]\n        }\n    }\n}"
+        via tags and annotations.\\n\",\n            \"enum\": [\n                \"Group\",\n                \"Mesh\",\n\
+        \                \"Marker\",\n                \"Volume\",\n                \"Emitter\",\n                \"Reference\"\
+        ,\n                \"Custom\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Find scenes using a specific asset\",\n    \"description\": \"Returns all
         scenes containing nodes that reference\\na specific asset ID.\\n\",\n    \"tags\": [\n        \"Query\"\n    ],\n\
         \    \"deprecated\": false,\n    \"operationId\": \"findAssetUsage\"\n}"
@@ -2765,10 +2765,10 @@ paths:
         $ref\": \"#/$defs/SceneType\",\n                    \"nullable\": true,\n                    \"description\": \"Optional
         different scene type\"\n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent
-        types may have different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\"\
-        ,\n                \"region\",\n                \"city\",\n                \"district\",\n                \"lot\"\
-        ,\n                \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\"\
-        ,\n                \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        types may have different validation requirements per game.\\n\",\n            \"enum\": [\n                \"Unknown\"\
+        ,\n                \"Region\",\n                \"City\",\n                \"District\",\n                \"Lot\"\
+        ,\n                \"Building\",\n                \"Room\",\n                \"Dungeon\",\n                \"Arena\"\
+        ,\n                \"Vehicle\",\n                \"Prefab\",\n                \"Cutscene\",\n                \"Other\"\
         \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SceneResponse\"\
         ,\n    \"$defs\": {\n        \"SceneResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -2805,10 +2805,10 @@ paths:
         \                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\
         \n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n    \
         \        \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have
-        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n       \
-        \         \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n      \
-        \          \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n  \
-        \              \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"Unknown\",\n       \
+        \         \"Region\",\n                \"City\",\n                \"District\",\n                \"Lot\",\n      \
+        \          \"Building\",\n                \"Room\",\n                \"Dungeon\",\n                \"Arena\",\n  \
+        \              \"Vehicle\",\n                \"Prefab\",\n                \"Cutscene\",\n                \"Other\"\
         \n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform
         relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\"\
@@ -2862,8 +2862,8 @@ paths:
         \           }\n        },\n        \"NodeType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Structural node type. Indicates what kind of data the node contains,\\nnot how it will be used at runtime. Consumers
         interpret nodes according\\nto their own needs via tags and annotations.\\n\",\n            \"enum\": [\n        \
-        \        \"group\",\n                \"mesh\",\n                \"marker\",\n                \"volume\",\n       \
-        \         \"emitter\",\n                \"reference\",\n                \"custom\"\n            ]\n        },\n  \
+        \        \"Group\",\n                \"Mesh\",\n                \"Marker\",\n                \"Volume\",\n       \
+        \         \"Emitter\",\n                \"Reference\",\n                \"Custom\"\n            ]\n        },\n  \
         \      \"Transform\": {\n            \"type\": \"object\",\n            \"description\": \"Position, rotation, and
         scale in 3D space\",\n            \"required\": [\n                \"position\",\n                \"rotation\",\n\
         \                \"scale\"\n            ],\n            \"properties\": {\n                \"position\": {\n     \
@@ -2923,9 +2923,9 @@ paths:
         keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
         can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
-        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
-        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
-        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        n\",\n            \"enum\": [\n                \"Walkable\",\n                \"Climbable\",\n                \"Sittable\"\
+        ,\n                \"Interactive\",\n                \"Collectible\",\n                \"Destructible\",\n       \
+        \         \"Container\",\n                \"Door\",\n                \"Teleport\"\n            ]\n        },\n   \
         \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
         types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
         scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
@@ -2941,12 +2941,12 @@ paths:
         \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
         this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
-        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
-        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
-        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
-        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
-        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
-        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
+        and other positional markers.\",\n            \"enum\": [\n                \"Generic\",\n                \"SpawnPoint\"\
+        ,\n                \"NpcSpawn\",\n                \"Waypoint\",\n                \"CameraPoint\",\n              \
+        \  \"LightPoint\",\n                \"AudioPoint\",\n                \"TriggerPoint\"\n            ]\n        },\n\
+        \        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume node
+        for spatial bounds\",\n            \"enum\": [\n                \"Box\",\n                \"Sphere\",\n          \
+        \      \"Capsule\",\n                \"Cylinder\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Duplicate a scene with a new ID\",\n    \"description\": \"Creates a copy
         of a scene with a new sceneId and name.\\nAll node IDs are regenerated. Version resets to 1.0.0.\\n\",\n    \"tags\"\
         : [\n        \"Scene\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"duplicateScene\"\n}"
@@ -2958,19 +2958,19 @@ components:
         Scene classification for querying and validation rule lookup.
         Different types may have different validation requirements per game.
       enum:
-      - unknown
-      - region
-      - city
-      - district
-      - lot
-      - building
-      - room
-      - dungeon
-      - arena
-      - vehicle
-      - prefab
-      - cutscene
-      - other
+      - Unknown
+      - Region
+      - City
+      - District
+      - Lot
+      - Building
+      - Room
+      - Dungeon
+      - Arena
+      - Vehicle
+      - Prefab
+      - Cutscene
+      - Other
     NodeType:
       type: string
       description: |
@@ -2978,48 +2978,48 @@ components:
         not how it will be used at runtime. Consumers interpret nodes according
         to their own needs via tags and annotations.
       enum:
-      - group
-      - mesh
-      - marker
-      - volume
-      - emitter
-      - reference
-      - custom
+      - Group
+      - Mesh
+      - Marker
+      - Volume
+      - Emitter
+      - Reference
+      - Custom
     VolumeShape:
       type: string
       description: Shape of a volume node for spatial bounds
       enum:
-      - box
-      - sphere
-      - capsule
-      - cylinder
+      - Box
+      - Sphere
+      - Capsule
+      - Cylinder
     AffordanceType:
       type: string
       description: |
         Types of affordances describing what an object can do or how it can be interacted with.
         Used by AI navigation, character controllers, and procedural content systems.
       enum:
-      - walkable
-      - climbable
-      - sittable
-      - interactive
-      - collectible
-      - destructible
-      - container
-      - door
-      - teleport
+      - Walkable
+      - Climbable
+      - Sittable
+      - Interactive
+      - Collectible
+      - Destructible
+      - Container
+      - Door
+      - Teleport
     MarkerType:
       type: string
       description: Types of marker nodes for spawn points, waypoints, and other positional markers.
       enum:
-      - generic
-      - spawn_point
-      - npc_spawn
-      - waypoint
-      - camera_point
-      - light_point
-      - audio_point
-      - trigger_point
+      - Generic
+      - SpawnPoint
+      - NpcSpawn
+      - Waypoint
+      - CameraPoint
+      - LightPoint
+      - AudioPoint
+      - TriggerPoint
     AttachmentPoint:
       type: object
       description: |
@@ -3109,33 +3109,33 @@ components:
       type: string
       description: Reason why a scene reference could not be resolved
       enum:
-      - not_found
-      - circular_reference
-      - depth_exceeded
-      - access_denied
+      - NotFound
+      - CircularReference
+      - DepthExceeded
+      - AccessDenied
     ValidationSeverity:
       type: string
       description: Severity level of a validation issue
       enum:
-      - error
-      - warning
+      - Error
+      - Warning
     ValidationRuleType:
       type: string
       description: Type of validation check to perform
       enum:
-      - require_tag
-      - require_node_type
-      - forbid_tag
-      - require_annotation
-      - custom_expression
+      - RequireTag
+      - RequireNodeType
+      - ForbidTag
+      - RequireAnnotation
+      - CustomExpression
     SearchMatchType:
       type: string
       description: Where the search match was found
       enum:
-      - name
-      - description
-      - tag
-      - node_name
+      - Name
+      - Description
+      - Tag
+      - NodeName
     Vector3:
       type: object
       description: A point or direction in 3D space

@@ -48,7 +48,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/deity/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createDeity",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/deity/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getDeity",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/deity/get-by-code",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getDeityByCode",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/deity/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listDeities",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/deity/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateDeity",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/deity/activate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "activateDeity",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/deity/deactivate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deactivateDeity",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/deity/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteDeity",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/divinity/get-balance",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getDivinityBalance",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/divinity/credit",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "creditDivinity",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/divinity/debit",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "debitDivinity",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/divinity/get-history",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getDivinityHistory",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/blessing/grant",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "grantBlessing",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/blessing/revoke",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "revokeBlessing",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/blessing/list-by-entity",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listBlessingsByEntity",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/blessing/list-by-deity",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listBlessingsByDeity",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/blessing/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getBlessing",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/follower/register",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "registerFollower",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/follower/unregister",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "unregisterFollower",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/follower/get-followers",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getFollowers",
             Permissions = new List<PermissionRequirement>
             {
@@ -348,7 +348,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/cleanup-by-character",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cleanupByCharacter",
             Permissions = new List<PermissionRequirement>
             {
@@ -363,7 +363,7 @@ public static class DivinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/divine/cleanup-by-game-service",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cleanupByGameService",
             Permissions = new List<PermissionRequirement>
             {

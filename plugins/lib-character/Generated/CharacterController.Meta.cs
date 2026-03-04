@@ -69,9 +69,9 @@ public partial class CharacterController
             "type": "string",
             "description": "Character lifecycle status",
             "enum": [
-                "alive",
-                "dead",
-                "dormant"
+                "Alive",
+                "Dead",
+                "Dormant"
             ]
         }
     }
@@ -152,9 +152,9 @@ public partial class CharacterController
             "type": "string",
             "description": "Character lifecycle status",
             "enum": [
-                "alive",
-                "dead",
-                "dormant"
+                "Alive",
+                "Dead",
+                "Dormant"
             ]
         }
     }
@@ -315,9 +315,9 @@ public partial class CharacterController
             "type": "string",
             "description": "Character lifecycle status",
             "enum": [
-                "alive",
-                "dead",
-                "dormant"
+                "Alive",
+                "Dead",
+                "Dormant"
             ]
         }
     }
@@ -432,9 +432,9 @@ public partial class CharacterController
             "type": "string",
             "description": "Character lifecycle status",
             "enum": [
-                "alive",
-                "dead",
-                "dormant"
+                "Alive",
+                "Dead",
+                "Dormant"
             ]
         }
     }
@@ -515,9 +515,9 @@ public partial class CharacterController
             "type": "string",
             "description": "Character lifecycle status",
             "enum": [
-                "alive",
-                "dead",
-                "dormant"
+                "Alive",
+                "Dead",
+                "Dormant"
             ]
         }
     }
@@ -716,9 +716,9 @@ public partial class CharacterController
             "type": "string",
             "description": "Character lifecycle status",
             "enum": [
-                "alive",
-                "dead",
-                "dormant"
+                "Alive",
+                "Dead",
+                "Dormant"
             ]
         }
     }
@@ -841,9 +841,9 @@ public partial class CharacterController
             "type": "string",
             "description": "Character lifecycle status",
             "enum": [
-                "alive",
-                "dead",
-                "dormant"
+                "Alive",
+                "Dead",
+                "Dormant"
             ]
         }
     }
@@ -1014,9 +1014,9 @@ public partial class CharacterController
             "type": "string",
             "description": "Character lifecycle status",
             "enum": [
-                "alive",
-                "dead",
-                "dormant"
+                "Alive",
+                "Dead",
+                "Dormant"
             ]
         },
         "FamilyTreeResponse": {
@@ -1704,9 +1704,9 @@ public partial class CharacterController
             "type": "string",
             "description": "Character lifecycle status",
             "enum": [
-                "alive",
-                "dead",
-                "dormant"
+                "Alive",
+                "Dead",
+                "Dormant"
             ]
         }
     }
@@ -1829,9 +1829,9 @@ public partial class CharacterController
             "type": "string",
             "description": "Character lifecycle status",
             "enum": [
-                "alive",
-                "dead",
-                "dormant"
+                "Alive",
+                "Dead",
+                "Dormant"
             ]
         }
     }
@@ -1998,9 +1998,9 @@ public partial class CharacterController
             "type": "string",
             "description": "Character lifecycle status",
             "enum": [
-                "alive",
-                "dead",
-                "dormant"
+                "Alive",
+                "Dead",
+                "Dormant"
             ]
         }
     }
@@ -2172,9 +2172,9 @@ public partial class CharacterController
             "type": "string",
             "description": "Character lifecycle status",
             "enum": [
-                "alive",
-                "dead",
-                "dormant"
+                "Alive",
+                "Dead",
+                "Dormant"
             ]
         }
     }

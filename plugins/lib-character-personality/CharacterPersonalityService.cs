@@ -649,58 +649,58 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     {
         return experienceType switch
         {
-            ExperienceType.TRAUMA => new Dictionary<TraitAxis, float>
+            ExperienceType.Trauma => new Dictionary<TraitAxis, float>
             {
-                { TraitAxis.NEUROTICISM, 0.5f },
-                { TraitAxis.OPENNESS, -0.3f },
-                { TraitAxis.EXTRAVERSION, -0.2f }
+                { TraitAxis.Neuroticism, 0.5f },
+                { TraitAxis.Openness, -0.3f },
+                { TraitAxis.Extraversion, -0.2f }
             },
-            ExperienceType.BETRAYAL => new Dictionary<TraitAxis, float>
+            ExperienceType.Betrayal => new Dictionary<TraitAxis, float>
             {
-                { TraitAxis.AGREEABLENESS, -0.5f },
-                { TraitAxis.HONESTY, -0.3f },
-                { TraitAxis.LOYALTY, 0.2f } // Can increase loyalty to those who remain
+                { TraitAxis.Agreeableness, -0.5f },
+                { TraitAxis.Honesty, -0.3f },
+                { TraitAxis.Loyalty, 0.2f } // Can increase loyalty to those who remain
             },
-            ExperienceType.LOSS => new Dictionary<TraitAxis, float>
+            ExperienceType.Loss => new Dictionary<TraitAxis, float>
             {
-                { TraitAxis.NEUROTICISM, 0.3f },
-                { TraitAxis.CONSCIENTIOUSNESS, 0.2f }
+                { TraitAxis.Neuroticism, 0.3f },
+                { TraitAxis.Conscientiousness, 0.2f }
             },
-            ExperienceType.VICTORY => new Dictionary<TraitAxis, float>
+            ExperienceType.Victory => new Dictionary<TraitAxis, float>
             {
-                { TraitAxis.EXTRAVERSION, 0.3f },
-                { TraitAxis.AGGRESSION, 0.2f },
-                { TraitAxis.NEUROTICISM, -0.2f }
+                { TraitAxis.Extraversion, 0.3f },
+                { TraitAxis.Aggression, 0.2f },
+                { TraitAxis.Neuroticism, -0.2f }
             },
-            ExperienceType.FRIENDSHIP => new Dictionary<TraitAxis, float>
+            ExperienceType.Friendship => new Dictionary<TraitAxis, float>
             {
-                { TraitAxis.AGREEABLENESS, 0.4f },
-                { TraitAxis.EXTRAVERSION, 0.3f },
-                { TraitAxis.LOYALTY, 0.3f }
+                { TraitAxis.Agreeableness, 0.4f },
+                { TraitAxis.Extraversion, 0.3f },
+                { TraitAxis.Loyalty, 0.3f }
             },
-            ExperienceType.REDEMPTION => new Dictionary<TraitAxis, float>
+            ExperienceType.Redemption => new Dictionary<TraitAxis, float>
             {
-                { TraitAxis.HONESTY, 0.4f },
-                { TraitAxis.CONSCIENTIOUSNESS, 0.3f },
-                { TraitAxis.NEUROTICISM, -0.2f }
+                { TraitAxis.Honesty, 0.4f },
+                { TraitAxis.Conscientiousness, 0.3f },
+                { TraitAxis.Neuroticism, -0.2f }
             },
-            ExperienceType.CORRUPTION => new Dictionary<TraitAxis, float>
+            ExperienceType.Corruption => new Dictionary<TraitAxis, float>
             {
-                { TraitAxis.HONESTY, -0.5f },
-                { TraitAxis.AGREEABLENESS, -0.3f },
-                { TraitAxis.AGGRESSION, 0.3f }
+                { TraitAxis.Honesty, -0.5f },
+                { TraitAxis.Agreeableness, -0.3f },
+                { TraitAxis.Aggression, 0.3f }
             },
-            ExperienceType.ENLIGHTENMENT => new Dictionary<TraitAxis, float>
+            ExperienceType.Enlightenment => new Dictionary<TraitAxis, float>
             {
-                { TraitAxis.OPENNESS, 0.5f },
-                { TraitAxis.CONSCIENTIOUSNESS, 0.3f },
-                { TraitAxis.NEUROTICISM, -0.3f }
+                { TraitAxis.Openness, 0.5f },
+                { TraitAxis.Conscientiousness, 0.3f },
+                { TraitAxis.Neuroticism, -0.3f }
             },
-            ExperienceType.SACRIFICE => new Dictionary<TraitAxis, float>
+            ExperienceType.Sacrifice => new Dictionary<TraitAxis, float>
             {
-                { TraitAxis.LOYALTY, 0.5f },
-                { TraitAxis.CONSCIENTIOUSNESS, 0.3f },
-                { TraitAxis.AGREEABLENESS, 0.2f }
+                { TraitAxis.Loyalty, 0.5f },
+                { TraitAxis.Conscientiousness, 0.3f },
+                { TraitAxis.Agreeableness, 0.2f }
             },
             _ => new Dictionary<TraitAxis, float>()
         };
@@ -715,45 +715,45 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
         switch (experienceType)
         {
-            case CombatExperienceType.DECISIVE_VICTORY:
+            case CombatExperienceType.DecisiveVictory:
                 data.RiskTolerance = Math.Clamp(data.RiskTolerance + shift, 0, 1);
                 // May become more aggressive
-                if (data.Style == CombatStyle.DEFENSIVE && Random.Shared.NextDouble() < _configuration.CombatStyleTransitionProbability)
-                    data.Style = CombatStyle.BALANCED;
-                else if (data.Style == CombatStyle.BALANCED && Random.Shared.NextDouble() < _configuration.CombatVictoryBalancedTransitionProbability)
-                    data.Style = CombatStyle.AGGRESSIVE;
+                if (data.Style == CombatStyle.Defensive && Random.Shared.NextDouble() < _configuration.CombatStyleTransitionProbability)
+                    data.Style = CombatStyle.Balanced;
+                else if (data.Style == CombatStyle.Balanced && Random.Shared.NextDouble() < _configuration.CombatVictoryBalancedTransitionProbability)
+                    data.Style = CombatStyle.Aggressive;
                 break;
 
-            case CombatExperienceType.NARROW_VICTORY:
+            case CombatExperienceType.NarrowVictory:
                 // Slight confidence boost but also caution
                 data.RiskTolerance = Math.Clamp(data.RiskTolerance + shift * (float)_configuration.CombatMildShiftMultiplier, 0, 1);
                 break;
 
-            case CombatExperienceType.DEFEAT:
+            case CombatExperienceType.Defeat:
                 data.RiskTolerance = Math.Clamp(data.RiskTolerance - shift, 0, 1);
                 data.RetreatThreshold = Math.Clamp(data.RetreatThreshold + shift * (float)_configuration.CombatMildShiftMultiplier, 0, 1);
                 // May become more defensive
-                if (data.Style == CombatStyle.AGGRESSIVE && Random.Shared.NextDouble() < _configuration.CombatStyleTransitionProbability)
-                    data.Style = CombatStyle.BALANCED;
-                else if (data.Style == CombatStyle.BERSERKER && Random.Shared.NextDouble() < _configuration.CombatDefeatStyleTransitionProbability)
-                    data.Style = CombatStyle.AGGRESSIVE;
+                if (data.Style == CombatStyle.Aggressive && Random.Shared.NextDouble() < _configuration.CombatStyleTransitionProbability)
+                    data.Style = CombatStyle.Balanced;
+                else if (data.Style == CombatStyle.Berserker && Random.Shared.NextDouble() < _configuration.CombatDefeatStyleTransitionProbability)
+                    data.Style = CombatStyle.Aggressive;
                 break;
 
-            case CombatExperienceType.NEAR_DEATH:
+            case CombatExperienceType.NearDeath:
                 data.RetreatThreshold = Math.Clamp(data.RetreatThreshold + shift * (float)_configuration.CombatIntenseShiftMultiplier, 0, 1);
                 data.RiskTolerance = Math.Clamp(data.RiskTolerance - shift * (float)_configuration.CombatIntenseShiftMultiplier, 0, 1);
                 // High chance of becoming more defensive
-                if (data.Style != CombatStyle.DEFENSIVE && Random.Shared.NextDouble() < _configuration.CombatDefensiveShiftProbability)
-                    data.Style = CombatStyle.DEFENSIVE;
+                if (data.Style != CombatStyle.Defensive && Random.Shared.NextDouble() < _configuration.CombatDefensiveShiftProbability)
+                    data.Style = CombatStyle.Defensive;
                 break;
 
-            case CombatExperienceType.ALLY_SAVED:
+            case CombatExperienceType.AllySaved:
                 data.ProtectAllies = true;
-                if (data.GroupRole == GroupRole.SOLO && Random.Shared.NextDouble() < _configuration.CombatRoleTransitionProbability)
-                    data.GroupRole = GroupRole.SUPPORT;
+                if (data.GroupRole == GroupRole.Solo && Random.Shared.NextDouble() < _configuration.CombatRoleTransitionProbability)
+                    data.GroupRole = GroupRole.Support;
                 break;
 
-            case CombatExperienceType.ALLY_LOST:
+            case CombatExperienceType.AllyLost:
                 // Complex - may increase or decrease protection tendency
                 if (Random.Shared.NextDouble() < _configuration.CombatDefensiveShiftProbability)
                 {
@@ -765,17 +765,17 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 }
                 break;
 
-            case CombatExperienceType.SUCCESSFUL_RETREAT:
+            case CombatExperienceType.SuccessfulRetreat:
                 // Validates retreat as a viable strategy
                 data.RetreatThreshold = Math.Clamp(data.RetreatThreshold + shift * (float)_configuration.CombatMildestShiftMultiplier, 0, 1);
                 break;
 
-            case CombatExperienceType.FAILED_RETREAT:
+            case CombatExperienceType.FailedRetreat:
                 // May fight harder next time or become more cautious
                 if (Random.Shared.NextDouble() < _configuration.CombatDefensiveShiftProbability)
                 {
                     data.RetreatThreshold = Math.Clamp(data.RetreatThreshold - shift, 0, 1);
-                    data.Style = CombatStyle.AGGRESSIVE; // Fight instead of flee
+                    data.Style = CombatStyle.Aggressive; // Fight instead of flee
                 }
                 else
                 {
@@ -783,13 +783,13 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 }
                 break;
 
-            case CombatExperienceType.AMBUSH_SUCCESS:
-                if (data.GroupRole != GroupRole.LEADER && Random.Shared.NextDouble() < _configuration.CombatStyleTransitionProbability)
-                    data.GroupRole = GroupRole.FLANKER;
-                data.Style = data.Style == CombatStyle.DEFENSIVE ? CombatStyle.TACTICAL : data.Style;
+            case CombatExperienceType.AmbushSuccess:
+                if (data.GroupRole != GroupRole.Leader && Random.Shared.NextDouble() < _configuration.CombatStyleTransitionProbability)
+                    data.GroupRole = GroupRole.Flanker;
+                data.Style = data.Style == CombatStyle.Defensive ? CombatStyle.Tactical : data.Style;
                 break;
 
-            case CombatExperienceType.AMBUSH_SURVIVED:
+            case CombatExperienceType.AmbushSurvived:
                 // More paranoid, more defensive
                 data.RiskTolerance = Math.Clamp(data.RiskTolerance - shift, 0, 1);
                 break;

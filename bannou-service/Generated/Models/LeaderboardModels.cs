@@ -38,10 +38,10 @@ using System = global::System;
 public enum SortOrder
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"descending")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Descending")]
     Descending = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ascending")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Ascending")]
     Ascending = 1,
 
 }
@@ -55,16 +55,16 @@ public enum SortOrder
 public enum UpdateMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"replace")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Replace")]
     Replace = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"increment")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Increment")]
     Increment = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"max")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Max")]
     Max = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"min")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Min")]
     Min = 3,
 
 }

@@ -48,7 +48,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/query",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryDocumentation",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getDocument",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/search",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "searchDocumentation",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listDocuments",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/suggest",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "suggestRelatedTopics",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createDocument",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateDocument",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteDocument",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/recover",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "recoverDocument",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/bulk-update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "bulkUpdateDocuments",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/bulk-delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "bulkDeleteDocuments",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/import",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "importDocumentation",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/trashcan",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listTrashcan",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/purge",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "purgeTrashcan",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/stats",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getNamespaceStats",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/repo/bind",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "bindRepository",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/repo/unbind",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "unbindRepository",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/repo/sync",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "syncRepository",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/repo/status",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getRepositoryStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/repo/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listRepositoryBindings",
             Permissions = new List<PermissionRequirement>
             {
@@ -348,7 +348,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/repo/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateRepositoryBinding",
             Permissions = new List<PermissionRequirement>
             {
@@ -363,7 +363,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/repo/archive/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createDocumentationArchive",
             Permissions = new List<PermissionRequirement>
             {
@@ -378,7 +378,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/repo/archive/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listDocumentationArchives",
             Permissions = new List<PermissionRequirement>
             {
@@ -393,7 +393,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/repo/archive/restore",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "restoreDocumentationArchive",
             Permissions = new List<PermissionRequirement>
             {
@@ -408,7 +408,7 @@ public static class DocumentationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/documentation/repo/archive/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteDocumentationArchive",
             Permissions = new List<PermissionRequirement>
             {

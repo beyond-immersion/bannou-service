@@ -229,7 +229,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
 
         try
         {
-            var heartbeat = BuildHeartbeatEvent(InstanceHealthStatus.Shutting_down);
+            var heartbeat = BuildHeartbeatEvent(InstanceHealthStatus.ShuttingDown);
 
             await _messageBus.TryPublishAsync(
                 HEARTBEAT_TOPIC,

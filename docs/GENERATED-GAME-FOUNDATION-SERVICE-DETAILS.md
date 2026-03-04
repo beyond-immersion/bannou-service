@@ -17,6 +17,8 @@ Distributed actor management and execution (L2 GameFoundation) for NPC brains, e
 
 The Character service (L2 GameFoundation) manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with family tree data (from lib-relationship), and compression/archival for dead characters via lib-resource. Per the service hierarchy, Character cannot depend on L4 services (personality, history, encounters) -- callers needing that data should aggregate from L4 services directly.
 
+**System realm characters**: The Character service is agnostic to realm type -- it treats characters in system realms (PANTHEON, DUNGEON_CORES, SENTIENT_ARMS, NEXIUS, UNDERWORLD) identically to characters in physical realms. This is by design: system realms give non-physical entities (gods, dungeon cores, sentient weapons, guardian spirits) character records for the actor-bound entity pattern without polluting physical realm queries. System realm filtering is the Realm service's responsibility via `isSystemType`.
+
 ## Collection {#collection}
 
 **Version**: 1.0.0 | **Schema**: `schemas/collection-api.yaml` | **Endpoints**: 21 | **Deep Dive**: [docs/plugins/COLLECTION.md](plugins/COLLECTION.md)

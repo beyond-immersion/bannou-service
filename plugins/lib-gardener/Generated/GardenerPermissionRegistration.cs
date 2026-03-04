@@ -48,7 +48,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/garden/enter",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "enterGarden",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/garden/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getGardenState",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/garden/update-position",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updatePosition",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/garden/leave",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "leaveGarden",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/poi/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listPois",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/poi/interact",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "interactWithPoi",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/poi/decline",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "declinePoi",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/scenario/enter",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "enterScenario",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/scenario/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getScenarioState",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/scenario/complete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "completeScenario",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/scenario/abandon",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "abandonScenario",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/scenario/chain",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "chainScenario",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/template/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/template/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/template/get-by-code",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getTemplateByCode",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/template/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listTemplates",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/template/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/template/deprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deprecateTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/template/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/phase/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getPhaseConfig",
             Permissions = new List<PermissionRequirement>
             {
@@ -348,7 +348,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/phase/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updatePhaseConfig",
             Permissions = new List<PermissionRequirement>
             {
@@ -363,7 +363,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/phase/get-metrics",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getPhaseMetrics",
             Permissions = new List<PermissionRequirement>
             {
@@ -378,7 +378,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/bond/enter-together",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "enterScenarioTogether",
             Permissions = new List<PermissionRequirement>
             {
@@ -393,7 +393,7 @@ public static class GardenerPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/gardener/bond/get-shared-garden",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getSharedGardenState",
             Permissions = new List<PermissionRequirement>
             {

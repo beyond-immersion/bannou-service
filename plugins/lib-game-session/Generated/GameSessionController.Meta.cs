@@ -55,10 +55,10 @@ public partial class GameSessionController
             "type": "string",
             "description": "Current status of the game session",
             "enum": [
-                "waiting",
-                "active",
-                "full",
-                "finished"
+                "Waiting",
+                "Active",
+                "Full",
+                "Finished"
             ]
         }
     }
@@ -185,18 +185,18 @@ public partial class GameSessionController
             "type": "string",
             "description": "Type of game session - determines join behavior",
             "enum": [
-                "lobby",
-                "matchmade"
+                "Lobby",
+                "Matchmade"
             ]
         },
         "SessionStatus": {
             "type": "string",
             "description": "Current status of the game session",
             "enum": [
-                "waiting",
-                "active",
-                "full",
-                "finished"
+                "Waiting",
+                "Active",
+                "Full",
+                "Finished"
             ]
         },
         "GamePlayer": {
@@ -246,9 +246,9 @@ public partial class GameSessionController
             "type": "string",
             "description": "Role of the player in the game session",
             "enum": [
-                "player",
-                "spectator",
-                "moderator"
+                "Player",
+                "Spectator",
+                "Moderator"
             ]
         },
         "ReservationInfo": {
@@ -419,8 +419,8 @@ public partial class GameSessionController
             "type": "string",
             "description": "Type of game session - determines join behavior",
             "enum": [
-                "lobby",
-                "matchmade"
+                "Lobby",
+                "Matchmade"
             ]
         }
     }
@@ -526,18 +526,18 @@ public partial class GameSessionController
             "type": "string",
             "description": "Type of game session - determines join behavior",
             "enum": [
-                "lobby",
-                "matchmade"
+                "Lobby",
+                "Matchmade"
             ]
         },
         "SessionStatus": {
             "type": "string",
             "description": "Current status of the game session",
             "enum": [
-                "waiting",
-                "active",
-                "full",
-                "finished"
+                "Waiting",
+                "Active",
+                "Full",
+                "Finished"
             ]
         },
         "GamePlayer": {
@@ -587,9 +587,9 @@ public partial class GameSessionController
             "type": "string",
             "description": "Role of the player in the game session",
             "enum": [
-                "player",
-                "spectator",
-                "moderator"
+                "Player",
+                "Spectator",
+                "Moderator"
             ]
         },
         "ReservationInfo": {
@@ -801,18 +801,18 @@ public partial class GameSessionController
             "type": "string",
             "description": "Type of game session - determines join behavior",
             "enum": [
-                "lobby",
-                "matchmade"
+                "Lobby",
+                "Matchmade"
             ]
         },
         "SessionStatus": {
             "type": "string",
             "description": "Current status of the game session",
             "enum": [
-                "waiting",
-                "active",
-                "full",
-                "finished"
+                "Waiting",
+                "Active",
+                "Full",
+                "Finished"
             ]
         },
         "GamePlayer": {
@@ -862,9 +862,9 @@ public partial class GameSessionController
             "type": "string",
             "description": "Role of the player in the game session",
             "enum": [
-                "player",
-                "spectator",
-                "moderator"
+                "Player",
+                "Spectator",
+                "Moderator"
             ]
         },
         "ReservationInfo": {
@@ -1046,9 +1046,9 @@ public partial class GameSessionController
             "type": "string",
             "description": "Role of the player in the game session",
             "enum": [
-                "player",
-                "spectator",
-                "moderator"
+                "Player",
+                "Spectator",
+                "Moderator"
             ]
         }
     }
@@ -1366,9 +1366,9 @@ public partial class GameSessionController
             "type": "string",
             "description": "Type of chat message",
             "enum": [
-                "public",
-                "whisper",
-                "system"
+                "Public",
+                "Whisper",
+                "System"
             ]
         }
     }
@@ -1491,11 +1491,11 @@ public partial class GameSessionController
             "type": "string",
             "description": "Type of game action",
             "enum": [
-                "move",
-                "interact",
-                "attack",
-                "cast_spell",
-                "use_item"
+                "Move",
+                "Interact",
+                "Attack",
+                "CastSpell",
+                "UseItem"
             ]
         }
     }
@@ -1684,9 +1684,9 @@ public partial class GameSessionController
             "type": "string",
             "description": "Role of the player in the game session",
             "enum": [
-                "player",
-                "spectator",
-                "moderator"
+                "Player",
+                "Spectator",
+                "Moderator"
             ]
         }
     }

@@ -350,7 +350,7 @@ public partial class GameServiceService : IGameServiceService
                     {
                         ResourceType = "game-service",
                         ResourceId = body.ServiceId,
-                        CleanupPolicy = CleanupPolicy.ALL_REQUIRED
+                        CleanupPolicy = CleanupPolicy.AllRequired
                     }, cancellationToken);
 
                 if (cleanupResult == null || !cleanupResult.Success)

@@ -32,9 +32,9 @@ using System = global::System;
 
 /// <summary>
 /// Action to take when the referenced resource is deleted.
-/// <br/>CASCADE: Delete dependent entities when resource is deleted
-/// <br/>RESTRICT: Block resource deletion if references exist
-/// <br/>DETACH: Set reference to null when resource is deleted
+/// <br/>Cascade: Delete dependent entities when resource is deleted
+/// <br/>Restrict: Block resource deletion if references exist
+/// <br/>Detach: Set reference to null when resource is deleted
 /// <br/>
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -42,22 +42,22 @@ using System = global::System;
 public enum OnDeleteAction
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CASCADE")]
-    CASCADE = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Cascade")]
+    Cascade = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"RESTRICT")]
-    RESTRICT = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Restrict")]
+    Restrict = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"DETACH")]
-    DETACH = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Detach")]
+    Detach = 2,
 
 }
 #pragma warning restore CS1591
 
 /// <summary>
 /// Policy for cleanup callback execution.
-/// <br/>BEST_EFFORT: Proceed with deletion even if some callbacks fail
-/// <br/>ALL_REQUIRED: Abort deletion if any callback fails
+/// <br/>BestEffort: Proceed with deletion even if some callbacks fail
+/// <br/>AllRequired: Abort deletion if any callback fails
 /// <br/>
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -65,19 +65,19 @@ public enum OnDeleteAction
 public enum CleanupPolicy
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"BEST_EFFORT")]
-    BEST_EFFORT = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"BestEffort")]
+    BestEffort = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ALL_REQUIRED")]
-    ALL_REQUIRED = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"AllRequired")]
+    AllRequired = 1,
 
 }
 #pragma warning restore CS1591
 
 /// <summary>
 /// Policy for compression callback execution.
-/// <br/>BEST_EFFORT: Create archive even if some callbacks fail (partial archive)
-/// <br/>ALL_REQUIRED: Abort compression if any callback fails
+/// <br/>BestEffort: Create archive even if some callbacks fail (partial archive)
+/// <br/>AllRequired: Abort compression if any callback fails
 /// <br/>
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -85,11 +85,11 @@ public enum CleanupPolicy
 public enum CompressionPolicy
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"BEST_EFFORT")]
-    BEST_EFFORT = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"BestEffort")]
+    BestEffort = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ALL_REQUIRED")]
-    ALL_REQUIRED = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"AllRequired")]
+    AllRequired = 1,
 
 }
 #pragma warning restore CS1591

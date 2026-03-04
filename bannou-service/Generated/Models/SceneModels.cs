@@ -40,43 +40,43 @@ using System = global::System;
 public enum SceneType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"unknown")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Unknown")]
     Unknown = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"region")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Region")]
     Region = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"city")]
+    [System.Runtime.Serialization.EnumMember(Value = @"City")]
     City = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"district")]
+    [System.Runtime.Serialization.EnumMember(Value = @"District")]
     District = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"lot")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Lot")]
     Lot = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"building")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Building")]
     Building = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"room")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Room")]
     Room = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"dungeon")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Dungeon")]
     Dungeon = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"arena")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Arena")]
     Arena = 8,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"vehicle")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Vehicle")]
     Vehicle = 9,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"prefab")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Prefab")]
     Prefab = 10,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cutscene")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Cutscene")]
     Cutscene = 11,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"other")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Other")]
     Other = 12,
 
 }
@@ -93,25 +93,25 @@ public enum SceneType
 public enum NodeType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"group")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Group")]
     Group = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"mesh")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Mesh")]
     Mesh = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"marker")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Marker")]
     Marker = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"volume")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Volume")]
     Volume = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"emitter")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Emitter")]
     Emitter = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"reference")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Reference")]
     Reference = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Custom")]
     Custom = 6,
 
 }
@@ -125,16 +125,16 @@ public enum NodeType
 public enum VolumeShape
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"box")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Box")]
     Box = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"sphere")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Sphere")]
     Sphere = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"capsule")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Capsule")]
     Capsule = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cylinder")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Cylinder")]
     Cylinder = 3,
 
 }
@@ -150,31 +150,31 @@ public enum VolumeShape
 public enum AffordanceType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"walkable")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Walkable")]
     Walkable = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"climbable")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Climbable")]
     Climbable = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"sittable")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Sittable")]
     Sittable = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"interactive")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Interactive")]
     Interactive = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"collectible")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Collectible")]
     Collectible = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"destructible")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Destructible")]
     Destructible = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"container")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Container")]
     Container = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"door")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Door")]
     Door = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"teleport")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Teleport")]
     Teleport = 8,
 
 }
@@ -188,28 +188,28 @@ public enum AffordanceType
 public enum MarkerType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"generic")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Generic")]
     Generic = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"spawn_point")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SpawnPoint")]
     SpawnPoint = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"npc_spawn")]
+    [System.Runtime.Serialization.EnumMember(Value = @"NpcSpawn")]
     NpcSpawn = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"waypoint")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Waypoint")]
     Waypoint = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"camera_point")]
+    [System.Runtime.Serialization.EnumMember(Value = @"CameraPoint")]
     CameraPoint = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"light_point")]
+    [System.Runtime.Serialization.EnumMember(Value = @"LightPoint")]
     LightPoint = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"audio_point")]
+    [System.Runtime.Serialization.EnumMember(Value = @"AudioPoint")]
     AudioPoint = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"trigger_point")]
+    [System.Runtime.Serialization.EnumMember(Value = @"TriggerPoint")]
     TriggerPoint = 7,
 
 }
@@ -380,16 +380,16 @@ public partial class AssetSlot
 public enum UnresolvedReferenceReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"not_found")]
+    [System.Runtime.Serialization.EnumMember(Value = @"NotFound")]
     NotFound = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"circular_reference")]
+    [System.Runtime.Serialization.EnumMember(Value = @"CircularReference")]
     CircularReference = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"depth_exceeded")]
+    [System.Runtime.Serialization.EnumMember(Value = @"DepthExceeded")]
     DepthExceeded = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"access_denied")]
+    [System.Runtime.Serialization.EnumMember(Value = @"AccessDenied")]
     AccessDenied = 3,
 
 }
@@ -403,10 +403,10 @@ public enum UnresolvedReferenceReason
 public enum ValidationSeverity
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"error")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Error")]
     Error = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"warning")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Warning")]
     Warning = 1,
 
 }
@@ -420,19 +420,19 @@ public enum ValidationSeverity
 public enum ValidationRuleType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"require_tag")]
+    [System.Runtime.Serialization.EnumMember(Value = @"RequireTag")]
     RequireTag = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"require_node_type")]
+    [System.Runtime.Serialization.EnumMember(Value = @"RequireNodeType")]
     RequireNodeType = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"forbid_tag")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ForbidTag")]
     ForbidTag = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"require_annotation")]
+    [System.Runtime.Serialization.EnumMember(Value = @"RequireAnnotation")]
     RequireAnnotation = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"custom_expression")]
+    [System.Runtime.Serialization.EnumMember(Value = @"CustomExpression")]
     CustomExpression = 4,
 
 }
@@ -446,16 +446,16 @@ public enum ValidationRuleType
 public enum SearchMatchType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"name")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Name")]
     Name = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"description")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Description")]
     Description = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"tag")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Tag")]
     Tag = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"node_name")]
+    [System.Runtime.Serialization.EnumMember(Value = @"NodeName")]
     NodeName = 3,
 
 }

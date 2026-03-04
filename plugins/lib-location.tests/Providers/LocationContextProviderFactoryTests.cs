@@ -39,7 +39,7 @@ public class LocationContextProviderFactoryTests
             Zone: "MARKET_DISTRICT",
             Name: "Market District",
             Region: "CENTRAL_REGION",
-            Type: LocationType.DISTRICT,
+            Type: LocationType.District,
             Depth: 3,
             Realm: "ARCADIA",
             NearbyPois: new List<string> { "TEMPLE_DISTRICT" },

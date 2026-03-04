@@ -48,7 +48,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "CreateSeed",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetSeed",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/get-by-owner",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetSeedsByOwner",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ListSeeds",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "UpdateSeed",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/activate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ActivateSeed",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/archive",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ArchiveSeed",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/growth/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetGrowth",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/growth/record",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "RecordGrowth",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/growth/record-batch",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "RecordGrowthBatch",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/growth/get-phase",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetGrowthPhase",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/capability/get-manifest",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetCapabilityManifest",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/type/register",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "RegisterSeedType",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/type/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetSeedType",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/type/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ListSeedTypes",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/type/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "UpdateSeedType",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/type/deprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "DeprecateSeedType",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/type/undeprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "UndeprecateSeedType",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/type/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "DeleteSeedType",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/bond/initiate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "InitiateBond",
             Permissions = new List<PermissionRequirement>
             {
@@ -348,7 +348,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/bond/confirm",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ConfirmBond",
             Permissions = new List<PermissionRequirement>
             {
@@ -363,7 +363,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/bond/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetBond",
             Permissions = new List<PermissionRequirement>
             {
@@ -378,7 +378,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/bond/get-for-seed",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetBondForSeed",
             Permissions = new List<PermissionRequirement>
             {
@@ -393,7 +393,7 @@ public static class SeedPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/seed/bond/get-partners",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetBondPartners",
             Permissions = new List<PermissionRequirement>
             {

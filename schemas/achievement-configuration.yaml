@@ -88,6 +88,16 @@ x-service-configuration:
       description: TTL in seconds for progress data in Redis (0 = no expiry, progress persists indefinitely)
       default: 0
       env: ACHIEVEMENT_PROGRESS_TTL_SECONDS
+    # Progress Milestone Configuration
+    ProgressMilestonePercents:
+      type: array
+      items:
+        type: integer
+        minimum: 1
+        maximum: 99
+      default: [25, 50, 75]
+      env: ACHIEVEMENT_PROGRESS_MILESTONE_PERCENTS
+      description: Progress percentage thresholds at which client milestone events are published (comma-separated in env var)
     # Rarity Calculation Configuration
     RarityCalculationStartupDelaySeconds:
       type: integer

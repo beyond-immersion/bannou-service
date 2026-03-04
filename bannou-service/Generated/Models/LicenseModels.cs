@@ -41,10 +41,10 @@ using System = global::System;
 public enum AdjacencyMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"four_way")]
+    [System.Runtime.Serialization.EnumMember(Value = @"FourWay")]
     FourWay = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"eight_way")]
+    [System.Runtime.Serialization.EnumMember(Value = @"EightWay")]
     EightWay = 1,
 
 }
@@ -62,13 +62,13 @@ public enum AdjacencyMode
 public enum LicenseStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"locked")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Locked")]
     Locked = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"unlockable")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Unlockable")]
     Unlockable = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"unlocked")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Unlocked")]
     Unlocked = 2,
 
 }
@@ -90,25 +90,25 @@ public enum LicenseStatus
 public enum UnlockFailureReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"not_adjacent")]
+    [System.Runtime.Serialization.EnumMember(Value = @"NotAdjacent")]
     NotAdjacent = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"insufficient_lp")]
+    [System.Runtime.Serialization.EnumMember(Value = @"InsufficientLp")]
     InsufficientLp = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"prerequisites_not_met")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PrerequisitesNotMet")]
     PrerequisitesNotMet = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"contract_failed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ContractFailed")]
     ContractFailed = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"already_unlocked")]
+    [System.Runtime.Serialization.EnumMember(Value = @"AlreadyUnlocked")]
     AlreadyUnlocked = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"board_not_found")]
+    [System.Runtime.Serialization.EnumMember(Value = @"BoardNotFound")]
     BoardNotFound = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"license_not_found")]
+    [System.Runtime.Serialization.EnumMember(Value = @"LicenseNotFound")]
     LicenseNotFound = 6,
 
 }

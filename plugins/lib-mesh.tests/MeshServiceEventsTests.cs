@@ -385,7 +385,7 @@ public class MeshServiceEventsTests
     [InlineData(InstanceHealthStatus.Degraded, EndpointStatus.Degraded)]
     [InlineData(InstanceHealthStatus.Overloaded, EndpointStatus.Degraded)]
     [InlineData(InstanceHealthStatus.Unavailable, EndpointStatus.Unavailable)]
-    [InlineData(InstanceHealthStatus.Shutting_down, EndpointStatus.ShuttingDown)]
+    [InlineData(InstanceHealthStatus.ShuttingDown, EndpointStatus.ShuttingDown)]
     public async Task HandleServiceHeartbeatAsync_MapsHeartbeatStatus_Correctly(
         InstanceHealthStatus heartbeatStatus,
         EndpointStatus expectedEndpointStatus)

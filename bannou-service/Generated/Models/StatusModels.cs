@@ -45,22 +45,22 @@ using System = global::System;
 public enum StatusCategory
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"buff")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Buff")]
     Buff = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"debuff")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Debuff")]
     Debuff = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"death")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Death")]
     Death = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"subscription")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Subscription")]
     Subscription = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"event")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Event")]
     Event = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"passive")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Passive")]
     Passive = 5,
 
 }
@@ -80,19 +80,19 @@ public enum StatusCategory
 public enum StackBehavior
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"refresh_duration")]
+    [System.Runtime.Serialization.EnumMember(Value = @"RefreshDuration")]
     RefreshDuration = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"independent")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Independent")]
     Independent = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"increase_intensity")]
+    [System.Runtime.Serialization.EnumMember(Value = @"IncreaseIntensity")]
     IncreaseIntensity = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"replace")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Replace")]
     Replace = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ignore")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Ignore")]
     Ignore = 4,
 
 }
@@ -109,10 +109,10 @@ public enum StackBehavior
 public enum EffectSource
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"item_based")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ItemBased")]
     ItemBased = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"seed_derived")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SeedDerived")]
     SeedDerived = 1,
 
 }
@@ -132,19 +132,19 @@ public enum EffectSource
 public enum StatusRemoveReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"expired")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Expired")]
     Expired = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cleansed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Cleansed")]
     Cleansed = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Cancelled")]
     Cancelled = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"source_removed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SourceRemoved")]
     SourceRemoved = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"admin")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Admin")]
     Admin = 4,
 
 }
@@ -165,22 +165,22 @@ public enum StatusRemoveReason
 public enum GrantFailureReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"template_not_found")]
+    [System.Runtime.Serialization.EnumMember(Value = @"TemplateNotFound")]
     TemplateNotFound = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"entity_at_max_statuses")]
+    [System.Runtime.Serialization.EnumMember(Value = @"EntityAtMaxStatuses")]
     EntityAtMaxStatuses = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"stack_limit_reached")]
+    [System.Runtime.Serialization.EnumMember(Value = @"StackLimitReached")]
     StackLimitReached = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"stack_behavior_ignore")]
+    [System.Runtime.Serialization.EnumMember(Value = @"StackBehaviorIgnore")]
     StackBehaviorIgnore = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"contract_failed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ContractFailed")]
     ContractFailed = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"item_creation_failed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ItemCreationFailed")]
     ItemCreationFailed = 5,
 
 }
@@ -199,16 +199,16 @@ public enum GrantFailureReason
 public enum GrantResult
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"granted")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Granted")]
     Granted = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"stacked")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Stacked")]
     Stacked = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"refreshed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Refreshed")]
     Refreshed = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"replaced")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Replaced")]
     Replaced = 3,
 
 }
@@ -228,19 +228,19 @@ public enum GrantResult
 public enum StatusChangeType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"granted")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Granted")]
     Granted = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"removed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Removed")]
     Removed = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"expired")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Expired")]
     Expired = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"stacked")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Stacked")]
     Stacked = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cleansed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Cleansed")]
     Cleansed = 4,
 
 }

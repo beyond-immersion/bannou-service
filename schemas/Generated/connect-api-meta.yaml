@@ -97,8 +97,8 @@ paths:
         \    \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                    \"\
         description\": \"Query string parameters for the endpoint (null if none)\"\n                }\n            }\n   \
         \     },\n        \"HttpMethodType\": {\n            \"type\": \"string\",\n            \"description\": \"HTTP method
-        for endpoint invocation\",\n            \"enum\": [\n                \"GET\",\n                \"POST\",\n       \
-        \         \"PUT\",\n                \"DELETE\",\n                \"PATCH\"\n            ]\n        }\n    }\n}"
+        for endpoint invocation\",\n            \"enum\": [\n                \"Get\",\n                \"Post\",\n       \
+        \         \"Put\",\n                \"Delete\",\n                \"Patch\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/InternalProxyResponse\"\
         ,\n    \"$defs\": {\n        \"InternalProxyResponse\": {\n            \"description\": \"Response from a proxied
         API call containing the target service's response data\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -205,8 +205,8 @@ paths:
         \  \"type\": \"integer\",\n                    \"format\": \"uint16\",\n                    \"description\": \"Preferred
         WebSocket channel for this capability\",\n                    \"default\": 0\n                }\n            }\n \
         \       },\n        \"HttpMethodType\": {\n            \"type\": \"string\",\n            \"description\": \"HTTP
-        method for endpoint invocation\",\n            \"enum\": [\n                \"GET\",\n                \"POST\",\n\
-        \                \"PUT\",\n                \"DELETE\",\n                \"PATCH\"\n            ]\n        },\n   \
+        method for endpoint invocation\",\n            \"enum\": [\n                \"Get\",\n                \"Post\",\n\
+        \                \"Put\",\n                \"Delete\",\n                \"Patch\"\n            ]\n        },\n   \
         \     \"ClientShortcut\": {\n            \"type\": \"object\",\n            \"description\": \"Session shortcut information
         sent to clients in the capability manifest.\\nShortcuts appear as invocable capabilities but Connect injects a pre-bound\\
         npayload when the shortcut GUID is used, replacing any client-provided payload.\\n\",\n            \"additionalProperties\"\
@@ -1244,11 +1244,11 @@ components:
       type: string
       description: HTTP method for endpoint invocation
       enum:
-      - GET
-      - POST
-      - PUT
-      - DELETE
-      - PATCH
+      - Get
+      - Post
+      - Put
+      - Delete
+      - Patch
     ConnectionMode:
       type: string
       description: WebSocket connection mode controlling broadcast and response behavior

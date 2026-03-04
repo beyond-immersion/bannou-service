@@ -48,7 +48,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/login",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "login",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/register",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "register",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/oauth/{provider}/init",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.Get,
             Description = "initOAuth",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/oauth/{provider}/callback",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "completeOAuth",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/steam/verify",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "verifySteamAuth",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/refresh",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "refreshToken",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/validate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "validateToken",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/logout",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "logout",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/sessions/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getSessions",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/sessions/terminate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "terminateSession",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/revocation-list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getRevocationList",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/password/reset",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "requestPasswordReset",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/password/confirm",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "confirmPasswordReset",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/providers",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listProviders",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/mfa/setup",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "setupMfa",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/mfa/enable",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "enableMfa",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/mfa/disable",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "disableMfa",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/mfa/admin-disable",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "adminDisableMfa",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class AuthPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/auth/mfa/verify",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "verifyMfa",
             Permissions = new List<PermissionRequirement>
             {

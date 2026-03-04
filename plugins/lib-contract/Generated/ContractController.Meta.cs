@@ -234,27 +234,27 @@ public partial class ContractController
             "type": "string",
             "description": "When payments occur",
             "enum": [
-                "one_time",
-                "recurring",
-                "milestone_based"
+                "OneTime",
+                "Recurring",
+                "MilestoneBased"
             ]
         },
         "TerminationPolicy": {
             "type": "string",
             "description": "How the contract can be terminated",
             "enum": [
-                "mutual_consent",
-                "unilateral_with_notice",
-                "unilateral_immediate",
-                "non_terminable"
+                "MutualConsent",
+                "UnilateralWithNotice",
+                "UnilateralImmediate",
+                "NonTerminable"
             ]
         },
         "TimeCommitmentType": {
             "type": "string",
             "description": "Type of time commitment for scheduling constraints",
             "enum": [
-                "exclusive",
-                "partial"
+                "Exclusive",
+                "Partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -431,9 +431,9 @@ public partial class ContractController
             "type": "string",
             "description": "Behavior when optional milestone deadline passes",
             "enum": [
-                "skip",
-                "warn",
-                "breach"
+                "Skip",
+                "Warn",
+                "Breach"
             ]
         },
         "PreboundApi": {
@@ -483,9 +483,9 @@ public partial class ContractController
             "type": "string",
             "description": "How to execute a prebound API call",
             "enum": [
-                "sync",
-                "async",
-                "fire_and_forget"
+                "Sync",
+                "Async",
+                "FireAndForget"
             ]
         },
         "ResponseValidation": {
@@ -560,36 +560,36 @@ public partial class ContractController
             "type": "string",
             "description": "Type of validation condition",
             "enum": [
-                "statusCodeIn",
-                "jsonPathEquals",
-                "jsonPathNotEquals",
-                "jsonPathExists",
-                "jsonPathNotExists",
-                "jsonPathGreaterThan",
-                "jsonPathLessThan",
-                "jsonPathContains"
+                "StatusCodeIn",
+                "JsonPathEquals",
+                "JsonPathNotEquals",
+                "JsonPathExists",
+                "JsonPathNotExists",
+                "JsonPathGreaterThan",
+                "JsonPathLessThan",
+                "JsonPathContains"
             ]
         },
         "ComparisonOperator": {
             "type": "string",
             "description": "Comparison operators for numeric conditions",
             "enum": [
-                "eq",
-                "ne",
-                "gt",
-                "gte",
-                "lt",
-                "lte"
+                "Eq",
+                "Ne",
+                "Gt",
+                "Gte",
+                "Lt",
+                "Lte"
             ]
         },
         "EnforcementMode": {
             "type": "string",
             "description": "How contract breaches are handled",
             "enum": [
-                "advisory",
-                "event_only",
-                "consequence_based",
-                "community"
+                "Advisory",
+                "EventOnly",
+                "ConsequenceBased",
+                "Community"
             ]
         }
     }
@@ -822,27 +822,27 @@ public partial class ContractController
             "type": "string",
             "description": "When payments occur",
             "enum": [
-                "one_time",
-                "recurring",
-                "milestone_based"
+                "OneTime",
+                "Recurring",
+                "MilestoneBased"
             ]
         },
         "TerminationPolicy": {
             "type": "string",
             "description": "How the contract can be terminated",
             "enum": [
-                "mutual_consent",
-                "unilateral_with_notice",
-                "unilateral_immediate",
-                "non_terminable"
+                "MutualConsent",
+                "UnilateralWithNotice",
+                "UnilateralImmediate",
+                "NonTerminable"
             ]
         },
         "TimeCommitmentType": {
             "type": "string",
             "description": "Type of time commitment for scheduling constraints",
             "enum": [
-                "exclusive",
-                "partial"
+                "Exclusive",
+                "Partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -1019,9 +1019,9 @@ public partial class ContractController
             "type": "string",
             "description": "Behavior when optional milestone deadline passes",
             "enum": [
-                "skip",
-                "warn",
-                "breach"
+                "Skip",
+                "Warn",
+                "Breach"
             ]
         },
         "PreboundApi": {
@@ -1071,9 +1071,9 @@ public partial class ContractController
             "type": "string",
             "description": "How to execute a prebound API call",
             "enum": [
-                "sync",
-                "async",
-                "fire_and_forget"
+                "Sync",
+                "Async",
+                "FireAndForget"
             ]
         },
         "ResponseValidation": {
@@ -1148,36 +1148,36 @@ public partial class ContractController
             "type": "string",
             "description": "Type of validation condition",
             "enum": [
-                "statusCodeIn",
-                "jsonPathEquals",
-                "jsonPathNotEquals",
-                "jsonPathExists",
-                "jsonPathNotExists",
-                "jsonPathGreaterThan",
-                "jsonPathLessThan",
-                "jsonPathContains"
+                "StatusCodeIn",
+                "JsonPathEquals",
+                "JsonPathNotEquals",
+                "JsonPathExists",
+                "JsonPathNotExists",
+                "JsonPathGreaterThan",
+                "JsonPathLessThan",
+                "JsonPathContains"
             ]
         },
         "ComparisonOperator": {
             "type": "string",
             "description": "Comparison operators for numeric conditions",
             "enum": [
-                "eq",
-                "ne",
-                "gt",
-                "gte",
-                "lt",
-                "lte"
+                "Eq",
+                "Ne",
+                "Gt",
+                "Gte",
+                "Lt",
+                "Lte"
             ]
         },
         "EnforcementMode": {
             "type": "string",
             "description": "How contract breaches are handled",
             "enum": [
-                "advisory",
-                "event_only",
-                "consequence_based",
-                "community"
+                "Advisory",
+                "EventOnly",
+                "ConsequenceBased",
+                "Community"
             ]
         }
     }
@@ -1493,27 +1493,27 @@ public partial class ContractController
             "type": "string",
             "description": "When payments occur",
             "enum": [
-                "one_time",
-                "recurring",
-                "milestone_based"
+                "OneTime",
+                "Recurring",
+                "MilestoneBased"
             ]
         },
         "TerminationPolicy": {
             "type": "string",
             "description": "How the contract can be terminated",
             "enum": [
-                "mutual_consent",
-                "unilateral_with_notice",
-                "unilateral_immediate",
-                "non_terminable"
+                "MutualConsent",
+                "UnilateralWithNotice",
+                "UnilateralImmediate",
+                "NonTerminable"
             ]
         },
         "TimeCommitmentType": {
             "type": "string",
             "description": "Type of time commitment for scheduling constraints",
             "enum": [
-                "exclusive",
-                "partial"
+                "Exclusive",
+                "Partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -1690,9 +1690,9 @@ public partial class ContractController
             "type": "string",
             "description": "Behavior when optional milestone deadline passes",
             "enum": [
-                "skip",
-                "warn",
-                "breach"
+                "Skip",
+                "Warn",
+                "Breach"
             ]
         },
         "PreboundApi": {
@@ -1742,9 +1742,9 @@ public partial class ContractController
             "type": "string",
             "description": "How to execute a prebound API call",
             "enum": [
-                "sync",
-                "async",
-                "fire_and_forget"
+                "Sync",
+                "Async",
+                "FireAndForget"
             ]
         },
         "ResponseValidation": {
@@ -1819,36 +1819,36 @@ public partial class ContractController
             "type": "string",
             "description": "Type of validation condition",
             "enum": [
-                "statusCodeIn",
-                "jsonPathEquals",
-                "jsonPathNotEquals",
-                "jsonPathExists",
-                "jsonPathNotExists",
-                "jsonPathGreaterThan",
-                "jsonPathLessThan",
-                "jsonPathContains"
+                "StatusCodeIn",
+                "JsonPathEquals",
+                "JsonPathNotEquals",
+                "JsonPathExists",
+                "JsonPathNotExists",
+                "JsonPathGreaterThan",
+                "JsonPathLessThan",
+                "JsonPathContains"
             ]
         },
         "ComparisonOperator": {
             "type": "string",
             "description": "Comparison operators for numeric conditions",
             "enum": [
-                "eq",
-                "ne",
-                "gt",
-                "gte",
-                "lt",
-                "lte"
+                "Eq",
+                "Ne",
+                "Gt",
+                "Gte",
+                "Lt",
+                "Lte"
             ]
         },
         "EnforcementMode": {
             "type": "string",
             "description": "How contract breaches are handled",
             "enum": [
-                "advisory",
-                "event_only",
-                "consequence_based",
-                "community"
+                "Advisory",
+                "EventOnly",
+                "ConsequenceBased",
+                "Community"
             ]
         }
     }
@@ -2208,27 +2208,27 @@ public partial class ContractController
             "type": "string",
             "description": "When payments occur",
             "enum": [
-                "one_time",
-                "recurring",
-                "milestone_based"
+                "OneTime",
+                "Recurring",
+                "MilestoneBased"
             ]
         },
         "TerminationPolicy": {
             "type": "string",
             "description": "How the contract can be terminated",
             "enum": [
-                "mutual_consent",
-                "unilateral_with_notice",
-                "unilateral_immediate",
-                "non_terminable"
+                "MutualConsent",
+                "UnilateralWithNotice",
+                "UnilateralImmediate",
+                "NonTerminable"
             ]
         },
         "TimeCommitmentType": {
             "type": "string",
             "description": "Type of time commitment for scheduling constraints",
             "enum": [
-                "exclusive",
-                "partial"
+                "Exclusive",
+                "Partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -2405,9 +2405,9 @@ public partial class ContractController
             "type": "string",
             "description": "Behavior when optional milestone deadline passes",
             "enum": [
-                "skip",
-                "warn",
-                "breach"
+                "Skip",
+                "Warn",
+                "Breach"
             ]
         },
         "PreboundApi": {
@@ -2457,9 +2457,9 @@ public partial class ContractController
             "type": "string",
             "description": "How to execute a prebound API call",
             "enum": [
-                "sync",
-                "async",
-                "fire_and_forget"
+                "Sync",
+                "Async",
+                "FireAndForget"
             ]
         },
         "ResponseValidation": {
@@ -2534,36 +2534,36 @@ public partial class ContractController
             "type": "string",
             "description": "Type of validation condition",
             "enum": [
-                "statusCodeIn",
-                "jsonPathEquals",
-                "jsonPathNotEquals",
-                "jsonPathExists",
-                "jsonPathNotExists",
-                "jsonPathGreaterThan",
-                "jsonPathLessThan",
-                "jsonPathContains"
+                "StatusCodeIn",
+                "JsonPathEquals",
+                "JsonPathNotEquals",
+                "JsonPathExists",
+                "JsonPathNotExists",
+                "JsonPathGreaterThan",
+                "JsonPathLessThan",
+                "JsonPathContains"
             ]
         },
         "ComparisonOperator": {
             "type": "string",
             "description": "Comparison operators for numeric conditions",
             "enum": [
-                "eq",
-                "ne",
-                "gt",
-                "gte",
-                "lt",
-                "lte"
+                "Eq",
+                "Ne",
+                "Gt",
+                "Gte",
+                "Lt",
+                "Lte"
             ]
         },
         "EnforcementMode": {
             "type": "string",
             "description": "How contract breaches are handled",
             "enum": [
-                "advisory",
-                "event_only",
-                "consequence_based",
-                "community"
+                "Advisory",
+                "EventOnly",
+                "ConsequenceBased",
+                "Community"
             ]
         }
     }
@@ -2899,27 +2899,27 @@ public partial class ContractController
             "type": "string",
             "description": "When payments occur",
             "enum": [
-                "one_time",
-                "recurring",
-                "milestone_based"
+                "OneTime",
+                "Recurring",
+                "MilestoneBased"
             ]
         },
         "TerminationPolicy": {
             "type": "string",
             "description": "How the contract can be terminated",
             "enum": [
-                "mutual_consent",
-                "unilateral_with_notice",
-                "unilateral_immediate",
-                "non_terminable"
+                "MutualConsent",
+                "UnilateralWithNotice",
+                "UnilateralImmediate",
+                "NonTerminable"
             ]
         },
         "TimeCommitmentType": {
             "type": "string",
             "description": "Type of time commitment for scheduling constraints",
             "enum": [
-                "exclusive",
-                "partial"
+                "Exclusive",
+                "Partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -3096,9 +3096,9 @@ public partial class ContractController
             "type": "string",
             "description": "Behavior when optional milestone deadline passes",
             "enum": [
-                "skip",
-                "warn",
-                "breach"
+                "Skip",
+                "Warn",
+                "Breach"
             ]
         },
         "PreboundApi": {
@@ -3148,9 +3148,9 @@ public partial class ContractController
             "type": "string",
             "description": "How to execute a prebound API call",
             "enum": [
-                "sync",
-                "async",
-                "fire_and_forget"
+                "Sync",
+                "Async",
+                "FireAndForget"
             ]
         },
         "ResponseValidation": {
@@ -3225,36 +3225,36 @@ public partial class ContractController
             "type": "string",
             "description": "Type of validation condition",
             "enum": [
-                "statusCodeIn",
-                "jsonPathEquals",
-                "jsonPathNotEquals",
-                "jsonPathExists",
-                "jsonPathNotExists",
-                "jsonPathGreaterThan",
-                "jsonPathLessThan",
-                "jsonPathContains"
+                "StatusCodeIn",
+                "JsonPathEquals",
+                "JsonPathNotEquals",
+                "JsonPathExists",
+                "JsonPathNotExists",
+                "JsonPathGreaterThan",
+                "JsonPathLessThan",
+                "JsonPathContains"
             ]
         },
         "ComparisonOperator": {
             "type": "string",
             "description": "Comparison operators for numeric conditions",
             "enum": [
-                "eq",
-                "ne",
-                "gt",
-                "gte",
-                "lt",
-                "lte"
+                "Eq",
+                "Ne",
+                "Gt",
+                "Gte",
+                "Lt",
+                "Lte"
             ]
         },
         "EnforcementMode": {
             "type": "string",
             "description": "How contract breaches are handled",
             "enum": [
-                "advisory",
-                "event_only",
-                "consequence_based",
-                "community"
+                "Advisory",
+                "EventOnly",
+                "ConsequenceBased",
+                "Community"
             ]
         }
     }
@@ -3572,27 +3572,27 @@ public partial class ContractController
             "type": "string",
             "description": "When payments occur",
             "enum": [
-                "one_time",
-                "recurring",
-                "milestone_based"
+                "OneTime",
+                "Recurring",
+                "MilestoneBased"
             ]
         },
         "TerminationPolicy": {
             "type": "string",
             "description": "How the contract can be terminated",
             "enum": [
-                "mutual_consent",
-                "unilateral_with_notice",
-                "unilateral_immediate",
-                "non_terminable"
+                "MutualConsent",
+                "UnilateralWithNotice",
+                "UnilateralImmediate",
+                "NonTerminable"
             ]
         },
         "TimeCommitmentType": {
             "type": "string",
             "description": "Type of time commitment for scheduling constraints",
             "enum": [
-                "exclusive",
-                "partial"
+                "Exclusive",
+                "Partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -3828,17 +3828,17 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a contract instance",
             "enum": [
-                "draft",
-                "proposed",
-                "pending",
-                "active",
-                "fulfilled",
-                "expired",
-                "terminated",
-                "breached",
-                "suspended",
-                "disputed",
-                "declined"
+                "Draft",
+                "Proposed",
+                "Pending",
+                "Active",
+                "Fulfilled",
+                "Expired",
+                "Terminated",
+                "Breached",
+                "Suspended",
+                "Disputed",
+                "Declined"
             ]
         },
         "ContractPartyResponse": {
@@ -3881,10 +3881,10 @@ public partial class ContractController
             "type": "string",
             "description": "Party's consent status",
             "enum": [
-                "pending",
-                "consented",
-                "declined",
-                "implicit"
+                "Pending",
+                "Consented",
+                "Declined",
+                "Implicit"
             ]
         },
         "ContractTerms": {
@@ -3972,27 +3972,27 @@ public partial class ContractController
             "type": "string",
             "description": "When payments occur",
             "enum": [
-                "one_time",
-                "recurring",
-                "milestone_based"
+                "OneTime",
+                "Recurring",
+                "MilestoneBased"
             ]
         },
         "TerminationPolicy": {
             "type": "string",
             "description": "How the contract can be terminated",
             "enum": [
-                "mutual_consent",
-                "unilateral_with_notice",
-                "unilateral_immediate",
-                "non_terminable"
+                "MutualConsent",
+                "UnilateralWithNotice",
+                "UnilateralImmediate",
+                "NonTerminable"
             ]
         },
         "TimeCommitmentType": {
             "type": "string",
             "description": "Type of time commitment for scheduling constraints",
             "enum": [
-                "exclusive",
-                "partial"
+                "Exclusive",
+                "Partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -4168,20 +4168,20 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a milestone",
             "enum": [
-                "pending",
-                "active",
-                "completed",
-                "failed",
-                "skipped"
+                "Pending",
+                "Active",
+                "Completed",
+                "Failed",
+                "Skipped"
             ]
         },
         "MilestoneDeadlineBehavior": {
             "type": "string",
             "description": "Behavior when optional milestone deadline passes",
             "enum": [
-                "skip",
-                "warn",
-                "breach"
+                "Skip",
+                "Warn",
+                "Breach"
             ]
         }
     }
@@ -4391,17 +4391,17 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a contract instance",
             "enum": [
-                "draft",
-                "proposed",
-                "pending",
-                "active",
-                "fulfilled",
-                "expired",
-                "terminated",
-                "breached",
-                "suspended",
-                "disputed",
-                "declined"
+                "Draft",
+                "Proposed",
+                "Pending",
+                "Active",
+                "Fulfilled",
+                "Expired",
+                "Terminated",
+                "Breached",
+                "Suspended",
+                "Disputed",
+                "Declined"
             ]
         },
         "ContractPartyResponse": {
@@ -4444,10 +4444,10 @@ public partial class ContractController
             "type": "string",
             "description": "Party's consent status",
             "enum": [
-                "pending",
-                "consented",
-                "declined",
-                "implicit"
+                "Pending",
+                "Consented",
+                "Declined",
+                "Implicit"
             ]
         },
         "ContractTerms": {
@@ -4535,27 +4535,27 @@ public partial class ContractController
             "type": "string",
             "description": "When payments occur",
             "enum": [
-                "one_time",
-                "recurring",
-                "milestone_based"
+                "OneTime",
+                "Recurring",
+                "MilestoneBased"
             ]
         },
         "TerminationPolicy": {
             "type": "string",
             "description": "How the contract can be terminated",
             "enum": [
-                "mutual_consent",
-                "unilateral_with_notice",
-                "unilateral_immediate",
-                "non_terminable"
+                "MutualConsent",
+                "UnilateralWithNotice",
+                "UnilateralImmediate",
+                "NonTerminable"
             ]
         },
         "TimeCommitmentType": {
             "type": "string",
             "description": "Type of time commitment for scheduling constraints",
             "enum": [
-                "exclusive",
-                "partial"
+                "Exclusive",
+                "Partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -4731,20 +4731,20 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a milestone",
             "enum": [
-                "pending",
-                "active",
-                "completed",
-                "failed",
-                "skipped"
+                "Pending",
+                "Active",
+                "Completed",
+                "Failed",
+                "Skipped"
             ]
         },
         "MilestoneDeadlineBehavior": {
             "type": "string",
             "description": "Behavior when optional milestone deadline passes",
             "enum": [
-                "skip",
-                "warn",
-                "breach"
+                "Skip",
+                "Warn",
+                "Breach"
             ]
         }
     }
@@ -4965,17 +4965,17 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a contract instance",
             "enum": [
-                "draft",
-                "proposed",
-                "pending",
-                "active",
-                "fulfilled",
-                "expired",
-                "terminated",
-                "breached",
-                "suspended",
-                "disputed",
-                "declined"
+                "Draft",
+                "Proposed",
+                "Pending",
+                "Active",
+                "Fulfilled",
+                "Expired",
+                "Terminated",
+                "Breached",
+                "Suspended",
+                "Disputed",
+                "Declined"
             ]
         },
         "ContractPartyResponse": {
@@ -5018,10 +5018,10 @@ public partial class ContractController
             "type": "string",
             "description": "Party's consent status",
             "enum": [
-                "pending",
-                "consented",
-                "declined",
-                "implicit"
+                "Pending",
+                "Consented",
+                "Declined",
+                "Implicit"
             ]
         },
         "ContractTerms": {
@@ -5109,27 +5109,27 @@ public partial class ContractController
             "type": "string",
             "description": "When payments occur",
             "enum": [
-                "one_time",
-                "recurring",
-                "milestone_based"
+                "OneTime",
+                "Recurring",
+                "MilestoneBased"
             ]
         },
         "TerminationPolicy": {
             "type": "string",
             "description": "How the contract can be terminated",
             "enum": [
-                "mutual_consent",
-                "unilateral_with_notice",
-                "unilateral_immediate",
-                "non_terminable"
+                "MutualConsent",
+                "UnilateralWithNotice",
+                "UnilateralImmediate",
+                "NonTerminable"
             ]
         },
         "TimeCommitmentType": {
             "type": "string",
             "description": "Type of time commitment for scheduling constraints",
             "enum": [
-                "exclusive",
-                "partial"
+                "Exclusive",
+                "Partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -5305,20 +5305,20 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a milestone",
             "enum": [
-                "pending",
-                "active",
-                "completed",
-                "failed",
-                "skipped"
+                "Pending",
+                "Active",
+                "Completed",
+                "Failed",
+                "Skipped"
             ]
         },
         "MilestoneDeadlineBehavior": {
             "type": "string",
             "description": "Behavior when optional milestone deadline passes",
             "enum": [
-                "skip",
-                "warn",
-                "breach"
+                "Skip",
+                "Warn",
+                "Breach"
             ]
         }
     }
@@ -5528,17 +5528,17 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a contract instance",
             "enum": [
-                "draft",
-                "proposed",
-                "pending",
-                "active",
-                "fulfilled",
-                "expired",
-                "terminated",
-                "breached",
-                "suspended",
-                "disputed",
-                "declined"
+                "Draft",
+                "Proposed",
+                "Pending",
+                "Active",
+                "Fulfilled",
+                "Expired",
+                "Terminated",
+                "Breached",
+                "Suspended",
+                "Disputed",
+                "Declined"
             ]
         },
         "ContractPartyResponse": {
@@ -5581,10 +5581,10 @@ public partial class ContractController
             "type": "string",
             "description": "Party's consent status",
             "enum": [
-                "pending",
-                "consented",
-                "declined",
-                "implicit"
+                "Pending",
+                "Consented",
+                "Declined",
+                "Implicit"
             ]
         },
         "ContractTerms": {
@@ -5672,27 +5672,27 @@ public partial class ContractController
             "type": "string",
             "description": "When payments occur",
             "enum": [
-                "one_time",
-                "recurring",
-                "milestone_based"
+                "OneTime",
+                "Recurring",
+                "MilestoneBased"
             ]
         },
         "TerminationPolicy": {
             "type": "string",
             "description": "How the contract can be terminated",
             "enum": [
-                "mutual_consent",
-                "unilateral_with_notice",
-                "unilateral_immediate",
-                "non_terminable"
+                "MutualConsent",
+                "UnilateralWithNotice",
+                "UnilateralImmediate",
+                "NonTerminable"
             ]
         },
         "TimeCommitmentType": {
             "type": "string",
             "description": "Type of time commitment for scheduling constraints",
             "enum": [
-                "exclusive",
-                "partial"
+                "Exclusive",
+                "Partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -5868,20 +5868,20 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a milestone",
             "enum": [
-                "pending",
-                "active",
-                "completed",
-                "failed",
-                "skipped"
+                "Pending",
+                "Active",
+                "Completed",
+                "Failed",
+                "Skipped"
             ]
         },
         "MilestoneDeadlineBehavior": {
             "type": "string",
             "description": "Behavior when optional milestone deadline passes",
             "enum": [
-                "skip",
-                "warn",
-                "breach"
+                "Skip",
+                "Warn",
+                "Breach"
             ]
         }
     }
@@ -5997,17 +5997,17 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a contract instance",
             "enum": [
-                "draft",
-                "proposed",
-                "pending",
-                "active",
-                "fulfilled",
-                "expired",
-                "terminated",
-                "breached",
-                "suspended",
-                "disputed",
-                "declined"
+                "Draft",
+                "Proposed",
+                "Pending",
+                "Active",
+                "Fulfilled",
+                "Expired",
+                "Terminated",
+                "Breached",
+                "Suspended",
+                "Disputed",
+                "Declined"
             ]
         }
     }
@@ -6164,17 +6164,17 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a contract instance",
             "enum": [
-                "draft",
-                "proposed",
-                "pending",
-                "active",
-                "fulfilled",
-                "expired",
-                "terminated",
-                "breached",
-                "suspended",
-                "disputed",
-                "declined"
+                "Draft",
+                "Proposed",
+                "Pending",
+                "Active",
+                "Fulfilled",
+                "Expired",
+                "Terminated",
+                "Breached",
+                "Suspended",
+                "Disputed",
+                "Declined"
             ]
         },
         "ContractPartyResponse": {
@@ -6217,10 +6217,10 @@ public partial class ContractController
             "type": "string",
             "description": "Party's consent status",
             "enum": [
-                "pending",
-                "consented",
-                "declined",
-                "implicit"
+                "Pending",
+                "Consented",
+                "Declined",
+                "Implicit"
             ]
         },
         "ContractTerms": {
@@ -6308,27 +6308,27 @@ public partial class ContractController
             "type": "string",
             "description": "When payments occur",
             "enum": [
-                "one_time",
-                "recurring",
-                "milestone_based"
+                "OneTime",
+                "Recurring",
+                "MilestoneBased"
             ]
         },
         "TerminationPolicy": {
             "type": "string",
             "description": "How the contract can be terminated",
             "enum": [
-                "mutual_consent",
-                "unilateral_with_notice",
-                "unilateral_immediate",
-                "non_terminable"
+                "MutualConsent",
+                "UnilateralWithNotice",
+                "UnilateralImmediate",
+                "NonTerminable"
             ]
         },
         "TimeCommitmentType": {
             "type": "string",
             "description": "Type of time commitment for scheduling constraints",
             "enum": [
-                "exclusive",
-                "partial"
+                "Exclusive",
+                "Partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -6504,20 +6504,20 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a milestone",
             "enum": [
-                "pending",
-                "active",
-                "completed",
-                "failed",
-                "skipped"
+                "Pending",
+                "Active",
+                "Completed",
+                "Failed",
+                "Skipped"
             ]
         },
         "MilestoneDeadlineBehavior": {
             "type": "string",
             "description": "Behavior when optional milestone deadline passes",
             "enum": [
-                "skip",
-                "warn",
-                "breach"
+                "Skip",
+                "Warn",
+                "Breach"
             ]
         }
     }
@@ -6744,17 +6744,17 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a contract instance",
             "enum": [
-                "draft",
-                "proposed",
-                "pending",
-                "active",
-                "fulfilled",
-                "expired",
-                "terminated",
-                "breached",
-                "suspended",
-                "disputed",
-                "declined"
+                "Draft",
+                "Proposed",
+                "Pending",
+                "Active",
+                "Fulfilled",
+                "Expired",
+                "Terminated",
+                "Breached",
+                "Suspended",
+                "Disputed",
+                "Declined"
             ]
         },
         "ContractPartyResponse": {
@@ -6797,10 +6797,10 @@ public partial class ContractController
             "type": "string",
             "description": "Party's consent status",
             "enum": [
-                "pending",
-                "consented",
-                "declined",
-                "implicit"
+                "Pending",
+                "Consented",
+                "Declined",
+                "Implicit"
             ]
         },
         "ContractTerms": {
@@ -6888,27 +6888,27 @@ public partial class ContractController
             "type": "string",
             "description": "When payments occur",
             "enum": [
-                "one_time",
-                "recurring",
-                "milestone_based"
+                "OneTime",
+                "Recurring",
+                "MilestoneBased"
             ]
         },
         "TerminationPolicy": {
             "type": "string",
             "description": "How the contract can be terminated",
             "enum": [
-                "mutual_consent",
-                "unilateral_with_notice",
-                "unilateral_immediate",
-                "non_terminable"
+                "MutualConsent",
+                "UnilateralWithNotice",
+                "UnilateralImmediate",
+                "NonTerminable"
             ]
         },
         "TimeCommitmentType": {
             "type": "string",
             "description": "Type of time commitment for scheduling constraints",
             "enum": [
-                "exclusive",
-                "partial"
+                "Exclusive",
+                "Partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -7084,20 +7084,20 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a milestone",
             "enum": [
-                "pending",
-                "active",
-                "completed",
-                "failed",
-                "skipped"
+                "Pending",
+                "Active",
+                "Completed",
+                "Failed",
+                "Skipped"
             ]
         },
         "MilestoneDeadlineBehavior": {
             "type": "string",
             "description": "Behavior when optional milestone deadline passes",
             "enum": [
-                "skip",
-                "warn",
-                "breach"
+                "Skip",
+                "Warn",
+                "Breach"
             ]
         }
     }
@@ -7242,17 +7242,17 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a contract instance",
             "enum": [
-                "draft",
-                "proposed",
-                "pending",
-                "active",
-                "fulfilled",
-                "expired",
-                "terminated",
-                "breached",
-                "suspended",
-                "disputed",
-                "declined"
+                "Draft",
+                "Proposed",
+                "Pending",
+                "Active",
+                "Fulfilled",
+                "Expired",
+                "Terminated",
+                "Breached",
+                "Suspended",
+                "Disputed",
+                "Declined"
             ]
         },
         "MilestoneProgressSummary": {
@@ -7278,11 +7278,11 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a milestone",
             "enum": [
-                "pending",
-                "active",
-                "completed",
-                "failed",
-                "skipped"
+                "Pending",
+                "Active",
+                "Completed",
+                "Failed",
+                "Skipped"
             ]
         },
         "PendingConsentSummary": {
@@ -7339,23 +7339,23 @@ public partial class ContractController
             "type": "string",
             "description": "Type of contract breach",
             "enum": [
-                "term_violation",
-                "milestone_missed",
-                "milestone_deadline",
-                "unauthorized_action",
-                "non_payment"
+                "TermViolation",
+                "MilestoneMissed",
+                "MilestoneDeadline",
+                "UnauthorizedAction",
+                "NonPayment"
             ]
         },
         "BreachStatus": {
             "type": "string",
             "description": "Current status of a breach record",
             "enum": [
-                "detected",
-                "cure_period",
-                "cured",
-                "consequences_applied",
-                "disputed",
-                "forgiven"
+                "Detected",
+                "CurePeriod",
+                "Cured",
+                "ConsequencesApplied",
+                "Disputed",
+                "Forgiven"
             ]
         }
     }
@@ -7545,20 +7545,20 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a milestone",
             "enum": [
-                "pending",
-                "active",
-                "completed",
-                "failed",
-                "skipped"
+                "Pending",
+                "Active",
+                "Completed",
+                "Failed",
+                "Skipped"
             ]
         },
         "MilestoneDeadlineBehavior": {
             "type": "string",
             "description": "Behavior when optional milestone deadline passes",
             "enum": [
-                "skip",
-                "warn",
-                "breach"
+                "Skip",
+                "Warn",
+                "Breach"
             ]
         }
     }
@@ -7748,20 +7748,20 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a milestone",
             "enum": [
-                "pending",
-                "active",
-                "completed",
-                "failed",
-                "skipped"
+                "Pending",
+                "Active",
+                "Completed",
+                "Failed",
+                "Skipped"
             ]
         },
         "MilestoneDeadlineBehavior": {
             "type": "string",
             "description": "Behavior when optional milestone deadline passes",
             "enum": [
-                "skip",
-                "warn",
-                "breach"
+                "Skip",
+                "Warn",
+                "Breach"
             ]
         }
     }
@@ -7945,20 +7945,20 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a milestone",
             "enum": [
-                "pending",
-                "active",
-                "completed",
-                "failed",
-                "skipped"
+                "Pending",
+                "Active",
+                "Completed",
+                "Failed",
+                "Skipped"
             ]
         },
         "MilestoneDeadlineBehavior": {
             "type": "string",
             "description": "Behavior when optional milestone deadline passes",
             "enum": [
-                "skip",
-                "warn",
-                "breach"
+                "Skip",
+                "Warn",
+                "Breach"
             ]
         }
     }
@@ -8072,11 +8072,11 @@ public partial class ContractController
             "type": "string",
             "description": "Type of contract breach",
             "enum": [
-                "term_violation",
-                "milestone_missed",
-                "milestone_deadline",
-                "unauthorized_action",
-                "non_payment"
+                "TermViolation",
+                "MilestoneMissed",
+                "MilestoneDeadline",
+                "UnauthorizedAction",
+                "NonPayment"
             ]
         }
     }
@@ -8172,23 +8172,23 @@ public partial class ContractController
             "type": "string",
             "description": "Type of contract breach",
             "enum": [
-                "term_violation",
-                "milestone_missed",
-                "milestone_deadline",
-                "unauthorized_action",
-                "non_payment"
+                "TermViolation",
+                "MilestoneMissed",
+                "MilestoneDeadline",
+                "UnauthorizedAction",
+                "NonPayment"
             ]
         },
         "BreachStatus": {
             "type": "string",
             "description": "Current status of a breach record",
             "enum": [
-                "detected",
-                "cure_period",
-                "cured",
-                "consequences_applied",
-                "disputed",
-                "forgiven"
+                "Detected",
+                "CurePeriod",
+                "Cured",
+                "ConsequencesApplied",
+                "Disputed",
+                "Forgiven"
             ]
         }
     }
@@ -8370,23 +8370,23 @@ public partial class ContractController
             "type": "string",
             "description": "Type of contract breach",
             "enum": [
-                "term_violation",
-                "milestone_missed",
-                "milestone_deadline",
-                "unauthorized_action",
-                "non_payment"
+                "TermViolation",
+                "MilestoneMissed",
+                "MilestoneDeadline",
+                "UnauthorizedAction",
+                "NonPayment"
             ]
         },
         "BreachStatus": {
             "type": "string",
             "description": "Current status of a breach record",
             "enum": [
-                "detected",
-                "cure_period",
-                "cured",
-                "consequences_applied",
-                "disputed",
-                "forgiven"
+                "Detected",
+                "CurePeriod",
+                "Cured",
+                "ConsequencesApplied",
+                "Disputed",
+                "Forgiven"
             ]
         }
     }
@@ -8562,23 +8562,23 @@ public partial class ContractController
             "type": "string",
             "description": "Type of contract breach",
             "enum": [
-                "term_violation",
-                "milestone_missed",
-                "milestone_deadline",
-                "unauthorized_action",
-                "non_payment"
+                "TermViolation",
+                "MilestoneMissed",
+                "MilestoneDeadline",
+                "UnauthorizedAction",
+                "NonPayment"
             ]
         },
         "BreachStatus": {
             "type": "string",
             "description": "Current status of a breach record",
             "enum": [
-                "detected",
-                "cure_period",
-                "cured",
-                "consequences_applied",
-                "disputed",
-                "forgiven"
+                "Detected",
+                "CurePeriod",
+                "Cured",
+                "ConsequencesApplied",
+                "Disputed",
+                "Forgiven"
             ]
         }
     }
@@ -8676,8 +8676,8 @@ public partial class ContractController
             "type": "string",
             "description": "Type of metadata to update",
             "enum": [
-                "instance_data",
-                "runtime_state"
+                "InstanceData",
+                "RuntimeState"
             ]
         }
     }
@@ -8932,9 +8932,9 @@ public partial class ContractController
             "type": "string",
             "description": "Type of constraint to check",
             "enum": [
-                "exclusivity",
-                "non_compete",
-                "time_commitment"
+                "Exclusivity",
+                "NonCompete",
+                "TimeCommitment"
             ]
         }
     }
@@ -9018,17 +9018,17 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a contract instance",
             "enum": [
-                "draft",
-                "proposed",
-                "pending",
-                "active",
-                "fulfilled",
-                "expired",
-                "terminated",
-                "breached",
-                "suspended",
-                "disputed",
-                "declined"
+                "Draft",
+                "Proposed",
+                "Pending",
+                "Active",
+                "Fulfilled",
+                "Expired",
+                "Terminated",
+                "Breached",
+                "Suspended",
+                "Disputed",
+                "Declined"
             ]
         }
     }
@@ -9195,17 +9195,17 @@ public partial class ContractController
             "type": "string",
             "description": "Current status of a contract instance",
             "enum": [
-                "draft",
-                "proposed",
-                "pending",
-                "active",
-                "fulfilled",
-                "expired",
-                "terminated",
-                "breached",
-                "suspended",
-                "disputed",
-                "declined"
+                "Draft",
+                "Proposed",
+                "Pending",
+                "Active",
+                "Fulfilled",
+                "Expired",
+                "Terminated",
+                "Breached",
+                "Suspended",
+                "Disputed",
+                "Declined"
             ]
         }
     }
@@ -9725,9 +9725,9 @@ public partial class ContractController
             "type": "string",
             "description": "Category of clause type",
             "enum": [
-                "validation",
-                "execution",
-                "both"
+                "Validation",
+                "Execution",
+                "Both"
             ]
         },
         "ClauseHandlerDefinition": {
@@ -9870,9 +9870,9 @@ public partial class ContractController
             "type": "string",
             "description": "Category of clause type",
             "enum": [
-                "validation",
-                "execution",
-                "both"
+                "Validation",
+                "Execution",
+                "Both"
             ]
         }
     }
@@ -9944,9 +9944,9 @@ public partial class ContractController
             "type": "string",
             "description": "Category of clause type",
             "enum": [
-                "validation",
-                "execution",
-                "both"
+                "Validation",
+                "Execution",
+                "Both"
             ]
         }
     }

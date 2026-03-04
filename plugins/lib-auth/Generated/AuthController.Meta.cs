@@ -90,10 +90,10 @@ public partial class AuthController
         "DeviceType": {
             "type": "string",
             "enum": [
-                "desktop",
-                "mobile",
-                "tablet",
-                "console"
+                "Desktop",
+                "Mobile",
+                "Tablet",
+                "Console"
             ],
             "description": "Category of client device used for authentication or session tracking"
         }
@@ -488,10 +488,10 @@ public partial class AuthController
         "DeviceType": {
             "type": "string",
             "enum": [
-                "desktop",
-                "mobile",
-                "tablet",
-                "console"
+                "Desktop",
+                "Mobile",
+                "Tablet",
+                "Console"
             ],
             "description": "Category of client device used for authentication or session tracking"
         }
@@ -670,10 +670,10 @@ public partial class AuthController
         "DeviceType": {
             "type": "string",
             "enum": [
-                "desktop",
-                "mobile",
-                "tablet",
-                "console"
+                "Desktop",
+                "Mobile",
+                "Tablet",
+                "Console"
             ],
             "description": "Category of client device used for authentication or session tracking"
         }
@@ -1216,10 +1216,10 @@ public partial class AuthController
         "DeviceType": {
             "type": "string",
             "enum": [
-                "desktop",
-                "mobile",
-                "tablet",
-                "console"
+                "Desktop",
+                "Mobile",
+                "Tablet",
+                "Console"
             ],
             "description": "Category of client device used for authentication or session tracking"
         }
@@ -1797,8 +1797,8 @@ public partial class AuthController
         "AuthType": {
             "type": "string",
             "enum": [
-                "oauth",
-                "ticket"
+                "Oauth",
+                "Ticket"
             ],
             "description": "Authentication mechanism type (oauth = browser redirect, ticket = game client token)"
         }

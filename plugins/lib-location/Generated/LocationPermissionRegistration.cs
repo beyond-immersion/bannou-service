@@ -48,7 +48,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getLocation",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/get-by-code",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getLocationByCode",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listLocations",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/list-by-realm",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listLocationsByRealm",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/list-by-parent",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listLocationsByParent",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/list-root",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listRootLocations",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/get-ancestors",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getLocationAncestors",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/validate-territory",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "validateTerritory",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/get-descendants",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getLocationDescendants",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createLocation",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateLocation",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/set-parent",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "setLocationParent",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/remove-parent",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "removeLocationParent",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteLocation",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/transfer-realm",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "transferLocationToRealm",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/deprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deprecateLocation",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/undeprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "undeprecateLocation",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/exists",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "locationExists",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/query/by-position",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryLocationsByPosition",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/seed",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "seedLocations",
             Permissions = new List<PermissionRequirement>
             {
@@ -348,7 +348,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/report-entity-position",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "reportEntityPosition",
             Permissions = new List<PermissionRequirement>
             {
@@ -363,7 +363,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/get-entity-location",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getEntityLocation",
             Permissions = new List<PermissionRequirement>
             {
@@ -378,7 +378,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/list-entities-at-location",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listEntitiesAtLocation",
             Permissions = new List<PermissionRequirement>
             {
@@ -393,7 +393,7 @@ public static class LocationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/location/clear-entity-position",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "clearEntityPosition",
             Permissions = new List<PermissionRequirement>
             {

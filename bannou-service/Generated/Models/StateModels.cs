@@ -332,43 +332,43 @@ public partial class QueryCondition
 public enum QueryOperator
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"equals")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Equals")]
     Equals = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"notEquals")]
+    [System.Runtime.Serialization.EnumMember(Value = @"NotEquals")]
     NotEquals = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"greaterThan")]
+    [System.Runtime.Serialization.EnumMember(Value = @"GreaterThan")]
     GreaterThan = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"greaterThanOrEqual")]
+    [System.Runtime.Serialization.EnumMember(Value = @"GreaterThanOrEqual")]
     GreaterThanOrEqual = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"lessThan")]
+    [System.Runtime.Serialization.EnumMember(Value = @"LessThan")]
     LessThan = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"lessThanOrEqual")]
+    [System.Runtime.Serialization.EnumMember(Value = @"LessThanOrEqual")]
     LessThanOrEqual = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"contains")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Contains")]
     Contains = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"startsWith")]
+    [System.Runtime.Serialization.EnumMember(Value = @"StartsWith")]
     StartsWith = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"endsWith")]
+    [System.Runtime.Serialization.EnumMember(Value = @"EndsWith")]
     EndsWith = 8,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"in")]
+    [System.Runtime.Serialization.EnumMember(Value = @"In")]
     In = 9,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"exists")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Exists")]
     Exists = 10,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"notExists")]
+    [System.Runtime.Serialization.EnumMember(Value = @"NotExists")]
     NotExists = 11,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"fullText")]
+    [System.Runtime.Serialization.EnumMember(Value = @"FullText")]
     FullText = 12,
 
 }
@@ -765,10 +765,10 @@ public partial class StoreInfo
 public enum SortFieldOrder
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"asc")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Asc")]
     Asc = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"desc")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Desc")]
     Desc = 1,
 
 }
@@ -779,10 +779,10 @@ public enum SortFieldOrder
 public enum ListStoresRequestBackendFilter
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"redis")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Redis")]
     Redis = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"mysql")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Mysql")]
     Mysql = 1,
 
 }
@@ -793,10 +793,10 @@ public enum ListStoresRequestBackendFilter
 public enum StoreInfoBackend
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"redis")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Redis")]
     Redis = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"mysql")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Mysql")]
     Mysql = 1,
 
 }

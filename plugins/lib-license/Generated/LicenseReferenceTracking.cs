@@ -95,7 +95,7 @@ public partial class LicenseService
                 {
                     ResourceType = "character",
                     SourceType = "license-board",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "license",
                     CallbackEndpoint = "/license/cleanup-by-owner",
                     PayloadTemplate = "{\"ownerType\": \"character\", \"ownerId\": \"{{resourceId}}\"}",

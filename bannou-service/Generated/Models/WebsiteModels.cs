@@ -38,13 +38,13 @@ using System = global::System;
 public enum Platform
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"windows")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Windows")]
     Windows = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"macos")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Macos")]
     Macos = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"linux")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Linux")]
     Linux = 2,
 
 }
@@ -526,7 +526,7 @@ public partial class NavigationItem
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("target")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public NavigationItemTarget Target { get; set; } = BeyondImmersion.BannouService.Website.NavigationItemTarget._self;
+    public NavigationItemTarget Target { get; set; } = BeyondImmersion.BannouService.Website.NavigationItemTarget.Self;
 
     /// <summary>
     /// Nested child navigation items for dropdowns
@@ -830,13 +830,13 @@ public partial class AccountProfile
 public enum StatusResponseStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Healthy")]
     Healthy = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"degraded")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Degraded")]
     Degraded = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"maintenance")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Maintenance")]
     Maintenance = 2,
 
 }
@@ -847,13 +847,13 @@ public enum StatusResponseStatus
 public enum PageContentContentType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"html")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Html")]
     Html = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"markdown")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Markdown")]
     Markdown = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"blazor")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Blazor")]
     Blazor = 2,
 
 }
@@ -864,11 +864,11 @@ public enum PageContentContentType
 public enum NavigationItemTarget
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"_self")]
-    _self = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Self")]
+    Self = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"_blank")]
-    _blank = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Blank")]
+    Blank = 1,
 
 }
 #pragma warning restore CS1591
@@ -878,19 +878,19 @@ public enum NavigationItemTarget
 public enum ContactRequestCategory
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"general")]
+    [System.Runtime.Serialization.EnumMember(Value = @"General")]
     General = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"support")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Support")]
     Support = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"bug")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Bug")]
     Bug = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"feedback")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Feedback")]
     Feedback = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"business")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Business")]
     Business = 4,
 
 }

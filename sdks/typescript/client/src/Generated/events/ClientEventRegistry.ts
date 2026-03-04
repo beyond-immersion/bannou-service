@@ -27,6 +27,22 @@ export interface EventMetadata {
  */
 export const eventRegistry = new Map<string, EventMetadata>([
   [
+    'achievement.progress.milestone-reached',
+    {
+      eventName: 'achievement.progress.milestone-reached',
+      typeName: 'AchievementProgressMilestoneClientEvent',
+      service: 'achievement',
+    },
+  ],
+  [
+    'achievement.unlocked',
+    {
+      eventName: 'achievement.unlocked',
+      typeName: 'AchievementUnlockedClientEvent',
+      service: 'achievement',
+    },
+  ],
+  [
     'asset.bundle.creation.complete',
     {
       eventName: 'asset.bundle.creation.complete',

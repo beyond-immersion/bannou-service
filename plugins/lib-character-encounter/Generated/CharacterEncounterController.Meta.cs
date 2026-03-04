@@ -66,16 +66,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -147,16 +147,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -307,16 +307,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -497,16 +497,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -615,16 +615,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -696,16 +696,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -1042,11 +1042,11 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "Overall outcome of an encounter",
             "enum": [
-                "POSITIVE",
-                "NEGATIVE",
-                "NEUTRAL",
-                "MEMORABLE",
-                "TRANSFORMATIVE"
+                "Positive",
+                "Negative",
+                "Neutral",
+                "Memorable",
+                "Transformative"
             ]
         },
         "PerspectiveInput": {
@@ -1107,16 +1107,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -1233,11 +1233,11 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "Overall outcome of an encounter",
             "enum": [
-                "POSITIVE",
-                "NEGATIVE",
-                "NEUTRAL",
-                "MEMORABLE",
-                "TRANSFORMATIVE"
+                "Positive",
+                "Negative",
+                "Neutral",
+                "Memorable",
+                "Transformative"
             ]
         },
         "EncounterPerspectiveModel": {
@@ -1327,16 +1327,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -1466,11 +1466,11 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "Overall outcome of an encounter",
             "enum": [
-                "POSITIVE",
-                "NEGATIVE",
-                "NEUTRAL",
-                "MEMORABLE",
-                "TRANSFORMATIVE"
+                "Positive",
+                "Negative",
+                "Neutral",
+                "Memorable",
+                "Transformative"
             ]
         }
     }
@@ -1627,11 +1627,11 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "Overall outcome of an encounter",
             "enum": [
-                "POSITIVE",
-                "NEGATIVE",
-                "NEUTRAL",
-                "MEMORABLE",
-                "TRANSFORMATIVE"
+                "Positive",
+                "Negative",
+                "Neutral",
+                "Memorable",
+                "Transformative"
             ]
         },
         "EncounterPerspectiveModel": {
@@ -1721,16 +1721,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -1999,11 +1999,11 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "Overall outcome of an encounter",
             "enum": [
-                "POSITIVE",
-                "NEGATIVE",
-                "NEUTRAL",
-                "MEMORABLE",
-                "TRANSFORMATIVE"
+                "Positive",
+                "Negative",
+                "Neutral",
+                "Memorable",
+                "Transformative"
             ]
         },
         "EncounterPerspectiveModel": {
@@ -2093,16 +2093,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -2363,11 +2363,11 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "Overall outcome of an encounter",
             "enum": [
-                "POSITIVE",
-                "NEGATIVE",
-                "NEUTRAL",
-                "MEMORABLE",
-                "TRANSFORMATIVE"
+                "Positive",
+                "Negative",
+                "Neutral",
+                "Memorable",
+                "Transformative"
             ]
         },
         "EncounterPerspectiveModel": {
@@ -2457,16 +2457,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -2721,16 +2721,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -2899,16 +2899,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -3111,16 +3111,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -3240,16 +3240,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -3366,16 +3366,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -3586,16 +3586,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }
@@ -4178,11 +4178,11 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "Overall outcome of an encounter",
             "enum": [
-                "POSITIVE",
-                "NEGATIVE",
-                "NEUTRAL",
-                "MEMORABLE",
-                "TRANSFORMATIVE"
+                "Positive",
+                "Negative",
+                "Neutral",
+                "Memorable",
+                "Transformative"
             ]
         },
         "EncounterPerspectiveModel": {
@@ -4272,16 +4272,16 @@ public partial class CharacterEncounterController
             "type": "string",
             "description": "How the encounter emotionally affected the character",
             "enum": [
-                "GRATITUDE",
-                "ANGER",
-                "FEAR",
-                "RESPECT",
-                "CONTEMPT",
-                "AFFECTION",
-                "RIVALRY",
-                "INDIFFERENCE",
-                "GUILT",
-                "PRIDE"
+                "Gratitude",
+                "Anger",
+                "Fear",
+                "Respect",
+                "Contempt",
+                "Affection",
+                "Rivalry",
+                "Indifference",
+                "Guilt",
+                "Pride"
             ]
         }
     }

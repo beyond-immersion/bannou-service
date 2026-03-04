@@ -84,7 +84,7 @@ public sealed class RelationshipProvider : IVariableProvider
 
         var firstSegment = path[0];
         return firstSegment.Equals("has", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("count", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("total", StringComparison.OrdinalIgnoreCase);
+                firstSegment.Equals("count", StringComparison.OrdinalIgnoreCase) ||
+                firstSegment.Equals("total", StringComparison.OrdinalIgnoreCase);
     }
 }

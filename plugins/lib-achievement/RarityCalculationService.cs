@@ -51,7 +51,6 @@ public class RarityCalculationService : BackgroundService
     /// <param name="stoppingToken">Token to signal shutdown.</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "RarityCalculationService.ExecuteAsync");
         _logger.LogInformation(
             "Rarity calculation service starting, interval: {IntervalMinutes} minutes",
             _configuration.RarityCalculationIntervalMinutes);

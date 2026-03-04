@@ -48,7 +48,7 @@ public static class WebsitePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/website/status",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.Get,
             Description = "getStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class WebsitePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/website/content/{slug}",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.Get,
             Description = "getPageContent",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class WebsitePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/website/news",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.Get,
             Description = "getNews",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class WebsitePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/website/downloads",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.Get,
             Description = "getDownloads",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class WebsitePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/website/contact",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "submitContact",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class WebsitePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/website/account/profile",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.Get,
             Description = "getAccountProfile",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class WebsitePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/website/cms/pages",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.Get,
             Description = "listPages",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class WebsitePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/website/cms/pages",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createPage",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class WebsitePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/website/cms/pages/{slug}",
-            Method = ServiceEndpointMethod.PUT,
+            Method = ServiceEndpointMethod.Put,
             Description = "updatePage",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class WebsitePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/website/cms/pages/{slug}",
-            Method = ServiceEndpointMethod.DELETE,
+            Method = ServiceEndpointMethod.Delete,
             Description = "deletePage",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class WebsitePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/website/cms/site-settings",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.Get,
             Description = "getSiteSettings",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class WebsitePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/website/cms/site-settings",
-            Method = ServiceEndpointMethod.PUT,
+            Method = ServiceEndpointMethod.Put,
             Description = "updateSiteSettings",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class WebsitePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/website/cms/theme",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.Get,
             Description = "getTheme",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class WebsitePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/website/cms/theme",
-            Method = ServiceEndpointMethod.PUT,
+            Method = ServiceEndpointMethod.Put,
             Description = "updateTheme",
             Permissions = new List<PermissionRequirement>
             {

@@ -30,9 +30,9 @@ Compliant properties include one of these phrases in their description:
 | Metric | Count |
 |--------|-------|
 | Total metadata bag properties | 170 |
-| Compliant (has marker) | 148 |
-| Non-compliant (missing marker) | 22 |
-| Compliance rate | 87% |
+| Compliant (has marker) | 150 |
+| Non-compliant (missing marker) | 20 |
+| Compliance rate | 88% |
 
 ## Properties by Service
 
@@ -253,8 +253,8 @@ Compliant properties include one of these phrases in their description:
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `AchievementDefinitionResponse` | `metadata` | `achievement-api.yaml` | **N** | Additional metadata |
-| `CreateAchievementDefinitionRequest` | `metadata` | `achievement-api.yaml` | **N** | Additional achievement-specific metadata |
+| `AchievementDefinitionResponse` | `metadata` | `achievement-api.yaml` | Y | Client-only metadata. No Bannou plugin reads specific keys from this field by... |
+| `CreateAchievementDefinitionRequest` | `metadata` | `achievement-api.yaml` | Y | Client-only metadata. No Bannou plugin reads specific keys from this field by... |
 
 #### Analytics
 
@@ -448,8 +448,6 @@ or is it being misused as a cross-service data contract?
 
 | Service | Schema Type | Property | Schema File | Description |
 |---------|-------------|----------|-------------|-------------|
-| Achievement | `CreateAchievementDefinitionRequest` | `metadata` | `achievement-api.yaml` | Additional achievement-specific metadata |
-| Achievement | `AchievementDefinitionResponse` | `metadata` | `achievement-api.yaml` | Additional metadata |
 | Analytics | `IngestEventRequest` | `metadata` | `analytics-api.yaml` | Additional event-specific data |
 | Asset | `AssetProcessingJobDispatchedEvent` | `processingOptions` | `asset-events.yaml` | Content-type-specific processing options (opaque pass-through to processor) |
 | Behavior | `CharacterContext` | `worldState` | `behavior-api.yaml` | Relevant world state information |

@@ -48,7 +48,7 @@ public static class BehaviorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/compile",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "CompileAbmlBehavior",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class BehaviorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/validate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ValidateAbml",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class BehaviorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/cache/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetCachedBehavior",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class BehaviorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/cache/invalidate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "InvalidateCachedBehavior",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class BehaviorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/goap/plan",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GenerateGoapPlan",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class BehaviorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/goap/validate-plan",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ValidateGoapPlan",
             Permissions = new List<PermissionRequirement>
             {

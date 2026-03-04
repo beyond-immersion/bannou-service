@@ -62,7 +62,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
             _logger.LogDebug("Hot cache hit for slot {SlotId} version {Version}", slotId, version.VersionNumber);
             var compressedData = Convert.FromBase64String(hotEntry.Data);
             // HotSaveEntry.CompressionType is now a nullable enum - use it directly or default to NONE
-            var hotCompressionType = hotEntry.CompressionType ?? CompressionType.NONE;
+            var hotCompressionType = hotEntry.CompressionType ?? CompressionType.None;
             return CompressionHelper.Decompress(compressedData, hotCompressionType);
         }
 
@@ -224,12 +224,12 @@ public sealed class VersionDataLoader : IVersionDataLoader
             // Re-compress for storage efficiency
             // SaveVersionManifest.CompressionType is now an enum - use it directly
             var compressionType = manifest.CompressionType;
-            var cacheCompressionLevel = compressionType == CompressionType.BROTLI
+            var cacheCompressionLevel = compressionType == CompressionType.Brotli
                 ? _configuration.BrotliCompressionLevel
-                : compressionType == CompressionType.GZIP
+                : compressionType == CompressionType.Gzip
                     ? _configuration.GzipCompressionLevel
                     : (int?)null;
-            var dataToStore = compressionType != CompressionType.NONE
+            var dataToStore = compressionType != CompressionType.None
                 ? CompressionHelper.Compress(decompressedData, compressionType, cacheCompressionLevel)
                 : decompressedData;
 
@@ -240,7 +240,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
                 VersionNumber = versionNumber,
                 Data = Convert.ToBase64String(dataToStore),
                 ContentHash = contentHash,
-                IsCompressed = compressionType != CompressionType.NONE,
+                IsCompressed = compressionType != CompressionType.None,
                 CompressionType = compressionType,
                 SizeBytes = dataToStore.Length,
                 CachedAt = DateTimeOffset.UtcNow,

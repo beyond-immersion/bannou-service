@@ -403,7 +403,7 @@ components:
           description: Description shown before achievement is earned (for hidden types)
         achievementType:
           $ref: '#/components/schemas/AchievementType'
-          default: standard
+          default: Standard
           description: Classification of the achievement (affects visibility and progress behavior)
         entityTypes:
           type: array
@@ -1087,10 +1087,6 @@ components:
         platform:
           $ref: '#/components/schemas/Platform'
           description: External platform to sync achievements to
-        forceResync:
-          type: boolean
-          default: false
-          description: Force resync even if already synced
 
     SyncPlatformAchievementsResponse:
       type: object

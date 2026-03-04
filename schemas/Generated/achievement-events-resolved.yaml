@@ -276,10 +276,10 @@ components:
       type: string
       description: External platform for achievement sync
       enum:
-      - steam
-      - xbox
-      - playstation
-      - internal
+      - Steam
+      - Xbox
+      - PlayStation
+      - Internal
 
     PlatformMapping:
       type: object

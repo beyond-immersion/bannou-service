@@ -71,11 +71,11 @@ public partial class AccountController
             "type": "string",
             "description": "All authentication provider types including email",
             "enum": [
-                "email",
-                "google",
-                "discord",
-                "twitch",
-                "steam"
+                "Email",
+                "Google",
+                "Discord",
+                "Twitch",
+                "Steam"
             ]
         }
     }
@@ -261,11 +261,11 @@ public partial class AccountController
             "type": "string",
             "description": "All authentication provider types including email",
             "enum": [
-                "email",
-                "google",
-                "discord",
-                "twitch",
-                "steam"
+                "Email",
+                "Google",
+                "Discord",
+                "Twitch",
+                "Steam"
             ]
         }
     }
@@ -521,11 +521,11 @@ public partial class AccountController
             "type": "string",
             "description": "All authentication provider types including email",
             "enum": [
-                "email",
-                "google",
-                "discord",
-                "twitch",
-                "steam"
+                "Email",
+                "Google",
+                "Discord",
+                "Twitch",
+                "Steam"
             ]
         }
     }
@@ -749,11 +749,11 @@ public partial class AccountController
             "type": "string",
             "description": "All authentication provider types including email",
             "enum": [
-                "email",
-                "google",
-                "discord",
-                "twitch",
-                "steam"
+                "Email",
+                "Google",
+                "Discord",
+                "Twitch",
+                "Steam"
             ]
         }
     }
@@ -999,11 +999,11 @@ public partial class AccountController
             "type": "string",
             "description": "All authentication provider types including email",
             "enum": [
-                "email",
-                "google",
-                "discord",
-                "twitch",
-                "steam"
+                "Email",
+                "Google",
+                "Discord",
+                "Twitch",
+                "Steam"
             ]
         }
     }
@@ -1312,11 +1312,11 @@ public partial class AccountController
             "type": "string",
             "description": "All authentication provider types including email",
             "enum": [
-                "email",
-                "google",
-                "discord",
-                "twitch",
-                "steam"
+                "Email",
+                "Google",
+                "Discord",
+                "Twitch",
+                "Steam"
             ]
         }
     }
@@ -1469,11 +1469,11 @@ public partial class AccountController
             "type": "string",
             "description": "All authentication provider types including email",
             "enum": [
-                "email",
-                "google",
-                "discord",
-                "twitch",
-                "steam"
+                "Email",
+                "Google",
+                "Discord",
+                "Twitch",
+                "Steam"
             ]
         }
     }
@@ -1580,10 +1580,10 @@ public partial class AccountController
             "type": "string",
             "description": "OAuth provider types (excludes email)",
             "enum": [
-                "google",
-                "discord",
-                "twitch",
-                "steam"
+                "Google",
+                "Discord",
+                "Twitch",
+                "Steam"
             ]
         }
     }
@@ -1639,10 +1639,10 @@ public partial class AccountController
             "type": "string",
             "description": "OAuth provider types (excludes email)",
             "enum": [
-                "google",
-                "discord",
-                "twitch",
-                "steam"
+                "Google",
+                "Discord",
+                "Twitch",
+                "Steam"
             ]
         }
     }
@@ -1828,10 +1828,10 @@ public partial class AccountController
             "type": "string",
             "description": "OAuth provider types (excludes email)",
             "enum": [
-                "google",
-                "discord",
-                "twitch",
-                "steam"
+                "Google",
+                "Discord",
+                "Twitch",
+                "Steam"
             ]
         }
     }
@@ -1975,11 +1975,11 @@ public partial class AccountController
             "type": "string",
             "description": "All authentication provider types including email",
             "enum": [
-                "email",
-                "google",
-                "discord",
-                "twitch",
-                "steam"
+                "Email",
+                "Google",
+                "Discord",
+                "Twitch",
+                "Steam"
             ]
         }
     }
@@ -2215,11 +2215,11 @@ public partial class AccountController
             "type": "string",
             "description": "All authentication provider types including email",
             "enum": [
-                "email",
-                "google",
-                "discord",
-                "twitch",
-                "steam"
+                "Email",
+                "Google",
+                "Discord",
+                "Twitch",
+                "Steam"
             ]
         }
     }
@@ -2674,11 +2674,11 @@ public partial class AccountController
             "type": "string",
             "description": "All authentication provider types including email",
             "enum": [
-                "email",
-                "google",
-                "discord",
-                "twitch",
-                "steam"
+                "Email",
+                "Google",
+                "Discord",
+                "Twitch",
+                "Steam"
             ]
         },
         "BulkOperationFailure": {
@@ -3290,11 +3290,11 @@ public partial class AccountController
             "type": "string",
             "description": "All authentication provider types including email",
             "enum": [
-                "email",
-                "google",
-                "discord",
-                "twitch",
-                "steam"
+                "Email",
+                "Google",
+                "Discord",
+                "Twitch",
+                "Steam"
             ]
         }
     }

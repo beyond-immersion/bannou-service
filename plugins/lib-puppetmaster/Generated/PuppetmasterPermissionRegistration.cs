@@ -48,7 +48,7 @@ public static class PuppetmasterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/puppetmaster/watchers/start",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "startWatcher",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class PuppetmasterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/puppetmaster/watchers/stop",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "stopWatcher",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class PuppetmasterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/puppetmaster/watchers/start-for-realm",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "startWatchersForRealm",
             Permissions = new List<PermissionRequirement>
             {

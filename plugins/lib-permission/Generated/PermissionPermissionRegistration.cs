@@ -48,7 +48,7 @@ public static class PermissionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/permission/update-session-state",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateSessionState",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class PermissionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/permission/services/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getRegisteredServices",
             Permissions = new List<PermissionRequirement>
             {

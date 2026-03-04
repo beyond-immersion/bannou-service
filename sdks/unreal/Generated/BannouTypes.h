@@ -389,7 +389,6 @@ struct FDefineNormRequest;
 struct FDeityPersonalityTraits;
 struct FDeityResponse;
 struct FDeityStatus;
-struct FDeleteAchievementDefinitionRequest;
 struct FDeleteActionMappingRequest;
 struct FDeleteActorTemplateRequest;
 struct FDeleteActorTemplateResponse;
@@ -424,6 +423,7 @@ struct FDepartJourneyRequest;
 struct FDeploymentPhase;
 struct FDepositRequest;
 struct FDepositResponse;
+struct FDeprecateAchievementDefinitionRequest;
 struct FDeprecateFactionRequest;
 struct FDeprecateModeRequest;
 struct FDeprecateQuestDefinitionRequest;
@@ -1035,6 +1035,7 @@ struct FPlanSummary;
 struct FPlannedActionResponse;
 struct FPlanningUrgency;
 struct FPlatform;
+struct FPlatformMapping;
 struct FPlayerRole;
 struct FPoiInteractionResponse;
 struct FPoiInteractionResult;
@@ -1775,27 +1776,63 @@ struct FAchievementDefinitionResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FPlatform> Platforms;
 
-    /** Platform-specific IDs */
+    /** Platform-specific achievement ID mappings */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TMap<FString, FString> PlatformIds;
+    TArray<FPlatformMapping> PlatformMappings;
 
     /** Required achievements */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FString> Prerequisites;
 
+    /** Score type code for matching analytics.score.updated events (progressive achievements) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ScoreType;
+
+    /** Milestone type code for matching analytics.milestone.reached events */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString MilestoneType;
+
+    /** Expected milestone value for matching analytics.milestone.reached events */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> MilestoneValue;
+
+    /** Expected milestone name for matching analytics.milestone.reached events */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString MilestoneName;
+
+    /** Leaderboard ID for matching leaderboard.rank.changed events */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString LeaderboardId;
+
+    /** Rank threshold for leaderboard achievements (unlock when rank <= threshold) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int64> RankThreshold;
+
     /** Whether achievement is earnable */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool IsActive = false;
 
+    /** Whether this definition is deprecated and should not be used for new progress */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
+
+    /** When deprecation occurred, null if not deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Audit reason for deprecation, null if not deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
+
     /** How many entities have earned this */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int64> EarnedCount;
+    int64 EarnedCount = 0;
 
     /** When the achievement was created */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FDateTime CreatedAt;
 
-    /** Additional metadata */
+    /** Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Metadata;
 
@@ -1861,11 +1898,11 @@ struct FAchievementProgressResponse
 
     /** Total points from unlocked achievements */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> TotalPoints;
+    int32 TotalPoints = 0;
 
     /** Number of unlocked achievements */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> UnlockedCount;
+    int32 UnlockedCount = 0;
 
 };
 
@@ -9667,19 +9704,43 @@ struct FCreateAchievementDefinitionRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FPlatform> Platforms;
 
-    /** Platform-specific achievement IDs (e.g., {"steam": "ACH_001"}) */
+    /** Platform-specific achievement ID mappings */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TMap<FString, FString> PlatformIds;
+    TArray<FPlatformMapping> PlatformMappings;
 
     /** Achievement IDs that must be unlocked first */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FString> Prerequisites;
 
+    /** Score type code for matching analytics.score.updated events (progressive achievements) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ScoreType;
+
+    /** Milestone type code for matching analytics.milestone.reached events */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString MilestoneType;
+
+    /** Expected milestone value for matching analytics.milestone.reached events */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> MilestoneValue;
+
+    /** Expected milestone name for matching analytics.milestone.reached events */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString MilestoneName;
+
+    /** Leaderboard ID for matching leaderboard.rank.changed events */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString LeaderboardId;
+
+    /** Rank threshold for leaderboard achievements (unlock when rank <= threshold) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int64> RankThreshold;
+
     /** Whether this achievement can be earned */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool IsActive = true;
 
-    /** Additional achievement-specific metadata */
+    /** Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Metadata;
 
@@ -12146,24 +12207,6 @@ struct FDeityStatus
 };
 
 /**
- * Request to delete an achievement
- */
-USTRUCT(BlueprintType)
-struct FDeleteAchievementDefinitionRequest
-{
-    GENERATED_BODY()
-
-    /** ID of the game service */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid GameServiceId;
-
-    /** ID of the achievement to delete */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString AchievementId;
-
-};
-
-/**
  * Request to delete an action tag mapping
  */
 USTRUCT(BlueprintType)
@@ -12728,6 +12771,28 @@ struct FDepositResponse
     /** Release tokens (issued when fully funded) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FPartyToken> ReleaseTokens;
+
+};
+
+/**
+ * Request to deprecate an achievement definition
+ */
+USTRUCT(BlueprintType)
+struct FDeprecateAchievementDefinitionRequest
+{
+    GENERATED_BODY()
+
+    /** ID of the game service */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** ID of the achievement to deprecate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString AchievementId;
+
+    /** Audit reason for deprecation, explaining why this achievement is being phased out */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
 
 };
 
@@ -21447,6 +21512,10 @@ struct FListAchievementDefinitionsRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool IncludeHidden = false;
 
+    /** Whether to include deprecated definitions in results */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IncludeDeprecated = false;
+
 };
 
 /**
@@ -24407,6 +24476,10 @@ struct FListUnlockedAchievementsRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FPlatform> Platform;
 
+    /** Whether to include achievements earned from deprecated definitions */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IncludeDeprecated = false;
+
 };
 
 /**
@@ -27302,6 +27375,24 @@ USTRUCT(BlueprintType)
 struct FPlatform
 {
     GENERATED_BODY()
+
+};
+
+/**
+ * Maps an achievement to a platform-specific ID
+ */
+USTRUCT(BlueprintType)
+struct FPlatformMapping
+{
+    GENERATED_BODY()
+
+    /** External platform */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FPlatform Platform;
+
+    /** Platform-specific achievement identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString PlatformAchievementId;
 
 };
 
@@ -37087,7 +37178,31 @@ struct FUpdateAchievementDefinitionRequest
 
     /** Updated platform ID mappings */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TMap<FString, FString> PlatformIds;
+    TArray<FPlatformMapping> PlatformMappings;
+
+    /** Score type code for matching analytics.score.updated events (progressive achievements) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ScoreType;
+
+    /** Milestone type code for matching analytics.milestone.reached events */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString MilestoneType;
+
+    /** Expected milestone value for matching analytics.milestone.reached events */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> MilestoneValue;
+
+    /** Expected milestone name for matching analytics.milestone.reached events */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString MilestoneName;
+
+    /** Leaderboard ID for matching leaderboard.rank.changed events */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString LeaderboardId;
+
+    /** Rank threshold for leaderboard achievements (unlock when rank <= threshold) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int64> RankThreshold;
 
 };
 

@@ -66,7 +66,7 @@ public partial class MessagingController
                 },
                 "exchangeType": {
                     "$ref": "#/$defs/ExchangeType",
-                    "default": "topic",
+                    "default": "Topic",
                     "nullable": true,
                     "description": "Exchange type - determines how messages are routed (topic routes by routing key pattern)"
                 },
@@ -106,9 +106,9 @@ public partial class MessagingController
             "type": "string",
             "description": "RabbitMQ exchange type determining how messages are routed",
             "enum": [
-                "fanout",
-                "direct",
-                "topic"
+                "Fanout",
+                "Direct",
+                "Topic"
             ]
         }
     }

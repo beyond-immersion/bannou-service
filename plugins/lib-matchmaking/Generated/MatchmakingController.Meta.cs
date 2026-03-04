@@ -377,9 +377,9 @@ public partial class MatchmakingController
             "type": "string",
             "description": "Method for aggregating party member skills",
             "enum": [
-                "highest",
-                "average",
-                "weighted"
+                "Highest",
+                "Average",
+                "Weighted"
             ]
         }
     }
@@ -619,9 +619,9 @@ public partial class MatchmakingController
             "type": "string",
             "description": "Method for aggregating party member skills",
             "enum": [
-                "highest",
-                "average",
-                "weighted"
+                "Highest",
+                "Average",
+                "Weighted"
             ]
         }
     }
@@ -808,9 +808,9 @@ public partial class MatchmakingController
             "type": "string",
             "description": "Method for aggregating party member skills",
             "enum": [
-                "highest",
-                "average",
-                "weighted"
+                "Highest",
+                "Average",
+                "Weighted"
             ]
         }
     }
@@ -992,9 +992,9 @@ public partial class MatchmakingController
             "type": "string",
             "description": "Method for aggregating party member skills",
             "enum": [
-                "highest",
-                "average",
-                "weighted"
+                "Highest",
+                "Average",
+                "Weighted"
             ]
         }
     }
@@ -1181,9 +1181,9 @@ public partial class MatchmakingController
             "type": "string",
             "description": "Method for aggregating party member skills",
             "enum": [
-                "highest",
-                "average",
-                "weighted"
+                "Highest",
+                "Average",
+                "Weighted"
             ]
         }
     }
@@ -1721,11 +1721,11 @@ public partial class MatchmakingController
             "type": "string",
             "description": "Current status of a matchmaking ticket",
             "enum": [
-                "searching",
-                "match_found",
-                "match_accepted",
-                "cancelled",
-                "expired"
+                "Searching",
+                "MatchFound",
+                "MatchAccepted",
+                "Cancelled",
+                "Expired"
             ]
         }
     }

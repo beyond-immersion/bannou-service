@@ -40,29 +40,29 @@ using System = global::System;
 public enum TraitAxis
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"OPENNESS")]
-    OPENNESS = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Openness")]
+    Openness = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CONSCIENTIOUSNESS")]
-    CONSCIENTIOUSNESS = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Conscientiousness")]
+    Conscientiousness = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"EXTRAVERSION")]
-    EXTRAVERSION = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Extraversion")]
+    Extraversion = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"AGREEABLENESS")]
-    AGREEABLENESS = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Agreeableness")]
+    Agreeableness = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"NEUROTICISM")]
-    NEUROTICISM = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Neuroticism")]
+    Neuroticism = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"HONESTY")]
-    HONESTY = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"Honesty")]
+    Honesty = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"AGGRESSION")]
-    AGGRESSION = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"Aggression")]
+    Aggression = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"LOYALTY")]
-    LOYALTY = 7,
+    [System.Runtime.Serialization.EnumMember(Value = @"Loyalty")]
+    Loyalty = 7,
 
 }
 #pragma warning restore CS1591
@@ -77,32 +77,32 @@ public enum TraitAxis
 public enum ExperienceType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TRAUMA")]
-    TRAUMA = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Trauma")]
+    Trauma = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"BETRAYAL")]
-    BETRAYAL = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Betrayal")]
+    Betrayal = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"LOSS")]
-    LOSS = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Loss")]
+    Loss = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"VICTORY")]
-    VICTORY = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Victory")]
+    Victory = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"FRIENDSHIP")]
-    FRIENDSHIP = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Friendship")]
+    Friendship = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"REDEMPTION")]
-    REDEMPTION = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"Redemption")]
+    Redemption = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CORRUPTION")]
-    CORRUPTION = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"Corruption")]
+    Corruption = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ENLIGHTENMENT")]
-    ENLIGHTENMENT = 7,
+    [System.Runtime.Serialization.EnumMember(Value = @"Enlightenment")]
+    Enlightenment = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"SACRIFICE")]
-    SACRIFICE = 8,
+    [System.Runtime.Serialization.EnumMember(Value = @"Sacrifice")]
+    Sacrifice = 8,
 
 }
 #pragma warning restore CS1591
@@ -117,20 +117,20 @@ public enum ExperienceType
 public enum CombatStyle
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"DEFENSIVE")]
-    DEFENSIVE = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Defensive")]
+    Defensive = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"BALANCED")]
-    BALANCED = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Balanced")]
+    Balanced = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"AGGRESSIVE")]
-    AGGRESSIVE = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Aggressive")]
+    Aggressive = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"BERSERKER")]
-    BERSERKER = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Berserker")]
+    Berserker = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TACTICAL")]
-    TACTICAL = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Tactical")]
+    Tactical = 4,
 
 }
 #pragma warning restore CS1591
@@ -145,17 +145,17 @@ public enum CombatStyle
 public enum PreferredRange
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"MELEE")]
-    MELEE = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Melee")]
+    Melee = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CLOSE")]
-    CLOSE = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Close")]
+    Close = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"MEDIUM")]
-    MEDIUM = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Medium")]
+    Medium = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"RANGED")]
-    RANGED = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Ranged")]
+    Ranged = 3,
 
 }
 #pragma warning restore CS1591
@@ -170,20 +170,20 @@ public enum PreferredRange
 public enum GroupRole
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"FRONTLINE")]
-    FRONTLINE = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Frontline")]
+    Frontline = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"SUPPORT")]
-    SUPPORT = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Support")]
+    Support = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"FLANKER")]
-    FLANKER = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Flanker")]
+    Flanker = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"LEADER")]
-    LEADER = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Leader")]
+    Leader = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"SOLO")]
-    SOLO = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Solo")]
+    Solo = 4,
 
 }
 #pragma warning restore CS1591
@@ -198,35 +198,35 @@ public enum GroupRole
 public enum CombatExperienceType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"DECISIVE_VICTORY")]
-    DECISIVE_VICTORY = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"DecisiveVictory")]
+    DecisiveVictory = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"NARROW_VICTORY")]
-    NARROW_VICTORY = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"NarrowVictory")]
+    NarrowVictory = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"DEFEAT")]
-    DEFEAT = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Defeat")]
+    Defeat = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"NEAR_DEATH")]
-    NEAR_DEATH = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"NearDeath")]
+    NearDeath = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ALLY_SAVED")]
-    ALLY_SAVED = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"AllySaved")]
+    AllySaved = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ALLY_LOST")]
-    ALLY_LOST = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"AllyLost")]
+    AllyLost = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"SUCCESSFUL_RETREAT")]
-    SUCCESSFUL_RETREAT = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"SuccessfulRetreat")]
+    SuccessfulRetreat = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"FAILED_RETREAT")]
-    FAILED_RETREAT = 7,
+    [System.Runtime.Serialization.EnumMember(Value = @"FailedRetreat")]
+    FailedRetreat = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"AMBUSH_SUCCESS")]
-    AMBUSH_SUCCESS = 8,
+    [System.Runtime.Serialization.EnumMember(Value = @"AmbushSuccess")]
+    AmbushSuccess = 8,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"AMBUSH_SURVIVED")]
-    AMBUSH_SURVIVED = 9,
+    [System.Runtime.Serialization.EnumMember(Value = @"AmbushSurvived")]
+    AmbushSurvived = 9,
 
 }
 #pragma warning restore CS1591

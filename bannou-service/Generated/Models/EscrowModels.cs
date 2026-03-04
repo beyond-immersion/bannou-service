@@ -43,16 +43,16 @@ using System = global::System;
 public enum EscrowType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"two_party")]
+    [System.Runtime.Serialization.EnumMember(Value = @"TwoParty")]
     TwoParty = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"multi_party")]
+    [System.Runtime.Serialization.EnumMember(Value = @"MultiParty")]
     MultiParty = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"conditional")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Conditional")]
     Conditional = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"auction")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Auction")]
     Auction = 3,
 
 }
@@ -81,46 +81,46 @@ public enum EscrowType
 public enum EscrowStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"pending_deposits")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PendingDeposits")]
     PendingDeposits = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"partially_funded")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PartiallyFunded")]
     PartiallyFunded = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"funded")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Funded")]
     Funded = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"pending_consent")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PendingConsent")]
     PendingConsent = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"pending_condition")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PendingCondition")]
     PendingCondition = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"finalizing")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Finalizing")]
     Finalizing = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"releasing")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Releasing")]
     Releasing = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"released")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Released")]
     Released = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"refunding")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Refunding")]
     Refunding = 8,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"refunded")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Refunded")]
     Refunded = 9,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"disputed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Disputed")]
     Disputed = 10,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"expired")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Expired")]
     Expired = 11,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Cancelled")]
     Cancelled = 12,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"validation_failed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ValidationFailed")]
     ValidationFailed = 13,
 
 }
@@ -138,13 +138,13 @@ public enum EscrowStatus
 public enum EscrowTrustMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"full_consent")]
+    [System.Runtime.Serialization.EnumMember(Value = @"FullConsent")]
     FullConsent = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"initiator_trusted")]
+    [System.Runtime.Serialization.EnumMember(Value = @"InitiatorTrusted")]
     InitiatorTrusted = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"single_party_trusted")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SinglePartyTrusted")]
     SinglePartyTrusted = 2,
 
 }
@@ -164,19 +164,19 @@ public enum EscrowTrustMode
 public enum EscrowPartyRole
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"depositor")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Depositor")]
     Depositor = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"recipient")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Recipient")]
     Recipient = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"depositor_recipient")]
+    [System.Runtime.Serialization.EnumMember(Value = @"DepositorRecipient")]
     DepositorRecipient = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"arbiter")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Arbiter")]
     Arbiter = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"observer")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Observer")]
     Observer = 4,
 
 }
@@ -195,16 +195,16 @@ public enum EscrowPartyRole
 public enum EscrowConsentType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"release")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Release")]
     Release = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"refund")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Refund")]
     Refund = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"dispute")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Dispute")]
     Dispute = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"reaffirm")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Reaffirm")]
     Reaffirm = 3,
 
 }
@@ -225,22 +225,22 @@ public enum EscrowConsentType
 public enum EscrowResolution
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"released")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Released")]
     Released = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"refunded")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Refunded")]
     Refunded = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"split")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Split")]
     Split = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"expired_refunded")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ExpiredRefunded")]
     ExpiredRefunded = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cancelled_refunded")]
+    [System.Runtime.Serialization.EnumMember(Value = @"CancelledRefunded")]
     CancelledRefunded = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"violation_refunded")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ViolationRefunded")]
     ViolationRefunded = 5,
 
 }
@@ -260,19 +260,19 @@ public enum EscrowResolution
 public enum AssetType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"currency")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Currency")]
     Currency = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"item")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Item")]
     Item = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"item_stack")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ItemStack")]
     ItemStack = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"contract")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Contract")]
     Contract = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Custom")]
     Custom = 4,
 
 }
@@ -291,16 +291,16 @@ public enum AssetType
 public enum ValidationFailureType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"asset_missing")]
+    [System.Runtime.Serialization.EnumMember(Value = @"AssetMissing")]
     AssetMissing = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"asset_mutated")]
+    [System.Runtime.Serialization.EnumMember(Value = @"AssetMutated")]
     AssetMutated = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"asset_expired")]
+    [System.Runtime.Serialization.EnumMember(Value = @"AssetExpired")]
     AssetExpired = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"balance_mismatch")]
+    [System.Runtime.Serialization.EnumMember(Value = @"BalanceMismatch")]
     BalanceMismatch = 3,
 
 }
@@ -317,10 +317,10 @@ public enum ValidationFailureType
 public enum TokenAlgorithm
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"hmac_sha256")]
+    [System.Runtime.Serialization.EnumMember(Value = @"HmacSha256")]
     HmacSha256 = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"random_bytes")]
+    [System.Runtime.Serialization.EnumMember(Value = @"RandomBytes")]
     RandomBytes = 1,
 
 }
@@ -337,10 +337,10 @@ public enum TokenAlgorithm
 public enum TokenType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"deposit")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Deposit")]
     Deposit = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"release")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Release")]
     Release = 1,
 
 }
@@ -362,16 +362,16 @@ public enum TokenType
 public enum ReleaseMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"immediate")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Immediate")]
     Immediate = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"service_only")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ServiceOnly")]
     ServiceOnly = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"party_required")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PartyRequired")]
     PartyRequired = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"service_and_party")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ServiceAndParty")]
     ServiceAndParty = 3,
 
 }
@@ -387,13 +387,13 @@ public enum ReleaseMode
 public enum RefundMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"immediate")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Immediate")]
     Immediate = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"service_only")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ServiceOnly")]
     ServiceOnly = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"party_required")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PartyRequired")]
     PartyRequired = 2,
 
 }
@@ -411,13 +411,13 @@ public enum RefundMode
 public enum ConfirmationTimeoutBehavior
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"auto_confirm")]
+    [System.Runtime.Serialization.EnumMember(Value = @"AutoConfirm")]
     AutoConfirm = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"dispute")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Dispute")]
     Dispute = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"refund")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Refund")]
     Refund = 2,
 
 }

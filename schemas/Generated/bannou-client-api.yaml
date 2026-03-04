@@ -259,13 +259,17 @@ paths:
                 $ref: '#/components/schemas/AchievementDefinitionResponse'
         '404':
           description: Achievement not found
-  /achievement/definition/delete:
+  /achievement/definition/deprecate:
     post:
-      summary: Delete achievement definition
+      summary: Deprecate an achievement definition
       description: |
-        Delete an achievement. Earned instances are preserved in history.
-        Developer-only endpoint.
-      operationId: achievement_deleteAchievementDefinition
+        Mark an achievement definition as deprecated (Category B per IMPLEMENTATION TENETS).
+        Deprecated definitions:
+        - Remain queryable for historical data and earned instances
+        - Cannot be used for new progress tracking or unlocks
+        - Persist forever (no delete endpoint — instances outlive template relevance)
+        Idempotent: returns OK if already deprecated.
+      operationId: achievement_deprecateAchievementDefinition
       tags:
       - Definitions
       x-permissions:
@@ -276,12 +280,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteAchievementDefinitionRequest'
+              $ref: '#/components/schemas/DeprecateAchievementDefinitionRequest'
       responses:
         '200':
-          description: Achievement deleted successfully
+          description: Achievement definition deprecated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementDefinitionResponse'
         '404':
-          description: Achievement not found
+          description: Achievement definition not found
   /achievement/progress/get:
     post:
       summary: Get entity's achievement progress
@@ -16560,6 +16568,8 @@ components:
       - achievementType
       - points
       - isActive
+      - isDeprecated
+      - earnedCount
       - createdAt
       properties:
         gameServiceId:
@@ -16586,6 +16596,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EntityType'
+          nullable: true
           description: Allowed entity types
         progressTarget:
           type: integer
@@ -16602,22 +16613,74 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Platform'
-          description: Available platforms
-        platformIds:
-          type: object
-          additionalProperties:
-            type: string
           nullable: true
-          description: Platform-specific IDs
+          description: Available platforms
+        platformMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformMapping'
+          nullable: true
+          description: Platform-specific achievement ID mappings
         prerequisites:
           type: array
           items:
             type: string
           nullable: true
           description: Required achievements
+        scoreType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Score type code for matching analytics.score.updated 
+            events (progressive achievements)
+        milestoneType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Milestone type code for matching 
+            analytics.milestone.reached events
+        milestoneValue:
+          type: number
+          format: double
+          nullable: true
+          description: Expected milestone value for matching 
+            analytics.milestone.reached events
+        milestoneName:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: Expected milestone name for matching 
+            analytics.milestone.reached events
+        leaderboardId:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Leaderboard ID for matching leaderboard.rank.changed 
+            events
+        rankThreshold:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 1
+          description: Rank threshold for leaderboard achievements (unlock when 
+            rank <= threshold)
         isActive:
           type: boolean
           description: Whether achievement is earnable
+        isDeprecated:
+          type: boolean
+          description: Whether this definition is deprecated and should not be 
+            used for new progress
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When deprecation occurred, null if not deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Audit reason for deprecation, null if not deprecated
         earnedCount:
           type: integer
           format: int64
@@ -16630,13 +16693,15 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata
+          description: Client-only metadata. No Bannou plugin reads specific 
+            keys from this field by convention.
     AchievementProgress:
       type: object
       description: Progress toward a single achievement
       additionalProperties: false
       required:
       - achievementId
+      - displayName
       - isUnlocked
       properties:
         achievementId:
@@ -16674,6 +16739,8 @@ components:
       - entityId
       - entityType
       - progress
+      - totalPoints
+      - unlockedCount
       properties:
         entityId:
           type: string
@@ -16697,10 +16764,10 @@ components:
       type: string
       description: Type of achievement
       enum:
-      - standard
-      - progressive
-      - hidden
-      - secret
+      - Standard
+      - Progressive
+      - Hidden
+      - Secret
     ActionEffect:
       type: object
       additionalProperties: false
@@ -16921,22 +16988,22 @@ components:
       description: Size classification affecting cover requirements and passage 
         width
       enum:
-      - tiny
-      - small
-      - medium
-      - large
-      - huge
-      default: medium
+      - Tiny
+      - Small
+      - Medium
+      - Large
+      - Huge
+      default: Medium
     ActorStatus:
       type: string
       enum:
-      - pending
-      - starting
-      - running
-      - paused
-      - stopping
-      - stopped
-      - error
+      - Pending
+      - Starting
+      - Running
+      - Paused
+      - Stopping
+      - Stopped
+      - Error
       description: Current actor lifecycle state
     ActorTemplateResponse:
       type: object
@@ -17140,8 +17207,8 @@ components:
         - four_way: Orthogonal only (up, down, left, right)
         - eight_way: Orthogonal + diagonal (all 8 surrounding cells)
       enum:
-      - four_way
-      - eight_way
+      - FourWay
+      - EightWay
     AdminCleanupResponse:
       type: object
       additionalProperties: false
@@ -17389,10 +17456,10 @@ components:
       type: string
       description: Controls caching behavior for affordance queries
       enum:
-      - fresh
-      - cached
-      - aggressive_cache
-      default: cached
+      - Fresh
+      - Cached
+      - AggressiveCache
+      default: Cached
     AffordanceLocation:
       type: object
       description: A location that affords the requested action
@@ -17520,15 +17587,15 @@ components:
         Well-known affordance types with predefined scoring logic.
         Use 'custom' for novel affordance definitions.
       enum:
-      - ambush
-      - shelter
-      - vista
-      - choke_point
-      - gathering_spot
-      - dramatic_reveal
-      - hidden_path
-      - defensible_position
-      - custom
+      - Ambush
+      - Shelter
+      - Vista
+      - ChokePoint
+      - GatheringSpot
+      - DramaticReveal
+      - HiddenPath
+      - DefensiblePosition
+      - Custom
     Analytics:
       description: Analytics and tracking configuration for website visitor 
         metrics
@@ -17994,13 +18061,13 @@ components:
     AssetType:
       type: string
       enum:
-      - texture
-      - model
-      - audio
-      - behavior
-      - bundle
-      - prefab
-      - other
+      - Texture
+      - Model
+      - Audio
+      - Behavior
+      - Bundle
+      - Prefab
+      - Other
       description: Type classification for assets
     AssetUsageInfo:
       type: object
@@ -18191,11 +18258,11 @@ components:
       type: string
       description: All authentication provider types including email
       enum:
-      - email
-      - google
-      - discord
-      - twitch
-      - steam
+      - Email
+      - Google
+      - Discord
+      - Twitch
+      - Steam
     AuthResponse:
       description: Successful authentication response containing tokens and 
         session information
@@ -18235,8 +18302,8 @@ components:
     AuthType:
       type: string
       enum:
-      - oauth
-      - ticket
+      - Oauth
+      - Ticket
       description: Authentication mechanism type (oauth = browser redirect, 
         ticket = game client token)
     AuthoringCheckoutRequest:
@@ -18398,8 +18465,8 @@ components:
       type: string
       description: How autogain (energy/interest) is calculated
       enum:
-      - simple
-      - compound
+      - Simple
+      - Compound
     BackstoryElement:
       type: object
       description: A machine-readable backstory element for behavior system 
@@ -18452,15 +18519,15 @@ components:
         Types of backstory elements. Each type represents a different aspect
         of the character's background that influences behavior.
       enum:
-      - ORIGIN
-      - OCCUPATION
-      - TRAINING
-      - TRAUMA
-      - ACHIEVEMENT
-      - SECRET
-      - GOAL
-      - FEAR
-      - BELIEF
+      - Origin
+      - Occupation
+      - Training
+      - Trauma
+      - Achievement
+      - Secret
+      - Goal
+      - Fear
+      - Belief
     BackstoryResponse:
       type: object
       description: Complete backstory data for a character
@@ -19137,11 +19204,11 @@ components:
     BindingStatus:
       type: string
       enum:
-      - pending
-      - syncing
-      - synced
-      - error
-      - disabled
+      - Pending
+      - Syncing
+      - Synced
+      - Error
+      - Disabled
       description: Status of a repository binding
     BlessingResponse:
       type: object
@@ -19203,8 +19270,8 @@ components:
       type: string
       description: Current status of a granted blessing
       enum:
-      - active
-      - revoked
+      - Active
+      - Revoked
     BlessingSummary:
       type: object
       additionalProperties: false
@@ -19253,10 +19320,10 @@ components:
       description: Tier of a blessing determining its power, cost, and storage 
         mechanism
       enum:
-      - minor
-      - standard
-      - greater
-      - supreme
+      - Minor
+      - Standard
+      - Greater
+      - Supreme
     BoardNodeState:
       type: object
       description: State of a single license node on a board, including unlock 
@@ -19706,12 +19773,12 @@ components:
       type: string
       description: Current status of a breach record
       enum:
-      - detected
-      - cure_period
-      - cured
-      - consequences_applied
-      - disputed
-      - forgiven
+      - Detected
+      - CurePeriod
+      - Cured
+      - ConsequencesApplied
+      - Disputed
+      - Forgiven
     BreachSummary:
       type: object
       description: Brief breach information
@@ -19735,11 +19802,11 @@ components:
       type: string
       description: Type of contract breach
       enum:
-      - term_violation
-      - milestone_missed
-      - milestone_deadline
-      - unauthorized_action
-      - non_payment
+      - TermViolation
+      - MilestoneMissed
+      - MilestoneDeadline
+      - UnauthorizedAction
+      - NonPayment
     BroadcastConsentRequest:
       type: object
       additionalProperties: false
@@ -19989,8 +20056,8 @@ components:
     BundleFormat:
       type: string
       enum:
-      - bannou
-      - zip
+      - Bannou
+      - Zip
       description: Bundle file format
     BundleInfo:
       type: object
@@ -20071,9 +20138,9 @@ components:
     BundleLifecycle:
       type: string
       enum:
-      - active
-      - deleted
-      - processing
+      - Active
+      - Deleted
+      - Processing
       description: |
         Bundle lifecycle status:
         - active: Bundle is available for use
@@ -20100,19 +20167,19 @@ components:
     BundleSortField:
       type: string
       enum:
-      - created_at
-      - updated_at
-      - name
-      - size
+      - CreatedAt
+      - UpdatedAt
+      - Name
+      - Size
       description: Fields available for sorting bundle query results
     BundleStatus:
       type: string
       enum:
-      - queued
-      - processing
-      - ready
-      - failed
-      - cancelled
+      - Queued
+      - Processing
+      - Ready
+      - Failed
+      - Cancelled
       description: |
         Bundle processing status:
         - queued: Bundle creation is queued for processing
@@ -20160,8 +20227,8 @@ components:
     BundleType:
       type: string
       enum:
-      - source
-      - metabundle
+      - Source
+      - Metabundle
       description: |
         Bundle category:
         - source: Original bundle (uploaded or server-created from assets)
@@ -20502,9 +20569,9 @@ components:
         - block: CanUse failure prevents use (default)
         - warn_and_proceed: CanUse failure logs warning but proceeds with use
       enum:
-      - disabled
-      - block
-      - warn_and_proceed
+      - Disabled
+      - Block
+      - WarnAndProceed
     CancelJobRequest:
       type: object
       additionalProperties: false
@@ -20584,9 +20651,9 @@ components:
       type: string
       description: What happens when a credit would exceed the wallet cap
       enum:
-      - reject
-      - cap_and_lose
-      - cap_and_return
+      - Reject
+      - CapAndLose
+      - CapAndReturn
     Capability:
       type: object
       additionalProperties: false
@@ -21230,9 +21297,9 @@ components:
       type: string
       description: Character lifecycle status
       enum:
-      - alive
-      - dead
-      - dormant
+      - Alive
+      - Dead
+      - Dormant
     ChatMessageRequest:
       description: Request to send a chat message to players in a game session
       type: object
@@ -21322,9 +21389,9 @@ components:
       type: string
       description: Type of chat message
       enum:
-      - public
-      - whisper
-      - system
+      - Public
+      - Whisper
+      - System
     ChatParticipantRole:
       type: string
       description: Participant role within a chat room determining moderation 
@@ -21817,9 +21884,9 @@ components:
       type: string
       description: Category of clause type
       enum:
-      - validation
-      - execution
-      - both
+      - Validation
+      - Execution
+      - Both
     ClauseDistributionResult:
       type: object
       description: Per-clause distribution outcome during contract execution; 
@@ -22128,12 +22195,12 @@ components:
     CleanupPolicy:
       type: string
       enum:
-      - BEST_EFFORT
-      - ALL_REQUIRED
+      - BestEffort
+      - AllRequired
       description: |
         Policy for cleanup callback execution.
-        BEST_EFFORT: Proceed with deletion even if some callbacks fail
-        ALL_REQUIRED: Abort deletion if any callback fails
+        BestEffort: Proceed with deletion even if some callbacks fail
+        AllRequired: Abort deletion if any callback fails
     CleanupResponse:
       type: object
       description: Result of an owner cleanup operation
@@ -22580,11 +22647,11 @@ components:
         Overall approach to combat situations. Affects target selection,
         ability usage, and engagement decisions.
       enum:
-      - DEFENSIVE
-      - BALANCED
-      - AGGRESSIVE
-      - BERSERKER
-      - TACTICAL
+      - Defensive
+      - Balanced
+      - Aggressive
+      - Berserker
+      - Tactical
     CommitRequest:
       type: object
       description: Request to commit checkout changes
@@ -22628,12 +22695,12 @@ components:
       type: string
       description: Comparison operators for numeric conditions
       enum:
-      - eq
-      - ne
-      - gt
-      - gte
-      - lt
-      - lte
+      - Eq
+      - Ne
+      - Gt
+      - Gte
+      - Lt
+      - Lte
     CompilationOptions:
       description: Options controlling the ABML compilation process including 
         optimizations and caching
@@ -23153,18 +23220,18 @@ components:
     CompressionPolicy:
       type: string
       enum:
-      - BEST_EFFORT
-      - ALL_REQUIRED
+      - BestEffort
+      - AllRequired
       description: |
         Policy for compression callback execution.
-        BEST_EFFORT: Create archive even if some callbacks fail (partial archive)
-        ALL_REQUIRED: Abort compression if any callback fails
+        BestEffort: Create archive even if some callbacks fail (partial archive)
+        AllRequired: Abort compression if any callback fails
     CompressionType:
       type: string
       enum:
-      - lz4
-      - lzma
-      - none
+      - Lz4
+      - Lzma
+      - None
       description: Compression algorithm for bundles
     ConditionResult:
       type: object
@@ -23330,11 +23397,11 @@ components:
       type: string
       description: Operational status of a transit connection
       enum:
-      - open
-      - closed
-      - dangerous
-      - blocked
-      - seasonal_closed
+      - Open
+      - Closed
+      - Dangerous
+      - Blocked
+      - SeasonalClosed
     ConnectivityMode:
       type: string
       enum:
@@ -23402,10 +23469,10 @@ components:
       type: string
       description: Party's consent status
       enum:
-      - pending
-      - consented
-      - declined
-      - implicit
+      - Pending
+      - Consented
+      - Declined
+      - Implicit
     ConsentToContractRequest:
       type: object
       description: Request to consent to a contract
@@ -23430,9 +23497,9 @@ components:
       type: string
       description: Type of constraint to check
       enum:
-      - exclusivity
-      - non_compete
-      - time_commitment
+      - Exclusivity
+      - NonCompete
+      - TimeCommitment
     ContactRequest:
       description: User-submitted contact form data
       type: object
@@ -23463,12 +23530,12 @@ components:
         category:
           type: string
           enum:
-          - general
-          - support
-          - bug
-          - feedback
-          - business
-          default: general
+          - General
+          - Support
+          - Bug
+          - Feedback
+          - Business
+          default: General
           description: Category to route the contact request
     ContactResponse:
       description: Confirmation response after submitting a contact form
@@ -23490,12 +23557,12 @@ components:
       type: string
       description: Container capacity constraint type
       enum:
-      - slot_only
-      - weight_only
-      - slot_and_weight
-      - grid
-      - volumetric
-      - unlimited
+      - SlotOnly
+      - WeightOnly
+      - SlotAndWeight
+      - Grid
+      - Volumetric
+      - Unlimited
     ContainerItem:
       type: object
       description: Item in a container
@@ -23537,14 +23604,14 @@ components:
       type: string
       description: Type of entity that owns this container
       enum:
-      - character
-      - account
-      - location
-      - vehicle
-      - guild
-      - escrow
-      - mail
-      - other
+      - Character
+      - Account
+      - Location
+      - Vehicle
+      - Guild
+      - Escrow
+      - Mail
+      - Other
     ContainerResponse:
       type: object
       description: Container details
@@ -23729,9 +23796,9 @@ components:
     ContentFormat:
       type: string
       enum:
-      - markdown
-      - html
-      - none
+      - Markdown
+      - Html
+      - None
       description: Format of the content field in a document response
     ContentSelectionResponse:
       type: object
@@ -23784,9 +23851,9 @@ components:
         - session: Temporary binding for multi-step use (managed by Item service)
         - lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)
       enum:
-      - none
-      - session
-      - lifecycle
+      - None
+      - Session
+      - Lifecycle
     ContractClauseAsset:
       type: object
       description: An asset requirement within a clause definition
@@ -24089,17 +24156,17 @@ components:
       type: string
       description: Current status of a contract instance
       enum:
-      - draft
-      - proposed
-      - pending
-      - active
-      - fulfilled
-      - expired
-      - terminated
-      - breached
-      - suspended
-      - disputed
-      - declined
+      - Draft
+      - Proposed
+      - Pending
+      - Active
+      - Fulfilled
+      - Expired
+      - Terminated
+      - Breached
+      - Suspended
+      - Disputed
+      - Declined
     ContractSummary:
       type: object
       description: Brief contract information
@@ -24475,16 +24542,19 @@ components:
           description: ID of the game service owning this achievement
         achievementId:
           type: string
+          minLength: 1
           maxLength: 64
           pattern: "^[a-z0-9_-]+$"
           description: Unique identifier for this achievement (lowercase, no 
             spaces)
         displayName:
           type: string
+          minLength: 1
           maxLength: 100
           description: Human-readable name
         description:
           type: string
+          minLength: 1
           maxLength: 500
           description: Description of how to earn this achievement
         hiddenDescription:
@@ -24495,13 +24565,14 @@ components:
             hidden types)
         achievementType:
           $ref: '#/components/schemas/AchievementType'
-          default: standard
+          default: Standard
           description: Classification of the achievement (affects visibility and
             progress behavior)
         entityTypes:
           type: array
           items:
             $ref: '#/components/schemas/EntityType'
+          nullable: true
           description: Which entity types can earn this achievement
         progressTarget:
           type: integer
@@ -24519,20 +24590,57 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Platform'
-          description: Platforms where this achievement exists
-        platformIds:
-          type: object
-          additionalProperties:
-            type: string
           nullable: true
-          description: "Platform-specific achievement IDs (e.g., {\"steam\": \"ACH_001\"\
-            })"
+          description: Platforms where this achievement exists
+        platformMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformMapping'
+          nullable: true
+          description: Platform-specific achievement ID mappings
         prerequisites:
           type: array
           items:
             type: string
           nullable: true
           description: Achievement IDs that must be unlocked first
+        scoreType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Score type code for matching analytics.score.updated 
+            events (progressive achievements)
+        milestoneType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Milestone type code for matching 
+            analytics.milestone.reached events
+        milestoneValue:
+          type: number
+          format: double
+          nullable: true
+          description: Expected milestone value for matching 
+            analytics.milestone.reached events
+        milestoneName:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: Expected milestone name for matching 
+            analytics.milestone.reached events
+        leaderboardId:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Leaderboard ID for matching leaderboard.rank.changed 
+            events
+        rankThreshold:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 1
+          description: Rank threshold for leaderboard achievements (unlock when 
+            rank <= threshold)
         isActive:
           type: boolean
           default: true
@@ -24541,7 +24649,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional achievement-specific metadata
+          description: Client-only metadata. No Bannou plugin reads specific 
+            keys from this field by convention.
     CreateActorTemplateRequest:
       type: object
       additionalProperties: false
@@ -26832,19 +26941,19 @@ components:
       description: How the currency handles decimal values (immutable after 
         creation)
       enum:
-      - integer
-      - decimal_2
-      - decimal_4
-      - decimal_8
-      - decimal_full
-      - big_integer
+      - Integer
+      - Decimal2
+      - Decimal4
+      - Decimal8
+      - DecimalFull
+      - BigInteger
     CurrencyScope:
       type: string
       description: Scope of currency availability across realms
       enum:
-      - global
-      - realm_specific
-      - multi_realm
+      - Global
+      - RealmSpecific
+      - MultiRealm
     CurrencyTransactionRecord:
       type: object
       description: Immutable record of a currency transaction
@@ -27339,24 +27448,9 @@ components:
       type: string
       description: Lifecycle status of a deity entity
       enum:
-      - active
-      - dormant
-      - archived
-    DeleteAchievementDefinitionRequest:
-      type: object
-      description: Request to delete an achievement
-      additionalProperties: false
-      required:
-      - gameServiceId
-      - achievementId
-      properties:
-        gameServiceId:
-          type: string
-          format: uuid
-          description: ID of the game service
-        achievementId:
-          type: string
-          description: ID of the achievement to delete
+      - Active
+      - Dormant
+      - Archived
     DeleteActionMappingRequest:
       type: object
       description: Request to delete an action tag mapping
@@ -27743,8 +27837,8 @@ components:
     DeletionStatus:
       type: string
       enum:
-      - deleted
-      - permanently_deleted
+      - Deleted
+      - PermanentlyDeleted
       description: |
         Result of a deletion operation:
         - deleted: Soft-deleted (within retention period, can be restored)
@@ -27752,10 +27846,10 @@ components:
     DeltaAlgorithm:
       type: string
       enum:
-      - JSON_PATCH
-      - BSDIFF
-      - XDELTA
-      default: JSON_PATCH
+      - JsonPatch
+      - Bsdiff
+      - Xdelta
+      default: JsonPatch
       description: |
         Algorithm used for delta computation.
         JSON_PATCH: RFC 6902, best for structured JSON data
@@ -27833,6 +27927,29 @@ components:
           items:
             $ref: '#/components/schemas/PartyToken'
           description: Release tokens (issued when fully funded)
+    DeprecateAchievementDefinitionRequest:
+      type: object
+      description: Request to deprecate an achievement definition
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - achievementId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        achievementId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the achievement to deprecate
+        deprecationReason:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Audit reason for deprecation, explaining why this 
+            achievement is being phased out
     DeprecateFactionRequest:
       type: object
       description: Request to deprecate a faction
@@ -27980,10 +28097,10 @@ components:
       type: string
       description: Reason for destroying an item instance
       enum:
-      - consumed
-      - destroyed
-      - expired
-      - admin
+      - Consumed
+      - Destroyed
+      - Expired
+      - Admin
     DeviceInfo:
       description: Information about the client device used for authentication 
         or session tracking
@@ -28010,10 +28127,10 @@ components:
     DeviceType:
       type: string
       enum:
-      - desktop
-      - mobile
-      - tablet
-      - console
+      - Desktop
+      - Mobile
+      - Tablet
+      - Console
       description: Category of client device used for authentication or session 
         tracking
     DiscardRequest:
@@ -28320,16 +28437,16 @@ components:
     DocumentCategory:
       type: string
       enum:
-      - getting-started
-      - api-reference
-      - architecture
-      - deployment
-      - troubleshooting
-      - tutorials
-      - game-systems
-      - world-lore
-      - npc-ai
-      - other
+      - GettingStarted
+      - ApiReference
+      - Architecture
+      - Deployment
+      - Troubleshooting
+      - Tutorials
+      - GameSystems
+      - WorldLore
+      - NpcAi
+      - Other
       description: Fixed categories for type-safe filtering
     DocumentResult:
       description: Search result with relevance scoring and match highlights
@@ -28579,22 +28696,22 @@ components:
         - item_based: temporary effect stored as an item in a status container
         - seed_derived: passive capability computed from seed growth state
       enum:
-      - item_based
-      - seed_derived
+      - ItemBased
+      - SeedDerived
     EmotionalImpact:
       type: string
       description: How the encounter emotionally affected the character
       enum:
-      - GRATITUDE
-      - ANGER
-      - FEAR
-      - RESPECT
-      - CONTEMPT
-      - AFFECTION
-      - RIVALRY
-      - INDIFFERENCE
-      - GUILT
-      - PRIDE
+      - Gratitude
+      - Anger
+      - Fear
+      - Respect
+      - Contempt
+      - Affection
+      - Rivalry
+      - Indifference
+      - Guilt
+      - Pride
     EmotionalStateInput:
       description: 6-dimensional emotional state input (all values 0-1)
       type: object
@@ -28767,11 +28884,11 @@ components:
       type: string
       description: Overall outcome of an encounter
       enum:
-      - POSITIVE
-      - NEGATIVE
-      - NEUTRAL
-      - MEMORABLE
-      - TRANSFORMATIVE
+      - Positive
+      - Negative
+      - Neutral
+      - Memorable
+      - Transformative
     EncounterPerspectiveModel:
       type: object
       description: A character's individual perspective on an encounter
@@ -28950,10 +29067,10 @@ components:
       type: string
       description: How contract breaches are handled
       enum:
-      - advisory
-      - event_only
-      - consequence_based
-      - community
+      - Advisory
+      - EventOnly
+      - ConsequenceBased
+      - Community
     EnrichedCharacterResponse:
       description: |
         Character data with optional enriched fields.
@@ -29163,24 +29280,24 @@ components:
         service-specific roles that include non-entity values (use service-specific enums).
         See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
       enum:
-      - system
-      - account
-      - character
-      - actor
-      - guild
-      - organization
-      - government
-      - faction
-      - location
-      - realm
-      - item
-      - monster
-      - relationship
-      - session
-      - deity
-      - dungeon
-      - custom
-      - other
+      - System
+      - Account
+      - Character
+      - Actor
+      - Guild
+      - Organization
+      - Government
+      - Faction
+      - Location
+      - Realm
+      - Item
+      - Monster
+      - Relationship
+      - Session
+      - Deity
+      - Dungeon
+      - Custom
+      - Other
     EntryMetadata:
       type: object
       description: Metadata for an unlocked entry instance tracking usage and 
@@ -29742,10 +29859,10 @@ components:
         - dispute: Raises a dispute
         - reaffirm: Re-affirms after validation failure
       enum:
-      - release
-      - refund
-      - dispute
-      - reaffirm
+      - Release
+      - Refund
+      - Dispute
+      - Reaffirm
     EscrowDeposit:
       type: object
       description: Records an actual deposit
@@ -29919,11 +30036,11 @@ components:
         - arbiter: Can resolve disputes, does not deposit or receive
         - observer: Can view status but cannot act
       enum:
-      - depositor
-      - recipient
-      - depositor_recipient
-      - arbiter
-      - observer
+      - Depositor
+      - Recipient
+      - DepositorRecipient
+      - Arbiter
+      - Observer
     EscrowRefundRequest:
       type: object
       description: Request from lib-escrow to credit depositor on refund
@@ -30033,12 +30150,12 @@ components:
         - cancelled_refunded: Cancelled, deposits refunded
         - violation_refunded: Validation failure caused refund
       enum:
-      - released
-      - refunded
-      - split
-      - expired_refunded
-      - cancelled_refunded
-      - violation_refunded
+      - Released
+      - Refunded
+      - Split
+      - ExpiredRefunded
+      - CancelledRefunded
+      - ViolationRefunded
     EscrowStatus:
       type: string
       description: |
@@ -30058,20 +30175,20 @@ components:
         - cancelled: Cancelled before funding complete
         - validation_failed: Held assets changed, awaiting re-affirmation
       enum:
-      - pending_deposits
-      - partially_funded
-      - funded
-      - pending_consent
-      - pending_condition
-      - finalizing
-      - releasing
-      - released
-      - refunding
-      - refunded
-      - disputed
-      - expired
-      - cancelled
-      - validation_failed
+      - PendingDeposits
+      - PartiallyFunded
+      - Funded
+      - PendingConsent
+      - PendingCondition
+      - Finalizing
+      - Releasing
+      - Released
+      - Refunding
+      - Refunded
+      - Disputed
+      - Expired
+      - Cancelled
+      - ValidationFailed
     EscrowTrustMode:
       type: string
       description: |
@@ -30080,9 +30197,9 @@ components:
         - initiator_trusted: The service that created the escrow can complete unilaterally
         - single_party_trusted: A designated party can complete unilaterally
       enum:
-      - full_consent
-      - initiator_trusted
-      - single_party_trusted
+      - FullConsent
+      - InitiatorTrusted
+      - SinglePartyTrusted
     EscrowType:
       type: string
       description: |
@@ -30092,22 +30209,22 @@ components:
         - conditional: Release based on external condition or contract fulfillment
         - auction: Winner-takes-all with refunds to losers
       enum:
-      - two_party
-      - multi_party
-      - conditional
-      - auction
+      - TwoParty
+      - MultiParty
+      - Conditional
+      - Auction
     EventCategory:
       type: string
       description: Categories of historical events that characters can 
         participate in
       enum:
-      - WAR
-      - NATURAL_DISASTER
-      - POLITICAL
-      - ECONOMIC
-      - RELIGIOUS
-      - CULTURAL
-      - PERSONAL
+      - War
+      - NaturalDisaster
+      - Political
+      - Economic
+      - Religious
+      - Cultural
+      - Personal
     ExecuteCleanupRequest:
       type: object
       additionalProperties: false
@@ -30548,9 +30665,9 @@ components:
       type: string
       description: How currency expiration is determined
       enum:
-      - fixed_date
-      - duration_from_earn
-      - end_of_season
+      - FixedDate
+      - DurationFromEarn
+      - EndOfSeason
     ExportSavesRequest:
       type: object
       description: Request to export all saves for an owner to a downloadable 
@@ -31058,11 +31175,11 @@ components:
       type: string
       description: Type of game action
       enum:
-      - move
-      - interact
-      - attack
-      - cast_spell
-      - use_item
+      - Move
+      - Interact
+      - Attack
+      - CastSpell
+      - UseItem
     GamePlayer:
       description: Information about a player currently participating in a game 
         session
@@ -34507,10 +34624,10 @@ components:
         - refreshed: timer reset on existing instance
         - replaced: existing instance removed and new one created
       enum:
-      - granted
-      - stacked
-      - refreshed
-      - replaced
+      - Granted
+      - Stacked
+      - Refreshed
+      - Replaced
     GrantStatusRequest:
       type: object
       description: Request to grant a status effect to an entity
@@ -34620,11 +34737,11 @@ components:
         Preferred role when fighting in groups. Affects positioning,
         target priority, and coordination behavior.
       enum:
-      - FRONTLINE
-      - SUPPORT
-      - FLANKER
-      - LEADER
-      - SOLO
+      - Frontline
+      - Support
+      - Flanker
+      - Leader
+      - Solo
     GrowthEntry:
       type: object
       additionalProperties: false
@@ -35196,19 +35313,19 @@ components:
       type: string
       description: Current status of an authorization hold
       enum:
-      - active
-      - captured
-      - released
-      - expired
+      - Active
+      - Captured
+      - Released
+      - Expired
     HttpMethodType:
       type: string
       description: HTTP method for endpoint invocation
       enum:
-      - GET
-      - POST
-      - PUT
-      - DELETE
-      - PATCH
+      - Get
+      - Post
+      - Put
+      - Delete
+      - Patch
     InitializeRealmClockRequest:
       type: object
       additionalProperties: false
@@ -35443,16 +35560,16 @@ components:
       type: string
       description: Item classification category
       enum:
-      - weapon
-      - armor
-      - accessory
-      - consumable
-      - material
-      - container
-      - quest
-      - currency_like
-      - misc
-      - custom
+      - Weapon
+      - Armor
+      - Accessory
+      - Consumable
+      - Material
+      - Container
+      - Quest
+      - CurrencyLike
+      - Misc
+      - Custom
     ItemInstanceResponse:
       type: object
       description: Item instance details
@@ -35565,30 +35682,30 @@ components:
       type: string
       description: How currency is linked to inventory items
       enum:
-      - none
-      - visual_only
-      - reference_only
+      - None
+      - VisualOnly
+      - ReferenceOnly
     ItemOriginType:
       type: string
       description: How an item instance was created
       enum:
-      - loot
-      - quest
-      - craft
-      - trade
-      - purchase
-      - spawn
-      - other
+      - Loot
+      - Quest
+      - Craft
+      - Trade
+      - Purchase
+      - Spawn
+      - Other
     ItemRarity:
       type: string
       description: Item rarity tier
       enum:
-      - common
-      - uncommon
-      - rare
-      - epic
-      - legendary
-      - custom
+      - Common
+      - Uncommon
+      - Rare
+      - Epic
+      - Legendary
+      - Custom
     ItemRequirement:
       type: object
       description: Required item and quantity
@@ -35610,9 +35727,9 @@ components:
       type: string
       description: Realm availability scope (consistent with CurrencyScope)
       enum:
-      - global
-      - realm_specific
-      - multi_realm
+      - Global
+      - RealmSpecific
+      - MultiRealm
     ItemTemplateResponse:
       type: object
       description: Item template details
@@ -35826,9 +35943,9 @@ components:
         - destroy_on_success: Item consumed only if use behavior succeeds (default)
         - destroy_always: Item consumed regardless of success/failure
       enum:
-      - disabled
-      - destroy_on_success
-      - destroy_always
+      - Disabled
+      - DestroyOnSuccess
+      - DestroyAlways
     JoinMatchmakingRequest:
       type: object
       description: Request to join a matchmaking queue
@@ -35963,10 +36080,10 @@ components:
       type: string
       description: Lifecycle status of a journey leg
       enum:
-      - pending
-      - in_progress
-      - completed
-      - skipped
+      - Pending
+      - InProgress
+      - Completed
+      - Skipped
     JourneyResponse:
       type: object
       additionalProperties: false
@@ -35982,12 +36099,12 @@ components:
       type: string
       description: Lifecycle status of a transit journey
       enum:
-      - preparing
-      - in_transit
-      - at_waypoint
-      - arrived
-      - interrupted
-      - abandoned
+      - Preparing
+      - InTransit
+      - AtWaypoint
+      - Arrived
+      - Interrupted
+      - Abandoned
     JsonPatchOperation:
       type: object
       required:
@@ -36091,10 +36208,10 @@ components:
         storageMode:
           type: string
           enum:
-          - durable
-          - cached
-          - ephemeral
-          default: cached
+          - Durable
+          - Cached
+          - Ephemeral
+          default: Cached
           description: How this layer's data should be stored
         ttlSeconds:
           type: integer
@@ -36399,9 +36516,9 @@ components:
         - unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)
         - unlocked: Already unlocked (item placed at this position)
       enum:
-      - locked
-      - unlockable
-      - unlocked
+      - Locked
+      - Unlockable
+      - Unlocked
     ListAchievementDefinitionsRequest:
       type: object
       description: Request to list achievement definitions
@@ -36429,6 +36546,10 @@ components:
           type: boolean
           default: false
           description: Include hidden achievements in response
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated definitions in results
     ListAchievementDefinitionsResponse:
       type: object
       description: Response containing achievement definitions
@@ -38892,10 +39013,10 @@ components:
     ListSortField:
       type: string
       enum:
-      - created_at
-      - updated_at
-      - title
-      default: updated_at
+      - CreatedAt
+      - UpdatedAt
+      - Title
+      default: UpdatedAt
       description: Fields available for sorting document lists
     ListSpeciesByRealmRequest:
       description: Request to list species available within a specific realm
@@ -39229,6 +39350,11 @@ components:
           $ref: '#/components/schemas/Platform'
           nullable: true
           description: Filter by platform
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include achievements earned from deprecated 
+            definitions
     ListUnlockedAchievementsResponse:
       type: object
       description: Response containing unlocked achievements
@@ -39557,16 +39683,16 @@ components:
       type: string
       description: Type classification for locations
       enum:
-      - CONTINENT
-      - REGION
-      - CITY
-      - DISTRICT
-      - BUILDING
-      - ROOM
-      - LANDMARK
-      - WILDERNESS
-      - DUNGEON
-      - OTHER
+      - Continent
+      - Region
+      - City
+      - District
+      - Building
+      - Room
+      - Landmark
+      - Wilderness
+      - Dungeon
+      - Other
     LockContractRequest:
       type: object
       description: Request to lock a contract under guardian custody
@@ -39760,18 +39886,18 @@ components:
         The category of spatial data this map contains.
         Different kinds have different update frequencies, storage models, and TTLs.
       enum:
-      - terrain
-      - static_geometry
-      - navigation
-      - resources
-      - spawn_points
-      - points_of_interest
-      - dynamic_objects
-      - hazards
-      - weather_effects
-      - ownership
-      - combat_effects
-      - visual_effects
+      - Terrain
+      - StaticGeometry
+      - Navigation
+      - Resources
+      - SpawnPoints
+      - PointsOfInterest
+      - DynamicObjects
+      - Hazards
+      - WeatherEffects
+      - Ownership
+      - CombatEffects
+      - VisualEffects
     MapObject:
       type: object
       description: A stored map object with full metadata
@@ -39829,14 +39955,14 @@ components:
       description: Types of marker nodes for spawn points, waypoints, and other 
         positional markers.
       enum:
-      - generic
-      - spawn_point
-      - npc_spawn
-      - waypoint
-      - camera_point
-      - light_point
-      - audio_point
-      - trigger_point
+      - Generic
+      - SpawnPoint
+      - NpcSpawn
+      - Waypoint
+      - CameraPoint
+      - LightPoint
+      - AudioPoint
+      - TriggerPoint
     MatchesHierarchyRequest:
       description: Request to check if a relationship type matches or descends 
         from an ancestor type in the hierarchy
@@ -40045,23 +40171,23 @@ components:
     MetabundleErrorCode:
       type: string
       enum:
-      - SOURCE_BUNDLE_NOT_FOUND
-      - SOURCE_BUNDLE_NOT_READY
-      - STANDALONE_ASSET_NOT_FOUND
-      - STANDALONE_ASSET_NOT_READY
-      - REALM_MISMATCH
-      - ASSET_CONFLICT
-      - STORAGE_ERROR
-      - TIMEOUT
-      - CANCELLED
-      - INTERNAL_ERROR
+      - SourceBundleNotFound
+      - SourceBundleNotReady
+      - StandaloneAssetNotFound
+      - StandaloneAssetNotReady
+      - RealmMismatch
+      - AssetConflict
+      - StorageError
+      - Timeout
+      - Cancelled
+      - InternalError
       description: Error codes for metabundle creation failures
     MetadataType:
       type: string
       description: Type of metadata to update
       enum:
-      - instance_data
-      - runtime_state
+      - InstanceData
+      - RuntimeState
     MfaDisableRequest:
       type: object
       description: Request to disable MFA. Exactly one of totpCode or 
@@ -40356,9 +40482,9 @@ components:
       type: string
       description: Behavior when optional milestone deadline passes
       enum:
-      - skip
-      - warn
-      - breach
+      - Skip
+      - Warn
+      - Breach
     MilestoneDefinition:
       type: object
       description: Milestone definition in a template
@@ -40493,11 +40619,11 @@ components:
       type: string
       description: Current status of a milestone
       enum:
-      - pending
-      - active
-      - completed
-      - failed
-      - skipped
+      - Pending
+      - Active
+      - Completed
+      - Failed
+      - Skipped
     ModeAvailabilityResult:
       type: object
       additionalProperties: false
@@ -40902,9 +41028,9 @@ components:
         target:
           type: string
           enum:
-          - _self
-          - _blank
-          default: _self
+          - Self
+          - Blank
+          default: Self
           description: Link target attribute for opening behavior
         children:
           type: array
@@ -41011,21 +41137,21 @@ components:
         not how it will be used at runtime. Consumers interpret nodes according
         to their own needs via tags and annotations.
       enum:
-      - group
-      - mesh
-      - marker
-      - volume
-      - emitter
-      - reference
-      - custom
+      - Group
+      - Mesh
+      - Marker
+      - Volume
+      - Emitter
+      - Reference
+      - Custom
     NonAuthorityHandlingMode:
       type: string
       description: How to handle publish attempts from non-authority sources
       enum:
-      - reject_and_alert
-      - accept_and_alert
-      - reject_silent
-      default: reject_and_alert
+      - RejectAndAlert
+      - AcceptAndAlert
+      - RejectSilent
+      default: RejectAndAlert
     NormDefinitionResponse:
       type: object
       description: A behavioral norm definition stored in a faction
@@ -41264,24 +41390,24 @@ components:
     ObjectiveRevealBehavior:
       type: string
       enum:
-      - ALWAYS
-      - ON_PROGRESS
-      - ON_COMPLETE
-      - NEVER
+      - Always
+      - OnProgress
+      - OnComplete
+      - Never
       description: When a hidden objective is revealed in the quest log
     ObjectiveType:
       type: string
       enum:
-      - KILL
-      - COLLECT
-      - DELIVER
-      - TRAVEL
-      - DISCOVER
-      - TALK
-      - CRAFT
-      - ESCORT
-      - DEFEND
-      - CUSTOM
+      - Kill
+      - Collect
+      - Deliver
+      - Travel
+      - Discover
+      - Talk
+      - Craft
+      - Escort
+      - Defend
+      - Custom
       description: Type of objective determining progress tracking logic
     ObligationArchive:
       type: object
@@ -41319,14 +41445,14 @@ components:
     OnDeleteAction:
       type: string
       enum:
-      - CASCADE
-      - RESTRICT
-      - DETACH
+      - Cascade
+      - Restrict
+      - Detach
       description: |
         Action to take when the referenced resource is deleted.
-        CASCADE: Delete dependent entities when resource is deleted
-        RESTRICT: Block resource deletion if references exist
-        DETACH: Set reference to null when resource is deleted
+        Cascade: Delete dependent entities when resource is deleted
+        Restrict: Block resource deletion if references exist
+        Detach: Set reference to null when resource is deleted
     PageContent:
       description: Full content and metadata for a CMS-managed page
       type: object
@@ -41352,9 +41478,9 @@ components:
         contentType:
           type: string
           enum:
-          - html
-          - markdown
-          - blazor
+          - Html
+          - Markdown
+          - Blazor
           description: Format of the page content
         template:
           type: string
@@ -41527,14 +41653,14 @@ components:
       type: string
       description: How the character participated in the historical event
       enum:
-      - LEADER
-      - COMBATANT
-      - VICTIM
-      - WITNESS
-      - BENEFICIARY
-      - CONSPIRATOR
-      - HERO
-      - SURVIVOR
+      - Leader
+      - Combatant
+      - Victim
+      - Witness
+      - Beneficiary
+      - Conspirator
+      - Hero
+      - Survivor
     PartnerSummary:
       type: object
       additionalProperties: false
@@ -41668,9 +41794,9 @@ components:
       type: string
       description: Method for aggregating party member skills
       enum:
-      - highest
-      - average
-      - weighted
+      - Highest
+      - Average
+      - Weighted
     PartyToken:
       type: object
       description: Token issued to a party for deposit or release operations
@@ -41744,9 +41870,9 @@ components:
       type: string
       description: When payments occur
       enum:
-      - one_time
-      - recurring
-      - milestone_based
+      - OneTime
+      - Recurring
+      - MilestoneBased
     PendingConsentSummary:
       type: object
       description: Summary of pending consent
@@ -41835,15 +41961,15 @@ components:
       type: string
       description: Type of source generating a perception event
       enum:
-      - character
-      - npc
-      - object
-      - environment
-      - coordinator
-      - scheduled
-      - message
-      - service
-      - system
+      - Character
+      - Npc
+      - Object
+      - Environment
+      - Coordinator
+      - Scheduled
+      - Message
+      - Service
+      - System
     PersistenceMode:
       type: string
       description: Whether room messages are stored in Redis (TTL) or MySQL 
@@ -42160,17 +42286,33 @@ components:
       type: string
       description: External platform for achievement sync
       enum:
-      - steam
-      - xbox
-      - playstation
-      - internal
+      - Steam
+      - Xbox
+      - PlayStation
+      - Internal
+    PlatformMapping:
+      type: object
+      description: Maps an achievement to a platform-specific ID
+      additionalProperties: false
+      required:
+      - platform
+      - platformAchievementId
+      properties:
+        platform:
+          $ref: '#/components/schemas/Platform'
+          description: External platform
+        platformAchievementId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Platform-specific achievement identifier
     PlayerRole:
       type: string
       description: Role of the player in the game session
       enum:
-      - player
-      - spectator
-      - moderator
+      - Player
+      - Spectator
+      - Moderator
     PoiInteractionResponse:
       type: object
       description: Result of interacting with a POI
@@ -42347,9 +42489,9 @@ components:
       type: string
       description: How to execute a prebound API call
       enum:
-      - sync
-      - async
-      - fire_and_forget
+      - Sync
+      - Async
+      - FireAndForget
     PredictedMutation:
       type: object
       additionalProperties: false
@@ -42370,10 +42512,10 @@ components:
         Preferred engagement distance. Influences positioning and
         ability selection in combat.
       enum:
-      - MELEE
-      - CLOSE
-      - MEDIUM
-      - RANGED
+      - Melee
+      - Close
+      - Medium
+      - Ranged
     PrerequisiteDefinition:
       type: object
       description: Requirement that must be met before a quest can be accepted
@@ -42417,19 +42559,19 @@ components:
     PrerequisiteType:
       type: string
       enum:
-      - QUEST_COMPLETED
-      - CHARACTER_LEVEL
-      - REPUTATION
-      - ITEM_OWNED
-      - CURRENCY_AMOUNT
+      - QuestCompleted
+      - CharacterLevel
+      - Reputation
+      - ItemOwned
+      - CurrencyAmount
       description: Type of prerequisite check
     ProcessingStatus:
       type: string
       enum:
-      - pending
-      - processing
-      - complete
-      - failed
+      - Pending
+      - Processing
+      - Complete
+      - Failed
       description: Asset processing pipeline status
     ProgressionAnalysis:
       description: Analysis of a chord progression
@@ -42503,10 +42645,10 @@ components:
     Provider:
       type: string
       enum:
-      - google
-      - discord
-      - twitch
-      - steam
+      - Google
+      - Discord
+      - Twitch
+      - Steam
       description: Authentication provider type
     ProviderInfo:
       type: object
@@ -42553,9 +42695,9 @@ components:
       type: string
       description: How quantities are tracked for this item type
       enum:
-      - discrete
-      - continuous
-      - unique
+      - Discrete
+      - Continuous
+      - Unique
     Quaternion:
       type: object
       description: Rotation represented as a quaternion
@@ -43681,13 +43823,13 @@ components:
     QuestCategory:
       type: string
       enum:
-      - MAIN
-      - SIDE
-      - BOUNTY
-      - DAILY
-      - WEEKLY
-      - EVENT
-      - TUTORIAL
+      - Main
+      - Side
+      - Bounty
+      - Daily
+      - Weekly
+      - Event
+      - Tutorial
       description: Category of quest for organization
     QuestDefinitionResponse:
       type: object
@@ -43797,12 +43939,12 @@ components:
     QuestDifficulty:
       type: string
       enum:
-      - TRIVIAL
-      - EASY
-      - NORMAL
-      - HARD
-      - HEROIC
-      - LEGENDARY
+      - Trivial
+      - Easy
+      - Normal
+      - Hard
+      - Heroic
+      - Legendary
       description: Difficulty rating of the quest
     QuestInstanceResponse:
       type: object
@@ -43942,11 +44084,11 @@ components:
     QuestStatus:
       type: string
       enum:
-      - ACTIVE
-      - COMPLETED
-      - FAILED
-      - ABANDONED
-      - EXPIRED
+      - Active
+      - Completed
+      - Failed
+      - Abandoned
+      - Expired
       description: Current status of a quest instance
     QueueResponse:
       type: object
@@ -44751,9 +44893,9 @@ components:
         Controls how refund confirmation is handled. Same semantics as ReleaseMode.
         Refunds typically use 'immediate' since parties get their own assets back.
       enum:
-      - immediate
-      - service_only
-      - party_required
+      - Immediate
+      - ServiceOnly
+      - PartyRequired
     RefundRequest:
       type: object
       description: Request to trigger escrow refund to depositors
@@ -45233,10 +45375,10 @@ components:
     RelatedDepth:
       type: string
       enum:
-      - none
-      - direct
-      - extended
-      default: direct
+      - None
+      - Direct
+      - Extended
+      default: Direct
       description: |
         How deep to traverse related document links:
         - none: No related documents included
@@ -45547,10 +45689,10 @@ components:
         - party_required: Wait for all parties to call /confirm-release.
         - service_and_party: Wait for both service completion AND party confirmation.
       enum:
-      - immediate
-      - service_only
-      - party_required
-      - service_and_party
+      - Immediate
+      - ServiceOnly
+      - PartyRequired
+      - ServiceAndParty
     ReleaseRequest:
       type: object
       description: Request to trigger escrow release to recipients
@@ -46530,10 +46672,10 @@ components:
     RewardType:
       type: string
       enum:
-      - CURRENCY
-      - ITEM
-      - EXPERIENCE
-      - REPUTATION
+      - Currency
+      - Item
+      - Experience
+      - Reputation
       description: Type of reward granted on quest completion
     RoomTypeResponse:
       type: object
@@ -46621,9 +46763,9 @@ components:
       type: string
       description: Sort criteria for route calculation results
       enum:
-      - fastest
-      - safest
-      - shortest
+      - Fastest
+      - Safest
+      - Shortest
     SEOMetadata:
       description: Search engine optimization and social media sharing metadata
       type: object
@@ -46654,11 +46796,11 @@ components:
     SaveCategory:
       type: string
       enum:
-      - QUICK_SAVE
-      - AUTO_SAVE
-      - MANUAL_SAVE
-      - CHECKPOINT
-      - STATE_SNAPSHOT
+      - QuickSave
+      - AutoSave
+      - ManualSave
+      - Checkpoint
+      - StateSnapshot
       description: |
         Category of save with predefined behaviors.
         QUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).
@@ -47748,19 +47890,19 @@ components:
         Scene classification for querying and validation rule lookup.
         Different types may have different validation requirements per game.
       enum:
-      - unknown
-      - region
-      - city
-      - district
-      - lot
-      - building
-      - room
-      - dungeon
-      - arena
-      - vehicle
-      - prefab
-      - cutscene
-      - other
+      - Unknown
+      - Region
+      - City
+      - District
+      - Lot
+      - Building
+      - Room
+      - Dungeon
+      - Arena
+      - Vehicle
+      - Prefab
+      - Cutscene
+      - Other
     SchemaResponse:
       type: object
       description: Registered schema definition with version lineage information
@@ -47857,19 +47999,19 @@ components:
     SearchField:
       type: string
       enum:
-      - title
-      - content
-      - tags
-      - summary
+      - Title
+      - Content
+      - Tags
+      - Summary
       description: Fields that can be searched within documents
     SearchMatchType:
       type: string
       description: Where the search match was found
       enum:
-      - name
-      - description
-      - tag
-      - node_name
+      - Name
+      - Description
+      - Tag
+      - NodeName
     SearchMessagesRequest:
       type: object
       additionalProperties: false
@@ -47971,10 +48113,10 @@ components:
     SearchSortBy:
       type: string
       enum:
-      - relevance
-      - recency
-      - alphabetical
-      default: relevance
+      - Relevance
+      - Recency
+      - Alphabetical
+      default: Relevance
       description: How to sort search results
     SeasonDefinition:
       type: object
@@ -48730,16 +48872,16 @@ components:
       type: string
       description: Current status of the game session
       enum:
-      - waiting
-      - active
-      - full
-      - finished
+      - Waiting
+      - Active
+      - Full
+      - Finished
     SessionType:
       type: string
       description: Type of game session - determines join behavior
       enum:
-      - lobby
-      - matchmade
+      - Lobby
+      - Matchmade
     SessionsResponse:
       description: Response containing a list of all active sessions for an 
         account
@@ -48890,10 +49032,10 @@ components:
         endpoint (excludes seasonal_closed which is managed by the Seasonal 
         Connection Worker)
       enum:
-      - open
-      - closed
-      - dangerous
-      - blocked
+      - Open
+      - Closed
+      - Dangerous
+      - Blocked
     SharedGardenStateResponse:
       type: object
       description: Shared garden state for bonded players
@@ -49052,17 +49194,17 @@ components:
     SortOrder:
       type: string
       enum:
-      - asc
-      - desc
+      - Asc
+      - Desc
       description: Sort direction for query results
     SoulboundType:
       type: string
       description: When item becomes bound to a character
       enum:
-      - none
-      - on_pickup
-      - on_equip
-      - on_use
+      - None
+      - OnPickup
+      - OnEquip
+      - OnUse
     SourceBundleReference:
       type: object
       additionalProperties: false
@@ -49416,11 +49558,11 @@ components:
         - replace: new application replaces existing entirely
         - ignore: cannot apply if already present
       enum:
-      - refresh_duration
-      - independent
-      - increase_intensity
-      - replace
-      - ignore
+      - RefreshDuration
+      - Independent
+      - IncreaseIntensity
+      - Replace
+      - Ignore
     StartEncounterRequest:
       type: object
       additionalProperties: false
@@ -49539,12 +49681,12 @@ components:
         - event: time-limited event effect (festival bonus, seasonal)
         - passive: seed-derived passive capability (used in unified queries)
       enum:
-      - buff
-      - debuff
-      - death
-      - subscription
-      - event
-      - passive
+      - Buff
+      - Debuff
+      - Death
+      - Subscription
+      - Event
+      - Passive
     StatusEffectSummary:
       type: object
       description: Unified summary of an active effect from any source 
@@ -49664,11 +49806,11 @@ components:
         - source_removed: source entity was deleted (cascading removal)
         - admin: removed by administrative action
       enum:
-      - expired
-      - cleansed
-      - cancelled
-      - source_removed
-      - admin
+      - Expired
+      - Cleansed
+      - Cancelled
+      - SourceRemoved
+      - Admin
     StatusResponse:
       description: Health and version status information for the website service
       type: object
@@ -49681,9 +49823,9 @@ components:
         status:
           type: string
           enum:
-          - healthy
-          - degraded
-          - maintenance
+          - Healthy
+          - Degraded
+          - Maintenance
           description: Current health status of the website service
         version:
           type: string
@@ -49892,11 +50034,11 @@ components:
     StorylineGoal:
       type: string
       enum:
-      - revenge
-      - resurrection
-      - legacy
-      - mystery
-      - peace
+      - Revenge
+      - Resurrection
+      - Legacy
+      - Mystery
+      - Peace
       description: |
         High-level story goal that drives arc selection.
         revenge: Character seeks vengeance for past wrongs
@@ -50063,9 +50205,9 @@ components:
         severity:
           type: string
           enum:
-          - low
-          - medium
-          - high
+          - Low
+          - Medium
+          - High
           description: Risk severity
         mitigation:
           type: string
@@ -50282,10 +50424,10 @@ components:
     SuggestionSource:
       type: string
       enum:
-      - document_id
-      - slug
-      - topic
-      - category
+      - DocumentId
+      - Slug
+      - Topic
+      - Category
       description: Source type for generating related topic suggestions
     SyncInfo:
       description: Information about a repository sync operation
@@ -50385,22 +50527,22 @@ components:
       type: string
       description: Status of platform synchronization
       enum:
-      - pending
-      - synced
-      - failed
-      - not_linked
+      - Pending
+      - Synced
+      - Failed
+      - NotLinked
     SyncTrigger:
       type: string
       enum:
-      - manual
-      - scheduled
+      - Manual
+      - Scheduled
       description: What triggered the sync operation
     TagMatchMode:
       type: string
       enum:
-      - all
-      - any
-      default: all
+      - All
+      - Any
+      default: All
       description: Whether documents must match all specified tags or any tag
     TemplateStatus:
       type: string
@@ -50486,10 +50628,10 @@ components:
       type: string
       description: How the contract can be terminated
       enum:
-      - mutual_consent
-      - unilateral_with_notice
-      - unilateral_immediate
-      - non_terminable
+      - MutualConsent
+      - UnilateralWithNotice
+      - UnilateralImmediate
+      - NonTerminable
     TerrainSpeedModifier:
       type: object
       additionalProperties: false
@@ -50672,17 +50814,17 @@ components:
       type: string
       description: Current status of a matchmaking ticket
       enum:
-      - searching
-      - match_found
-      - match_accepted
-      - cancelled
-      - expired
+      - Searching
+      - MatchFound
+      - MatchAccepted
+      - Cancelled
+      - Expired
     TimeCommitmentType:
       type: string
       description: Type of time commitment for scheduling constraints
       enum:
-      - exclusive
-      - partial
+      - Exclusive
+      - Partial
     TimeRatioChangeReason:
       type: string
       description: Why the time ratio was changed
@@ -50752,14 +50894,14 @@ components:
         Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.
         Based on psychological research (Big Five + game-relevant extensions).
       enum:
-      - OPENNESS
-      - CONSCIENTIOUSNESS
-      - EXTRAVERSION
-      - AGREEABLENESS
-      - NEUROTICISM
-      - HONESTY
-      - AGGRESSION
-      - LOYALTY
+      - Openness
+      - Conscientiousness
+      - Extraversion
+      - Agreeableness
+      - Neuroticism
+      - Honesty
+      - Aggression
+      - Loyalty
     TraitSnapshot:
       type: object
       additionalProperties: false
@@ -50817,25 +50959,25 @@ components:
       type: string
       description: Classification of the currency transaction
       enum:
-      - mint
-      - quest_reward
-      - loot_drop
-      - vendor_sale
-      - autogain
-      - refund
-      - conversion_credit
-      - burn
-      - vendor_purchase
-      - fee
-      - expiration
-      - cap_overflow
-      - conversion_debit
-      - transfer
-      - trade
-      - gift
-      - escrow_deposit
-      - escrow_release
-      - escrow_refund
+      - Mint
+      - QuestReward
+      - LootDrop
+      - VendorSale
+      - Autogain
+      - Refund
+      - ConversionCredit
+      - Burn
+      - VendorPurchase
+      - Fee
+      - Expiration
+      - CapOverflow
+      - ConversionDebit
+      - Transfer
+      - Trade
+      - Gift
+      - EscrowDeposit
+      - EscrowRelease
+      - EscrowRefund
     TransferContractPartyRequest:
       type: object
       description: Request to transfer a party role to a new entity
@@ -51952,6 +52094,7 @@ components:
       required:
       - achievementId
       - displayName
+      - description
       - points
       - unlockedAt
       properties:
@@ -52177,10 +52320,10 @@ components:
       type: string
       description: Reason why a scene reference could not be resolved
       enum:
-      - not_found
-      - circular_reference
-      - depth_exceeded
-      - access_denied
+      - NotFound
+      - CircularReference
+      - DepthExceeded
+      - AccessDenied
     UpdateAchievementDefinitionRequest:
       type: object
       description: Request to update an achievement definition
@@ -52195,6 +52338,8 @@ components:
           description: ID of the game service
         achievementId:
           type: string
+          minLength: 1
+          maxLength: 64
           description: ID of the achievement to update
         displayName:
           type: string
@@ -52210,12 +52355,49 @@ components:
           type: boolean
           nullable: true
           description: New active status
-        platformIds:
-          type: object
-          additionalProperties:
-            type: string
+        platformMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformMapping'
           nullable: true
           description: Updated platform ID mappings
+        scoreType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Score type code for matching analytics.score.updated 
+            events (progressive achievements)
+        milestoneType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Milestone type code for matching 
+            analytics.milestone.reached events
+        milestoneValue:
+          type: number
+          format: double
+          nullable: true
+          description: Expected milestone value for matching 
+            analytics.milestone.reached events
+        milestoneName:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: Expected milestone name for matching 
+            analytics.milestone.reached events
+        leaderboardId:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Leaderboard ID for matching leaderboard.rank.changed 
+            events
+        rankThreshold:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 1
+          description: Rank threshold for leaderboard achievements (unlock when 
+            rank <= threshold)
     UpdateActorTemplateRequest:
       type: object
       additionalProperties: false
@@ -53096,10 +53278,10 @@ components:
       type: string
       description: How to handle score updates
       enum:
-      - replace
-      - increment
-      - max
-      - min
+      - Replace
+      - Increment
+      - Max
+      - Min
     UpdateModeRequest:
       type: object
       additionalProperties: false
@@ -54140,20 +54322,20 @@ components:
         reason:
           type: string
           enum:
-          - none
-          - preconditionInvalidated
-          - actionFailed
-          - betterGoalAvailable
-          - planCompleted
-          - goalAlreadySatisfied
-          - suboptimalPlan
+          - None
+          - PreconditionInvalidated
+          - ActionFailed
+          - BetterGoalAvailable
+          - PlanCompleted
+          - GoalAlreadySatisfied
+          - SuboptimalPlan
           description: Reason for the validation result
         suggestedAction:
           type: string
           enum:
-          - continue
-          - replan
-          - abort
+          - Continue
+          - Replan
+          - Abort
           description: Suggested action based on validation
         invalidatedAtIndex:
           type: integer
@@ -54329,14 +54511,14 @@ components:
       type: string
       description: Type of validation condition
       enum:
-      - statusCodeIn
-      - jsonPathEquals
-      - jsonPathNotEquals
-      - jsonPathExists
-      - jsonPathNotExists
-      - jsonPathGreaterThan
-      - jsonPathLessThan
-      - jsonPathContains
+      - StatusCodeIn
+      - JsonPathEquals
+      - JsonPathNotEquals
+      - JsonPathExists
+      - JsonPathNotExists
+      - JsonPathGreaterThan
+      - JsonPathLessThan
+      - JsonPathContains
     ValidationError:
       description: Detailed validation error with type, location, and message 
         information
@@ -54416,10 +54598,10 @@ components:
         - asset_expired: Asset has a time-based expiration that triggered
         - balance_mismatch: Wallet balance does not match expected held amount
       enum:
-      - asset_missing
-      - asset_mutated
-      - asset_expired
-      - balance_mismatch
+      - AssetMissing
+      - AssetMutated
+      - AssetExpired
+      - BalanceMismatch
     ValidationResult:
       type: object
       description: Result of scene validation
@@ -54499,17 +54681,17 @@ components:
       type: string
       description: Type of validation check to perform
       enum:
-      - require_tag
-      - require_node_type
-      - forbid_tag
-      - require_annotation
-      - custom_expression
+      - RequireTag
+      - RequireNodeType
+      - ForbidTag
+      - RequireAnnotation
+      - CustomExpression
     ValidationSeverity:
       type: string
       description: Severity level of a validation issue
       enum:
-      - error
-      - warning
+      - Error
+      - Warning
     ValidatorConfig:
       type: object
       additionalProperties: false
@@ -54972,10 +55154,10 @@ components:
       type: string
       description: Shape of a volume node for spatial bounds
       enum:
-      - box
-      - sphere
-      - capsule
-      - cylinder
+      - Box
+      - Sphere
+      - Capsule
+      - Cylinder
     WalletResponse:
       type: object
       description: Wallet details
@@ -55032,9 +55214,9 @@ components:
       type: string
       description: Current status of a wallet
       enum:
-      - active
-      - frozen
-      - closed
+      - Active
+      - Frozen
+      - Closed
     WalletWithBalancesResponse:
       type: object
       description: Wallet with all non-zero balances
@@ -55088,18 +55270,18 @@ components:
       type: string
       description: How container weight propagates to parent
       enum:
-      - none
-      - self_only
-      - self_plus_contents
+      - None
+      - SelfOnly
+      - SelfPlusContents
     WeightPrecision:
       type: string
       description: Precision for weight values (consistent with 
         CurrencyPrecision)
       enum:
-      - integer
-      - decimal_1
-      - decimal_2
-      - decimal_3
+      - Integer
+      - Decimal1
+      - Decimal2
+      - Decimal3
   securitySchemes:
     BearerAuth:
       type: http

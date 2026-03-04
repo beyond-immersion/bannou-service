@@ -48,7 +48,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/template/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createContractTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/template/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getContractTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/template/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listContractTemplates",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/template/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateContractTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/template/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteContractTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/instance/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createContractInstance",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/instance/propose",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "proposeContractInstance",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/instance/consent",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "consentToContract",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/instance/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getContractInstance",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/instance/query",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryContractInstances",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/instance/terminate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "terminateContractInstance",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/instance/get-status",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getContractInstanceStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/milestone/complete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "completeMilestone",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/milestone/fail",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "failMilestone",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/milestone/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getMilestone",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/breach/report",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "reportBreach",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/breach/cure",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cureBreach",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/breach/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getBreach",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/metadata/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateContractMetadata",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/metadata/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getContractMetadata",
             Permissions = new List<PermissionRequirement>
             {
@@ -348,7 +348,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/check-constraint",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "checkContractConstraint",
             Permissions = new List<PermissionRequirement>
             {
@@ -363,7 +363,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/query-active",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryActiveContracts",
             Permissions = new List<PermissionRequirement>
             {
@@ -378,7 +378,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/lock",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "lockContract",
             Permissions = new List<PermissionRequirement>
             {
@@ -393,7 +393,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/unlock",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "unlockContract",
             Permissions = new List<PermissionRequirement>
             {
@@ -408,7 +408,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/transfer-party",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "transferContractParty",
             Permissions = new List<PermissionRequirement>
             {
@@ -423,7 +423,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/clause-type/register",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "registerClauseType",
             Permissions = new List<PermissionRequirement>
             {
@@ -438,7 +438,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/clause-type/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listClauseTypes",
             Permissions = new List<PermissionRequirement>
             {
@@ -453,7 +453,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/instance/set-template-values",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "setContractTemplateValues",
             Permissions = new List<PermissionRequirement>
             {
@@ -468,7 +468,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/instance/check-asset-requirements",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "checkAssetRequirements",
             Permissions = new List<PermissionRequirement>
             {
@@ -483,7 +483,7 @@ public static class ContractPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/instance/execute",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "executeContract",
             Permissions = new List<PermissionRequirement>
             {

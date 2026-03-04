@@ -113,9 +113,9 @@ public partial class OrchestratorController
         "ComponentHealthStatus": {
             "type": "string",
             "enum": [
-                "healthy",
-                "degraded",
-                "unavailable"
+                "Healthy",
+                "Degraded",
+                "Unavailable"
             ],
             "description": "Health status for an individual infrastructure component"
         }
@@ -202,9 +202,9 @@ public partial class OrchestratorController
             "type": "string",
             "description": "Filter for which services to include in health reports.\ n- all: Include both control plane services and deployed services (default)\n- control_plane_only: Only services running on the control plane (main bannou instance)\n- deployed_only: Only services running on explicitly deployed nodes (split topology)\n",
             "enum": [
-                "all",
-                "control_plane_only",
-                "deployed_only"
+                "All",
+                "ControlPlaneOnly",
+                "DeployedOnly"
             ]
         }
     }
@@ -272,9 +272,9 @@ public partial class OrchestratorController
             "type": "string",
             "description": "Filter for which services to include in health reports.\n- all: Include both control plane services and deployed services (default)\n- control_plane_only: Only services running on the control plane (main bannou instance)\n- deployed_only: Only services running on explicitly deployed nodes (split topology)\n",
             "enum": [
-                "all",
-                "control_plane_only",
-                "deployed_only"
+                "All",
+                "ControlPlaneOnly",
+                "DeployedOnly"
             ]
         },
         "ServiceHealthEntry": {
@@ -760,10 +760,10 @@ public partial class OrchestratorController
         "BackendType": {
             "type": "string",
             "enum": [
-                "kubernetes",
-                "portainer",
-                "swarm",
-                "compose"
+                "Kubernetes",
+                "Portainer",
+                "Swarm",
+                "Compose"
             ],
             "description": "Container orchestration backend type.\nPriority order: kubernetes > portainer > swarm > compose\n"
         }
@@ -845,10 +845,10 @@ public partial class OrchestratorController
         "PresetCategory": {
             "type": "string",
             "enum": [
-                "development",
-                "testing",
-                "production",
-                "custom"
+                "Development",
+                "Testing",
+                "Production",
+                "Custom"
             ],
             "description": "Category classification for deployment presets"
         }
@@ -940,10 +940,10 @@ public partial class OrchestratorController
         "PresetCategory": {
             "type": "string",
             "enum": [
-                "development",
-                "testing",
-                "production",
-                "custom"
+                "Development",
+                "Testing",
+                "Production",
+                "Custom"
             ],
             "description": "Category classification for deployment presets"
         },
@@ -1161,10 +1161,10 @@ public partial class OrchestratorController
         "IngressType": {
             "type": "string",
             "enum": [
-                "openresty",
-                "nginx",
-                "traefik",
-                "none"
+                "Openresty",
+                "Nginx",
+                "Traefik",
+                "None"
             ],
             "description": "Type of ingress or reverse proxy to use"
         },
@@ -1192,10 +1192,10 @@ public partial class OrchestratorController
         "BackendType": {
             "type": "string",
             "enum": [
-                "kubernetes",
-                "portainer",
-                "swarm",
-                "compose"
+                "Kubernetes",
+                "Portainer",
+                "Swarm",
+                "Compose"
             ],
             "description": "Container orchestration backend type.\nPriority order: kubernetes > portainer > swarm > compose\n"
         }
@@ -1535,10 +1535,10 @@ public partial class OrchestratorController
         "IngressType": {
             "type": "string",
             "enum": [
-                "openresty",
-                "nginx",
-                "traefik",
-                "none"
+                "Openresty",
+                "Nginx",
+                "Traefik",
+                "None"
             ],
             "description": "Type of ingress or reverse proxy to use"
         },
@@ -1566,19 +1566,19 @@ public partial class OrchestratorController
         "BackendType": {
             "type": "string",
             "enum": [
-                "kubernetes",
-                "portainer",
-                "swarm",
-                "compose"
+                "Kubernetes",
+                "Portainer",
+                "Swarm",
+                "Compose"
             ],
             "description": "Container orchestration backend type.\nPriority order: kubernetes > portainer > swarm > compose\n"
         },
         "DeploymentMode": {
             "type": "string",
             "enum": [
-                "graceful",
-                "force",
-                "clean"
+                "Graceful",
+                "Force",
+                "Clean"
             ],
             "description": "Deployment mode:\n- graceful: Wait for connections to drain\n- force: Apply immediately\n- clean: Tear down and rebuild\n"
         }
@@ -1649,10 +1649,10 @@ public partial class OrchestratorController
         "BackendType": {
             "type": "string",
             "enum": [
-                "kubernetes",
-                "portainer",
-                "swarm",
-                "compose"
+                "Kubernetes",
+                "Portainer",
+                "Swarm",
+                "Compose"
             ],
             "description": "Container orchestration backend type.\nPriority order: kubernetes > portainer > swarm > compose\n"
         },
@@ -1870,10 +1870,10 @@ public partial class OrchestratorController
         "IngressType": {
             "type": "string",
             "enum": [
-                "openresty",
-                "nginx",
-                "traefik",
-                "none"
+                "Openresty",
+                "Nginx",
+                "Traefik",
+                "None"
             ],
             "description": "Type of ingress or reverse proxy to use"
         },
@@ -1943,11 +1943,11 @@ public partial class OrchestratorController
         "DeployedServiceStatus": {
             "type": "string",
             "enum": [
-                "starting",
-                "running",
-                "healthy",
-                "unhealthy",
-                "stopped"
+                "Starting",
+                "Running",
+                "Healthy",
+                "Unhealthy",
+                "Stopped"
             ],
             "description": "Current status of a deployed service instance"
         }
@@ -2224,10 +2224,10 @@ public partial class OrchestratorController
         "BackendType": {
             "type": "string",
             "enum": [
-                "kubernetes",
-                "portainer",
-                "swarm",
-                "compose"
+                "Kubernetes",
+                "Portainer",
+                "Swarm",
+                "Compose"
             ],
             "description": "Container orchestration backend type.\ nPriority order: kubernetes > portainer > swarm > compose\n"
         },
@@ -2445,10 +2445,10 @@ public partial class OrchestratorController
         "IngressType": {
             "type": "string",
             "enum": [
-                "openresty",
-                "nginx",
-                "traefik",
-                "none"
+                "Openresty",
+                "Nginx",
+                "Traefik",
+                "None"
             ],
             "description": "Type of ingress or reverse proxy to use"
         },
@@ -2518,11 +2518,11 @@ public partial class OrchestratorController
         "DeployedServiceStatus": {
             "type": "string",
             "enum": [
-                "starting",
-                "running",
-                "healthy",
-                "unhealthy",
-                "stopped"
+                "Starting",
+                "Running",
+                "Healthy",
+                "Unhealthy",
+                "Stopped"
             ],
             "description": "Current status of a deployed service instance"
         },
@@ -2593,9 +2593,9 @@ public partial class OrchestratorController
         "ComponentHealthStatus": {
             "type": "string",
             "enum": [
-                "healthy",
-                "degraded",
-                "unavailable"
+                "Healthy",
+                "Degraded",
+                "Unavailable"
             ],
             "description": "Health status for an individual infrastructure component"
         },
@@ -2738,9 +2738,9 @@ public partial class OrchestratorController
         "TeardownMode": {
             "type": "string",
             "enum": [
-                "graceful",
-                "force",
-                "preserve-data"
+                "Graceful",
+                "Force",
+                "PreserveData"
             ],
             "description": "Teardown mode:\n- graceful: Signal shutdown, wait for clean exit\n- force: Immediately stop (SIGKILL)\n- preserve-data: Keep volumes/networks, remove containers\n"
         }
@@ -2908,11 +2908,11 @@ public partial class OrchestratorController
         "CleanTarget": {
             "type": "string",
             "enum": [
-                "containers",
-                "networks",
-                "volumes",
-                "images",
-                "all"
+                "Containers",
+                "Networks",
+                "Volumes",
+                "Images",
+                "All"
             ],
             "description": "Type of resource to clean"
         }
@@ -3129,8 +3129,8 @@ public partial class OrchestratorController
         "LogStreamType": {
             "type": "string",
             "enum": [
-                "stdout",
-                "stderr"
+                "Stdout",
+                "Stderr"
             ],
             "description": "Output stream type for log entries"
         }
@@ -3273,11 +3273,11 @@ public partial class OrchestratorController
         "TopologyChangeAction": {
             "type": "string",
             "enum": [
-                "add-node",
-                "remove-node",
-                "move-service",
-                "scale",
-                "update-env"
+                "AddNode",
+                "RemoveNode",
+                "MoveService",
+                "Scale",
+                "UpdateEnv"
             ],
             "description": "Type of topology modification to apply"
         },
@@ -3381,9 +3381,9 @@ public partial class OrchestratorController
         "DeploymentMode": {
             "type": "string",
             "enum": [
-                "graceful",
-                "force",
-                "clean"
+                "Graceful",
+                "Force",
+                "Clean"
             ],
             "description": "Deployment mode:\n- graceful: Wait for connections to drain\n- force: Apply immediately\n- clean: Tear down and rebuild\n"
         }
@@ -3674,10 +3674,10 @@ public partial class OrchestratorController
         "IngressType": {
             "type": "string",
             "enum": [
-                "openresty",
-                "nginx",
-                "traefik",
-                "none"
+                "Openresty",
+                "Nginx",
+                "Traefik",
+                "None"
             ],
             "description": "Type of ingress or reverse proxy to use"
         },
@@ -3799,9 +3799,9 @@ public partial class OrchestratorController
         "RestartPriority": {
             "type": "string",
             "enum": [
-                "graceful",
-                "immediate",
-                "force"
+                "Graceful",
+                "Immediate",
+                "Force"
             ],
             "description": "Restart urgency level:\n- graceful: Rolling update, wait for healthy before cycling next instance\n- immediate: Rolling update but don't wait for connection drain\n- force: Kill all instances simultaneously (causes downtime)\n"
         }
@@ -3846,8 +3846,8 @@ public partial class OrchestratorController
         "RestartStrategy": {
             "type": "string",
             "enum": [
-                "rolling",
-                "simultaneous"
+                "Rolling",
+                "Simultaneous"
             ],
             "description": "Strategy for performing container restarts"
         }
@@ -4008,11 +4008,11 @@ public partial class OrchestratorController
         "ContainerStatusType": {
             "type": "string",
             "enum": [
-                "running",
-                "starting",
-                "stopping",
-                "stopped",
-                "unhealthy"
+                "Running",
+                "Starting",
+                "Stopping",
+                "Stopped",
+                "Unhealthy"
             ],
             "description": "Current runtime status of a container"
         },
@@ -4058,9 +4058,9 @@ public partial class OrchestratorController
         "RestartPriority": {
             "type": "string",
             "enum": [
-                "graceful",
-                "immediate",
-                "force"
+                "Graceful",
+                "Immediate",
+                "Force"
             ],
             "description": "Restart urgency level:\n- graceful: Rolling update, wait for healthy before cycling next instance\n- immediate: Rolling update but don't wait for connection drain\n- force: Kill all instances simultaneously (causes downtime)\n"
         },

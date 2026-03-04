@@ -38,35 +38,35 @@ using System = global::System;
 public enum LocationType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CONTINENT")]
-    CONTINENT = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Continent")]
+    Continent = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"REGION")]
-    REGION = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Region")]
+    Region = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CITY")]
-    CITY = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"City")]
+    City = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"DISTRICT")]
-    DISTRICT = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"District")]
+    District = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"BUILDING")]
-    BUILDING = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Building")]
+    Building = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ROOM")]
-    ROOM = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"Room")]
+    Room = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"LANDMARK")]
-    LANDMARK = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"Landmark")]
+    Landmark = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"WILDERNESS")]
-    WILDERNESS = 7,
+    [System.Runtime.Serialization.EnumMember(Value = @"Wilderness")]
+    Wilderness = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"DUNGEON")]
-    DUNGEON = 8,
+    [System.Runtime.Serialization.EnumMember(Value = @"Dungeon")]
+    Dungeon = 8,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"OTHER")]
-    OTHER = 9,
+    [System.Runtime.Serialization.EnumMember(Value = @"Other")]
+    Other = 9,
 
 }
 #pragma warning restore CS1591

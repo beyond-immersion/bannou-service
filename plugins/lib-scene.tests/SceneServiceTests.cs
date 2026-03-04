@@ -95,7 +95,7 @@ public class SceneServiceTests
         // Assert
         var createEndpoint = endpoints.FirstOrDefault(e =>
             e.Path == "/scene/create" &&
-            e.Method == ServiceEndpointMethod.POST);
+            e.Method == ServiceEndpointMethod.Post);
 
         Assert.NotNull(createEndpoint);
     }
@@ -109,7 +109,7 @@ public class SceneServiceTests
         // Assert
         var getEndpoint = endpoints.FirstOrDefault(e =>
             e.Path == "/scene/get" &&
-            e.Method == ServiceEndpointMethod.POST);
+            e.Method == ServiceEndpointMethod.Post);
 
         Assert.NotNull(getEndpoint);
     }
@@ -123,7 +123,7 @@ public class SceneServiceTests
         // Assert
         var listEndpoint = endpoints.FirstOrDefault(e =>
             e.Path == "/scene/list" &&
-            e.Method == ServiceEndpointMethod.POST);
+            e.Method == ServiceEndpointMethod.Post);
 
         Assert.NotNull(listEndpoint);
     }
@@ -137,7 +137,7 @@ public class SceneServiceTests
         // Assert
         var updateEndpoint = endpoints.FirstOrDefault(e =>
             e.Path == "/scene/update" &&
-            e.Method == ServiceEndpointMethod.POST);
+            e.Method == ServiceEndpointMethod.Post);
 
         Assert.NotNull(updateEndpoint);
     }
@@ -151,7 +151,7 @@ public class SceneServiceTests
         // Assert
         var deleteEndpoint = endpoints.FirstOrDefault(e =>
             e.Path == "/scene/delete" &&
-            e.Method == ServiceEndpointMethod.POST);
+            e.Method == ServiceEndpointMethod.Post);
 
         Assert.NotNull(deleteEndpoint);
     }
@@ -165,7 +165,7 @@ public class SceneServiceTests
         // Assert
         var checkoutEndpoint = endpoints.FirstOrDefault(e =>
             e.Path == "/scene/checkout" &&
-            e.Method == ServiceEndpointMethod.POST);
+            e.Method == ServiceEndpointMethod.Post);
 
         Assert.NotNull(checkoutEndpoint);
     }
@@ -179,7 +179,7 @@ public class SceneServiceTests
         // Assert
         var commitEndpoint = endpoints.FirstOrDefault(e =>
             e.Path == "/scene/commit" &&
-            e.Method == ServiceEndpointMethod.POST);
+            e.Method == ServiceEndpointMethod.Post);
 
         Assert.NotNull(commitEndpoint);
     }

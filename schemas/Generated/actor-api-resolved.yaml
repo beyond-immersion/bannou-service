@@ -827,46 +827,46 @@ components:
     ActorStatus:
       type: string
       enum:
-      - pending
-      - starting
-      - running
-      - paused
-      - stopping
-      - stopped
-      - error
+      - Pending
+      - Starting
+      - Running
+      - Paused
+      - Stopping
+      - Stopped
+      - Error
       description: Current actor lifecycle state
 
     ActorExitReason:
       type: string
       description: Reason an actor exited execution
       enum:
-      - behavior_complete
-      - error
-      - timeout
-      - external_stop
+      - BehaviorComplete
+      - Error
+      - Timeout
+      - ExternalStop
 
     ActorDeploymentMode:
       type: string
       description: Actor service deployment mode determining how actors are distributed
       enum:
-      - bannou
-      - pool-per-type
-      - shared-pool
-      - auto-scale
+      - Bannou
+      - PoolPerType
+      - SharedPool
+      - AutoScale
 
     PerceptionSourceType:
       type: string
       description: Type of source generating a perception event
       enum:
-      - character
-      - npc
-      - object
-      - environment
-      - coordinator
-      - scheduled
-      - message
-      - service
-      - system
+      - Character
+      - Npc
+      - Object
+      - Environment
+      - Coordinator
+      - Scheduled
+      - Message
+      - Service
+      - System
 
     StopActorRequest:
       type: object
@@ -1284,19 +1284,19 @@ components:
         Type of options to query. Actors maintain options in state.memories.{type}_options.
         Well-known types are defined; actors can also expose custom types.
       enum:
-      - combat
-      - dialogue
-      - exploration
-      - social
-      - custom
+      - Combat
+      - Dialogue
+      - Exploration
+      - Social
+      - Custom
 
     OptionsFreshness:
       type: string
       description: Controls caching behavior for options queries
       enum:
-      - fresh
-      - cached
-      - stale_ok
+      - Fresh
+      - Cached
+      - StaleOk
       default: cached
 
     ActorOption:
@@ -1576,18 +1576,18 @@ components:
         - high: Important sequence; should follow even if not preferred
         - override: Critical moment; must follow unless physically impossible
       enum:
-      - low
-      - normal
-      - high
-      - override
+      - Low
+      - Normal
+      - High
+      - Override
 
     ChoreographyStartCondition:
       type: string
       description: When to begin executing a choreographed sequence
       enum:
-      - immediate
-      - after_previous
-      - sync_point
+      - Immediate
+      - AfterPrevious
+      - SyncPoint
 
     # === Encounter Management ===
     StartEncounterRequest:

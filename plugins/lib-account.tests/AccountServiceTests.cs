@@ -93,7 +93,7 @@ public class AccountServiceTests
         // Assert - POST-only pattern: /account/list replaces GET /account
         var listEndpoint = endpoints.FirstOrDefault(e =>
             e.Path == "/account/list" &&
-            e.Method == ServiceEndpointMethod.POST);
+            e.Method == ServiceEndpointMethod.Post);
 
         Assert.NotNull(listEndpoint);
         Assert.NotNull(listEndpoint.Permissions);

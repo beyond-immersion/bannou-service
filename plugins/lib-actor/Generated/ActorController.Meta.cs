@@ -1209,13 +1209,13 @@ public partial class ActorController
         "ActorStatus": {
             "type": "string",
             "enum": [
-                "pending",
-                "starting",
-                "running",
-                "paused",
-                "stopping",
-                "stopped",
-                "error"
+                "Pending",
+                "Starting",
+                "Running",
+                "Paused",
+                "Stopping",
+                "Stopped",
+                "Error"
             ],
             "description": "Current actor lifecycle state"
         }
@@ -1379,13 +1379,13 @@ public partial class ActorController
         "ActorStatus": {
             "type": "string",
             "enum": [
-                "pending",
-                "starting",
-                "running",
-                "paused",
-                "stopping",
-                "stopped",
-                "error"
+                "Pending",
+                "Starting",
+                "Running",
+                "Paused",
+                "Stopping",
+                "Stopped",
+                "Error"
             ],
             "description": "Current actor lifecycle state"
         }
@@ -1498,13 +1498,13 @@ public partial class ActorController
         "ActorStatus": {
             "type": "string",
             "enum": [
-                "pending",
-                "starting",
-                "running",
-                "paused",
-                "stopping",
-                "stopped",
-                "error"
+                "Pending",
+                "Starting",
+                "Running",
+                "Paused",
+                "Stopping",
+                "Stopped",
+                "Error"
             ],
             "description": "Current actor lifecycle state"
         }
@@ -1674,13 +1674,13 @@ public partial class ActorController
         "ActorStatus": {
             "type": "string",
             "enum": [
-                "pending",
-                "starting",
-                "running",
-                "paused",
-                "stopping",
-                "stopped",
-                "error"
+                "Pending",
+                "Starting",
+                "Running",
+                "Paused",
+                "Stopping",
+                "Stopped",
+                "Error"
             ],
             "description": "Current actor lifecycle state"
         }
@@ -1901,13 +1901,13 @@ public partial class ActorController
         "ActorStatus": {
             "type": "string",
             "enum": [
-                "pending",
-                "starting",
-                "running",
-                "paused",
-                "stopping",
-                "stopped",
-                "error"
+                "Pending",
+                "Starting",
+                "Running",
+                "Paused",
+                "Stopping",
+                "Stopped",
+                "Error"
             ],
             "description": "Current actor lifecycle state"
         }
@@ -2015,13 +2015,13 @@ public partial class ActorController
         "ActorStatus": {
             "type": "string",
             "enum": [
-                "pending",
-                "starting",
-                "running",
-                "paused",
-                "stopping",
-                "stopped",
-                "error"
+                "Pending",
+                "Starting",
+                "Running",
+                "Paused",
+                "Stopping",
+                "Stopped",
+                "Error"
             ],
             "description": "Current actor lifecycle state"
         }
@@ -2171,15 +2171,15 @@ public partial class ActorController
             "type": "string",
             "description": "Type of source generating a perception event",
             "enum": [
-                "character",
-                "npc",
-                "object",
-                "environment",
-                "coordinator",
-                "scheduled",
-                "message",
-                "service",
-                "system"
+                "Character",
+                "Npc",
+                "Object",
+                "Environment",
+                "Coordinator",
+                "Scheduled",
+                "Message",
+                "Service",
+                "System"
             ]
         },
         "SpatialContext": {
@@ -2434,20 +2434,20 @@ public partial class ActorController
             "type": "string",
             "description": "Type of options to query. Actors maintain options in state.memories.{type}_options.\nWell-known types are defined; actors can also expose custom types.\n",
             "enum": [
-                "combat",
-                "dialogue",
-                "exploration",
-                "social",
-                "custom"
+                "Combat",
+                "Dialogue",
+                "Exploration",
+                "Social",
+                "Custom"
             ]
         },
         "OptionsFreshness": {
             "type": "string",
             "description": "Controls caching behavior for options queries",
             "enum": [
-                "fresh",
-                "cached",
-                "stale_ok"
+                "Fresh",
+                "Cached",
+                "StaleOk"
             ],
             "default": "cached"
         },
@@ -2557,11 +2557,11 @@ public partial class ActorController
             "type": "string",
             "description": "Type of options to query. Actors maintain options in state.memories.{type}_options.\nWell-known types are defined; actors can also expose custom types.\n",
             "enum": [
-                "combat",
-                "dialogue",
-                "exploration",
-                "social",
-                "custom"
+                "Combat",
+                "Dialogue",
+                "Exploration",
+                "Social",
+                "Custom"
             ]
         },
         "ActorOption": {

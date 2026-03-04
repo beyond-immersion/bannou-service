@@ -38,13 +38,13 @@ using System = global::System;
 public enum CurrencyScope
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"global")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Global")]
     Global = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"realm_specific")]
+    [System.Runtime.Serialization.EnumMember(Value = @"RealmSpecific")]
     RealmSpecific = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"multi_realm")]
+    [System.Runtime.Serialization.EnumMember(Value = @"MultiRealm")]
     MultiRealm = 2,
 
 }
@@ -58,22 +58,22 @@ public enum CurrencyScope
 public enum CurrencyPrecision
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"integer")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Integer")]
     Integer = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"decimal_2")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Decimal2")]
     Decimal2 = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"decimal_4")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Decimal4")]
     Decimal4 = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"decimal_8")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Decimal8")]
     Decimal8 = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"decimal_full")]
+    [System.Runtime.Serialization.EnumMember(Value = @"DecimalFull")]
     DecimalFull = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"big_integer")]
+    [System.Runtime.Serialization.EnumMember(Value = @"BigInteger")]
     BigInteger = 5,
 
 }
@@ -87,13 +87,13 @@ public enum CurrencyPrecision
 public enum WalletStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"active")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Active")]
     Active = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"frozen")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Frozen")]
     Frozen = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"closed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Closed")]
     Closed = 2,
 
 }
@@ -107,13 +107,13 @@ public enum WalletStatus
 public enum CapOverflowBehavior
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"reject")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Reject")]
     Reject = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cap_and_lose")]
+    [System.Runtime.Serialization.EnumMember(Value = @"CapAndLose")]
     CapAndLose = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cap_and_return")]
+    [System.Runtime.Serialization.EnumMember(Value = @"CapAndReturn")]
     CapAndReturn = 2,
 
 }
@@ -127,10 +127,10 @@ public enum CapOverflowBehavior
 public enum AutogainMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"simple")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Simple")]
     Simple = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"compound")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Compound")]
     Compound = 1,
 
 }
@@ -144,13 +144,13 @@ public enum AutogainMode
 public enum ExpirationPolicy
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"fixed_date")]
+    [System.Runtime.Serialization.EnumMember(Value = @"FixedDate")]
     FixedDate = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"duration_from_earn")]
+    [System.Runtime.Serialization.EnumMember(Value = @"DurationFromEarn")]
     DurationFromEarn = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"end_of_season")]
+    [System.Runtime.Serialization.EnumMember(Value = @"EndOfSeason")]
     EndOfSeason = 2,
 
 }
@@ -164,13 +164,13 @@ public enum ExpirationPolicy
 public enum ItemLinkageMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    [System.Runtime.Serialization.EnumMember(Value = @"None")]
     None = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"visual_only")]
+    [System.Runtime.Serialization.EnumMember(Value = @"VisualOnly")]
     VisualOnly = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"reference_only")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ReferenceOnly")]
     ReferenceOnly = 2,
 
 }
@@ -184,61 +184,61 @@ public enum ItemLinkageMode
 public enum TransactionType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"mint")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Mint")]
     Mint = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"quest_reward")]
+    [System.Runtime.Serialization.EnumMember(Value = @"QuestReward")]
     QuestReward = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"loot_drop")]
+    [System.Runtime.Serialization.EnumMember(Value = @"LootDrop")]
     LootDrop = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"vendor_sale")]
+    [System.Runtime.Serialization.EnumMember(Value = @"VendorSale")]
     VendorSale = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"autogain")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Autogain")]
     Autogain = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"refund")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Refund")]
     Refund = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"conversion_credit")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ConversionCredit")]
     ConversionCredit = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"burn")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Burn")]
     Burn = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"vendor_purchase")]
+    [System.Runtime.Serialization.EnumMember(Value = @"VendorPurchase")]
     VendorPurchase = 8,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"fee")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Fee")]
     Fee = 9,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"expiration")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Expiration")]
     Expiration = 10,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cap_overflow")]
+    [System.Runtime.Serialization.EnumMember(Value = @"CapOverflow")]
     CapOverflow = 11,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"conversion_debit")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ConversionDebit")]
     ConversionDebit = 12,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"transfer")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Transfer")]
     Transfer = 13,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"trade")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Trade")]
     Trade = 14,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"gift")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Gift")]
     Gift = 15,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"escrow_deposit")]
+    [System.Runtime.Serialization.EnumMember(Value = @"EscrowDeposit")]
     EscrowDeposit = 16,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"escrow_release")]
+    [System.Runtime.Serialization.EnumMember(Value = @"EscrowRelease")]
     EscrowRelease = 17,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"escrow_refund")]
+    [System.Runtime.Serialization.EnumMember(Value = @"EscrowRefund")]
     EscrowRefund = 18,
 
 }
@@ -252,10 +252,10 @@ public enum TransactionType
 public enum AutogainProcessingMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"lazy")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Lazy")]
     Lazy = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"task")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Task")]
     Task = 1,
 
 }
@@ -269,16 +269,16 @@ public enum AutogainProcessingMode
 public enum HoldStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"active")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Active")]
     Active = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"captured")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Captured")]
     Captured = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"released")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Released")]
     Released = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"expired")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Expired")]
     Expired = 3,
 
 }
@@ -292,10 +292,10 @@ public enum HoldStatus
 public enum EarnCapType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"daily")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Daily")]
     Daily = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"weekly")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Weekly")]
     Weekly = 1,
 
 }

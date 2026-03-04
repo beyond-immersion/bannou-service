@@ -211,7 +211,7 @@ public partial class MeshService
             InstanceHealthStatus.Degraded => EndpointStatus.Degraded,
             InstanceHealthStatus.Overloaded => EndpointStatus.Degraded,
             InstanceHealthStatus.Unavailable => EndpointStatus.Unavailable,
-            InstanceHealthStatus.Shutting_down => EndpointStatus.ShuttingDown,
+            InstanceHealthStatus.ShuttingDown => EndpointStatus.ShuttingDown,
             _ => EndpointStatus.Healthy
         };
     }

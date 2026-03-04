@@ -48,7 +48,7 @@ public static class MappingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/mapping/request-snapshot",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "requestSnapshot",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class MappingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/mapping/query/point",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryPoint",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class MappingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/mapping/query/bounds",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryBounds",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class MappingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/mapping/query/objects-by-type",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryObjectsByType",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class MappingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/mapping/query/affordance",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryAffordance",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class MappingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/mapping/authoring/checkout",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "checkoutForAuthoring",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class MappingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/mapping/authoring/commit",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "commitAuthoring",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class MappingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/mapping/authoring/release",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "releaseAuthoring",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class MappingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/mapping/definition/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class MappingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/mapping/definition/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class MappingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/mapping/definition/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listDefinitions",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class MappingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/mapping/definition/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class MappingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/mapping/definition/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteDefinition",
             Permissions = new List<PermissionRequirement>
             {

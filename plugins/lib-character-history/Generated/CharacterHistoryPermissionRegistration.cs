@@ -48,7 +48,7 @@ public static class CharacterHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-history/get-participation",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getParticipation",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class CharacterHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-history/get-event-participants",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getEventParticipants",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class CharacterHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-history/delete-participation",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteParticipation",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class CharacterHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-history/get-backstory",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getBackstory",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class CharacterHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-history/set-backstory",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "setBackstory",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class CharacterHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-history/add-backstory-element",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "addBackstoryElement",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class CharacterHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-history/delete-backstory",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteBackstory",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class CharacterHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-history/delete-all",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteAllHistory",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class CharacterHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-history/get-compress-data",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getCompressData",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class CharacterHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-history/restore-from-archive",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "restoreFromArchive",
             Permissions = new List<PermissionRequirement>
             {

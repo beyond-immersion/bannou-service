@@ -869,15 +869,15 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         return element.ElementType switch
         {
-            BackstoryElementType.ORIGIN => $"From {FormatValue(element.Value)}",
-            BackstoryElementType.OCCUPATION => $"Worked as {FormatValue(element.Value)}",
-            BackstoryElementType.TRAINING => $"Trained by {FormatValue(element.Value)}",
-            BackstoryElementType.TRAUMA => $"Experienced {FormatValue(element.Value)}",
-            BackstoryElementType.ACHIEVEMENT => $"Known for {FormatValue(element.Value)}",
-            BackstoryElementType.SECRET => $"Hides {FormatValue(element.Value)}",
-            BackstoryElementType.GOAL => $"Seeks to {FormatValue(element.Value)}",
-            BackstoryElementType.FEAR => $"Fears {FormatValue(element.Value)}",
-            BackstoryElementType.BELIEF => $"Believes in {FormatValue(element.Value)}",
+            BackstoryElementType.Origin => $"From {FormatValue(element.Value)}",
+            BackstoryElementType.Occupation => $"Worked as {FormatValue(element.Value)}",
+            BackstoryElementType.Training => $"Trained by {FormatValue(element.Value)}",
+            BackstoryElementType.Trauma => $"Experienced {FormatValue(element.Value)}",
+            BackstoryElementType.Achievement => $"Known for {FormatValue(element.Value)}",
+            BackstoryElementType.Secret => $"Hides {FormatValue(element.Value)}",
+            BackstoryElementType.Goal => $"Seeks to {FormatValue(element.Value)}",
+            BackstoryElementType.Fear => $"Fears {FormatValue(element.Value)}",
+            BackstoryElementType.Belief => $"Believes in {FormatValue(element.Value)}",
             _ => $"{element.Key}: {element.Value}"
         };
     }
@@ -886,14 +886,14 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         var roleText = participation.Role switch
         {
-            ParticipationRole.LEADER => "led",
-            ParticipationRole.COMBATANT => "fought in",
-            ParticipationRole.VICTIM => "suffered in",
-            ParticipationRole.WITNESS => "witnessed",
-            ParticipationRole.BENEFICIARY => "benefited from",
-            ParticipationRole.CONSPIRATOR => "conspired in",
-            ParticipationRole.HERO => "was a hero of",
-            ParticipationRole.SURVIVOR => "survived",
+            ParticipationRole.Leader => "led",
+            ParticipationRole.Combatant => "fought in",
+            ParticipationRole.Victim => "suffered in",
+            ParticipationRole.Witness => "witnessed",
+            ParticipationRole.Beneficiary => "benefited from",
+            ParticipationRole.Conspirator => "conspired in",
+            ParticipationRole.Hero => "was a hero of",
+            ParticipationRole.Survivor => "survived",
             _ => "participated in"
         };
 

@@ -24,6 +24,8 @@ public static class ClientEventWhitelist
     /// </summary>
     private static readonly HashSet<string> ValidEventNames = new(StringComparer.OrdinalIgnoreCase)
     {
+        "achievement.progress.milestone-reached",
+        "achievement.unlocked",
         "asset.bundle.creation.complete",
         "asset.bundle.validation.complete",
         "asset.bundle.validation.failed",

@@ -124,15 +124,15 @@ paths:
         n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary effect (poison,
         slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription benefit\\
         n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability (used
-        in unified queries)\\n\",\n            \"enum\": [\n                \"buff\",\n                \"debuff\",\n     \
-        \           \"death\",\n                \"subscription\",\n                \"event\",\n                \"passive\"\
+        in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n     \
+        \           \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How multiple applications of the same status template interact.\\n- refresh_duration: resets timer, preserves
         or increments stack count\\n- independent: each application is a separate item with own timer\\n- increase_intensity:
         stacks increase effect magnitude, shared timer reset\\n- replace: new application replaces existing entirely\\n- ignore:
-        cannot apply if already present\\n\",\n            \"enum\": [\n                \"refresh_duration\",\n          \
-        \      \"independent\",\n                \"increase_intensity\",\n                \"replace\",\n                \"\
-        ignore\"\n            ]\n        }\n    }\n}"
+        cannot apply if already present\\n\",\n            \"enum\": [\n                \"RefreshDuration\",\n           \
+        \     \"Independent\",\n                \"IncreaseIntensity\",\n                \"Replace\",\n                \"Ignore\"\
+        \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StatusTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"StatusTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Status template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -172,15 +172,15 @@ paths:
         and cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
         effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
         benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
-        (used in unified queries)\\n\",\n            \"enum\": [\n                \"buff\",\n                \"debuff\",\n\
-        \                \"death\",\n                \"subscription\",\n                \"event\",\n                \"passive\"\
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How multiple applications of the same status template interact.\\n- refresh_duration: resets timer, preserves
         or increments stack count\\n- independent: each application is a separate item with own timer\\n- increase_intensity:
         stacks increase effect magnitude, shared timer reset\\n- replace: new application replaces existing entirely\\n- ignore:
-        cannot apply if already present\\n\",\n            \"enum\": [\n                \"refresh_duration\",\n          \
-        \      \"independent\",\n                \"increase_intensity\",\n                \"replace\",\n                \"\
-        ignore\"\n            ]\n        }\n    }\n}"
+        cannot apply if already present\\n\",\n            \"enum\": [\n                \"RefreshDuration\",\n           \
+        \     \"Independent\",\n                \"IncreaseIntensity\",\n                \"Replace\",\n                \"Ignore\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a status template\",\n    \"description\": \"Create a status template
         defining a status effect type. Each template has\\na unique code within its game service, references an item template
         for\\ninventory placement, and configures stacking behavior and optional contract\\nintegration for lifecycle management.\\\
@@ -256,15 +256,15 @@ paths:
         and cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
         effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
         benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
-        (used in unified queries)\\n\",\n            \"enum\": [\n                \"buff\",\n                \"debuff\",\n\
-        \                \"death\",\n                \"subscription\",\n                \"event\",\n                \"passive\"\
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How multiple applications of the same status template interact.\\n- refresh_duration: resets timer, preserves
         or increments stack count\\n- independent: each application is a separate item with own timer\\n- increase_intensity:
         stacks increase effect magnitude, shared timer reset\\n- replace: new application replaces existing entirely\\n- ignore:
-        cannot apply if already present\\n\",\n            \"enum\": [\n                \"refresh_duration\",\n          \
-        \      \"independent\",\n                \"increase_intensity\",\n                \"replace\",\n                \"\
-        ignore\"\n            ]\n        }\n    }\n}"
+        cannot apply if already present\\n\",\n            \"enum\": [\n                \"RefreshDuration\",\n           \
+        \     \"Independent\",\n                \"IncreaseIntensity\",\n                \"Replace\",\n                \"Ignore\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a status template by ID\",\n    \"description\": \"Retrieves a status
         template by its unique identifier.\",\n    \"tags\": [\n        \"StatusTemplate\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"getStatusTemplate\"\n}"
@@ -341,15 +341,15 @@ paths:
         and cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
         effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
         benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
-        (used in unified queries)\\n\",\n            \"enum\": [\n                \"buff\",\n                \"debuff\",\n\
-        \                \"death\",\n                \"subscription\",\n                \"event\",\n                \"passive\"\
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How multiple applications of the same status template interact.\\n- refresh_duration: resets timer, preserves
         or increments stack count\\n- independent: each application is a separate item with own timer\\n- increase_intensity:
         stacks increase effect magnitude, shared timer reset\\n- replace: new application replaces existing entirely\\n- ignore:
-        cannot apply if already present\\n\",\n            \"enum\": [\n                \"refresh_duration\",\n          \
-        \      \"independent\",\n                \"increase_intensity\",\n                \"replace\",\n                \"\
-        ignore\"\n            ]\n        }\n    }\n}"
+        cannot apply if already present\\n\",\n            \"enum\": [\n                \"RefreshDuration\",\n           \
+        \     \"Independent\",\n                \"IncreaseIntensity\",\n                \"Replace\",\n                \"Ignore\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a status template by code\",\n    \"description\": \"Retrieves a status
         template by its game service and unique code.\",\n    \"tags\": [\n        \"StatusTemplate\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"getStatusTemplateByCode\"\n}"
@@ -394,8 +394,8 @@ paths:
         cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
         effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
         benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
-        (used in unified queries)\\n\",\n            \"enum\": [\n                \"buff\",\n                \"debuff\",\n\
-        \                \"death\",\n                \"subscription\",\n                \"event\",\n                \"passive\"\
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListStatusTemplatesResponse\"\
         ,\n    \"$defs\": {\n        \"ListStatusTemplatesResponse\": {\n            \"type\": \"object\",\n            \"\
@@ -447,15 +447,15 @@ paths:
         n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary effect (poison,
         slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription benefit\\
         n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability (used
-        in unified queries)\\n\",\n            \"enum\": [\n                \"buff\",\n                \"debuff\",\n     \
-        \           \"death\",\n                \"subscription\",\n                \"event\",\n                \"passive\"\
+        in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n     \
+        \           \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How multiple applications of the same status template interact.\\n- refresh_duration: resets timer, preserves
         or increments stack count\\n- independent: each application is a separate item with own timer\\n- increase_intensity:
         stacks increase effect magnitude, shared timer reset\\n- replace: new application replaces existing entirely\\n- ignore:
-        cannot apply if already present\\n\",\n            \"enum\": [\n                \"refresh_duration\",\n          \
-        \      \"independent\",\n                \"increase_intensity\",\n                \"replace\",\n                \"\
-        ignore\"\n            ]\n        }\n    }\n}"
+        cannot apply if already present\\n\",\n            \"enum\": [\n                \"RefreshDuration\",\n           \
+        \     \"Independent\",\n                \"IncreaseIntensity\",\n                \"Replace\",\n                \"Ignore\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List status templates\",\n    \"description\": \"Paginated list of status
         templates filtered by game service with optional category filter.\",\n    \"tags\": [\n        \"StatusTemplate\"\n\
         \    ],\n    \"deprecated\": false,\n    \"operationId\": \"listStatusTemplates\"\n}"
@@ -517,15 +517,15 @@ paths:
         n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary effect (poison,
         slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription benefit\\
         n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability (used
-        in unified queries)\\n\",\n            \"enum\": [\n                \"buff\",\n                \"debuff\",\n     \
-        \           \"death\",\n                \"subscription\",\n                \"event\",\n                \"passive\"\
+        in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n     \
+        \           \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How multiple applications of the same status template interact.\\n- refresh_duration: resets timer, preserves
         or increments stack count\\n- independent: each application is a separate item with own timer\\n- increase_intensity:
         stacks increase effect magnitude, shared timer reset\\n- replace: new application replaces existing entirely\\n- ignore:
-        cannot apply if already present\\n\",\n            \"enum\": [\n                \"refresh_duration\",\n          \
-        \      \"independent\",\n                \"increase_intensity\",\n                \"replace\",\n                \"\
-        ignore\"\n            ]\n        }\n    }\n}"
+        cannot apply if already present\\n\",\n            \"enum\": [\n                \"RefreshDuration\",\n           \
+        \     \"Independent\",\n                \"IncreaseIntensity\",\n                \"Replace\",\n                \"Ignore\"\
+        \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StatusTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"StatusTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Status template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -565,15 +565,15 @@ paths:
         and cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
         effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
         benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
-        (used in unified queries)\\n\",\n            \"enum\": [\n                \"buff\",\n                \"debuff\",\n\
-        \                \"death\",\n                \"subscription\",\n                \"event\",\n                \"passive\"\
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How multiple applications of the same status template interact.\\n- refresh_duration: resets timer, preserves
         or increments stack count\\n- independent: each application is a separate item with own timer\\n- increase_intensity:
         stacks increase effect magnitude, shared timer reset\\n- replace: new application replaces existing entirely\\n- ignore:
-        cannot apply if already present\\n\",\n            \"enum\": [\n                \"refresh_duration\",\n          \
-        \      \"independent\",\n                \"increase_intensity\",\n                \"replace\",\n                \"\
-        ignore\"\n            ]\n        }\n    }\n}"
+        cannot apply if already present\\n\",\n            \"enum\": [\n                \"RefreshDuration\",\n           \
+        \     \"Independent\",\n                \"IncreaseIntensity\",\n                \"Replace\",\n                \"Ignore\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a status template\",\n    \"description\": \"Update mutable fields
         of a status template. Only non-null fields in the request are updated.\",\n    \"tags\": [\n        \"StatusTemplate\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateStatusTemplate\"\n}"
@@ -649,15 +649,15 @@ paths:
         cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
         effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
         benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
-        (used in unified queries)\\n\",\n            \"enum\": [\n                \"buff\",\n                \"debuff\",\n\
-        \                \"death\",\n                \"subscription\",\n                \"event\",\n                \"passive\"\
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How multiple applications of the same status template interact.\\n- refresh_duration: resets timer, preserves
         or increments stack count\\n- independent: each application is a separate item with own timer\\n- increase_intensity:
         stacks increase effect magnitude, shared timer reset\\n- replace: new application replaces existing entirely\\n- ignore:
-        cannot apply if already present\\n\",\n            \"enum\": [\n                \"refresh_duration\",\n          \
-        \      \"independent\",\n                \"increase_intensity\",\n                \"replace\",\n                \"\
-        ignore\"\n            ]\n        }\n    }\n}"
+        cannot apply if already present\\n\",\n            \"enum\": [\n                \"RefreshDuration\",\n           \
+        \     \"Independent\",\n                \"IncreaseIntensity\",\n                \"Replace\",\n                \"Ignore\"\
+        \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedStatusTemplatesResponse\"\
         ,\n    \"$defs\": {\n        \"SeedStatusTemplatesResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Result of bulk seed operation\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -755,8 +755,8 @@ paths:
         {\n            \"type\": \"string\",\n            \"description\": \"How a successful status grant was resolved.\\
         n- granted: new status applied (no prior instance)\\n- stacked: stack count increased on existing instance\\n- refreshed:
         timer reset on existing instance\\n- replaced: existing instance removed and new one created\\n\",\n            \"\
-        enum\": [\n                \"granted\",\n                \"stacked\",\n                \"refreshed\",\n          \
-        \      \"replaced\"\n            ]\n        }\n    }\n}"
+        enum\": [\n                \"Granted\",\n                \"Stacked\",\n                \"Refreshed\",\n          \
+        \      \"Replaced\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Grant a status effect to an entity\",\n    \"description\": \"Grant a status
         effect to an entity. Creates an item instance in the entity's\\nstatus container and optionally creates a contract
         instance for lifecycle\\nmanagement. Auto-creates the status container (and inventory container) if\\none does not
@@ -804,8 +804,8 @@ paths:
         : {\n            \"type\": \"string\",\n            \"description\": \"Why a status was removed from an entity.\\\
         n- expired: TTL or contract duration elapsed\\n- cleansed: removed by category cleanse mechanic\\n- cancelled: explicitly
         cancelled by service or admin\\n- source_removed: source entity was deleted (cascading removal)\\n- admin: removed
-        by administrative action\\n\",\n            \"enum\": [\n                \"expired\",\n                \"cleansed\"\
-        ,\n                \"cancelled\",\n                \"source_removed\",\n                \"admin\"\n            ]\n\
+        by administrative action\\n\",\n            \"enum\": [\n                \"Expired\",\n                \"Cleansed\"\
+        ,\n                \"Cancelled\",\n                \"SourceRemoved\",\n                \"Admin\"\n            ]\n\
         \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StatusInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"StatusInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -841,8 +841,8 @@ paths:
         targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary effect
         (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
         benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
-        (used in unified queries)\\n\",\n            \"enum\": [\n                \"buff\",\n                \"debuff\",\n\
-        \                \"death\",\n                \"subscription\",\n                \"event\",\n                \"passive\"\
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Remove a specific status instance\",\n    \"description\": \"Remove a specific
         status instance by ID. Destroys the item via lib-item,\\ncancels any associated contract, deletes the instance record,
@@ -933,14 +933,14 @@ paths:
         targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary effect
         (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
         benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
-        (used in unified queries)\\n\",\n            \"enum\": [\n                \"buff\",\n                \"debuff\",\n\
-        \                \"death\",\n                \"subscription\",\n                \"event\",\n                \"passive\"\
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"StatusRemoveReason\": {\n            \"type\": \"string\",\n            \"\
         description\": \"Why a status was removed from an entity.\\n- expired: TTL or contract duration elapsed\\n- cleansed:
         removed by category cleanse mechanic\\n- cancelled: explicitly cancelled by service or admin\\n- source_removed: source
         entity was deleted (cascading removal)\\n- admin: removed by administrative action\\n\",\n            \"enum\": [\n\
-        \                \"expired\",\n                \"cleansed\",\n                \"cancelled\",\n                \"source_removed\"\
-        ,\n                \"admin\"\n            ]\n        }\n    }\n}"
+        \                \"Expired\",\n                \"Cleansed\",\n                \"Cancelled\",\n                \"SourceRemoved\"\
+        ,\n                \"Admin\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RemoveStatusesResponse\"\
         ,\n    \"$defs\": {\n        \"RemoveStatusesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of a bulk status removal operation\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1047,8 +1047,8 @@ paths:
         and cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
         effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
         benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
-        (used in unified queries)\\n\",\n            \"enum\": [\n                \"buff\",\n                \"debuff\",\n\
-        \                \"death\",\n                \"subscription\",\n                \"event\",\n                \"passive\"\
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListStatusesResponse\"\
         ,\n    \"$defs\": {\n        \"ListStatusesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -1087,12 +1087,12 @@ paths:
         cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
         effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
         benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
-        (used in unified queries)\\n\",\n            \"enum\": [\n                \"buff\",\n                \"debuff\",\n\
-        \                \"death\",\n                \"subscription\",\n                \"event\",\n                \"passive\"\
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"EffectSource\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Whether an effect comes from a status item or a seed capability.\\n- item_based: temporary effect stored as an
         item in a status container\\n- seed_derived: passive capability computed from seed growth state\\n\",\n          \
-        \  \"enum\": [\n                \"item_based\",\n                \"seed_derived\"\n            ]\n        }\n    }\n\
+        \  \"enum\": [\n                \"ItemBased\",\n                \"SeedDerived\"\n            ]\n        }\n    }\n\
         }"
       x-endpoint-info-json: "{\n    \"summary\": \"List active statuses for an entity\",\n    \"description\": \"List active
         status effects for an entity with optional category filter\\nand seed-derived passive effect inclusion. Merges item-based
@@ -1163,8 +1163,8 @@ paths:
         targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary effect
         (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
         benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
-        (used in unified queries)\\n\",\n            \"enum\": [\n                \"buff\",\n                \"debuff\",\n\
-        \                \"death\",\n                \"subscription\",\n                \"event\",\n                \"passive\"\
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a specific status instance\",\n    \"description\": \"Retrieves a status
         instance by its unique identifier with full details including metadata.\",\n    \"tags\": [\n        \"Status\"\n\
@@ -1246,12 +1246,12 @@ paths:
         boost, speed increase)\\n- debuff: negative temporary effect (poison, slow, weakness)\\n- death: death penalty or
         incapacitation state\\n- subscription: account-level subscription benefit\\n- event: time-limited event effect (festival
         bonus, seasonal)\\n- passive: seed-derived passive capability (used in unified queries)\\n\",\n            \"enum\"\
-        : [\n                \"buff\",\n                \"debuff\",\n                \"death\",\n                \"subscription\"\
-        ,\n                \"event\",\n                \"passive\"\n            ]\n        },\n        \"EffectSource\": {\n\
+        : [\n                \"Buff\",\n                \"Debuff\",\n                \"Death\",\n                \"Subscription\"\
+        ,\n                \"Event\",\n                \"Passive\"\n            ]\n        },\n        \"EffectSource\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"Whether an effect comes from a status item or a
         seed capability.\\n- item_based: temporary effect stored as an item in a status container\\n- seed_derived: passive
-        capability computed from seed growth state\\n\",\n            \"enum\": [\n                \"item_based\",\n     \
-        \           \"seed_derived\"\n            ]\n        }\n    }\n}"
+        capability computed from seed growth state\\n\",\n            \"enum\": [\n                \"ItemBased\",\n      \
+        \          \"SeedDerived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get unified effects for an entity\",\n    \"description\": \"Get all active
         effects for an entity including both item-based statuses\\nand seed-derived passive capabilities. Returns a unified
         view with source\\nattribution via the effectSource field.\\n\",\n    \"tags\": [\n        \"Effects\"\n    ],\n \
@@ -1378,12 +1378,12 @@ components:
         - event: time-limited event effect (festival bonus, seasonal)
         - passive: seed-derived passive capability (used in unified queries)
       enum:
-      - buff
-      - debuff
-      - death
-      - subscription
-      - event
-      - passive
+      - Buff
+      - Debuff
+      - Death
+      - Subscription
+      - Event
+      - Passive
     StackBehavior:
       type: string
       description: |
@@ -1394,11 +1394,11 @@ components:
         - replace: new application replaces existing entirely
         - ignore: cannot apply if already present
       enum:
-      - refresh_duration
-      - independent
-      - increase_intensity
-      - replace
-      - ignore
+      - RefreshDuration
+      - Independent
+      - IncreaseIntensity
+      - Replace
+      - Ignore
     EffectSource:
       type: string
       description: |
@@ -1406,8 +1406,8 @@ components:
         - item_based: temporary effect stored as an item in a status container
         - seed_derived: passive capability computed from seed growth state
       enum:
-      - item_based
-      - seed_derived
+      - ItemBased
+      - SeedDerived
     StatusRemoveReason:
       type: string
       description: |
@@ -1418,11 +1418,11 @@ components:
         - source_removed: source entity was deleted (cascading removal)
         - admin: removed by administrative action
       enum:
-      - expired
-      - cleansed
-      - cancelled
-      - source_removed
-      - admin
+      - Expired
+      - Cleansed
+      - Cancelled
+      - SourceRemoved
+      - Admin
     GrantFailureReason:
       type: string
       description: |
@@ -1434,12 +1434,12 @@ components:
         - contract_failed: contract instance creation or lifecycle failed
         - item_creation_failed: item instance creation via lib-item failed
       enum:
-      - template_not_found
-      - entity_at_max_statuses
-      - stack_limit_reached
-      - stack_behavior_ignore
-      - contract_failed
-      - item_creation_failed
+      - TemplateNotFound
+      - EntityAtMaxStatuses
+      - StackLimitReached
+      - StackBehaviorIgnore
+      - ContractFailed
+      - ItemCreationFailed
     GrantResult:
       type: string
       description: |
@@ -1449,10 +1449,10 @@ components:
         - refreshed: timer reset on existing instance
         - replaced: existing instance removed and new one created
       enum:
-      - granted
-      - stacked
-      - refreshed
-      - replaced
+      - Granted
+      - Stacked
+      - Refreshed
+      - Replaced
     StatusChangeType:
       type: string
       description: |
@@ -1463,11 +1463,11 @@ components:
         - stacked: stack count increased or duration refreshed on existing status
         - cleansed: status removed by category cleanse mechanic
       enum:
-      - granted
-      - removed
-      - expired
-      - stacked
-      - cleansed
+      - Granted
+      - Removed
+      - Expired
+      - Stacked
+      - Cleansed
     StatusEffectSummary:
       type: object
       description: Unified summary of an active effect from any source (item-based or seed-derived)

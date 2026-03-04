@@ -193,7 +193,7 @@ public class AuthServiceTests
         // Assert
         var loginEndpoint = endpoints.FirstOrDefault(e =>
             e.Path == "/auth/login" &&
-            e.Method == ServiceEndpointMethod.POST);
+            e.Method == ServiceEndpointMethod.Post);
 
         Assert.NotNull(loginEndpoint);
         Assert.NotNull(loginEndpoint.Permissions);

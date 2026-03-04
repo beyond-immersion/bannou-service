@@ -95,7 +95,7 @@ public partial class CollectionService
                 {
                     ResourceType = "character",
                     SourceType = "collection",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "collection",
                     CallbackEndpoint = "/collection/cleanup-by-character",
                     PayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",

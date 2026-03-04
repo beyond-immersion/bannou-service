@@ -42,8 +42,8 @@ namespace Bannou
         /** Update achievement definition */
         constexpr const TCHAR* AchievementUpdateAchievementDefinition = TEXT("POST:/achievement/definition/update");
 
-        /** Delete achievement definition */
-        constexpr const TCHAR* AchievementDeleteAchievementDefinition = TEXT("POST:/achievement/definition/delete");
+        /** Deprecate an achievement definition */
+        constexpr const TCHAR* AchievementDeprecateAchievementDefinition = TEXT("POST:/achievement/definition/deprecate");
 
         /** Get entity's achievement progress */
         constexpr const TCHAR* AchievementGetAchievementProgress = TEXT("POST:/achievement/progress/get");
@@ -2012,13 +2012,13 @@ namespace Bannou
                 TEXT("FAchievementDefinitionResponse"),
                 TEXT("Update achievement definition")
             });
-            Registry.Add(TEXT("AchievementDeleteAchievementDefinition"), FEndpointInfo{
+            Registry.Add(TEXT("AchievementDeprecateAchievementDefinition"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/achievement/definition/delete"),
+                TEXT("/achievement/definition/deprecate"),
                 TEXT("achievement"),
-                TEXT("FDeleteAchievementDefinitionRequest"),
-                TEXT(""),
-                TEXT("Delete achievement definition")
+                TEXT("FDeprecateAchievementDefinitionRequest"),
+                TEXT("FAchievementDefinitionResponse"),
+                TEXT("Deprecate an achievement definition")
             });
             Registry.Add(TEXT("AchievementGetAchievementProgress"), FEndpointInfo{
                 TEXT("POST"),

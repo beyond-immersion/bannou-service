@@ -187,7 +187,7 @@ public partial class FactionService
                 {
                     ResourceType = "character",
                     SourceType = "faction",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "faction",
                     CallbackEndpoint = "/faction/cleanup-by-character",
                     PayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
@@ -208,7 +208,7 @@ public partial class FactionService
                 {
                     ResourceType = "realm",
                     SourceType = "faction",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "faction",
                     CallbackEndpoint = "/faction/cleanup-by-realm",
                     PayloadTemplate = "{\"realmId\": \"{{resourceId}}\"}",
@@ -229,7 +229,7 @@ public partial class FactionService
                 {
                     ResourceType = "location",
                     SourceType = "faction",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "faction",
                     CallbackEndpoint = "/faction/cleanup-by-location",
                     PayloadTemplate = "{\"locationId\": \"{{resourceId}}\"}",

@@ -145,19 +145,19 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
+                "TwoParty",
+                "MultiParty",
+                "Conditional",
+                "Auction"
             ]
         },
         "EscrowTrustMode": {
             "type": "string",
             "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
             "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
+                "FullConsent",
+                "InitiatorTrusted",
+                "SinglePartyTrusted"
             ]
         },
         "CreateEscrowPartyInput": {
@@ -210,11 +210,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
+                "Depositor",
+                "Recipient",
+                "DepositorRecipient",
+                "Arbiter",
+                "Observer"
             ]
         },
         "ExpectedDepositInput": {
@@ -352,11 +352,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         },
         "ReleaseAllocationInput": {
@@ -402,19 +402,19 @@ public partial class EscrowController
             "type": "string",
             "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \ u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\ n- party_required: Wait for all parties to call /confirm-release.\n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required",
-                "service_and_party"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired",
+                "ServiceAndParty"
             ]
         },
         "RefundMode": {
             "type": "string",
             "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired"
             ]
         }
     }
@@ -646,19 +646,19 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
+                "TwoParty",
+                "MultiParty",
+                "Conditional",
+                "Auction"
             ]
         },
         "EscrowTrustMode": {
             "type": "string",
             "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
             "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
+                "FullConsent",
+                "InitiatorTrusted",
+                "SinglePartyTrusted"
             ]
         },
         "EscrowParty": {
@@ -755,11 +755,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
+                "Depositor",
+                "Recipient",
+                "DepositorRecipient",
+                "Arbiter",
+                "Observer"
             ]
         },
         "ExpectedDeposit": {
@@ -919,11 +919,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         },
         "EscrowDeposit": {
@@ -1093,30 +1093,30 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
+                "Release",
+                "Refund",
+                "Dispute",
+                "Reaffirm"
             ]
         },
         "EscrowStatus": {
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         },
         "ValidationFailure": {
@@ -1169,41 +1169,41 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
+                "AssetMissing",
+                "AssetMutated",
+                "AssetExpired",
+                "BalanceMismatch"
             ]
         },
         "EscrowResolution": {
             "type": "string",
             "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
+                "Released",
+                "Refunded",
+                "Split",
+                "ExpiredRefunded",
+                "CancelledRefunded",
+                "ViolationRefunded"
             ]
         },
         "ReleaseMode": {
             "type": "string",
             "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required",
-                "service_and_party"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired",
+                "ServiceAndParty"
             ]
         },
         "RefundMode": {
             "type": "string",
             "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired"
             ]
         },
         "PartyToken": {
@@ -1530,19 +1530,19 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
+                "TwoParty",
+                "MultiParty",
+                "Conditional",
+                "Auction"
             ]
         },
         "EscrowTrustMode": {
             "type": "string",
             "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
             "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
+                "FullConsent",
+                "InitiatorTrusted",
+                "SinglePartyTrusted"
             ]
         },
         "EscrowParty": {
@@ -1639,11 +1639,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
+                "Depositor",
+                "Recipient",
+                "DepositorRecipient",
+                "Arbiter",
+                "Observer"
             ]
         },
         "ExpectedDeposit": {
@@ -1803,11 +1803,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         },
         "EscrowDeposit": {
@@ -1977,30 +1977,30 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
+                "Release",
+                "Refund",
+                "Dispute",
+                "Reaffirm"
             ]
         },
         "EscrowStatus": {
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         },
         "ValidationFailure": {
@@ -2053,41 +2053,41 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
+                "AssetMissing",
+                "AssetMutated",
+                "AssetExpired",
+                "BalanceMismatch"
             ]
         },
         "EscrowResolution": {
             "type": "string",
             "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
+                "Released",
+                "Refunded",
+                "Split",
+                "ExpiredRefunded",
+                "CancelledRefunded",
+                "ViolationRefunded"
             ]
         },
         "ReleaseMode": {
             "type": "string",
             "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required",
-                "service_and_party"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired",
+                "ServiceAndParty"
             ]
         },
         "RefundMode": {
             "type": "string",
             "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired"
             ]
         }
     }
@@ -2221,20 +2221,20 @@ public partial class EscrowController
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\ n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\ n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         }
     }
@@ -2466,19 +2466,19 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
+                "TwoParty",
+                "MultiParty",
+                "Conditional",
+                "Auction"
             ]
         },
         "EscrowTrustMode": {
             "type": "string",
             "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
             "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
+                "FullConsent",
+                "InitiatorTrusted",
+                "SinglePartyTrusted"
             ]
         },
         "EscrowParty": {
@@ -2575,11 +2575,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
+                "Depositor",
+                "Recipient",
+                "DepositorRecipient",
+                "Arbiter",
+                "Observer"
             ]
         },
         "ExpectedDeposit": {
@@ -2739,11 +2739,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         },
         "EscrowDeposit": {
@@ -2913,30 +2913,30 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
+                "Release",
+                "Refund",
+                "Dispute",
+                "Reaffirm"
             ]
         },
         "EscrowStatus": {
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         },
         "ValidationFailure": {
@@ -2989,41 +2989,41 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
+                "AssetMissing",
+                "AssetMutated",
+                "AssetExpired",
+                "BalanceMismatch"
             ]
         },
         "EscrowResolution": {
             "type": "string",
             "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
+                "Released",
+                "Refunded",
+                "Split",
+                "ExpiredRefunded",
+                "CancelledRefunded",
+                "ViolationRefunded"
             ]
         },
         "ReleaseMode": {
             "type": "string",
             "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required",
-                "service_and_party"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired",
+                "ServiceAndParty"
             ]
         },
         "RefundMode": {
             "type": "string",
             "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired"
             ]
         }
     }
@@ -3125,8 +3125,8 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of token being requested.\n- deposit: Token for depositing assets\n- release: Token for consenting to release\n",
             "enum": [
-                "deposit",
-                "release"
+                "Deposit",
+                "Release"
             ]
         }
     }
@@ -3390,11 +3390,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         }
     }
@@ -3636,19 +3636,19 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
+                "TwoParty",
+                "MultiParty",
+                "Conditional",
+                "Auction"
             ]
         },
         "EscrowTrustMode": {
             "type": "string",
             "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
             "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
+                "FullConsent",
+                "InitiatorTrusted",
+                "SinglePartyTrusted"
             ]
         },
         "EscrowParty": {
@@ -3745,11 +3745,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
+                "Depositor",
+                "Recipient",
+                "DepositorRecipient",
+                "Arbiter",
+                "Observer"
             ]
         },
         "ExpectedDeposit": {
@@ -3909,11 +3909,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         },
         "EscrowDeposit": {
@@ -4083,30 +4083,30 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
+                "Release",
+                "Refund",
+                "Dispute",
+                "Reaffirm"
             ]
         },
         "EscrowStatus": {
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         },
         "ValidationFailure": {
@@ -4159,41 +4159,41 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
+                "AssetMissing",
+                "AssetMutated",
+                "AssetExpired",
+                "BalanceMismatch"
             ]
         },
         "EscrowResolution": {
             "type": "string",
             "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
+                "Released",
+                "Refunded",
+                "Split",
+                "ExpiredRefunded",
+                "CancelledRefunded",
+                "ViolationRefunded"
             ]
         },
         "ReleaseMode": {
             "type": "string",
             "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required",
-                "service_and_party"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired",
+                "ServiceAndParty"
             ]
         },
         "RefundMode": {
             "type": "string",
             "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired"
             ]
         },
         "PartyToken": {
@@ -4438,11 +4438,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         }
     }
@@ -4736,11 +4736,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         }
     }
@@ -4857,10 +4857,10 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\ n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
+                "Release",
+                "Refund",
+                "Dispute",
+                "Reaffirm"
             ]
         }
     }
@@ -5099,19 +5099,19 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
+                "TwoParty",
+                "MultiParty",
+                "Conditional",
+                "Auction"
             ]
         },
         "EscrowTrustMode": {
             "type": "string",
             "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
             "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
+                "FullConsent",
+                "InitiatorTrusted",
+                "SinglePartyTrusted"
             ]
         },
         "EscrowParty": {
@@ -5208,11 +5208,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
+                "Depositor",
+                "Recipient",
+                "DepositorRecipient",
+                "Arbiter",
+                "Observer"
             ]
         },
         "ExpectedDeposit": {
@@ -5372,11 +5372,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         },
         "EscrowDeposit": {
@@ -5546,30 +5546,30 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
+                "Release",
+                "Refund",
+                "Dispute",
+                "Reaffirm"
             ]
         },
         "EscrowStatus": {
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         },
         "ValidationFailure": {
@@ -5622,41 +5622,41 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
+                "AssetMissing",
+                "AssetMutated",
+                "AssetExpired",
+                "BalanceMismatch"
             ]
         },
         "EscrowResolution": {
             "type": "string",
             "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
+                "Released",
+                "Refunded",
+                "Split",
+                "ExpiredRefunded",
+                "CancelledRefunded",
+                "ViolationRefunded"
             ]
         },
         "ReleaseMode": {
             "type": "string",
             "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required",
-                "service_and_party"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired",
+                "ServiceAndParty"
             ]
         },
         "RefundMode": {
             "type": "string",
             "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired"
             ]
         }
     }
@@ -5827,10 +5827,10 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\ n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
+                "Release",
+                "Refund",
+                "Dispute",
+                "Reaffirm"
             ]
         }
     }
@@ -6164,19 +6164,19 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
+                "TwoParty",
+                "MultiParty",
+                "Conditional",
+                "Auction"
             ]
         },
         "EscrowTrustMode": {
             "type": "string",
             "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
             "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
+                "FullConsent",
+                "InitiatorTrusted",
+                "SinglePartyTrusted"
             ]
         },
         "EscrowParty": {
@@ -6273,11 +6273,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
+                "Depositor",
+                "Recipient",
+                "DepositorRecipient",
+                "Arbiter",
+                "Observer"
             ]
         },
         "ExpectedDeposit": {
@@ -6437,11 +6437,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         },
         "EscrowDeposit": {
@@ -6611,30 +6611,30 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
+                "Release",
+                "Refund",
+                "Dispute",
+                "Reaffirm"
             ]
         },
         "EscrowStatus": {
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         },
         "ValidationFailure": {
@@ -6687,41 +6687,41 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
+                "AssetMissing",
+                "AssetMutated",
+                "AssetExpired",
+                "BalanceMismatch"
             ]
         },
         "EscrowResolution": {
             "type": "string",
             "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
+                "Released",
+                "Refunded",
+                "Split",
+                "ExpiredRefunded",
+                "CancelledRefunded",
+                "ViolationRefunded"
             ]
         },
         "ReleaseMode": {
             "type": "string",
             "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required",
-                "service_and_party"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired",
+                "ServiceAndParty"
             ]
         },
         "RefundMode": {
             "type": "string",
             "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired"
             ]
         },
         "FinalizerResult": {
@@ -7099,19 +7099,19 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
+                "TwoParty",
+                "MultiParty",
+                "Conditional",
+                "Auction"
             ]
         },
         "EscrowTrustMode": {
             "type": "string",
             "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
             "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
+                "FullConsent",
+                "InitiatorTrusted",
+                "SinglePartyTrusted"
             ]
         },
         "EscrowParty": {
@@ -7208,11 +7208,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
+                "Depositor",
+                "Recipient",
+                "DepositorRecipient",
+                "Arbiter",
+                "Observer"
             ]
         },
         "ExpectedDeposit": {
@@ -7372,11 +7372,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         },
         "EscrowDeposit": {
@@ -7546,30 +7546,30 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
+                "Release",
+                "Refund",
+                "Dispute",
+                "Reaffirm"
             ]
         },
         "EscrowStatus": {
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         },
         "ValidationFailure": {
@@ -7622,41 +7622,41 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
+                "AssetMissing",
+                "AssetMutated",
+                "AssetExpired",
+                "BalanceMismatch"
             ]
         },
         "EscrowResolution": {
             "type": "string",
             "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
+                "Released",
+                "Refunded",
+                "Split",
+                "ExpiredRefunded",
+                "CancelledRefunded",
+                "ViolationRefunded"
             ]
         },
         "ReleaseMode": {
             "type": "string",
             "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required",
-                "service_and_party"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired",
+                "ServiceAndParty"
             ]
         },
         "RefundMode": {
             "type": "string",
             "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired"
             ]
         },
         "RefundResult": {
@@ -8006,19 +8006,19 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
+                "TwoParty",
+                "MultiParty",
+                "Conditional",
+                "Auction"
             ]
         },
         "EscrowTrustMode": {
             "type": "string",
             "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
             "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
+                "FullConsent",
+                "InitiatorTrusted",
+                "SinglePartyTrusted"
             ]
         },
         "EscrowParty": {
@@ -8115,11 +8115,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
+                "Depositor",
+                "Recipient",
+                "DepositorRecipient",
+                "Arbiter",
+                "Observer"
             ]
         },
         "ExpectedDeposit": {
@@ -8279,11 +8279,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         },
         "EscrowDeposit": {
@@ -8453,30 +8453,30 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
+                "Release",
+                "Refund",
+                "Dispute",
+                "Reaffirm"
             ]
         },
         "EscrowStatus": {
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         },
         "ValidationFailure": {
@@ -8529,41 +8529,41 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
+                "AssetMissing",
+                "AssetMutated",
+                "AssetExpired",
+                "BalanceMismatch"
             ]
         },
         "EscrowResolution": {
             "type": "string",
             "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
+                "Released",
+                "Refunded",
+                "Split",
+                "ExpiredRefunded",
+                "CancelledRefunded",
+                "ViolationRefunded"
             ]
         },
         "ReleaseMode": {
             "type": "string",
             "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required",
-                "service_and_party"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired",
+                "ServiceAndParty"
             ]
         },
         "RefundMode": {
             "type": "string",
             "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired"
             ]
         },
         "RefundResult": {
@@ -8921,19 +8921,19 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
+                "TwoParty",
+                "MultiParty",
+                "Conditional",
+                "Auction"
             ]
         },
         "EscrowTrustMode": {
             "type": "string",
             "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
             "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
+                "FullConsent",
+                "InitiatorTrusted",
+                "SinglePartyTrusted"
             ]
         },
         "EscrowParty": {
@@ -9030,11 +9030,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
+                "Depositor",
+                "Recipient",
+                "DepositorRecipient",
+                "Arbiter",
+                "Observer"
             ]
         },
         "ExpectedDeposit": {
@@ -9194,11 +9194,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         },
         "EscrowDeposit": {
@@ -9368,30 +9368,30 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
+                "Release",
+                "Refund",
+                "Dispute",
+                "Reaffirm"
             ]
         },
         "EscrowStatus": {
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         },
         "ValidationFailure": {
@@ -9444,41 +9444,41 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
+                "AssetMissing",
+                "AssetMutated",
+                "AssetExpired",
+                "BalanceMismatch"
             ]
         },
         "EscrowResolution": {
             "type": "string",
             "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
+                "Released",
+                "Refunded",
+                "Split",
+                "ExpiredRefunded",
+                "CancelledRefunded",
+                "ViolationRefunded"
             ]
         },
         "ReleaseMode": {
             "type": "string",
             "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required",
-                "service_and_party"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired",
+                "ServiceAndParty"
             ]
         },
         "RefundMode": {
             "type": "string",
             "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired"
             ]
         }
     }
@@ -9620,20 +9620,20 @@ public partial class EscrowController
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\ n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         }
     }
@@ -9770,20 +9770,20 @@ public partial class EscrowController
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\ n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         }
     }
@@ -9903,12 +9903,12 @@ public partial class EscrowController
             "type": "string",
             "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
+                "Released",
+                "Refunded",
+                "Split",
+                "ExpiredRefunded",
+                "CancelledRefunded",
+                "ViolationRefunded"
             ]
         },
         "SplitAllocation": {
@@ -10035,11 +10035,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         }
     }
@@ -10271,19 +10271,19 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
+                "TwoParty",
+                "MultiParty",
+                "Conditional",
+                "Auction"
             ]
         },
         "EscrowTrustMode": {
             "type": "string",
             "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
             "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
+                "FullConsent",
+                "InitiatorTrusted",
+                "SinglePartyTrusted"
             ]
         },
         "EscrowParty": {
@@ -10380,11 +10380,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
+                "Depositor",
+                "Recipient",
+                "DepositorRecipient",
+                "Arbiter",
+                "Observer"
             ]
         },
         "ExpectedDeposit": {
@@ -10544,11 +10544,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         },
         "EscrowDeposit": {
@@ -10718,30 +10718,30 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
+                "Release",
+                "Refund",
+                "Dispute",
+                "Reaffirm"
             ]
         },
         "EscrowStatus": {
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         },
         "ValidationFailure": {
@@ -10794,41 +10794,41 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
+                "AssetMissing",
+                "AssetMutated",
+                "AssetExpired",
+                "BalanceMismatch"
             ]
         },
         "EscrowResolution": {
             "type": "string",
             "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
+                "Released",
+                "Refunded",
+                "Split",
+                "ExpiredRefunded",
+                "CancelledRefunded",
+                "ViolationRefunded"
             ]
         },
         "ReleaseMode": {
             "type": "string",
             "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required",
-                "service_and_party"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired",
+                "ServiceAndParty"
             ]
         },
         "RefundMode": {
             "type": "string",
             "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired"
             ]
         },
         "TransferResult": {
@@ -11192,19 +11192,19 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
+                "TwoParty",
+                "MultiParty",
+                "Conditional",
+                "Auction"
             ]
         },
         "EscrowTrustMode": {
             "type": "string",
             "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
             "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
+                "FullConsent",
+                "InitiatorTrusted",
+                "SinglePartyTrusted"
             ]
         },
         "EscrowParty": {
@@ -11301,11 +11301,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
+                "Depositor",
+                "Recipient",
+                "DepositorRecipient",
+                "Arbiter",
+                "Observer"
             ]
         },
         "ExpectedDeposit": {
@@ -11465,11 +11465,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         },
         "EscrowDeposit": {
@@ -11639,30 +11639,30 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
+                "Release",
+                "Refund",
+                "Dispute",
+                "Reaffirm"
             ]
         },
         "EscrowStatus": {
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         },
         "ValidationFailure": {
@@ -11715,41 +11715,41 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
+                "AssetMissing",
+                "AssetMutated",
+                "AssetExpired",
+                "BalanceMismatch"
             ]
         },
         "EscrowResolution": {
             "type": "string",
             "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
+                "Released",
+                "Refunded",
+                "Split",
+                "ExpiredRefunded",
+                "CancelledRefunded",
+                "ViolationRefunded"
             ]
         },
         "ReleaseMode": {
             "type": "string",
             "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required",
-                "service_and_party"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired",
+                "ServiceAndParty"
             ]
         },
         "RefundMode": {
             "type": "string",
             "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired"
             ]
         }
     }
@@ -11916,21 +11916,21 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         },
         "ValidationFailureType": {
             "type": "string",
             "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
+                "AssetMissing",
+                "AssetMutated",
+                "AssetExpired",
+                "BalanceMismatch"
             ]
         },
         "EscrowAgreement": {
@@ -12132,19 +12132,19 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
+                "TwoParty",
+                "MultiParty",
+                "Conditional",
+                "Auction"
             ]
         },
         "EscrowTrustMode": {
             "type": "string",
             "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
             "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
+                "FullConsent",
+                "InitiatorTrusted",
+                "SinglePartyTrusted"
             ]
         },
         "EscrowParty": {
@@ -12241,11 +12241,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
+                "Depositor",
+                "Recipient",
+                "DepositorRecipient",
+                "Arbiter",
+                "Observer"
             ]
         },
         "ExpectedDeposit": {
@@ -12568,61 +12568,61 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
+                "Release",
+                "Refund",
+                "Dispute",
+                "Reaffirm"
             ]
         },
         "EscrowStatus": {
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\ n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
+                "Released",
+                "Refunded",
+                "Split",
+                "ExpiredRefunded",
+                "CancelledRefunded",
+                "ViolationRefunded"
             ]
         },
         "ReleaseMode": {
             "type": "string",
-            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\ n- party_required: Wait for all parties to call /confirm-release.\n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required",
-                "service_and_party"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired",
+                "ServiceAndParty"
             ]
         },
         "RefundMode": {
             "type": "string",
             "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired"
             ]
         }
     }
@@ -12951,19 +12951,19 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
-                "two_party",
-                "multi_party",
-                "conditional",
-                "auction"
+                "TwoParty",
+                "MultiParty",
+                "Conditional",
+                "Auction"
             ]
         },
         "EscrowTrustMode": {
             "type": "string",
             "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
             "enum": [
-                "full_consent",
-                "initiator_trusted",
-                "single_party_trusted"
+                "FullConsent",
+                "InitiatorTrusted",
+                "SinglePartyTrusted"
             ]
         },
         "EscrowParty": {
@@ -13060,11 +13060,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
-                "depositor",
-                "recipient",
-                "depositor_recipient",
-                "arbiter",
-                "observer"
+                "Depositor",
+                "Recipient",
+                "DepositorRecipient",
+                "Arbiter",
+                "Observer"
             ]
         },
         "ExpectedDeposit": {
@@ -13224,11 +13224,11 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
+                "Currency",
+                "Item",
+                "ItemStack",
+                "Contract",
+                "Custom"
             ]
         },
         "EscrowDeposit": {
@@ -13398,30 +13398,30 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
-                "release",
-                "refund",
-                "dispute",
-                "reaffirm"
+                "Release",
+                "Refund",
+                "Dispute",
+                "Reaffirm"
             ]
         },
         "EscrowStatus": {
             "type": "string",
             "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
-                "pending_deposits",
-                "partially_funded",
-                "funded",
-                "pending_consent",
-                "pending_condition",
-                "finalizing",
-                "releasing",
-                "released",
-                "refunding",
-                "refunded",
-                "disputed",
-                "expired",
-                "cancelled",
-                "validation_failed"
+                "PendingDeposits",
+                "PartiallyFunded",
+                "Funded",
+                "PendingConsent",
+                "PendingCondition",
+                "Finalizing",
+                "Releasing",
+                "Released",
+                "Refunding",
+                "Refunded",
+                "Disputed",
+                "Expired",
+                "Cancelled",
+                "ValidationFailed"
             ]
         },
         "ValidationFailure": {
@@ -13474,41 +13474,41 @@ public partial class EscrowController
             "type": "string",
             "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
-                "asset_missing",
-                "asset_mutated",
-                "asset_expired",
-                "balance_mismatch"
+                "AssetMissing",
+                "AssetMutated",
+                "AssetExpired",
+                "BalanceMismatch"
             ]
         },
         "EscrowResolution": {
             "type": "string",
             "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
-                "released",
-                "refunded",
-                "split",
-                "expired_refunded",
-                "cancelled_refunded",
-                "violation_refunded"
+                "Released",
+                "Refunded",
+                "Split",
+                "ExpiredRefunded",
+                "CancelledRefunded",
+                "ViolationRefunded"
             ]
         },
         "ReleaseMode": {
             "type": "string",
             "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required",
-                "service_and_party"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired",
+                "ServiceAndParty"
             ]
         },
         "RefundMode": {
             "type": "string",
             "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
             "enum": [
-                "immediate",
-                "service_only",
-                "party_required"
+                "Immediate",
+                "ServiceOnly",
+                "PartyRequired"
             ]
         }
     }

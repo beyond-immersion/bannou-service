@@ -674,11 +674,11 @@ public partial class ResourceController
         "OnDeleteAction": {
             "type": "string",
             "enum": [
-                "CASCADE",
-                "RESTRICT",
-                "DETACH"
+                "Cascade",
+                "Restrict",
+                "Detach"
             ],
-            "description": "Action to take when the referenced resource is deleted.\nCASCADE: Delete dependent entities when resource is deleted\nRESTRICT: Block resource deletion if references exist\nDETACH: Set reference to null when resource is deleted\n"
+            "description": "Action to take when the referenced resource is deleted.\nCascade: Delete dependent entities when resource is deleted\nRestrict: Block resource deletion if references exist\nDetach: Set reference to null when resource is deleted\n"
         }
     }
 }
@@ -820,10 +820,10 @@ public partial class ResourceController
         "CleanupPolicy": {
             "type": "string",
             "enum": [
-                "BEST_EFFORT",
-                "ALL_REQUIRED"
+                "BestEffort",
+                "AllRequired"
             ],
-            "description": "Policy for cleanup callback execution.\nBEST_EFFORT: Proceed with deletion even if some callbacks fail\nALL_REQUIRED: Abort deletion if any callback fails\n"
+            "description": "Policy for cleanup callback execution.\nBestEffort: Proceed with deletion even if some callbacks fail\nAllRequired: Abort deletion if any callback fails\n"
         }
     }
 }
@@ -1085,11 +1085,11 @@ public partial class ResourceController
         "OnDeleteAction": {
             "type": "string",
             "enum": [
-                "CASCADE",
-                "RESTRICT",
-                "DETACH"
+                "Cascade",
+                "Restrict",
+                "Detach"
             ],
-            "description": "Action to take when the referenced resource is deleted.\nCASCADE: Delete dependent entities when resource is deleted\nRESTRICT: Block resource deletion if references exist\nDETACH: Set reference to null when resource is deleted\n"
+            "description": "Action to take when the referenced resource is deleted.\nCascade: Delete dependent entities when resource is deleted\nRestrict: Block resource deletion if references exist\nDetach: Set reference to null when resource is deleted\n"
         }
     }
 }
@@ -1478,18 +1478,18 @@ public partial class ResourceController
         "CleanupPolicy": {
             "type": "string",
             "enum": [
-                "BEST_EFFORT",
-                "ALL_REQUIRED"
+                "BestEffort",
+                "AllRequired"
             ],
-            "description": "Policy for cleanup callback execution.\nBEST_EFFORT: Proceed with deletion even if some callbacks fail\nALL_REQUIRED: Abort deletion if any callback fails\n"
+            "description": "Policy for cleanup callback execution.\nBestEffort: Proceed with deletion even if some callbacks fail\nAllRequired: Abort deletion if any callback fails\n"
         },
         "CompressionPolicy": {
             "type": "string",
             "enum": [
-                "BEST_EFFORT",
-                "ALL_REQUIRED"
+                "BestEffort",
+                "AllRequired"
             ],
-            "description": "Policy for compression callback execution.\nBEST_EFFORT: Create archive even if some callbacks fail (partial archive)\nALL_REQUIRED: Abort compression if any callback fails\n"
+            "description": "Policy for compression callback execution.\nBestEffort: Create archive even if some callbacks fail (partial archive)\nAllRequired: Abort compression if any callback fails\n"
         }
     }
 }
@@ -2298,10 +2298,10 @@ public partial class ResourceController
         "CompressionPolicy": {
             "type": "string",
             "enum": [
-                "BEST_EFFORT",
-                "ALL_REQUIRED"
+                "BestEffort",
+                "AllRequired"
             ],
-            "description": "Policy for compression callback execution.\nBEST_EFFORT: Create archive even if some callbacks fail (partial archive)\nALL_REQUIRED: Abort compression if any callback fails\n"
+            "description": "Policy for compression callback execution.\nBestEffort: Create archive even if some callbacks fail (partial archive)\ nAllRequired: Abort compression if any callback fails\n"
         }
     }
 }

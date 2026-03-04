@@ -56,7 +56,7 @@ public sealed class QuestDataCache : IQuestDataCache
             var request = new ListQuestsRequest
             {
                 CharacterId = characterId,
-                Statuses = new[] { QuestStatus.ACTIVE }
+                Statuses = new[] { QuestStatus.Active }
             };
 
             var response = await client.ListQuestsAsync(request, ct);

@@ -38,13 +38,13 @@ using System = global::System;
 public enum CharacterStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"alive")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Alive")]
     Alive = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"dead")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Dead")]
     Dead = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"dormant")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Dormant")]
     Dormant = 2,
 
 }
@@ -422,10 +422,10 @@ public partial class CharacterListResponse
 public enum CharacterRealmLeftReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"deletion")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Deletion")]
     Deletion = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"transfer")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Transfer")]
     Transfer = 1,
 
 }

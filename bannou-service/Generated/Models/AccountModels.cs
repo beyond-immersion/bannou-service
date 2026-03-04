@@ -38,19 +38,19 @@ using System = global::System;
 public enum AuthProvider
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"email")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Email")]
     Email = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Google")]
     Google = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Discord")]
     Discord = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Twitch")]
     Twitch = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Steam")]
     Steam = 4,
 
 }
@@ -64,16 +64,16 @@ public enum AuthProvider
 public enum OAuthProvider
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Google")]
     Google = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Discord")]
     Discord = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Twitch")]
     Twitch = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Steam")]
     Steam = 3,
 
 }

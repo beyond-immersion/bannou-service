@@ -48,7 +48,7 @@ public static class CharacterPersonalityPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-personality/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getPersonality",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class CharacterPersonalityPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-personality/set",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "setPersonality",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class CharacterPersonalityPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-personality/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deletePersonality",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class CharacterPersonalityPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-personality/get-combat",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getCombatPreferences",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class CharacterPersonalityPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-personality/set-combat",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "setCombatPreferences",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class CharacterPersonalityPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-personality/delete-combat",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteCombatPreferences",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class CharacterPersonalityPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-personality/get-compress-data",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getCompressData",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class CharacterPersonalityPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-personality/restore-from-archive",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "restoreFromArchive",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class CharacterPersonalityPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-personality/cleanup-by-character",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cleanupByCharacter",
             Permissions = new List<PermissionRequirement>
             {

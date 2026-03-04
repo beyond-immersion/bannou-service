@@ -38,34 +38,34 @@ using System = global::System;
 public enum ItemCategory
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"weapon")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Weapon")]
     Weapon = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"armor")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Armor")]
     Armor = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"accessory")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Accessory")]
     Accessory = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"consumable")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Consumable")]
     Consumable = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"material")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Material")]
     Material = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"container")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Container")]
     Container = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"quest")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Quest")]
     Quest = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"currency_like")]
+    [System.Runtime.Serialization.EnumMember(Value = @"CurrencyLike")]
     CurrencyLike = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"misc")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Misc")]
     Misc = 8,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Custom")]
     Custom = 9,
 
 }
@@ -79,13 +79,13 @@ public enum ItemCategory
 public enum QuantityModel
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"discrete")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Discrete")]
     Discrete = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"continuous")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Continuous")]
     Continuous = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"unique")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Unique")]
     Unique = 2,
 
 }
@@ -99,22 +99,22 @@ public enum QuantityModel
 public enum ItemRarity
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"common")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Common")]
     Common = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"uncommon")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Uncommon")]
     Uncommon = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"rare")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Rare")]
     Rare = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"epic")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Epic")]
     Epic = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"legendary")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Legendary")]
     Legendary = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Custom")]
     Custom = 5,
 
 }
@@ -128,16 +128,16 @@ public enum ItemRarity
 public enum SoulboundType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    [System.Runtime.Serialization.EnumMember(Value = @"None")]
     None = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"on_pickup")]
+    [System.Runtime.Serialization.EnumMember(Value = @"OnPickup")]
     OnPickup = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"on_equip")]
+    [System.Runtime.Serialization.EnumMember(Value = @"OnEquip")]
     OnEquip = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"on_use")]
+    [System.Runtime.Serialization.EnumMember(Value = @"OnUse")]
     OnUse = 3,
 
 }
@@ -151,13 +151,13 @@ public enum SoulboundType
 public enum ItemScope
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"global")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Global")]
     Global = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"realm_specific")]
+    [System.Runtime.Serialization.EnumMember(Value = @"RealmSpecific")]
     RealmSpecific = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"multi_realm")]
+    [System.Runtime.Serialization.EnumMember(Value = @"MultiRealm")]
     MultiRealm = 2,
 
 }
@@ -171,16 +171,16 @@ public enum ItemScope
 public enum WeightPrecision
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"integer")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Integer")]
     Integer = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"decimal_1")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Decimal1")]
     Decimal1 = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"decimal_2")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Decimal2")]
     Decimal2 = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"decimal_3")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Decimal3")]
     Decimal3 = 3,
 
 }
@@ -194,25 +194,25 @@ public enum WeightPrecision
 public enum ItemOriginType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"loot")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Loot")]
     Loot = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"quest")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Quest")]
     Quest = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"craft")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Craft")]
     Craft = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"trade")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Trade")]
     Trade = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"purchase")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Purchase")]
     Purchase = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"spawn")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Spawn")]
     Spawn = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"other")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Other")]
     Other = 6,
 
 }
@@ -230,13 +230,13 @@ public enum ItemOriginType
 public enum ItemUseBehavior
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"disabled")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Disabled")]
     Disabled = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"destroy_on_success")]
+    [System.Runtime.Serialization.EnumMember(Value = @"DestroyOnSuccess")]
     DestroyOnSuccess = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"destroy_always")]
+    [System.Runtime.Serialization.EnumMember(Value = @"DestroyAlways")]
     DestroyAlways = 2,
 
 }
@@ -254,13 +254,13 @@ public enum ItemUseBehavior
 public enum CanUseBehavior
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"disabled")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Disabled")]
     Disabled = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"block")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Block")]
     Block = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"warn_and_proceed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"WarnAndProceed")]
     WarnAndProceed = 2,
 
 }
@@ -278,13 +278,13 @@ public enum CanUseBehavior
 public enum ContractBindingType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    [System.Runtime.Serialization.EnumMember(Value = @"None")]
     None = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"session")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Session")]
     Session = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"lifecycle")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Lifecycle")]
     Lifecycle = 2,
 
 }
@@ -298,16 +298,16 @@ public enum ContractBindingType
 public enum DestroyReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"consumed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Consumed")]
     Consumed = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"destroyed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Destroyed")]
     Destroyed = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"expired")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Expired")]
     Expired = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"admin")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Admin")]
     Admin = 3,
 
 }
@@ -321,13 +321,13 @@ public enum DestroyReason
 public enum UnbindReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"admin")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Admin")]
     Admin = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"expiration")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Expiration")]
     Expiration = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"transfer_override")]
+    [System.Runtime.Serialization.EnumMember(Value = @"TransferOverride")]
     TransferOverride = 2,
 
 }

@@ -141,7 +141,7 @@ public partial class WorldstateService
                 {
                     ResourceType = "realm",
                     SourceType = "worldstate",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "worldstate",
                     CallbackEndpoint = "/worldstate/cleanup-by-realm",
                     PayloadTemplate = "{\"realmId\": \"{{resourceId}}\"}",
@@ -162,7 +162,7 @@ public partial class WorldstateService
                 {
                     ResourceType = "game-service",
                     SourceType = "worldstate",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "worldstate",
                     CallbackEndpoint = "/worldstate/cleanup-by-game-service",
                     PayloadTemplate = "{\"gameServiceId\": \"{{resourceId}}\"}",

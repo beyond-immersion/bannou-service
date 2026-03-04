@@ -124,9 +124,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -217,9 +217,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -269,10 +269,10 @@ paths:
         \    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n        \
         \            \"default\": 20,\n                    \"description\": \"Number of results per page\"\n             \
         \   }\n            }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
-        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
-        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
-        \                \"OTHER\"\n            ]\n        }\n    }\n}"
+        : \"Type classification for locations\",\n            \"enum\": [\n                \"Continent\",\n              \
+        \  \"Region\",\n                \"City\",\n                \"District\",\n                \"Building\",\n        \
+        \        \"Room\",\n                \"Landmark\",\n                \"Wilderness\",\n                \"Dungeon\",\n\
+        \                \"Other\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LocationListResponse\"\
         ,\n    \"$defs\": {\n        \"LocationListResponse\": {\n            \"description\": \"Paginated list of locations
         with metadata for navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
@@ -335,9 +335,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -390,9 +390,9 @@ paths:
         \              \"maximum\": 100,\n                    \"default\": 20,\n                    \"description\": \"Number
         of results per page\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
-        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
-        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
-        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        }\n    }\n}"
+        \            \"Continent\",\n                \"Region\",\n                \"City\",\n                \"District\"\
+        ,\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n                \"Wilderness\"\
+        ,\n                \"Dungeon\",\n                \"Other\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LocationListResponse\"\
         ,\n    \"$defs\": {\n        \"LocationListResponse\": {\n            \"description\": \"Paginated list of locations
         with metadata for navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
@@ -455,9 +455,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -512,9 +512,9 @@ paths:
         \      \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n            \
         \        \"description\": \"Number of results per page\"\n                }\n            }\n        },\n        \"\
         LocationType\": {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\"\
-        ,\n            \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\"\
-        ,\n                \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
+        ,\n            \"enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\"\
+        ,\n                \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\"\
+        ,\n                \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n     \
         \   }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LocationListResponse\"\
         ,\n    \"$defs\": {\n        \"LocationListResponse\": {\n            \"description\": \"Paginated list of locations
@@ -578,9 +578,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -633,9 +633,9 @@ paths:
         \      \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n            \
         \        \"description\": \"Number of results per page\"\n                }\n            }\n        },\n        \"\
         LocationType\": {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\"\
-        ,\n            \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\"\
-        ,\n                \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
+        ,\n            \"enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\"\
+        ,\n                \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\"\
+        ,\n                \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n     \
         \   }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LocationListResponse\"\
         ,\n    \"$defs\": {\n        \"LocationListResponse\": {\n            \"description\": \"Paginated list of locations
@@ -699,9 +699,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -809,9 +809,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -934,9 +934,9 @@ paths:
         \      \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n            \
         \        \"description\": \"Number of results per page\"\n                }\n            }\n        },\n        \"\
         LocationType\": {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\"\
-        ,\n            \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\"\
-        ,\n                \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
+        ,\n            \"enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\"\
+        ,\n                \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\"\
+        ,\n                \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n     \
         \   }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LocationListResponse\"\
         ,\n    \"$defs\": {\n        \"LocationListResponse\": {\n            \"description\": \"Paginated list of locations
@@ -1000,9 +1000,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -1074,9 +1074,9 @@ paths:
         \                \"description\": \"Client-provided location metadata. No Bannou plugin reads specific keys from this
         field by convention.\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"\
         type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n\
-        \                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
-        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
-        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
+        \                \"Continent\",\n                \"Region\",\n                \"City\",\n                \"District\"\
+        ,\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n                \"Wilderness\"\
+        ,\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n        \"BoundsPrecision\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
         ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
         \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
@@ -1129,9 +1129,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -1196,9 +1196,9 @@ paths:
         \                  \"nullable\": true,\n                    \"description\": \"Updated client-provided location metadata.
         No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
         \        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\": \"Type classification
-        for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n         \
-        \       \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n     \
-        \           \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\
+        for locations\",\n            \"enum\": [\n                \"Continent\",\n                \"Region\",\n         \
+        \       \"City\",\n                \"District\",\n                \"Building\",\n                \"Room\",\n     \
+        \           \"Landmark\",\n                \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\
         \n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n   \
         \             \"approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n\
@@ -1252,9 +1252,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -1351,9 +1351,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -1445,9 +1445,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -1587,9 +1587,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -1690,9 +1690,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -1786,9 +1786,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -1948,9 +1948,9 @@ paths:
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
         the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"\
-        enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n              \
-        \  \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n      \
-        \          \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n \
+        enum\": [\n                \"Continent\",\n                \"Region\",\n                \"City\",\n              \
+        \  \"District\",\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n      \
+        \          \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n \
         \       \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision level
         of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"approximate\"\
         ,\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\"\
@@ -2035,9 +2035,9 @@ paths:
         : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided location
         metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n\
         \        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\": \"Type classification
-        for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n         \
-        \       \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n     \
-        \           \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\
+        for locations\",\n            \"enum\": [\n                \"Continent\",\n                \"Region\",\n         \
+        \       \"City\",\n                \"District\",\n                \"Building\",\n                \"Room\",\n     \
+        \           \"Landmark\",\n                \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\
         \n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n   \
         \             \"approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n\
@@ -2297,16 +2297,16 @@ components:
       type: string
       description: Type classification for locations
       enum:
-      - CONTINENT
-      - REGION
-      - CITY
-      - DISTRICT
-      - BUILDING
-      - ROOM
-      - LANDMARK
-      - WILDERNESS
-      - DUNGEON
-      - OTHER
+      - Continent
+      - Region
+      - City
+      - District
+      - Building
+      - Room
+      - Landmark
+      - Wilderness
+      - Dungeon
+      - Other
     BoundsPrecision:
       type: string
       description: Precision level of spatial bounds for a location

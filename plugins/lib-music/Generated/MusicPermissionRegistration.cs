@@ -48,7 +48,7 @@ public static class MusicPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/music/generate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GenerateComposition",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class MusicPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/music/validate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ValidateMidiJson",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class MusicPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/music/style/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetStyle",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class MusicPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/music/style/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ListStyles",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class MusicPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/music/style/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "CreateStyle",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class MusicPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/music/theory/progression",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GenerateProgression",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class MusicPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/music/theory/melody",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GenerateMelody",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class MusicPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/music/theory/voice-lead",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ApplyVoiceLeading",
             Permissions = new List<PermissionRequirement>
             {

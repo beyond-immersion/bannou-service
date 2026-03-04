@@ -218,56 +218,56 @@ public partial class CurrencyController
             "type": "string",
             "description": "Scope of currency availability across realms",
             "enum": [
-                "global",
-                "realm_specific",
-                "multi_realm"
+                "Global",
+                "RealmSpecific",
+                "MultiRealm"
             ]
         },
         "CurrencyPrecision": {
             "type": "string",
             "description": "How the currency handles decimal values (immutable after creation)",
             "enum": [
-                "integer",
-                "decimal_2",
-                "decimal_4",
-                "decimal_8",
-                "decimal_full",
-                "big_integer"
+                "Integer",
+                "Decimal2",
+                "Decimal4",
+                "Decimal8",
+                "DecimalFull",
+                "BigInteger"
             ]
         },
         "CapOverflowBehavior": {
             "type": "string",
             "description": "What happens when a credit would exceed the wallet cap",
             "enum": [
-                "reject",
-                "cap_and_lose",
-                "cap_and_return"
+                "Reject",
+                "CapAndLose",
+                "CapAndReturn"
             ]
         },
         "AutogainMode": {
             "type": "string",
             "description": "How autogain (energy/interest) is calculated",
             "enum": [
-                "simple",
-                "compound"
+                "Simple",
+                "Compound"
             ]
         },
         "ExpirationPolicy": {
             "type": "string",
             "description": "How currency expiration is determined",
             "enum": [
-                "fixed_date",
-                "duration_from_earn",
-                "end_of_season"
+                "FixedDate",
+                "DurationFromEarn",
+                "EndOfSeason"
             ]
         },
         "ItemLinkageMode": {
             "type": "string",
             "description": "How currency is linked to inventory items",
             "enum": [
-                "none",
-                "visual_only",
-                "reference_only"
+                "None",
+                "VisualOnly",
+                "ReferenceOnly"
             ]
         }
     }
@@ -496,56 +496,56 @@ public partial class CurrencyController
             "type": "string",
             "description": "Scope of currency availability across realms",
             "enum": [
-                "global",
-                "realm_specific",
-                "multi_realm"
+                "Global",
+                "RealmSpecific",
+                "MultiRealm"
             ]
         },
         "CurrencyPrecision": {
             "type": "string",
             "description": "How the currency handles decimal values (immutable after creation)",
             "enum": [
-                "integer",
-                "decimal_2",
-                "decimal_4",
-                "decimal_8",
-                "decimal_full",
-                "big_integer"
+                "Integer",
+                "Decimal2",
+                "Decimal4",
+                "Decimal8",
+                "DecimalFull",
+                "BigInteger"
             ]
         },
         "CapOverflowBehavior": {
             "type": "string",
             "description": "What happens when a credit would exceed the wallet cap",
             "enum": [
-                "reject",
-                "cap_and_lose",
-                "cap_and_return"
+                "Reject",
+                "CapAndLose",
+                "CapAndReturn"
             ]
         },
         "AutogainMode": {
             "type": "string",
             "description": "How autogain (energy/interest) is calculated",
             "enum": [
-                "simple",
-                "compound"
+                "Simple",
+                "Compound"
             ]
         },
         "ExpirationPolicy": {
             "type": "string",
             "description": "How currency expiration is determined",
             "enum": [
-                "fixed_date",
-                "duration_from_earn",
-                "end_of_season"
+                "FixedDate",
+                "DurationFromEarn",
+                "EndOfSeason"
             ]
         },
         "ItemLinkageMode": {
             "type": "string",
             "description": "How currency is linked to inventory items",
             "enum": [
-                "none",
-                "visual_only",
-                "reference_only"
+                "None",
+                "VisualOnly",
+                "ReferenceOnly"
             ]
         }
     }
@@ -858,56 +858,56 @@ public partial class CurrencyController
             "type": "string",
             "description": "Scope of currency availability across realms",
             "enum": [
-                "global",
-                "realm_specific",
-                "multi_realm"
+                "Global",
+                "RealmSpecific",
+                "MultiRealm"
             ]
         },
         "CurrencyPrecision": {
             "type": "string",
             "description": "How the currency handles decimal values (immutable after creation)",
             "enum": [
-                "integer",
-                "decimal_2",
-                "decimal_4",
-                "decimal_8",
-                "decimal_full",
-                "big_integer"
+                "Integer",
+                "Decimal2",
+                "Decimal4",
+                "Decimal8",
+                "DecimalFull",
+                "BigInteger"
             ]
         },
         "CapOverflowBehavior": {
             "type": "string",
             "description": "What happens when a credit would exceed the wallet cap",
             "enum": [
-                "reject",
-                "cap_and_lose",
-                "cap_and_return"
+                "Reject",
+                "CapAndLose",
+                "CapAndReturn"
             ]
         },
         "AutogainMode": {
             "type": "string",
             "description": "How autogain (energy/interest) is calculated",
             "enum": [
-                "simple",
-                "compound"
+                "Simple",
+                "Compound"
             ]
         },
         "ExpirationPolicy": {
             "type": "string",
             "description": "How currency expiration is determined",
             "enum": [
-                "fixed_date",
-                "duration_from_earn",
-                "end_of_season"
+                "FixedDate",
+                "DurationFromEarn",
+                "EndOfSeason"
             ]
         },
         "ItemLinkageMode": {
             "type": "string",
             "description": "How currency is linked to inventory items",
             "enum": [
-                "none",
-                "visual_only",
-                "reference_only"
+                "None",
+                "VisualOnly",
+                "ReferenceOnly"
             ]
         }
     }
@@ -1007,9 +1007,9 @@ public partial class CurrencyController
             "type": "string",
             "description": "Scope of currency availability across realms",
             "enum": [
-                "global",
-                "realm_specific",
-                "multi_realm"
+                "Global",
+                "RealmSpecific",
+                "MultiRealm"
             ]
         }
     }
@@ -1255,56 +1255,56 @@ public partial class CurrencyController
             "type": "string",
             "description": "Scope of currency availability across realms",
             "enum": [
-                "global",
-                "realm_specific",
-                "multi_realm"
+                "Global",
+                "RealmSpecific",
+                "MultiRealm"
             ]
         },
         "CurrencyPrecision": {
             "type": "string",
             "description": "How the currency handles decimal values (immutable after creation)",
             "enum": [
-                "integer",
-                "decimal_2",
-                "decimal_4",
-                "decimal_8",
-                "decimal_full",
-                "big_integer"
+                "Integer",
+                "Decimal2",
+                "Decimal4",
+                "Decimal8",
+                "DecimalFull",
+                "BigInteger"
             ]
         },
         "CapOverflowBehavior": {
             "type": "string",
             "description": "What happens when a credit would exceed the wallet cap",
             "enum": [
-                "reject",
-                "cap_and_lose",
-                "cap_and_return"
+                "Reject",
+                "CapAndLose",
+                "CapAndReturn"
             ]
         },
         "AutogainMode": {
             "type": "string",
             "description": "How autogain (energy/interest) is calculated",
             "enum": [
-                "simple",
-                "compound"
+                "Simple",
+                "Compound"
             ]
         },
         "ExpirationPolicy": {
             "type": "string",
             "description": "How currency expiration is determined",
             "enum": [
-                "fixed_date",
-                "duration_from_earn",
-                "end_of_season"
+                "FixedDate",
+                "DurationFromEarn",
+                "EndOfSeason"
             ]
         },
         "ItemLinkageMode": {
             "type": "string",
             "description": "How currency is linked to inventory items",
             "enum": [
-                "none",
-                "visual_only",
-                "reference_only"
+                "None",
+                "VisualOnly",
+                "ReferenceOnly"
             ]
         }
     }
@@ -1498,17 +1498,17 @@ public partial class CurrencyController
             "type": "string",
             "description": "What happens when a credit would exceed the wallet cap",
             "enum": [
-                "reject",
-                "cap_and_lose",
-                "cap_and_return"
+                "Reject",
+                "CapAndLose",
+                "CapAndReturn"
             ]
         },
         "AutogainMode": {
             "type": "string",
             "description": "How autogain (energy/interest) is calculated",
             "enum": [
-                "simple",
-                "compound"
+                "Simple",
+                "Compound"
             ]
         }
     }
@@ -1737,56 +1737,56 @@ public partial class CurrencyController
             "type": "string",
             "description": "Scope of currency availability across realms",
             "enum": [
-                "global",
-                "realm_specific",
-                "multi_realm"
+                "Global",
+                "RealmSpecific",
+                "MultiRealm"
             ]
         },
         "CurrencyPrecision": {
             "type": "string",
             "description": "How the currency handles decimal values (immutable after creation)",
             "enum": [
-                "integer",
-                "decimal_2",
-                "decimal_4",
-                "decimal_8",
-                "decimal_full",
-                "big_integer"
+                "Integer",
+                "Decimal2",
+                "Decimal4",
+                "Decimal8",
+                "DecimalFull",
+                "BigInteger"
             ]
         },
         "CapOverflowBehavior": {
             "type": "string",
             "description": "What happens when a credit would exceed the wallet cap",
             "enum": [
-                "reject",
-                "cap_and_lose",
-                "cap_and_return"
+                "Reject",
+                "CapAndLose",
+                "CapAndReturn"
             ]
         },
         "AutogainMode": {
             "type": "string",
             "description": "How autogain (energy/interest) is calculated",
             "enum": [
-                "simple",
-                "compound"
+                "Simple",
+                "Compound"
             ]
         },
         "ExpirationPolicy": {
             "type": "string",
             "description": "How currency expiration is determined",
             "enum": [
-                "fixed_date",
-                "duration_from_earn",
-                "end_of_season"
+                "FixedDate",
+                "DurationFromEarn",
+                "EndOfSeason"
             ]
         },
         "ItemLinkageMode": {
             "type": "string",
             "description": "How currency is linked to inventory items",
             "enum": [
-                "none",
-                "visual_only",
-                "reference_only"
+                "None",
+                "VisualOnly",
+                "ReferenceOnly"
             ]
         }
     }
@@ -1958,9 +1958,9 @@ public partial class CurrencyController
             "type": "string",
             "description": "Current status of a wallet",
             "enum": [
-                "active",
-                "frozen",
-                "closed"
+                "Active",
+                "Frozen",
+                "Closed"
             ]
         }
     }
@@ -2158,9 +2158,9 @@ public partial class CurrencyController
             "type": "string",
             "description": "Current status of a wallet",
             "enum": [
-                "active",
-                "frozen",
-                "closed"
+                "Active",
+                "Frozen",
+                "Closed"
             ]
         },
         "BalanceSummary": {
@@ -2397,9 +2397,9 @@ public partial class CurrencyController
             "type": "string",
             "description": "Current status of a wallet",
             "enum": [
-                "active",
-                "frozen",
-                "closed"
+                "Active",
+                "Frozen",
+                "Closed"
             ]
         },
         "BalanceSummary": {
@@ -2605,9 +2605,9 @@ public partial class CurrencyController
             "type": "string",
             "description": "Current status of a wallet",
             "enum": [
-                "active",
-                "frozen",
-                "closed"
+                "Active",
+                "Frozen",
+                "Closed"
             ]
         }
     }
@@ -2768,9 +2768,9 @@ public partial class CurrencyController
             "type": "string",
             "description": "Current status of a wallet",
             "enum": [
-                "active",
-                "frozen",
-                "closed"
+                "Active",
+                "Frozen",
+                "Closed"
             ]
         }
     }
@@ -2959,9 +2959,9 @@ public partial class CurrencyController
             "type": "string",
             "description": "Current status of a wallet",
             "enum": [
-                "active",
-                "frozen",
-                "closed"
+                "Active",
+                "Frozen",
+                "Closed"
             ]
         },
         "TransferredBalance": {
@@ -3215,8 +3215,8 @@ public partial class CurrencyController
             "type": "string",
             "description": "How autogain (energy/interest) is calculated",
             "enum": [
-                "simple",
-                "compound"
+                "Simple",
+                "Compound"
             ]
         }
     }
@@ -3522,25 +3522,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -3720,25 +3720,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -3874,25 +3874,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -4050,25 +4050,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -4205,25 +4205,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -4398,25 +4398,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -4560,25 +4560,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -4762,25 +4762,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -4935,25 +4935,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -5137,25 +5137,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -5599,25 +5599,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -6087,56 +6087,56 @@ public partial class CurrencyController
             "type": "string",
             "description": "Scope of currency availability across realms",
             "enum": [
-                "global",
-                "realm_specific",
-                "multi_realm"
+                "Global",
+                "RealmSpecific",
+                "MultiRealm"
             ]
         },
         "CurrencyPrecision": {
             "type": "string",
             "description": "How the currency handles decimal values (immutable after creation)",
             "enum": [
-                "integer",
-                "decimal_2",
-                "decimal_4",
-                "decimal_8",
-                "decimal_full",
-                "big_integer"
+                "Integer",
+                "Decimal2",
+                "Decimal4",
+                "Decimal8",
+                "DecimalFull",
+                "BigInteger"
             ]
         },
         "CapOverflowBehavior": {
             "type": "string",
             "description": "What happens when a credit would exceed the wallet cap",
             "enum": [
-                "reject",
-                "cap_and_lose",
-                "cap_and_return"
+                "Reject",
+                "CapAndLose",
+                "CapAndReturn"
             ]
         },
         "AutogainMode": {
             "type": "string",
             "description": "How autogain (energy/interest) is calculated",
             "enum": [
-                "simple",
-                "compound"
+                "Simple",
+                "Compound"
             ]
         },
         "ExpirationPolicy": {
             "type": "string",
             "description": "How currency expiration is determined",
             "enum": [
-                "fixed_date",
-                "duration_from_earn",
-                "end_of_season"
+                "FixedDate",
+                "DurationFromEarn",
+                "EndOfSeason"
             ]
         },
         "ItemLinkageMode": {
             "type": "string",
             "description": "How currency is linked to inventory items",
             "enum": [
-                "none",
-                "visual_only",
-                "reference_only"
+                "None",
+                "VisualOnly",
+                "ReferenceOnly"
             ]
         }
     }
@@ -6368,25 +6368,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -6512,25 +6512,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -6690,25 +6690,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -6950,25 +6950,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -7555,25 +7555,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -7838,25 +7838,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -8121,25 +8121,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -8362,10 +8362,10 @@ public partial class CurrencyController
             "type": "string",
             "description": "Current status of an authorization hold",
             "enum": [
-                "active",
-                "captured",
-                "released",
-                "expired"
+                "Active",
+                "Captured",
+                "Released",
+                "Expired"
             ]
         }
     }
@@ -8581,10 +8581,10 @@ public partial class CurrencyController
             "type": "string",
             "description": "Current status of an authorization hold",
             "enum": [
-                "active",
-                "captured",
-                "released",
-                "expired"
+                "Active",
+                "Captured",
+                "Released",
+                "Expired"
             ]
         },
         "CurrencyTransactionRecord": {
@@ -8713,25 +8713,25 @@ public partial class CurrencyController
             "type": "string",
             "description": "Classification of the currency transaction",
             "enum": [
-                "mint",
-                "quest_reward",
-                "loot_drop",
-                "vendor_sale",
-                "autogain",
-                "refund",
-                "conversion_credit",
-                "burn",
-                "vendor_purchase",
-                "fee",
-                "expiration",
-                "cap_overflow",
-                "conversion_debit",
-                "transfer",
-                "trade",
-                "gift",
-                "escrow_deposit",
-                "escrow_release",
-                "escrow_refund"
+                "Mint",
+                "QuestReward",
+                "LootDrop",
+                "VendorSale",
+                "Autogain",
+                "Refund",
+                "ConversionCredit",
+                "Burn",
+                "VendorPurchase",
+                "Fee",
+                "Expiration",
+                "CapOverflow",
+                "ConversionDebit",
+                "Transfer",
+                "Trade",
+                "Gift",
+                "EscrowDeposit",
+                "EscrowRelease",
+                "EscrowRefund"
             ]
         }
     }
@@ -8915,10 +8915,10 @@ public partial class CurrencyController
             "type": "string",
             "description": "Current status of an authorization hold",
             "enum": [
-                "active",
-                "captured",
-                "released",
-                "expired"
+                "Active",
+                "Captured",
+                "Released",
+                "Expired"
             ]
         }
     }
@@ -9102,10 +9102,10 @@ public partial class CurrencyController
             "type": "string",
             "description": "Current status of an authorization hold",
             "enum": [
-                "active",
-                "captured",
-                "released",
-                "expired"
+                "Active",
+                "Captured",
+                "Released",
+                "Expired"
             ]
         }
     }

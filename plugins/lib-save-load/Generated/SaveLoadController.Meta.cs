@@ -105,20 +105,20 @@ public partial class SaveLoadController
         "SaveCategory": {
             "type": "string",
             "enum": [
-                "QUICK_SAVE",
-                "AUTO_SAVE",
-                "MANUAL_SAVE",
-                "CHECKPOINT",
-                "STATE_SNAPSHOT"
+                "QuickSave",
+                "AutoSave",
+                "ManualSave",
+                "Checkpoint",
+                "StateSnapshot"
             ],
             "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
             "enum": [
-                "NONE",
-                "GZIP",
-                "BROTLI"
+                "None",
+                "Gzip",
+                "Brotli"
             ],
             "description": "Compression algorithm used for save data"
         }
@@ -214,20 +214,20 @@ public partial class SaveLoadController
         "SaveCategory": {
             "type": "string",
             "enum": [
-                "QUICK_SAVE",
-                "AUTO_SAVE",
-                "MANUAL_SAVE",
-                "CHECKPOINT",
-                "STATE_SNAPSHOT"
+                "QuickSave",
+                "AutoSave",
+                "ManualSave",
+                "Checkpoint",
+                "StateSnapshot"
             ],
             "description": "Category of save with predefined behaviors.\ nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
             "enum": [
-                "NONE",
-                "GZIP",
-                "BROTLI"
+                "None",
+                "Gzip",
+                "Brotli"
             ],
             "description": "Compression algorithm used for save data"
         }
@@ -420,20 +420,20 @@ public partial class SaveLoadController
         "SaveCategory": {
             "type": "string",
             "enum": [
-                "QUICK_SAVE",
-                "AUTO_SAVE",
-                "MANUAL_SAVE",
-                "CHECKPOINT",
-                "STATE_SNAPSHOT"
+                "QuickSave",
+                "AutoSave",
+                "ManualSave",
+                "Checkpoint",
+                "StateSnapshot"
             ],
             "description": "Category of save with predefined behaviors.\ nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
             "enum": [
-                "NONE",
-                "GZIP",
-                "BROTLI"
+                "None",
+                "Gzip",
+                "Brotli"
             ],
             "description": "Compression algorithm used for save data"
         }
@@ -546,11 +546,11 @@ public partial class SaveLoadController
         "SaveCategory": {
             "type": "string",
             "enum": [
-                "QUICK_SAVE",
-                "AUTO_SAVE",
-                "MANUAL_SAVE",
-                "CHECKPOINT",
-                "STATE_SNAPSHOT"
+                "QuickSave",
+                "AutoSave",
+                "ManualSave",
+                "Checkpoint",
+                "StateSnapshot"
             ],
             "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
@@ -666,20 +666,20 @@ public partial class SaveLoadController
         "SaveCategory": {
             "type": "string",
             "enum": [
-                "QUICK_SAVE",
-                "AUTO_SAVE",
-                "MANUAL_SAVE",
-                "CHECKPOINT",
-                "STATE_SNAPSHOT"
+                "QuickSave",
+                "AutoSave",
+                "ManualSave",
+                "Checkpoint",
+                "StateSnapshot"
             ],
             "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
             "enum": [
-                "NONE",
-                "GZIP",
-                "BROTLI"
+                "None",
+                "Gzip",
+                "Brotli"
             ],
             "description": "Compression algorithm used for save data"
         }
@@ -1007,20 +1007,20 @@ public partial class SaveLoadController
         "SaveCategory": {
             "type": "string",
             "enum": [
-                "QUICK_SAVE",
-                "AUTO_SAVE",
-                "MANUAL_SAVE",
-                "CHECKPOINT",
-                "STATE_SNAPSHOT"
+                "QuickSave",
+                "AutoSave",
+                "ManualSave",
+                "Checkpoint",
+                "StateSnapshot"
             ],
             "description": "Category of save with predefined behaviors.\ nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
             "enum": [
-                "NONE",
-                "GZIP",
-                "BROTLI"
+                "None",
+                "Gzip",
+                "Brotli"
             ],
             "description": "Compression algorithm used for save data"
         }
@@ -1288,11 +1288,11 @@ public partial class SaveLoadController
         "SaveCategory": {
             "type": "string",
             "enum": [
-                "QUICK_SAVE",
-                "AUTO_SAVE",
-                "MANUAL_SAVE",
-                "CHECKPOINT",
-                "STATE_SNAPSHOT"
+                "QuickSave",
+                "AutoSave",
+                "ManualSave",
+                "Checkpoint",
+                "StateSnapshot"
             ],
             "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
@@ -1709,11 +1709,11 @@ public partial class SaveLoadController
         "DeltaAlgorithm": {
             "type": "string",
             "enum": [
-                "JSON_PATCH",
-                "BSDIFF",
-                "XDELTA"
+                "JsonPatch",
+                "Bsdiff",
+                "Xdelta"
             ],
-            "default": "JSON_PATCH",
+            "default": "JsonPatch",
             "description": "Algorithm used for delta computation.\nJSON_PATCH: RFC 6902, best for structured JSON data\nBSDIFF: Binary diff, good for general binary data\nXDELTA: RFC 3284 VCDIFF, efficient for large binary files\n"
         }
     }
@@ -2977,11 +2977,11 @@ public partial class SaveLoadController
         "SaveCategory": {
             "type": "string",
             "enum": [
-                "QUICK_SAVE",
-                "AUTO_SAVE",
-                "MANUAL_SAVE",
-                "CHECKPOINT",
-                "STATE_SNAPSHOT"
+                "QuickSave",
+                "AutoSave",
+                "ManualSave",
+                "Checkpoint",
+                "StateSnapshot"
             ],
             "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
@@ -3095,11 +3095,11 @@ public partial class SaveLoadController
         "SaveCategory": {
             "type": "string",
             "enum": [
-                "QUICK_SAVE",
-                "AUTO_SAVE",
-                "MANUAL_SAVE",
-                "CHECKPOINT",
-                "STATE_SNAPSHOT"
+                "QuickSave",
+                "AutoSave",
+                "ManualSave",
+                "Checkpoint",
+                "StateSnapshot"
             ],
             "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
@@ -3230,11 +3230,11 @@ public partial class SaveLoadController
         "SaveCategory": {
             "type": "string",
             "enum": [
-                "QUICK_SAVE",
-                "AUTO_SAVE",
-                "MANUAL_SAVE",
-                "CHECKPOINT",
-                "STATE_SNAPSHOT"
+                "QuickSave",
+                "AutoSave",
+                "ManualSave",
+                "Checkpoint",
+                "StateSnapshot"
             ],
             "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
@@ -3561,10 +3561,10 @@ public partial class SaveLoadController
         "ConflictResolution": {
             "type": "string",
             "enum": [
-                "SKIP",
-                "OVERWRITE",
-                "RENAME",
-                "FAIL"
+                "Skip",
+                "Overwrite",
+                "Rename",
+                "Fail"
             ],
             "description": "Strategy for handling conflicts during import"
         }
@@ -4513,11 +4513,11 @@ public partial class SaveLoadController
         "SaveCategory": {
             "type": "string",
             "enum": [
-                "QUICK_SAVE",
-                "AUTO_SAVE",
-                "MANUAL_SAVE",
-                "CHECKPOINT",
-                "STATE_SNAPSHOT"
+                "QuickSave",
+                "AutoSave",
+                "ManualSave",
+                "Checkpoint",
+                "StateSnapshot"
             ],
             "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }

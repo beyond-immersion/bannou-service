@@ -1410,22 +1410,22 @@ public partial class BehaviorController
                 "reason": {
                     "type": "string",
                     "enum": [
-                        "none",
-                        "preconditionInvalidated",
-                        "actionFailed",
-                        "betterGoalAvailable",
-                        "planCompleted",
-                        "goalAlreadySatisfied",
-                        "suboptimalPlan"
+                        "None",
+                        "PreconditionInvalidated",
+                        "ActionFailed",
+                        "BetterGoalAvailable",
+                        "PlanCompleted",
+                        "GoalAlreadySatisfied",
+                        "SuboptimalPlan"
                     ],
                     "description": "Reason for the validation result"
                 },
                 "suggestedAction": {
                     "type": "string",
                     "enum": [
-                        "continue",
-                        "replan",
-                        "abort"
+                        "Continue",
+                        "Replan",
+                        "Abort"
                     ],
                     "description": "Suggested action based on validation"
                 },

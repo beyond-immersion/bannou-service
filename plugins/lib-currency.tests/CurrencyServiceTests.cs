@@ -81,7 +81,7 @@ public class CurrencyServiceTests
         // Assert - verify core endpoints exist
         var createEndpoint = endpoints.FirstOrDefault(e =>
             e.Path == "/currency/definition/create" &&
-            e.Method == ServiceEndpointMethod.POST);
+            e.Method == ServiceEndpointMethod.Post);
 
         Assert.NotNull(createEndpoint);
         Assert.NotNull(createEndpoint.Permissions);
@@ -154,7 +154,7 @@ public class CurrencyServiceTests
         // Assert - POST-only API pattern
         foreach (var endpoint in endpoints)
         {
-            Assert.Equal(ServiceEndpointMethod.POST, endpoint.Method);
+            Assert.Equal(ServiceEndpointMethod.Post, endpoint.Method);
         }
     }
 

@@ -562,25 +562,25 @@ public partial class ActorInstanceResponse
 public enum ActorStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"pending")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Pending")]
     Pending = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"starting")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Starting")]
     Starting = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"running")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Running")]
     Running = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"paused")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Paused")]
     Paused = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"stopping")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Stopping")]
     Stopping = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"stopped")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Stopped")]
     Stopped = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"error")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Error")]
     Error = 6,
 
 }
@@ -594,16 +594,16 @@ public enum ActorStatus
 public enum ActorExitReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"behavior_complete")]
+    [System.Runtime.Serialization.EnumMember(Value = @"BehaviorComplete")]
     BehaviorComplete = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"error")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Error")]
     Error = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"timeout")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Timeout")]
     Timeout = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"external_stop")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ExternalStop")]
     ExternalStop = 3,
 
 }
@@ -617,16 +617,16 @@ public enum ActorExitReason
 public enum ActorDeploymentMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"bannou")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Bannou")]
     Bannou = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"pool-per-type")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PoolPerType")]
     PoolPerType = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"shared-pool")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SharedPool")]
     SharedPool = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"auto-scale")]
+    [System.Runtime.Serialization.EnumMember(Value = @"AutoScale")]
     AutoScale = 3,
 
 }
@@ -640,31 +640,31 @@ public enum ActorDeploymentMode
 public enum PerceptionSourceType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"character")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Character")]
     Character = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"npc")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Npc")]
     Npc = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"object")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Object")]
     Object = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"environment")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Environment")]
     Environment = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"coordinator")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Coordinator")]
     Coordinator = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"scheduled")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Scheduled")]
     Scheduled = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"message")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Message")]
     Message = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"service")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Service")]
     Service = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"system")]
+    [System.Runtime.Serialization.EnumMember(Value = @"System")]
     System = 8,
 
 }
@@ -1247,19 +1247,19 @@ public partial class QueryOptionsResponse
 public enum OptionsQueryType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"combat")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Combat")]
     Combat = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"dialogue")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Dialogue")]
     Dialogue = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"exploration")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Exploration")]
     Exploration = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"social")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Social")]
     Social = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Custom")]
     Custom = 4,
 
 }
@@ -1273,13 +1273,13 @@ public enum OptionsQueryType
 public enum OptionsFreshness
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"fresh")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Fresh")]
     Fresh = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cached")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Cached")]
     Cached = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"stale_ok")]
+    [System.Runtime.Serialization.EnumMember(Value = @"StaleOk")]
     StaleOk = 2,
 
 }
@@ -1668,16 +1668,16 @@ public partial class ChoreographyTiming
 public enum ChoreographyPriority
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"low")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Low")]
     Low = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"normal")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Normal")]
     Normal = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"high")]
+    [System.Runtime.Serialization.EnumMember(Value = @"High")]
     High = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"override")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Override")]
     Override = 3,
 
 }
@@ -1691,13 +1691,13 @@ public enum ChoreographyPriority
 public enum ChoreographyStartCondition
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"immediate")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Immediate")]
     Immediate = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"after_previous")]
+    [System.Runtime.Serialization.EnumMember(Value = @"AfterPrevious")]
     AfterPrevious = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"sync_point")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SyncPoint")]
     SyncPoint = 2,
 
 }

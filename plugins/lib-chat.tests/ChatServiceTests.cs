@@ -79,7 +79,7 @@ public class ChatServiceTests
 
         foreach (var endpoint in endpoints)
         {
-            Assert.Equal(ServiceEndpointMethod.POST, endpoint.Method);
+            Assert.Equal(ServiceEndpointMethod.Post, endpoint.Method);
         }
     }
 

@@ -742,11 +742,11 @@ components:
     SubscriptionAction:
       type: string
       enum:
-      - created
-      - updated
-      - cancelled
-      - expired
-      - renewed
+      - Created
+      - Updated
+      - Cancelled
+      - Expired
+      - Renewed
       description: The type of action that triggered a subscription state change
     QuerySubscriptionsResponse:
       type: object

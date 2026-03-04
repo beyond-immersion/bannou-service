@@ -91,6 +91,7 @@ The Achievement plugin is currently a leaf service — it reacts to external eve
 | LockExpirySeconds | `ACHIEVEMENT_LOCK_EXPIRY_SECONDS` | 30 | Expiry time for distributed locks on progress/unlock operations |
 | EarnedCountRetryAttempts | `ACHIEVEMENT_EARNED_COUNT_RETRY_ATTEMPTS` | 3 | Retry attempts for ETag conflicts when incrementing earned count |
 | ProgressTtlSeconds | `ACHIEVEMENT_PROGRESS_TTL_SECONDS` | 0 | TTL on progress records in Redis (0 = no expiry, progress persists indefinitely; positive value enables cache-like expiry) |
+| ProgressMilestonePercents | `ACHIEVEMENT_PROGRESS_MILESTONE_PERCENTS` | [25, 50, 75] | Progress percentage thresholds at which client milestone events are published (comma-separated in env var) |
 | RarityCalculationStartupDelaySeconds | `ACHIEVEMENT_RARITY_CALCULATION_STARTUP_DELAY_SECONDS` | 30 | Delay before first rarity recalculation after startup |
 | RarityCalculationIntervalMinutes | `ACHIEVEMENT_RARITY_CALCULATION_INTERVAL_MINUTES` | 60 | Interval between periodic rarity recalculations |
 | RareThresholdPercent | `ACHIEVEMENT_RARE_THRESHOLD_PERCENT` | 5.0 | Percentage below which an achievement is flagged as rare |
@@ -184,7 +185,6 @@ Create/Read/Update/List/Deprecate (Category B — no delete, no undeprecate). Cr
 - **Progressive platform sync**: Call `SetProgressAsync` when progress updates occur (not just on unlock), enabling Steam stats to track incremental progress
 - **Achievement groups/categories**: Add a typed `category` field on achievement definitions for UI grouping/filtering
 - **Leaderboard integration on unlock**: Publish achievement points to a leaderboard for gamerscore-style rankings
-- **Configurable milestone thresholds**: Make the 25/50/75% client event thresholds configurable per achievement or globally via configuration
 
 ## Known Quirks & Caveats
 
@@ -204,7 +204,7 @@ Create/Read/Update/List/Deprecate (Category B — no delete, no undeprecate). Cr
 
 5. **Orphaned progress data**: Since definitions cannot be deleted (Category B), progress records may reference deprecated definitions. Orphaned entries are filtered at read time by verifying each definition still exists.
 
-6. **Client milestone events at fixed thresholds**: Progress milestone client events fire at exactly 25%, 50%, and 75% completion. These thresholds are hardcoded (not configurable).
+6. **Client milestone events at configurable thresholds**: Progress milestone client events fire at configurable percentage thresholds (default: 25%, 50%, 75%) via `ProgressMilestonePercents` configuration. Values are parsed from string array at runtime.
 
 ### Design Considerations (Requires Planning)
 

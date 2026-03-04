@@ -237,84 +237,84 @@ public partial class ItemController
             "type": "string",
             "description": "Item classification category",
             "enum": [
-                "weapon",
-                "armor",
-                "accessory",
-                "consumable",
-                "material",
-                "container",
-                "quest",
-                "currency_like",
-                "misc",
-                "custom"
+                "Weapon",
+                "Armor",
+                "Accessory",
+                "Consumable",
+                "Material",
+                "Container",
+                "Quest",
+                "CurrencyLike",
+                "Misc",
+                "Custom"
             ]
         },
         "ItemRarity": {
             "type": "string",
             "description": "Item rarity tier",
             "enum": [
-                "common",
-                "uncommon",
-                "rare",
-                "epic",
-                "legendary",
-                "custom"
+                "Common",
+                "Uncommon",
+                "Rare",
+                "Epic",
+                "Legendary",
+                "Custom"
             ]
         },
         "QuantityModel": {
             "type": "string",
             "description": "How quantities are tracked for this item type",
             "enum": [
-                "discrete",
-                "continuous",
-                "unique"
+                "Discrete",
+                "Continuous",
+                "Unique"
             ]
         },
         "WeightPrecision": {
             "type": "string",
             "description": "Precision for weight values (consistent with CurrencyPrecision)",
             "enum": [
-                "integer",
-                "decimal_1",
-                "decimal_2",
-                "decimal_3"
+                "Integer",
+                "Decimal1",
+                "Decimal2",
+                "Decimal3"
             ]
         },
         "SoulboundType": {
             "type": "string",
             "description": "When item becomes bound to a character",
             "enum": [
-                "none",
-                "on_pickup",
-                "on_equip",
-                "on_use"
+                "None",
+                "OnPickup",
+                "OnEquip",
+                "OnUse"
             ]
         },
         "ItemScope": {
             "type": "string",
             "description": "Realm availability scope (consistent with CurrencyScope)",
             "enum": [
-                "global",
-                "realm_specific",
-                "multi_realm"
+                "Global",
+                "RealmSpecific",
+                "MultiRealm"
             ]
         },
         "ItemUseBehavior": {
             "type": "string",
             "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\n- destroy_always: Item consumed regardless of success/failure\n",
             "enum": [
-                "disabled",
-                "destroy_on_success",
-                "destroy_always"
+                "Disabled",
+                "DestroyOnSuccess",
+                "DestroyAlways"
             ]
         },
         "CanUseBehavior": {
             "type": "string",
             "description": "Controls CanUse validation behavior.\n- disabled: Skip CanUse validation even if template is configured\n- block: CanUse failure prevents use (default)\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\n",
             "enum": [
-                "disabled",
-                "block",
-                "warn_and_proceed"
+                "Disabled",
+                "Block",
+                "WarnAndProceed"
             ]
         }
     }
@@ -573,84 +573,84 @@ public partial class ItemController
             "type": "string",
             "description": "Item classification category",
             "enum": [
-                "weapon",
-                "armor",
-                "accessory",
-                "consumable",
-                "material",
-                "container",
-                "quest",
-                "currency_like",
-                "misc",
-                "custom"
+                "Weapon",
+                "Armor",
+                "Accessory",
+                "Consumable",
+                "Material",
+                "Container",
+                "Quest",
+                "CurrencyLike",
+                "Misc",
+                "Custom"
             ]
         },
         "ItemRarity": {
             "type": "string",
             "description": "Item rarity tier",
             "enum": [
-                "common",
-                "uncommon",
-                "rare",
-                "epic",
-                "legendary",
-                "custom"
+                "Common",
+                "Uncommon",
+                "Rare",
+                "Epic",
+                "Legendary",
+                "Custom"
             ]
         },
         "QuantityModel": {
             "type": "string",
             "description": "How quantities are tracked for this item type",
             "enum": [
-                "discrete",
-                "continuous",
-                "unique"
+                "Discrete",
+                "Continuous",
+                "Unique"
             ]
         },
         "WeightPrecision": {
             "type": "string",
             "description": "Precision for weight values (consistent with CurrencyPrecision)",
             "enum": [
-                "integer",
-                "decimal_1",
-                "decimal_2",
-                "decimal_3"
+                "Integer",
+                "Decimal1",
+                "Decimal2",
+                "Decimal3"
             ]
         },
         "SoulboundType": {
             "type": "string",
             "description": "When item becomes bound to a character",
             "enum": [
-                "none",
-                "on_pickup",
-                "on_equip",
-                "on_use"
+                "None",
+                "OnPickup",
+                "OnEquip",
+                "OnUse"
             ]
         },
         "ItemScope": {
             "type": "string",
             "description": "Realm availability scope (consistent with CurrencyScope)",
             "enum": [
-                "global",
-                "realm_specific",
-                "multi_realm"
+                "Global",
+                "RealmSpecific",
+                "MultiRealm"
             ]
         },
         "ItemUseBehavior": {
             "type": "string",
             "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\n- destroy_always: Item consumed regardless of success/failure\n",
             "enum": [
-                "disabled",
-                "destroy_on_success",
-                "destroy_always"
+                "Disabled",
+                "DestroyOnSuccess",
+                "DestroyAlways"
             ]
         },
         "CanUseBehavior": {
             "type": "string",
             "description": "Controls CanUse validation behavior.\n- disabled: Skip CanUse validation even if template is configured\n- block: CanUse failure prevents use (default)\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\n",
             "enum": [
-                "disabled",
-                "block",
-                "warn_and_proceed"
+                "Disabled",
+                "Block",
+                "WarnAndProceed"
             ]
         }
     }
@@ -997,84 +997,84 @@ public partial class ItemController
             "type": "string",
             "description": "Item classification category",
             "enum": [
-                "weapon",
-                "armor",
-                "accessory",
-                "consumable",
-                "material",
-                "container",
-                "quest",
-                "currency_like",
-                "misc",
-                "custom"
+                "Weapon",
+                "Armor",
+                "Accessory",
+                "Consumable",
+                "Material",
+                "Container",
+                "Quest",
+                "CurrencyLike",
+                "Misc",
+                "Custom"
             ]
         },
         "ItemRarity": {
             "type": "string",
             "description": "Item rarity tier",
             "enum": [
-                "common",
-                "uncommon",
-                "rare",
-                "epic",
-                "legendary",
-                "custom"
+                "Common",
+                "Uncommon",
+                "Rare",
+                "Epic",
+                "Legendary",
+                "Custom"
             ]
         },
         "QuantityModel": {
             "type": "string",
             "description": "How quantities are tracked for this item type",
             "enum": [
-                "discrete",
-                "continuous",
-                "unique"
+                "Discrete",
+                "Continuous",
+                "Unique"
             ]
         },
         "WeightPrecision": {
             "type": "string",
             "description": "Precision for weight values (consistent with CurrencyPrecision)",
             "enum": [
-                "integer",
-                "decimal_1",
-                "decimal_2",
-                "decimal_3"
+                "Integer",
+                "Decimal1",
+                "Decimal2",
+                "Decimal3"
             ]
         },
         "SoulboundType": {
             "type": "string",
             "description": "When item becomes bound to a character",
             "enum": [
-                "none",
-                "on_pickup",
-                "on_equip",
-                "on_use"
+                "None",
+                "OnPickup",
+                "OnEquip",
+                "OnUse"
             ]
         },
         "ItemScope": {
             "type": "string",
             "description": "Realm availability scope (consistent with CurrencyScope)",
             "enum": [
-                "global",
-                "realm_specific",
-                "multi_realm"
+                "Global",
+                "RealmSpecific",
+                "MultiRealm"
             ]
         },
         "ItemUseBehavior": {
             "type": "string",
             "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\n- destroy_always: Item consumed regardless of success/failure\n",
             "enum": [
-                "disabled",
-                "destroy_on_success",
-                "destroy_always"
+                "Disabled",
+                "DestroyOnSuccess",
+                "DestroyAlways"
             ]
         },
         "CanUseBehavior": {
             "type": "string",
             "description": "Controls CanUse validation behavior.\n- disabled: Skip CanUse validation even if template is configured\n- block: CanUse failure prevents use (default)\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\n",
             "enum": [
-                "disabled",
-                "block",
-                "warn_and_proceed"
+                "Disabled",
+                "Block",
+                "WarnAndProceed"
             ]
         }
     }
@@ -1220,37 +1220,37 @@ public partial class ItemController
             "type": "string",
             "description": "Item classification category",
             "enum": [
-                "weapon",
-                "armor",
-                "accessory",
-                "consumable",
-                "material",
-                "container",
-                "quest",
-                "currency_like",
-                "misc",
-                "custom"
+                "Weapon",
+                "Armor",
+                "Accessory",
+                "Consumable",
+                "Material",
+                "Container",
+                "Quest",
+                "CurrencyLike",
+                "Misc",
+                "Custom"
             ]
         },
         "ItemRarity": {
             "type": "string",
             "description": "Item rarity tier",
             "enum": [
-                "common",
-                "uncommon",
-                "rare",
-                "epic",
-                "legendary",
-                "custom"
+                "Common",
+                "Uncommon",
+                "Rare",
+                "Epic",
+                "Legendary",
+                "Custom"
             ]
         },
         "ItemScope": {
             "type": "string",
             "description": "Realm availability scope (consistent with CurrencyScope)",
             "enum": [
-                "global",
-                "realm_specific",
-                "multi_realm"
+                "Global",
+                "RealmSpecific",
+                "MultiRealm"
             ]
         }
     }
@@ -1531,84 +1531,84 @@ public partial class ItemController
             "type": "string",
             "description": "Item classification category",
             "enum": [
-                "weapon",
-                "armor",
-                "accessory",
-                "consumable",
-                "material",
-                "container",
-                "quest",
-                "currency_like",
-                "misc",
-                "custom"
+                "Weapon",
+                "Armor",
+                "Accessory",
+                "Consumable",
+                "Material",
+                "Container",
+                "Quest",
+                "CurrencyLike",
+                "Misc",
+                "Custom"
             ]
         },
         "ItemRarity": {
             "type": "string",
             "description": "Item rarity tier",
             "enum": [
-                "common",
-                "uncommon",
-                "rare",
-                "epic",
-                "legendary",
-                "custom"
+                "Common",
+                "Uncommon",
+                "Rare",
+                "Epic",
+                "Legendary",
+                "Custom"
             ]
         },
         "QuantityModel": {
             "type": "string",
             "description": "How quantities are tracked for this item type",
             "enum": [
-                "discrete",
-                "continuous",
-                "unique"
+                "Discrete",
+                "Continuous",
+                "Unique"
             ]
         },
         "WeightPrecision": {
             "type": "string",
             "description": "Precision for weight values (consistent with CurrencyPrecision)",
             "enum": [
-                "integer",
-                "decimal_1",
-                "decimal_2",
-                "decimal_3"
+                "Integer",
+                "Decimal1",
+                "Decimal2",
+                "Decimal3"
             ]
         },
         "SoulboundType": {
             "type": "string",
             "description": "When item becomes bound to a character",
             "enum": [
-                "none",
-                "on_pickup",
-                "on_equip",
-                "on_use"
+                "None",
+                "OnPickup",
+                "OnEquip",
+                "OnUse"
             ]
         },
         "ItemScope": {
             "type": "string",
             "description": "Realm availability scope (consistent with CurrencyScope)",
             "enum": [
-                "global",
-                "realm_specific",
-                "multi_realm"
+                "Global",
+                "RealmSpecific",
+                "MultiRealm"
             ]
         },
         "ItemUseBehavior": {
             "type": "string",
             "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\n- destroy_always: Item consumed regardless of success/failure\n",
             "enum": [
-                "disabled",
-                "destroy_on_success",
-                "destroy_always"
+                "Disabled",
+                "DestroyOnSuccess",
+                "DestroyAlways"
             ]
         },
         "CanUseBehavior": {
             "type": "string",
             "description": "Controls CanUse validation behavior.\n- disabled: Skip CanUse validation even if template is configured\n- block: CanUse failure prevents use (default)\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\n",
             "enum": [
-                "disabled",
-                "block",
-                "warn_and_proceed"
+                "Disabled",
+                "Block",
+                "WarnAndProceed"
             ]
         }
     }
@@ -1841,30 +1841,30 @@ public partial class ItemController
             "type": "string",
             "description": "Item rarity tier",
             "enum": [
-                "common",
-                "uncommon",
-                "rare",
-                "epic",
-                "legendary",
-                "custom"
+                "Common",
+                "Uncommon",
+                "Rare",
+                "Epic",
+                "Legendary",
+                "Custom"
             ]
         },
         "ItemUseBehavior": {
             "type": "string",
             "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\n- destroy_always: Item consumed regardless of success/failure\n",
             "enum": [
-                "disabled",
-                "destroy_on_success",
-                "destroy_always"
+                "Disabled",
+                "DestroyOnSuccess",
+                "DestroyAlways"
             ]
         },
         "CanUseBehavior": {
             "type": "string",
             "description": "Controls CanUse validation behavior.\n- disabled: Skip CanUse validation even if template is configured\n- block: CanUse failure prevents use (default)\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\n",
             "enum": [
-                "disabled",
-                "block",
-                "warn_and_proceed"
+                "Disabled",
+                "Block",
+                "WarnAndProceed"
             ]
         }
     }
@@ -2123,84 +2123,84 @@ public partial class ItemController
             "type": "string",
             "description": "Item classification category",
             "enum": [
-                "weapon",
-                "armor",
-                "accessory",
-                "consumable",
-                "material",
-                "container",
-                "quest",
-                "currency_like",
-                "misc",
-                "custom"
+                "Weapon",
+                "Armor",
+                "Accessory",
+                "Consumable",
+                "Material",
+                "Container",
+                "Quest",
+                "CurrencyLike",
+                "Misc",
+                "Custom"
             ]
         },
         "ItemRarity": {
             "type": "string",
             "description": "Item rarity tier",
             "enum": [
-                "common",
-                "uncommon",
-                "rare",
-                "epic",
-                "legendary",
-                "custom"
+                "Common",
+                "Uncommon",
+                "Rare",
+                "Epic",
+                "Legendary",
+                "Custom"
             ]
         },
         "QuantityModel": {
             "type": "string",
             "description": "How quantities are tracked for this item type",
             "enum": [
-                "discrete",
-                "continuous",
-                "unique"
+                "Discrete",
+                "Continuous",
+                "Unique"
             ]
         },
         "WeightPrecision": {
             "type": "string",
             "description": "Precision for weight values (consistent with CurrencyPrecision)",
             "enum": [
-                "integer",
-                "decimal_1",
-                "decimal_2",
-                "decimal_3"
+                "Integer",
+                "Decimal1",
+                "Decimal2",
+                "Decimal3"
             ]
         },
         "SoulboundType": {
             "type": "string",
             "description": "When item becomes bound to a character",
             "enum": [
-                "none",
-                "on_pickup",
-                "on_equip",
-                "on_use"
+                "None",
+                "OnPickup",
+                "OnEquip",
+                "OnUse"
             ]
         },
         "ItemScope": {
             "type": "string",
             "description": "Realm availability scope (consistent with CurrencyScope)",
             "enum": [
-                "global",
-                "realm_specific",
-                "multi_realm"
+                "Global",
+                "RealmSpecific",
+                "MultiRealm"
             ]
         },
         "ItemUseBehavior": {
             "type": "string",
             "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\n- destroy_always: Item consumed regardless of success/failure\n",
             "enum": [
-                "disabled",
-                "destroy_on_success",
-                "destroy_always"
+                "Disabled",
+                "DestroyOnSuccess",
+                "DestroyAlways"
             ]
         },
         "CanUseBehavior": {
             "type": "string",
             "description": "Controls CanUse validation behavior.\n- disabled: Skip CanUse validation even if template is configured\n- block: CanUse failure prevents use (default)\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\n",
             "enum": [
-                "disabled",
-                "block",
-                "warn_and_proceed"
+                "Disabled",
+                "Block",
+                "WarnAndProceed"
             ]
         }
     }
@@ -2551,84 +2551,84 @@ public partial class ItemController
             "type": "string",
             "description": "Item classification category",
             "enum": [
-                "weapon",
-                "armor",
-                "accessory",
-                "consumable",
-                "material",
-                "container",
-                "quest",
-                "currency_like",
-                "misc",
-                "custom"
+                "Weapon",
+                "Armor",
+                "Accessory",
+                "Consumable",
+                "Material",
+                "Container",
+                "Quest",
+                "CurrencyLike",
+                "Misc",
+                "Custom"
             ]
         },
         "ItemRarity": {
             "type": "string",
             "description": "Item rarity tier",
             "enum": [
-                "common",
-                "uncommon",
-                "rare",
-                "epic",
-                "legendary",
-                "custom"
+                "Common",
+                "Uncommon",
+                "Rare",
+                "Epic",
+                "Legendary",
+                "Custom"
             ]
         },
         "QuantityModel": {
             "type": "string",
             "description": "How quantities are tracked for this item type",
             "enum": [
-                "discrete",
-                "continuous",
-                "unique"
+                "Discrete",
+                "Continuous",
+                "Unique"
             ]
         },
         "WeightPrecision": {
             "type": "string",
             "description": "Precision for weight values (consistent with CurrencyPrecision)",
             "enum": [
-                "integer",
-                "decimal_1",
-                "decimal_2",
-                "decimal_3"
+                "Integer",
+                "Decimal1",
+                "Decimal2",
+                "Decimal3"
             ]
         },
         "SoulboundType": {
             "type": "string",
             "description": "When item becomes bound to a character",
             "enum": [
-                "none",
-                "on_pickup",
-                "on_equip",
-                "on_use"
+                "None",
+                "OnPickup",
+                "OnEquip",
+                "OnUse"
             ]
         },
         "ItemScope": {
             "type": "string",
             "description": "Realm availability scope (consistent with CurrencyScope)",
             "enum": [
-                "global",
-                "realm_specific",
-                "multi_realm"
+                "Global",
+                "RealmSpecific",
+                "MultiRealm"
             ]
         },
         "ItemUseBehavior": {
             "type": "string",
             "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\n- destroy_always: Item consumed regardless of success/failure\n",
             "enum": [
-                "disabled",
-                "destroy_on_success",
-                "destroy_always"
+                "Disabled",
+                "DestroyOnSuccess",
+                "DestroyAlways"
             ]
         },
         "CanUseBehavior": {
             "type": "string",
             "description": "Controls CanUse validation behavior.\n- disabled: Skip CanUse validation even if template is configured\n- block: CanUse failure prevents use (default)\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\n",
             "enum": [
-                "disabled",
-                "block",
-                "warn_and_proceed"
+                "Disabled",
+                "Block",
+                "WarnAndProceed"
             ]
         }
     }
@@ -2798,22 +2798,22 @@ public partial class ItemController
             "type": "string",
             "description": "How an item instance was created",
             "enum": [
-                "loot",
-                "quest",
-                "craft",
-                "trade",
-                "purchase",
-                "spawn",
-                "other"
+                "Loot",
+                "Quest",
+                "Craft",
+                "Trade",
+                "Purchase",
+                "Spawn",
+                "Other"
             ]
         },
         "ContractBindingType": {
             "type": "string",
             "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
             "enum": [
-                "none",
-                "session",
-                "lifecycle"
+                "None",
+                "Session",
+                "Lifecycle"
             ]
         }
     }
@@ -2954,22 +2954,22 @@ public partial class ItemController
             "type": "string",
             "description": "How an item instance was created",
             "enum": [
-                "loot",
-                "quest",
-                "craft",
-                "trade",
-                "purchase",
-                "spawn",
-                "other"
+                "Loot",
+                "Quest",
+                "Craft",
+                "Trade",
+                "Purchase",
+                "Spawn",
+                "Other"
             ]
         },
         "ContractBindingType": {
             "type": "string",
             "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
             "enum": [
-                "none",
-                "session",
-                "lifecycle"
+                "None",
+                "Session",
+                "Lifecycle"
             ]
         }
     }
@@ -3190,22 +3190,22 @@ public partial class ItemController
             "type": "string",
             "description": "How an item instance was created",
             "enum": [
-                "loot",
-                "quest",
-                "craft",
-                "trade",
-                "purchase",
-                "spawn",
-                "other"
+                "Loot",
+                "Quest",
+                "Craft",
+                "Trade",
+                "Purchase",
+                "Spawn",
+                "Other"
             ]
         },
         "ContractBindingType": {
             "type": "string",
             "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
             "enum": [
-                "none",
-                "session",
-                "lifecycle"
+                "None",
+                "Session",
+                "Lifecycle"
             ]
         }
     }
@@ -3479,22 +3479,22 @@ public partial class ItemController
             "type": "string",
             "description": "How an item instance was created",
             "enum": [
-                "loot",
-                "quest",
-                "craft",
-                "trade",
-                "purchase",
-                "spawn",
-                "other"
+                "Loot",
+                "Quest",
+                "Craft",
+                "Trade",
+                "Purchase",
+                "Spawn",
+                "Other"
             ]
         },
         "ContractBindingType": {
             "type": "string",
             "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
             "enum": [
-                "none",
-                "session",
-                "lifecycle"
+                "None",
+                "Session",
+                "Lifecycle"
             ]
         }
     }
@@ -3592,10 +3592,10 @@ public partial class ItemController
             "type": "string",
             "description": "When item becomes bound to a character",
             "enum": [
-                "none",
-                "on_pickup",
-                "on_equip",
-                "on_use"
+                "None",
+                "OnPickup",
+                "OnEquip",
+                "OnUse"
             ]
         }
     }
@@ -3736,22 +3736,22 @@ public partial class ItemController
             "type": "string",
             "description": "How an item instance was created",
             "enum": [
-                "loot",
-                "quest",
-                "craft",
-                "trade",
-                "purchase",
-                "spawn",
-                "other"
+                "Loot",
+                "Quest",
+                "Craft",
+                "Trade",
+                "Purchase",
+                "Spawn",
+                "Other"
             ]
         },
         "ContractBindingType": {
             "type": "string",
             "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
             "enum": [
-                "none",
-                "session",
-                "lifecycle"
+                "None",
+                "Session",
+                "Lifecycle"
             ]
         }
     }
@@ -3843,9 +3843,9 @@ public partial class ItemController
             "type": "string",
             "description": "Reason for unbinding an item from a character",
             "enum": [
-                "admin",
-                "expiration",
-                "transfer_override"
+                "Admin",
+                "Expiration",
+                "TransferOverride"
             ]
         }
     }
@@ -3986,22 +3986,22 @@ public partial class ItemController
             "type": "string",
             "description": "How an item instance was created",
             "enum": [
-                "loot",
-                "quest",
-                "craft",
-                "trade",
-                "purchase",
-                "spawn",
-                "other"
+                "Loot",
+                "Quest",
+                "Craft",
+                "Trade",
+                "Purchase",
+                "Spawn",
+                "Other"
             ]
         },
         "ContractBindingType": {
             "type": "string",
             "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
             "enum": [
-                "none",
-                "session",
-                "lifecycle"
+                "None",
+                "Session",
+                "Lifecycle"
             ]
         }
     }
@@ -4093,10 +4093,10 @@ public partial class ItemController
             "type": "string",
             "description": "Reason for destroying an item instance",
             "enum": [
-                "consumed",
-                "destroyed",
-                "expired",
-                "admin"
+                "Consumed",
+                "Destroyed",
+                "Expired",
+                "Admin"
             ]
         }
     }
@@ -4690,22 +4690,22 @@ public partial class ItemController
             "type": "string",
             "description": "How an item instance was created",
             "enum": [
-                "loot",
-                "quest",
-                "craft",
-                "trade",
-                "purchase",
-                "spawn",
-                "other"
+                "Loot",
+                "Quest",
+                "Craft",
+                "Trade",
+                "Purchase",
+                "Spawn",
+                "Other"
             ]
         },
         "ContractBindingType": {
             "type": "string",
             "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
             "enum": [
-                "none",
-                "session",
-                "lifecycle"
+                "None",
+                "Session",
+                "Lifecycle"
             ]
         }
     }
@@ -4973,22 +4973,22 @@ public partial class ItemController
             "type": "string",
             "description": "How an item instance was created",
             "enum": [
-                "loot",
-                "quest",
-                "craft",
-                "trade",
-                "purchase",
-                "spawn",
-                "other"
+                "Loot",
+                "Quest",
+                "Craft",
+                "Trade",
+                "Purchase",
+                "Spawn",
+                "Other"
             ]
         },
         "ContractBindingType": {
             "type": "string",
             "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
             "enum": [
-                "none",
-                "session",
-                "lifecycle"
+                "None",
+                "Session",
+                "Lifecycle"
             ]
         }
     }
@@ -5240,22 +5240,22 @@ public partial class ItemController
             "type": "string",
             "description": "How an item instance was created",
             "enum": [
-                "loot",
-                "quest",
-                "craft",
-                "trade",
-                "purchase",
-                "spawn",
-                "other"
+                "Loot",
+                "Quest",
+                "Craft",
+                "Trade",
+                "Purchase",
+                "Spawn",
+                "Other"
             ]
         },
         "ContractBindingType": {
             "type": "string",
             "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
             "enum": [
-                "none",
-                "session",
-                "lifecycle"
+                "None",
+                "Session",
+                "Lifecycle"
             ]
         }
     }

@@ -648,10 +648,10 @@ components:
         - conditional: Release based on external condition or contract fulfillment
         - auction: Winner-takes-all with refunds to losers
       enum:
-      - two_party
-      - multi_party
-      - conditional
-      - auction
+      - TwoParty
+      - MultiParty
+      - Conditional
+      - Auction
 
     EscrowStatus:
       type: string
@@ -672,20 +672,20 @@ components:
         - cancelled: Cancelled before funding complete
         - validation_failed: Held assets changed, awaiting re-affirmation
       enum:
-      - pending_deposits
-      - partially_funded
-      - funded
-      - pending_consent
-      - pending_condition
-      - finalizing
-      - releasing
-      - released
-      - refunding
-      - refunded
-      - disputed
-      - expired
-      - cancelled
-      - validation_failed
+      - PendingDeposits
+      - PartiallyFunded
+      - Funded
+      - PendingConsent
+      - PendingCondition
+      - Finalizing
+      - Releasing
+      - Released
+      - Refunding
+      - Refunded
+      - Disputed
+      - Expired
+      - Cancelled
+      - ValidationFailed
 
     EscrowTrustMode:
       type: string
@@ -695,9 +695,9 @@ components:
         - initiator_trusted: The service that created the escrow can complete unilaterally
         - single_party_trusted: A designated party can complete unilaterally
       enum:
-      - full_consent
-      - initiator_trusted
-      - single_party_trusted
+      - FullConsent
+      - InitiatorTrusted
+      - SinglePartyTrusted
 
     EscrowPartyRole:
       type: string
@@ -709,11 +709,11 @@ components:
         - arbiter: Can resolve disputes, does not deposit or receive
         - observer: Can view status but cannot act
       enum:
-      - depositor
-      - recipient
-      - depositor_recipient
-      - arbiter
-      - observer
+      - Depositor
+      - Recipient
+      - DepositorRecipient
+      - Arbiter
+      - Observer
 
     EscrowConsentType:
       type: string
@@ -724,10 +724,10 @@ components:
         - dispute: Raises a dispute
         - reaffirm: Re-affirms after validation failure
       enum:
-      - release
-      - refund
-      - dispute
-      - reaffirm
+      - Release
+      - Refund
+      - Dispute
+      - Reaffirm
 
     EscrowResolution:
       type: string
@@ -740,12 +740,12 @@ components:
         - cancelled_refunded: Cancelled, deposits refunded
         - violation_refunded: Validation failure caused refund
       enum:
-      - released
-      - refunded
-      - split
-      - expired_refunded
-      - cancelled_refunded
-      - violation_refunded
+      - Released
+      - Refunded
+      - Split
+      - ExpiredRefunded
+      - CancelledRefunded
+      - ViolationRefunded
 
     AssetType:
       type: string
@@ -757,11 +757,11 @@ components:
         - contract: Contract instance locked under escrow guardianship
         - custom: Custom asset type via registered handler
       enum:
-      - currency
-      - item
-      - item_stack
-      - contract
-      - custom
+      - Currency
+      - Item
+      - ItemStack
+      - Contract
+      - Custom
 
     ValidationFailureType:
       type: string
@@ -772,10 +772,10 @@ components:
         - asset_expired: Asset has a time-based expiration that triggered
         - balance_mismatch: Wallet balance does not match expected held amount
       enum:
-      - asset_missing
-      - asset_mutated
-      - asset_expired
-      - balance_mismatch
+      - AssetMissing
+      - AssetMutated
+      - AssetExpired
+      - BalanceMismatch
 
     TokenAlgorithm:
       type: string
@@ -784,8 +784,8 @@ components:
         - hmac_sha256: HMAC-SHA256 based tokens
         - random_bytes: Cryptographically random tokens
       enum:
-      - hmac_sha256
-      - random_bytes
+      - HmacSha256
+      - RandomBytes
 
     TokenType:
       type: string
@@ -794,8 +794,8 @@ components:
         - deposit: Token for depositing assets
         - release: Token for consenting to release
       enum:
-      - deposit
-      - release
+      - Deposit
+      - Release
 
     ReleaseMode:
       type: string
@@ -809,10 +809,10 @@ components:
         - party_required: Wait for all parties to call /confirm-release.
         - service_and_party: Wait for both service completion AND party confirmation.
       enum:
-      - immediate
-      - service_only
-      - party_required
-      - service_and_party
+      - Immediate
+      - ServiceOnly
+      - PartyRequired
+      - ServiceAndParty
 
     RefundMode:
       type: string
@@ -820,9 +820,9 @@ components:
         Controls how refund confirmation is handled. Same semantics as ReleaseMode.
         Refunds typically use 'immediate' since parties get their own assets back.
       enum:
-      - immediate
-      - service_only
-      - party_required
+      - Immediate
+      - ServiceOnly
+      - PartyRequired
 
     ConfirmationTimeoutBehavior:
       type: string
@@ -832,9 +832,9 @@ components:
         - dispute: Transition to Disputed state, require arbiter intervention.
         - refund: Treat as failed, transition to Refunding.
       enum:
-      - auto_confirm
-      - dispute
-      - refund
+      - AutoConfirm
+      - Dispute
+      - Refund
 
     # ==========================================================================
     # Core Models
@@ -2792,24 +2792,24 @@ components:
         service-specific roles that include non-entity values (use service-specific enums).
         See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
       enum:
-      - system
-      - account
-      - character
-      - actor
-      - guild
-      - organization
-      - government
-      - faction
-      - location
-      - realm
-      - item
-      - monster
-      - relationship
-      - session
-      - deity
-      - dungeon
-      - custom
-      - other
+      - System
+      - Account
+      - Character
+      - Actor
+      - Guild
+      - Organization
+      - Government
+      - Faction
+      - Location
+      - Realm
+      - Item
+      - Monster
+      - Relationship
+      - Session
+      - Deity
+      - Dungeon
+      - Custom
+      - Other
 
 x-inlined-types:
 - EntityType

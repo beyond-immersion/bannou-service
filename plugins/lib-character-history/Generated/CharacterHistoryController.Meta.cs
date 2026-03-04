@@ -84,27 +84,27 @@ public partial class CharacterHistoryController
             "type": "string",
             "description": "Categories of historical events that characters can participate in",
             "enum": [
-                "WAR",
-                "NATURAL_DISASTER",
-                "POLITICAL",
-                "ECONOMIC",
-                "RELIGIOUS",
-                "CULTURAL",
-                "PERSONAL"
+                "War",
+                "NaturalDisaster",
+                "Political",
+                "Economic",
+                "Religious",
+                "Cultural",
+                "Personal"
             ]
         },
         "ParticipationRole": {
             "type": "string",
             "description": "How the character participated in the historical event",
             "enum": [
-                "LEADER",
-                "COMBATANT",
-                "VICTIM",
-                "WITNESS",
-                "BENEFICIARY",
-                "CONSPIRATOR",
-                "HERO",
-                "SURVIVOR"
+                "Leader",
+                "Combatant",
+                "Victim",
+                "Witness",
+                "Beneficiary",
+                "Conspirator",
+                "Hero",
+                "Survivor"
             ]
         }
     }
@@ -188,27 +188,27 @@ public partial class CharacterHistoryController
             "type": "string",
             "description": "Categories of historical events that characters can participate in",
             "enum": [
-                "WAR",
-                "NATURAL_DISASTER",
-                "POLITICAL",
-                "ECONOMIC",
-                "RELIGIOUS",
-                "CULTURAL",
-                "PERSONAL"
+                "War",
+                "NaturalDisaster",
+                "Political",
+                "Economic",
+                "Religious",
+                "Cultural",
+                "Personal"
             ]
         },
         "ParticipationRole": {
             "type": "string",
             "description": "How the character participated in the historical event",
             "enum": [
-                "LEADER",
-                "COMBATANT",
-                "VICTIM",
-                "WITNESS",
-                "BENEFICIARY",
-                "CONSPIRATOR",
-                "HERO",
-                "SURVIVOR"
+                "Leader",
+                "Combatant",
+                "Victim",
+                "Witness",
+                "Beneficiary",
+                "Conspirator",
+                "Hero",
+                "Survivor"
             ]
         }
     }
@@ -321,13 +321,13 @@ public partial class CharacterHistoryController
             "type": "string",
             "description": "Categories of historical events that characters can participate in",
             "enum": [
-                "WAR",
-                "NATURAL_DISASTER",
-                "POLITICAL",
-                "ECONOMIC",
-                "RELIGIOUS",
-                "CULTURAL",
-                "PERSONAL"
+                "War",
+                "NaturalDisaster",
+                "Political",
+                "Economic",
+                "Religious",
+                "Cultural",
+                "Personal"
             ]
         }
     }
@@ -451,27 +451,27 @@ public partial class CharacterHistoryController
             "type": "string",
             "description": "Categories of historical events that characters can participate in",
             "enum": [
-                "WAR",
-                "NATURAL_DISASTER",
-                "POLITICAL",
-                "ECONOMIC",
-                "RELIGIOUS",
-                "CULTURAL",
-                "PERSONAL"
+                "War",
+                "NaturalDisaster",
+                "Political",
+                "Economic",
+                "Religious",
+                "Cultural",
+                "Personal"
             ]
         },
         "ParticipationRole": {
             "type": "string",
             "description": "How the character participated in the historical event",
             "enum": [
-                "LEADER",
-                "COMBATANT",
-                "VICTIM",
-                "WITNESS",
-                "BENEFICIARY",
-                "CONSPIRATOR",
-                "HERO",
-                "SURVIVOR"
+                "Leader",
+                "Combatant",
+                "Victim",
+                "Witness",
+                "Beneficiary",
+                "Conspirator",
+                "Hero",
+                "Survivor"
             ]
         }
     }
@@ -576,14 +576,14 @@ public partial class CharacterHistoryController
             "type": "string",
             "description": "How the character participated in the historical event",
             "enum": [
-                "LEADER",
-                "COMBATANT",
-                "VICTIM",
-                "WITNESS",
-                "BENEFICIARY",
-                "CONSPIRATOR",
-                "HERO",
-                "SURVIVOR"
+                "Leader",
+                "Combatant",
+                "Victim",
+                "Witness",
+                "Beneficiary",
+                "Conspirator",
+                "Hero",
+                "Survivor"
             ]
         }
     }
@@ -707,27 +707,27 @@ public partial class CharacterHistoryController
             "type": "string",
             "description": "Categories of historical events that characters can participate in",
             "enum": [
-                "WAR",
-                "NATURAL_DISASTER",
-                "POLITICAL",
-                "ECONOMIC",
-                "RELIGIOUS",
-                "CULTURAL",
-                "PERSONAL"
+                "War",
+                "NaturalDisaster",
+                "Political",
+                "Economic",
+                "Religious",
+                "Cultural",
+                "Personal"
             ]
         },
         "ParticipationRole": {
             "type": "string",
             "description": "How the character participated in the historical event",
             "enum": [
-                "LEADER",
-                "COMBATANT",
-                "VICTIM",
-                "WITNESS",
-                "BENEFICIARY",
-                "CONSPIRATOR",
-                "HERO",
-                "SURVIVOR"
+                "Leader",
+                "Combatant",
+                "Victim",
+                "Witness",
+                "Beneficiary",
+                "Conspirator",
+                "Hero",
+                "Survivor"
             ]
         }
     }
@@ -914,15 +914,15 @@ public partial class CharacterHistoryController
             "type": "string",
             "description": "Types of backstory elements. Each type represents a different aspect\nof the character's background that influences behavior.\n",
             "enum": [
-                "ORIGIN",
-                "OCCUPATION",
-                "TRAINING",
-                "TRAUMA",
-                "ACHIEVEMENT",
-                "SECRET",
-                "GOAL",
-                "FEAR",
-                "BELIEF"
+                "Origin",
+                "Occupation",
+                "Training",
+                "Trauma",
+                "Achievement",
+                "Secret",
+                "Goal",
+                "Fear",
+                "Belief"
             ]
         }
     }
@@ -1020,15 +1020,15 @@ public partial class CharacterHistoryController
             "type": "string",
             "description": "Types of backstory elements. Each type represents a different aspect\nof the character's background that influences behavior.\n",
             "enum": [
-                "ORIGIN",
-                "OCCUPATION",
-                "TRAINING",
-                "TRAUMA",
-                "ACHIEVEMENT",
-                "SECRET",
-                "GOAL",
-                "FEAR",
-                "BELIEF"
+                "Origin",
+                "Occupation",
+                "Training",
+                "Trauma",
+                "Achievement",
+                "Secret",
+                "Goal",
+                "Fear",
+                "Belief"
             ]
         }
     }
@@ -1176,15 +1176,15 @@ public partial class CharacterHistoryController
             "type": "string",
             "description": "Types of backstory elements. Each type represents a different aspect\nof the character's background that influences behavior.\n",
             "enum": [
-                "ORIGIN",
-                "OCCUPATION",
-                "TRAINING",
-                "TRAUMA",
-                "ACHIEVEMENT",
-                "SECRET",
-                "GOAL",
-                "FEAR",
-                "BELIEF"
+                "Origin",
+                "Occupation",
+                "Training",
+                "Trauma",
+                "Achievement",
+                "Secret",
+                "Goal",
+                "Fear",
+                "Belief"
             ]
         }
     }
@@ -1282,15 +1282,15 @@ public partial class CharacterHistoryController
             "type": "string",
             "description": "Types of backstory elements. Each type represents a different aspect\nof the character's background that influences behavior.\n",
             "enum": [
-                "ORIGIN",
-                "OCCUPATION",
-                "TRAINING",
-                "TRAUMA",
-                "ACHIEVEMENT",
-                "SECRET",
-                "GOAL",
-                "FEAR",
-                "BELIEF"
+                "Origin",
+                "Occupation",
+                "Training",
+                "Trauma",
+                "Achievement",
+                "Secret",
+                "Goal",
+                "Fear",
+                "Belief"
             ]
         }
     }
@@ -1429,15 +1429,15 @@ public partial class CharacterHistoryController
             "type": "string",
             "description": "Types of backstory elements. Each type represents a different aspect\nof the character's background that influences behavior.\n",
             "enum": [
-                "ORIGIN",
-                "OCCUPATION",
-                "TRAINING",
-                "TRAUMA",
-                "ACHIEVEMENT",
-                "SECRET",
-                "GOAL",
-                "FEAR",
-                "BELIEF"
+                "Origin",
+                "Occupation",
+                "Training",
+                "Trauma",
+                "Achievement",
+                "Secret",
+                "Goal",
+                "Fear",
+                "Belief"
             ]
         }
     }
@@ -1535,15 +1535,15 @@ public partial class CharacterHistoryController
             "type": "string",
             "description": "Types of backstory elements. Each type represents a different aspect\nof the character's background that influences behavior.\n",
             "enum": [
-                "ORIGIN",
-                "OCCUPATION",
-                "TRAINING",
-                "TRAUMA",
-                "ACHIEVEMENT",
-                "SECRET",
-                "GOAL",
-                "FEAR",
-                "BELIEF"
+                "Origin",
+                "Occupation",
+                "Training",
+                "Trauma",
+                "Achievement",
+                "Secret",
+                "Goal",
+                "Fear",
+                "Belief"
             ]
         }
     }
@@ -2087,27 +2087,27 @@ public partial class CharacterHistoryController
             "type": "string",
             "description": "Categories of historical events that characters can participate in",
             "enum": [
-                "WAR",
-                "NATURAL_DISASTER",
-                "POLITICAL",
-                "ECONOMIC",
-                "RELIGIOUS",
-                "CULTURAL",
-                "PERSONAL"
+                "War",
+                "NaturalDisaster",
+                "Political",
+                "Economic",
+                "Religious",
+                "Cultural",
+                "Personal"
             ]
         },
         "ParticipationRole": {
             "type": "string",
             "description": "How the character participated in the historical event",
             "enum": [
-                "LEADER",
-                "COMBATANT",
-                "VICTIM",
-                "WITNESS",
-                "BENEFICIARY",
-                "CONSPIRATOR",
-                "HERO",
-                "SURVIVOR"
+                "Leader",
+                "Combatant",
+                "Victim",
+                "Witness",
+                "Beneficiary",
+                "Conspirator",
+                "Hero",
+                "Survivor"
             ]
         },
         "BackstoryResponse": {
@@ -2196,15 +2196,15 @@ public partial class CharacterHistoryController
             "type": "string",
             "description": "Types of backstory elements. Each type represents a different aspect\nof the character's background that influences behavior.\n",
             "enum": [
-                "ORIGIN",
-                "OCCUPATION",
-                "TRAINING",
-                "TRAUMA",
-                "ACHIEVEMENT",
-                "SECRET",
-                "GOAL",
-                "FEAR",
-                "BELIEF"
+                "Origin",
+                "Occupation",
+                "Training",
+                "Trauma",
+                "Achievement",
+                "Secret",
+                "Goal",
+                "Fear",
+                "Belief"
             ]
         },
         "HistorySummaryResponse": {

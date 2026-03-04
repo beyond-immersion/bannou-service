@@ -2005,7 +2005,7 @@ public partial class AssetService : IAssetService
         job.Status = BundleStatus.Cancelled;
         job.UpdatedAt = DateTimeOffset.UtcNow;
         job.CompletedAt = DateTimeOffset.UtcNow;
-        job.ErrorCode = MetabundleErrorCode.CANCELLED;
+        job.ErrorCode = MetabundleErrorCode.Cancelled;
         job.ErrorMessage = "Job cancelled by user request";
         await jobStore.SaveAsync(jobKey, job,
             new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
@@ -2027,7 +2027,7 @@ public partial class AssetService : IAssetService
                 assetCount: null,
                 standaloneAssetCount: null,
                 processingTimeMs: null,
-                MetabundleErrorCode.CANCELLED,
+                MetabundleErrorCode.Cancelled,
                 "Job cancelled by user request",
                 cancellationToken).ConfigureAwait(false);
         }

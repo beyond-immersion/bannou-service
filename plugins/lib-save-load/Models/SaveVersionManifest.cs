@@ -40,7 +40,7 @@ public sealed class SaveVersionManifest
     /// <summary>
     /// Compression type applied to this version
     /// </summary>
-    public CompressionType CompressionType { get; set; } = CompressionType.NONE;
+    public CompressionType CompressionType { get; set; } = CompressionType.None;
 
     /// <summary>
     /// Whether this version is pinned (excluded from rolling cleanup)

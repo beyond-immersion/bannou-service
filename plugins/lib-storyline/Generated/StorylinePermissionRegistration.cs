@@ -48,7 +48,7 @@ public static class StorylinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/storyline/compose",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "Compose",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class StorylinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/storyline/plan/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetPlan",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class StorylinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/storyline/plan/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ListPlans",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class StorylinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/storyline/scenario/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "CreateScenarioDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class StorylinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/storyline/scenario/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetScenarioDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class StorylinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/storyline/scenario/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ListScenarioDefinitions",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class StorylinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/storyline/scenario/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "UpdateScenarioDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class StorylinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/storyline/scenario/deprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "DeprecateScenarioDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class StorylinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/storyline/scenario/test",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "TestScenarioTrigger",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class StorylinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/storyline/scenario/get-active",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetActiveScenarios",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class StorylinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/storyline/scenario/get-history",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetScenarioHistory",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class StorylinePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/storyline/get-compress-data",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getCompressData",
             Permissions = new List<PermissionRequirement>
             {

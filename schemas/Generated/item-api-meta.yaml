@@ -155,32 +155,32 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/CanUseBehavior\",\n                    \"nullable\": true,\n        \
         \            \"description\": \"How CanUse validation failures should be handled (defaults to block)\"\n         \
         \       }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n           \
-        \ \"description\": \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n     \
-        \           \"armor\",\n                \"accessory\",\n                \"consumable\",\n                \"material\"\
-        ,\n                \"container\",\n                \"quest\",\n                \"currency_like\",\n              \
-        \  \"misc\",\n                \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\"\
-        ,\n                \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\"\
-        ,\n                \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
+        \ \"description\": \"Item classification category\",\n            \"enum\": [\n                \"Weapon\",\n     \
+        \           \"Armor\",\n                \"Accessory\",\n                \"Consumable\",\n                \"Material\"\
+        ,\n                \"Container\",\n                \"Quest\",\n                \"CurrencyLike\",\n               \
+        \ \"Misc\",\n                \"Custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"Common\"\
+        ,\n                \"Uncommon\",\n                \"Rare\",\n                \"Epic\",\n                \"Legendary\"\
+        ,\n                \"Custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
-        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
+        \            \"Discrete\",\n                \"Continuous\",\n                \"Unique\"\n            ]\n        },\n\
         \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
-        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
-        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
-        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
-        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
-        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
-        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
+        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"Integer\",\n           \
+        \     \"Decimal1\",\n                \"Decimal2\",\n                \"Decimal3\"\n            ]\n        },\n    \
+        \    \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound
+        to a character\",\n            \"enum\": [\n                \"None\",\n                \"OnPickup\",\n           \
+        \     \"OnEquip\",\n                \"OnUse\"\n            ]\n        },\n        \"ItemScope\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n\
+        \            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\
         \n            ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns 400)\\n- destroy_on_success:
         Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed regardless of success/failure\\\
-        n\",\n            \"enum\": [\n                \"disabled\",\n                \"destroy_on_success\",\n          \
-        \      \"destroy_always\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
+        n\",\n            \"enum\": [\n                \"Disabled\",\n                \"DestroyOnSuccess\",\n            \
+        \    \"DestroyAlways\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Controls CanUse validation behavior.\\n- disabled: Skip CanUse validation even if
         template is configured\\n- block: CanUse failure prevents use (default)\\n- warn_and_proceed: CanUse failure logs
-        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"disabled\",\n                \"block\"\
-        ,\n                \"warn_and_proceed\"\n            ]\n        }\n    }\n}"
+        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"Disabled\",\n                \"Block\"\
+        ,\n                \"WarnAndProceed\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ItemTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Item template details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -273,32 +273,32 @@ paths:
         \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
         \      \"format\": \"date-time\",\n                    \"description\": \"Last update timestamp\"\n              \
         \  }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
-        ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
-        \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
-        \             \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n      \
-        \          \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n \
-        \               \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
+        : \"Item classification category\",\n            \"enum\": [\n                \"Weapon\",\n                \"Armor\"\
+        ,\n                \"Accessory\",\n                \"Consumable\",\n                \"Material\",\n              \
+        \  \"Container\",\n                \"Quest\",\n                \"CurrencyLike\",\n                \"Misc\",\n    \
+        \            \"Custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"Common\",\n      \
+        \          \"Uncommon\",\n                \"Rare\",\n                \"Epic\",\n                \"Legendary\",\n \
+        \               \"Custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
-        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
+        \            \"Discrete\",\n                \"Continuous\",\n                \"Unique\"\n            ]\n        },\n\
         \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
-        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
-        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
-        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
-        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
-        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
-        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
+        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"Integer\",\n           \
+        \     \"Decimal1\",\n                \"Decimal2\",\n                \"Decimal3\"\n            ]\n        },\n    \
+        \    \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound
+        to a character\",\n            \"enum\": [\n                \"None\",\n                \"OnPickup\",\n           \
+        \     \"OnEquip\",\n                \"OnUse\"\n            ]\n        },\n        \"ItemScope\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n\
+        \            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\
         \n            ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns 400)\\n- destroy_on_success:
         Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed regardless of success/failure\\\
-        n\",\n            \"enum\": [\n                \"disabled\",\n                \"destroy_on_success\",\n          \
-        \      \"destroy_always\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
+        n\",\n            \"enum\": [\n                \"Disabled\",\n                \"DestroyOnSuccess\",\n            \
+        \    \"DestroyAlways\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Controls CanUse validation behavior.\\n- disabled: Skip CanUse validation even if
         template is configured\\n- block: CanUse failure prevents use (default)\\n- warn_and_proceed: CanUse failure logs
-        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"disabled\",\n                \"block\"\
-        ,\n                \"warn_and_proceed\"\n            ]\n        }\n    }\n}"
+        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"Disabled\",\n                \"Block\"\
+        ,\n                \"WarnAndProceed\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new item template\",\n    \"description\": \"Creates a new item
         definition for a game. Code, gameId, quantityModel, and scope\\nare immutable after creation.\\n\",\n    \"tags\"\
         : [\n        \"Item Template\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createItemTemplate\"\n}"
@@ -433,32 +433,32 @@ paths:
         \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
         \      \"format\": \"date-time\",\n                    \"description\": \"Last update timestamp\"\n              \
         \  }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
-        ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
-        \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
-        \             \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n      \
-        \          \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n \
-        \               \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
+        : \"Item classification category\",\n            \"enum\": [\n                \"Weapon\",\n                \"Armor\"\
+        ,\n                \"Accessory\",\n                \"Consumable\",\n                \"Material\",\n              \
+        \  \"Container\",\n                \"Quest\",\n                \"CurrencyLike\",\n                \"Misc\",\n    \
+        \            \"Custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"Common\",\n      \
+        \          \"Uncommon\",\n                \"Rare\",\n                \"Epic\",\n                \"Legendary\",\n \
+        \               \"Custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
-        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
+        \            \"Discrete\",\n                \"Continuous\",\n                \"Unique\"\n            ]\n        },\n\
         \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
-        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
-        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
-        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
-        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
-        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
-        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
+        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"Integer\",\n           \
+        \     \"Decimal1\",\n                \"Decimal2\",\n                \"Decimal3\"\n            ]\n        },\n    \
+        \    \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound
+        to a character\",\n            \"enum\": [\n                \"None\",\n                \"OnPickup\",\n           \
+        \     \"OnEquip\",\n                \"OnUse\"\n            ]\n        },\n        \"ItemScope\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n\
+        \            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\
         \n            ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns 400)\\n- destroy_on_success:
         Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed regardless of success/failure\\\
-        n\",\n            \"enum\": [\n                \"disabled\",\n                \"destroy_on_success\",\n          \
-        \      \"destroy_always\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
+        n\",\n            \"enum\": [\n                \"Disabled\",\n                \"DestroyOnSuccess\",\n            \
+        \    \"DestroyAlways\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Controls CanUse validation behavior.\\n- disabled: Skip CanUse validation even if
         template is configured\\n- block: CanUse failure prevents use (default)\\n- warn_and_proceed: CanUse failure logs
-        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"disabled\",\n                \"block\"\
-        ,\n                \"warn_and_proceed\"\n            ]\n        }\n    }\n}"
+        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"Disabled\",\n                \"Block\"\
+        ,\n                \"WarnAndProceed\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get item template by ID or code\",\n    \"description\": \"Retrieves an
         item template by its unique ID or by code+gameId combination.\\nAt least one of templateId or (code + gameId) must
         be provided.\\n\",\n    \"tags\": [\n        \"Item Template\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -516,15 +516,15 @@ paths:
         \                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\"\
         : 200,\n                    \"default\": 50,\n                    \"description\": \"Maximum results to return\"\n\
         \                }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n  \
-        \          \"description\": \"Item classification category\",\n            \"enum\": [\n                \"weapon\"\
-        ,\n                \"armor\",\n                \"accessory\",\n                \"consumable\",\n                \"\
-        material\",\n                \"container\",\n                \"quest\",\n                \"currency_like\",\n    \
-        \            \"misc\",\n                \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n       \
-        \     \"type\": \"string\",\n            \"description\": \"Item rarity tier\",\n            \"enum\": [\n       \
-        \         \"common\",\n                \"uncommon\",\n                \"rare\",\n                \"epic\",\n     \
-        \           \"legendary\",\n                \"custom\"\n            ]\n        },\n        \"ItemScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
-        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
+        \          \"description\": \"Item classification category\",\n            \"enum\": [\n                \"Weapon\"\
+        ,\n                \"Armor\",\n                \"Accessory\",\n                \"Consumable\",\n                \"\
+        Material\",\n                \"Container\",\n                \"Quest\",\n                \"CurrencyLike\",\n     \
+        \           \"Misc\",\n                \"Custom\"\n            ]\n        },\n        \"ItemRarity\": {\n        \
+        \    \"type\": \"string\",\n            \"description\": \"Item rarity tier\",\n            \"enum\": [\n        \
+        \        \"Common\",\n                \"Uncommon\",\n                \"Rare\",\n                \"Epic\",\n      \
+        \          \"Legendary\",\n                \"Custom\"\n            ]\n        },\n        \"ItemScope\": {\n     \
+        \       \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
+        ,\n            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\
         \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListItemTemplatesResponse\"\
         ,\n    \"$defs\": {\n        \"ListItemTemplatesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -625,32 +625,32 @@ paths:
         \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
         \      \"format\": \"date-time\",\n                    \"description\": \"Last update timestamp\"\n              \
         \  }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
-        ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
-        \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
-        \             \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n      \
-        \          \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n \
-        \               \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
+        : \"Item classification category\",\n            \"enum\": [\n                \"Weapon\",\n                \"Armor\"\
+        ,\n                \"Accessory\",\n                \"Consumable\",\n                \"Material\",\n              \
+        \  \"Container\",\n                \"Quest\",\n                \"CurrencyLike\",\n                \"Misc\",\n    \
+        \            \"Custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"Common\",\n      \
+        \          \"Uncommon\",\n                \"Rare\",\n                \"Epic\",\n                \"Legendary\",\n \
+        \               \"Custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
-        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
+        \            \"Discrete\",\n                \"Continuous\",\n                \"Unique\"\n            ]\n        },\n\
         \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
-        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
-        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
-        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
-        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
-        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
-        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
+        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"Integer\",\n           \
+        \     \"Decimal1\",\n                \"Decimal2\",\n                \"Decimal3\"\n            ]\n        },\n    \
+        \    \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound
+        to a character\",\n            \"enum\": [\n                \"None\",\n                \"OnPickup\",\n           \
+        \     \"OnEquip\",\n                \"OnUse\"\n            ]\n        },\n        \"ItemScope\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n\
+        \            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\
         \n            ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns 400)\\n- destroy_on_success:
         Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed regardless of success/failure\\\
-        n\",\n            \"enum\": [\n                \"disabled\",\n                \"destroy_on_success\",\n          \
-        \      \"destroy_always\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
+        n\",\n            \"enum\": [\n                \"Disabled\",\n                \"DestroyOnSuccess\",\n            \
+        \    \"DestroyAlways\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Controls CanUse validation behavior.\\n- disabled: Skip CanUse validation even if
         template is configured\\n- block: CanUse failure prevents use (default)\\n- warn_and_proceed: CanUse failure logs
-        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"disabled\",\n                \"block\"\
-        ,\n                \"warn_and_proceed\"\n            ]\n        }\n    }\n}"
+        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"Disabled\",\n                \"Block\"\
+        ,\n                \"WarnAndProceed\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List item templates with filters\",\n    \"description\": \"Lists item
         templates with optional filtering by gameId, category, tags,\\nrarity, scope, and active status.\\n\",\n    \"tags\"\
         : [\n        \"Item Template\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listItemTemplates\"\n}"
@@ -745,17 +745,17 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/CanUseBehavior\",\n                    \"nullable\": true,\n        \
         \            \"description\": \"How CanUse validation failures should be handled\"\n                }\n          \
         \  }\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\": \"Item
-        rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n            \
-        \    \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n          \
+        rarity tier\",\n            \"enum\": [\n                \"Common\",\n                \"Uncommon\",\n            \
+        \    \"Rare\",\n                \"Epic\",\n                \"Legendary\",\n                \"Custom\"\n          \
         \  ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\":
         \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns 400)\\n- destroy_on_success:
         Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed regardless of success/failure\\\
-        n\",\n            \"enum\": [\n                \"disabled\",\n                \"destroy_on_success\",\n          \
-        \      \"destroy_always\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
+        n\",\n            \"enum\": [\n                \"Disabled\",\n                \"DestroyOnSuccess\",\n            \
+        \    \"DestroyAlways\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Controls CanUse validation behavior.\\n- disabled: Skip CanUse validation even if
         template is configured\\n- block: CanUse failure prevents use (default)\\n- warn_and_proceed: CanUse failure logs
-        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"disabled\",\n                \"block\"\
-        ,\n                \"warn_and_proceed\"\n            ]\n        }\n    }\n}"
+        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"Disabled\",\n                \"Block\"\
+        ,\n                \"WarnAndProceed\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ItemTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Item template details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -848,32 +848,32 @@ paths:
         \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
         \      \"format\": \"date-time\",\n                    \"description\": \"Last update timestamp\"\n              \
         \  }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
-        ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
-        \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
-        \             \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n      \
-        \          \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n \
-        \               \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
+        : \"Item classification category\",\n            \"enum\": [\n                \"Weapon\",\n                \"Armor\"\
+        ,\n                \"Accessory\",\n                \"Consumable\",\n                \"Material\",\n              \
+        \  \"Container\",\n                \"Quest\",\n                \"CurrencyLike\",\n                \"Misc\",\n    \
+        \            \"Custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"Common\",\n      \
+        \          \"Uncommon\",\n                \"Rare\",\n                \"Epic\",\n                \"Legendary\",\n \
+        \               \"Custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
-        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
+        \            \"Discrete\",\n                \"Continuous\",\n                \"Unique\"\n            ]\n        },\n\
         \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
-        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
-        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
-        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
-        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
-        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
-        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
+        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"Integer\",\n           \
+        \     \"Decimal1\",\n                \"Decimal2\",\n                \"Decimal3\"\n            ]\n        },\n    \
+        \    \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound
+        to a character\",\n            \"enum\": [\n                \"None\",\n                \"OnPickup\",\n           \
+        \     \"OnEquip\",\n                \"OnUse\"\n            ]\n        },\n        \"ItemScope\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n\
+        \            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\
         \n            ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns 400)\\n- destroy_on_success:
         Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed regardless of success/failure\\\
-        n\",\n            \"enum\": [\n                \"disabled\",\n                \"destroy_on_success\",\n          \
-        \      \"destroy_always\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
+        n\",\n            \"enum\": [\n                \"Disabled\",\n                \"DestroyOnSuccess\",\n            \
+        \    \"DestroyAlways\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Controls CanUse validation behavior.\\n- disabled: Skip CanUse validation even if
         template is configured\\n- block: CanUse failure prevents use (default)\\n- warn_and_proceed: CanUse failure logs
-        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"disabled\",\n                \"block\"\
-        ,\n                \"warn_and_proceed\"\n            ]\n        }\n    }\n}"
+        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"Disabled\",\n                \"Block\"\
+        ,\n                \"WarnAndProceed\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update mutable fields of an item template\",\n    \"description\": \"Updates
         mutable fields of an item template. Code, gameId, quantityModel, and scope\\nare immutable after creation and cannot
         be changed.\\n\",\n    \"tags\": [\n        \"Item Template\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -1011,32 +1011,32 @@ paths:
         \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
         \      \"format\": \"date-time\",\n                    \"description\": \"Last update timestamp\"\n              \
         \  }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
-        ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
-        \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
-        \             \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n      \
-        \          \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n \
-        \               \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
+        : \"Item classification category\",\n            \"enum\": [\n                \"Weapon\",\n                \"Armor\"\
+        ,\n                \"Accessory\",\n                \"Consumable\",\n                \"Material\",\n              \
+        \  \"Container\",\n                \"Quest\",\n                \"CurrencyLike\",\n                \"Misc\",\n    \
+        \            \"Custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"Common\",\n      \
+        \          \"Uncommon\",\n                \"Rare\",\n                \"Epic\",\n                \"Legendary\",\n \
+        \               \"Custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
-        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
+        \            \"Discrete\",\n                \"Continuous\",\n                \"Unique\"\n            ]\n        },\n\
         \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
-        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
-        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
-        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
-        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
-        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
-        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
+        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"Integer\",\n           \
+        \     \"Decimal1\",\n                \"Decimal2\",\n                \"Decimal3\"\n            ]\n        },\n    \
+        \    \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound
+        to a character\",\n            \"enum\": [\n                \"None\",\n                \"OnPickup\",\n           \
+        \     \"OnEquip\",\n                \"OnUse\"\n            ]\n        },\n        \"ItemScope\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n\
+        \            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\
         \n            ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns 400)\\n- destroy_on_success:
         Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed regardless of success/failure\\\
-        n\",\n            \"enum\": [\n                \"disabled\",\n                \"destroy_on_success\",\n          \
-        \      \"destroy_always\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
+        n\",\n            \"enum\": [\n                \"Disabled\",\n                \"DestroyOnSuccess\",\n            \
+        \    \"DestroyAlways\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Controls CanUse validation behavior.\\n- disabled: Skip CanUse validation even if
         template is configured\\n- block: CanUse failure prevents use (default)\\n- warn_and_proceed: CanUse failure logs
-        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"disabled\",\n                \"block\"\
-        ,\n                \"warn_and_proceed\"\n            ]\n        }\n    }\n}"
+        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"Disabled\",\n                \"Block\"\
+        ,\n                \"WarnAndProceed\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate an item template\",\n    \"description\": \"Marks an item template
         as deprecated. Deprecated templates cannot be used\\nto create new instances but existing instances remain valid.
         Optionally\\nspecify a migration target template.\\n\",\n    \"tags\": [\n        \"Item Template\"\n    ],\n    \"\
@@ -1116,12 +1116,12 @@ paths:
         (managed externally) or session binding\\n(managed by Item service). Defaults to 'lifecycle' when contractInstanceId
         is set.\\n\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How an item instance was created\",\n            \"enum\": [\n         \
-        \       \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\",\n          \
-        \      \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        },\n        \"\
+        \       \"Loot\",\n                \"Quest\",\n                \"Craft\",\n                \"Trade\",\n          \
+        \      \"Purchase\",\n                \"Spawn\",\n                \"Other\"\n            ]\n        },\n        \"\
         ContractBindingType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of contract binding
         on an item instance.\\n- none: No contract bound\\n- session: Temporary binding for multi-step use (managed by Item
         service)\\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\\\
-        n\",\n            \"enum\": [\n                \"none\",\n                \"session\",\n                \"lifecycle\"\
+        n\",\n            \"enum\": [\n                \"None\",\n                \"Session\",\n                \"Lifecycle\"\
         \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ItemInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -1174,12 +1174,12 @@ paths:
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
         timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How an item instance was created\",\n            \"enum\": [\n         \
-        \       \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\",\n          \
-        \      \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        },\n        \"\
+        \       \"Loot\",\n                \"Quest\",\n                \"Craft\",\n                \"Trade\",\n          \
+        \      \"Purchase\",\n                \"Spawn\",\n                \"Other\"\n            ]\n        },\n        \"\
         ContractBindingType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of contract binding
         on an item instance.\\n- none: No contract bound\\n- session: Temporary binding for multi-step use (managed by Item
         service)\\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\\\
-        n\",\n            \"enum\": [\n                \"none\",\n                \"session\",\n                \"lifecycle\"\
+        n\",\n            \"enum\": [\n                \"None\",\n                \"Session\",\n                \"Lifecycle\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new item instance\",\n    \"description\": \"Creates a new item
         instance from a template. The instance must be placed\\nin a container (containerId required). Use lib-inventory's
@@ -1267,12 +1267,12 @@ paths:
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
         timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How an item instance was created\",\n            \"enum\": [\n         \
-        \       \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\",\n          \
-        \      \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        },\n        \"\
+        \       \"Loot\",\n                \"Quest\",\n                \"Craft\",\n                \"Trade\",\n          \
+        \      \"Purchase\",\n                \"Spawn\",\n                \"Other\"\n            ]\n        },\n        \"\
         ContractBindingType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of contract binding
         on an item instance.\\n- none: No contract bound\\n- session: Temporary binding for multi-step use (managed by Item
         service)\\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\\\
-        n\",\n            \"enum\": [\n                \"none\",\n                \"session\",\n                \"lifecycle\"\
+        n\",\n            \"enum\": [\n                \"None\",\n                \"Session\",\n                \"Lifecycle\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get item instance by ID\",\n    \"description\": \"Retrieves an item instance
         by its unique ID.\",\n    \"tags\": [\n        \"Item Instance\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -1389,12 +1389,12 @@ paths:
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
         timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How an item instance was created\",\n            \"enum\": [\n         \
-        \       \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\",\n          \
-        \      \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        },\n        \"\
+        \       \"Loot\",\n                \"Quest\",\n                \"Craft\",\n                \"Trade\",\n          \
+        \      \"Purchase\",\n                \"Spawn\",\n                \"Other\"\n            ]\n        },\n        \"\
         ContractBindingType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of contract binding
         on an item instance.\\n- none: No contract bound\\n- session: Temporary binding for multi-step use (managed by Item
         service)\\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\\\
-        n\",\n            \"enum\": [\n                \"none\",\n                \"session\",\n                \"lifecycle\"\
+        n\",\n            \"enum\": [\n                \"None\",\n                \"Session\",\n                \"Lifecycle\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Modify item instance state\",\n    \"description\": \"Modifies an item
         instance's mutable state: durability, custom stats,\\ncustom name, and metadata. Cannot modify bound items unless
@@ -1442,8 +1442,8 @@ paths:
         \                \"bindType\": {\n                    \"$ref\": \"#/$defs/SoulboundType\",\n                    \"\
         description\": \"Type of binding to apply\"\n                }\n            }\n        },\n        \"SoulboundType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
-        ,\n                \"on_use\"\n            ]\n        }\n    }\n}"
+        \            \"enum\": [\n                \"None\",\n                \"OnPickup\",\n                \"OnEquip\",\n\
+        \                \"OnUse\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ItemInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Item instance details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -1495,12 +1495,12 @@ paths:
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
         timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How an item instance was created\",\n            \"enum\": [\n         \
-        \       \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\",\n          \
-        \      \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        },\n        \"\
+        \       \"Loot\",\n                \"Quest\",\n                \"Craft\",\n                \"Trade\",\n          \
+        \      \"Purchase\",\n                \"Spawn\",\n                \"Other\"\n            ]\n        },\n        \"\
         ContractBindingType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of contract binding
         on an item instance.\\n- none: No contract bound\\n- session: Temporary binding for multi-step use (managed by Item
         service)\\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\\\
-        n\",\n            \"enum\": [\n                \"none\",\n                \"session\",\n                \"lifecycle\"\
+        n\",\n            \"enum\": [\n                \"None\",\n                \"Session\",\n                \"Lifecycle\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Bind item to character\",\n    \"description\": \"Binds an item instance
         to a character. The bind type must be allowed by\\nthe template's soulboundType. Once bound, the item cannot be traded.\\\
@@ -1544,8 +1544,8 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/UnbindReason\",\n                    \"description\": \"Reason for unbinding\"\
         \n                }\n            }\n        },\n        \"UnbindReason\": {\n            \"type\": \"string\",\n \
         \           \"description\": \"Reason for unbinding an item from a character\",\n            \"enum\": [\n       \
-        \         \"admin\",\n                \"expiration\",\n                \"transfer_override\"\n            ]\n    \
-        \    }\n    }\n}"
+        \         \"Admin\",\n                \"Expiration\",\n                \"TransferOverride\"\n            ]\n     \
+        \   }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ItemInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Item instance details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -1597,12 +1597,12 @@ paths:
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
         timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How an item instance was created\",\n            \"enum\": [\n         \
-        \       \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\",\n          \
-        \      \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        },\n        \"\
+        \       \"Loot\",\n                \"Quest\",\n                \"Craft\",\n                \"Trade\",\n          \
+        \      \"Purchase\",\n                \"Spawn\",\n                \"Other\"\n            ]\n        },\n        \"\
         ContractBindingType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of contract binding
         on an item instance.\\n- none: No contract bound\\n- session: Temporary binding for multi-step use (managed by Item
         service)\\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\\\
-        n\",\n            \"enum\": [\n                \"none\",\n                \"session\",\n                \"lifecycle\"\
+        n\",\n            \"enum\": [\n                \"None\",\n                \"Session\",\n                \"Lifecycle\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Unbind item from character\",\n    \"description\": \"Removes the binding
         from a soulbound item. This is an admin-only operation\\nfor returning bound items to tradeable state. Requires a
@@ -1646,8 +1646,8 @@ paths:
         \ \"reason\": {\n                    \"$ref\": \"#/$defs/DestroyReason\",\n                    \"description\": \"\
         Reason for destruction\"\n                }\n            }\n        },\n        \"DestroyReason\": {\n           \
         \ \"type\": \"string\",\n            \"description\": \"Reason for destroying an item instance\",\n            \"\
-        enum\": [\n                \"consumed\",\n                \"destroyed\",\n                \"expired\",\n         \
-        \       \"admin\"\n            ]\n        }\n    }\n}"
+        enum\": [\n                \"Consumed\",\n                \"Destroyed\",\n                \"Expired\",\n         \
+        \       \"Admin\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DestroyItemInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"DestroyItemInstanceResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Response after destroying an item instance\",\n            \"additionalProperties\": false,\n   \
@@ -1905,12 +1905,12 @@ paths:
         format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
         timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How an item instance was created\",\n            \"enum\": [\n         \
-        \       \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\",\n          \
-        \      \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        },\n        \"\
+        \       \"Loot\",\n                \"Quest\",\n                \"Craft\",\n                \"Trade\",\n          \
+        \      \"Purchase\",\n                \"Spawn\",\n                \"Other\"\n            ]\n        },\n        \"\
         ContractBindingType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of contract binding
         on an item instance.\\n- none: No contract bound\\n- session: Temporary binding for multi-step use (managed by Item
         service)\\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\\\
-        n\",\n            \"enum\": [\n                \"none\",\n                \"session\",\n                \"lifecycle\"\
+        n\",\n            \"enum\": [\n                \"None\",\n                \"Session\",\n                \"Lifecycle\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List items in a container\",\n    \"description\": \"Returns all item instances
         in the specified container.\",\n    \"tags\": [\n        \"Item Query\"\n    ],\n    \"deprecated\": false,\n    \"\
@@ -2013,12 +2013,12 @@ paths:
         format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
         timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How an item instance was created\",\n            \"enum\": [\n         \
-        \       \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\",\n          \
-        \      \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        },\n        \"\
+        \       \"Loot\",\n                \"Quest\",\n                \"Craft\",\n                \"Trade\",\n          \
+        \      \"Purchase\",\n                \"Spawn\",\n                \"Other\"\n            ]\n        },\n        \"\
         ContractBindingType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of contract binding
         on an item instance.\\n- none: No contract bound\\n- session: Temporary binding for multi-step use (managed by Item
         service)\\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\\\
-        n\",\n            \"enum\": [\n                \"none\",\n                \"session\",\n                \"lifecycle\"\
+        n\",\n            \"enum\": [\n                \"None\",\n                \"Session\",\n                \"Lifecycle\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List instances of a template\",\n    \"description\": \"Returns item instances
         of the specified template, optionally filtered by realm.\\nUseful for admin queries and analytics.\\n\",\n    \"tags\"\
@@ -2113,12 +2113,12 @@ paths:
         format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
         timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How an item instance was created\",\n            \"enum\": [\n         \
-        \       \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\",\n          \
-        \      \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        },\n        \"\
+        \       \"Loot\",\n                \"Quest\",\n                \"Craft\",\n                \"Trade\",\n          \
+        \      \"Purchase\",\n                \"Spawn\",\n                \"Other\"\n            ]\n        },\n        \"\
         ContractBindingType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of contract binding
         on an item instance.\\n- none: No contract bound\\n- session: Temporary binding for multi-step use (managed by Item
         service)\\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\\\
-        n\",\n            \"enum\": [\n                \"none\",\n                \"session\",\n                \"lifecycle\"\
+        n\",\n            \"enum\": [\n                \"None\",\n                \"Session\",\n                \"Lifecycle\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get multiple item instances by ID\",\n    \"description\": \"Retrieves
         multiple item instances in a single request.\",\n    \"tags\": [\n        \"Item Query\"\n    ],\n    \"deprecated\"\
@@ -2129,67 +2129,67 @@ components:
       type: string
       description: Item classification category
       enum:
-      - weapon
-      - armor
-      - accessory
-      - consumable
-      - material
-      - container
-      - quest
-      - currency_like
-      - misc
-      - custom
+      - Weapon
+      - Armor
+      - Accessory
+      - Consumable
+      - Material
+      - Container
+      - Quest
+      - CurrencyLike
+      - Misc
+      - Custom
     QuantityModel:
       type: string
       description: How quantities are tracked for this item type
       enum:
-      - discrete
-      - continuous
-      - unique
+      - Discrete
+      - Continuous
+      - Unique
     ItemRarity:
       type: string
       description: Item rarity tier
       enum:
-      - common
-      - uncommon
-      - rare
-      - epic
-      - legendary
-      - custom
+      - Common
+      - Uncommon
+      - Rare
+      - Epic
+      - Legendary
+      - Custom
     SoulboundType:
       type: string
       description: When item becomes bound to a character
       enum:
-      - none
-      - on_pickup
-      - on_equip
-      - on_use
+      - None
+      - OnPickup
+      - OnEquip
+      - OnUse
     ItemScope:
       type: string
       description: Realm availability scope (consistent with CurrencyScope)
       enum:
-      - global
-      - realm_specific
-      - multi_realm
+      - Global
+      - RealmSpecific
+      - MultiRealm
     WeightPrecision:
       type: string
       description: Precision for weight values (consistent with CurrencyPrecision)
       enum:
-      - integer
-      - decimal_1
-      - decimal_2
-      - decimal_3
+      - Integer
+      - Decimal1
+      - Decimal2
+      - Decimal3
     ItemOriginType:
       type: string
       description: How an item instance was created
       enum:
-      - loot
-      - quest
-      - craft
-      - trade
-      - purchase
-      - spawn
-      - other
+      - Loot
+      - Quest
+      - Craft
+      - Trade
+      - Purchase
+      - Spawn
+      - Other
     ItemUseBehavior:
       type: string
       description: |
@@ -2198,9 +2198,9 @@ components:
         - destroy_on_success: Item consumed only if use behavior succeeds (default)
         - destroy_always: Item consumed regardless of success/failure
       enum:
-      - disabled
-      - destroy_on_success
-      - destroy_always
+      - Disabled
+      - DestroyOnSuccess
+      - DestroyAlways
     CanUseBehavior:
       type: string
       description: |
@@ -2209,9 +2209,9 @@ components:
         - block: CanUse failure prevents use (default)
         - warn_and_proceed: CanUse failure logs warning but proceeds with use
       enum:
-      - disabled
-      - block
-      - warn_and_proceed
+      - Disabled
+      - Block
+      - WarnAndProceed
     ContractBindingType:
       type: string
       description: |
@@ -2220,24 +2220,24 @@ components:
         - session: Temporary binding for multi-step use (managed by Item service)
         - lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)
       enum:
-      - none
-      - session
-      - lifecycle
+      - None
+      - Session
+      - Lifecycle
     DestroyReason:
       type: string
       description: Reason for destroying an item instance
       enum:
-      - consumed
-      - destroyed
-      - expired
-      - admin
+      - Consumed
+      - Destroyed
+      - Expired
+      - Admin
     UnbindReason:
       type: string
       description: Reason for unbinding an item from a character
       enum:
-      - admin
-      - expiration
-      - transfer_override
+      - Admin
+      - Expiration
+      - TransferOverride
     CreateItemTemplateRequest:
       type: object
       description: Request to create a new item template

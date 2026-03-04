@@ -38,10 +38,10 @@ using System = global::System;
 public enum ControllerAction
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"possess")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Possess")]
     Possess = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"release")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Release")]
     Release = 1,
 
 }

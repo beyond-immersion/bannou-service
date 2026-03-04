@@ -5,8 +5,8 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
-using BeyondImmersion.BannouService.Relationship.Caching;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Relationship.Caching;
 using BeyondImmersion.BannouService.Services;
 using System.Diagnostics;
 

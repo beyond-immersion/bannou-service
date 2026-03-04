@@ -75,7 +75,7 @@ public class LocationContextProviderTests
     {
         var provider = CreateProvider();
         var result = provider.GetValue(ToSpan("type"));
-        Assert.Equal("DISTRICT", result);
+        Assert.Equal("District", result);
     }
 
     [Fact]
@@ -160,7 +160,7 @@ public class LocationContextProviderTests
         Assert.Equal("MARKET_DISTRICT", dict["zone"]);
         Assert.Equal("Market District", dict["name"]);
         Assert.Equal("CENTRAL_REGION", dict["region"]);
-        Assert.Equal("DISTRICT", dict["type"]);
+        Assert.Equal("District", dict["type"]);
         Assert.Equal(3, dict["depth"]);
         Assert.Equal("ARCADIA", dict["realm"]);
         var pois = Assert.IsType<List<string>>(dict["nearby_pois"]);
@@ -208,7 +208,7 @@ public class LocationContextProviderTests
             Zone: "ISOLATED_CAVE",
             Name: "Isolated Cave",
             Region: null,
-            Type: LocationType.DUNGEON,
+            Type: LocationType.Dungeon,
             Depth: 5,
             Realm: "ARCADIA",
             NearbyPois: new List<string>(),
@@ -232,7 +232,7 @@ public class LocationContextProviderTests
             Zone: "MARKET_DISTRICT",
             Name: "Market District",
             Region: region,
-            Type: LocationType.DISTRICT,
+            Type: LocationType.District,
             Depth: 3,
             Realm: "ARCADIA",
             NearbyPois: new List<string> { "TEMPLE_DISTRICT", "HARBOR" },

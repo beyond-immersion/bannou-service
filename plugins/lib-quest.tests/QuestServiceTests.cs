@@ -576,7 +576,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         // Arrange
         var service = CreateService();
         var definition = CreateTestDefinitionModel(Guid.NewGuid());
-        definition.Category = QuestCategory.MAIN;
+        definition.Category = QuestCategory.Main;
 
         _mockDefinitionStore
             .Setup(s => s.QueryAsync(
@@ -584,7 +584,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<QuestDefinitionModel> { definition });
 
-        var request = new ListQuestDefinitionsRequest { Category = QuestCategory.MAIN };
+        var request = new ListQuestDefinitionsRequest { Category = QuestCategory.Main };
 
         // Act
         var (status, response) = await service.ListQuestDefinitionsAsync(request, CancellationToken.None);
@@ -593,7 +593,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Single(response.Definitions);
-        Assert.Equal(QuestCategory.MAIN, response.Definitions.First().Category);
+        Assert.Equal(QuestCategory.Main, response.Definitions.First().Category);
     }
 
     #endregion
@@ -684,7 +684,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(QuestStatus.ACTIVE, response.Status);
+        Assert.Equal(QuestStatus.Active, response.Status);
         Assert.Contains(characterId, response.QuestorCharacterIds);
     }
 
@@ -845,7 +845,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var instanceId = Guid.NewGuid();
         var characterId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(instanceId, characterId);
-        instance.Status = QuestStatus.ACTIVE;
+        instance.Status = QuestStatus.Active;
 
         // Setup: quest instance exists - service uses GetWithETagAsync for direct key lookup
         _mockInstanceStore
@@ -907,7 +907,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(QuestStatus.ABANDONED, response.Status);
+        Assert.Equal(QuestStatus.Abandoned, response.Status);
     }
 
     [Fact]
@@ -944,7 +944,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var instanceId = Guid.NewGuid();
         var characterId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(instanceId, characterId);
-        instance.Status = QuestStatus.COMPLETED;
+        instance.Status = QuestStatus.Completed;
 
         // Setup: quest instance exists but not active - service uses GetWithETagAsync
         _mockInstanceStore
@@ -1055,14 +1055,14 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         mainInstance.Code = "MAIN_QUEST";
         var mainDefId = mainInstance.DefinitionId;
         var mainDef = CreateTestDefinitionModel(mainDefId, "MAIN_QUEST");
-        mainDef.Category = QuestCategory.MAIN;
+        mainDef.Category = QuestCategory.Main;
 
         // Side quest instance
         var sideInstance = CreateTestInstanceModel(sideQuestId, characterId);
         sideInstance.Code = "SIDE_QUEST";
         var sideDefId = sideInstance.DefinitionId;
         var sideDef = CreateTestDefinitionModel(sideDefId, "SIDE_QUEST");
-        sideDef.Category = QuestCategory.SIDE;
+        sideDef.Category = QuestCategory.Side;
 
         _mockInstanceStore
             .Setup(s => s.GetAsync($"inst:{mainQuestId}", It.IsAny<CancellationToken>()))
@@ -1095,7 +1095,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new GetQuestLogRequest
         {
             CharacterId = characterId,
-            Category = QuestCategory.MAIN
+            Category = QuestCategory.Main
         };
 
         // Act
@@ -1107,7 +1107,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         Assert.Single(response.ActiveQuests);
         var entry = response.ActiveQuests.First();
         Assert.Equal("MAIN_QUEST", entry.Code);
-        Assert.Equal(QuestCategory.MAIN, entry.Category);
+        Assert.Equal(QuestCategory.Main, entry.Category);
     }
 
     [Fact]
@@ -1133,13 +1133,13 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var mainInstance = CreateTestInstanceModel(mainQuestId, characterId);
         var mainDefId = mainInstance.DefinitionId;
         var mainDef = CreateTestDefinitionModel(mainDefId, "MAIN_QUEST");
-        mainDef.Category = QuestCategory.MAIN;
+        mainDef.Category = QuestCategory.Main;
 
         // Side quest instance
         var sideInstance = CreateTestInstanceModel(sideQuestId, characterId);
         var sideDefId = sideInstance.DefinitionId;
         var sideDef = CreateTestDefinitionModel(sideDefId, "SIDE_QUEST");
-        sideDef.Category = QuestCategory.SIDE;
+        sideDef.Category = QuestCategory.Side;
 
         _mockInstanceStore
             .Setup(s => s.GetAsync($"inst:{mainQuestId}", It.IsAny<CancellationToken>()))
@@ -1196,14 +1196,14 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var characterId = Guid.NewGuid();
         var objectiveCode = "KILL_WOLVES";
         var instance = CreateTestInstanceModel(instanceId, characterId);
-        instance.Status = QuestStatus.ACTIVE;
+        instance.Status = QuestStatus.Active;
 
         var progress = new ObjectiveProgressModel
         {
             QuestInstanceId = instanceId,
             ObjectiveCode = objectiveCode,
             Name = "Kill Wolves",
-            ObjectiveType = ObjectiveType.KILL,
+            ObjectiveType = ObjectiveType.Kill,
             CurrentCount = 3,
             RequiredCount = 10,
             IsComplete = false,
@@ -1254,14 +1254,14 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var characterId = Guid.NewGuid();
         var objectiveCode = "KILL_WOLVES";
         var instance = CreateTestInstanceModel(instanceId, characterId);
-        instance.Status = QuestStatus.ACTIVE;
+        instance.Status = QuestStatus.Active;
 
         var progress = new ObjectiveProgressModel
         {
             QuestInstanceId = instanceId,
             ObjectiveCode = objectiveCode,
             Name = "Kill Wolves",
-            ObjectiveType = ObjectiveType.KILL,
+            ObjectiveType = ObjectiveType.Kill,
             CurrentCount = 8,
             RequiredCount = 10,
             IsComplete = false,
@@ -1344,7 +1344,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var instanceId = Guid.NewGuid();
         var characterId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(instanceId, characterId);
-        instance.Status = QuestStatus.COMPLETED;
+        instance.Status = QuestStatus.Completed;
 
         // Setup: quest instance exists but not active - service uses GetAsync
         _mockInstanceStore
@@ -1374,7 +1374,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var instanceId = Guid.NewGuid();
         var characterId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(instanceId, characterId);
-        instance.Status = QuestStatus.ACTIVE;
+        instance.Status = QuestStatus.Active;
 
         // Setup: quest instance exists - service uses GetAsync
         _mockInstanceStore
@@ -1411,14 +1411,14 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var objectiveCode = "KILL_WOLVES";
         var trackedEntityId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(instanceId, characterId);
-        instance.Status = QuestStatus.ACTIVE;
+        instance.Status = QuestStatus.Active;
 
         var progress = new ObjectiveProgressModel
         {
             QuestInstanceId = instanceId,
             ObjectiveCode = objectiveCode,
             Name = "Kill Wolves",
-            ObjectiveType = ObjectiveType.KILL,
+            ObjectiveType = ObjectiveType.Kill,
             CurrentCount = 3,
             RequiredCount = 10,
             IsComplete = false,
@@ -1464,14 +1464,14 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var characterId = Guid.NewGuid();
         var objectiveCode = "KILL_WOLVES";
         var instance = CreateTestInstanceModel(instanceId, characterId);
-        instance.Status = QuestStatus.ACTIVE;
+        instance.Status = QuestStatus.Active;
 
         var progress = new ObjectiveProgressModel
         {
             QuestInstanceId = instanceId,
             ObjectiveCode = objectiveCode,
             Name = "Kill Wolves",
-            ObjectiveType = ObjectiveType.KILL,
+            ObjectiveType = ObjectiveType.Kill,
             CurrentCount = 3,
             RequiredCount = 10,
             IsComplete = false,
@@ -1536,7 +1536,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             QuestInstanceId = instanceId,
             ObjectiveCode = objectiveCode,
             Name = "Kill Wolves",
-            ObjectiveType = ObjectiveType.KILL,
+            ObjectiveType = ObjectiveType.Kill,
             CurrentCount = 5,
             RequiredCount = 10,
             IsComplete = false,
@@ -1613,7 +1613,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var instanceId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(instanceId, Guid.NewGuid());
         instance.ContractInstanceId = contractId;
-        instance.Status = QuestStatus.ACTIVE;
+        instance.Status = QuestStatus.Active;
 
         _mockInstanceStore
             .Setup(s => s.QueryAsync(
@@ -1644,7 +1644,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var characterId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(instanceId, characterId);
         instance.ContractInstanceId = contractId;
-        instance.Status = QuestStatus.ACTIVE;
+        instance.Status = QuestStatus.Active;
 
         _mockInstanceStore
             .Setup(s => s.QueryAsync(
@@ -1712,7 +1712,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var characterId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(instanceId, characterId);
         instance.ContractInstanceId = contractId;
-        instance.Status = QuestStatus.ACTIVE;
+        instance.Status = QuestStatus.Active;
 
         _mockInstanceStore
             .Setup(s => s.QueryAsync(
@@ -1775,7 +1775,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var characterId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(instanceId, characterId);
         instance.ContractInstanceId = contractId;
-        instance.Status = QuestStatus.ACTIVE;
+        instance.Status = QuestStatus.Active;
 
         _mockInstanceStore
             .Setup(s => s.QueryAsync(
@@ -1871,7 +1871,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var characterId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(instanceId, characterId);
         instance.ContractInstanceId = contractId;
-        instance.Status = QuestStatus.ACTIVE;
+        instance.Status = QuestStatus.Active;
 
         _mockInstanceStore
             .Setup(s => s.QueryAsync(
@@ -1948,7 +1948,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             QuestInstanceId = instanceId,
             ObjectiveCode = "KILL_WOLVES",
             Name = "Kill Wolves",
-            ObjectiveType = ObjectiveType.KILL,
+            ObjectiveType = ObjectiveType.Kill,
             CurrentCount = 7,
             RequiredCount = 10,
             IsComplete = false,
@@ -2015,7 +2015,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Setup: active quest instance (QueryAsync used by GetCompressDataAsync)
         var activeInstance = CreateTestInstanceModel(activeQuestId, characterId);
-        activeInstance.Status = QuestStatus.ACTIVE;
+        activeInstance.Status = QuestStatus.Active;
         _mockInstanceStore
             .Setup(s => s.QueryAsync(
                 It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
@@ -2024,14 +2024,14 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Setup: definition for active quest
         var definition = CreateTestDefinitionModel(activeInstance.DefinitionId);
-        definition.Category = QuestCategory.MAIN;
+        definition.Category = QuestCategory.Main;
         _mockDefinitionCache
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(definition);
 
         // Setup: completed quest definition lookup
         var completedDef = CreateTestDefinitionModel(Guid.NewGuid(), completedQuestCode);
-        completedDef.Category = QuestCategory.SIDE;
+        completedDef.Category = QuestCategory.Side;
         _mockDefinitionStore
             .Setup(s => s.QueryAsync(
                 It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
@@ -2044,7 +2044,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             QuestInstanceId = activeQuestId,
             ObjectiveCode = "KILL_WOLVES",
             Name = "Kill Wolves",
-            ObjectiveType = ObjectiveType.KILL,
+            ObjectiveType = ObjectiveType.Kill,
             CurrentCount = 5,
             RequiredCount = 10,
             IsComplete = false,
@@ -2114,11 +2114,11 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Setup: definitions for completed quests
         var mainDef1 = CreateTestDefinitionModel(Guid.NewGuid(), "MAIN_1");
-        mainDef1.Category = QuestCategory.MAIN;
+        mainDef1.Category = QuestCategory.Main;
         var mainDef2 = CreateTestDefinitionModel(Guid.NewGuid(), "MAIN_2");
-        mainDef2.Category = QuestCategory.MAIN;
+        mainDef2.Category = QuestCategory.Main;
         var sideDef = CreateTestDefinitionModel(Guid.NewGuid(), "SIDE_1");
-        sideDef.Category = QuestCategory.SIDE;
+        sideDef.Category = QuestCategory.Side;
 
         // Each completed quest code is queried individually, so use SetupSequence
         _mockDefinitionStore
@@ -2138,10 +2138,10 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(3, response.CompletedQuests);
-        Assert.True(response.QuestCategories.ContainsKey("MAIN"));
-        Assert.True(response.QuestCategories.ContainsKey("SIDE"));
-        Assert.Equal(2, response.QuestCategories["MAIN"]);
-        Assert.Equal(1, response.QuestCategories["SIDE"]);
+        Assert.True(response.QuestCategories.ContainsKey("Main"));
+        Assert.True(response.QuestCategories.ContainsKey("Side"));
+        Assert.Equal(2, response.QuestCategories["Main"]);
+        Assert.Equal(1, response.QuestCategories["Side"]);
     }
 
     #endregion
@@ -2155,8 +2155,8 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             Code = "test_quest",
             Name = "Test Quest",
             Description = "A test quest for unit testing",
-            Category = QuestCategory.SIDE,
-            Difficulty = QuestDifficulty.NORMAL,
+            Category = QuestCategory.Side,
+            Difficulty = QuestDifficulty.Normal,
             Repeatable = false,
             MaxQuestors = 1,
             GameServiceId = Guid.NewGuid(),
@@ -2167,7 +2167,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                     Code = "KILL_WOLVES",
                     Name = "Kill Wolves",
                     Description = "Kill 10 wolves",
-                    ObjectiveType = ObjectiveType.KILL,
+                    ObjectiveType = ObjectiveType.Kill,
                     RequiredCount = 10,
                     TargetEntityType = "creature",
                     TargetEntitySubtype = "wolf"
@@ -2185,8 +2185,8 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             Code = code,
             Name = "Test Quest",
             Description = "A test quest",
-            Category = QuestCategory.SIDE,
-            Difficulty = QuestDifficulty.NORMAL,
+            Category = QuestCategory.Side,
+            Difficulty = QuestDifficulty.Normal,
             LevelRequirement = null,
             Repeatable = false,
             CooldownSeconds = null,
@@ -2199,12 +2199,12 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                     Code = "KILL_WOLVES",
                     Name = "Kill Wolves",
                     Description = "Kill 10 wolves",
-                    ObjectiveType = ObjectiveType.KILL,
+                    ObjectiveType = ObjectiveType.Kill,
                     RequiredCount = 10,
                     TargetEntityType = "creature",
                     TargetEntitySubtype = "wolf",
                     Hidden = false,
-                    RevealBehavior = ObjectiveRevealBehavior.ALWAYS,
+                    RevealBehavior = ObjectiveRevealBehavior.Always,
                     Optional = false
                 }
             },
@@ -2228,7 +2228,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             ContractInstanceId = Guid.NewGuid(),
             Code = "TEST_QUEST",
             Name = "Test Quest",
-            Status = QuestStatus.ACTIVE,
+            Status = QuestStatus.Active,
             QuestorCharacterIds = new List<Guid> { questorCharacterId },
             QuestGiverCharacterId = null,
             AcceptedAt = DateTimeOffset.UtcNow,

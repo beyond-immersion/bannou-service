@@ -48,7 +48,7 @@ public static class GameServicePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/game-service/services/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listServices",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class GameServicePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/game-service/services/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getService",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class GameServicePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/game-service/services/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createService",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class GameServicePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/game-service/services/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateService",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class GameServicePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/game-service/services/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteService",
             Permissions = new List<PermissionRequirement>
             {

@@ -48,7 +48,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/type/register",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "RegisterRoomType",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/type/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetRoomType",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/type/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ListRoomTypes",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/type/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "UpdateRoomType",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/type/deprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "DeprecateRoomType",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/room/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "CreateRoom",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/room/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetRoom",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/room/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ListRooms",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/room/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "UpdateRoom",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/room/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "DeleteRoom",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/room/archive",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ArchiveRoom",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/room/join",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "JoinRoom",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/room/leave",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "LeaveRoom",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/room/participants",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ListParticipants",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/room/participant/kick",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "KickParticipant",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/room/participant/ban",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "BanParticipant",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/room/participant/unban",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "UnbanParticipant",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/room/participant/mute",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "MuteParticipant",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/room/participant/unmute",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "UnmuteParticipant",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/room/participant/change-role",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ChangeParticipantRole",
             Permissions = new List<PermissionRequirement>
             {
@@ -348,7 +348,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/message/send",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "SendMessage",
             Permissions = new List<PermissionRequirement>
             {
@@ -363,7 +363,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/message/send-batch",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "SendMessageBatch",
             Permissions = new List<PermissionRequirement>
             {
@@ -378,7 +378,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/message/history",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetMessageHistory",
             Permissions = new List<PermissionRequirement>
             {
@@ -393,7 +393,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/message/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "DeleteMessage",
             Permissions = new List<PermissionRequirement>
             {
@@ -408,7 +408,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/message/pin",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "PinMessage",
             Permissions = new List<PermissionRequirement>
             {
@@ -423,7 +423,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/message/unpin",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "UnpinMessage",
             Permissions = new List<PermissionRequirement>
             {
@@ -438,7 +438,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/message/search",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "SearchMessages",
             Permissions = new List<PermissionRequirement>
             {
@@ -453,7 +453,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/admin/rooms",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "AdminListRooms",
             Permissions = new List<PermissionRequirement>
             {
@@ -468,7 +468,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/admin/stats",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "AdminGetStats",
             Permissions = new List<PermissionRequirement>
             {
@@ -483,7 +483,7 @@ public static class ChatPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/chat/admin/cleanup",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "AdminForceCleanup",
             Permissions = new List<PermissionRequirement>
             {

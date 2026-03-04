@@ -458,7 +458,7 @@ public partial class SaveLoadService : ISaveLoadService
         {
             // Auto-create slot with defaults
             // SaveSlotMetadata fields are now proper types (Guid, enums)
-            var category = body.Category ?? SaveCategory.MANUAL_SAVE;
+            var category = body.Category ?? SaveCategory.ManualSave;
             slot = new SaveSlotMetadata
             {
                 SlotId = Guid.NewGuid(),
@@ -526,9 +526,9 @@ public partial class SaveLoadService : ISaveLoadService
 
         if (Compression.CompressionHelper.ShouldCompress(originalSize, _configuration.AutoCompressThresholdBytes))
         {
-            var compressionLevel = compressionType == CompressionType.BROTLI
+            var compressionLevel = compressionType == CompressionType.Brotli
                 ? _configuration.BrotliCompressionLevel
-                : compressionType == CompressionType.GZIP
+                : compressionType == CompressionType.Gzip
                     ? _configuration.GzipCompressionLevel
                     : (int?)null;
             compressedData = Compression.CompressionHelper.Compress(rawData, compressionType, compressionLevel);
@@ -536,7 +536,7 @@ public partial class SaveLoadService : ISaveLoadService
         }
         else
         {
-            compressionType = CompressionType.NONE;
+            compressionType = CompressionType.None;
         }
 
         var compressionRatio = Compression.CompressionHelper.CalculateCompressionRatio(originalSize, compressedSize);
@@ -576,7 +576,7 @@ public partial class SaveLoadService : ISaveLoadService
             VersionNumber = nextVersion,
             Data = Convert.ToBase64String(compressedData),
             ContentHash = contentHash,
-            IsCompressed = compressionType != CompressionType.NONE,
+            IsCompressed = compressionType != CompressionType.None,
             CompressionType = compressionType,
             SizeBytes = compressedSize,
             CachedAt = now,
@@ -678,11 +678,11 @@ public partial class SaveLoadService : ISaveLoadService
     {
         return category switch
         {
-            SaveCategory.CHECKPOINT => 0,      // Highest priority
-            SaveCategory.MANUAL_SAVE => 1,
-            SaveCategory.AUTO_SAVE => 2,
-            SaveCategory.QUICK_SAVE => 3,
-            SaveCategory.STATE_SNAPSHOT => 4,  // Lowest priority
+            SaveCategory.Checkpoint => 0,      // Highest priority
+            SaveCategory.ManualSave => 1,
+            SaveCategory.AutoSave => 2,
+            SaveCategory.QuickSave => 3,
+            SaveCategory.StateSnapshot => 4,  // Lowest priority
             _ => 2
         };
     }
@@ -756,7 +756,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             // Decompress if needed - HotSaveEntry.CompressionType is now a nullable enum
             var compressedData = Convert.FromBase64String(hotEntry.Data);
-            var compressionType = hotEntry.CompressionType ?? CompressionType.NONE;
+            var compressionType = hotEntry.CompressionType ?? CompressionType.None;
 
             decompressedData = hotEntry.IsCompressed
                 ? Compression.CompressionHelper.Decompress(compressedData, compressionType)
@@ -802,7 +802,7 @@ public partial class SaveLoadService : ISaveLoadService
                 }
 
                 // SaveVersionManifest.CompressionType is now an enum - use directly
-                decompressedData = manifest.CompressionType != CompressionType.NONE
+                decompressedData = manifest.CompressionType != CompressionType.None
                     ? Compression.CompressionHelper.Decompress(assetResponse, manifest.CompressionType)
                     : assetResponse;
             }
@@ -910,7 +910,7 @@ public partial class SaveLoadService : ISaveLoadService
         var deltaProcessor = new DeltaProcessor(
             _logger as ILogger<DeltaProcessor> ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<DeltaProcessor>.Instance,
             _configuration.MigrationMaxPatchOperations);
-        var algorithmEnum = body.Algorithm ?? DeltaAlgorithm.JSON_PATCH;
+        var algorithmEnum = body.Algorithm ?? DeltaAlgorithm.JsonPatch;
         var algorithm = algorithmEnum.ToString();
         if (!deltaProcessor.ValidateDelta(body.Delta, algorithm))
         {
@@ -970,14 +970,14 @@ public partial class SaveLoadService : ISaveLoadService
 
         // Compress the delta if needed
         var compressedDelta = body.Delta;
-        var compressionTypeEnum = CompressionType.NONE;
+        var compressionTypeEnum = CompressionType.None;
         if (deltaSize > _configuration.AutoCompressThresholdBytes)
         {
             // Configuration already provides typed enum (T25 compliant)
             compressionTypeEnum = _configuration.DefaultCompressionType;
-            var deltaCompressionLevel = compressionTypeEnum == CompressionType.BROTLI
+            var deltaCompressionLevel = compressionTypeEnum == CompressionType.Brotli
                 ? _configuration.BrotliCompressionLevel
-                : compressionTypeEnum == CompressionType.GZIP
+                : compressionTypeEnum == CompressionType.Gzip
                     ? _configuration.GzipCompressionLevel
                     : (int?)null;
             compressedDelta = Compression.CompressionHelper.Compress(body.Delta, compressionTypeEnum, deltaCompressionLevel);
@@ -991,7 +991,7 @@ public partial class SaveLoadService : ISaveLoadService
             VersionNumber = newVersionNumber,
             Data = Convert.ToBase64String(compressedDelta),
             ContentHash = contentHash,
-            IsCompressed = compressionTypeEnum != CompressionType.NONE,
+            IsCompressed = compressionTypeEnum != CompressionType.None,
             CompressionType = compressionTypeEnum,
             SizeBytes = deltaSize,
             CachedAt = DateTimeOffset.UtcNow,
@@ -1282,9 +1282,9 @@ public partial class SaveLoadService : ISaveLoadService
 
         // Compress the reconstructed data - config already provides typed enum (T25 compliant)
         var compressionTypeEnum = _configuration.DefaultCompressionType;
-        var collapseCompressionLevel = compressionTypeEnum == CompressionType.BROTLI
+        var collapseCompressionLevel = compressionTypeEnum == CompressionType.Brotli
             ? _configuration.BrotliCompressionLevel
-            : compressionTypeEnum == CompressionType.GZIP
+            : compressionTypeEnum == CompressionType.Gzip
                 ? _configuration.GzipCompressionLevel
                 : (int?)null;
         var compressedData = Compression.CompressionHelper.Compress(reconstructedData, compressionTypeEnum, collapseCompressionLevel);
@@ -1318,7 +1318,7 @@ public partial class SaveLoadService : ISaveLoadService
             VersionNumber = resolvedVersionNumber,
             Data = Convert.ToBase64String(compressedData),
             ContentHash = contentHash,
-            IsCompressed = compressionTypeEnum != CompressionType.NONE,
+            IsCompressed = compressionTypeEnum != CompressionType.None,
             CompressionType = compressionTypeEnum,
             SizeBytes = reconstructedData.Length,
             CachedAt = DateTimeOffset.UtcNow
@@ -1914,9 +1914,9 @@ public partial class SaveLoadService : ISaveLoadService
         var contentHash = Hashing.ContentHasher.ComputeHash(sourceData);
         // Configuration already provides typed enum (T25 compliant)
         var compressionTypeEnum = _configuration.DefaultCompressionType;
-        var copyCompressionLevel = compressionTypeEnum == CompressionType.BROTLI
+        var copyCompressionLevel = compressionTypeEnum == CompressionType.Brotli
             ? _configuration.BrotliCompressionLevel
-            : compressionTypeEnum == CompressionType.GZIP
+            : compressionTypeEnum == CompressionType.Gzip
                 ? _configuration.GzipCompressionLevel
                 : (int?)null;
         var compressedData = Compression.CompressionHelper.Compress(sourceData, compressionTypeEnum, copyCompressionLevel);
@@ -1952,7 +1952,7 @@ public partial class SaveLoadService : ISaveLoadService
             VersionNumber = newVersionNumber,
             Data = Convert.ToBase64String(compressedData),
             ContentHash = contentHash,
-            IsCompressed = compressionTypeEnum != CompressionType.NONE,
+            IsCompressed = compressionTypeEnum != CompressionType.None,
             CompressionType = compressionTypeEnum,
             SizeBytes = sourceData.Length,
             CachedAt = DateTimeOffset.UtcNow
@@ -2485,11 +2485,11 @@ public partial class SaveLoadService : ISaveLoadService
     {
         return category switch
         {
-            SaveCategory.QUICK_SAVE => _configuration.DefaultMaxVersionsQuickSave,
-            SaveCategory.AUTO_SAVE => _configuration.DefaultMaxVersionsAutoSave,
-            SaveCategory.MANUAL_SAVE => _configuration.DefaultMaxVersionsManualSave,
-            SaveCategory.CHECKPOINT => _configuration.DefaultMaxVersionsCheckpoint,
-            SaveCategory.STATE_SNAPSHOT => _configuration.DefaultMaxVersionsStateSnapshot,
+            SaveCategory.QuickSave => _configuration.DefaultMaxVersionsQuickSave,
+            SaveCategory.AutoSave => _configuration.DefaultMaxVersionsAutoSave,
+            SaveCategory.ManualSave => _configuration.DefaultMaxVersionsManualSave,
+            SaveCategory.Checkpoint => _configuration.DefaultMaxVersionsCheckpoint,
+            SaveCategory.StateSnapshot => _configuration.DefaultMaxVersionsStateSnapshot,
             _ => _configuration.DefaultMaxVersionsManualSave
         };
     }
@@ -2520,11 +2520,11 @@ public partial class SaveLoadService : ISaveLoadService
         // Default based on category characteristics
         return category switch
         {
-            SaveCategory.QUICK_SAVE => CompressionType.NONE,
-            SaveCategory.AUTO_SAVE => CompressionType.GZIP,
-            SaveCategory.MANUAL_SAVE => CompressionType.GZIP,
-            SaveCategory.CHECKPOINT => CompressionType.GZIP,
-            SaveCategory.STATE_SNAPSHOT => CompressionType.BROTLI,
+            SaveCategory.QuickSave => CompressionType.None,
+            SaveCategory.AutoSave => CompressionType.Gzip,
+            SaveCategory.ManualSave => CompressionType.Gzip,
+            SaveCategory.Checkpoint => CompressionType.Gzip,
+            SaveCategory.StateSnapshot => CompressionType.Brotli,
             // Configuration already provides typed enum (T25 compliant)
             _ => _configuration.DefaultCompressionType
         };

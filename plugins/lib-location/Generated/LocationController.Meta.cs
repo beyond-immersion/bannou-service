@@ -172,16 +172,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -425,16 +425,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -566,16 +566,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         }
     }
@@ -755,16 +755,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -896,16 +896,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         }
     }
@@ -1085,16 +1085,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -1226,16 +1226,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         }
     }
@@ -1415,16 +1415,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -1556,16 +1556,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         }
     }
@@ -1745,16 +1745,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -2032,16 +2032,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -2320,16 +2320,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         }
     }
@@ -2509,16 +2509,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -2697,16 +2697,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -2862,16 +2862,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -3040,16 +3040,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -3205,16 +3205,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -3456,16 +3456,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -3701,16 +3701,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -4036,16 +4036,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -4287,16 +4287,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -4532,16 +4532,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -4957,16 +4957,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {
@@ -5171,16 +5171,16 @@ public partial class LocationController
             "type": "string",
             "description": "Type classification for locations",
             "enum": [
-                "CONTINENT",
-                "REGION",
-                "CITY",
-                "DISTRICT",
-                "BUILDING",
-                "ROOM",
-                "LANDMARK",
-                "WILDERNESS",
-                "DUNGEON",
-                "OTHER"
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
             ]
         },
         "BoundsPrecision": {

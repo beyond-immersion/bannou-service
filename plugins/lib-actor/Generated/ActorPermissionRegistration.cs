@@ -48,7 +48,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/template/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "CreateActorTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/template/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetActorTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/template/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ListActorTemplates",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/template/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "UpdateActorTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/template/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "DeleteActorTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/spawn",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "SpawnActor",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetActor",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/stop",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "StopActor",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/bind-character",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "BindActorCharacter",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/cleanup-by-character",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "CleanupByCharacter",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ListActors",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/inject-perception",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "InjectPerception",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/encounter/start",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "StartEncounter",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/encounter/update-phase",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "UpdateEncounterPhase",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/encounter/end",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "EndEncounter",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class ActorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/actor/encounter/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetEncounter",
             Permissions = new List<PermissionRequirement>
             {

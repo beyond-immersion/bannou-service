@@ -101,23 +101,23 @@ public partial class StatusController
             "type": "string",
             "description": "Classification of status effects for filtering and cleanse targeting.\ n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\ n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
-                "buff",
-                "debuff",
-                "death",
-                "subscription",
-                "event",
-                "passive"
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
             ]
         },
         "StackBehavior": {
             "type": "string",
             "description": "How multiple applications of the same status template interact.\n- refresh_duration: resets timer, preserves or increments stack count\n- independent: each application is a separate item with own timer\n- increase_intensity: stacks increase effect magnitude, shared timer reset\n- replace: new application replaces existing entirely\n- ignore: cannot apply if already present\n",
             "enum": [
-                "refresh_duration",
-                "independent",
-                "increase_intensity",
-                "replace",
-                "ignore"
+                "RefreshDuration",
+                "Independent",
+                "IncreaseIntensity",
+                "Replace",
+                "Ignore"
             ]
         }
     }
@@ -224,23 +224,23 @@ public partial class StatusController
             "type": "string",
             "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
-                "buff",
-                "debuff",
-                "death",
-                "subscription",
-                "event",
-                "passive"
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
             ]
         },
         "StackBehavior": {
             "type": "string",
             "description": "How multiple applications of the same status template interact.\n- refresh_duration: resets timer, preserves or increments stack count\n- independent: each application is a separate item with own timer\n- increase_intensity: stacks increase effect magnitude, shared timer reset\n- replace: new application replaces existing entirely\n- ignore: cannot apply if already present\n",
             "enum": [
-                "refresh_duration",
-                "independent",
-                "increase_intensity",
-                "replace",
-                "ignore"
+                "RefreshDuration",
+                "Independent",
+                "IncreaseIntensity",
+                "Replace",
+                "Ignore"
             ]
         }
     }
@@ -427,23 +427,23 @@ public partial class StatusController
             "type": "string",
             "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
-                "buff",
-                "debuff",
-                "death",
-                "subscription",
-                "event",
-                "passive"
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
             ]
         },
         "StackBehavior": {
             "type": "string",
             "description": "How multiple applications of the same status template interact.\n- refresh_duration: resets timer, preserves or increments stack count\n- independent: each application is a separate item with own timer\n- increase_intensity: stacks increase effect magnitude, shared timer reset\n- replace: new application replaces existing entirely\n- ignore: cannot apply if already present\n",
             "enum": [
-                "refresh_duration",
-                "independent",
-                "increase_intensity",
-                "replace",
-                "ignore"
+                "RefreshDuration",
+                "Independent",
+                "IncreaseIntensity",
+                "Replace",
+                "Ignore"
             ]
         }
     }
@@ -635,23 +635,23 @@ public partial class StatusController
             "type": "string",
             "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
-                "buff",
-                "debuff",
-                "death",
-                "subscription",
-                "event",
-                "passive"
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
             ]
         },
         "StackBehavior": {
             "type": "string",
             "description": "How multiple applications of the same status template interact.\n- refresh_duration: resets timer, preserves or increments stack count\n- independent: each application is a separate item with own timer\n- increase_intensity: stacks increase effect magnitude, shared timer reset\n- replace: new application replaces existing entirely\n- ignore: cannot apply if already present\n",
             "enum": [
-                "refresh_duration",
-                "independent",
-                "increase_intensity",
-                "replace",
-                "ignore"
+                "RefreshDuration",
+                "Independent",
+                "IncreaseIntensity",
+                "Replace",
+                "Ignore"
             ]
         }
     }
@@ -760,12 +760,12 @@ public partial class StatusController
             "type": "string",
             "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
-                "buff",
-                "debuff",
-                "death",
-                "subscription",
-                "event",
-                "passive"
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
             ]
         }
     }
@@ -904,23 +904,23 @@ public partial class StatusController
             "type": "string",
             "description": "Classification of status effects for filtering and cleanse targeting.\ n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\ n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
-                "buff",
-                "debuff",
-                "death",
-                "subscription",
-                "event",
-                "passive"
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
             ]
         },
         "StackBehavior": {
             "type": "string",
             "description": "How multiple applications of the same status template interact.\n- refresh_duration: resets timer, preserves or increments stack count\n- independent: each application is a separate item with own timer\n- increase_intensity: stacks increase effect magnitude, shared timer reset\n- replace: new application replaces existing entirely\n- ignore: cannot apply if already present\n",
             "enum": [
-                "refresh_duration",
-                "independent",
-                "increase_intensity",
-                "replace",
-                "ignore"
+                "RefreshDuration",
+                "Independent",
+                "IncreaseIntensity",
+                "Replace",
+                "Ignore"
             ]
         }
     }
@@ -1064,23 +1064,23 @@ public partial class StatusController
             "type": "string",
             "description": "Classification of status effects for filtering and cleanse targeting.\ n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\ n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
-                "buff",
-                "debuff",
-                "death",
-                "subscription",
-                "event",
-                "passive"
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
             ]
         },
         "StackBehavior": {
             "type": "string",
             "description": "How multiple applications of the same status template interact.\n- refresh_duration: resets timer, preserves or increments stack count\n- independent: each application is a separate item with own timer\n- increase_intensity: stacks increase effect magnitude, shared timer reset\n- replace: new application replaces existing entirely\n- ignore: cannot apply if already present\n",
             "enum": [
-                "refresh_duration",
-                "independent",
-                "increase_intensity",
-                "replace",
-                "ignore"
+                "RefreshDuration",
+                "Independent",
+                "IncreaseIntensity",
+                "Replace",
+                "Ignore"
             ]
         }
     }
@@ -1187,23 +1187,23 @@ public partial class StatusController
             "type": "string",
             "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
-                "buff",
-                "debuff",
-                "death",
-                "subscription",
-                "event",
-                "passive"
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
             ]
         },
         "StackBehavior": {
             "type": "string",
             "description": "How multiple applications of the same status template interact.\n- refresh_duration: resets timer, preserves or increments stack count\n- independent: each application is a separate item with own timer\n- increase_intensity: stacks increase effect magnitude, shared timer reset\n- replace: new application replaces existing entirely\n- ignore: cannot apply if already present\n",
             "enum": [
-                "refresh_duration",
-                "independent",
-                "increase_intensity",
-                "replace",
-                "ignore"
+                "RefreshDuration",
+                "Independent",
+                "IncreaseIntensity",
+                "Replace",
+                "Ignore"
             ]
         }
     }
@@ -1373,23 +1373,23 @@ public partial class StatusController
             "type": "string",
             "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
-                "buff",
-                "debuff",
-                "death",
-                "subscription",
-                "event",
-                "passive"
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
             ]
         },
         "StackBehavior": {
             "type": "string",
             "description": "How multiple applications of the same status template interact.\n- refresh_duration: resets timer, preserves or increments stack count\n- independent: each application is a separate item with own timer\n- increase_intensity: stacks increase effect magnitude, shared timer reset\n- replace: new application replaces existing entirely\n- ignore: cannot apply if already present\n",
             "enum": [
-                "refresh_duration",
-                "independent",
-                "increase_intensity",
-                "replace",
-                "ignore"
+                "RefreshDuration",
+                "Independent",
+                "IncreaseIntensity",
+                "Replace",
+                "Ignore"
             ]
         }
     }
@@ -1601,10 +1601,10 @@ public partial class StatusController
             "type": "string",
             "description": "How a successful status grant was resolved.\ n- granted: new status applied (no prior instance)\n- stacked: stack count increased on existing instance\n- refreshed: timer reset on existing instance\n- replaced: existing instance removed and new one created\n",
             "enum": [
-                "granted",
-                "stacked",
-                "refreshed",
-                "replaced"
+                "Granted",
+                "Stacked",
+                "Refreshed",
+                "Replaced"
             ]
         }
     }
@@ -1696,11 +1696,11 @@ public partial class StatusController
             "type": "string",
             "description": "Why a status was removed from an entity.\n- expired: TTL or contract duration elapsed\n- cleansed: removed by category cleanse mechanic\n- cancelled: explicitly cancelled by service or admin\n- source_removed: source entity was deleted (cascading removal)\n- admin: removed by administrative action\n",
             "enum": [
-                "expired",
-                "cleansed",
-                "cancelled",
-                "source_removed",
-                "admin"
+                "Expired",
+                "Cleansed",
+                "Cancelled",
+                "SourceRemoved",
+                "Admin"
             ]
         }
     }
@@ -1793,12 +1793,12 @@ public partial class StatusController
             "type": "string",
             "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
-                "buff",
-                "debuff",
-                "death",
-                "subscription",
-                "event",
-                "passive"
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
             ]
         }
     }
@@ -2014,23 +2014,23 @@ public partial class StatusController
             "type": "string",
             "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
-                "buff",
-                "debuff",
-                "death",
-                "subscription",
-                "event",
-                "passive"
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
             ]
         },
         "StatusRemoveReason": {
             "type": "string",
             "description": "Why a status was removed from an entity.\n- expired: TTL or contract duration elapsed\n- cleansed: removed by category cleanse mechanic\n- cancelled: explicitly cancelled by service or admin\n- source_removed: source entity was deleted (cascading removal)\n- admin: removed by administrative action\n",
             "enum": [
-                "expired",
-                "cleansed",
-                "cancelled",
-                "source_removed",
-                "admin"
+                "Expired",
+                "Cleansed",
+                "Cancelled",
+                "SourceRemoved",
+                "Admin"
             ]
         }
     }
@@ -2296,12 +2296,12 @@ public partial class StatusController
             "type": "string",
             "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
-                "buff",
-                "debuff",
-                "death",
-                "subscription",
-                "event",
-                "passive"
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
             ]
         }
     }
@@ -2402,20 +2402,20 @@ public partial class StatusController
             "type": "string",
             "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
-                "buff",
-                "debuff",
-                "death",
-                "subscription",
-                "event",
-                "passive"
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
             ]
         },
         "EffectSource": {
             "type": "string",
             "description": "Whether an effect comes from a status item or a seed capability.\n- item_based: temporary effect stored as an item in a status container\n- seed_derived: passive capability computed from seed growth state\n",
             "enum": [
-                "item_based",
-                "seed_derived"
+                "ItemBased",
+                "SeedDerived"
             ]
         }
     }
@@ -2588,12 +2588,12 @@ public partial class StatusController
             "type": "string",
             "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
-                "buff",
-                "debuff",
-                "death",
-                "subscription",
-                "event",
-                "passive"
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
             ]
         }
     }
@@ -2790,20 +2790,20 @@ public partial class StatusController
             "type": "string",
             "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
             "enum": [
-                "buff",
-                "debuff",
-                "death",
-                "subscription",
-                "event",
-                "passive"
+                "Buff",
+                "Debuff",
+                "Death",
+                "Subscription",
+                "Event",
+                "Passive"
             ]
         },
         "EffectSource": {
             "type": "string",
             "description": "Whether an effect comes from a status item or a seed capability.\n- item_based: temporary effect stored as an item in a status container\n- seed_derived: passive capability computed from seed growth state\n",
             "enum": [
-                "item_based",
-                "seed_derived"
+                "ItemBased",
+                "SeedDerived"
             ]
         }
     }

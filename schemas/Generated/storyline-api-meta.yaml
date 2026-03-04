@@ -98,8 +98,8 @@ paths:
         \ \"nullable\": true,\n                    \"description\": \"Optional actant role hint (e.g., \\\"protagonist\\\"\
         , \\\"antagonist\\\", \\\"helper\\\").\\nUsed for Greimas actant assignment if provided.\\n\"\n                }\n\
         \            }\n        },\n        \"StorylineGoal\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"revenge\",\n                \"resurrection\",\n                \"legacy\",\n              \
-        \  \"mystery\",\n                \"peace\"\n            ],\n            \"description\": \"High-level story goal that
+        : [\n                \"Revenge\",\n                \"Resurrection\",\n                \"Legacy\",\n              \
+        \  \"Mystery\",\n                \"Peace\"\n            ],\n            \"description\": \"High-level story goal that
         drives arc selection.\\nrevenge: Character seeks vengeance for past wrongs\\nresurrection: Restoring something/someone
         lost\\nlegacy: Creating or continuing a lasting impact\\nmystery: Uncovering hidden truths\\npeace: Resolving conflicts
         and finding harmony\\n\"\n        },\n        \"ComposeConstraints\": {\n            \"type\": \"object\",\n     \
@@ -158,8 +158,8 @@ paths:
         : \"Time taken to generate in milliseconds\"\n                },\n                \"cached\": {\n                \
         \    \"type\": \"boolean\",\n                    \"description\": \"Whether this was returned from cache\"\n     \
         \           }\n            }\n        },\n        \"StorylineGoal\": {\n            \"type\": \"string\",\n      \
-        \      \"enum\": [\n                \"revenge\",\n                \"resurrection\",\n                \"legacy\",\n\
-        \                \"mystery\",\n                \"peace\"\n            ],\n            \"description\": \"High-level
+        \      \"enum\": [\n                \"Revenge\",\n                \"Resurrection\",\n                \"Legacy\",\n\
+        \                \"Mystery\",\n                \"Peace\"\n            ],\n            \"description\": \"High-level
         story goal that drives arc selection.\\nrevenge: Character seeks vengeance for past wrongs\\nresurrection: Restoring
         something/someone lost\\nlegacy: Creating or continuing a lasting impact\\nmystery: Uncovering hidden truths\\npeace:
         Resolving conflicts and finding harmony\\n\"\n        },\n        \"ArcType\": {\n            \"type\": \"string\"\
@@ -268,8 +268,8 @@ paths:
         string\",\n                    \"description\": \"Risk category (e.g., \\\"missing_entity\\\", \\\"low_tension\\\"\
         , \\\"weak_climax\\\")\"\n                },\n                \"description\": {\n                    \"type\": \"\
         string\",\n                    \"description\": \"Risk description\"\n                },\n                \"severity\"\
-        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"low\",\n\
-        \                        \"medium\",\n                        \"high\"\n                    ],\n                 \
+        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"Low\",\n\
+        \                        \"Medium\",\n                        \"High\"\n                    ],\n                 \
         \   \"description\": \"Risk severity\"\n                },\n                \"mitigation\": {\n                  \
         \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Suggested
         mitigation\"\n                }\n            }\n        }\n    }\n}"
@@ -352,8 +352,8 @@ paths:
         integer\",\n                    \"description\": \"Time taken to generate in milliseconds\"\n                },\n\
         \                \"cached\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
         Whether this was returned from cache\"\n                }\n            }\n        },\n        \"StorylineGoal\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"revenge\",\n                \"resurrection\"\
-        ,\n                \"legacy\",\n                \"mystery\",\n                \"peace\"\n            ],\n        \
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"Revenge\",\n                \"Resurrection\"\
+        ,\n                \"Legacy\",\n                \"Mystery\",\n                \"Peace\"\n            ],\n        \
         \    \"description\": \"High-level story goal that drives arc selection.\\nrevenge: Character seeks vengeance for
         past wrongs\\nresurrection: Restoring something/someone lost\\nlegacy: Creating or continuing a lasting impact\\nmystery:
         Uncovering hidden truths\\npeace: Resolving conflicts and finding harmony\\n\"\n        },\n        \"ArcType\": {\n\
@@ -463,8 +463,8 @@ paths:
         string\",\n                    \"description\": \"Risk category (e.g., \\\"missing_entity\\\", \\\"low_tension\\\"\
         , \\\"weak_climax\\\")\"\n                },\n                \"description\": {\n                    \"type\": \"\
         string\",\n                    \"description\": \"Risk description\"\n                },\n                \"severity\"\
-        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"low\",\n\
-        \                        \"medium\",\n                        \"high\"\n                    ],\n                 \
+        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"Low\",\n\
+        \                        \"Medium\",\n                        \"High\"\n                    ],\n                 \
         \   \"description\": \"Risk severity\"\n                },\n                \"mitigation\": {\n                  \
         \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Suggested
         mitigation\"\n                }\n            }\n        }\n    }\n}"
@@ -529,8 +529,8 @@ paths:
         \n                },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n              \
         \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
         When plan expires from cache\"\n                }\n            }\n        },\n        \"StorylineGoal\": {\n     \
-        \       \"type\": \"string\",\n            \"enum\": [\n                \"revenge\",\n                \"resurrection\"\
-        ,\n                \"legacy\",\n                \"mystery\",\n                \"peace\"\n            ],\n        \
+        \       \"type\": \"string\",\n            \"enum\": [\n                \"Revenge\",\n                \"Resurrection\"\
+        ,\n                \"Legacy\",\n                \"Mystery\",\n                \"Peace\"\n            ],\n        \
         \    \"description\": \"High-level story goal that drives arc selection.\\nrevenge: Character seeks vengeance for
         past wrongs\\nresurrection: Restoring something/someone lost\\nlegacy: Creating or continuing a lasting impact\\nmystery:
         Uncovering hidden truths\\npeace: Resolving conflicts and finding harmony\\n\"\n        },\n        \"ArcType\": {\n\
@@ -2172,11 +2172,11 @@ components:
     StorylineGoal:
       type: string
       enum:
-      - revenge
-      - resurrection
-      - legacy
-      - mystery
-      - peace
+      - Revenge
+      - Resurrection
+      - Legacy
+      - Mystery
+      - Peace
       description: |
         High-level story goal that drives arc selection.
         revenge: Character seeks vengeance for past wrongs
@@ -2723,9 +2723,9 @@ components:
         severity:
           type: string
           enum:
-          - low
-          - medium
-          - high
+          - Low
+          - Medium
+          - High
           description: Risk severity
         mitigation:
           type: string

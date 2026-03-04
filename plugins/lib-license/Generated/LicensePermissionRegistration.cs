@@ -48,7 +48,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/board-template/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createBoardTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/board-template/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getBoardTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/board-template/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listBoardTemplates",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/board-template/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateBoardTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/board-template/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteBoardTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/definition/add",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "addLicenseDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/definition/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getLicenseDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/definition/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listLicenseDefinitions",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/definition/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateLicenseDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/definition/remove",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "removeLicenseDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/board/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createBoard",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/board/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getBoard",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/board/list-by-owner",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listBoardsByOwner",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/board/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteBoard",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/unlock",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "unlockLicense",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/check-unlockable",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "checkUnlockable",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/board-state",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getBoardState",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/board-template/seed",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "seedBoardTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/board/clone",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cloneBoard",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class LicensePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/license/cleanup-by-owner",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cleanupByOwner",
             Permissions = new List<PermissionRequirement>
             {

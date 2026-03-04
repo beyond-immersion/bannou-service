@@ -50,7 +50,7 @@ public sealed class SaveSlotMetadata
     /// <summary>
     /// Compression type for new saves
     /// </summary>
-    public CompressionType CompressionType { get; set; } = CompressionType.GZIP;
+    public CompressionType CompressionType { get; set; } = CompressionType.Gzip;
 
     /// <summary>
     /// Current number of versions in slot

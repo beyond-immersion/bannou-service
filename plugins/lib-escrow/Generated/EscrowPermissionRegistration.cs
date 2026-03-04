@@ -48,7 +48,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createEscrow",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getEscrow",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listEscrows",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/deposit",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deposit",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/deposit/validate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "validateDeposit",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/deposit/status",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getDepositStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/consent",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "recordConsent",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/consent/status",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getConsentStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/release",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "release",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/refund",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "refund",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/cancel",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cancel",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/dispute",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "dispute",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/confirm-release",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "confirmRelease",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/confirm-refund",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "confirmRefund",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/resolve",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "resolve",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/verify-condition",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "verifyCondition",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/validate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "validateEscrow",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/reaffirm",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "reaffirm",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/handler/register",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "registerHandler",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/handler/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listHandlers",
             Permissions = new List<PermissionRequirement>
             {
@@ -348,7 +348,7 @@ public static class EscrowPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/escrow/handler/deregister",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deregisterHandler",
             Permissions = new List<PermissionRequirement>
             {

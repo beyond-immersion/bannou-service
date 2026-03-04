@@ -38,22 +38,22 @@ using System = global::System;
 public enum ContainerConstraintModel
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"slot_only")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SlotOnly")]
     SlotOnly = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"weight_only")]
+    [System.Runtime.Serialization.EnumMember(Value = @"WeightOnly")]
     WeightOnly = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"slot_and_weight")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SlotAndWeight")]
     SlotAndWeight = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"grid")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Grid")]
     Grid = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"volumetric")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Volumetric")]
     Volumetric = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"unlimited")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Unlimited")]
     Unlimited = 5,
 
 }
@@ -67,16 +67,16 @@ public enum ContainerConstraintModel
 public enum ConstraintLimitType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"slots")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Slots")]
     Slots = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"weight")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Weight")]
     Weight = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"volume")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Volume")]
     Volume = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"grid")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Grid")]
     Grid = 3,
 
 }
@@ -90,13 +90,13 @@ public enum ConstraintLimitType
 public enum WeightContribution
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    [System.Runtime.Serialization.EnumMember(Value = @"None")]
     None = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"self_only")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SelfOnly")]
     SelfOnly = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"self_plus_contents")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SelfPlusContents")]
     SelfPlusContents = 2,
 
 }
@@ -110,28 +110,28 @@ public enum WeightContribution
 public enum ContainerOwnerType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"character")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Character")]
     Character = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"account")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Account")]
     Account = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"location")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Location")]
     Location = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"vehicle")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Vehicle")]
     Vehicle = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"guild")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Guild")]
     Guild = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"escrow")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Escrow")]
     Escrow = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"mail")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Mail")]
     Mail = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"other")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Other")]
     Other = 7,
 
 }
@@ -145,13 +145,13 @@ public enum ContainerOwnerType
 public enum ItemHandling
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"destroy")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Destroy")]
     Destroy = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"transfer")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Transfer")]
     Transfer = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"error")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Error")]
     Error = 2,
 
 }
@@ -165,19 +165,19 @@ public enum ItemHandling
 public enum InventoryItemChangeType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"placed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Placed")]
     Placed = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"removed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Removed")]
     Removed = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"moved")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Moved")]
     Moved = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"stacked")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Stacked")]
     Stacked = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"split")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Split")]
     Split = 4,
 
 }

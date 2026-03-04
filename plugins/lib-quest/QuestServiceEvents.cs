@@ -184,7 +184,7 @@ public partial class QuestService
                 return;
             }
 
-            if (instance.Status != QuestStatus.ACTIVE)
+            if (instance.Status != QuestStatus.Active)
             {
                 _logger.LogDebug(
                     "Quest {QuestInstanceId} not in ACTIVE status, ignoring contract fulfilled event",
@@ -239,7 +239,7 @@ public partial class QuestService
                 return;
             }
 
-            if (instance.Status != QuestStatus.ACTIVE)
+            if (instance.Status != QuestStatus.Active)
             {
                 _logger.LogDebug(
                     "Quest {QuestInstanceId} not in ACTIVE status, ignoring contract terminated event",
@@ -251,7 +251,7 @@ public partial class QuestService
             var isAbandonment = evt.Reason?.Contains("abandoned", StringComparison.OrdinalIgnoreCase) == true ||
                                 evt.Reason?.Contains("player", StringComparison.OrdinalIgnoreCase) == true;
 
-            var newStatus = isAbandonment ? QuestStatus.ABANDONED : QuestStatus.FAILED;
+            var newStatus = isAbandonment ? QuestStatus.Abandoned : QuestStatus.Failed;
             var now = DateTimeOffset.UtcNow;
 
             await FailOrAbandonQuestAsync(instance, newStatus, evt.Reason ?? "Contract terminated", now);
@@ -288,7 +288,7 @@ public partial class QuestService
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (current, etag) = await InstanceStore.GetWithETagAsync(instanceKey, CancellationToken.None);
-            if (current == null || current.Status != QuestStatus.ACTIVE)
+            if (current == null || current.Status != QuestStatus.Active)
             {
                 return;
             }
@@ -323,7 +323,7 @@ public partial class QuestService
             }
 
             // Publish appropriate event
-            if (newStatus == QuestStatus.ABANDONED)
+            if (newStatus == QuestStatus.Abandoned)
             {
                 var abandonedEvent = new QuestAbandonedEvent
                 {

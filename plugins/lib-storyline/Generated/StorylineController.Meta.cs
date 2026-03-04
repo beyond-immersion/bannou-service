@@ -98,11 +98,11 @@ public partial class StorylineController
         "StorylineGoal": {
             "type": "string",
             "enum": [
-                "revenge",
-                "resurrection",
-                "legacy",
-                "mystery",
-                "peace"
+                "Revenge",
+                "Resurrection",
+                "Legacy",
+                "Mystery",
+                "Peace"
             ],
             "description": "High-level story goal that drives arc selection.\nrevenge: Character seeks vengeance for past wrongs\nresurrection: Restoring something/someone lost\nlegacy: Creating or continuing a lasting impact\nmystery: Uncovering hidden truths\npeace: Resolving conflicts and finding harmony\n"
         },
@@ -265,11 +265,11 @@ public partial class StorylineController
         "StorylineGoal": {
             "type": "string",
             "enum": [
-                "revenge",
-                "resurrection",
-                "legacy",
-                "mystery",
-                "peace"
+                "Revenge",
+                "Resurrection",
+                "Legacy",
+                "Mystery",
+                "Peace"
             ],
             "description": "High-level story goal that drives arc selection.\nrevenge: Character seeks vengeance for past wrongs\nresurrection: Restoring something/someone lost\nlegacy: Creating or continuing a lasting impact\nmystery: Uncovering hidden truths\npeace: Resolving conflicts and finding harmony\n"
         },
@@ -577,9 +577,9 @@ public partial class StorylineController
                 "severity": {
                     "type": "string",
                     "enum": [
-                        "low",
-                        "medium",
-                        "high"
+                        "Low",
+                        "Medium",
+                        "High"
                     ],
                     "description": "Risk severity"
                 },
@@ -794,11 +794,11 @@ public partial class StorylineController
         "StorylineGoal": {
             "type": "string",
             "enum": [
-                "revenge",
-                "resurrection",
-                "legacy",
-                "mystery",
-                "peace"
+                "Revenge",
+                "Resurrection",
+                "Legacy",
+                "Mystery",
+                "Peace"
             ],
             "description": "High-level story goal that drives arc selection.\nrevenge: Character seeks vengeance for past wrongs\nresurrection: Restoring something/someone lost\nlegacy: Creating or continuing a lasting impact\nmystery: Uncovering hidden truths\npeace: Resolving conflicts and finding harmony\n"
         },
@@ -1106,9 +1106,9 @@ public partial class StorylineController
                 "severity": {
                     "type": "string",
                     "enum": [
-                        "low",
-                        "medium",
-                        "high"
+                        "Low",
+                        "Medium",
+                        "High"
                     ],
                     "description": "Risk severity"
                 },
@@ -1293,11 +1293,11 @@ public partial class StorylineController
         "StorylineGoal": {
             "type": "string",
             "enum": [
-                "revenge",
-                "resurrection",
-                "legacy",
-                "mystery",
-                "peace"
+                "Revenge",
+                "Resurrection",
+                "Legacy",
+                "Mystery",
+                "Peace"
             ],
             "description": "High-level story goal that drives arc selection.\nrevenge: Character seeks vengeance for past wrongs\nresurrection: Restoring something/someone lost\nlegacy: Creating or continuing a lasting impact\nmystery: Uncovering hidden truths\npeace: Resolving conflicts and finding harmony\n"
         },

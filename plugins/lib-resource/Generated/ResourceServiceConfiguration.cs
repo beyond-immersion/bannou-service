@@ -76,13 +76,13 @@ public class ResourceServiceConfiguration : BaseServiceConfiguration
     /// Default cleanup policy when not specified per-resource-type
     /// Environment variable: RESOURCE_DEFAULT_CLEANUP_POLICY
     /// </summary>
-    public CleanupPolicy DefaultCleanupPolicy { get; set; } = CleanupPolicy.BEST_EFFORT;
+    public CleanupPolicy DefaultCleanupPolicy { get; set; } = CleanupPolicy.BestEffort;
 
     /// <summary>
     /// Default compression policy when not specified per-request
     /// Environment variable: RESOURCE_DEFAULT_COMPRESSION_POLICY
     /// </summary>
-    public CompressionPolicy DefaultCompressionPolicy { get; set; } = CompressionPolicy.ALL_REQUIRED;
+    public CompressionPolicy DefaultCompressionPolicy { get; set; } = CompressionPolicy.AllRequired;
 
     /// <summary>
     /// Timeout for each compression callback execution

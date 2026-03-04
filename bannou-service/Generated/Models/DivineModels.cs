@@ -38,13 +38,13 @@ using System = global::System;
 public enum DeityStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"active")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Active")]
     Active = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"dormant")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Dormant")]
     Dormant = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"archived")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Archived")]
     Archived = 2,
 
 }
@@ -58,16 +58,16 @@ public enum DeityStatus
 public enum BlessingTier
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"minor")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Minor")]
     Minor = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"standard")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Standard")]
     Standard = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"greater")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Greater")]
     Greater = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"supreme")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Supreme")]
     Supreme = 3,
 
 }
@@ -81,10 +81,10 @@ public enum BlessingTier
 public enum BlessingStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"active")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Active")]
     Active = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"revoked")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Revoked")]
     Revoked = 1,
 
 }
@@ -98,16 +98,16 @@ public enum BlessingStatus
 public enum AttentionPriority
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"low")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Low")]
     Low = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"medium")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Medium")]
     Medium = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"high")]
+    [System.Runtime.Serialization.EnumMember(Value = @"High")]
     High = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"critical")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Critical")]
     Critical = 3,
 
 }

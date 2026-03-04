@@ -194,8 +194,8 @@ public partial class TelemetryController
         "OtlpProtocol": {
             "type": "string",
             "enum": [
-                "grpc",
-                "http"
+                "Grpc",
+                "Http"
             ],
             "description": "OTLP transport protocol"
         }

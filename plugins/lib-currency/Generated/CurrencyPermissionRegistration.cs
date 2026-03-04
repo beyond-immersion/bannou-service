@@ -48,7 +48,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/definition/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createCurrencyDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/definition/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getCurrencyDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/definition/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listCurrencyDefinitions",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/definition/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateCurrencyDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/wallet/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createWallet",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/wallet/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getWallet",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/wallet/get-or-create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getOrCreateWallet",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/wallet/freeze",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "freezeWallet",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/wallet/unfreeze",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "unfreezeWallet",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/wallet/close",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "closeWallet",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/balance/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getBalance",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/balance/batch-get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "batchGetBalances",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/credit",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "creditCurrency",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/debit",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "debitCurrency",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/transfer",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "transferCurrency",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/batch-credit",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "batchCreditCurrency",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/batch-debit",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "batchDebitCurrency",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/convert/calculate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "calculateConversion",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/convert/execute",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "executeConversion",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/exchange-rate/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getExchangeRate",
             Permissions = new List<PermissionRequirement>
             {
@@ -348,7 +348,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/exchange-rate/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateExchangeRate",
             Permissions = new List<PermissionRequirement>
             {
@@ -363,7 +363,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/transaction/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getTransaction",
             Permissions = new List<PermissionRequirement>
             {
@@ -378,7 +378,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/transaction/history",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getTransactionHistory",
             Permissions = new List<PermissionRequirement>
             {
@@ -393,7 +393,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/transaction/by-reference",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getTransactionsByReference",
             Permissions = new List<PermissionRequirement>
             {
@@ -408,7 +408,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/stats/global-supply",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getGlobalSupply",
             Permissions = new List<PermissionRequirement>
             {
@@ -423,7 +423,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/stats/wallet-distribution",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getWalletDistribution",
             Permissions = new List<PermissionRequirement>
             {
@@ -438,7 +438,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/escrow/deposit",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "escrowDeposit",
             Permissions = new List<PermissionRequirement>
             {
@@ -453,7 +453,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/escrow/release",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "escrowRelease",
             Permissions = new List<PermissionRequirement>
             {
@@ -468,7 +468,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/escrow/refund",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "escrowRefund",
             Permissions = new List<PermissionRequirement>
             {
@@ -483,7 +483,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/hold/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createHold",
             Permissions = new List<PermissionRequirement>
             {
@@ -498,7 +498,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/hold/capture",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "captureHold",
             Permissions = new List<PermissionRequirement>
             {
@@ -513,7 +513,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/hold/release",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "releaseHold",
             Permissions = new List<PermissionRequirement>
             {
@@ -528,7 +528,7 @@ public static class CurrencyPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/currency/hold/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getHold",
             Permissions = new List<PermissionRequirement>
             {

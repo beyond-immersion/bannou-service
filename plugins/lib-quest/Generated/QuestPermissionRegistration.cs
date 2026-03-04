@@ -48,7 +48,7 @@ public static class QuestPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/quest/definition/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createQuestDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class QuestPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/quest/definition/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getQuestDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class QuestPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/quest/definition/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listQuestDefinitions",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class QuestPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/quest/definition/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateQuestDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class QuestPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/quest/definition/deprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deprecateQuestDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class QuestPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/quest/accept",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "acceptQuest",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class QuestPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/quest/abandon",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "abandonQuest",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class QuestPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/quest/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getQuest",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class QuestPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/quest/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listQuests",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class QuestPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/quest/list-available",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listAvailableQuests",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class QuestPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/quest/log",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getQuestLog",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class QuestPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/quest/objective/progress",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "reportObjectiveProgress",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class QuestPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/quest/objective/complete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "forceCompleteObjective",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class QuestPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/quest/objective/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getObjectiveProgress",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class QuestPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/quest/get-compress-data",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getCompressData",
             Permissions = new List<PermissionRequirement>
             {

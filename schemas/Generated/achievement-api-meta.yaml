@@ -6,7 +6,7 @@ info:
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
-    See docs/BANNOU_DESIGN.md for architectural rationale.
+    See docs/BANNOU-DESIGN.md for architectural rationale.
 
     **Polymorphic Entity Model**: Achievements can be earned by accounts, characters,
     guilds, or actors using `entityId + entityType`.
@@ -59,89 +59,145 @@ paths:
         \    \"displayName\",\n                \"description\"\n            ],\n            \"properties\": {\n          \
         \      \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
         \                    \"description\": \"ID of the game service owning this achievement\"\n                },\n   \
-        \             \"achievementId\": {\n                    \"type\": \"string\",\n                    \"maxLength\":
-        64,\n                    \"pattern\": \"^[a-z0-9_-]+$\",\n                    \"description\": \"Unique identifier
-        for this achievement (lowercase, no spaces)\"\n                },\n                \"displayName\": {\n          \
-        \          \"type\": \"string\",\n                    \"maxLength\": 100,\n                    \"description\": \"\
-        Human-readable name\"\n                },\n                \"description\": {\n                    \"type\": \"string\"\
-        ,\n                    \"maxLength\": 500,\n                    \"description\": \"Description of how to earn this
-        achievement\"\n                },\n                \"hiddenDescription\": {\n                    \"type\": \"string\"\
-        ,\n                    \"maxLength\": 500,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Description shown before achievement is earned (for hidden types)\"\n                },\n                \"achievementType\"\
-        : {\n                    \"$ref\": \"#/$defs/AchievementType\",\n                    \"default\": \"standard\",\n\
-        \                    \"description\": \"Classification of the achievement (affects visibility and progress behavior)\"\
-        \n                },\n                \"entityTypes\": {\n                    \"type\": \"array\",\n             \
-        \       \"items\": {\n                        \"type\": \"object\"\n                    },\n                    \"\
-        description\": \"Which entity types can earn this achievement\"\n                },\n                \"progressTarget\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Target value for progressive achievements\"\n                },\n                \"points\": {\n             \
-        \       \"type\": \"integer\",\n                    \"default\": 10,\n                    \"description\": \"Point
-        value of this achievement\"\n                },\n                \"iconUrl\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"URL to achievement icon\"\
-        \n                },\n                \"platforms\": {\n                    \"type\": \"array\",\n               \
-        \     \"items\": {\n                        \"$ref\": \"#/$defs/Platform\"\n                    },\n             \
-        \       \"description\": \"Platforms where this achievement exists\"\n                },\n                \"platformIds\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"Platform-specific achievement IDs (e.g., {\\\"steam\\\": \\\"ACH_001\\\"})\"\n            \
-        \    },\n                \"prerequisites\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Achievement IDs that must be unlocked first\"\n                },\n      \
-        \          \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n \
-        \                   \"description\": \"Whether this achievement can be earned\"\n                },\n            \
-        \    \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Additional achievement-specific metadata\"\
-        \n                }\n            }\n        },\n        \"AchievementType\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Type of achievement\",\n            \"enum\": [\n                \"standard\",\n \
-        \               \"progressive\",\n                \"hidden\",\n                \"secret\"\n            ]\n       \
-        \ },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform
-        for achievement sync\",\n            \"enum\": [\n                \"steam\",\n                \"xbox\",\n        \
-        \        \"playstation\",\n                \"internal\"\n            ]\n        }\n    }\n}"
+        \             \"achievementId\": {\n                    \"type\": \"string\",\n                    \"minLength\":
+        1,\n                    \"maxLength\": 64,\n                    \"pattern\": \"^[a-z0-9_-]+$\",\n                \
+        \    \"description\": \"Unique identifier for this achievement (lowercase, no spaces)\"\n                },\n    \
+        \            \"displayName\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 100,\n                    \"description\": \"Human-readable name\"\n         \
+        \       },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"\
+        minLength\": 1,\n                    \"maxLength\": 500,\n                    \"description\": \"Description of how
+        to earn this achievement\"\n                },\n                \"hiddenDescription\": {\n                    \"type\"\
+        : \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Description shown before achievement is earned (for hidden types)\"\n                },\n\
+        \                \"achievementType\": {\n                    \"$ref\": \"#/$defs/AchievementType\",\n            \
+        \        \"default\": \"Standard\",\n                    \"description\": \"Classification of the achievement (affects
+        visibility and progress behavior)\"\n                },\n                \"entityTypes\": {\n                    \"\
+        type\": \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\n             \
+        \       },\n                    \"nullable\": true,\n                    \"description\": \"Which entity types can
+        earn this achievement\"\n                },\n                \"progressTarget\": {\n                    \"type\":
+        \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Target value for progressive
+        achievements\"\n                },\n                \"points\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"default\": 10,\n                    \"description\": \"Point value of this achievement\"\n  \
+        \              },\n                \"iconUrl\": {\n                    \"type\": \"string\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"URL to achievement icon\"\n                },\n    \
+        \            \"platforms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n      \
+        \                  \"$ref\": \"#/$defs/Platform\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Platforms where this achievement exists\"\n                },\n          \
+        \      \"platformMappings\": {\n                    \"type\": \"array\",\n                    \"items\": {\n     \
+        \                   \"$ref\": \"#/$defs/PlatformMapping\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Platform-specific achievement ID mappings\"\n                },\n\
+        \                \"prerequisites\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Achievement IDs that must be unlocked first\"\n                },\n       \
+        \         \"scoreType\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 100,\n \
+        \                   \"nullable\": true,\n                    \"description\": \"Score type code for matching analytics.score.updated
+        events (progressive achievements)\"\n                },\n                \"milestoneType\": {\n                  \
+        \  \"type\": \"string\",\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Milestone type code for matching analytics.milestone.reached events\"\n       \
+        \         },\n                \"milestoneValue\": {\n                    \"type\": \"number\",\n                 \
+        \   \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Expected
+        milestone value for matching analytics.milestone.reached events\"\n                },\n                \"milestoneName\"\
+        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Expected milestone name for matching analytics.milestone.reached events\"\
+        \n                },\n                \"leaderboardId\": {\n                    \"type\": \"string\",\n          \
+        \          \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\": \"Leaderboard
+        ID for matching leaderboard.rank.changed events\"\n                },\n                \"rankThreshold\": {\n    \
+        \                \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"nullable\"\
+        : true,\n                    \"minimum\": 1,\n                    \"description\": \"Rank threshold for leaderboard
+        achievements (unlock when rank <= threshold)\"\n                },\n                \"isActive\": {\n            \
+        \        \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
+        this achievement can be earned\"\n                },\n                \"metadata\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
+        \                \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this field by
+        convention.\"\n                }\n            }\n        },\n        \"AchievementType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type of achievement\",\n            \"enum\": [\n                \"\
+        Standard\",\n                \"Progressive\",\n                \"Hidden\",\n                \"Secret\"\n         \
+        \   ]\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External
+        platform for achievement sync\",\n            \"enum\": [\n                \"Steam\",\n                \"Xbox\",\n\
+        \                \"PlayStation\",\n                \"Internal\"\n            ]\n        },\n        \"PlatformMapping\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Maps an achievement to a platform-specific
+        ID\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"platform\",\n\
+        \                \"platformAchievementId\"\n            ],\n            \"properties\": {\n                \"platform\"\
+        : {\n                    \"$ref\": \"#/$defs/Platform\",\n                    \"description\": \"External platform\"\
+        \n                },\n                \"platformAchievementId\": {\n                    \"type\": \"string\",\n  \
+        \                  \"minLength\": 1,\n                    \"maxLength\": 200,\n                    \"description\"\
+        : \"Platform-specific achievement identifier\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AchievementDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"AchievementDefinitionResponse\": {\n            \"type\": \"object\",\n           \
         \ \"description\": \"Achievement definition details\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"gameServiceId\",\n                \"achievementId\",\n                \"displayName\"\
         ,\n                \"description\",\n                \"achievementType\",\n                \"points\",\n         \
-        \       \"isActive\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n            \
-        \    \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"ID of the owning game service\"\n                },\n                \"achievementId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique identifier\"\n     \
-        \           },\n                \"displayName\": {\n                    \"type\": \"string\",\n                  \
-        \  \"description\": \"Human-readable name\"\n                },\n                \"description\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"How to earn this achievement\"\n          \
-        \      },\n                \"hiddenDescription\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Description for hidden achievements\"\n          \
-        \      },\n                \"achievementType\": {\n                    \"$ref\": \"#/$defs/AchievementType\",\n  \
-        \                  \"description\": \"Classification of the achievement\"\n                },\n                \"\
-        entityTypes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
-        \     \"type\": \"object\"\n                    },\n                    \"description\": \"Allowed entity types\"\n\
-        \                },\n                \"progressTarget\": {\n                    \"type\": \"integer\",\n         \
-        \           \"nullable\": true,\n                    \"description\": \"Target for progressive achievements\"\n  \
-        \              },\n                \"points\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"description\": \"Point value\"\n                },\n                \"iconUrl\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Achievement icon URL\"\
-        \n                },\n                \"platforms\": {\n                    \"type\": \"array\",\n               \
-        \     \"items\": {\n                        \"$ref\": \"#/$defs/Platform\"\n                    },\n             \
-        \       \"description\": \"Available platforms\"\n                },\n                \"platformIds\": {\n       \
-        \             \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\"\
+        \       \"isActive\",\n                \"isDeprecated\",\n                \"earnedCount\",\n                \"createdAt\"\
+        \n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the owning
+        game service\"\n                },\n                \"achievementId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Unique identifier\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n   \
+        \             },\n                \"description\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"How to earn this achievement\"\n                },\n                \"hiddenDescription\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Description for hidden achievements\"\n                },\n                \"achievementType\": {\n          \
+        \          \"$ref\": \"#/$defs/AchievementType\",\n                    \"description\": \"Classification of the achievement\"\
+        \n                },\n                \"entityTypes\": {\n                    \"type\": \"array\",\n             \
+        \       \"items\": {\n                        \"type\": \"object\"\n                    },\n                    \"\
+        nullable\": true,\n                    \"description\": \"Allowed entity types\"\n                },\n           \
+        \     \"progressTarget\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Target for progressive achievements\"\n                },\n              \
+        \  \"points\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Point value\"\
+        \n                },\n                \"iconUrl\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Achievement icon URL\"\n                },\n    \
+        \            \"platforms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n      \
+        \                  \"$ref\": \"#/$defs/Platform\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Available platforms\"\n                },\n                \"platformMappings\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/PlatformMapping\"\n                    },\n                    \"nullable\": true,\n                 \
+        \   \"description\": \"Platform-specific achievement ID mappings\"\n                },\n                \"prerequisites\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
         : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Platform-specific IDs\"\n                },\n                \"prerequisites\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
-        \ },\n                    \"nullable\": true,\n                    \"description\": \"Required achievements\"\n  \
-        \              },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                 \
-        \   \"description\": \"Whether achievement is earnable\"\n                },\n                \"earnedCount\": {\n\
-        \                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
-        : \"How many entities have earned this\"\n                },\n                \"createdAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        When the achievement was created\"\n                },\n                \"metadata\": {\n                    \"type\"\
-        : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Additional metadata\"\n                }\n            }\n        },\n        \"\
-        AchievementType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of achievement\",\n \
-        \           \"enum\": [\n                \"standard\",\n                \"progressive\",\n                \"hidden\"\
-        ,\n                \"secret\"\n            ]\n        },\n        \"Platform\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"External platform for achievement sync\",\n            \"enum\": [\n           \
-        \     \"steam\",\n                \"xbox\",\n                \"playstation\",\n                \"internal\"\n    \
-        \        ]\n        }\n    }\n}"
+        : \"Required achievements\"\n                },\n                \"scoreType\": {\n                    \"type\": \"\
+        string\",\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"\
+        description\": \"Score type code for matching analytics.score.updated events (progressive achievements)\"\n      \
+        \          },\n                \"milestoneType\": {\n                    \"type\": \"string\",\n                 \
+        \   \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\": \"Milestone
+        type code for matching analytics.milestone.reached events\"\n                },\n                \"milestoneValue\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Expected milestone value for matching analytics.milestone.reached
+        events\"\n                },\n                \"milestoneName\": {\n                    \"type\": \"string\",\n  \
+        \                  \"maxLength\": 200,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Expected milestone name for matching analytics.milestone.reached events\"\n                },\n              \
+        \  \"leaderboardId\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 100,\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Leaderboard ID for matching leaderboard.rank.changed
+        events\"\n                },\n                \"rankThreshold\": {\n                    \"type\": \"integer\",\n \
+        \                   \"format\": \"int64\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"Rank threshold for leaderboard achievements (unlock when rank <= threshold)\"\
+        \n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether achievement is earnable\"\n                },\n                \"isDeprecated\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this definition is
+        deprecated and should not be used for new progress\"\n                },\n                \"deprecatedAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When deprecation occurred, null if not deprecated\"\n            \
+        \    },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n                   \
+        \ \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Audit reason
+        for deprecation, null if not deprecated\"\n                },\n                \"earnedCount\": {\n              \
+        \      \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"\
+        How many entities have earned this\"\n                },\n                \"createdAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the
+        achievement was created\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"AchievementType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Type of achievement\",\n            \"enum\": [\n                \"Standard\",\n \
+        \               \"Progressive\",\n                \"Hidden\",\n                \"Secret\"\n            ]\n       \
+        \ },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform
+        for achievement sync\",\n            \"enum\": [\n                \"Steam\",\n                \"Xbox\",\n        \
+        \        \"PlayStation\",\n                \"Internal\"\n            ]\n        },\n        \"PlatformMapping\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"Maps an achievement to a platform-specific ID\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"platform\",\n    \
+        \            \"platformAchievementId\"\n            ],\n            \"properties\": {\n                \"platform\"\
+        : {\n                    \"$ref\": \"#/$defs/Platform\",\n                    \"description\": \"External platform\"\
+        \n                },\n                \"platformAchievementId\": {\n                    \"type\": \"string\",\n  \
+        \                  \"minLength\": 1,\n                    \"maxLength\": 200,\n                    \"description\"\
+        : \"Platform-specific achievement identifier\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new achievement definition\",\n    \"description\": \"Create a
         new achievement with specified criteria and platform mappings.\\nDeveloper-only endpoint.\\n\",\n    \"tags\": [\n\
         \        \"Definitions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createAchievementDefinition\"\
@@ -176,52 +232,84 @@ paths:
         \            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n\
         \                    \"format\": \"uuid\",\n                    \"description\": \"ID of the game service\"\n    \
         \            },\n                \"achievementId\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"ID of the achievement\"\n                }\n            }\n        }\n    }\n}"
+        \     \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"ID of the
+        achievement\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AchievementDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"AchievementDefinitionResponse\": {\n            \"type\": \"object\",\n           \
         \ \"description\": \"Achievement definition details\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"gameServiceId\",\n                \"achievementId\",\n                \"displayName\"\
         ,\n                \"description\",\n                \"achievementType\",\n                \"points\",\n         \
-        \       \"isActive\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n            \
-        \    \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"ID of the owning game service\"\n                },\n                \"achievementId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique identifier\"\n     \
-        \           },\n                \"displayName\": {\n                    \"type\": \"string\",\n                  \
-        \  \"description\": \"Human-readable name\"\n                },\n                \"description\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"How to earn this achievement\"\n          \
-        \      },\n                \"hiddenDescription\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Description for hidden achievements\"\n          \
-        \      },\n                \"achievementType\": {\n                    \"$ref\": \"#/$defs/AchievementType\",\n  \
-        \                  \"description\": \"Classification of the achievement\"\n                },\n                \"\
-        entityTypes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
-        \     \"type\": \"object\"\n                    },\n                    \"description\": \"Allowed entity types\"\n\
-        \                },\n                \"progressTarget\": {\n                    \"type\": \"integer\",\n         \
-        \           \"nullable\": true,\n                    \"description\": \"Target for progressive achievements\"\n  \
-        \              },\n                \"points\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"description\": \"Point value\"\n                },\n                \"iconUrl\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Achievement icon URL\"\
-        \n                },\n                \"platforms\": {\n                    \"type\": \"array\",\n               \
-        \     \"items\": {\n                        \"$ref\": \"#/$defs/Platform\"\n                    },\n             \
-        \       \"description\": \"Available platforms\"\n                },\n                \"platformIds\": {\n       \
-        \             \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\"\
+        \       \"isActive\",\n                \"isDeprecated\",\n                \"earnedCount\",\n                \"createdAt\"\
+        \n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the owning
+        game service\"\n                },\n                \"achievementId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Unique identifier\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n   \
+        \             },\n                \"description\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"How to earn this achievement\"\n                },\n                \"hiddenDescription\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Description for hidden achievements\"\n                },\n                \"achievementType\": {\n          \
+        \          \"$ref\": \"#/$defs/AchievementType\",\n                    \"description\": \"Classification of the achievement\"\
+        \n                },\n                \"entityTypes\": {\n                    \"type\": \"array\",\n             \
+        \       \"items\": {\n                        \"type\": \"object\"\n                    },\n                    \"\
+        nullable\": true,\n                    \"description\": \"Allowed entity types\"\n                },\n           \
+        \     \"progressTarget\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Target for progressive achievements\"\n                },\n              \
+        \  \"points\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Point value\"\
+        \n                },\n                \"iconUrl\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Achievement icon URL\"\n                },\n    \
+        \            \"platforms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n      \
+        \                  \"$ref\": \"#/$defs/Platform\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Available platforms\"\n                },\n                \"platformMappings\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/PlatformMapping\"\n                    },\n                    \"nullable\": true,\n                 \
+        \   \"description\": \"Platform-specific achievement ID mappings\"\n                },\n                \"prerequisites\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
         : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Platform-specific IDs\"\n                },\n                \"prerequisites\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
-        \ },\n                    \"nullable\": true,\n                    \"description\": \"Required achievements\"\n  \
-        \              },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                 \
-        \   \"description\": \"Whether achievement is earnable\"\n                },\n                \"earnedCount\": {\n\
-        \                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
-        : \"How many entities have earned this\"\n                },\n                \"createdAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        When the achievement was created\"\n                },\n                \"metadata\": {\n                    \"type\"\
-        : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Additional metadata\"\n                }\n            }\n        },\n        \"\
-        AchievementType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of achievement\",\n \
-        \           \"enum\": [\n                \"standard\",\n                \"progressive\",\n                \"hidden\"\
-        ,\n                \"secret\"\n            ]\n        },\n        \"Platform\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"External platform for achievement sync\",\n            \"enum\": [\n           \
-        \     \"steam\",\n                \"xbox\",\n                \"playstation\",\n                \"internal\"\n    \
-        \        ]\n        }\n    }\n}"
+        : \"Required achievements\"\n                },\n                \"scoreType\": {\n                    \"type\": \"\
+        string\",\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"\
+        description\": \"Score type code for matching analytics.score.updated events (progressive achievements)\"\n      \
+        \          },\n                \"milestoneType\": {\n                    \"type\": \"string\",\n                 \
+        \   \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\": \"Milestone
+        type code for matching analytics.milestone.reached events\"\n                },\n                \"milestoneValue\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Expected milestone value for matching analytics.milestone.reached
+        events\"\n                },\n                \"milestoneName\": {\n                    \"type\": \"string\",\n  \
+        \                  \"maxLength\": 200,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Expected milestone name for matching analytics.milestone.reached events\"\n                },\n              \
+        \  \"leaderboardId\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 100,\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Leaderboard ID for matching leaderboard.rank.changed
+        events\"\n                },\n                \"rankThreshold\": {\n                    \"type\": \"integer\",\n \
+        \                   \"format\": \"int64\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"Rank threshold for leaderboard achievements (unlock when rank <= threshold)\"\
+        \n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether achievement is earnable\"\n                },\n                \"isDeprecated\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this definition is
+        deprecated and should not be used for new progress\"\n                },\n                \"deprecatedAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When deprecation occurred, null if not deprecated\"\n            \
+        \    },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n                   \
+        \ \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Audit reason
+        for deprecation, null if not deprecated\"\n                },\n                \"earnedCount\": {\n              \
+        \      \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"\
+        How many entities have earned this\"\n                },\n                \"createdAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the
+        achievement was created\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"AchievementType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Type of achievement\",\n            \"enum\": [\n                \"Standard\",\n \
+        \               \"Progressive\",\n                \"Hidden\",\n                \"Secret\"\n            ]\n       \
+        \ },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform
+        for achievement sync\",\n            \"enum\": [\n                \"Steam\",\n                \"Xbox\",\n        \
+        \        \"PlayStation\",\n                \"Internal\"\n            ]\n        },\n        \"PlatformMapping\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"Maps an achievement to a platform-specific ID\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"platform\",\n    \
+        \            \"platformAchievementId\"\n            ],\n            \"properties\": {\n                \"platform\"\
+        : {\n                    \"$ref\": \"#/$defs/Platform\",\n                    \"description\": \"External platform\"\
+        \n                },\n                \"platformAchievementId\": {\n                    \"type\": \"string\",\n  \
+        \                  \"minLength\": 1,\n                    \"maxLength\": 200,\n                    \"description\"\
+        : \"Platform-specific achievement identifier\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get achievement definition\",\n    \"description\": \"Retrieve details
         about a specific achievement.\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n    \"deprecated\": false,\n \
         \   \"operationId\": \"getAchievementDefinition\"\n}"
@@ -261,12 +349,14 @@ paths:
         {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Filter by active status\"\n                },\n                \"includeHidden\": {\n                    \"type\"\
         : \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Include hidden achievements
-        in response\"\n                }\n            }\n        },\n        \"Platform\": {\n            \"type\": \"string\"\
+        in response\"\n                },\n                \"includeDeprecated\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"Whether to include deprecated definitions
+        in results\"\n                }\n            }\n        },\n        \"Platform\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"External platform for achievement sync\",\n            \"enum\": [\n           \
-        \     \"steam\",\n                \"xbox\",\n                \"playstation\",\n                \"internal\"\n    \
+        \     \"Steam\",\n                \"Xbox\",\n                \"PlayStation\",\n                \"Internal\"\n    \
         \        ]\n        },\n        \"AchievementType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of achievement\",\n            \"enum\": [\n                \"standard\",\n                \"progressive\"\
-        ,\n                \"hidden\",\n                \"secret\"\n            ]\n        }\n    }\n}"
+        : \"Type of achievement\",\n            \"enum\": [\n                \"Standard\",\n                \"Progressive\"\
+        ,\n                \"Hidden\",\n                \"Secret\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListAchievementDefinitionsResponse\"\
         ,\n    \"$defs\": {\n        \"ListAchievementDefinitionsResponse\": {\n            \"type\": \"object\",\n      \
         \      \"description\": \"Response containing achievement definitions\",\n            \"additionalProperties\": false,\n\
@@ -278,45 +368,77 @@ paths:
         definition details\",\n            \"additionalProperties\": false,\n            \"required\": [\n               \
         \ \"gameServiceId\",\n                \"achievementId\",\n                \"displayName\",\n                \"description\"\
         ,\n                \"achievementType\",\n                \"points\",\n                \"isActive\",\n            \
-        \    \"createdAt\"\n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the owning game service\"\n                },\n                \"achievementId\": {\n                  \
-        \  \"type\": \"string\",\n                    \"description\": \"Unique identifier\"\n                },\n       \
-        \         \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
-        name\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n      \
-        \              \"description\": \"How to earn this achievement\"\n                },\n                \"hiddenDescription\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Description for hidden achievements\"\n                },\n                \"achievementType\": {\n          \
-        \          \"$ref\": \"#/$defs/AchievementType\",\n                    \"description\": \"Classification of the achievement\"\
-        \n                },\n                \"entityTypes\": {\n                    \"type\": \"array\",\n             \
-        \       \"items\": {\n                        \"type\": \"object\"\n                    },\n                    \"\
-        description\": \"Allowed entity types\"\n                },\n                \"progressTarget\": {\n             \
-        \       \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Target
-        for progressive achievements\"\n                },\n                \"points\": {\n                    \"type\": \"\
-        integer\",\n                    \"description\": \"Point value\"\n                },\n                \"iconUrl\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Achievement icon URL\"\n                },\n                \"platforms\": {\n                    \"type\": \"\
-        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/Platform\"\n             \
-        \       },\n                    \"description\": \"Available platforms\"\n                },\n                \"platformIds\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"Platform-specific IDs\"\n                },\n                \"prerequisites\": {\n       \
-        \             \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Required
-        achievements\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"description\": \"Whether achievement is earnable\"\n                },\n                \"\
-        earnedCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n       \
-        \             \"description\": \"How many entities have earned this\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When the achievement was created\"\n                },\n                \"metadata\": {\n \
-        \                   \"type\": \"object\",\n                    \"additionalProperties\": true,\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n                }\n       \
-        \     }\n        },\n        \"AchievementType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of achievement\",\n            \"enum\": [\n                \"standard\",\n                \"progressive\"\
-        ,\n                \"hidden\",\n                \"secret\"\n            ]\n        },\n        \"Platform\": {\n \
+        \    \"isDeprecated\",\n                \"earnedCount\",\n                \"createdAt\"\n            ],\n        \
+        \    \"properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n        \
+        \            \"format\": \"uuid\",\n                    \"description\": \"ID of the owning game service\"\n     \
+        \           },\n                \"achievementId\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"Unique identifier\"\n                },\n                \"displayName\": {\n            \
+        \        \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n                },\n\
+        \                \"description\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"How to earn this achievement\"\n                },\n                \"hiddenDescription\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Description
+        for hidden achievements\"\n                },\n                \"achievementType\": {\n                    \"$ref\"\
+        : \"#/$defs/AchievementType\",\n                    \"description\": \"Classification of the achievement\"\n     \
+        \           },\n                \"entityTypes\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"object\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Allowed entity types\"\n                },\n                \"progressTarget\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Target for progressive achievements\"\n                },\n                \"points\": {\n                   \
+        \ \"type\": \"integer\",\n                    \"description\": \"Point value\"\n                },\n             \
+        \   \"iconUrl\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"Achievement icon URL\"\n                },\n                \"platforms\": {\n    \
+        \                \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/Platform\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Available
+        platforms\"\n                },\n                \"platformMappings\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PlatformMapping\"\n             \
+        \       },\n                    \"nullable\": true,\n                    \"description\": \"Platform-specific achievement
+        ID mappings\"\n                },\n                \"prerequisites\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Required achievements\"\n               \
+        \ },\n                \"scoreType\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 100,\n                    \"nullable\": true,\n                    \"description\": \"Score type code for matching
+        analytics.score.updated events (progressive achievements)\"\n                },\n                \"milestoneType\"\
+        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 100,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Milestone type code for matching analytics.milestone.reached events\"\
+        \n                },\n                \"milestoneValue\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Expected milestone value for matching analytics.milestone.reached events\"\n                },\n             \
+        \   \"milestoneName\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 200,\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Expected milestone name for matching
+        analytics.milestone.reached events\"\n                },\n                \"leaderboardId\": {\n                 \
+        \   \"type\": \"string\",\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n    \
+        \                \"description\": \"Leaderboard ID for matching leaderboard.rank.changed events\"\n              \
+        \  },\n                \"rankThreshold\": {\n                    \"type\": \"integer\",\n                    \"format\"\
+        : \"int64\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n                    \"\
+        description\": \"Rank threshold for leaderboard achievements (unlock when rank <= threshold)\"\n                },\n\
+        \                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether achievement is earnable\"\n                },\n                \"isDeprecated\": {\n                 \
+        \   \"type\": \"boolean\",\n                    \"description\": \"Whether this definition is deprecated and should
+        not be used for new progress\"\n                },\n                \"deprecatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"When deprecation occurred, null if not deprecated\"\n                },\n         \
+        \       \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"maxLength\": 500,\n                    \"description\": \"Audit reason for deprecation, null
+        if not deprecated\"\n                },\n                \"earnedCount\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"format\": \"int64\",\n                    \"description\": \"How many entities have earned
+        this\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n        \
+        \            \"format\": \"date-time\",\n                    \"description\": \"When the achievement was created\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
+        \            }\n        },\n        \"AchievementType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of achievement\",\n            \"enum\": [\n                \"Standard\",\n                \"Progressive\"\
+        ,\n                \"Hidden\",\n                \"Secret\"\n            ]\n        },\n        \"Platform\": {\n \
         \           \"type\": \"string\",\n            \"description\": \"External platform for achievement sync\",\n    \
-        \        \"enum\": [\n                \"steam\",\n                \"xbox\",\n                \"playstation\",\n  \
-        \              \"internal\"\n            ]\n        }\n    }\n}"
+        \        \"enum\": [\n                \"Steam\",\n                \"Xbox\",\n                \"PlayStation\",\n  \
+        \              \"Internal\"\n            ]\n        },\n        \"PlatformMapping\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Maps an achievement to a platform-specific ID\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"platform\",\n                \"platformAchievementId\"\n\
+        \            ],\n            \"properties\": {\n                \"platform\": {\n                    \"$ref\": \"\
+        #/$defs/Platform\",\n                    \"description\": \"External platform\"\n                },\n            \
+        \    \"platformAchievementId\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 200,\n                    \"description\": \"Platform-specific achievement identifier\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List achievement definitions\",\n    \"description\": \"List achievements
         for a game service with optional platform filtering.\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n    \"\
         deprecated\": false,\n    \"operationId\": \"listAchievementDefinitions\"\n}"
@@ -354,71 +476,133 @@ paths:
         \            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n\
         \                    \"format\": \"uuid\",\n                    \"description\": \"ID of the game service\"\n    \
         \            },\n                \"achievementId\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"ID of the achievement to update\"\n                },\n                \"displayName\": {\n\
-        \                    \"type\": \"string\",\n                    \"maxLength\": 100,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New display name\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New description\"\n                },\n                \"isActive\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New active status\"\n                },\n                \"platformIds\": {\n                    \"type\": \"\
-        object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n       \
-        \             },\n                    \"nullable\": true,\n                    \"description\": \"Updated platform
-        ID mappings\"\n                }\n            }\n        }\n    }\n}"
+        \     \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"ID of the
+        achievement to update\"\n                },\n                \"displayName\": {\n                    \"type\": \"\
+        string\",\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"\
+        description\": \"New display name\"\n                },\n                \"description\": {\n                    \"\
+        type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\": true,\n          \
+        \          \"description\": \"New description\"\n                },\n                \"isActive\": {\n           \
+        \         \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        New active status\"\n                },\n                \"platformMappings\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PlatformMapping\"\n      \
+        \              },\n                    \"nullable\": true,\n                    \"description\": \"Updated platform
+        ID mappings\"\n                },\n                \"scoreType\": {\n                    \"type\": \"string\",\n \
+        \                   \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Score type code for matching analytics.score.updated events (progressive achievements)\"\n                },\n\
+        \                \"milestoneType\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 100,\n                    \"nullable\": true,\n                    \"description\": \"Milestone type code for matching
+        analytics.milestone.reached events\"\n                },\n                \"milestoneValue\": {\n                \
+        \    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Expected milestone value for matching analytics.milestone.reached events\"\
+        \n                },\n                \"milestoneName\": {\n                    \"type\": \"string\",\n          \
+        \          \"maxLength\": 200,\n                    \"nullable\": true,\n                    \"description\": \"Expected
+        milestone name for matching analytics.milestone.reached events\"\n                },\n                \"leaderboardId\"\
+        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 100,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Leaderboard ID for matching leaderboard.rank.changed events\"\n  \
+        \              },\n                \"rankThreshold\": {\n                    \"type\": \"integer\",\n            \
+        \        \"format\": \"int64\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n  \
+        \                  \"description\": \"Rank threshold for leaderboard achievements (unlock when rank <= threshold)\"\
+        \n                }\n            }\n        },\n        \"PlatformMapping\": {\n            \"type\": \"object\",\n\
+        \            \"description\": \"Maps an achievement to a platform-specific ID\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"platform\",\n                \"platformAchievementId\"\n\
+        \            ],\n            \"properties\": {\n                \"platform\": {\n                    \"$ref\": \"\
+        #/$defs/Platform\",\n                    \"description\": \"External platform\"\n                },\n            \
+        \    \"platformAchievementId\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 200,\n                    \"description\": \"Platform-specific achievement identifier\"\
+        \n                }\n            }\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n     \
+        \       \"description\": \"External platform for achievement sync\",\n            \"enum\": [\n                \"\
+        Steam\",\n                \"Xbox\",\n                \"PlayStation\",\n                \"Internal\"\n            ]\n\
+        \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AchievementDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"AchievementDefinitionResponse\": {\n            \"type\": \"object\",\n           \
         \ \"description\": \"Achievement definition details\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"gameServiceId\",\n                \"achievementId\",\n                \"displayName\"\
         ,\n                \"description\",\n                \"achievementType\",\n                \"points\",\n         \
-        \       \"isActive\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n            \
-        \    \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"ID of the owning game service\"\n                },\n                \"achievementId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique identifier\"\n     \
-        \           },\n                \"displayName\": {\n                    \"type\": \"string\",\n                  \
-        \  \"description\": \"Human-readable name\"\n                },\n                \"description\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"How to earn this achievement\"\n          \
-        \      },\n                \"hiddenDescription\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Description for hidden achievements\"\n          \
-        \      },\n                \"achievementType\": {\n                    \"$ref\": \"#/$defs/AchievementType\",\n  \
-        \                  \"description\": \"Classification of the achievement\"\n                },\n                \"\
-        entityTypes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
-        \     \"type\": \"object\"\n                    },\n                    \"description\": \"Allowed entity types\"\n\
-        \                },\n                \"progressTarget\": {\n                    \"type\": \"integer\",\n         \
-        \           \"nullable\": true,\n                    \"description\": \"Target for progressive achievements\"\n  \
-        \              },\n                \"points\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"description\": \"Point value\"\n                },\n                \"iconUrl\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Achievement icon URL\"\
-        \n                },\n                \"platforms\": {\n                    \"type\": \"array\",\n               \
-        \     \"items\": {\n                        \"$ref\": \"#/$defs/Platform\"\n                    },\n             \
-        \       \"description\": \"Available platforms\"\n                },\n                \"platformIds\": {\n       \
-        \             \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\"\
+        \       \"isActive\",\n                \"isDeprecated\",\n                \"earnedCount\",\n                \"createdAt\"\
+        \n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the owning
+        game service\"\n                },\n                \"achievementId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Unique identifier\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n   \
+        \             },\n                \"description\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"How to earn this achievement\"\n                },\n                \"hiddenDescription\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Description for hidden achievements\"\n                },\n                \"achievementType\": {\n          \
+        \          \"$ref\": \"#/$defs/AchievementType\",\n                    \"description\": \"Classification of the achievement\"\
+        \n                },\n                \"entityTypes\": {\n                    \"type\": \"array\",\n             \
+        \       \"items\": {\n                        \"type\": \"object\"\n                    },\n                    \"\
+        nullable\": true,\n                    \"description\": \"Allowed entity types\"\n                },\n           \
+        \     \"progressTarget\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Target for progressive achievements\"\n                },\n              \
+        \  \"points\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Point value\"\
+        \n                },\n                \"iconUrl\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Achievement icon URL\"\n                },\n    \
+        \            \"platforms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n      \
+        \                  \"$ref\": \"#/$defs/Platform\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Available platforms\"\n                },\n                \"platformMappings\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/PlatformMapping\"\n                    },\n                    \"nullable\": true,\n                 \
+        \   \"description\": \"Platform-specific achievement ID mappings\"\n                },\n                \"prerequisites\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
         : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Platform-specific IDs\"\n                },\n                \"prerequisites\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
-        \ },\n                    \"nullable\": true,\n                    \"description\": \"Required achievements\"\n  \
-        \              },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                 \
-        \   \"description\": \"Whether achievement is earnable\"\n                },\n                \"earnedCount\": {\n\
-        \                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
-        : \"How many entities have earned this\"\n                },\n                \"createdAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        When the achievement was created\"\n                },\n                \"metadata\": {\n                    \"type\"\
-        : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Additional metadata\"\n                }\n            }\n        },\n        \"\
-        AchievementType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of achievement\",\n \
-        \           \"enum\": [\n                \"standard\",\n                \"progressive\",\n                \"hidden\"\
-        ,\n                \"secret\"\n            ]\n        },\n        \"Platform\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"External platform for achievement sync\",\n            \"enum\": [\n           \
-        \     \"steam\",\n                \"xbox\",\n                \"playstation\",\n                \"internal\"\n    \
-        \        ]\n        }\n    }\n}"
+        : \"Required achievements\"\n                },\n                \"scoreType\": {\n                    \"type\": \"\
+        string\",\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"\
+        description\": \"Score type code for matching analytics.score.updated events (progressive achievements)\"\n      \
+        \          },\n                \"milestoneType\": {\n                    \"type\": \"string\",\n                 \
+        \   \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\": \"Milestone
+        type code for matching analytics.milestone.reached events\"\n                },\n                \"milestoneValue\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Expected milestone value for matching analytics.milestone.reached
+        events\"\n                },\n                \"milestoneName\": {\n                    \"type\": \"string\",\n  \
+        \                  \"maxLength\": 200,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Expected milestone name for matching analytics.milestone.reached events\"\n                },\n              \
+        \  \"leaderboardId\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 100,\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Leaderboard ID for matching leaderboard.rank.changed
+        events\"\n                },\n                \"rankThreshold\": {\n                    \"type\": \"integer\",\n \
+        \                   \"format\": \"int64\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"Rank threshold for leaderboard achievements (unlock when rank <= threshold)\"\
+        \n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether achievement is earnable\"\n                },\n                \"isDeprecated\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this definition is
+        deprecated and should not be used for new progress\"\n                },\n                \"deprecatedAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When deprecation occurred, null if not deprecated\"\n            \
+        \    },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n                   \
+        \ \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Audit reason
+        for deprecation, null if not deprecated\"\n                },\n                \"earnedCount\": {\n              \
+        \      \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"\
+        How many entities have earned this\"\n                },\n                \"createdAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the
+        achievement was created\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"AchievementType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Type of achievement\",\n            \"enum\": [\n                \"Standard\",\n \
+        \               \"Progressive\",\n                \"Hidden\",\n                \"Secret\"\n            ]\n       \
+        \ },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform
+        for achievement sync\",\n            \"enum\": [\n                \"Steam\",\n                \"Xbox\",\n        \
+        \        \"PlayStation\",\n                \"Internal\"\n            ]\n        },\n        \"PlatformMapping\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"Maps an achievement to a platform-specific ID\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"platform\",\n    \
+        \            \"platformAchievementId\"\n            ],\n            \"properties\": {\n                \"platform\"\
+        : {\n                    \"$ref\": \"#/$defs/Platform\",\n                    \"description\": \"External platform\"\
+        \n                },\n                \"platformAchievementId\": {\n                    \"type\": \"string\",\n  \
+        \                  \"minLength\": 1,\n                    \"maxLength\": 200,\n                    \"description\"\
+        : \"Platform-specific achievement identifier\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update achievement definition\",\n    \"description\": \"Update properties
         of an existing achievement.\\nDeveloper-only endpoint.\\n\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n \
         \   \"deprecated\": false,\n    \"operationId\": \"updateAchievementDefinition\"\n}"
-  /achievement/definition/delete:
+  /achievement/definition/deprecate:
     post:
-      summary: Delete achievement definition
+      summary: Deprecate an achievement definition
       description: |
-        Delete an achievement. Earned instances are preserved in history.
-        Developer-only endpoint.
-      operationId: deleteAchievementDefinition
+        Mark an achievement definition as deprecated (Category B per IMPLEMENTATION TENETS).
+        Deprecated definitions:
+        - Remain queryable for historical data and earned instances
+        - Cannot be used for new progress tracking or unlocks
+        - Persist forever (no delete endpoint — instances outlive template relevance)
+        Idempotent: returns OK if already deprecated.
+      operationId: deprecateAchievementDefinition
       tags:
       - Definitions
       x-permissions:
@@ -429,24 +613,110 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteAchievementDefinitionRequest'
+              $ref: '#/components/schemas/DeprecateAchievementDefinitionRequest'
       responses:
         '200':
-          description: Achievement deleted successfully
+          description: Achievement definition deprecated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementDefinitionResponse'
         '404':
-          description: Achievement not found
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteAchievementDefinitionRequest\"\
-        ,\n    \"$defs\": {\n        \"DeleteAchievementDefinitionRequest\": {\n            \"type\": \"object\",\n      \
-        \      \"description\": \"Request to delete an achievement\",\n            \"additionalProperties\": false,\n    \
-        \        \"required\": [\n                \"gameServiceId\",\n                \"achievementId\"\n            ],\n\
-        \            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"description\": \"ID of the game service\"\n    \
-        \            },\n                \"achievementId\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"ID of the achievement to delete\"\n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n    \"summary\": \"Delete achievement definition\",\n    \"description\": \"Delete an achievement.
-        Earned instances are preserved in history.\\nDeveloper-only endpoint.\\n\",\n    \"tags\": [\n        \"Definitions\"\
-        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteAchievementDefinition\"\n}"
+          description: Achievement definition not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateAchievementDefinitionRequest\"\
+        ,\n    \"$defs\": {\n        \"DeprecateAchievementDefinitionRequest\": {\n            \"type\": \"object\",\n   \
+        \         \"description\": \"Request to deprecate an achievement definition\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"gameServiceId\",\n                \"achievementId\"\n   \
+        \         ],\n            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the game service\"\
+        \n                },\n                \"achievementId\": {\n                    \"type\": \"string\",\n          \
+        \          \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"ID of
+        the achievement to deprecate\"\n                },\n                \"deprecationReason\": {\n                   \
+        \ \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Audit reason for deprecation, explaining why this achievement is being phased out\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AchievementDefinitionResponse\"\
+        ,\n    \"$defs\": {\n        \"AchievementDefinitionResponse\": {\n            \"type\": \"object\",\n           \
+        \ \"description\": \"Achievement definition details\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"gameServiceId\",\n                \"achievementId\",\n                \"displayName\"\
+        ,\n                \"description\",\n                \"achievementType\",\n                \"points\",\n         \
+        \       \"isActive\",\n                \"isDeprecated\",\n                \"earnedCount\",\n                \"createdAt\"\
+        \n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the owning
+        game service\"\n                },\n                \"achievementId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Unique identifier\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n   \
+        \             },\n                \"description\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"How to earn this achievement\"\n                },\n                \"hiddenDescription\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Description for hidden achievements\"\n                },\n                \"achievementType\": {\n          \
+        \          \"$ref\": \"#/$defs/AchievementType\",\n                    \"description\": \"Classification of the achievement\"\
+        \n                },\n                \"entityTypes\": {\n                    \"type\": \"array\",\n             \
+        \       \"items\": {\n                        \"type\": \"object\"\n                    },\n                    \"\
+        nullable\": true,\n                    \"description\": \"Allowed entity types\"\n                },\n           \
+        \     \"progressTarget\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Target for progressive achievements\"\n                },\n              \
+        \  \"points\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Point value\"\
+        \n                },\n                \"iconUrl\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Achievement icon URL\"\n                },\n    \
+        \            \"platforms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n      \
+        \                  \"$ref\": \"#/$defs/Platform\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Available platforms\"\n                },\n                \"platformMappings\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/PlatformMapping\"\n                    },\n                    \"nullable\": true,\n                 \
+        \   \"description\": \"Platform-specific achievement ID mappings\"\n                },\n                \"prerequisites\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Required achievements\"\n                },\n                \"scoreType\": {\n                    \"type\": \"\
+        string\",\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"\
+        description\": \"Score type code for matching analytics.score.updated events (progressive achievements)\"\n      \
+        \          },\n                \"milestoneType\": {\n                    \"type\": \"string\",\n                 \
+        \   \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\": \"Milestone
+        type code for matching analytics.milestone.reached events\"\n                },\n                \"milestoneValue\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Expected milestone value for matching analytics.milestone.reached
+        events\"\n                },\n                \"milestoneName\": {\n                    \"type\": \"string\",\n  \
+        \                  \"maxLength\": 200,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Expected milestone name for matching analytics.milestone.reached events\"\n                },\n              \
+        \  \"leaderboardId\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 100,\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Leaderboard ID for matching leaderboard.rank.changed
+        events\"\n                },\n                \"rankThreshold\": {\n                    \"type\": \"integer\",\n \
+        \                   \"format\": \"int64\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"Rank threshold for leaderboard achievements (unlock when rank <= threshold)\"\
+        \n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether achievement is earnable\"\n                },\n                \"isDeprecated\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this definition is
+        deprecated and should not be used for new progress\"\n                },\n                \"deprecatedAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When deprecation occurred, null if not deprecated\"\n            \
+        \    },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n                   \
+        \ \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Audit reason
+        for deprecation, null if not deprecated\"\n                },\n                \"earnedCount\": {\n              \
+        \      \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"\
+        How many entities have earned this\"\n                },\n                \"createdAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the
+        achievement was created\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"AchievementType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Type of achievement\",\n            \"enum\": [\n                \"Standard\",\n \
+        \               \"Progressive\",\n                \"Hidden\",\n                \"Secret\"\n            ]\n       \
+        \ },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform
+        for achievement sync\",\n            \"enum\": [\n                \"Steam\",\n                \"Xbox\",\n        \
+        \        \"PlayStation\",\n                \"Internal\"\n            ]\n        },\n        \"PlatformMapping\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"Maps an achievement to a platform-specific ID\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"platform\",\n    \
+        \            \"platformAchievementId\"\n            ],\n            \"properties\": {\n                \"platform\"\
+        : {\n                    \"$ref\": \"#/$defs/Platform\",\n                    \"description\": \"External platform\"\
+        \n                },\n                \"platformAchievementId\": {\n                    \"type\": \"string\",\n  \
+        \                  \"minLength\": 1,\n                    \"maxLength\": 200,\n                    \"description\"\
+        : \"Platform-specific achievement identifier\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Deprecate an achievement definition\",\n    \"description\": \"Mark an
+        achievement definition as deprecated (Category B per IMPLEMENTATION TENETS).\\nDeprecated definitions:\\n- Remain
+        queryable for historical data and earned instances\\n- Cannot be used for new progress tracking or unlocks\\n- Persist
+        forever (no delete endpoint \\u2014 instances outlive template relevance)\\nIdempotent: returns OK if already deprecated.\\\
+        n\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deprecateAchievementDefinition\"\
+        \n}"
   /achievement/progress/get:
     post:
       summary: Get entity's achievement progress
@@ -485,33 +755,34 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AchievementProgressResponse\"\
         ,\n    \"$defs\": {\n        \"AchievementProgressResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Achievement progress for an entity\",\n            \"additionalProperties\": false,\n           \
-        \ \"required\": [\n                \"entityId\",\n                \"entityType\",\n                \"progress\"\n\
-        \            ],\n            \"properties\": {\n                \"entityId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n\
-        \                },\n                \"entityType\": {\n                    \"type\": \"object\",\n              \
-        \      \"description\": \"Entity type that owns this progress summary\"\n                },\n                \"progress\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/AchievementProgress\"\n                    },\n                    \"description\": \"Progress for each
-        achievement\"\n                },\n                \"totalPoints\": {\n                    \"type\": \"integer\",\n\
-        \                    \"description\": \"Total points from unlocked achievements\"\n                },\n          \
-        \      \"unlockedCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
-        of unlocked achievements\"\n                }\n            }\n        },\n        \"AchievementProgress\": {\n   \
-        \         \"type\": \"object\",\n            \"description\": \"Progress toward a single achievement\",\n        \
-        \    \"additionalProperties\": false,\n            \"required\": [\n                \"achievementId\",\n         \
-        \       \"isUnlocked\"\n            ],\n            \"properties\": {\n                \"achievementId\": {\n    \
-        \                \"type\": \"string\",\n                    \"description\": \"Achievement identifier\"\n        \
-        \        },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Achievement display name\"\n                },\n                \"currentProgress\": {\n        \
-        \            \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Current progress (for progressive)\"\n                },\n                \"targetProgress\": {\n            \
-        \        \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Target progress (for progressive)\"\n                },\n                \"percentComplete\": {\n                \
-        \    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Completion percentage (0-100)\"\n                },\n                \"isUnlocked\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether achievement is unlocked\"\
-        \n                },\n                \"unlockedAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
-        \"When achievement was unlocked\"\n                }\n            }\n        }\n    }\n}"
+        \ \"required\": [\n                \"entityId\",\n                \"entityType\",\n                \"progress\",\n\
+        \                \"totalPoints\",\n                \"unlockedCount\"\n            ],\n            \"properties\":
+        {\n                \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"ID of the entity\"\n                },\n                \"entityType\"\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Entity type that owns this
+        progress summary\"\n                },\n                \"progress\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/AchievementProgress\"\n           \
+        \         },\n                    \"description\": \"Progress for each achievement\"\n                },\n       \
+        \         \"totalPoints\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        Total points from unlocked achievements\"\n                },\n                \"unlockedCount\": {\n            \
+        \        \"type\": \"integer\",\n                    \"description\": \"Number of unlocked achievements\"\n      \
+        \          }\n            }\n        },\n        \"AchievementProgress\": {\n            \"type\": \"object\",\n \
+        \           \"description\": \"Progress toward a single achievement\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"achievementId\",\n                \"displayName\",\n             \
+        \   \"isUnlocked\"\n            ],\n            \"properties\": {\n                \"achievementId\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Achievement identifier\"\n            \
+        \    },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Achievement display name\"\n                },\n                \"currentProgress\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Current progress
+        (for progressive)\"\n                },\n                \"targetProgress\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Target progress (for progressive)\"\
+        \n                },\n                \"percentComplete\": {\n                    \"type\": \"number\",\n        \
+        \            \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Completion percentage (0-100)\"\n                },\n                \"isUnlocked\": {\n                    \"\
+        type\": \"boolean\",\n                    \"description\": \"Whether achievement is unlocked\"\n                },\n\
+        \                \"unlockedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When achievement was
+        unlocked\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get entity's achievement progress\",\n    \"description\": \"Get progress
         for an entity across all achievements or a specific one.\",\n    \"tags\": [\n        \"Progress\"\n    ],\n    \"\
         deprecated\": false,\n    \"operationId\": \"getAchievementProgress\"\n}"
@@ -547,29 +818,28 @@ paths:
         \     \"entityId\",\n                \"entityType\",\n                \"increment\"\n            ],\n            \"\
         properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n               \
         \     \"format\": \"uuid\",\n                    \"description\": \"ID of the game service\"\n                },\n\
-        \                \"achievementId\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"ID of the achievement\"\n                },\n                \"entityId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n\
-        \                },\n                \"entityType\": {\n                    \"type\": \"object\",\n              \
-        \      \"description\": \"Entity type receiving the progress increment\"\n                },\n                \"increment\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\"\
-        : \"Amount to increment progress\"\n                }\n            }\n        }\n    }\n}"
+        \                \"achievementId\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 64,\n                    \"description\": \"ID of the achievement\"\n   \
+        \             },\n                \"entityId\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n                },\n         \
+        \       \"entityType\": {\n                    \"type\": \"object\",\n                    \"description\": \"Entity
+        type receiving the progress increment\"\n                },\n                \"increment\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Amount to increment
+        progress\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateAchievementProgressResponse\"\
         ,\n    \"$defs\": {\n        \"UpdateAchievementProgressResponse\": {\n            \"type\": \"object\",\n       \
         \     \"description\": \"Response after updating progress\",\n            \"additionalProperties\": false,\n     \
-        \       \"required\": [\n                \"achievementId\",\n                \"previousProgress\",\n             \
-        \   \"newProgress\",\n                \"targetProgress\",\n                \"unlocked\"\n            ],\n        \
-        \    \"properties\": {\n                \"achievementId\": {\n                    \"type\": \"string\",\n        \
-        \            \"description\": \"Achievement identifier\"\n                },\n                \"previousProgress\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Progress before update\"\n\
-        \                },\n                \"newProgress\": {\n                    \"type\": \"integer\",\n            \
-        \        \"description\": \"Progress after update\"\n                },\n                \"targetProgress\": {\n \
-        \                   \"type\": \"integer\",\n                    \"description\": \"Target to unlock\"\n          \
-        \      },\n                \"unlocked\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether this update unlocked the achievement\"\n                },\n                \"unlockedAt\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Unlock timestamp (if unlocked)\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        \       \"required\": [\n                \"previousProgress\",\n                \"newProgress\",\n               \
+        \ \"targetProgress\",\n                \"unlocked\"\n            ],\n            \"properties\": {\n             \
+        \   \"previousProgress\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Progress
+        before update\"\n                },\n                \"newProgress\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Progress after update\"\n                },\n                \"targetProgress\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Target to unlock\"\n     \
+        \           },\n                \"unlocked\": {\n                    \"type\": \"boolean\",\n                    \"\
+        description\": \"Whether this update unlocked the achievement\"\n                },\n                \"unlockedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Unlock timestamp (if unlocked)\"\n               \
+        \ }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update achievement progress\",\n    \"description\": \"Increment progress
         toward an achievement. If target is reached, auto-unlocks.\\nService-only endpoint - called by game logic.\\n\",\n\
         \    \"tags\": [\n        \"Progress\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateAchievementProgress\"\
@@ -608,28 +878,26 @@ paths:
         \           \"entityType\"\n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"ID of the game service\"\n                },\n                \"achievementId\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"ID of the achievement to unlock\"\n                },\n    \
-        \            \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the entity\"\n                },\n                \"entityType\":
-        {\n                    \"type\": \"object\",\n                    \"description\": \"Entity type to unlock the achievement
-        for\"\n                },\n                \"skipPlatformSync\": {\n                    \"type\": \"boolean\",\n \
-        \                   \"default\": false,\n                    \"description\": \"Skip syncing to external platforms\"\
-        \n                }\n            }\n        }\n    }\n}"
+        : \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                   \
+        \ \"description\": \"ID of the achievement to unlock\"\n                },\n                \"entityId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the entity\"\n                },\n                \"entityType\": {\n                    \"type\": \"object\"\
+        ,\n                    \"description\": \"Entity type to unlock the achievement for\"\n                },\n      \
+        \          \"skipPlatformSync\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"Skip syncing to external platforms\"\n                }\n            }\n \
+        \       }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UnlockAchievementResponse\"\
         ,\n    \"$defs\": {\n        \"UnlockAchievementResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after unlocking an achievement\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"achievementId\",\n                \"unlocked\",\n                \"unlockedAt\"\n         \
-        \   ],\n            \"properties\": {\n                \"achievementId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Achievement identifier\"\n                },\n                \"unlocked\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether unlock was successful\"\
-        \n                },\n                \"unlockedAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"description\": \"Unlock timestamp\"\n                },\n\
-        \                \"platformSyncStatus\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : {\n                        \"$ref\": \"#/$defs/SyncStatus\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Sync status by platform\"\n                }\n            }\n    \
-        \    },\n        \"SyncStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Status of platform
-        synchronization\",\n            \"enum\": [\n                \"pending\",\n                \"synced\",\n         \
-        \       \"failed\",\n                \"not_linked\"\n            ]\n        }\n    }\n}"
+        : [\n                \"unlockedAt\"\n            ],\n            \"properties\": {\n                \"unlockedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Unlock timestamp\"\n                },\n                \"platformSyncStatus\": {\n       \
+        \             \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"$ref\"\
+        : \"#/$defs/SyncStatus\"\n                    },\n                    \"nullable\": true,\n                    \"\
+        description\": \"Sync status by platform\"\n                }\n            }\n        },\n        \"SyncStatus\":
+        {\n            \"type\": \"string\",\n            \"description\": \"Status of platform synchronization\",\n     \
+        \       \"enum\": [\n                \"Pending\",\n                \"Synced\",\n                \"Failed\",\n    \
+        \            \"NotLinked\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Directly unlock an achievement\",\n    \"description\": \"Immediately unlock
         an achievement without progress tracking.\\nService-only endpoint - used for non-progressive achievements.\\n\",\n\
         \    \"tags\": [\n        \"Progress\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"unlockAchievement\"\
@@ -668,10 +936,12 @@ paths:
         \        },\n                \"entityType\": {\n                    \"type\": \"object\",\n                    \"\
         description\": \"Entity type whose unlocked achievements are listed\"\n                },\n                \"platform\"\
         : {\n                    \"$ref\": \"#/$defs/Platform\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Filter by platform\"\n                }\n            }\n        },\n        \"Platform\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"External platform for achievement sync\",\n\
-        \            \"enum\": [\n                \"steam\",\n                \"xbox\",\n                \"playstation\",\n\
-        \                \"internal\"\n            ]\n        }\n    }\n}"
+        \      \"description\": \"Filter by platform\"\n                },\n                \"includeDeprecated\": {\n   \
+        \                 \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Whether to include achievements earned from deprecated definitions\"\n                }\n            }\n     \
+        \   },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform
+        for achievement sync\",\n            \"enum\": [\n                \"Steam\",\n                \"Xbox\",\n        \
+        \        \"PlayStation\",\n                \"Internal\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListUnlockedAchievementsResponse\"\
         ,\n    \"$defs\": {\n        \"ListUnlockedAchievementsResponse\": {\n            \"type\": \"object\",\n        \
         \    \"description\": \"Response containing unlocked achievements\",\n            \"additionalProperties\": false,\n\
@@ -686,18 +956,18 @@ paths:
         \             \"type\": \"integer\",\n                    \"description\": \"Total points earned\"\n             \
         \   }\n            }\n        },\n        \"UnlockedAchievement\": {\n            \"type\": \"object\",\n        \
         \    \"description\": \"An unlocked achievement instance\",\n            \"additionalProperties\": false,\n      \
-        \      \"required\": [\n                \"achievementId\",\n                \"displayName\",\n                \"points\"\
-        ,\n                \"unlockedAt\"\n            ],\n            \"properties\": {\n                \"achievementId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Achievement identifier\"\n\
-        \                },\n                \"displayName\": {\n                    \"type\": \"string\",\n             \
-        \       \"description\": \"Achievement name\"\n                },\n                \"description\": {\n          \
-        \          \"type\": \"string\",\n                    \"description\": \"Achievement description\"\n             \
-        \   },\n                \"points\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Point value\"\n                },\n                \"iconUrl\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Achievement icon\"\n            \
-        \    },\n                \"unlockedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"When it was unlocked\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        \      \"required\": [\n                \"achievementId\",\n                \"displayName\",\n                \"description\"\
+        ,\n                \"points\",\n                \"unlockedAt\"\n            ],\n            \"properties\": {\n  \
+        \              \"achievementId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Achievement identifier\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Achievement name\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Achievement description\"\n\
+        \                },\n                \"points\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"description\": \"Point value\"\n                },\n                \"iconUrl\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Achievement icon\"\n\
+        \                },\n                \"unlockedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When it was unlocked\"\n               \
+        \ }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List unlocked achievements\",\n    \"description\": \"Get all achievements
         unlocked by an entity.\",\n    \"tags\": [\n        \"Progress\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"listUnlockedAchievements\"\n}"
@@ -738,11 +1008,10 @@ paths:
         : {\n                    \"type\": \"object\",\n                    \"description\": \"Entity type to sync (must be
         account for platform links)\"\n                },\n                \"platform\": {\n                    \"$ref\":
         \"#/$defs/Platform\",\n                    \"description\": \"External platform to sync achievements to\"\n      \
-        \          },\n                \"forceResync\": {\n                    \"type\": \"boolean\",\n                  \
-        \  \"default\": false,\n                    \"description\": \"Force resync even if already synced\"\n           \
-        \     }\n            }\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"External platform for achievement sync\",\n            \"enum\": [\n                \"steam\",\n             \
-        \   \"xbox\",\n                \"playstation\",\n                \"internal\"\n            ]\n        }\n    }\n}"
+        \          }\n            }\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"\
+        description\": \"External platform for achievement sync\",\n            \"enum\": [\n                \"Steam\",\n\
+        \                \"Xbox\",\n                \"PlayStation\",\n                \"Internal\"\n            ]\n      \
+        \  }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SyncPlatformAchievementsResponse\"\
         ,\n    \"$defs\": {\n        \"SyncPlatformAchievementsResponse\": {\n            \"type\": \"object\",\n        \
         \    \"description\": \"Response after platform sync attempt\",\n            \"additionalProperties\": false,\n  \
@@ -752,14 +1021,12 @@ paths:
         \    },\n                \"synced\": {\n                    \"type\": \"integer\",\n                    \"description\"\
         : \"Number of achievements successfully synced\"\n                },\n                \"failed\": {\n            \
         \        \"type\": \"integer\",\n                    \"description\": \"Number of sync failures\"\n              \
-        \  },\n                \"notLinked\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether account is not linked to platform\"\n                },\n                \"errors\": {\n             \
-        \       \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n   \
-        \                 },\n                    \"nullable\": true,\n                    \"description\": \"Error messages
-        for failed syncs\"\n                }\n            }\n        },\n        \"Platform\": {\n            \"type\": \"\
-        string\",\n            \"description\": \"External platform for achievement sync\",\n            \"enum\": [\n   \
-        \             \"steam\",\n                \"xbox\",\n                \"playstation\",\n                \"internal\"\
-        \n            ]\n        }\n    }\n}"
+        \  },\n                \"errors\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Error messages for failed syncs\"\n                }\n            }\n     \
+        \   },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform
+        for achievement sync\",\n            \"enum\": [\n                \"Steam\",\n                \"Xbox\",\n        \
+        \        \"PlayStation\",\n                \"Internal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Manually trigger platform sync\",\n    \"description\": \"Force synchronization
         of achievements with external platforms.\\nAdmin-only endpoint.\\n\",\n    \"tags\": [\n        \"Platform Sync\"\n\
         \    ],\n    \"deprecated\": false,\n    \"operationId\": \"syncPlatformAchievements\"\n}"
@@ -797,8 +1064,8 @@ paths:
         \               \"$ref\": \"#/$defs/Platform\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Specific platform (null for all)\"\n                }\n            }\n        },\n        \"Platform\": {\n  \
         \          \"type\": \"string\",\n            \"description\": \"External platform for achievement sync\",\n     \
-        \       \"enum\": [\n                \"steam\",\n                \"xbox\",\n                \"playstation\",\n   \
-        \             \"internal\"\n            ]\n        }\n    }\n}"
+        \       \"enum\": [\n                \"Steam\",\n                \"Xbox\",\n                \"PlayStation\",\n   \
+        \             \"Internal\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PlatformSyncStatusResponse\"\
         ,\n    \"$defs\": {\n        \"PlatformSyncStatusResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Platform sync status for an entity\",\n            \"additionalProperties\": false,\n           \
@@ -812,24 +1079,24 @@ paths:
         \n                }\n            }\n        },\n        \"PlatformStatus\": {\n            \"type\": \"object\",\n\
         \            \"description\": \"Sync status for a single platform\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"platform\",\n                \"isLinked\",\n                \"syncedCount\"\
-        ,\n                \"pendingCount\"\n            ],\n            \"properties\": {\n                \"platform\":
-        {\n                    \"$ref\": \"#/$defs/Platform\",\n                    \"description\": \"Platform this status
-        entry describes\"\n                },\n                \"isLinked\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether entity is linked to this platform\"\n                },\n      \
-        \          \"externalId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"External platform user ID\"\n                },\n                \"syncedCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Achievements successfully
-        synced\"\n                },\n                \"pendingCount\": {\n                    \"type\": \"integer\",\n  \
-        \                  \"description\": \"Achievements pending sync\"\n                },\n                \"failedCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Achievements that failed to
-        sync\"\n                },\n                \"lastSyncAt\": {\n                    \"type\": \"string\",\n       \
-        \             \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Last successful sync timestamp\"\n                },\n                \"lastError\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Most recent sync
-        error\"\n                }\n            }\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"External platform for achievement sync\",\n            \"enum\": [\n             \
-        \   \"steam\",\n                \"xbox\",\n                \"playstation\",\n                \"internal\"\n      \
-        \      ]\n        }\n    }\n}"
+        ,\n                \"pendingCount\",\n                \"failedCount\"\n            ],\n            \"properties\"\
+        : {\n                \"platform\": {\n                    \"$ref\": \"#/$defs/Platform\",\n                    \"\
+        description\": \"Platform this status entry describes\"\n                },\n                \"isLinked\": {\n   \
+        \                 \"type\": \"boolean\",\n                    \"description\": \"Whether entity is linked to this
+        platform\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"External platform user ID\"\n      \
+        \          },\n                \"syncedCount\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"description\": \"Achievements successfully synced\"\n                },\n                \"pendingCount\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Achievements pending sync\"\n\
+        \                },\n                \"failedCount\": {\n                    \"type\": \"integer\",\n            \
+        \        \"description\": \"Achievements that failed to sync\"\n                },\n                \"lastSyncAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Last successful sync timestamp\"\n               \
+        \ },\n                \"lastError\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Most recent sync error\"\n                }\n            }\n     \
+        \   },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform
+        for achievement sync\",\n            \"enum\": [\n                \"Steam\",\n                \"Xbox\",\n        \
+        \        \"PlayStation\",\n                \"Internal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get platform sync status\",\n    \"description\": \"Get the sync status
         for an entity on a specific platform.\",\n    \"tags\": [\n        \"Platform Sync\"\n    ],\n    \"deprecated\":
         false,\n    \"operationId\": \"getPlatformSyncStatus\"\n}"
@@ -839,26 +1106,42 @@ components:
       type: string
       description: Type of achievement
       enum:
-      - standard
-      - progressive
-      - hidden
-      - secret
+      - Standard
+      - Progressive
+      - Hidden
+      - Secret
     Platform:
       type: string
       description: External platform for achievement sync
       enum:
-      - steam
-      - xbox
-      - playstation
-      - internal
+      - Steam
+      - Xbox
+      - PlayStation
+      - Internal
     SyncStatus:
       type: string
       description: Status of platform synchronization
       enum:
-      - pending
-      - synced
-      - failed
-      - not_linked
+      - Pending
+      - Synced
+      - Failed
+      - NotLinked
+    PlatformMapping:
+      type: object
+      description: Maps an achievement to a platform-specific ID
+      additionalProperties: false
+      required:
+      - platform
+      - platformAchievementId
+      properties:
+        platform:
+          $ref: '#/components/schemas/Platform'
+          description: External platform
+        platformAchievementId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Platform-specific achievement identifier
     CreateAchievementDefinitionRequest:
       type: object
       description: Request to create a new achievement
@@ -875,15 +1158,18 @@ components:
           description: ID of the game service owning this achievement
         achievementId:
           type: string
+          minLength: 1
           maxLength: 64
           pattern: "^[a-z0-9_-]+$"
           description: Unique identifier for this achievement (lowercase, no spaces)
         displayName:
           type: string
+          minLength: 1
           maxLength: 100
           description: Human-readable name
         description:
           type: string
+          minLength: 1
           maxLength: 500
           description: Description of how to earn this achievement
         hiddenDescription:
@@ -893,12 +1179,13 @@ components:
           description: Description shown before achievement is earned (for hidden types)
         achievementType:
           $ref: '#/components/schemas/AchievementType'
-          default: standard
+          default: Standard
           description: Classification of the achievement (affects visibility and progress behavior)
         entityTypes:
           type: array
           items:
             $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
           description: Which entity types can earn this achievement
         progressTarget:
           type: integer
@@ -916,19 +1203,51 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Platform'
-          description: Platforms where this achievement exists
-        platformIds:
-          type: object
-          additionalProperties:
-            type: string
           nullable: true
-          description: "Platform-specific achievement IDs (e.g., {\"steam\": \"ACH_001\"})"
+          description: Platforms where this achievement exists
+        platformMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformMapping'
+          nullable: true
+          description: Platform-specific achievement ID mappings
         prerequisites:
           type: array
           items:
             type: string
           nullable: true
           description: Achievement IDs that must be unlocked first
+        scoreType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Score type code for matching analytics.score.updated events (progressive achievements)
+        milestoneType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Milestone type code for matching analytics.milestone.reached events
+        milestoneValue:
+          type: number
+          format: double
+          nullable: true
+          description: Expected milestone value for matching analytics.milestone.reached events
+        milestoneName:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: Expected milestone name for matching analytics.milestone.reached events
+        leaderboardId:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Leaderboard ID for matching leaderboard.rank.changed events
+        rankThreshold:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 1
+          description: Rank threshold for leaderboard achievements (unlock when rank <= threshold)
         isActive:
           type: boolean
           default: true
@@ -937,7 +1256,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional achievement-specific metadata
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     GetAchievementDefinitionRequest:
       type: object
       description: Request to get an achievement definition
@@ -952,6 +1271,8 @@ components:
           description: ID of the game service
         achievementId:
           type: string
+          minLength: 1
+          maxLength: 64
           description: ID of the achievement
     ListAchievementDefinitionsRequest:
       type: object
@@ -980,6 +1301,10 @@ components:
           type: boolean
           default: false
           description: Include hidden achievements in response
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated definitions in results
     ListAchievementDefinitionsResponse:
       type: object
       description: Response containing achievement definitions
@@ -1006,6 +1331,8 @@ components:
           description: ID of the game service
         achievementId:
           type: string
+          minLength: 1
+          maxLength: 64
           description: ID of the achievement to update
         displayName:
           type: string
@@ -1021,15 +1348,46 @@ components:
           type: boolean
           nullable: true
           description: New active status
-        platformIds:
-          type: object
-          additionalProperties:
-            type: string
+        platformMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformMapping'
           nullable: true
           description: Updated platform ID mappings
-    DeleteAchievementDefinitionRequest:
+        scoreType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Score type code for matching analytics.score.updated events (progressive achievements)
+        milestoneType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Milestone type code for matching analytics.milestone.reached events
+        milestoneValue:
+          type: number
+          format: double
+          nullable: true
+          description: Expected milestone value for matching analytics.milestone.reached events
+        milestoneName:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: Expected milestone name for matching analytics.milestone.reached events
+        leaderboardId:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Leaderboard ID for matching leaderboard.rank.changed events
+        rankThreshold:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 1
+          description: Rank threshold for leaderboard achievements (unlock when rank <= threshold)
+    DeprecateAchievementDefinitionRequest:
       type: object
-      description: Request to delete an achievement
+      description: Request to deprecate an achievement definition
       additionalProperties: false
       required:
       - gameServiceId
@@ -1041,7 +1399,14 @@ components:
           description: ID of the game service
         achievementId:
           type: string
-          description: ID of the achievement to delete
+          minLength: 1
+          maxLength: 64
+          description: ID of the achievement to deprecate
+        deprecationReason:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Audit reason for deprecation, explaining why this achievement is being phased out
     AchievementDefinitionResponse:
       type: object
       description: Achievement definition details
@@ -1054,6 +1419,8 @@ components:
       - achievementType
       - points
       - isActive
+      - isDeprecated
+      - earnedCount
       - createdAt
       properties:
         gameServiceId:
@@ -1080,6 +1447,7 @@ components:
           type: array
           items:
             $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
           description: Allowed entity types
         progressTarget:
           type: integer
@@ -1096,22 +1464,67 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Platform'
-          description: Available platforms
-        platformIds:
-          type: object
-          additionalProperties:
-            type: string
           nullable: true
-          description: Platform-specific IDs
+          description: Available platforms
+        platformMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformMapping'
+          nullable: true
+          description: Platform-specific achievement ID mappings
         prerequisites:
           type: array
           items:
             type: string
           nullable: true
           description: Required achievements
+        scoreType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Score type code for matching analytics.score.updated events (progressive achievements)
+        milestoneType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Milestone type code for matching analytics.milestone.reached events
+        milestoneValue:
+          type: number
+          format: double
+          nullable: true
+          description: Expected milestone value for matching analytics.milestone.reached events
+        milestoneName:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: Expected milestone name for matching analytics.milestone.reached events
+        leaderboardId:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Leaderboard ID for matching leaderboard.rank.changed events
+        rankThreshold:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 1
+          description: Rank threshold for leaderboard achievements (unlock when rank <= threshold)
         isActive:
           type: boolean
           description: Whether achievement is earnable
+        isDeprecated:
+          type: boolean
+          description: Whether this definition is deprecated and should not be used for new progress
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When deprecation occurred, null if not deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Audit reason for deprecation, null if not deprecated
         earnedCount:
           type: integer
           format: int64
@@ -1124,7 +1537,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     GetAchievementProgressRequest:
       type: object
       description: Request to get achievement progress
@@ -1157,6 +1570,8 @@ components:
       - entityId
       - entityType
       - progress
+      - totalPoints
+      - unlockedCount
       properties:
         entityId:
           type: string
@@ -1182,6 +1597,7 @@ components:
       additionalProperties: false
       required:
       - achievementId
+      - displayName
       - isUnlocked
       properties:
         achievementId:
@@ -1228,6 +1644,8 @@ components:
           description: ID of the game service
         achievementId:
           type: string
+          minLength: 1
+          maxLength: 64
           description: ID of the achievement
         entityId:
           type: string
@@ -1245,15 +1663,11 @@ components:
       description: Response after updating progress
       additionalProperties: false
       required:
-      - achievementId
       - previousProgress
       - newProgress
       - targetProgress
       - unlocked
       properties:
-        achievementId:
-          type: string
-          description: Achievement identifier
         previousProgress:
           type: integer
           description: Progress before update
@@ -1287,6 +1701,8 @@ components:
           description: ID of the game service
         achievementId:
           type: string
+          minLength: 1
+          maxLength: 64
           description: ID of the achievement to unlock
         entityId:
           type: string
@@ -1304,16 +1720,8 @@ components:
       description: Response after unlocking an achievement
       additionalProperties: false
       required:
-      - achievementId
-      - unlocked
       - unlockedAt
       properties:
-        achievementId:
-          type: string
-          description: Achievement identifier
-        unlocked:
-          type: boolean
-          description: Whether unlock was successful
         unlockedAt:
           type: string
           format: date-time
@@ -1348,6 +1756,10 @@ components:
           $ref: '#/components/schemas/Platform'
           nullable: true
           description: Filter by platform
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include achievements earned from deprecated definitions
     ListUnlockedAchievementsResponse:
       type: object
       description: Response containing unlocked achievements
@@ -1380,6 +1792,7 @@ components:
       required:
       - achievementId
       - displayName
+      - description
       - points
       - unlockedAt
       properties:
@@ -1427,10 +1840,6 @@ components:
         platform:
           $ref: '#/components/schemas/Platform'
           description: External platform to sync achievements to
-        forceResync:
-          type: boolean
-          default: false
-          description: Force resync even if already synced
     SyncPlatformAchievementsResponse:
       type: object
       description: Response after platform sync attempt
@@ -1449,9 +1858,6 @@ components:
         failed:
           type: integer
           description: Number of sync failures
-        notLinked:
-          type: boolean
-          description: Whether account is not linked to platform
         errors:
           type: array
           items:
@@ -1512,6 +1918,7 @@ components:
       - isLinked
       - syncedCount
       - pendingCount
+      - failedCount
       properties:
         platform:
           $ref: '#/components/schemas/Platform'
@@ -1541,10 +1948,3 @@ components:
           type: string
           nullable: true
           description: Most recent sync error
-x-service-registration:
-  serviceId: "achievement"
-  serviceName: "Achievement Service"
-  version: "1.0.0"
-  categories:
-  - gaming
-  - progression

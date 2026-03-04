@@ -19,7 +19,7 @@ public class PlayStationAchievementSync : IPlatformAchievementSync
     private readonly ITelemetryProvider _telemetryProvider;
 
     /// <inheritdoc />
-    public Platform Platform => Platform.Playstation;
+    public Platform Platform => Platform.PlayStation;
 
     /// <inheritdoc />
     /// <remarks>PlayStation sync is a stub and is never configured.</remarks>

@@ -126,14 +126,14 @@ public class CharacterPersonalityServiceTests
             CharacterId = characterId,
             Traits = new Dictionary<TraitAxis, float>
             {
-                { TraitAxis.OPENNESS, 0.5f },
-                { TraitAxis.CONSCIENTIOUSNESS, 0.3f },
-                { TraitAxis.EXTRAVERSION, -0.2f },
-                { TraitAxis.AGREEABLENESS, 0.7f },
-                { TraitAxis.NEUROTICISM, -0.4f },
-                { TraitAxis.HONESTY, 0.6f },
-                { TraitAxis.AGGRESSION, -0.5f },
-                { TraitAxis.LOYALTY, 0.8f }
+                { TraitAxis.Openness, 0.5f },
+                { TraitAxis.Conscientiousness, 0.3f },
+                { TraitAxis.Extraversion, -0.2f },
+                { TraitAxis.Agreeableness, 0.7f },
+                { TraitAxis.Neuroticism, -0.4f },
+                { TraitAxis.Honesty, 0.6f },
+                { TraitAxis.Aggression, -0.5f },
+                { TraitAxis.Loyalty, 0.8f }
             },
             Version = version,
             CreatedAtUnix = now - 3600, // 1 hour ago
@@ -150,9 +150,9 @@ public class CharacterPersonalityServiceTests
         return new CombatPreferencesData
         {
             CharacterId = characterId,
-            Style = CombatStyle.BALANCED,
-            PreferredRange = PreferredRange.MEDIUM,
-            GroupRole = GroupRole.FRONTLINE,
+            Style = CombatStyle.Balanced,
+            PreferredRange = PreferredRange.Medium,
+            GroupRole = GroupRole.Frontline,
             RiskTolerance = 0.5f,
             RetreatThreshold = 0.3f,
             ProtectAllies = true,
@@ -278,8 +278,8 @@ public class CharacterPersonalityServiceTests
             CharacterId = characterId,
             Traits = new List<TraitValue>
             {
-                new() { Axis = TraitAxis.OPENNESS, Value = 0.5f },
-                new() { Axis = TraitAxis.CONSCIENTIOUSNESS, Value = 0.3f }
+                new() { Axis = TraitAxis.Openness, Value = 0.5f },
+                new() { Axis = TraitAxis.Conscientiousness, Value = 0.3f }
             }
         };
 
@@ -326,7 +326,7 @@ public class CharacterPersonalityServiceTests
             CharacterId = characterId,
             Traits = new List<TraitValue>
             {
-                new() { Axis = TraitAxis.OPENNESS, Value = 0.9f }
+                new() { Axis = TraitAxis.Openness, Value = 0.9f }
             }
         };
 
@@ -361,7 +361,7 @@ public class CharacterPersonalityServiceTests
         var request = new SetPersonalityRequest
         {
             CharacterId = characterId,
-            Traits = new List<TraitValue> { new() { Axis = TraitAxis.OPENNESS, Value = 0.5f } }
+            Traits = new List<TraitValue> { new() { Axis = TraitAxis.Openness, Value = 0.5f } }
         };
 
         // Act & Assert - exceptions propagate to generated controller for error handling
@@ -552,7 +552,7 @@ public class CharacterPersonalityServiceTests
         var request = new RecordExperienceRequest
         {
             CharacterId = characterId,
-            ExperienceType = ExperienceType.TRAUMA,
+            ExperienceType = ExperienceType.Trauma,
             Intensity = 1.0f
         };
 
@@ -582,7 +582,7 @@ public class CharacterPersonalityServiceTests
         var request = new RecordExperienceRequest
         {
             CharacterId = characterId,
-            ExperienceType = ExperienceType.VICTORY,
+            ExperienceType = ExperienceType.Victory,
             Intensity = 0.5f
         };
 
@@ -621,7 +621,7 @@ public class CharacterPersonalityServiceTests
             var request = new RecordExperienceRequest
             {
                 CharacterId = characterId,
-                ExperienceType = ExperienceType.TRAUMA,
+                ExperienceType = ExperienceType.Trauma,
                 Intensity = 1.0f // Max intensity for highest evolution chance
             };
 
@@ -648,15 +648,15 @@ public class CharacterPersonalityServiceTests
     }
 
     [Theory]
-    [InlineData(ExperienceType.TRAUMA)]
-    [InlineData(ExperienceType.BETRAYAL)]
-    [InlineData(ExperienceType.LOSS)]
-    [InlineData(ExperienceType.VICTORY)]
-    [InlineData(ExperienceType.FRIENDSHIP)]
-    [InlineData(ExperienceType.REDEMPTION)]
-    [InlineData(ExperienceType.CORRUPTION)]
-    [InlineData(ExperienceType.ENLIGHTENMENT)]
-    [InlineData(ExperienceType.SACRIFICE)]
+    [InlineData(ExperienceType.Trauma)]
+    [InlineData(ExperienceType.Betrayal)]
+    [InlineData(ExperienceType.Loss)]
+    [InlineData(ExperienceType.Victory)]
+    [InlineData(ExperienceType.Friendship)]
+    [InlineData(ExperienceType.Redemption)]
+    [InlineData(ExperienceType.Corruption)]
+    [InlineData(ExperienceType.Enlightenment)]
+    [InlineData(ExperienceType.Sacrifice)]
     public async Task RecordExperienceAsync_AllExperienceTypes_ShouldBeHandled(ExperienceType experienceType)
     {
         // Arrange
@@ -712,9 +712,9 @@ public class CharacterPersonalityServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(characterId, response.CharacterId);
-        Assert.Equal(CombatStyle.BALANCED, response.Preferences.Style);
-        Assert.Equal(PreferredRange.MEDIUM, response.Preferences.PreferredRange);
-        Assert.Equal(GroupRole.FRONTLINE, response.Preferences.GroupRole);
+        Assert.Equal(CombatStyle.Balanced, response.Preferences.Style);
+        Assert.Equal(PreferredRange.Medium, response.Preferences.PreferredRange);
+        Assert.Equal(GroupRole.Frontline, response.Preferences.GroupRole);
     }
 
     [Fact]
@@ -758,9 +758,9 @@ public class CharacterPersonalityServiceTests
             CharacterId = characterId,
             Preferences = new CombatPreferences
             {
-                Style = CombatStyle.AGGRESSIVE,
-                PreferredRange = PreferredRange.MELEE,
-                GroupRole = GroupRole.FLANKER,
+                Style = CombatStyle.Aggressive,
+                PreferredRange = PreferredRange.Melee,
+                GroupRole = GroupRole.Flanker,
                 RiskTolerance = 0.8f,
                 RetreatThreshold = 0.2f,
                 ProtectAllies = false
@@ -774,7 +774,7 @@ public class CharacterPersonalityServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(1, response.Version);
-        Assert.Equal(CombatStyle.AGGRESSIVE, response.Preferences.Style);
+        Assert.Equal(CombatStyle.Aggressive, response.Preferences.Style);
 
         // Verify created event
         var createdEvent = _publishedEvents.FirstOrDefault(e => e.Topic == "combat-preferences.created");
@@ -799,9 +799,9 @@ public class CharacterPersonalityServiceTests
             CharacterId = characterId,
             Preferences = new CombatPreferences
             {
-                Style = CombatStyle.DEFENSIVE,
-                PreferredRange = PreferredRange.RANGED,
-                GroupRole = GroupRole.SUPPORT,
+                Style = CombatStyle.Defensive,
+                PreferredRange = PreferredRange.Ranged,
+                GroupRole = GroupRole.Support,
                 RiskTolerance = 0.1f,
                 RetreatThreshold = 0.7f,
                 ProtectAllies = true
@@ -894,7 +894,7 @@ public class CharacterPersonalityServiceTests
         var request = new EvolveCombatRequest
         {
             CharacterId = characterId,
-            ExperienceType = CombatExperienceType.DECISIVE_VICTORY,
+            ExperienceType = CombatExperienceType.DecisiveVictory,
             Intensity = 1.0f
         };
 
@@ -924,7 +924,7 @@ public class CharacterPersonalityServiceTests
         var request = new EvolveCombatRequest
         {
             CharacterId = characterId,
-            ExperienceType = CombatExperienceType.DEFEAT,
+            ExperienceType = CombatExperienceType.Defeat,
             Intensity = 0.5f
         };
 
@@ -939,16 +939,16 @@ public class CharacterPersonalityServiceTests
     }
 
     [Theory]
-    [InlineData(CombatExperienceType.DECISIVE_VICTORY)]
-    [InlineData(CombatExperienceType.NARROW_VICTORY)]
-    [InlineData(CombatExperienceType.DEFEAT)]
-    [InlineData(CombatExperienceType.NEAR_DEATH)]
-    [InlineData(CombatExperienceType.ALLY_SAVED)]
-    [InlineData(CombatExperienceType.ALLY_LOST)]
-    [InlineData(CombatExperienceType.SUCCESSFUL_RETREAT)]
-    [InlineData(CombatExperienceType.FAILED_RETREAT)]
-    [InlineData(CombatExperienceType.AMBUSH_SUCCESS)]
-    [InlineData(CombatExperienceType.AMBUSH_SURVIVED)]
+    [InlineData(CombatExperienceType.DecisiveVictory)]
+    [InlineData(CombatExperienceType.NarrowVictory)]
+    [InlineData(CombatExperienceType.Defeat)]
+    [InlineData(CombatExperienceType.NearDeath)]
+    [InlineData(CombatExperienceType.AllySaved)]
+    [InlineData(CombatExperienceType.AllyLost)]
+    [InlineData(CombatExperienceType.SuccessfulRetreat)]
+    [InlineData(CombatExperienceType.FailedRetreat)]
+    [InlineData(CombatExperienceType.AmbushSuccess)]
+    [InlineData(CombatExperienceType.AmbushSurvived)]
     public async Task EvolveCombatPreferencesAsync_AllExperienceTypes_ShouldBeHandled(CombatExperienceType experienceType)
     {
         // Arrange
@@ -1003,7 +1003,7 @@ public class CharacterPersonalityServiceTests
             var request = new EvolveCombatRequest
             {
                 CharacterId = characterId,
-                ExperienceType = CombatExperienceType.NEAR_DEATH,
+                ExperienceType = CombatExperienceType.NearDeath,
                 Intensity = 1.0f
             };
 
@@ -1102,8 +1102,8 @@ public class CharacterPersonalityServiceTests
             CharacterId = characterId,
             Traits = new Dictionary<TraitAxis, float>
             {
-                { TraitAxis.OPENNESS, 0.75f },
-                { TraitAxis.NEUROTICISM, -0.5f }
+                { TraitAxis.Openness, 0.75f },
+                { TraitAxis.Neuroticism, -0.5f }
             },
             Version = 3,
             CreatedAtUnix = createdAt,
@@ -1125,10 +1125,10 @@ public class CharacterPersonalityServiceTests
         Assert.Equal(3, response.Version);
         Assert.Equal(2, response.Traits.Count);
 
-        var openness = response.Traits.First(t => t.Axis == TraitAxis.OPENNESS);
+        var openness = response.Traits.First(t => t.Axis == TraitAxis.Openness);
         Assert.Equal(0.75f, openness.Value);
 
-        var neuroticism = response.Traits.First(t => t.Axis == TraitAxis.NEUROTICISM);
+        var neuroticism = response.Traits.First(t => t.Axis == TraitAxis.Neuroticism);
         Assert.Equal(-0.5f, neuroticism.Value);
 
         // CreatedAt and UpdatedAt should be different, so UpdatedAt should be populated
@@ -1143,9 +1143,9 @@ public class CharacterPersonalityServiceTests
         var testData = new CombatPreferencesData
         {
             CharacterId = characterId,
-            Style = CombatStyle.TACTICAL,
-            PreferredRange = PreferredRange.RANGED,
-            GroupRole = GroupRole.LEADER,
+            Style = CombatStyle.Tactical,
+            PreferredRange = PreferredRange.Ranged,
+            GroupRole = GroupRole.Leader,
             RiskTolerance = 0.3f,
             RetreatThreshold = 0.6f,
             ProtectAllies = true,
@@ -1167,9 +1167,9 @@ public class CharacterPersonalityServiceTests
         Assert.NotNull(response);
         Assert.Equal(characterId, response.CharacterId);
         Assert.Equal(7, response.Version);
-        Assert.Equal(CombatStyle.TACTICAL, response.Preferences.Style);
-        Assert.Equal(PreferredRange.RANGED, response.Preferences.PreferredRange);
-        Assert.Equal(GroupRole.LEADER, response.Preferences.GroupRole);
+        Assert.Equal(CombatStyle.Tactical, response.Preferences.Style);
+        Assert.Equal(PreferredRange.Ranged, response.Preferences.PreferredRange);
+        Assert.Equal(GroupRole.Leader, response.Preferences.GroupRole);
         Assert.Equal(0.3f, response.Preferences.RiskTolerance);
         Assert.Equal(0.6f, response.Preferences.RetreatThreshold);
         Assert.True(response.Preferences.ProtectAllies);
@@ -1196,7 +1196,7 @@ public class CharacterPersonalityServiceTests
             CharacterId = characterId,
             Traits = new List<TraitValue>
             {
-                new() { Axis = TraitAxis.LOYALTY, Value = 1.0f }
+                new() { Axis = TraitAxis.Loyalty, Value = 1.0f }
             }
         };
 
@@ -1226,7 +1226,7 @@ public class CharacterPersonalityServiceTests
         var request = new RecordExperienceRequest
         {
             CharacterId = characterId,
-            ExperienceType = ExperienceType.VICTORY,
+            ExperienceType = ExperienceType.Victory,
             Intensity = 0.0f // Zero intensity should have 0% evolution chance
         };
 
@@ -1257,9 +1257,9 @@ public class CharacterPersonalityServiceTests
             CharacterId = characterId,
             Preferences = new CombatPreferences
             {
-                Style = CombatStyle.BERSERKER,
-                PreferredRange = PreferredRange.MELEE,
-                GroupRole = GroupRole.SOLO,
+                Style = CombatStyle.Berserker,
+                PreferredRange = PreferredRange.Melee,
+                GroupRole = GroupRole.Solo,
                 RiskTolerance = 1.0f, // Max
                 RetreatThreshold = 0.0f, // Min - fight to death
                 ProtectAllies = false
@@ -1307,7 +1307,7 @@ public class CharacterPersonalityServiceTests
             CharacterId = characterId,
             Traits = new List<TraitValue>
             {
-                new() { Axis = TraitAxis.OPENNESS, Value = 0.5f }
+                new() { Axis = TraitAxis.Openness, Value = 0.5f }
             }
         };
 
@@ -1340,7 +1340,7 @@ public class CharacterPersonalityServiceTests
             CharacterId = characterId,
             Traits = new List<TraitValue>
             {
-                new() { Axis = TraitAxis.OPENNESS, Value = 0.9f }
+                new() { Axis = TraitAxis.Openness, Value = 0.9f }
             }
         };
 
@@ -1419,9 +1419,9 @@ public class CharacterPersonalityServiceTests
             CharacterId = characterId,
             Preferences = new CombatPreferences
             {
-                Style = CombatStyle.AGGRESSIVE,
-                PreferredRange = PreferredRange.MELEE,
-                GroupRole = GroupRole.FLANKER,
+                Style = CombatStyle.Aggressive,
+                PreferredRange = PreferredRange.Melee,
+                GroupRole = GroupRole.Flanker,
                 RiskTolerance = 0.8f,
                 RetreatThreshold = 0.2f,
                 ProtectAllies = false
@@ -1457,9 +1457,9 @@ public class CharacterPersonalityServiceTests
             CharacterId = characterId,
             Preferences = new CombatPreferences
             {
-                Style = CombatStyle.DEFENSIVE,
-                PreferredRange = PreferredRange.RANGED,
-                GroupRole = GroupRole.SUPPORT,
+                Style = CombatStyle.Defensive,
+                PreferredRange = PreferredRange.Ranged,
+                GroupRole = GroupRole.Support,
                 RiskTolerance = 0.1f,
                 RetreatThreshold = 0.7f,
                 ProtectAllies = true
@@ -1672,8 +1672,8 @@ public class CharacterPersonalityServiceTests
                 CharacterId = characterId,
                 Traits = new List<TraitValue>
                 {
-                    new() { Axis = TraitAxis.OPENNESS, Value = 0.7f },
-                    new() { Axis = TraitAxis.HONESTY, Value = 0.5f }
+                    new() { Axis = TraitAxis.Openness, Value = 0.7f },
+                    new() { Axis = TraitAxis.Honesty, Value = 0.5f }
                 },
                 Version = 1,
                 CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
@@ -1684,9 +1684,9 @@ public class CharacterPersonalityServiceTests
                 CharacterId = characterId,
                 Preferences = new CombatPreferences
                 {
-                    Style = CombatStyle.BALANCED,
-                    PreferredRange = PreferredRange.MEDIUM,
-                    GroupRole = GroupRole.FRONTLINE,
+                    Style = CombatStyle.Balanced,
+                    PreferredRange = PreferredRange.Medium,
+                    GroupRole = GroupRole.Frontline,
                     RiskTolerance = 0.5f,
                     RetreatThreshold = 0.3f,
                     ProtectAllies = true
@@ -1752,7 +1752,7 @@ public class CharacterPersonalityServiceTests
                 CharacterId = characterId,
                 Traits = new List<TraitValue>
                 {
-                    new() { Axis = TraitAxis.LOYALTY, Value = 0.9f }
+                    new() { Axis = TraitAxis.Loyalty, Value = 0.9f }
                 },
                 Version = 2,
                 CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
@@ -1866,7 +1866,7 @@ public class CharacterPersonalityServiceTests
                 CharacterId = characterId,
                 Traits = new List<TraitValue>
                 {
-                    new() { Axis = TraitAxis.OPENNESS, Value = 0.5f }
+                    new() { Axis = TraitAxis.Openness, Value = 0.5f }
                 },
                 Version = 1,
                 CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
@@ -1911,7 +1911,7 @@ public class CharacterPersonalityServiceTests
                 CharacterId = characterId,
                 Traits = new List<TraitValue>
                 {
-                    new() { Axis = TraitAxis.OPENNESS, Value = 0.5f }
+                    new() { Axis = TraitAxis.Openness, Value = 0.5f }
                 },
                 Version = 1,
                 CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
@@ -1922,9 +1922,9 @@ public class CharacterPersonalityServiceTests
                 CharacterId = characterId,
                 Preferences = new CombatPreferences
                 {
-                    Style = CombatStyle.BALANCED,
-                    PreferredRange = PreferredRange.MEDIUM,
-                    GroupRole = GroupRole.FRONTLINE,
+                    Style = CombatStyle.Balanced,
+                    PreferredRange = PreferredRange.Medium,
+                    GroupRole = GroupRole.Frontline,
                     RiskTolerance = 0.5f,
                     RetreatThreshold = 0.3f,
                     ProtectAllies = true

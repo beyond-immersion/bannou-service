@@ -333,19 +333,19 @@ public partial class SubscriptionInfo
 public enum SubscriptionAction
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"created")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Created")]
     Created = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"updated")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Updated")]
     Updated = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Cancelled")]
     Cancelled = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"expired")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Expired")]
     Expired = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"renewed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Renewed")]
     Renewed = 4,
 
 }

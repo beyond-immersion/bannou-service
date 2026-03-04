@@ -170,7 +170,7 @@ public sealed class KernelExtractor
         if (history.HasBackstory && history.Backstory?.Elements != null)
         {
             // Trauma kernels
-            foreach (var trauma in history.Backstory.Elements.Where(b => b.ElementType == BackstoryElementType.TRAUMA))
+            foreach (var trauma in history.Backstory.Elements.Where(b => b.ElementType == BackstoryElementType.Trauma))
             {
                 kernels.Add(new NarrativeKernel
                 {
@@ -207,7 +207,7 @@ public sealed class KernelExtractor
 
             // UnfinishedBusiness from goal elements
             var goalElements = history.Backstory.Elements
-                .Where(b => b.ElementType == BackstoryElementType.GOAL)
+                .Where(b => b.ElementType == BackstoryElementType.Goal)
                 .ToList();
 
             if (goalElements.Count > 0)
@@ -410,10 +410,10 @@ public sealed class KernelExtractor
     {
         return category switch
         {
-            EventCategory.WAR => [ArcType.ManInHole, ArcType.Tragedy, ArcType.Oedipus],
-            EventCategory.NATURAL_DISASTER => [ArcType.ManInHole, ArcType.Tragedy],
-            EventCategory.POLITICAL => [ArcType.Icarus, ArcType.Oedipus, ArcType.ManInHole],
-            EventCategory.PERSONAL => [ArcType.Cinderella, ArcType.ManInHole, ArcType.RagsToRiches],
+            EventCategory.War => [ArcType.ManInHole, ArcType.Tragedy, ArcType.Oedipus],
+            EventCategory.NaturalDisaster => [ArcType.ManInHole, ArcType.Tragedy],
+            EventCategory.Political => [ArcType.Icarus, ArcType.Oedipus, ArcType.ManInHole],
+            EventCategory.Personal => [ArcType.Cinderella, ArcType.ManInHole, ArcType.RagsToRiches],
             _ => [ArcType.ManInHole, ArcType.Cinderella]
         };
     }
@@ -425,43 +425,43 @@ public sealed class KernelExtractor
     {
         return category switch
         {
-            EventCategory.WAR => new Dictionary<string, double>
+            EventCategory.War => new Dictionary<string, double>
             {
                 ["war"] = 1.0,
                 ["action"] = 0.9,
                 ["thriller"] = 0.7
             },
-            EventCategory.NATURAL_DISASTER => new Dictionary<string, double>
+            EventCategory.NaturalDisaster => new Dictionary<string, double>
             {
                 ["thriller"] = 0.9,
                 ["horror"] = 0.7,
                 ["worldview"] = 0.8
             },
-            EventCategory.POLITICAL => new Dictionary<string, double>
+            EventCategory.Political => new Dictionary<string, double>
             {
                 ["thriller"] = 0.9,
                 ["crime"] = 0.8,
                 ["status"] = 0.9
             },
-            EventCategory.ECONOMIC => new Dictionary<string, double>
+            EventCategory.Economic => new Dictionary<string, double>
             {
                 ["status"] = 0.9,
                 ["crime"] = 0.7,
                 ["thriller"] = 0.6
             },
-            EventCategory.RELIGIOUS => new Dictionary<string, double>
+            EventCategory.Religious => new Dictionary<string, double>
             {
                 ["worldview"] = 1.0,
                 ["horror"] = 0.6,
                 ["morality"] = 0.8
             },
-            EventCategory.CULTURAL => new Dictionary<string, double>
+            EventCategory.Cultural => new Dictionary<string, double>
             {
                 ["worldview"] = 0.9,
                 ["status"] = 0.7,
                 ["love"] = 0.6
             },
-            EventCategory.PERSONAL => new Dictionary<string, double>
+            EventCategory.Personal => new Dictionary<string, double>
             {
                 ["love"] = 0.8,
                 ["morality"] = 0.9,

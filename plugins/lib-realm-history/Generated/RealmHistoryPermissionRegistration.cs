@@ -48,7 +48,7 @@ public static class RealmHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm-history/get-participation",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getRealmParticipation",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class RealmHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm-history/get-event-participants",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getRealmEventParticipants",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class RealmHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm-history/delete-participation",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteRealmParticipation",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class RealmHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm-history/get-lore",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getRealmLore",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class RealmHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm-history/set-lore",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "setRealmLore",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class RealmHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm-history/add-lore-element",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "addRealmLoreElement",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class RealmHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm-history/delete-lore",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteRealmLore",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class RealmHistoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm-history/delete-all",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteAllRealmHistory",
             Permissions = new List<PermissionRequirement>
             {

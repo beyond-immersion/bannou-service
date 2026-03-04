@@ -20,7 +20,7 @@ public class CompressionHelperTests
     public void Compress_WithGzip_CompressesData()
     {
         // Arrange & Act
-        var compressed = CompressionHelper.Compress(TestData, CompressionType.GZIP);
+        var compressed = CompressionHelper.Compress(TestData, CompressionType.Gzip);
 
         // Assert
         Assert.NotNull(compressed);
@@ -33,10 +33,10 @@ public class CompressionHelperTests
     public void Decompress_WithGzip_RestoresOriginalData()
     {
         // Arrange
-        var compressed = CompressionHelper.Compress(TestData, CompressionType.GZIP);
+        var compressed = CompressionHelper.Compress(TestData, CompressionType.Gzip);
 
         // Act
-        var decompressed = CompressionHelper.Decompress(compressed, CompressionType.GZIP);
+        var decompressed = CompressionHelper.Decompress(compressed, CompressionType.Gzip);
 
         // Assert
         Assert.Equal(TestData, decompressed);
@@ -57,8 +57,8 @@ public class CompressionHelperTests
         foreach (var originalData in testCases)
         {
             // Act
-            var compressed = CompressionHelper.Compress(originalData, CompressionType.GZIP);
-            var decompressed = CompressionHelper.Decompress(compressed, CompressionType.GZIP);
+            var compressed = CompressionHelper.Compress(originalData, CompressionType.Gzip);
+            var decompressed = CompressionHelper.Decompress(compressed, CompressionType.Gzip);
 
             // Assert
             Assert.Equal(originalData, decompressed);
@@ -73,7 +73,7 @@ public class CompressionHelperTests
     public void Compress_WithBrotli_CompressesData()
     {
         // Arrange & Act
-        var compressed = CompressionHelper.Compress(TestData, CompressionType.BROTLI);
+        var compressed = CompressionHelper.Compress(TestData, CompressionType.Brotli);
 
         // Assert
         Assert.NotNull(compressed);
@@ -86,10 +86,10 @@ public class CompressionHelperTests
     public void Decompress_WithBrotli_RestoresOriginalData()
     {
         // Arrange
-        var compressed = CompressionHelper.Compress(TestData, CompressionType.BROTLI);
+        var compressed = CompressionHelper.Compress(TestData, CompressionType.Brotli);
 
         // Act
-        var decompressed = CompressionHelper.Decompress(compressed, CompressionType.BROTLI);
+        var decompressed = CompressionHelper.Decompress(compressed, CompressionType.Brotli);
 
         // Assert
         Assert.Equal(TestData, decompressed);
@@ -109,8 +109,8 @@ public class CompressionHelperTests
         foreach (var originalData in testCases)
         {
             // Act
-            var compressed = CompressionHelper.Compress(originalData, CompressionType.BROTLI);
-            var decompressed = CompressionHelper.Decompress(compressed, CompressionType.BROTLI);
+            var compressed = CompressionHelper.Compress(originalData, CompressionType.Brotli);
+            var decompressed = CompressionHelper.Decompress(compressed, CompressionType.Brotli);
 
             // Assert
             Assert.Equal(originalData, decompressed);
@@ -124,8 +124,8 @@ public class CompressionHelperTests
         var repetitiveData = Encoding.UTF8.GetBytes(new string('A', 10000));
 
         // Act
-        var gzipCompressed = CompressionHelper.Compress(repetitiveData, CompressionType.GZIP);
-        var brotliCompressed = CompressionHelper.Compress(repetitiveData, CompressionType.BROTLI);
+        var gzipCompressed = CompressionHelper.Compress(repetitiveData, CompressionType.Gzip);
+        var brotliCompressed = CompressionHelper.Compress(repetitiveData, CompressionType.Brotli);
 
         // Assert - Brotli typically achieves better compression on repetitive data
         Assert.True(brotliCompressed.Length <= gzipCompressed.Length,
@@ -140,7 +140,7 @@ public class CompressionHelperTests
     public void Compress_WithNone_ReturnsOriginalData()
     {
         // Arrange & Act
-        var result = CompressionHelper.Compress(TestData, CompressionType.NONE);
+        var result = CompressionHelper.Compress(TestData, CompressionType.None);
 
         // Assert
         Assert.Same(TestData, result);
@@ -150,7 +150,7 @@ public class CompressionHelperTests
     public void Decompress_WithNone_ReturnsOriginalData()
     {
         // Arrange & Act
-        var result = CompressionHelper.Decompress(TestData, CompressionType.NONE);
+        var result = CompressionHelper.Decompress(TestData, CompressionType.None);
 
         // Assert
         Assert.Same(TestData, result);
@@ -164,7 +164,7 @@ public class CompressionHelperTests
     public void Compress_WithEmptyData_ReturnsEmptyArray()
     {
         // Arrange & Act
-        var result = CompressionHelper.Compress(Array.Empty<byte>(), CompressionType.GZIP);
+        var result = CompressionHelper.Compress(Array.Empty<byte>(), CompressionType.Gzip);
 
         // Assert
         Assert.NotNull(result);
@@ -175,7 +175,7 @@ public class CompressionHelperTests
     public void Decompress_WithEmptyData_ReturnsEmptyArray()
     {
         // Arrange & Act
-        var result = CompressionHelper.Decompress(Array.Empty<byte>(), CompressionType.GZIP);
+        var result = CompressionHelper.Decompress(Array.Empty<byte>(), CompressionType.Gzip);
 
         // Assert
         Assert.NotNull(result);
@@ -189,8 +189,8 @@ public class CompressionHelperTests
         var singleByte = new byte[] { 42 };
 
         // Act
-        var compressed = CompressionHelper.Compress(singleByte, CompressionType.GZIP);
-        var decompressed = CompressionHelper.Decompress(compressed, CompressionType.GZIP);
+        var compressed = CompressionHelper.Compress(singleByte, CompressionType.Gzip);
+        var decompressed = CompressionHelper.Decompress(compressed, CompressionType.Gzip);
 
         // Assert
         Assert.Equal(singleByte, decompressed);
@@ -254,7 +254,7 @@ public class CompressionHelperTests
     public void CalculateCompressionRatio_WithRealCompression_ReturnsExpectedRange()
     {
         // Arrange
-        var compressed = CompressionHelper.Compress(TestData, CompressionType.GZIP);
+        var compressed = CompressionHelper.Compress(TestData, CompressionType.Gzip);
 
         // Act
         var ratio = CompressionHelper.CalculateCompressionRatio(TestData.Length, compressed.Length);

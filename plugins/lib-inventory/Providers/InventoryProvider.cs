@@ -113,11 +113,11 @@ public sealed class InventoryProvider : IVariableProvider
 
         var firstSegment = path[0];
         return firstSegment.Equals("has_item", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("count", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("has_space", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("total_containers", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("total_items", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("total_weight", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("used_slots", StringComparison.OrdinalIgnoreCase);
+                firstSegment.Equals("count", StringComparison.OrdinalIgnoreCase) ||
+                firstSegment.Equals("has_space", StringComparison.OrdinalIgnoreCase) ||
+                firstSegment.Equals("total_containers", StringComparison.OrdinalIgnoreCase) ||
+                firstSegment.Equals("total_items", StringComparison.OrdinalIgnoreCase) ||
+                firstSegment.Equals("total_weight", StringComparison.OrdinalIgnoreCase) ||
+                firstSegment.Equals("used_slots", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -135,25 +135,25 @@ public partial class QuestController
         "QuestCategory": {
             "type": "string",
             "enum": [
-                "MAIN",
-                "SIDE",
-                "BOUNTY",
-                "DAILY",
-                "WEEKLY",
-                "EVENT",
-                "TUTORIAL"
+                "Main",
+                "Side",
+                "Bounty",
+                "Daily",
+                "Weekly",
+                "Event",
+                "Tutorial"
             ],
             "description": "Category of quest for organization"
         },
         "QuestDifficulty": {
             "type": "string",
             "enum": [
-                "TRIVIAL",
-                "EASY",
-                "NORMAL",
-                "HARD",
-                "HEROIC",
-                "LEGENDARY"
+                "Trivial",
+                "Easy",
+                "Normal",
+                "Hard",
+                "Heroic",
+                "Legendary"
             ],
             "description": "Difficulty rating of the quest"
         },
@@ -232,26 +232,26 @@ public partial class QuestController
         "ObjectiveType": {
             "type": "string",
             "enum": [
-                "KILL",
-                "COLLECT",
-                "DELIVER",
-                "TRAVEL",
-                "DISCOVER",
-                "TALK",
-                "CRAFT",
-                "ESCORT",
-                "DEFEND",
-                "CUSTOM"
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
             ],
             "description": "Type of objective determining progress tracking logic"
         },
         "ObjectiveRevealBehavior": {
             "type": "string",
             "enum": [
-                "ALWAYS",
-                "ON_PROGRESS",
-                "ON_COMPLETE",
-                "NEVER"
+                "Always",
+                "OnProgress",
+                "OnComplete",
+                "Never"
             ],
             "description": "When a hidden objective is revealed in the quest log"
         },
@@ -309,11 +309,11 @@ public partial class QuestController
         "PrerequisiteType": {
             "type": "string",
             "enum": [
-                "QUEST_COMPLETED",
-                "CHARACTER_LEVEL",
-                "REPUTATION",
-                "ITEM_OWNED",
-                "CURRENCY_AMOUNT"
+                "QuestCompleted",
+                "CharacterLevel",
+                "Reputation",
+                "ItemOwned",
+                "CurrencyAmount"
             ],
             "description": "Type of prerequisite check"
         },
@@ -361,10 +361,10 @@ public partial class QuestController
         "RewardType": {
             "type": "string",
             "enum": [
-                "CURRENCY",
-                "ITEM",
-                "EXPERIENCE",
-                "REPUTATION"
+                "Currency",
+                "Item",
+                "Experience",
+                "Reputation"
             ],
             "description": "Type of reward granted on quest completion"
         }
@@ -512,25 +512,25 @@ public partial class QuestController
         "QuestCategory": {
             "type": "string",
             "enum": [
-                "MAIN",
-                "SIDE",
-                "BOUNTY",
-                "DAILY",
-                "WEEKLY",
-                "EVENT",
-                "TUTORIAL"
+                "Main",
+                "Side",
+                "Bounty",
+                "Daily",
+                "Weekly",
+                "Event",
+                "Tutorial"
             ],
             "description": "Category of quest for organization"
         },
         "QuestDifficulty": {
             "type": "string",
             "enum": [
-                "TRIVIAL",
-                "EASY",
-                "NORMAL",
-                "HARD",
-                "HEROIC",
-                "LEGENDARY"
+                "Trivial",
+                "Easy",
+                "Normal",
+                "Hard",
+                "Heroic",
+                "Legendary"
             ],
             "description": "Difficulty rating of the quest"
         },
@@ -609,26 +609,26 @@ public partial class QuestController
         "ObjectiveType": {
             "type": "string",
             "enum": [
-                "KILL",
-                "COLLECT",
-                "DELIVER",
-                "TRAVEL",
-                "DISCOVER",
-                "TALK",
-                "CRAFT",
-                "ESCORT",
-                "DEFEND",
-                "CUSTOM"
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
             ],
             "description": "Type of objective determining progress tracking logic"
         },
         "ObjectiveRevealBehavior": {
             "type": "string",
             "enum": [
-                "ALWAYS",
-                "ON_PROGRESS",
-                "ON_COMPLETE",
-                "NEVER"
+                "Always",
+                "OnProgress",
+                "OnComplete",
+                "Never"
             ],
             "description": "When a hidden objective is revealed in the quest log"
         },
@@ -686,11 +686,11 @@ public partial class QuestController
         "PrerequisiteType": {
             "type": "string",
             "enum": [
-                "QUEST_COMPLETED",
-                "CHARACTER_LEVEL",
-                "REPUTATION",
-                "ITEM_OWNED",
-                "CURRENCY_AMOUNT"
+                "QuestCompleted",
+                "CharacterLevel",
+                "Reputation",
+                "ItemOwned",
+                "CurrencyAmount"
             ],
             "description": "Type of prerequisite check"
         },
@@ -738,10 +738,10 @@ public partial class QuestController
         "RewardType": {
             "type": "string",
             "enum": [
-                "CURRENCY",
-                "ITEM",
-                "EXPERIENCE",
-                "REPUTATION"
+                "Currency",
+                "Item",
+                "Experience",
+                "Reputation"
             ],
             "description": "Type of reward granted on quest completion"
         }
@@ -972,25 +972,25 @@ public partial class QuestController
         "QuestCategory": {
             "type": "string",
             "enum": [
-                "MAIN",
-                "SIDE",
-                "BOUNTY",
-                "DAILY",
-                "WEEKLY",
-                "EVENT",
-                "TUTORIAL"
+                "Main",
+                "Side",
+                "Bounty",
+                "Daily",
+                "Weekly",
+                "Event",
+                "Tutorial"
             ],
             "description": "Category of quest for organization"
         },
         "QuestDifficulty": {
             "type": "string",
             "enum": [
-                "TRIVIAL",
-                "EASY",
-                "NORMAL",
-                "HARD",
-                "HEROIC",
-                "LEGENDARY"
+                "Trivial",
+                "Easy",
+                "Normal",
+                "Hard",
+                "Heroic",
+                "Legendary"
             ],
             "description": "Difficulty rating of the quest"
         },
@@ -1069,26 +1069,26 @@ public partial class QuestController
         "ObjectiveType": {
             "type": "string",
             "enum": [
-                "KILL",
-                "COLLECT",
-                "DELIVER",
-                "TRAVEL",
-                "DISCOVER",
-                "TALK",
-                "CRAFT",
-                "ESCORT",
-                "DEFEND",
-                "CUSTOM"
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
             ],
             "description": "Type of objective determining progress tracking logic"
         },
         "ObjectiveRevealBehavior": {
             "type": "string",
             "enum": [
-                "ALWAYS",
-                "ON_PROGRESS",
-                "ON_COMPLETE",
-                "NEVER"
+                "Always",
+                "OnProgress",
+                "OnComplete",
+                "Never"
             ],
             "description": "When a hidden objective is revealed in the quest log"
         },
@@ -1146,11 +1146,11 @@ public partial class QuestController
         "PrerequisiteType": {
             "type": "string",
             "enum": [
-                "QUEST_COMPLETED",
-                "CHARACTER_LEVEL",
-                "REPUTATION",
-                "ITEM_OWNED",
-                "CURRENCY_AMOUNT"
+                "QuestCompleted",
+                "CharacterLevel",
+                "Reputation",
+                "ItemOwned",
+                "CurrencyAmount"
             ],
             "description": "Type of prerequisite check"
         },
@@ -1198,10 +1198,10 @@ public partial class QuestController
         "RewardType": {
             "type": "string",
             "enum": [
-                "CURRENCY",
-                "ITEM",
-                "EXPERIENCE",
-                "REPUTATION"
+                "Currency",
+                "Item",
+                "Experience",
+                "Reputation"
             ],
             "description": "Type of reward granted on quest completion"
         }
@@ -1330,25 +1330,25 @@ public partial class QuestController
         "QuestCategory": {
             "type": "string",
             "enum": [
-                "MAIN",
-                "SIDE",
-                "BOUNTY",
-                "DAILY",
-                "WEEKLY",
-                "EVENT",
-                "TUTORIAL"
+                "Main",
+                "Side",
+                "Bounty",
+                "Daily",
+                "Weekly",
+                "Event",
+                "Tutorial"
             ],
             "description": "Category of quest for organization"
         },
         "QuestDifficulty": {
             "type": "string",
             "enum": [
-                "TRIVIAL",
-                "EASY",
-                "NORMAL",
-                "HARD",
-                "HEROIC",
-                "LEGENDARY"
+                "Trivial",
+                "Easy",
+                "Normal",
+                "Hard",
+                "Heroic",
+                "Legendary"
             ],
             "description": "Difficulty rating of the quest"
         }
@@ -1518,25 +1518,25 @@ public partial class QuestController
         "QuestCategory": {
             "type": "string",
             "enum": [
-                "MAIN",
-                "SIDE",
-                "BOUNTY",
-                "DAILY",
-                "WEEKLY",
-                "EVENT",
-                "TUTORIAL"
+                "Main",
+                "Side",
+                "Bounty",
+                "Daily",
+                "Weekly",
+                "Event",
+                "Tutorial"
             ],
             "description": "Category of quest for organization"
         },
         "QuestDifficulty": {
             "type": "string",
             "enum": [
-                "TRIVIAL",
-                "EASY",
-                "NORMAL",
-                "HARD",
-                "HEROIC",
-                "LEGENDARY"
+                "Trivial",
+                "Easy",
+                "Normal",
+                "Hard",
+                "Heroic",
+                "Legendary"
             ],
             "description": "Difficulty rating of the quest"
         },
@@ -1615,26 +1615,26 @@ public partial class QuestController
         "ObjectiveType": {
             "type": "string",
             "enum": [
-                "KILL",
-                "COLLECT",
-                "DELIVER",
-                "TRAVEL",
-                "DISCOVER",
-                "TALK",
-                "CRAFT",
-                "ESCORT",
-                "DEFEND",
-                "CUSTOM"
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
             ],
             "description": "Type of objective determining progress tracking logic"
         },
         "ObjectiveRevealBehavior": {
             "type": "string",
             "enum": [
-                "ALWAYS",
-                "ON_PROGRESS",
-                "ON_COMPLETE",
-                "NEVER"
+                "Always",
+                "OnProgress",
+                "OnComplete",
+                "Never"
             ],
             "description": "When a hidden objective is revealed in the quest log"
         },
@@ -1692,11 +1692,11 @@ public partial class QuestController
         "PrerequisiteType": {
             "type": "string",
             "enum": [
-                "QUEST_COMPLETED",
-                "CHARACTER_LEVEL",
-                "REPUTATION",
-                "ITEM_OWNED",
-                "CURRENCY_AMOUNT"
+                "QuestCompleted",
+                "CharacterLevel",
+                "Reputation",
+                "ItemOwned",
+                "CurrencyAmount"
             ],
             "description": "Type of prerequisite check"
         },
@@ -1744,10 +1744,10 @@ public partial class QuestController
         "RewardType": {
             "type": "string",
             "enum": [
-                "CURRENCY",
-                "ITEM",
-                "EXPERIENCE",
-                "REPUTATION"
+                "Currency",
+                "Item",
+                "Experience",
+                "Reputation"
             ],
             "description": "Type of reward granted on quest completion"
         }
@@ -1870,25 +1870,25 @@ public partial class QuestController
         "QuestCategory": {
             "type": "string",
             "enum": [
-                "MAIN",
-                "SIDE",
-                "BOUNTY",
-                "DAILY",
-                "WEEKLY",
-                "EVENT",
-                "TUTORIAL"
+                "Main",
+                "Side",
+                "Bounty",
+                "Daily",
+                "Weekly",
+                "Event",
+                "Tutorial"
             ],
             "description": "Category of quest for organization"
         },
         "QuestDifficulty": {
             "type": "string",
             "enum": [
-                "TRIVIAL",
-                "EASY",
-                "NORMAL",
-                "HARD",
-                "HEROIC",
-                "LEGENDARY"
+                "Trivial",
+                "Easy",
+                "Normal",
+                "Hard",
+                "Heroic",
+                "Legendary"
             ],
             "description": "Difficulty rating of the quest"
         }
@@ -2036,25 +2036,25 @@ public partial class QuestController
         "QuestCategory": {
             "type": "string",
             "enum": [
-                "MAIN",
-                "SIDE",
-                "BOUNTY",
-                "DAILY",
-                "WEEKLY",
-                "EVENT",
-                "TUTORIAL"
+                "Main",
+                "Side",
+                "Bounty",
+                "Daily",
+                "Weekly",
+                "Event",
+                "Tutorial"
             ],
             "description": "Category of quest for organization"
         },
         "QuestDifficulty": {
             "type": "string",
             "enum": [
-                "TRIVIAL",
-                "EASY",
-                "NORMAL",
-                "HARD",
-                "HEROIC",
-                "LEGENDARY"
+                "Trivial",
+                "Easy",
+                "Normal",
+                "Hard",
+                "Heroic",
+                "Legendary"
             ],
             "description": "Difficulty rating of the quest"
         },
@@ -2133,26 +2133,26 @@ public partial class QuestController
         "ObjectiveType": {
             "type": "string",
             "enum": [
-                "KILL",
-                "COLLECT",
-                "DELIVER",
-                "TRAVEL",
-                "DISCOVER",
-                "TALK",
-                "CRAFT",
-                "ESCORT",
-                "DEFEND",
-                "CUSTOM"
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
             ],
             "description": "Type of objective determining progress tracking logic"
         },
         "ObjectiveRevealBehavior": {
             "type": "string",
             "enum": [
-                "ALWAYS",
-                "ON_PROGRESS",
-                "ON_COMPLETE",
-                "NEVER"
+                "Always",
+                "OnProgress",
+                "OnComplete",
+                "Never"
             ],
             "description": "When a hidden objective is revealed in the quest log"
         },
@@ -2210,11 +2210,11 @@ public partial class QuestController
         "PrerequisiteType": {
             "type": "string",
             "enum": [
-                "QUEST_COMPLETED",
-                "CHARACTER_LEVEL",
-                "REPUTATION",
-                "ITEM_OWNED",
-                "CURRENCY_AMOUNT"
+                "QuestCompleted",
+                "CharacterLevel",
+                "Reputation",
+                "ItemOwned",
+                "CurrencyAmount"
             ],
             "description": "Type of prerequisite check"
         },
@@ -2262,10 +2262,10 @@ public partial class QuestController
         "RewardType": {
             "type": "string",
             "enum": [
-                "CURRENCY",
-                "ITEM",
-                "EXPERIENCE",
-                "REPUTATION"
+                "Currency",
+                "Item",
+                "Experience",
+                "Reputation"
             ],
             "description": "Type of reward granted on quest completion"
         }
@@ -2499,25 +2499,25 @@ public partial class QuestController
         "QuestCategory": {
             "type": "string",
             "enum": [
-                "MAIN",
-                "SIDE",
-                "BOUNTY",
-                "DAILY",
-                "WEEKLY",
-                "EVENT",
-                "TUTORIAL"
+                "Main",
+                "Side",
+                "Bounty",
+                "Daily",
+                "Weekly",
+                "Event",
+                "Tutorial"
             ],
             "description": "Category of quest for organization"
         },
         "QuestDifficulty": {
             "type": "string",
             "enum": [
-                "TRIVIAL",
-                "EASY",
-                "NORMAL",
-                "HARD",
-                "HEROIC",
-                "LEGENDARY"
+                "Trivial",
+                "Easy",
+                "Normal",
+                "Hard",
+                "Heroic",
+                "Legendary"
             ],
             "description": "Difficulty rating of the quest"
         },
@@ -2596,26 +2596,26 @@ public partial class QuestController
         "ObjectiveType": {
             "type": "string",
             "enum": [
-                "KILL",
-                "COLLECT",
-                "DELIVER",
-                "TRAVEL",
-                "DISCOVER",
-                "TALK",
-                "CRAFT",
-                "ESCORT",
-                "DEFEND",
-                "CUSTOM"
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
             ],
             "description": "Type of objective determining progress tracking logic"
         },
         "ObjectiveRevealBehavior": {
             "type": "string",
             "enum": [
-                "ALWAYS",
-                "ON_PROGRESS",
-                "ON_COMPLETE",
-                "NEVER"
+                "Always",
+                "OnProgress",
+                "OnComplete",
+                "Never"
             ],
             "description": "When a hidden objective is revealed in the quest log"
         },
@@ -2673,11 +2673,11 @@ public partial class QuestController
         "PrerequisiteType": {
             "type": "string",
             "enum": [
-                "QUEST_COMPLETED",
-                "CHARACTER_LEVEL",
-                "REPUTATION",
-                "ITEM_OWNED",
-                "CURRENCY_AMOUNT"
+                "QuestCompleted",
+                "CharacterLevel",
+                "Reputation",
+                "ItemOwned",
+                "CurrencyAmount"
             ],
             "description": "Type of prerequisite check"
         },
@@ -2725,10 +2725,10 @@ public partial class QuestController
         "RewardType": {
             "type": "string",
             "enum": [
-                "CURRENCY",
-                "ITEM",
-                "EXPERIENCE",
-                "REPUTATION"
+                "Currency",
+                "Item",
+                "Experience",
+                "Reputation"
             ],
             "description": "Type of reward granted on quest completion"
         }
@@ -2932,11 +2932,11 @@ public partial class QuestController
         "QuestStatus": {
             "type": "string",
             "enum": [
-                "ACTIVE",
-                "COMPLETED",
-                "FAILED",
-                "ABANDONED",
-                "EXPIRED"
+                "Active",
+                "Completed",
+                "Failed",
+                "Abandoned",
+                "Expired"
             ],
             "description": "Current status of a quest instance"
         },
@@ -3003,16 +3003,16 @@ public partial class QuestController
         "ObjectiveType": {
             "type": "string",
             "enum": [
-                "KILL",
-                "COLLECT",
-                "DELIVER",
-                "TRAVEL",
-                "DISCOVER",
-                "TALK",
-                "CRAFT",
-                "ESCORT",
-                "DEFEND",
-                "CUSTOM"
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
             ],
             "description": "Type of objective determining progress tracking logic"
         }
@@ -3197,11 +3197,11 @@ public partial class QuestController
         "QuestStatus": {
             "type": "string",
             "enum": [
-                "ACTIVE",
-                "COMPLETED",
-                "FAILED",
-                "ABANDONED",
-                "EXPIRED"
+                "Active",
+                "Completed",
+                "Failed",
+                "Abandoned",
+                "Expired"
             ],
             "description": "Current status of a quest instance"
         },
@@ -3268,16 +3268,16 @@ public partial class QuestController
         "ObjectiveType": {
             "type": "string",
             "enum": [
-                "KILL",
-                "COLLECT",
-                "DELIVER",
-                "TRAVEL",
-                "DISCOVER",
-                "TALK",
-                "CRAFT",
-                "ESCORT",
-                "DEFEND",
-                "CUSTOM"
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
             ],
             "description": "Type of objective determining progress tracking logic"
         }
@@ -3456,11 +3456,11 @@ public partial class QuestController
         "QuestStatus": {
             "type": "string",
             "enum": [
-                "ACTIVE",
-                "COMPLETED",
-                "FAILED",
-                "ABANDONED",
-                "EXPIRED"
+                "Active",
+                "Completed",
+                "Failed",
+                "Abandoned",
+                "Expired"
             ],
             "description": "Current status of a quest instance"
         },
@@ -3527,16 +3527,16 @@ public partial class QuestController
         "ObjectiveType": {
             "type": "string",
             "enum": [
-                "KILL",
-                "COLLECT",
-                "DELIVER",
-                "TRAVEL",
-                "DISCOVER",
-                "TALK",
-                "CRAFT",
-                "ESCORT",
-                "DEFEND",
-                "CUSTOM"
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
             ],
             "description": "Type of objective determining progress tracking logic"
         }
@@ -3644,11 +3644,11 @@ public partial class QuestController
         "QuestStatus": {
             "type": "string",
             "enum": [
-                "ACTIVE",
-                "COMPLETED",
-                "FAILED",
-                "ABANDONED",
-                "EXPIRED"
+                "Active",
+                "Completed",
+                "Failed",
+                "Abandoned",
+                "Expired"
             ],
             "description": "Current status of a quest instance"
         }
@@ -3769,11 +3769,11 @@ public partial class QuestController
         "QuestStatus": {
             "type": "string",
             "enum": [
-                "ACTIVE",
-                "COMPLETED",
-                "FAILED",
-                "ABANDONED",
-                "EXPIRED"
+                "Active",
+                "Completed",
+                "Failed",
+                "Abandoned",
+                "Expired"
             ],
             "description": "Current status of a quest instance"
         },
@@ -3840,16 +3840,16 @@ public partial class QuestController
         "ObjectiveType": {
             "type": "string",
             "enum": [
-                "KILL",
-                "COLLECT",
-                "DELIVER",
-                "TRAVEL",
-                "DISCOVER",
-                "TALK",
-                "CRAFT",
-                "ESCORT",
-                "DEFEND",
-                "CUSTOM"
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
             ],
             "description": "Type of objective determining progress tracking logic"
         }
@@ -4106,25 +4106,25 @@ public partial class QuestController
         "QuestCategory": {
             "type": "string",
             "enum": [
-                "MAIN",
-                "SIDE",
-                "BOUNTY",
-                "DAILY",
-                "WEEKLY",
-                "EVENT",
-                "TUTORIAL"
+                "Main",
+                "Side",
+                "Bounty",
+                "Daily",
+                "Weekly",
+                "Event",
+                "Tutorial"
             ],
             "description": "Category of quest for organization"
         },
         "QuestDifficulty": {
             "type": "string",
             "enum": [
-                "TRIVIAL",
-                "EASY",
-                "NORMAL",
-                "HARD",
-                "HEROIC",
-                "LEGENDARY"
+                "Trivial",
+                "Easy",
+                "Normal",
+                "Hard",
+                "Heroic",
+                "Legendary"
             ],
             "description": "Difficulty rating of the quest"
         },
@@ -4203,26 +4203,26 @@ public partial class QuestController
         "ObjectiveType": {
             "type": "string",
             "enum": [
-                "KILL",
-                "COLLECT",
-                "DELIVER",
-                "TRAVEL",
-                "DISCOVER",
-                "TALK",
-                "CRAFT",
-                "ESCORT",
-                "DEFEND",
-                "CUSTOM"
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
             ],
             "description": "Type of objective determining progress tracking logic"
         },
         "ObjectiveRevealBehavior": {
             "type": "string",
             "enum": [
-                "ALWAYS",
-                "ON_PROGRESS",
-                "ON_COMPLETE",
-                "NEVER"
+                "Always",
+                "OnProgress",
+                "OnComplete",
+                "Never"
             ],
             "description": "When a hidden objective is revealed in the quest log"
         },
@@ -4280,11 +4280,11 @@ public partial class QuestController
         "PrerequisiteType": {
             "type": "string",
             "enum": [
-                "QUEST_COMPLETED",
-                "CHARACTER_LEVEL",
-                "REPUTATION",
-                "ITEM_OWNED",
-                "CURRENCY_AMOUNT"
+                "QuestCompleted",
+                "CharacterLevel",
+                "Reputation",
+                "ItemOwned",
+                "CurrencyAmount"
             ],
             "description": "Type of prerequisite check"
         },
@@ -4332,10 +4332,10 @@ public partial class QuestController
         "RewardType": {
             "type": "string",
             "enum": [
-                "CURRENCY",
-                "ITEM",
-                "EXPERIENCE",
-                "REPUTATION"
+                "Currency",
+                "Item",
+                "Experience",
+                "Reputation"
             ],
             "description": "Type of reward granted on quest completion"
         }
@@ -4431,13 +4431,13 @@ public partial class QuestController
         "QuestCategory": {
             "type": "string",
             "enum": [
-                "MAIN",
-                "SIDE",
-                "BOUNTY",
-                "DAILY",
-                "WEEKLY",
-                "EVENT",
-                "TUTORIAL"
+                "Main",
+                "Side",
+                "Bounty",
+                "Daily",
+                "Weekly",
+                "Event",
+                "Tutorial"
             ],
             "description": "Category of quest for organization"
         }
@@ -4541,24 +4541,24 @@ public partial class QuestController
         "QuestCategory": {
             "type": "string",
             "enum": [
-                "MAIN",
-                "SIDE",
-                "BOUNTY",
-                "DAILY",
-                "WEEKLY",
-                "EVENT",
-                "TUTORIAL"
+                "Main",
+                "Side",
+                "Bounty",
+                "Daily",
+                "Weekly",
+                "Event",
+                "Tutorial"
             ],
             "description": "Category of quest for organization"
         },
         "QuestStatus": {
             "type": "string",
             "enum": [
-                "ACTIVE",
-                "COMPLETED",
-                "FAILED",
-                "ABANDONED",
-                "EXPIRED"
+                "Active",
+                "Completed",
+                "Failed",
+                "Abandoned",
+                "Expired"
             ],
             "description": "Current status of a quest instance"
         },
@@ -4625,16 +4625,16 @@ public partial class QuestController
         "ObjectiveType": {
             "type": "string",
             "enum": [
-                "KILL",
-                "COLLECT",
-                "DELIVER",
-                "TRAVEL",
-                "DISCOVER",
-                "TALK",
-                "CRAFT",
-                "ESCORT",
-                "DEFEND",
-                "CUSTOM"
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
             ],
             "description": "Type of objective determining progress tracking logic"
         }
@@ -4832,16 +4832,16 @@ public partial class QuestController
         "ObjectiveType": {
             "type": "string",
             "enum": [
-                "KILL",
-                "COLLECT",
-                "DELIVER",
-                "TRAVEL",
-                "DISCOVER",
-                "TALK",
-                "CRAFT",
-                "ESCORT",
-                "DEFEND",
-                "CUSTOM"
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
             ],
             "description": "Type of objective determining progress tracking logic"
         }
@@ -5027,16 +5027,16 @@ public partial class QuestController
         "ObjectiveType": {
             "type": "string",
             "enum": [
-                "KILL",
-                "COLLECT",
-                "DELIVER",
-                "TRAVEL",
-                "DISCOVER",
-                "TALK",
-                "CRAFT",
-                "ESCORT",
-                "DEFEND",
-                "CUSTOM"
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
             ],
             "description": "Type of objective determining progress tracking logic"
         }
@@ -5222,16 +5222,16 @@ public partial class QuestController
         "ObjectiveType": {
             "type": "string",
             "enum": [
-                "KILL",
-                "COLLECT",
-                "DELIVER",
-                "TRAVEL",
-                "DISCOVER",
-                "TALK",
-                "CRAFT",
-                "ESCORT",
-                "DEFEND",
-                "CUSTOM"
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
             ],
             "description": "Type of objective determining progress tracking logic"
         }
@@ -5591,13 +5591,13 @@ public partial class QuestController
         "QuestCategory": {
             "type": "string",
             "enum": [
-                "MAIN",
-                "SIDE",
-                "BOUNTY",
-                "DAILY",
-                "WEEKLY",
-                "EVENT",
-                "TUTORIAL"
+                "Main",
+                "Side",
+                "Bounty",
+                "Daily",
+                "Weekly",
+                "Event",
+                "Tutorial"
             ],
             "description": "Category of quest for organization"
         }

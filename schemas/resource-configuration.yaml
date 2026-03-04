@@ -47,14 +47,14 @@ x-service-configuration:
     DefaultCleanupPolicy:
       $ref: 'resource-api.yaml#/components/schemas/CleanupPolicy'
       env: RESOURCE_DEFAULT_CLEANUP_POLICY
-      default: BEST_EFFORT
+      default: BestEffort
       description: Default cleanup policy when not specified per-resource-type
 
     # === Compression Configuration ===
     DefaultCompressionPolicy:
       $ref: 'resource-api.yaml#/components/schemas/CompressionPolicy'
       env: RESOURCE_DEFAULT_COMPRESSION_POLICY
-      default: ALL_REQUIRED
+      default: AllRequired
       description: Default compression policy when not specified per-request
 
     CompressionCallbackTimeoutSeconds:

@@ -74,8 +74,8 @@ paths:
         \n                },\n                \"appVersion\": {\n                    \"type\": \"string\",\n             \
         \       \"nullable\": true,\n                    \"description\": \"Version of the client application\"\n        \
         \        }\n            }\n        },\n        \"DeviceType\": {\n            \"type\": \"string\",\n            \"\
-        enum\": [\n                \"desktop\",\n                \"mobile\",\n                \"tablet\",\n              \
-        \  \"console\"\n            ],\n            \"description\": \"Category of client device used for authentication or
+        enum\": [\n                \"Desktop\",\n                \"Mobile\",\n                \"Tablet\",\n              \
+        \  \"Console\"\n            ],\n            \"description\": \"Category of client device used for authentication or
         session tracking\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LoginResponse\"\
         ,\n    \"$defs\": {\n        \"LoginResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -254,7 +254,7 @@ paths:
         \             \"appVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Version of the client application\"\n                }\n            }\n  \
         \      },\n        \"DeviceType\": {\n            \"type\": \"string\",\n            \"enum\": [\n               \
-        \ \"desktop\",\n                \"mobile\",\n                \"tablet\",\n                \"console\"\n          \
+        \ \"Desktop\",\n                \"Mobile\",\n                \"Tablet\",\n                \"Console\"\n          \
         \  ],\n            \"description\": \"Category of client device used for authentication or session tracking\"\n  \
         \      }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
@@ -333,7 +333,7 @@ paths:
         \             \"appVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Version of the client application\"\n                }\n            }\n  \
         \      },\n        \"DeviceType\": {\n            \"type\": \"string\",\n            \"enum\": [\n               \
-        \ \"desktop\",\n                \"mobile\",\n                \"tablet\",\n                \"console\"\n          \
+        \ \"Desktop\",\n                \"Mobile\",\n                \"Tablet\",\n                \"Console\"\n          \
         \  ],\n            \"description\": \"Category of client device used for authentication or session tracking\"\n  \
         \      }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
@@ -555,8 +555,8 @@ paths:
         \n                },\n                \"appVersion\": {\n                    \"type\": \"string\",\n             \
         \       \"nullable\": true,\n                    \"description\": \"Version of the client application\"\n        \
         \        }\n            }\n        },\n        \"DeviceType\": {\n            \"type\": \"string\",\n            \"\
-        enum\": [\n                \"desktop\",\n                \"mobile\",\n                \"tablet\",\n              \
-        \  \"console\"\n            ],\n            \"description\": \"Category of client device used for authentication or
+        enum\": [\n                \"Desktop\",\n                \"Mobile\",\n                \"Tablet\",\n              \
+        \  \"Console\"\n            ],\n            \"description\": \"Category of client device used for authentication or
         session tracking\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get active sessions for account\",\n    \"description\": \"\",\n    \"\
         tags\": [\n        \"Sessions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSessions\"\n}"
@@ -771,7 +771,7 @@ paths:
         : true,\n                    \"example\": \"https://discord.com/oauth2/authorize\",\n                    \"description\"\
         : \"URL to initiate OAuth authentication (null for ticket-based auth like Steam)\"\n                }\n          \
         \  }\n        },\n        \"AuthType\": {\n            \"type\": \"string\",\n            \"enum\": [\n          \
-        \      \"oauth\",\n                \"ticket\"\n            ],\n            \"description\": \"Authentication mechanism
+        \      \"Oauth\",\n                \"Ticket\"\n            ],\n            \"description\": \"Authentication mechanism
         type (oauth = browser redirect, ticket = game client token)\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List available authentication providers\",\n    \"description\": \"Returns
         a list of available OAuth and authentication providers based on server configuration.\\nProviders are only listed
@@ -1029,33 +1029,33 @@ components:
     Provider:
       type: string
       enum:
-      - google
-      - discord
-      - twitch
-      - steam
+      - Google
+      - Discord
+      - Twitch
+      - Steam
       description: Authentication provider type
     EmailProvider:
       type: string
       enum:
-      - none
-      - sendgrid
-      - smtp
-      - ses
+      - None
+      - Sendgrid
+      - Smtp
+      - Ses
       description: Email delivery provider type (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit, 
         ses=AWS SES v2)
     DeviceType:
       type: string
       enum:
-      - desktop
-      - mobile
-      - tablet
-      - console
+      - Desktop
+      - Mobile
+      - Tablet
+      - Console
       description: Category of client device used for authentication or session tracking
     AuthType:
       type: string
       enum:
-      - oauth
-      - ticket
+      - Oauth
+      - Ticket
       description: Authentication mechanism type (oauth = browser redirect, ticket = game client token)
     SessionInvalidatedEventReason:
       type: string

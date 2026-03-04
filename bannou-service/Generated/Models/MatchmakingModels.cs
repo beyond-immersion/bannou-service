@@ -628,13 +628,13 @@ public partial class SkillExpansionStep
 public enum PartySkillAggregation
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"highest")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Highest")]
     Highest = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"average")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Average")]
     Average = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"weighted")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Weighted")]
     Weighted = 2,
 
 }
@@ -918,19 +918,19 @@ public partial class MatchmakingStatusResponse
 public enum TicketStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"searching")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Searching")]
     Searching = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"match_found")]
+    [System.Runtime.Serialization.EnumMember(Value = @"MatchFound")]
     MatchFound = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"match_accepted")]
+    [System.Runtime.Serialization.EnumMember(Value = @"MatchAccepted")]
     MatchAccepted = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Cancelled")]
     Cancelled = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"expired")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Expired")]
     Expired = 4,
 
 }
@@ -1150,22 +1150,22 @@ public partial class QueueStats
 public enum CancelReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cancelled_by_user")]
+    [System.Runtime.Serialization.EnumMember(Value = @"CancelledByUser")]
     CancelledByUser = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"timeout")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Timeout")]
     Timeout = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"session_disconnected")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SessionDisconnected")]
     SessionDisconnected = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"party_disbanded")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PartyDisbanded")]
     PartyDisbanded = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"match_declined")]
+    [System.Runtime.Serialization.EnumMember(Value = @"MatchDeclined")]
     MatchDeclined = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"queue_disabled")]
+    [System.Runtime.Serialization.EnumMember(Value = @"QueueDisabled")]
     QueueDisabled = 5,
 
 }

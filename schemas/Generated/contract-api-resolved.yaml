@@ -950,142 +950,142 @@ components:
       type: string
       description: Current status of a contract instance
       enum:
-      - draft
-      - proposed
-      - pending
-      - active
-      - fulfilled
-      - expired
-      - terminated
-      - breached
-      - suspended
-      - disputed
-      - declined
+      - Draft
+      - Proposed
+      - Pending
+      - Active
+      - Fulfilled
+      - Expired
+      - Terminated
+      - Breached
+      - Suspended
+      - Disputed
+      - Declined
 
     MilestoneStatus:
       type: string
       description: Current status of a milestone
       enum:
-      - pending
-      - active
-      - completed
-      - failed
-      - skipped
+      - Pending
+      - Active
+      - Completed
+      - Failed
+      - Skipped
 
     BreachType:
       type: string
       description: Type of contract breach
       enum:
-      - term_violation
-      - milestone_missed
-      - milestone_deadline
-      - unauthorized_action
-      - non_payment
+      - TermViolation
+      - MilestoneMissed
+      - MilestoneDeadline
+      - UnauthorizedAction
+      - NonPayment
 
     MilestoneDeadlineBehavior:
       type: string
       description: Behavior when optional milestone deadline passes
       enum:
-      - skip
-      - warn
-      - breach
+      - Skip
+      - Warn
+      - Breach
 
     BreachStatus:
       type: string
       description: Current status of a breach record
       enum:
-      - detected
-      - cure_period
-      - cured
-      - consequences_applied
-      - disputed
-      - forgiven
+      - Detected
+      - CurePeriod
+      - Cured
+      - ConsequencesApplied
+      - Disputed
+      - Forgiven
 
     ConsentStatus:
       type: string
       description: Party's consent status
       enum:
-      - pending
-      - consented
-      - declined
-      - implicit
+      - Pending
+      - Consented
+      - Declined
+      - Implicit
 
     EnforcementMode:
       type: string
       description: How contract breaches are handled
       enum:
-      - advisory
-      - event_only
-      - consequence_based
-      - community
+      - Advisory
+      - EventOnly
+      - ConsequenceBased
+      - Community
 
     TerminationPolicy:
       type: string
       description: How the contract can be terminated
       enum:
-      - mutual_consent
-      - unilateral_with_notice
-      - unilateral_immediate
-      - non_terminable
+      - MutualConsent
+      - UnilateralWithNotice
+      - UnilateralImmediate
+      - NonTerminable
 
     PaymentSchedule:
       type: string
       description: When payments occur
       enum:
-      - one_time
-      - recurring
-      - milestone_based
+      - OneTime
+      - Recurring
+      - MilestoneBased
 
     ConstraintType:
       type: string
       description: Type of constraint to check
       enum:
-      - exclusivity
-      - non_compete
-      - time_commitment
+      - Exclusivity
+      - NonCompete
+      - TimeCommitment
 
     MetadataType:
       type: string
       description: Type of metadata to update
       enum:
-      - instance_data
-      - runtime_state
+      - InstanceData
+      - RuntimeState
 
     IndexLockFailureMode:
       type: string
       description: Behavior when index lock acquisition fails
       enum:
-      - warn
-      - fail
+      - Warn
+      - Fail
 
     TermsMergeMode:
       type: string
       description: How instance terms merge with template terms during contract creation
       enum:
-      - shallow
-      - deep
+      - Shallow
+      - Deep
 
     PreboundApiExecutionMode:
       type: string
       description: How to execute a prebound API call
       enum:
-      - sync
-      - async
-      - fire_and_forget
+      - Sync
+      - Async
+      - FireAndForget
 
     ValidationOutcome:
       type: string
       description: Outcome of prebound API response validation
       enum:
-      - permanent_failure
-      - transient_failure
+      - PermanentFailure
+      - TransientFailure
 
     TimeCommitmentType:
       type: string
       description: Type of time commitment for scheduling constraints
       enum:
-      - exclusive
-      - partial
+      - Exclusive
+      - Partial
 
     # =========================================================================
     # Template Models
@@ -2541,25 +2541,25 @@ components:
       type: string
       description: Type of validation condition
       enum:
-      - statusCodeIn
-      - jsonPathEquals
-      - jsonPathNotEquals
-      - jsonPathExists
-      - jsonPathNotExists
-      - jsonPathGreaterThan
-      - jsonPathLessThan
-      - jsonPathContains
+      - StatusCodeIn
+      - JsonPathEquals
+      - JsonPathNotEquals
+      - JsonPathExists
+      - JsonPathNotExists
+      - JsonPathGreaterThan
+      - JsonPathLessThan
+      - JsonPathContains
 
     ComparisonOperator:
       type: string
       description: Comparison operators for numeric conditions
       enum:
-      - eq
-      - ne
-      - gt
-      - gte
-      - lt
-      - lte
+      - Eq
+      - Ne
+      - Gt
+      - Gte
+      - Lt
+      - Lte
 
     # =========================================================================
     # Guardian Models
@@ -2727,9 +2727,9 @@ components:
       type: string
       description: Category of clause type
       enum:
-      - validation
-      - execution
-      - both
+      - Validation
+      - Execution
+      - Both
 
     ClauseHandlerDefinition:
       type: object
@@ -3073,24 +3073,24 @@ components:
         service-specific roles that include non-entity values (use service-specific enums).
         See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
       enum:
-      - system
-      - account
-      - character
-      - actor
-      - guild
-      - organization
-      - government
-      - faction
-      - location
-      - realm
-      - item
-      - monster
-      - relationship
-      - session
-      - deity
-      - dungeon
-      - custom
-      - other
+      - System
+      - Account
+      - Character
+      - Actor
+      - Guild
+      - Organization
+      - Government
+      - Faction
+      - Location
+      - Realm
+      - Item
+      - Monster
+      - Relationship
+      - Session
+      - Deity
+      - Dungeon
+      - Custom
+      - Other
 
 x-service-registration:
   serviceId: "contract"

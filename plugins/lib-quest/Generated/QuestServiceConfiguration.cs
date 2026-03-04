@@ -101,9 +101,9 @@ public class QuestServiceConfiguration : BaseServiceConfiguration
     public int MaxConcurrencyRetries { get; set; } = 5;
 
     /// <summary>
-    /// Controls prerequisite validation behavior (FAIL_FAST stops on first failure, CHECK_ALL evaluates all)
+    /// Controls prerequisite validation behavior (FailFast stops on first failure, CheckAll evaluates all)
     /// Environment variable: QUEST_PREREQUISITE_VALIDATION_MODE
     /// </summary>
-    public PrerequisiteValidationMode PrerequisiteValidationMode { get; set; } = PrerequisiteValidationMode.CHECK_ALL;
+    public PrerequisiteValidationMode PrerequisiteValidationMode { get; set; } = PrerequisiteValidationMode.CheckAll;
 
 }

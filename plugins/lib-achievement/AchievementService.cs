@@ -10,6 +10,7 @@ using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("lib-achievement.tests")]
@@ -592,8 +593,13 @@ public partial class AchievementService : IAchievementService
         };
         await _messageBus.TryPublishAsync("achievement.progress.updated", progressEvent, cancellationToken: cancellationToken);
 
-        // Check for progress milestones (25%, 50%, 75%) and push client events
-        var milestones = new[] { 25, 50, 75 };
+        // Check for progress milestones and push client events
+        // IMPLEMENTATION TENETS compliant: milestone thresholds from configuration
+        var milestones = _configuration.ProgressMilestonePercents
+            .Select(s => int.TryParse(s, out var v) ? v : (int?)null)
+            .Where(v => v.HasValue)
+            .Select(v => v!.Value)
+            .ToArray();
         var previousPercent = achievementProgress.TargetProgress > 0
             ? (double)previousProgress / achievementProgress.TargetProgress * 100.0
             : 0;
@@ -1481,58 +1487,44 @@ public partial class AchievementService : IAchievementService
     private async Task PublishDefinitionCreatedEventAsync(AchievementDefinitionData definition, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.PublishDefinitionCreatedEventAsync");
-        try
+        var eventModel = new AchievementDefinitionCreatedEvent
         {
-            var eventModel = new AchievementDefinitionCreatedEvent
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            EventName = "achievement.definition.created",
+            GameServiceId = definition.GameServiceId,
+            AchievementId = definition.AchievementId,
+            DisplayName = definition.DisplayName,
+            Description = definition.Description,
+            HiddenDescription = definition.HiddenDescription,
+            AchievementType = definition.AchievementType,
+            EntityTypes = definition.EntityTypes?.ToList(),
+            ProgressTarget = definition.ProgressTarget,
+            Points = definition.Points,
+            IconUrl = definition.IconUrl,
+            Platforms = definition.Platforms?.ToList(),
+            PlatformMappings = definition.PlatformMappings?.Select(m => new PlatformMapping
             {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                EventName = "achievement.definition.created",
-                GameServiceId = definition.GameServiceId,
-                AchievementId = definition.AchievementId,
-                DisplayName = definition.DisplayName,
-                Description = definition.Description,
-                HiddenDescription = definition.HiddenDescription,
-                AchievementType = definition.AchievementType,
-                EntityTypes = definition.EntityTypes?.ToList(),
-                ProgressTarget = definition.ProgressTarget,
-                Points = definition.Points,
-                IconUrl = definition.IconUrl,
-                Platforms = definition.Platforms?.ToList(),
-                PlatformMappings = definition.PlatformMappings?.Select(m => new PlatformMapping
-                {
-                    Platform = m.Platform,
-                    PlatformAchievementId = m.PlatformAchievementId
-                }).ToList(),
-                Prerequisites = definition.Prerequisites?.ToList(),
-                ScoreType = definition.ScoreType,
-                MilestoneType = definition.MilestoneType,
-                MilestoneValue = definition.MilestoneValue,
-                MilestoneName = definition.MilestoneName,
-                LeaderboardId = definition.LeaderboardId,
-                RankThreshold = definition.RankThreshold,
-                IsActive = definition.IsActive,
-                IsDeprecated = definition.IsDeprecated,
-                DeprecatedAt = definition.DeprecatedAt,
-                DeprecationReason = definition.DeprecationReason,
-                EarnedCount = definition.EarnedCount,
-                CreatedAt = definition.CreatedAt,
-                Metadata = definition.Metadata
-            };
-            await _messageBus.TryPublishAsync("achievement.definition.created", eventModel, cancellationToken: cancellationToken);
-            _logger.LogDebug("Published achievement.definition.created event for {AchievementId}", definition.AchievementId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish achievement.definition.created event for {AchievementId}", definition.AchievementId);
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "PublishDefinitionCreatedEvent",
-                ex.GetType().Name,
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-        }
+                Platform = m.Platform,
+                PlatformAchievementId = m.PlatformAchievementId
+            }).ToList(),
+            Prerequisites = definition.Prerequisites?.ToList(),
+            ScoreType = definition.ScoreType,
+            MilestoneType = definition.MilestoneType,
+            MilestoneValue = definition.MilestoneValue,
+            MilestoneName = definition.MilestoneName,
+            LeaderboardId = definition.LeaderboardId,
+            RankThreshold = definition.RankThreshold,
+            IsActive = definition.IsActive,
+            IsDeprecated = definition.IsDeprecated,
+            DeprecatedAt = definition.DeprecatedAt,
+            DeprecationReason = definition.DeprecationReason,
+            EarnedCount = definition.EarnedCount,
+            CreatedAt = definition.CreatedAt,
+            Metadata = definition.Metadata
+        };
+        await _messageBus.TryPublishAsync("achievement.definition.created", eventModel, cancellationToken: cancellationToken);
+        _logger.LogDebug("Published achievement.definition.created event for {AchievementId}", definition.AchievementId);
     }
 
     /// <summary>
@@ -1542,60 +1534,46 @@ public partial class AchievementService : IAchievementService
     private async Task PublishDefinitionUpdatedEventAsync(AchievementDefinitionData definition, List<string> changedFields, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.PublishDefinitionUpdatedEventAsync");
-        try
+        var eventModel = new AchievementDefinitionUpdatedEvent
         {
-            var eventModel = new AchievementDefinitionUpdatedEvent
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            EventName = "achievement.definition.updated",
+            GameServiceId = definition.GameServiceId,
+            AchievementId = definition.AchievementId,
+            DisplayName = definition.DisplayName,
+            Description = definition.Description,
+            HiddenDescription = definition.HiddenDescription,
+            AchievementType = definition.AchievementType,
+            EntityTypes = definition.EntityTypes?.ToList(),
+            ProgressTarget = definition.ProgressTarget,
+            Points = definition.Points,
+            IconUrl = definition.IconUrl,
+            Platforms = definition.Platforms?.ToList(),
+            PlatformMappings = definition.PlatformMappings?.Select(m => new PlatformMapping
             {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                EventName = "achievement.definition.updated",
-                GameServiceId = definition.GameServiceId,
-                AchievementId = definition.AchievementId,
-                DisplayName = definition.DisplayName,
-                Description = definition.Description,
-                HiddenDescription = definition.HiddenDescription,
-                AchievementType = definition.AchievementType,
-                EntityTypes = definition.EntityTypes?.ToList(),
-                ProgressTarget = definition.ProgressTarget,
-                Points = definition.Points,
-                IconUrl = definition.IconUrl,
-                Platforms = definition.Platforms?.ToList(),
-                PlatformMappings = definition.PlatformMappings?.Select(m => new PlatformMapping
-                {
-                    Platform = m.Platform,
-                    PlatformAchievementId = m.PlatformAchievementId
-                }).ToList(),
-                Prerequisites = definition.Prerequisites?.ToList(),
-                ScoreType = definition.ScoreType,
-                MilestoneType = definition.MilestoneType,
-                MilestoneValue = definition.MilestoneValue,
-                MilestoneName = definition.MilestoneName,
-                LeaderboardId = definition.LeaderboardId,
-                RankThreshold = definition.RankThreshold,
-                IsActive = definition.IsActive,
-                IsDeprecated = definition.IsDeprecated,
-                DeprecatedAt = definition.DeprecatedAt,
-                DeprecationReason = definition.DeprecationReason,
-                EarnedCount = definition.EarnedCount,
-                CreatedAt = definition.CreatedAt,
-                Metadata = definition.Metadata,
-                ChangedFields = changedFields
-            };
-            await _messageBus.TryPublishAsync("achievement.definition.updated", eventModel, cancellationToken: cancellationToken);
-            _logger.LogDebug("Published achievement.definition.updated event for {AchievementId} (changed: {ChangedFields})",
-                definition.AchievementId, string.Join(", ", changedFields));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish achievement.definition.updated event for {AchievementId}", definition.AchievementId);
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "PublishDefinitionUpdatedEvent",
-                ex.GetType().Name,
-                ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-        }
+                Platform = m.Platform,
+                PlatformAchievementId = m.PlatformAchievementId
+            }).ToList(),
+            Prerequisites = definition.Prerequisites?.ToList(),
+            ScoreType = definition.ScoreType,
+            MilestoneType = definition.MilestoneType,
+            MilestoneValue = definition.MilestoneValue,
+            MilestoneName = definition.MilestoneName,
+            LeaderboardId = definition.LeaderboardId,
+            RankThreshold = definition.RankThreshold,
+            IsActive = definition.IsActive,
+            IsDeprecated = definition.IsDeprecated,
+            DeprecatedAt = definition.DeprecatedAt,
+            DeprecationReason = definition.DeprecationReason,
+            EarnedCount = definition.EarnedCount,
+            CreatedAt = definition.CreatedAt,
+            Metadata = definition.Metadata,
+            ChangedFields = changedFields
+        };
+        await _messageBus.TryPublishAsync("achievement.definition.updated", eventModel, cancellationToken: cancellationToken);
+        _logger.LogDebug("Published achievement.definition.updated event for {AchievementId} (changed: {ChangedFields})",
+            definition.AchievementId, string.Join(", ", changedFields));
     }
 
     #endregion

@@ -6,6 +6,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.Achievement.ClientEvents;
 using BeyondImmersion.Bannou.Asset.ClientEvents;
 using BeyondImmersion.Bannou.Auth.ClientEvents;
 using BeyondImmersion.Bannou.Character.ClientEvents;
@@ -33,6 +34,8 @@ public static class ClientEventRegistry
 {
     private static readonly Dictionary<Type, string> TypeToEventName = new()
     {
+        { typeof(AchievementProgressMilestoneClientEvent), "achievement.progress.milestone-reached" },
+        { typeof(AchievementUnlockedClientEvent), "achievement.unlocked" },
         { typeof(AssetProcessingCompleteClientEvent), "asset.processing.complete" },
         { typeof(AssetProcessingFailedClientEvent), "asset.processing.failed" },
         { typeof(AssetReadyClientEvent), "asset.ready" },
@@ -114,6 +117,8 @@ public static class ClientEventRegistry
 
     private static readonly Dictionary<string, Type> EventNameToType = new()
     {
+        { "achievement.progress.milestone-reached", typeof(AchievementProgressMilestoneClientEvent) },
+        { "achievement.unlocked", typeof(AchievementUnlockedClientEvent) },
         { "asset.bundle.creation.complete", typeof(BundleCreationCompleteClientEvent) },
         { "asset.bundle.validation.complete", typeof(BundleValidationCompleteClientEvent) },
         { "asset.bundle.validation.failed", typeof(BundleValidationFailedClientEvent) },

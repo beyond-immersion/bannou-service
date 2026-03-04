@@ -114,13 +114,13 @@ paths:
         \    \"description\": \"Client-provided event-specific details. No Bannou plugin reads specific keys from this field
         by convention.\"\n                }\n            }\n        },\n        \"EventCategory\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Categories of historical events that characters can participate in\"\
-        ,\n            \"enum\": [\n                \"WAR\",\n                \"NATURAL_DISASTER\",\n                \"POLITICAL\"\
-        ,\n                \"ECONOMIC\",\n                \"RELIGIOUS\",\n                \"CULTURAL\",\n                \"\
-        PERSONAL\"\n            ]\n        },\n        \"ParticipationRole\": {\n            \"type\": \"string\",\n     \
+        ,\n            \"enum\": [\n                \"War\",\n                \"NaturalDisaster\",\n                \"Political\"\
+        ,\n                \"Economic\",\n                \"Religious\",\n                \"Cultural\",\n                \"\
+        Personal\"\n            ]\n        },\n        \"ParticipationRole\": {\n            \"type\": \"string\",\n     \
         \       \"description\": \"How the character participated in the historical event\",\n            \"enum\": [\n  \
-        \              \"LEADER\",\n                \"COMBATANT\",\n                \"VICTIM\",\n                \"WITNESS\"\
-        ,\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\",\n                \"HERO\",\n               \
-        \ \"SURVIVOR\"\n            ]\n        }\n    }\n}"
+        \              \"Leader\",\n                \"Combatant\",\n                \"Victim\",\n                \"Witness\"\
+        ,\n                \"Beneficiary\",\n                \"Conspirator\",\n                \"Hero\",\n               \
+        \ \"Survivor\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/HistoricalParticipation\"\
         ,\n    \"$defs\": {\n        \"HistoricalParticipation\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Record of a character's participation in a historical event\",\n            \"additionalProperties\": false,\n\
@@ -149,13 +149,13 @@ paths:
         \   \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
         \                    \"description\": \"When this record was created\"\n                }\n            }\n       \
         \ },\n        \"EventCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Categories of
-        historical events that characters can participate in\",\n            \"enum\": [\n                \"WAR\",\n     \
-        \           \"NATURAL_DISASTER\",\n                \"POLITICAL\",\n                \"ECONOMIC\",\n               \
-        \ \"RELIGIOUS\",\n                \"CULTURAL\",\n                \"PERSONAL\"\n            ]\n        },\n       \
-        \ \"ParticipationRole\": {\n            \"type\": \"string\",\n            \"description\": \"How the character participated
-        in the historical event\",\n            \"enum\": [\n                \"LEADER\",\n                \"COMBATANT\",\n\
-        \                \"VICTIM\",\n                \"WITNESS\",\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\"\
-        ,\n                \"HERO\",\n                \"SURVIVOR\"\n            ]\n        }\n    }\n}"
+        historical events that characters can participate in\",\n            \"enum\": [\n                \"War\",\n     \
+        \           \"NaturalDisaster\",\n                \"Political\",\n                \"Economic\",\n                \"\
+        Religious\",\n                \"Cultural\",\n                \"Personal\"\n            ]\n        },\n        \"ParticipationRole\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How the character participated in the historical
+        event\",\n            \"enum\": [\n                \"Leader\",\n                \"Combatant\",\n                \"\
+        Victim\",\n                \"Witness\",\n                \"Beneficiary\",\n                \"Conspirator\",\n    \
+        \            \"Hero\",\n                \"Survivor\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Record character participation in a historical event\",\n    \"description\"\
         : \"Records that a character participated in a historical event. Events are\\nidentified by eventId (typically managed
         by a game-specific event system).\\nThe significance rating affects how strongly this event influences behavior.\\\
@@ -203,9 +203,9 @@ paths:
         \     \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n             \
         \       \"description\": \"Number of results per page\"\n                }\n            }\n        },\n        \"\
         EventCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Categories of historical events
-        that characters can participate in\",\n            \"enum\": [\n                \"WAR\",\n                \"NATURAL_DISASTER\"\
-        ,\n                \"POLITICAL\",\n                \"ECONOMIC\",\n                \"RELIGIOUS\",\n               \
-        \ \"CULTURAL\",\n                \"PERSONAL\"\n            ]\n        }\n    }\n}"
+        that characters can participate in\",\n            \"enum\": [\n                \"War\",\n                \"NaturalDisaster\"\
+        ,\n                \"Political\",\n                \"Economic\",\n                \"Religious\",\n               \
+        \ \"Cultural\",\n                \"Personal\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ParticipationListResponse\"\
         ,\n    \"$defs\": {\n        \"ParticipationListResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Paginated list of participation records\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -248,13 +248,13 @@ paths:
         \   \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
         \                    \"description\": \"When this record was created\"\n                }\n            }\n       \
         \ },\n        \"EventCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Categories of
-        historical events that characters can participate in\",\n            \"enum\": [\n                \"WAR\",\n     \
-        \           \"NATURAL_DISASTER\",\n                \"POLITICAL\",\n                \"ECONOMIC\",\n               \
-        \ \"RELIGIOUS\",\n                \"CULTURAL\",\n                \"PERSONAL\"\n            ]\n        },\n       \
-        \ \"ParticipationRole\": {\n            \"type\": \"string\",\n            \"description\": \"How the character participated
-        in the historical event\",\n            \"enum\": [\n                \"LEADER\",\n                \"COMBATANT\",\n\
-        \                \"VICTIM\",\n                \"WITNESS\",\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\"\
-        ,\n                \"HERO\",\n                \"SURVIVOR\"\n            ]\n        }\n    }\n}"
+        historical events that characters can participate in\",\n            \"enum\": [\n                \"War\",\n     \
+        \           \"NaturalDisaster\",\n                \"Political\",\n                \"Economic\",\n                \"\
+        Religious\",\n                \"Cultural\",\n                \"Personal\"\n            ]\n        },\n        \"ParticipationRole\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How the character participated in the historical
+        event\",\n            \"enum\": [\n                \"Leader\",\n                \"Combatant\",\n                \"\
+        Victim\",\n                \"Witness\",\n                \"Beneficiary\",\n                \"Conspirator\",\n    \
+        \            \"Hero\",\n                \"Survivor\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get all historical events a character participated in\",\n    \"description\"\
         : \"Retrieves all historical event participation records for a character.\\nSupports filtering by event category and
         minimum significance.\\n\",\n    \"tags\": [\n        \"Historical Events\"\n    ],\n    \"deprecated\": false,\n\
@@ -298,9 +298,9 @@ paths:
         \              \"maximum\": 100,\n                    \"default\": 20,\n                    \"description\": \"Number
         of results per page\"\n                }\n            }\n        },\n        \"ParticipationRole\": {\n          \
         \  \"type\": \"string\",\n            \"description\": \"How the character participated in the historical event\"\
-        ,\n            \"enum\": [\n                \"LEADER\",\n                \"COMBATANT\",\n                \"VICTIM\"\
-        ,\n                \"WITNESS\",\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\",\n            \
-        \    \"HERO\",\n                \"SURVIVOR\"\n            ]\n        }\n    }\n}"
+        ,\n            \"enum\": [\n                \"Leader\",\n                \"Combatant\",\n                \"Victim\"\
+        ,\n                \"Witness\",\n                \"Beneficiary\",\n                \"Conspirator\",\n            \
+        \    \"Hero\",\n                \"Survivor\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ParticipationListResponse\"\
         ,\n    \"$defs\": {\n        \"ParticipationListResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Paginated list of participation records\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -343,13 +343,13 @@ paths:
         \   \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
         \                    \"description\": \"When this record was created\"\n                }\n            }\n       \
         \ },\n        \"EventCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Categories of
-        historical events that characters can participate in\",\n            \"enum\": [\n                \"WAR\",\n     \
-        \           \"NATURAL_DISASTER\",\n                \"POLITICAL\",\n                \"ECONOMIC\",\n               \
-        \ \"RELIGIOUS\",\n                \"CULTURAL\",\n                \"PERSONAL\"\n            ]\n        },\n       \
-        \ \"ParticipationRole\": {\n            \"type\": \"string\",\n            \"description\": \"How the character participated
-        in the historical event\",\n            \"enum\": [\n                \"LEADER\",\n                \"COMBATANT\",\n\
-        \                \"VICTIM\",\n                \"WITNESS\",\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\"\
-        ,\n                \"HERO\",\n                \"SURVIVOR\"\n            ]\n        }\n    }\n}"
+        historical events that characters can participate in\",\n            \"enum\": [\n                \"War\",\n     \
+        \           \"NaturalDisaster\",\n                \"Political\",\n                \"Economic\",\n                \"\
+        Religious\",\n                \"Cultural\",\n                \"Personal\"\n            ]\n        },\n        \"ParticipationRole\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How the character participated in the historical
+        event\",\n            \"enum\": [\n                \"Leader\",\n                \"Combatant\",\n                \"\
+        Victim\",\n                \"Witness\",\n                \"Beneficiary\",\n                \"Conspirator\",\n    \
+        \            \"Hero\",\n                \"Survivor\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get all characters who participated in a historical event\",\n    \"description\"\
         : \"Retrieves all characters who participated in a specific historical event.\\nUseful for generating event summaries
         or finding related characters.\\n\",\n    \"tags\": [\n        \"Historical Events\"\n    ],\n    \"deprecated\":
@@ -431,9 +431,9 @@ paths:
         : true,\n                    \"description\": \"Filter by minimum strength\"\n                }\n            }\n \
         \       },\n        \"BackstoryElementType\": {\n            \"type\": \"string\",\n            \"description\": \"\
         Types of backstory elements. Each type represents a different aspect\\nof the character's background that influences
-        behavior.\\n\",\n            \"enum\": [\n                \"ORIGIN\",\n                \"OCCUPATION\",\n         \
-        \       \"TRAINING\",\n                \"TRAUMA\",\n                \"ACHIEVEMENT\",\n                \"SECRET\",\n\
-        \                \"GOAL\",\n                \"FEAR\",\n                \"BELIEF\"\n            ]\n        }\n    }\n\
+        behavior.\\n\",\n            \"enum\": [\n                \"Origin\",\n                \"Occupation\",\n         \
+        \       \"Training\",\n                \"Trauma\",\n                \"Achievement\",\n                \"Secret\",\n\
+        \                \"Goal\",\n                \"Fear\",\n                \"Belief\"\n            ]\n        }\n    }\n\
         }"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BackstoryResponse\"\
         ,\n    \"$defs\": {\n        \"BackstoryResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -470,9 +470,9 @@ paths:
         entity (if any)\"\n                }\n            }\n        },\n        \"BackstoryElementType\": {\n           \
         \ \"type\": \"string\",\n            \"description\": \"Types of backstory elements. Each type represents a different
         aspect\\nof the character's background that influences behavior.\\n\",\n            \"enum\": [\n                \"\
-        ORIGIN\",\n                \"OCCUPATION\",\n                \"TRAINING\",\n                \"TRAUMA\",\n         \
-        \       \"ACHIEVEMENT\",\n                \"SECRET\",\n                \"GOAL\",\n                \"FEAR\",\n    \
-        \            \"BELIEF\"\n            ]\n        }\n    }\n}"
+        Origin\",\n                \"Occupation\",\n                \"Training\",\n                \"Trauma\",\n         \
+        \       \"Achievement\",\n                \"Secret\",\n                \"Goal\",\n                \"Fear\",\n    \
+        \            \"Belief\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get machine-readable backstory elements for behavior system\",\n    \"\
         description\": \"Retrieves structured backstory elements for a character. These elements\\nare machine-readable key-value
         pairs used by the behavior system for\\ndecision-making, not narrative text for players.\\n\",\n    \"tags\": [\n\
@@ -537,9 +537,9 @@ paths:
         \   \"nullable\": true,\n                    \"description\": \"Type of the related entity (if any)\"\n          \
         \      }\n            }\n        },\n        \"BackstoryElementType\": {\n            \"type\": \"string\",\n    \
         \        \"description\": \"Types of backstory elements. Each type represents a different aspect\\nof the character's
-        background that influences behavior.\\n\",\n            \"enum\": [\n                \"ORIGIN\",\n               \
-        \ \"OCCUPATION\",\n                \"TRAINING\",\n                \"TRAUMA\",\n                \"ACHIEVEMENT\",\n\
-        \                \"SECRET\",\n                \"GOAL\",\n                \"FEAR\",\n                \"BELIEF\"\n \
+        background that influences behavior.\\n\",\n            \"enum\": [\n                \"Origin\",\n               \
+        \ \"Occupation\",\n                \"Training\",\n                \"Trauma\",\n                \"Achievement\",\n\
+        \                \"Secret\",\n                \"Goal\",\n                \"Fear\",\n                \"Belief\"\n \
         \           ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BackstoryResponse\"\
         ,\n    \"$defs\": {\n        \"BackstoryResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -576,9 +576,9 @@ paths:
         entity (if any)\"\n                }\n            }\n        },\n        \"BackstoryElementType\": {\n           \
         \ \"type\": \"string\",\n            \"description\": \"Types of backstory elements. Each type represents a different
         aspect\\nof the character's background that influences behavior.\\n\",\n            \"enum\": [\n                \"\
-        ORIGIN\",\n                \"OCCUPATION\",\n                \"TRAINING\",\n                \"TRAUMA\",\n         \
-        \       \"ACHIEVEMENT\",\n                \"SECRET\",\n                \"GOAL\",\n                \"FEAR\",\n    \
-        \            \"BELIEF\"\n            ]\n        }\n    }\n}"
+        Origin\",\n                \"Occupation\",\n                \"Training\",\n                \"Trauma\",\n         \
+        \       \"Achievement\",\n                \"Secret\",\n                \"Goal\",\n                \"Fear\",\n    \
+        \            \"Belief\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Set backstory elements for a character\",\n    \"description\": \"Creates
         or updates backstory elements for a character. Can either replace\\nall existing elements or merge with them based
         on the replaceExisting flag.\\n\",\n    \"tags\": [\n        \"Backstory\"\n    ],\n    \"deprecated\": false,\n \
@@ -639,9 +639,9 @@ paths:
         \   \"nullable\": true,\n                    \"description\": \"Type of the related entity (if any)\"\n          \
         \      }\n            }\n        },\n        \"BackstoryElementType\": {\n            \"type\": \"string\",\n    \
         \        \"description\": \"Types of backstory elements. Each type represents a different aspect\\nof the character's
-        background that influences behavior.\\n\",\n            \"enum\": [\n                \"ORIGIN\",\n               \
-        \ \"OCCUPATION\",\n                \"TRAINING\",\n                \"TRAUMA\",\n                \"ACHIEVEMENT\",\n\
-        \                \"SECRET\",\n                \"GOAL\",\n                \"FEAR\",\n                \"BELIEF\"\n \
+        background that influences behavior.\\n\",\n            \"enum\": [\n                \"Origin\",\n               \
+        \ \"Occupation\",\n                \"Training\",\n                \"Trauma\",\n                \"Achievement\",\n\
+        \                \"Secret\",\n                \"Goal\",\n                \"Fear\",\n                \"Belief\"\n \
         \           ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BackstoryResponse\"\
         ,\n    \"$defs\": {\n        \"BackstoryResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -678,9 +678,9 @@ paths:
         entity (if any)\"\n                }\n            }\n        },\n        \"BackstoryElementType\": {\n           \
         \ \"type\": \"string\",\n            \"description\": \"Types of backstory elements. Each type represents a different
         aspect\\nof the character's background that influences behavior.\\n\",\n            \"enum\": [\n                \"\
-        ORIGIN\",\n                \"OCCUPATION\",\n                \"TRAINING\",\n                \"TRAUMA\",\n         \
-        \       \"ACHIEVEMENT\",\n                \"SECRET\",\n                \"GOAL\",\n                \"FEAR\",\n    \
-        \            \"BELIEF\"\n            ]\n        }\n    }\n}"
+        Origin\",\n                \"Occupation\",\n                \"Training\",\n                \"Trauma\",\n         \
+        \       \"Achievement\",\n                \"Secret\",\n                \"Goal\",\n                \"Fear\",\n    \
+        \            \"Belief\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Add a single backstory element\",\n    \"description\": \"Adds a single
         backstory element to a character's existing backstory.\\nIf an element with the same type and key exists, it will
         be updated.\\n\",\n    \"tags\": [\n        \"Backstory\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -899,17 +899,17 @@ paths:
         \   \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
         \                    \"description\": \"When this record was created\"\n                }\n            }\n       \
         \ },\n        \"EventCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Categories of
-        historical events that characters can participate in\",\n            \"enum\": [\n                \"WAR\",\n     \
-        \           \"NATURAL_DISASTER\",\n                \"POLITICAL\",\n                \"ECONOMIC\",\n               \
-        \ \"RELIGIOUS\",\n                \"CULTURAL\",\n                \"PERSONAL\"\n            ]\n        },\n       \
-        \ \"ParticipationRole\": {\n            \"type\": \"string\",\n            \"description\": \"How the character participated
-        in the historical event\",\n            \"enum\": [\n                \"LEADER\",\n                \"COMBATANT\",\n\
-        \                \"VICTIM\",\n                \"WITNESS\",\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\"\
-        ,\n                \"HERO\",\n                \"SURVIVOR\"\n            ]\n        },\n        \"BackstoryResponse\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Complete backstory data for a character\",\n\
-        \            \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\",\n   \
-        \             \"elements\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        historical events that characters can participate in\",\n            \"enum\": [\n                \"War\",\n     \
+        \           \"NaturalDisaster\",\n                \"Political\",\n                \"Economic\",\n                \"\
+        Religious\",\n                \"Cultural\",\n                \"Personal\"\n            ]\n        },\n        \"ParticipationRole\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How the character participated in the historical
+        event\",\n            \"enum\": [\n                \"Leader\",\n                \"Combatant\",\n                \"\
+        Victim\",\n                \"Witness\",\n                \"Beneficiary\",\n                \"Conspirator\",\n    \
+        \            \"Hero\",\n                \"Survivor\"\n            ]\n        },\n        \"BackstoryResponse\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"Complete backstory data for a character\",\n  \
+        \          \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\",\n     \
+        \           \"elements\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"ID of the character this backstory belongs to\"\n                },\n                \"elements\": {\n       \
         \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/BackstoryElement\"\
         \n                    },\n                    \"description\": \"All backstory elements for this character\"\n   \
@@ -939,9 +939,9 @@ paths:
         \   \"nullable\": true,\n                    \"description\": \"Type of the related entity (if any)\"\n          \
         \      }\n            }\n        },\n        \"BackstoryElementType\": {\n            \"type\": \"string\",\n    \
         \        \"description\": \"Types of backstory elements. Each type represents a different aspect\\nof the character's
-        background that influences behavior.\\n\",\n            \"enum\": [\n                \"ORIGIN\",\n               \
-        \ \"OCCUPATION\",\n                \"TRAINING\",\n                \"TRAUMA\",\n                \"ACHIEVEMENT\",\n\
-        \                \"SECRET\",\n                \"GOAL\",\n                \"FEAR\",\n                \"BELIEF\"\n \
+        background that influences behavior.\\n\",\n            \"enum\": [\n                \"Origin\",\n               \
+        \ \"Occupation\",\n                \"Training\",\n                \"Trauma\",\n                \"Achievement\",\n\
+        \                \"Secret\",\n                \"Goal\",\n                \"Fear\",\n                \"Belief\"\n \
         \           ]\n        },\n        \"HistorySummaryResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Generated text summaries for character compression\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"characterId\",\n                \"keyBackstoryPoints\",\n        \
@@ -1018,40 +1018,40 @@ components:
       type: string
       description: Categories of historical events that characters can participate in
       enum:
-      - WAR
-      - NATURAL_DISASTER
-      - POLITICAL
-      - ECONOMIC
-      - RELIGIOUS
-      - CULTURAL
-      - PERSONAL
+      - War
+      - NaturalDisaster
+      - Political
+      - Economic
+      - Religious
+      - Cultural
+      - Personal
     ParticipationRole:
       type: string
       description: How the character participated in the historical event
       enum:
-      - LEADER
-      - COMBATANT
-      - VICTIM
-      - WITNESS
-      - BENEFICIARY
-      - CONSPIRATOR
-      - HERO
-      - SURVIVOR
+      - Leader
+      - Combatant
+      - Victim
+      - Witness
+      - Beneficiary
+      - Conspirator
+      - Hero
+      - Survivor
     BackstoryElementType:
       type: string
       description: |
         Types of backstory elements. Each type represents a different aspect
         of the character's background that influences behavior.
       enum:
-      - ORIGIN
-      - OCCUPATION
-      - TRAINING
-      - TRAUMA
-      - ACHIEVEMENT
-      - SECRET
-      - GOAL
-      - FEAR
-      - BELIEF
+      - Origin
+      - Occupation
+      - Training
+      - Trauma
+      - Achievement
+      - Secret
+      - Goal
+      - Fear
+      - Belief
     HistoricalParticipation:
       type: object
       description: Record of a character's participation in a historical event

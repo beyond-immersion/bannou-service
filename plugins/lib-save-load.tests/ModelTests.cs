@@ -21,7 +21,7 @@ public class ModelTests
             OwnerId = ownerId,
             OwnerType = EntityType.Account,
             SlotName = "main-save",
-            Category = SaveCategory.MANUAL_SAVE
+            Category = SaveCategory.ManualSave
         };
 
         // Act
@@ -53,7 +53,7 @@ public class ModelTests
             OwnerId = ownerId,
             OwnerType = EntityType.Session,
             SlotName = "slot1",
-            Category = SaveCategory.AUTO_SAVE
+            Category = SaveCategory.AutoSave
         };
 
         // Act
@@ -76,11 +76,11 @@ public class ModelTests
             OwnerId = Guid.NewGuid(),
             OwnerType = EntityType.Account,
             SlotName = "slot",
-            Category = SaveCategory.MANUAL_SAVE
+            Category = SaveCategory.ManualSave
         };
 
         // Assert defaults
-        Assert.Equal(CompressionType.GZIP, slot.CompressionType);
+        Assert.Equal(CompressionType.Gzip, slot.CompressionType);
         Assert.Equal(0, slot.VersionCount);
         Assert.Null(slot.LatestVersion);
         Assert.Equal(0, slot.TotalSizeBytes);
@@ -158,7 +158,7 @@ public class ModelTests
 
         // Assert defaults
         Assert.Null(manifest.AssetId);
-        Assert.Equal(CompressionType.NONE, manifest.CompressionType);
+        Assert.Equal(CompressionType.None, manifest.CompressionType);
         Assert.False(manifest.IsPinned);
         Assert.Null(manifest.CheckpointName);
         Assert.False(manifest.IsDelta);
@@ -347,7 +347,7 @@ public class ModelTests
         };
 
         // Assert defaults
-        Assert.Equal(CompressionType.GZIP, entry.CompressionType);
+        Assert.Equal(CompressionType.Gzip, entry.CompressionType);
         Assert.Equal(0, entry.SizeBytes);
         Assert.Equal(0, entry.CompressedSizeBytes);
         Assert.False(entry.IsDelta);

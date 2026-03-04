@@ -139,9 +139,9 @@ paths:
         \                    \"description\": \"Number of times this trait has evolved\"\n                }\n            }\n\
         \        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n            \"description\": \"Core personality
         trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on psychological research (Big Five + game-relevant
-        extensions).\\n\",\n            \"enum\": [\n                \"OPENNESS\",\n                \"CONSCIENTIOUSNESS\"\
-        ,\n                \"EXTRAVERSION\",\n                \"AGREEABLENESS\",\n                \"NEUROTICISM\",\n     \
-        \           \"HONESTY\",\n                \"AGGRESSION\",\n                \"LOYALTY\"\n            ]\n        }\n\
+        extensions).\\n\",\n            \"enum\": [\n                \"Openness\",\n                \"Conscientiousness\"\
+        ,\n                \"Extraversion\",\n                \"Agreeableness\",\n                \"Neuroticism\",\n     \
+        \           \"Honesty\",\n                \"Aggression\",\n                \"Loyalty\"\n            ]\n        }\n\
         \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get personality for a character\",\n    \"description\": \"Retrieves the
         personality profile for a character. Returns 404 if no\\npersonality has been defined for this character.\\n\",\n\
@@ -200,9 +200,9 @@ paths:
         \                    \"description\": \"Number of times this trait has evolved\"\n                }\n            }\n\
         \        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n            \"description\": \"Core personality
         trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on psychological research (Big Five + game-relevant
-        extensions).\\n\",\n            \"enum\": [\n                \"OPENNESS\",\n                \"CONSCIENTIOUSNESS\"\
-        ,\n                \"EXTRAVERSION\",\n                \"AGREEABLENESS\",\n                \"NEUROTICISM\",\n     \
-        \           \"HONESTY\",\n                \"AGGRESSION\",\n                \"LOYALTY\"\n            ]\n        }\n\
+        extensions).\\n\",\n            \"enum\": [\n                \"Openness\",\n                \"Conscientiousness\"\
+        ,\n                \"Extraversion\",\n                \"Agreeableness\",\n                \"Neuroticism\",\n     \
+        \           \"Honesty\",\n                \"Aggression\",\n                \"Loyalty\"\n            ]\n        }\n\
         \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PersonalityResponse\"\
         ,\n    \"$defs\": {\n        \"PersonalityResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -237,9 +237,9 @@ paths:
         \                    \"description\": \"Number of times this trait has evolved\"\n                }\n            }\n\
         \        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n            \"description\": \"Core personality
         trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on psychological research (Big Five + game-relevant
-        extensions).\\n\",\n            \"enum\": [\n                \"OPENNESS\",\n                \"CONSCIENTIOUSNESS\"\
-        ,\n                \"EXTRAVERSION\",\n                \"AGREEABLENESS\",\n                \"NEUROTICISM\",\n     \
-        \           \"HONESTY\",\n                \"AGGRESSION\",\n                \"LOYALTY\"\n            ]\n        }\n\
+        extensions).\\n\",\n            \"enum\": [\n                \"Openness\",\n                \"Conscientiousness\"\
+        ,\n                \"Extraversion\",\n                \"Agreeableness\",\n                \"Neuroticism\",\n     \
+        \           \"Honesty\",\n                \"Aggression\",\n                \"Loyalty\"\n            ]\n        }\n\
         \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create or update personality for a character\",\n    \"description\": \"\
         Creates or replaces the personality profile for a character. If a personality\\nalready exists, it will be completely
@@ -295,9 +295,9 @@ paths:
         keys from this field by convention.\\n\"\n                }\n            }\n        },\n        \"ExperienceType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Categories of significant experiences that
         may cause personality evolution.\\nEach type has predefined trait impact tendencies.\\n\",\n            \"enum\":
-        [\n                \"TRAUMA\",\n                \"BETRAYAL\",\n                \"LOSS\",\n                \"VICTORY\"\
-        ,\n                \"FRIENDSHIP\",\n                \"REDEMPTION\",\n                \"CORRUPTION\",\n           \
-        \     \"ENLIGHTENMENT\",\n                \"SACRIFICE\"\n            ]\n        }\n    }\n}"
+        [\n                \"Trauma\",\n                \"Betrayal\",\n                \"Loss\",\n                \"Victory\"\
+        ,\n                \"Friendship\",\n                \"Redemption\",\n                \"Corruption\",\n           \
+        \     \"Enlightenment\",\n                \"Sacrifice\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExperienceResult\"\
         ,\n    \"$defs\": {\n        \"ExperienceResult\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of recording an experience, including any personality evolution\",\n            \"additionalProperties\"\
@@ -327,9 +327,9 @@ paths:
         \                    \"description\": \"Number of times this trait has evolved\"\n                }\n            }\n\
         \        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n            \"description\": \"Core personality
         trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on psychological research (Big Five + game-relevant
-        extensions).\\n\",\n            \"enum\": [\n                \"OPENNESS\",\n                \"CONSCIENTIOUSNESS\"\
-        ,\n                \"EXTRAVERSION\",\n                \"AGREEABLENESS\",\n                \"NEUROTICISM\",\n     \
-        \           \"HONESTY\",\n                \"AGGRESSION\",\n                \"LOYALTY\"\n            ]\n        }\n\
+        extensions).\\n\",\n            \"enum\": [\n                \"Openness\",\n                \"Conscientiousness\"\
+        ,\n                \"Extraversion\",\n                \"Agreeableness\",\n                \"Neuroticism\",\n     \
+        \           \"Honesty\",\n                \"Aggression\",\n                \"Loyalty\"\n            ]\n        }\n\
         \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Record an experience that may evolve personality\",\n    \"description\"\
         : \"Records a significant experience for a character. The system evaluates whether\\nthe experience causes trait evolution
@@ -414,9 +414,9 @@ paths:
         \                    \"description\": \"Number of times this trait has evolved\"\n                }\n            }\n\
         \        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n            \"description\": \"Core personality
         trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on psychological research (Big Five + game-relevant
-        extensions).\\n\",\n            \"enum\": [\n                \"OPENNESS\",\n                \"CONSCIENTIOUSNESS\"\
-        ,\n                \"EXTRAVERSION\",\n                \"AGREEABLENESS\",\n                \"NEUROTICISM\",\n     \
-        \           \"HONESTY\",\n                \"AGGRESSION\",\n                \"LOYALTY\"\n            ]\n        }\n\
+        extensions).\\n\",\n            \"enum\": [\n                \"Openness\",\n                \"Conscientiousness\"\
+        ,\n                \"Extraversion\",\n                \"Agreeableness\",\n                \"Neuroticism\",\n     \
+        \           \"Honesty\",\n                \"Aggression\",\n                \"Loyalty\"\n            ]\n        }\n\
         \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get personalities for multiple characters\",\n    \"description\": \"Bulk
         load personalities for multiple characters. Used by the behavior service\\nfor efficient region initialization. Characters
@@ -529,14 +529,14 @@ paths:
         nAffects target selection and positioning decisions.\\n\"\n                }\n            }\n        },\n        \"\
         CombatStyle\": {\n            \"type\": \"string\",\n            \"description\": \"Overall approach to combat situations.
         Affects target selection,\\nability usage, and engagement decisions.\\n\",\n            \"enum\": [\n            \
-        \    \"DEFENSIVE\",\n                \"BALANCED\",\n                \"AGGRESSIVE\",\n                \"BERSERKER\"\
-        ,\n                \"TACTICAL\"\n            ]\n        },\n        \"PreferredRange\": {\n            \"type\": \"\
+        \    \"Defensive\",\n                \"Balanced\",\n                \"Aggressive\",\n                \"Berserker\"\
+        ,\n                \"Tactical\"\n            ]\n        },\n        \"PreferredRange\": {\n            \"type\": \"\
         string\",\n            \"description\": \"Preferred engagement distance. Influences positioning and\\nability selection
-        in combat.\\n\",\n            \"enum\": [\n                \"MELEE\",\n                \"CLOSE\",\n              \
-        \  \"MEDIUM\",\n                \"RANGED\"\n            ]\n        },\n        \"GroupRole\": {\n            \"type\"\
+        in combat.\\n\",\n            \"enum\": [\n                \"Melee\",\n                \"Close\",\n              \
+        \  \"Medium\",\n                \"Ranged\"\n            ]\n        },\n        \"GroupRole\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Preferred role when fighting in groups. Affects positioning,\\ntarget
-        priority, and coordination behavior.\\n\",\n            \"enum\": [\n                \"FRONTLINE\",\n            \
-        \    \"SUPPORT\",\n                \"FLANKER\",\n                \"LEADER\",\n                \"SOLO\"\n         \
+        priority, and coordination behavior.\\n\",\n            \"enum\": [\n                \"Frontline\",\n            \
+        \    \"Support\",\n                \"Flanker\",\n                \"Leader\",\n                \"Solo\"\n         \
         \   ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get combat preferences for a character\",\n    \"description\": \"Retrieves
         the combat preferences for a character. Combat preferences\\ninfluence tactical decisions in the behavior system,
@@ -598,14 +598,14 @@ paths:
         protection over self-preservation.\\nAffects target selection and positioning decisions.\\n\"\n                }\n\
         \            }\n        },\n        \"CombatStyle\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Overall approach to combat situations. Affects target selection,\\nability usage, and engagement decisions.\\\
-        n\",\n            \"enum\": [\n                \"DEFENSIVE\",\n                \"BALANCED\",\n                \"AGGRESSIVE\"\
-        ,\n                \"BERSERKER\",\n                \"TACTICAL\"\n            ]\n        },\n        \"PreferredRange\"\
+        n\",\n            \"enum\": [\n                \"Defensive\",\n                \"Balanced\",\n                \"Aggressive\"\
+        ,\n                \"Berserker\",\n                \"Tactical\"\n            ]\n        },\n        \"PreferredRange\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Preferred engagement distance. Influences positioning
-        and\\nability selection in combat.\\n\",\n            \"enum\": [\n                \"MELEE\",\n                \"\
-        CLOSE\",\n                \"MEDIUM\",\n                \"RANGED\"\n            ]\n        },\n        \"GroupRole\"\
+        and\\nability selection in combat.\\n\",\n            \"enum\": [\n                \"Melee\",\n                \"\
+        Close\",\n                \"Medium\",\n                \"Ranged\"\n            ]\n        },\n        \"GroupRole\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Preferred role when fighting in groups. Affects
-        positioning,\\ntarget priority, and coordination behavior.\\n\",\n            \"enum\": [\n                \"FRONTLINE\"\
-        ,\n                \"SUPPORT\",\n                \"FLANKER\",\n                \"LEADER\",\n                \"SOLO\"\
+        positioning,\\ntarget priority, and coordination behavior.\\n\",\n            \"enum\": [\n                \"Frontline\"\
+        ,\n                \"Support\",\n                \"Flanker\",\n                \"Leader\",\n                \"Solo\"\
         \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CombatPreferencesResponse\"\
         ,\n    \"$defs\": {\n        \"CombatPreferencesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -643,14 +643,14 @@ paths:
         nAffects target selection and positioning decisions.\\n\"\n                }\n            }\n        },\n        \"\
         CombatStyle\": {\n            \"type\": \"string\",\n            \"description\": \"Overall approach to combat situations.
         Affects target selection,\\nability usage, and engagement decisions.\\n\",\n            \"enum\": [\n            \
-        \    \"DEFENSIVE\",\n                \"BALANCED\",\n                \"AGGRESSIVE\",\n                \"BERSERKER\"\
-        ,\n                \"TACTICAL\"\n            ]\n        },\n        \"PreferredRange\": {\n            \"type\": \"\
+        \    \"Defensive\",\n                \"Balanced\",\n                \"Aggressive\",\n                \"Berserker\"\
+        ,\n                \"Tactical\"\n            ]\n        },\n        \"PreferredRange\": {\n            \"type\": \"\
         string\",\n            \"description\": \"Preferred engagement distance. Influences positioning and\\nability selection
-        in combat.\\n\",\n            \"enum\": [\n                \"MELEE\",\n                \"CLOSE\",\n              \
-        \  \"MEDIUM\",\n                \"RANGED\"\n            ]\n        },\n        \"GroupRole\": {\n            \"type\"\
+        in combat.\\n\",\n            \"enum\": [\n                \"Melee\",\n                \"Close\",\n              \
+        \  \"Medium\",\n                \"Ranged\"\n            ]\n        },\n        \"GroupRole\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Preferred role when fighting in groups. Affects positioning,\\ntarget
-        priority, and coordination behavior.\\n\",\n            \"enum\": [\n                \"FRONTLINE\",\n            \
-        \    \"SUPPORT\",\n                \"FLANKER\",\n                \"LEADER\",\n                \"SOLO\"\n         \
+        priority, and coordination behavior.\\n\",\n            \"enum\": [\n                \"Frontline\",\n            \
+        \    \"Support\",\n                \"Flanker\",\n                \"Leader\",\n                \"Solo\"\n         \
         \   ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create or update combat preferences for a character\",\n    \"description\"\
         : \"Creates or replaces the combat preferences for a character. If preferences\\nalready exist, they will be completely
@@ -702,10 +702,10 @@ paths:
         field by convention.\\n\"\n                }\n            }\n        },\n        \"CombatExperienceType\": {\n   \
         \         \"type\": \"string\",\n            \"description\": \"Categories of combat experiences that may cause preference
         evolution.\\nEach type affects different aspects of combat behavior.\\n\",\n            \"enum\": [\n            \
-        \    \"DECISIVE_VICTORY\",\n                \"NARROW_VICTORY\",\n                \"DEFEAT\",\n                \"NEAR_DEATH\"\
-        ,\n                \"ALLY_SAVED\",\n                \"ALLY_LOST\",\n                \"SUCCESSFUL_RETREAT\",\n    \
-        \            \"FAILED_RETREAT\",\n                \"AMBUSH_SUCCESS\",\n                \"AMBUSH_SURVIVED\"\n     \
-        \       ]\n        }\n    }\n}"
+        \    \"DecisiveVictory\",\n                \"NarrowVictory\",\n                \"Defeat\",\n                \"NearDeath\"\
+        ,\n                \"AllySaved\",\n                \"AllyLost\",\n                \"SuccessfulRetreat\",\n       \
+        \         \"FailedRetreat\",\n                \"AmbushSuccess\",\n                \"AmbushSurvived\"\n           \
+        \ ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CombatEvolutionResult\"\
         ,\n    \"$defs\": {\n        \"CombatEvolutionResult\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of recording a combat experience\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -743,15 +743,15 @@ paths:
         \              \"description\": \"Whether to prioritize ally protection over self-preservation.\\nAffects target selection
         and positioning decisions.\\n\"\n                }\n            }\n        },\n        \"CombatStyle\": {\n      \
         \      \"type\": \"string\",\n            \"description\": \"Overall approach to combat situations. Affects target
-        selection,\\nability usage, and engagement decisions.\\n\",\n            \"enum\": [\n                \"DEFENSIVE\"\
-        ,\n                \"BALANCED\",\n                \"AGGRESSIVE\",\n                \"BERSERKER\",\n              \
-        \  \"TACTICAL\"\n            ]\n        },\n        \"PreferredRange\": {\n            \"type\": \"string\",\n   \
+        selection,\\nability usage, and engagement decisions.\\n\",\n            \"enum\": [\n                \"Defensive\"\
+        ,\n                \"Balanced\",\n                \"Aggressive\",\n                \"Berserker\",\n              \
+        \  \"Tactical\"\n            ]\n        },\n        \"PreferredRange\": {\n            \"type\": \"string\",\n   \
         \         \"description\": \"Preferred engagement distance. Influences positioning and\\nability selection in combat.\\\
-        n\",\n            \"enum\": [\n                \"MELEE\",\n                \"CLOSE\",\n                \"MEDIUM\"\
-        ,\n                \"RANGED\"\n            ]\n        },\n        \"GroupRole\": {\n            \"type\": \"string\"\
+        n\",\n            \"enum\": [\n                \"Melee\",\n                \"Close\",\n                \"Medium\"\
+        ,\n                \"Ranged\"\n            ]\n        },\n        \"GroupRole\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Preferred role when fighting in groups. Affects positioning,\\ntarget priority,
-        and coordination behavior.\\n\",\n            \"enum\": [\n                \"FRONTLINE\",\n                \"SUPPORT\"\
-        ,\n                \"FLANKER\",\n                \"LEADER\",\n                \"SOLO\"\n            ]\n        }\n\
+        and coordination behavior.\\n\",\n            \"enum\": [\n                \"Frontline\",\n                \"Support\"\
+        ,\n                \"Flanker\",\n                \"Leader\",\n                \"Solo\"\n            ]\n        }\n\
         \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Record combat experience that may evolve preferences\",\n    \"description\"\
         : \"Records a significant combat experience that may cause preference evolution.\\nSimilar to personality evolution,
@@ -875,10 +875,10 @@ paths:
         \                    \"default\": 0,\n                    \"description\": \"Number of times this trait has evolved\"\
         \n                }\n            }\n        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n    \
         \        \"description\": \"Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on
-        psychological research (Big Five + game-relevant extensions).\\n\",\n            \"enum\": [\n                \"OPENNESS\"\
-        ,\n                \"CONSCIENTIOUSNESS\",\n                \"EXTRAVERSION\",\n                \"AGREEABLENESS\",\n\
-        \                \"NEUROTICISM\",\n                \"HONESTY\",\n                \"AGGRESSION\",\n               \
-        \ \"LOYALTY\"\n            ]\n        },\n        \"CombatPreferencesResponse\": {\n            \"type\": \"object\"\
+        psychological research (Big Five + game-relevant extensions).\\n\",\n            \"enum\": [\n                \"Openness\"\
+        ,\n                \"Conscientiousness\",\n                \"Extraversion\",\n                \"Agreeableness\",\n\
+        \                \"Neuroticism\",\n                \"Honesty\",\n                \"Aggression\",\n               \
+        \ \"Loyalty\"\n            ]\n        },\n        \"CombatPreferencesResponse\": {\n            \"type\": \"object\"\
         ,\n            \"description\": \"Combat preferences profile for behavior system consumption\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"characterId\",\n                \"preferences\",\n      \
         \          \"version\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n          \
@@ -913,14 +913,14 @@ paths:
         protection over self-preservation.\\nAffects target selection and positioning decisions.\\n\"\n                }\n\
         \            }\n        },\n        \"CombatStyle\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Overall approach to combat situations. Affects target selection,\\nability usage, and engagement decisions.\\\
-        n\",\n            \"enum\": [\n                \"DEFENSIVE\",\n                \"BALANCED\",\n                \"AGGRESSIVE\"\
-        ,\n                \"BERSERKER\",\n                \"TACTICAL\"\n            ]\n        },\n        \"PreferredRange\"\
+        n\",\n            \"enum\": [\n                \"Defensive\",\n                \"Balanced\",\n                \"Aggressive\"\
+        ,\n                \"Berserker\",\n                \"Tactical\"\n            ]\n        },\n        \"PreferredRange\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Preferred engagement distance. Influences positioning
-        and\\nability selection in combat.\\n\",\n            \"enum\": [\n                \"MELEE\",\n                \"\
-        CLOSE\",\n                \"MEDIUM\",\n                \"RANGED\"\n            ]\n        },\n        \"GroupRole\"\
+        and\\nability selection in combat.\\n\",\n            \"enum\": [\n                \"Melee\",\n                \"\
+        Close\",\n                \"Medium\",\n                \"Ranged\"\n            ]\n        },\n        \"GroupRole\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Preferred role when fighting in groups. Affects
-        positioning,\\ntarget priority, and coordination behavior.\\n\",\n            \"enum\": [\n                \"FRONTLINE\"\
-        ,\n                \"SUPPORT\",\n                \"FLANKER\",\n                \"LEADER\",\n                \"SOLO\"\
+        positioning,\\ntarget priority, and coordination behavior.\\n\",\n            \"enum\": [\n                \"Frontline\"\
+        ,\n                \"Support\",\n                \"Flanker\",\n                \"Leader\",\n                \"Solo\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get personality data for compression\",\n    \"description\": \"Called
         by Resource service during character compression.\\nReturns personality traits and combat preferences for archival.\\\
@@ -1036,77 +1036,77 @@ components:
         Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.
         Based on psychological research (Big Five + game-relevant extensions).
       enum:
-      - OPENNESS
-      - CONSCIENTIOUSNESS
-      - EXTRAVERSION
-      - AGREEABLENESS
-      - NEUROTICISM
-      - HONESTY
-      - AGGRESSION
-      - LOYALTY
+      - Openness
+      - Conscientiousness
+      - Extraversion
+      - Agreeableness
+      - Neuroticism
+      - Honesty
+      - Aggression
+      - Loyalty
     ExperienceType:
       type: string
       description: |
         Categories of significant experiences that may cause personality evolution.
         Each type has predefined trait impact tendencies.
       enum:
-      - TRAUMA
-      - BETRAYAL
-      - LOSS
-      - VICTORY
-      - FRIENDSHIP
-      - REDEMPTION
-      - CORRUPTION
-      - ENLIGHTENMENT
-      - SACRIFICE
+      - Trauma
+      - Betrayal
+      - Loss
+      - Victory
+      - Friendship
+      - Redemption
+      - Corruption
+      - Enlightenment
+      - Sacrifice
     CombatStyle:
       type: string
       description: |
         Overall approach to combat situations. Affects target selection,
         ability usage, and engagement decisions.
       enum:
-      - DEFENSIVE
-      - BALANCED
-      - AGGRESSIVE
-      - BERSERKER
-      - TACTICAL
+      - Defensive
+      - Balanced
+      - Aggressive
+      - Berserker
+      - Tactical
     PreferredRange:
       type: string
       description: |
         Preferred engagement distance. Influences positioning and
         ability selection in combat.
       enum:
-      - MELEE
-      - CLOSE
-      - MEDIUM
-      - RANGED
+      - Melee
+      - Close
+      - Medium
+      - Ranged
     GroupRole:
       type: string
       description: |
         Preferred role when fighting in groups. Affects positioning,
         target priority, and coordination behavior.
       enum:
-      - FRONTLINE
-      - SUPPORT
-      - FLANKER
-      - LEADER
-      - SOLO
+      - Frontline
+      - Support
+      - Flanker
+      - Leader
+      - Solo
     CombatExperienceType:
       type: string
       description: |
         Categories of combat experiences that may cause preference evolution.
         Each type affects different aspects of combat behavior.
       enum:
-      - DECISIVE_VICTORY
-      - NARROW_VICTORY
-      - DEFEAT
-      - NEAR_DEATH
-      - ALLY_SAVED
-      - ALLY_LOST
-      - SUCCESSFUL_RETREAT
-      - FAILED_RETREAT
-      - AMBUSH_SUCCESS
-      - AMBUSH_SURVIVED
+      - DecisiveVictory
+      - NarrowVictory
+      - Defeat
+      - NearDeath
+      - AllySaved
+      - AllyLost
+      - SuccessfulRetreat
+      - FailedRetreat
+      - AmbushSuccess
+      - AmbushSurvived
     TraitValue:
       type: object
       description: A single personality trait with its current value and evolution history

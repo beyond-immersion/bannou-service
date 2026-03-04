@@ -48,7 +48,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/type/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createEncounterType",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/type/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getEncounterType",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/type/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listEncounterTypes",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/type/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateEncounterType",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/type/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteEncounterType",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/type/seed",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "seedEncounterTypes",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/query/by-character",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryByCharacter",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/query/between",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryBetween",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/query/by-location",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryByLocation",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/has-met",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "hasMet",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/get-sentiment",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getSentiment",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/get-perspective",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getPerspective",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteEncounter",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/delete-by-character",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteByCharacter",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/decay-memories",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "decayMemories",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/get-compress-data",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getCompressData",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class CharacterEncounterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character-encounter/restore-from-archive",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "restoreFromArchive",
             Permissions = new List<PermissionRequirement>
             {

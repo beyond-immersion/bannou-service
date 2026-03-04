@@ -179,7 +179,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
                 ParticipantIds = participantIds,
                 Timestamp = timestamp.ToUnixTimeSeconds(),
                 RealmId = Guid.NewGuid(),
-                Outcome = EncounterOutcome.NEUTRAL,
+                Outcome = EncounterOutcome.Neutral,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             });
     }
@@ -290,7 +290,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             Code = "CUSTOM",
             Name = "Custom Encounter",
             Description = "A custom encounter type",
-            DefaultEmotionalImpact = EmotionalImpact.GRATITUDE,
+            DefaultEmotionalImpact = EmotionalImpact.Gratitude,
             SortOrder = 100
         };
 
@@ -578,7 +578,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             EncounterTypeCode = "DIALOGUE",
             RealmId = realmId,
             ParticipantIds = new List<Guid> { charA, charB },
-            Outcome = EncounterOutcome.POSITIVE,
+            Outcome = EncounterOutcome.Positive,
             Context = "Met at the tavern",
             Timestamp = DateTimeOffset.UtcNow
         };
@@ -615,7 +615,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             EncounterTypeCode = "DIALOGUE",
             RealmId = Guid.NewGuid(),
             ParticipantIds = new List<Guid> { charA }, // Only one participant
-            Outcome = EncounterOutcome.NEUTRAL
+            Outcome = EncounterOutcome.Neutral
         };
 
         // Act
@@ -657,7 +657,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             EncounterTypeCode = "COMBAT",
             RealmId = Guid.NewGuid(),
             ParticipantIds = new List<Guid> { charA, charB },
-            Outcome = EncounterOutcome.NEGATIVE,
+            Outcome = EncounterOutcome.Negative,
             Context = "Battle in the forest"
         };
 
@@ -669,7 +669,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         Assert.NotNull(capturedEvent);
         Assert.Equal("encounter.recorded", capturedTopic);
         Assert.Equal("COMBAT", capturedEvent.EncounterTypeCode);
-        Assert.Equal("NEGATIVE", capturedEvent.Outcome);
+        Assert.Equal("Negative", capturedEvent.Outcome);
         Assert.Contains(charA, capturedEvent.ParticipantIds);
         Assert.Contains(charB, capturedEvent.ParticipantIds);
     }
@@ -699,11 +699,11 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             EncounterTypeCode = "TRADE",
             RealmId = Guid.NewGuid(),
             ParticipantIds = new List<Guid> { charA, charB },
-            Outcome = EncounterOutcome.POSITIVE,
+            Outcome = EncounterOutcome.Positive,
             Perspectives = new List<PerspectiveInput>
             {
-                new() { CharacterId = charA, EmotionalImpact = EmotionalImpact.GRATITUDE, SentimentShift = 0.3f, RememberedAs = "A great deal" },
-                new() { CharacterId = charB, EmotionalImpact = EmotionalImpact.RESPECT, SentimentShift = 0.1f, RememberedAs = "Fair trade" }
+                new() { CharacterId = charA, EmotionalImpact = EmotionalImpact.Gratitude, SentimentShift = 0.3f, RememberedAs = "A great deal" },
+                new() { CharacterId = charB, EmotionalImpact = EmotionalImpact.Respect, SentimentShift = 0.1f, RememberedAs = "Fair trade" }
             }
         };
 
@@ -716,7 +716,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         var perspA = savedPerspectives.FirstOrDefault(p => p.CharacterId == charA);
         Assert.NotNull(perspA);
-        Assert.Equal(EmotionalImpact.GRATITUDE, perspA.EmotionalImpact);
+        Assert.Equal(EmotionalImpact.Gratitude, perspA.EmotionalImpact);
         Assert.Equal(0.3f, perspA.SentimentShift);
         Assert.Equal("A great deal", perspA.RememberedAs);
     }
@@ -920,7 +920,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             PerspectiveId = perspectiveId,
             EncounterId = encounterId,
             CharacterId = characterId,
-            EmotionalImpact = EmotionalImpact.GRATITUDE,
+            EmotionalImpact = EmotionalImpact.Gratitude,
             SentimentShift = 0.5f,
             MemoryStrength = 1.0f,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -1444,7 +1444,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             EncounterTypeCode = "DIALOGUE",
             RealmId = realmId,
             ParticipantIds = new List<Guid> { charA, charB },
-            Outcome = EncounterOutcome.NEUTRAL,
+            Outcome = EncounterOutcome.Neutral,
             Timestamp = timestamp.AddMinutes(2) // Within 5 minute tolerance
         };
 
@@ -1491,7 +1491,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
                 ParticipantIds = new List<Guid> { charA, charB },
                 Timestamp = timestamp.ToUnixTimeSeconds(),
                 RealmId = Guid.NewGuid(),
-                Outcome = EncounterOutcome.NEUTRAL,
+                Outcome = EncounterOutcome.Neutral,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             });
 
@@ -1500,7 +1500,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             EncounterTypeCode = "COMBAT", // Different type
             RealmId = Guid.NewGuid(),
             ParticipantIds = new List<Guid> { charA, charB },
-            Outcome = EncounterOutcome.NEUTRAL,
+            Outcome = EncounterOutcome.Neutral,
             Timestamp = timestamp
         };
 
@@ -1546,7 +1546,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
                 ParticipantIds = new List<Guid> { charA, charB },
                 Timestamp = existingTimestamp.ToUnixTimeSeconds(),
                 RealmId = Guid.NewGuid(),
-                Outcome = EncounterOutcome.NEUTRAL,
+                Outcome = EncounterOutcome.Neutral,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             });
 
@@ -1555,7 +1555,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             EncounterTypeCode = "DIALOGUE",
             RealmId = Guid.NewGuid(),
             ParticipantIds = new List<Guid> { charA, charB },
-            Outcome = EncounterOutcome.NEUTRAL,
+            Outcome = EncounterOutcome.Neutral,
             Timestamp = DateTimeOffset.UtcNow // Now (more than 5 min from existing)
         };
 
@@ -1641,7 +1641,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             EncounterTypeCode = "DIALOGUE",
             RealmId = Guid.NewGuid(),
             ParticipantIds = new List<Guid> { charA, charB },
-            Outcome = EncounterOutcome.NEUTRAL,
+            Outcome = EncounterOutcome.Neutral,
             Timestamp = DateTimeOffset.UtcNow
         };
 
@@ -1672,7 +1672,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             EncounterTypeCode = "DIALOGUE",
             RealmId = realmId,
             ParticipantIds = new List<Guid> { charA, charB },
-            Outcome = EncounterOutcome.POSITIVE,
+            Outcome = EncounterOutcome.Positive,
             Context = "Met at the tavern",
             Timestamp = DateTimeOffset.UtcNow
         };
@@ -1749,7 +1749,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             EncounterTypeCode = "COMBAT",
             RealmId = Guid.NewGuid(),
             ParticipantIds = new List<Guid> { charA, charB, charC },
-            Outcome = EncounterOutcome.NEUTRAL
+            Outcome = EncounterOutcome.Neutral
         };
 
         // Act
@@ -1862,7 +1862,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             Name = name,
             Description = $"Test encounter type: {name}",
             IsBuiltIn = isBuiltIn,
-            DefaultEmotionalImpact = EmotionalImpact.INDIFFERENCE,
+            DefaultEmotionalImpact = EmotionalImpact.Indifference,
             SortOrder = 0,
             IsActive = true,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -1877,7 +1877,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             EncounterTypeCode = "DIALOGUE",
             RealmId = Guid.NewGuid(),
             ParticipantIds = participantIds,
-            Outcome = EncounterOutcome.NEUTRAL,
+            Outcome = EncounterOutcome.Neutral,
             Context = "Test encounter",
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -1891,7 +1891,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             PerspectiveId = perspectiveId,
             EncounterId = encounterId,
             CharacterId = characterId,
-            EmotionalImpact = EmotionalImpact.INDIFFERENCE,
+            EmotionalImpact = EmotionalImpact.Indifference,
             SentimentShift = 0.0f,
             MemoryStrength = 1.0f,
             RememberedAs = null,
@@ -1997,7 +1997,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
                 PerspectiveId = perspectiveId,
                 EncounterId = encounterId,
                 CharacterId = characterId,
-                EmotionalImpact = EmotionalImpact.GRATITUDE,
+                EmotionalImpact = EmotionalImpact.Gratitude,
                 SentimentShift = 0.3f,
                 MemoryStrength = 0.8f,
                 RememberedAs = "A friendly meeting",
@@ -2223,7 +2223,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
                             PerspectiveId = perspectiveId,
                             EncounterId = encounterId,
                             CharacterId = characterId,
-                            EmotionalImpact = EmotionalImpact.GRATITUDE,
+                            EmotionalImpact = EmotionalImpact.Gratitude,
                             SentimentShift = 0.3f,
                             MemoryStrength = 0.8f,
                             RememberedAs = "A friendly meeting",

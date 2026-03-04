@@ -40,17 +40,20 @@ public partial class AchievementController
                 },
                 "achievementId": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 64,
                     "pattern": "^[a-z0-9_-]+$",
                     "description": "Unique identifier for this achievement (lowercase, no spaces)"
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 100,
                     "description": "Human-readable name"
                 },
                 "description": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 500,
                     "description": "Description of how to earn this achievement"
                 },
@@ -62,7 +65,7 @@ public partial class AchievementController
                 },
                 "achievementType": {
                     "$ref": "#/$defs/AchievementType",
-                    "default": "standard",
+                    "default": "Standard",
                     "description": "Classification of the achievement (affects visibility and progress behavior)"
                 },
                 "entityTypes": {
@@ -70,6 +73,7 @@ public partial class AchievementController
                     "items": {
                         "type": "object"
                     },
+                    "nullable": true,
                     "description": "Which entity types can earn this achievement"
                 },
                 "progressTarget": {
@@ -92,15 +96,16 @@ public partial class AchievementController
                     "items": {
                         "$ref": "#/$defs/Platform"
                     },
+                    "nullable": true,
                     "description": "Platforms where this achievement exists"
                 },
-                "platformIds": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
+                "platformMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PlatformMapping"
                     },
                     "nullable": true,
-                    "description": "Platform-specific achievement IDs (e.g., {\"steam\": \"ACH_001\"})"
+                    "description": "Platform-specific achievement ID mappings"
                 },
                 "prerequisites": {
                     "type": "array",
@@ -109,6 +114,43 @@ public partial class AchievementController
                     },
                     "nullable": true,
                     "description": "Achievement IDs that must be unlocked first"
+                },
+                "scoreType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Score type code for matching analytics.score.updated events (progressive achievements)"
+                },
+                "milestoneType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Milestone type code for matching analytics.milestone.reached events"
+                },
+                "milestoneValue": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Expected milestone value for matching analytics.milestone.reached events"
+                },
+                "milestoneName": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "nullable": true,
+                    "description": "Expected milestone name for matching analytics.milestone.reached events"
+                },
+                "leaderboardId": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Leaderboard ID for matching leaderboard.rank.changed events"
+                },
+                "rankThreshold": {
+                    "type": "integer",
+                    "format": "int64",
+                    "nullable": true,
+                    "minimum": 1,
+                    "description": "Rank threshold for leaderboard achievements (unlock when rank <= threshold)"
                 },
                 "isActive": {
                     "type": "boolean",
@@ -119,7 +161,7 @@ public partial class AchievementController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional achievement-specific metadata"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -127,21 +169,42 @@ public partial class AchievementController
             "type": "string",
             "description": "Type of achievement",
             "enum": [
-                "standard",
-                "progressive",
-                "hidden",
-                "secret"
+                "Standard",
+                "Progressive",
+                "Hidden",
+                "Secret"
             ]
         },
         "Platform": {
             "type": "string",
             "description": "External platform for achievement sync",
             "enum": [
-                "steam",
-                "xbox",
-                "playstation",
-                "internal"
+                "Steam",
+                "Xbox",
+                "PlayStation",
+                "Internal"
             ]
+        },
+        "PlatformMapping": {
+            "type": "object",
+            "description": "Maps an achievement to a platform-specific ID",
+            "additionalProperties": false,
+            "required": [
+                "platform",
+                "platformAchievementId"
+            ],
+            "properties": {
+                "platform": {
+                    "$ref": "#/$defs/Platform",
+                    "description": "External platform"
+                },
+                "platformAchievementId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Platform-specific achievement identifier"
+                }
+            }
         }
     }
 }
@@ -164,6 +227,8 @@ public partial class AchievementController
                 "achievementType",
                 "points",
                 "isActive",
+                "isDeprecated",
+                "earnedCount",
                 "createdAt"
             ],
             "properties": {
@@ -198,6 +263,7 @@ public partial class AchievementController
                     "items": {
                         "type": "object"
                     },
+                    "nullable": true,
                     "description": "Allowed entity types"
                 },
                 "progressTarget": {
@@ -219,15 +285,16 @@ public partial class AchievementController
                     "items": {
                         "$ref": "#/$defs/Platform"
                     },
+                    "nullable": true,
                     "description": "Available platforms"
                 },
-                "platformIds": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
+                "platformMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PlatformMapping"
                     },
                     "nullable": true,
-                    "description": "Platform-specific IDs"
+                    "description": "Platform-specific achievement ID mappings"
                 },
                 "prerequisites": {
                     "type": "array",
@@ -237,9 +304,62 @@ public partial class AchievementController
                     "nullable": true,
                     "description": "Required achievements"
                 },
+                "scoreType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Score type code for matching analytics.score.updated events (progressive achievements)"
+                },
+                "milestoneType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Milestone type code for matching analytics.milestone.reached events"
+                },
+                "milestoneValue": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Expected milestone value for matching analytics.milestone.reached events"
+                },
+                "milestoneName": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "nullable": true,
+                    "description": "Expected milestone name for matching analytics.milestone.reached events"
+                },
+                "leaderboardId": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Leaderboard ID for matching leaderboard.rank.changed events"
+                },
+                "rankThreshold": {
+                    "type": "integer",
+                    "format": "int64",
+                    "nullable": true,
+                    "minimum": 1,
+                    "description": "Rank threshold for leaderboard achievements (unlock when rank <= threshold)"
+                },
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether achievement is earnable"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this definition is deprecated and should not be used for new progress"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When deprecation occurred, null if not deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Audit reason for deprecation, null if not deprecated"
                 },
                 "earnedCount": {
                     "type": "integer",
@@ -255,7 +375,7 @@ public partial class AchievementController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -263,21 +383,42 @@ public partial class AchievementController
             "type": "string",
             "description": "Type of achievement",
             "enum": [
-                "standard",
-                "progressive",
-                "hidden",
-                "secret"
+                "Standard",
+                "Progressive",
+                "Hidden",
+                "Secret"
             ]
         },
         "Platform": {
             "type": "string",
             "description": "External platform for achievement sync",
             "enum": [
-                "steam",
-                "xbox",
-                "playstation",
-                "internal"
+                "Steam",
+                "Xbox",
+                "PlayStation",
+                "Internal"
             ]
+        },
+        "PlatformMapping": {
+            "type": "object",
+            "description": "Maps an achievement to a platform-specific ID",
+            "additionalProperties": false,
+            "required": [
+                "platform",
+                "platformAchievementId"
+            ],
+            "properties": {
+                "platform": {
+                    "$ref": "#/$defs/Platform",
+                    "description": "External platform"
+                },
+                "platformAchievementId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Platform-specific achievement identifier"
+                }
+            }
         }
     }
 }
@@ -360,6 +501,8 @@ public partial class AchievementController
                 },
                 "achievementId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "ID of the achievement"
                 }
             }
@@ -385,6 +528,8 @@ public partial class AchievementController
                 "achievementType",
                 "points",
                 "isActive",
+                "isDeprecated",
+                "earnedCount",
                 "createdAt"
             ],
             "properties": {
@@ -419,6 +564,7 @@ public partial class AchievementController
                     "items": {
                         "type": "object"
                     },
+                    "nullable": true,
                     "description": "Allowed entity types"
                 },
                 "progressTarget": {
@@ -440,15 +586,16 @@ public partial class AchievementController
                     "items": {
                         "$ref": "#/$defs/Platform"
                     },
+                    "nullable": true,
                     "description": "Available platforms"
                 },
-                "platformIds": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
+                "platformMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PlatformMapping"
                     },
                     "nullable": true,
-                    "description": "Platform-specific IDs"
+                    "description": "Platform-specific achievement ID mappings"
                 },
                 "prerequisites": {
                     "type": "array",
@@ -458,9 +605,62 @@ public partial class AchievementController
                     "nullable": true,
                     "description": "Required achievements"
                 },
+                "scoreType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Score type code for matching analytics.score.updated events (progressive achievements)"
+                },
+                "milestoneType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Milestone type code for matching analytics.milestone.reached events"
+                },
+                "milestoneValue": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Expected milestone value for matching analytics.milestone.reached events"
+                },
+                "milestoneName": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "nullable": true,
+                    "description": "Expected milestone name for matching analytics.milestone.reached events"
+                },
+                "leaderboardId": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Leaderboard ID for matching leaderboard.rank.changed events"
+                },
+                "rankThreshold": {
+                    "type": "integer",
+                    "format": "int64",
+                    "nullable": true,
+                    "minimum": 1,
+                    "description": "Rank threshold for leaderboard achievements (unlock when rank <= threshold)"
+                },
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether achievement is earnable"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this definition is deprecated and should not be used for new progress"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When deprecation occurred, null if not deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Audit reason for deprecation, null if not deprecated"
                 },
                 "earnedCount": {
                     "type": "integer",
@@ -476,7 +676,7 @@ public partial class AchievementController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -484,21 +684,42 @@ public partial class AchievementController
             "type": "string",
             "description": "Type of achievement",
             "enum": [
-                "standard",
-                "progressive",
-                "hidden",
-                "secret"
+                "Standard",
+                "Progressive",
+                "Hidden",
+                "Secret"
             ]
         },
         "Platform": {
             "type": "string",
             "description": "External platform for achievement sync",
             "enum": [
-                "steam",
-                "xbox",
-                "playstation",
-                "internal"
+                "Steam",
+                "Xbox",
+                "PlayStation",
+                "Internal"
             ]
+        },
+        "PlatformMapping": {
+            "type": "object",
+            "description": "Maps an achievement to a platform-specific ID",
+            "additionalProperties": false,
+            "required": [
+                "platform",
+                "platformAchievementId"
+            ],
+            "properties": {
+                "platform": {
+                    "$ref": "#/$defs/Platform",
+                    "description": "External platform"
+                },
+                "platformAchievementId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Platform-specific achievement identifier"
+                }
+            }
         }
     }
 }
@@ -597,6 +818,11 @@ public partial class AchievementController
                     "type": "boolean",
                     "default": false,
                     "description": "Include hidden achievements in response"
+                },
+                "includeDeprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to include deprecated definitions in results"
                 }
             }
         },
@@ -604,20 +830,20 @@ public partial class AchievementController
             "type": "string",
             "description": "External platform for achievement sync",
             "enum": [
-                "steam",
-                "xbox",
-                "playstation",
-                "internal"
+                "Steam",
+                "Xbox",
+                "PlayStation",
+                "Internal"
             ]
         },
         "AchievementType": {
             "type": "string",
             "description": "Type of achievement",
             "enum": [
-                "standard",
-                "progressive",
-                "hidden",
-                "secret"
+                "Standard",
+                "Progressive",
+                "Hidden",
+                "Secret"
             ]
         }
     }
@@ -658,6 +884,8 @@ public partial class AchievementController
                 "achievementType",
                 "points",
                 "isActive",
+                "isDeprecated",
+                "earnedCount",
                 "createdAt"
             ],
             "properties": {
@@ -692,6 +920,7 @@ public partial class AchievementController
                     "items": {
                         "type": "object"
                     },
+                    "nullable": true,
                     "description": "Allowed entity types"
                 },
                 "progressTarget": {
@@ -713,15 +942,16 @@ public partial class AchievementController
                     "items": {
                         "$ref": "#/$defs/Platform"
                     },
+                    "nullable": true,
                     "description": "Available platforms"
                 },
-                "platformIds": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
+                "platformMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PlatformMapping"
                     },
                     "nullable": true,
-                    "description": "Platform-specific IDs"
+                    "description": "Platform-specific achievement ID mappings"
                 },
                 "prerequisites": {
                     "type": "array",
@@ -731,9 +961,62 @@ public partial class AchievementController
                     "nullable": true,
                     "description": "Required achievements"
                 },
+                "scoreType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Score type code for matching analytics.score.updated events (progressive achievements)"
+                },
+                "milestoneType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Milestone type code for matching analytics.milestone.reached events"
+                },
+                "milestoneValue": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Expected milestone value for matching analytics.milestone.reached events"
+                },
+                "milestoneName": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "nullable": true,
+                    "description": "Expected milestone name for matching analytics.milestone.reached events"
+                },
+                "leaderboardId": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Leaderboard ID for matching leaderboard.rank.changed events"
+                },
+                "rankThreshold": {
+                    "type": "integer",
+                    "format": "int64",
+                    "nullable": true,
+                    "minimum": 1,
+                    "description": "Rank threshold for leaderboard achievements (unlock when rank <= threshold)"
+                },
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether achievement is earnable"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this definition is deprecated and should not be used for new progress"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When deprecation occurred, null if not deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Audit reason for deprecation, null if not deprecated"
                 },
                 "earnedCount": {
                     "type": "integer",
@@ -749,7 +1032,7 @@ public partial class AchievementController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -757,21 +1040,42 @@ public partial class AchievementController
             "type": "string",
             "description": "Type of achievement",
             "enum": [
-                "standard",
-                "progressive",
-                "hidden",
-                "secret"
+                "Standard",
+                "Progressive",
+                "Hidden",
+                "Secret"
             ]
         },
         "Platform": {
             "type": "string",
             "description": "External platform for achievement sync",
             "enum": [
-                "steam",
-                "xbox",
-                "playstation",
-                "internal"
+                "Steam",
+                "Xbox",
+                "PlayStation",
+                "Internal"
             ]
+        },
+        "PlatformMapping": {
+            "type": "object",
+            "description": "Maps an achievement to a platform-specific ID",
+            "additionalProperties": false,
+            "required": [
+                "platform",
+                "platformAchievementId"
+            ],
+            "properties": {
+                "platform": {
+                    "$ref": "#/$defs/Platform",
+                    "description": "External platform"
+                },
+                "platformAchievementId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Platform-specific achievement identifier"
+                }
+            }
         }
     }
 }
@@ -854,6 +1158,8 @@ public partial class AchievementController
                 },
                 "achievementId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "ID of the achievement to update"
                 },
                 "displayName": {
@@ -873,15 +1179,83 @@ public partial class AchievementController
                     "nullable": true,
                     "description": "New active status"
                 },
-                "platformIds": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
+                "platformMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PlatformMapping"
                     },
                     "nullable": true,
                     "description": "Updated platform ID mappings"
+                },
+                "scoreType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Score type code for matching analytics.score.updated events (progressive achievements)"
+                },
+                "milestoneType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Milestone type code for matching analytics.milestone.reached events"
+                },
+                "milestoneValue": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Expected milestone value for matching analytics.milestone.reached events"
+                },
+                "milestoneName": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "nullable": true,
+                    "description": "Expected milestone name for matching analytics.milestone.reached events"
+                },
+                "leaderboardId": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Leaderboard ID for matching leaderboard.rank.changed events"
+                },
+                "rankThreshold": {
+                    "type": "integer",
+                    "format": "int64",
+                    "nullable": true,
+                    "minimum": 1,
+                    "description": "Rank threshold for leaderboard achievements (unlock when rank <= threshold)"
                 }
             }
+        },
+        "PlatformMapping": {
+            "type": "object",
+            "description": "Maps an achievement to a platform-specific ID",
+            "additionalProperties": false,
+            "required": [
+                "platform",
+                "platformAchievementId"
+            ],
+            "properties": {
+                "platform": {
+                    "$ref": "#/$defs/Platform",
+                    "description": "External platform"
+                },
+                "platformAchievementId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Platform-specific achievement identifier"
+                }
+            }
+        },
+        "Platform": {
+            "type": "string",
+            "description": "External platform for achievement sync",
+            "enum": [
+                "Steam",
+                "Xbox",
+                "PlayStation",
+                "Internal"
+            ]
         }
     }
 }
@@ -904,6 +1278,8 @@ public partial class AchievementController
                 "achievementType",
                 "points",
                 "isActive",
+                "isDeprecated",
+                "earnedCount",
                 "createdAt"
             ],
             "properties": {
@@ -938,6 +1314,7 @@ public partial class AchievementController
                     "items": {
                         "type": "object"
                     },
+                    "nullable": true,
                     "description": "Allowed entity types"
                 },
                 "progressTarget": {
@@ -959,15 +1336,16 @@ public partial class AchievementController
                     "items": {
                         "$ref": "#/$defs/Platform"
                     },
+                    "nullable": true,
                     "description": "Available platforms"
                 },
-                "platformIds": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
+                "platformMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PlatformMapping"
                     },
                     "nullable": true,
-                    "description": "Platform-specific IDs"
+                    "description": "Platform-specific achievement ID mappings"
                 },
                 "prerequisites": {
                     "type": "array",
@@ -977,9 +1355,62 @@ public partial class AchievementController
                     "nullable": true,
                     "description": "Required achievements"
                 },
+                "scoreType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Score type code for matching analytics.score.updated events (progressive achievements)"
+                },
+                "milestoneType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Milestone type code for matching analytics.milestone.reached events"
+                },
+                "milestoneValue": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Expected milestone value for matching analytics.milestone.reached events"
+                },
+                "milestoneName": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "nullable": true,
+                    "description": "Expected milestone name for matching analytics.milestone.reached events"
+                },
+                "leaderboardId": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Leaderboard ID for matching leaderboard.rank.changed events"
+                },
+                "rankThreshold": {
+                    "type": "integer",
+                    "format": "int64",
+                    "nullable": true,
+                    "minimum": 1,
+                    "description": "Rank threshold for leaderboard achievements (unlock when rank <= threshold)"
+                },
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether achievement is earnable"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this definition is deprecated and should not be used for new progress"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When deprecation occurred, null if not deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Audit reason for deprecation, null if not deprecated"
                 },
                 "earnedCount": {
                     "type": "integer",
@@ -995,7 +1426,7 @@ public partial class AchievementController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1003,21 +1434,42 @@ public partial class AchievementController
             "type": "string",
             "description": "Type of achievement",
             "enum": [
-                "standard",
-                "progressive",
-                "hidden",
-                "secret"
+                "Standard",
+                "Progressive",
+                "Hidden",
+                "Secret"
             ]
         },
         "Platform": {
             "type": "string",
             "description": "External platform for achievement sync",
             "enum": [
-                "steam",
-                "xbox",
-                "playstation",
-                "internal"
+                "Steam",
+                "Xbox",
+                "PlayStation",
+                "Internal"
             ]
+        },
+        "PlatformMapping": {
+            "type": "object",
+            "description": "Maps an achievement to a platform-specific ID",
+            "additionalProperties": false,
+            "required": [
+                "platform",
+                "platformAchievementId"
+            ],
+            "properties": {
+                "platform": {
+                    "$ref": "#/$defs/Platform",
+                    "description": "External platform"
+                },
+                "platformAchievementId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Platform-specific achievement identifier"
+                }
+            }
         }
     }
 }
@@ -1077,16 +1529,16 @@ public partial class AchievementController
 
     #endregion
 
-    #region Meta Endpoints for DeleteAchievementDefinition
+    #region Meta Endpoints for DeprecateAchievementDefinition
 
-    private static readonly string _DeleteAchievementDefinition_RequestSchema = """
+    private static readonly string _DeprecateAchievementDefinition_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/DeleteAchievementDefinitionRequest",
+    "$ref": "#/$defs/DeprecateAchievementDefinitionRequest",
     "$defs": {
-        "DeleteAchievementDefinitionRequest": {
+        "DeprecateAchievementDefinitionRequest": {
             "type": "object",
-            "description": "Request to delete an achievement",
+            "description": "Request to deprecate an achievement definition",
             "additionalProperties": false,
             "required": [
                 "gameServiceId",
@@ -1100,7 +1552,15 @@ public partial class AchievementController
                 },
                 "achievementId": {
                     "type": "string",
-                    "description": "ID of the achievement to delete"
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "description": "ID of the achievement to deprecate"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true,
+                    "description": "Audit reason for deprecation, explaining why this achievement is being phased out"
                 }
             }
         }
@@ -1108,61 +1568,271 @@ public partial class AchievementController
 }
 """;
 
-    private static readonly string _DeleteAchievementDefinition_ResponseSchema = """
-{}
+    private static readonly string _DeprecateAchievementDefinition_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AchievementDefinitionResponse",
+    "$defs": {
+        "AchievementDefinitionResponse": {
+            "type": "object",
+            "description": "Achievement definition details",
+            "additionalProperties": false,
+            "required": [
+                "gameServiceId",
+                "achievementId",
+                "displayName",
+                "description",
+                "achievementType",
+                "points",
+                "isActive",
+                "isDeprecated",
+                "earnedCount",
+                "createdAt"
+            ],
+            "properties": {
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the owning game service"
+                },
+                "achievementId": {
+                    "type": "string",
+                    "description": "Unique identifier"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Human-readable name"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "How to earn this achievement"
+                },
+                "hiddenDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Description for hidden achievements"
+                },
+                "achievementType": {
+                    "$ref": "#/$defs/AchievementType",
+                    "description": "Classification of the achievement"
+                },
+                "entityTypes": {
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    },
+                    "nullable": true,
+                    "description": "Allowed entity types"
+                },
+                "progressTarget": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Target for progressive achievements"
+                },
+                "points": {
+                    "type": "integer",
+                    "description": "Point value"
+                },
+                "iconUrl": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Achievement icon URL"
+                },
+                "platforms": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Platform"
+                    },
+                    "nullable": true,
+                    "description": "Available platforms"
+                },
+                "platformMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PlatformMapping"
+                    },
+                    "nullable": true,
+                    "description": "Platform-specific achievement ID mappings"
+                },
+                "prerequisites": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Required achievements"
+                },
+                "scoreType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Score type code for matching analytics.score.updated events (progressive achievements)"
+                },
+                "milestoneType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Milestone type code for matching analytics.milestone.reached events"
+                },
+                "milestoneValue": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Expected milestone value for matching analytics.milestone.reached events"
+                },
+                "milestoneName": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "nullable": true,
+                    "description": "Expected milestone name for matching analytics.milestone.reached events"
+                },
+                "leaderboardId": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Leaderboard ID for matching leaderboard.rank.changed events"
+                },
+                "rankThreshold": {
+                    "type": "integer",
+                    "format": "int64",
+                    "nullable": true,
+                    "minimum": 1,
+                    "description": "Rank threshold for leaderboard achievements (unlock when rank <= threshold)"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether achievement is earnable"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this definition is deprecated and should not be used for new progress"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When deprecation occurred, null if not deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Audit reason for deprecation, null if not deprecated"
+                },
+                "earnedCount": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "How many entities have earned this"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the achievement was created"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
+                }
+            }
+        },
+        "AchievementType": {
+            "type": "string",
+            "description": "Type of achievement",
+            "enum": [
+                "Standard",
+                "Progressive",
+                "Hidden",
+                "Secret"
+            ]
+        },
+        "Platform": {
+            "type": "string",
+            "description": "External platform for achievement sync",
+            "enum": [
+                "Steam",
+                "Xbox",
+                "PlayStation",
+                "Internal"
+            ]
+        },
+        "PlatformMapping": {
+            "type": "object",
+            "description": "Maps an achievement to a platform-specific ID",
+            "additionalProperties": false,
+            "required": [
+                "platform",
+                "platformAchievementId"
+            ],
+            "properties": {
+                "platform": {
+                    "$ref": "#/$defs/Platform",
+                    "description": "External platform"
+                },
+                "platformAchievementId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Platform-specific achievement identifier"
+                }
+            }
+        }
+    }
+}
 """;
 
-    private static readonly string _DeleteAchievementDefinition_Info = """
+    private static readonly string _DeprecateAchievementDefinition_Info = """
 {
-    "summary": "Delete achievement definition",
-    "description": "Delete an achievement. Earned instances are preserved in history.\nDeveloper-only endpoint.\n",
+    "summary": "Deprecate an achievement definition",
+    "description": "Mark an achievement definition as deprecated (Category B per IMPLEMENTATION TENETS).\nDeprecated definitions:\n- Remain queryable for historical data and earned instances\n- Cannot be used for new progress tracking or unlocks\n- Persist forever (no delete endpoint \u2014 instances outlive template relevance)\nIdempotent: returns OK if already deprecated.\n",
     "tags": [
         "Definitions"
     ],
     "deprecated": false,
-    "operationId": "deleteAchievementDefinition"
+    "operationId": "deprecateAchievementDefinition"
 }
 """;
 
-    /// <summary>Returns endpoint information for DeleteAchievementDefinition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/definition/delete/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAchievementDefinition_MetaInfo()
+    /// <summary>Returns endpoint information for DeprecateAchievementDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/definition/deprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateAchievementDefinition_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "Achievement",
             "POST",
-            "/achievement/definition/delete",
-            _DeleteAchievementDefinition_Info));
+            "/achievement/definition/deprecate",
+            _DeprecateAchievementDefinition_Info));
 
-    /// <summary>Returns request schema for DeleteAchievementDefinition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/definition/delete/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAchievementDefinition_MetaRequestSchema()
+    /// <summary>Returns request schema for DeprecateAchievementDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/definition/deprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateAchievementDefinition_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Achievement",
             "POST",
-            "/achievement/definition/delete",
+            "/achievement/definition/deprecate",
             "request-schema",
-            _DeleteAchievementDefinition_RequestSchema));
+            _DeprecateAchievementDefinition_RequestSchema));
 
-    /// <summary>Returns response schema for DeleteAchievementDefinition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/definition/delete/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAchievementDefinition_MetaResponseSchema()
+    /// <summary>Returns response schema for DeprecateAchievementDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/definition/deprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateAchievementDefinition_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Achievement",
             "POST",
-            "/achievement/definition/delete",
+            "/achievement/definition/deprecate",
             "response-schema",
-            _DeleteAchievementDefinition_ResponseSchema));
+            _DeprecateAchievementDefinition_ResponseSchema));
 
-    /// <summary>Returns full schema for DeleteAchievementDefinition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/definition/delete/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAchievementDefinition_MetaFullSchema()
+    /// <summary>Returns full schema for DeprecateAchievementDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/definition/deprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateAchievementDefinition_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "Achievement",
             "POST",
-            "/achievement/definition/delete",
-            _DeleteAchievementDefinition_Info,
-            _DeleteAchievementDefinition_RequestSchema,
-            _DeleteAchievementDefinition_ResponseSchema));
+            "/achievement/definition/deprecate",
+            _DeprecateAchievementDefinition_Info,
+            _DeprecateAchievementDefinition_RequestSchema,
+            _DeprecateAchievementDefinition_ResponseSchema));
 
     #endregion
 
@@ -1220,7 +1890,9 @@ public partial class AchievementController
             "required": [
                 "entityId",
                 "entityType",
-                "progress"
+                "progress",
+                "totalPoints",
+                "unlockedCount"
             ],
             "properties": {
                 "entityId": {
@@ -1255,6 +1927,7 @@ public partial class AchievementController
             "additionalProperties": false,
             "required": [
                 "achievementId",
+                "displayName",
                 "isUnlocked"
             ],
             "properties": {
@@ -1378,6 +2051,8 @@ public partial class AchievementController
                 },
                 "achievementId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "ID of the achievement"
                 },
                 "entityId": {
@@ -1410,17 +2085,12 @@ public partial class AchievementController
             "description": "Response after updating progress",
             "additionalProperties": false,
             "required": [
-                "achievementId",
                 "previousProgress",
                 "newProgress",
                 "targetProgress",
                 "unlocked"
             ],
             "properties": {
-                "achievementId": {
-                    "type": "string",
-                    "description": "Achievement identifier"
-                },
                 "previousProgress": {
                     "type": "integer",
                     "description": "Progress before update"
@@ -1528,6 +2198,8 @@ public partial class AchievementController
                 },
                 "achievementId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "ID of the achievement to unlock"
                 },
                 "entityId": {
@@ -1560,19 +2232,9 @@ public partial class AchievementController
             "description": "Response after unlocking an achievement",
             "additionalProperties": false,
             "required": [
-                "achievementId",
-                "unlocked",
                 "unlockedAt"
             ],
             "properties": {
-                "achievementId": {
-                    "type": "string",
-                    "description": "Achievement identifier"
-                },
-                "unlocked": {
-                    "type": "boolean",
-                    "description": "Whether unlock was successful"
-                },
                 "unlockedAt": {
                     "type": "string",
                     "format": "date-time",
@@ -1592,10 +2254,10 @@ public partial class AchievementController
             "type": "string",
             "description": "Status of platform synchronization",
             "enum": [
-                "pending",
-                "synced",
-                "failed",
-                "not_linked"
+                "Pending",
+                "Synced",
+                "Failed",
+                "NotLinked"
             ]
         }
     }
@@ -1691,6 +2353,11 @@ public partial class AchievementController
                     "$ref": "#/$defs/Platform",
                     "nullable": true,
                     "description": "Filter by platform"
+                },
+                "includeDeprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to include achievements earned from deprecated definitions"
                 }
             }
         },
@@ -1698,10 +2365,10 @@ public partial class AchievementController
             "type": "string",
             "description": "External platform for achievement sync",
             "enum": [
-                "steam",
-                "xbox",
-                "playstation",
-                "internal"
+                "Steam",
+                "Xbox",
+                "PlayStation",
+                "Internal"
             ]
         }
     }
@@ -1753,6 +2420,7 @@ public partial class AchievementController
             "required": [
                 "achievementId",
                 "displayName",
+                "description",
                 "points",
                 "unlockedAt"
             ],
@@ -1878,11 +2546,6 @@ public partial class AchievementController
                 "platform": {
                     "$ref": "#/$defs/Platform",
                     "description": "External platform to sync achievements to"
-                },
-                "forceResync": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Force resync even if already synced"
                 }
             }
         },
@@ -1890,10 +2553,10 @@ public partial class AchievementController
             "type": "string",
             "description": "External platform for achievement sync",
             "enum": [
-                "steam",
-                "xbox",
-                "playstation",
-                "internal"
+                "Steam",
+                "Xbox",
+                "PlayStation",
+                "Internal"
             ]
         }
     }
@@ -1927,10 +2590,6 @@ public partial class AchievementController
                     "type": "integer",
                     "description": "Number of sync failures"
                 },
-                "notLinked": {
-                    "type": "boolean",
-                    "description": "Whether account is not linked to platform"
-                },
                 "errors": {
                     "type": "array",
                     "items": {
@@ -1945,10 +2604,10 @@ public partial class AchievementController
             "type": "string",
             "description": "External platform for achievement sync",
             "enum": [
-                "steam",
-                "xbox",
-                "playstation",
-                "internal"
+                "Steam",
+                "Xbox",
+                "PlayStation",
+                "Internal"
             ]
         }
     }
@@ -2051,10 +2710,10 @@ public partial class AchievementController
             "type": "string",
             "description": "External platform for achievement sync",
             "enum": [
-                "steam",
-                "xbox",
-                "playstation",
-                "internal"
+                "Steam",
+                "Xbox",
+                "PlayStation",
+                "Internal"
             ]
         }
     }
@@ -2102,7 +2761,8 @@ public partial class AchievementController
                 "platform",
                 "isLinked",
                 "syncedCount",
-                "pendingCount"
+                "pendingCount",
+                "failedCount"
             ],
             "properties": {
                 "platform": {
@@ -2147,10 +2807,10 @@ public partial class AchievementController
             "type": "string",
             "description": "External platform for achievement sync",
             "enum": [
-                "steam",
-                "xbox",
-                "playstation",
-                "internal"
+                "Steam",
+                "Xbox",
+                "PlayStation",
+                "Internal"
             ]
         }
     }

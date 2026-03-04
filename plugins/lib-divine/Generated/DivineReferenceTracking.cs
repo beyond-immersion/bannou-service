@@ -141,7 +141,7 @@ public partial class DivineService
                 {
                     ResourceType = "character",
                     SourceType = "divine",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "divine",
                     CallbackEndpoint = "/divine/cleanup-by-character",
                     PayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
@@ -162,7 +162,7 @@ public partial class DivineService
                 {
                     ResourceType = "game-service",
                     SourceType = "divine",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "divine",
                     CallbackEndpoint = "/divine/cleanup-by-game-service",
                     PayloadTemplate = "{\"gameServiceId\": \"{{resourceId}}\"}",

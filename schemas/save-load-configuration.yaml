@@ -31,7 +31,7 @@ x-service-configuration:
     DefaultCompressionType:
       $ref: 'save-load-api.yaml#/components/schemas/CompressionType'
       env: SAVE_LOAD_DEFAULT_COMPRESSION_TYPE
-      default: GZIP
+      default: Gzip
       description: Default compression algorithm
 
     HotCacheTtlMinutes:
@@ -194,7 +194,7 @@ x-service-configuration:
     DefaultDeltaAlgorithm:
       $ref: 'save-load-api.yaml#/components/schemas/DeltaAlgorithm'
       env: SAVE_LOAD_DEFAULT_DELTA_ALGORITHM
-      default: JSON_PATCH
+      default: JsonPatch
       description: Default algorithm for delta computation
 
     MaxDeltaChainLength:

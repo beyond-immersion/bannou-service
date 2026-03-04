@@ -48,7 +48,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/template/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createItemTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/template/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getItemTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/template/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listItemTemplates",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/template/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateItemTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/template/deprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deprecateItemTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/instance/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createItemInstance",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/instance/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getItemInstance",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/instance/modify",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "modifyItemInstance",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/instance/bind",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "bindItemInstance",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/instance/unbind",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "unbindItemInstance",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/instance/destroy",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "destroyItemInstance",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/use",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "useItem",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/use-step",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "useItemStep",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/instance/list-by-container",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listItemsByContainer",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/instance/list-by-template",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listItemsByTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class ItemPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/item/instance/batch-get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "batchGetItemInstances",
             Permissions = new List<PermissionRequirement>
             {

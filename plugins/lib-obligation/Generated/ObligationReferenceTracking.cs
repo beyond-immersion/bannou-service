@@ -95,7 +95,7 @@ public partial class ObligationService
                 {
                     ResourceType = "character",
                     SourceType = "obligation",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "obligation",
                     CallbackEndpoint = "/obligation/cleanup-by-character",
                     PayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",

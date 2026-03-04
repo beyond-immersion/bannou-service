@@ -99,9 +99,9 @@ paths:
         \      \"default\": 100,\n                    \"description\": \"Display ordering (lower = first)\"\n            \
         \    }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n           \
         \ \"description\": \"How the encounter emotionally affected the character\",\n            \"enum\": [\n          \
-        \      \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n     \
-        \           \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\"\
-        ,\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
+        \      \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n                \"Respect\",\n     \
+        \           \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n                \"Indifference\"\
+        ,\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterTypeResponse\"\
         ,\n    \"$defs\": {\n        \"EncounterTypeResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -123,9 +123,9 @@ paths:
         \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
         \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
-        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
-        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
+        ,\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n\
+        \                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\"\
+        ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
         \   }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new encounter type\",\n    \"description\": \"Creates a new encounter
         type code for game-specific encounter categories.\\nBuilt-in types (COMBAT, TRADE, etc.) cannot be created via this
@@ -183,9 +183,9 @@ paths:
         \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
         \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
-        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
-        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
+        ,\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n\
+        \                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\"\
+        ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
         \   }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get encounter type by code\",\n    \"description\": \"Retrieve an encounter
         type by its unique code.\",\n    \"tags\": [\n        \"Encounter Type Management\"\n    ],\n    \"deprecated\": false,\n\
@@ -251,9 +251,9 @@ paths:
         \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
         \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
-        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
-        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
+        ,\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n\
+        \                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\"\
+        ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
         \   }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all encounter types\",\n    \"description\": \"Retrieve all encounter
         types including built-in and custom types.\",\n    \"tags\": [\n        \"Encounter Type Management\"\n    ],\n  \
@@ -302,9 +302,9 @@ paths:
         : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"New display ordering\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n       \
         \     \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
-        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
-        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
+        ,\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n\
+        \                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\"\
+        ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
         \   }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterTypeResponse\"\
         ,\n    \"$defs\": {\n        \"EncounterTypeResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -327,9 +327,9 @@ paths:
         \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
         \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
-        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
-        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
+        ,\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n\
+        \                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\"\
+        ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
         \   }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update encounter type\",\n    \"description\": \"Update an existing encounter
         type. Built-in types can only have their\\ndescription and defaultEmotionalImpact updated.\\n\",\n    \"tags\": [\n\
@@ -478,8 +478,8 @@ paths:
         \                \"description\": \"Client-provided encounter-specific data. No Bannou plugin reads specific keys
         from this field by convention.\"\n                }\n            }\n        },\n        \"EncounterOutcome\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"Overall outcome of an encounter\",\n          \
-        \  \"enum\": [\n                \"POSITIVE\",\n                \"NEGATIVE\",\n                \"NEUTRAL\",\n     \
-        \           \"MEMORABLE\",\n                \"TRANSFORMATIVE\"\n            ]\n        },\n        \"PerspectiveInput\"\
+        \  \"enum\": [\n                \"Positive\",\n                \"Negative\",\n                \"Neutral\",\n     \
+        \           \"Memorable\",\n                \"Transformative\"\n            ]\n        },\n        \"PerspectiveInput\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Input for a single participant's perspective\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\",\n \
         \               \"emotionalImpact\"\n            ],\n            \"properties\": {\n                \"characterId\"\
@@ -500,10 +500,10 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\"\
         : true,\n                    \"description\": \"How this character remembers the encounter\"\n                }\n\
         \            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\"\
-        ,\n                \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\"\
-        ,\n                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n             \
-        \   \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
+        : \"How the encounter emotionally affected the character\",\n            \"enum\": [\n                \"Gratitude\"\
+        ,\n                \"Anger\",\n                \"Fear\",\n                \"Respect\",\n                \"Contempt\"\
+        ,\n                \"Affection\",\n                \"Rivalry\",\n                \"Indifference\",\n             \
+        \   \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterResponse\"\
         ,\n    \"$defs\": {\n        \"EncounterResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response containing an encounter with perspectives\",\n            \"additionalProperties\": false,\n        \
@@ -543,8 +543,8 @@ paths:
         createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
         \              \"description\": \"System timestamp when record was created\"\n                }\n            }\n \
         \       },\n        \"EncounterOutcome\": {\n            \"type\": \"string\",\n            \"description\": \"Overall
-        outcome of an encounter\",\n            \"enum\": [\n                \"POSITIVE\",\n                \"NEGATIVE\",\n\
-        \                \"NEUTRAL\",\n                \"MEMORABLE\",\n                \"TRANSFORMATIVE\"\n            ]\n\
+        outcome of an encounter\",\n            \"enum\": [\n                \"Positive\",\n                \"Negative\",\n\
+        \                \"Neutral\",\n                \"Memorable\",\n                \"Transformative\"\n            ]\n\
         \        },\n        \"EncounterPerspectiveModel\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"A character's individual perspective on an encounter\",\n            \"additionalProperties\": false,\n      \
         \      \"required\": [\n                \"perspectiveId\",\n                \"encounterId\",\n                \"characterId\"\
@@ -578,9 +578,9 @@ paths:
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
         timestamp\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How the encounter emotionally affected the character\",\n            \"\
-        enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n               \
-        \ \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\",\n    \
-        \            \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n\
+        enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n               \
+        \ \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n    \
+        \            \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n\
         \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Record new encounter with perspectives\",\n    \"description\": \"Records
         a new encounter between two or more characters. Creates the shared\\nencounter record and individual perspectives
@@ -635,8 +635,8 @@ paths:
         \              \"maximum\": 100,\n                    \"default\": 20,\n                    \"description\": \"Results
         per page\"\n                }\n            }\n        },\n        \"EncounterOutcome\": {\n            \"type\": \"\
         string\",\n            \"description\": \"Overall outcome of an encounter\",\n            \"enum\": [\n          \
-        \      \"POSITIVE\",\n                \"NEGATIVE\",\n                \"NEUTRAL\",\n                \"MEMORABLE\",\n\
-        \                \"TRANSFORMATIVE\"\n            ]\n        }\n    }\n}"
+        \      \"Positive\",\n                \"Negative\",\n                \"Neutral\",\n                \"Memorable\",\n\
+        \                \"Transformative\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterListResponse\"\
         ,\n    \"$defs\": {\n        \"EncounterListResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Paginated list of encounters\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
@@ -689,8 +689,8 @@ paths:
         createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
         \              \"description\": \"System timestamp when record was created\"\n                }\n            }\n \
         \       },\n        \"EncounterOutcome\": {\n            \"type\": \"string\",\n            \"description\": \"Overall
-        outcome of an encounter\",\n            \"enum\": [\n                \"POSITIVE\",\n                \"NEGATIVE\",\n\
-        \                \"NEUTRAL\",\n                \"MEMORABLE\",\n                \"TRANSFORMATIVE\"\n            ]\n\
+        outcome of an encounter\",\n            \"enum\": [\n                \"Positive\",\n                \"Negative\",\n\
+        \                \"Neutral\",\n                \"Memorable\",\n                \"Transformative\"\n            ]\n\
         \        },\n        \"EncounterPerspectiveModel\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"A character's individual perspective on an encounter\",\n            \"additionalProperties\": false,\n      \
         \      \"required\": [\n                \"perspectiveId\",\n                \"encounterId\",\n                \"characterId\"\
@@ -724,9 +724,9 @@ paths:
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
         timestamp\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How the encounter emotionally affected the character\",\n            \"\
-        enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n               \
-        \ \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\",\n    \
-        \            \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n\
+        enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n               \
+        \ \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n    \
+        \            \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n\
         \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get character's encounters (paginated)\",\n    \"description\": \"Retrieves
         all encounters for a character with optional filtering.\\nMemory decay is applied lazily on access.\\n\",\n    \"\
@@ -826,8 +826,8 @@ paths:
         createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
         \              \"description\": \"System timestamp when record was created\"\n                }\n            }\n \
         \       },\n        \"EncounterOutcome\": {\n            \"type\": \"string\",\n            \"description\": \"Overall
-        outcome of an encounter\",\n            \"enum\": [\n                \"POSITIVE\",\n                \"NEGATIVE\",\n\
-        \                \"NEUTRAL\",\n                \"MEMORABLE\",\n                \"TRANSFORMATIVE\"\n            ]\n\
+        outcome of an encounter\",\n            \"enum\": [\n                \"Positive\",\n                \"Negative\",\n\
+        \                \"Neutral\",\n                \"Memorable\",\n                \"Transformative\"\n            ]\n\
         \        },\n        \"EncounterPerspectiveModel\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"A character's individual perspective on an encounter\",\n            \"additionalProperties\": false,\n      \
         \      \"required\": [\n                \"perspectiveId\",\n                \"encounterId\",\n                \"characterId\"\
@@ -861,9 +861,9 @@ paths:
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
         timestamp\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How the encounter emotionally affected the character\",\n            \"\
-        enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n               \
-        \ \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\",\n    \
-        \            \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n\
+        enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n               \
+        \ \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n    \
+        \            \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n\
         \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get encounters between two characters\",\n    \"description\": \"Retrieves
         all encounters between two specific characters.\\nUseful for relationship history and dialogue context.\\n\",\n  \
@@ -960,8 +960,8 @@ paths:
         createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
         \              \"description\": \"System timestamp when record was created\"\n                }\n            }\n \
         \       },\n        \"EncounterOutcome\": {\n            \"type\": \"string\",\n            \"description\": \"Overall
-        outcome of an encounter\",\n            \"enum\": [\n                \"POSITIVE\",\n                \"NEGATIVE\",\n\
-        \                \"NEUTRAL\",\n                \"MEMORABLE\",\n                \"TRANSFORMATIVE\"\n            ]\n\
+        outcome of an encounter\",\n            \"enum\": [\n                \"Positive\",\n                \"Negative\",\n\
+        \                \"Neutral\",\n                \"Memorable\",\n                \"Transformative\"\n            ]\n\
         \        },\n        \"EncounterPerspectiveModel\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"A character's individual perspective on an encounter\",\n            \"additionalProperties\": false,\n      \
         \      \"required\": [\n                \"perspectiveId\",\n                \"encounterId\",\n                \"characterId\"\
@@ -995,9 +995,9 @@ paths:
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
         timestamp\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How the encounter emotionally affected the character\",\n            \"\
-        enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n               \
-        \ \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\",\n    \
-        \            \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n\
+        enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n               \
+        \ \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n    \
+        \            \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n\
         \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Recent encounters at location\",\n    \"description\": \"Retrieves recent
         encounters at a specific location.\\nUseful for scene context and area history.\\n\",\n    \"tags\": [\n        \"\
@@ -1098,9 +1098,9 @@ paths:
         : true,\n                    \"description\": \"Most common emotional impact across encounters\"\n               \
         \ }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"\
         description\": \"How the encounter emotionally affected the character\",\n            \"enum\": [\n              \
-        \  \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n         \
-        \       \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\"\
-        ,\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
+        \  \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n                \"Respect\",\n         \
+        \       \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n                \"Indifference\"\
+        ,\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Aggregate sentiment toward another character\",\n    \"description\": \"\
         Calculates the aggregate sentiment a character has toward another based\\non all their encounters. Memory strength
         is factored into the calculation.\\n\",\n    \"tags\": [\n        \"Queries\"\n    ],\n    \"deprecated\": false,\n\
@@ -1163,9 +1163,9 @@ paths:
         \       \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Most common emotional impact across encounters\"\n                }\n            }\n        },\n        \"EmotionalImpact\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the
-        character\",\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n              \
-        \  \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n      \
-        \          \"RIVALRY\",\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n\
+        character\",\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n              \
+        \  \"Fear\",\n                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n      \
+        \          \"Rivalry\",\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n\
         \            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Bulk sentiment for multiple targets\",\n    \"description\": \"Calculates
         sentiment toward multiple target characters in a single call.\\nEfficient for behavior system queries that check multiple
@@ -1246,10 +1246,10 @@ paths:
         \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
         \        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How
-        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n   \
-        \             \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n\
-        \                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n               \
-        \ \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
+        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"Gratitude\",\n   \
+        \             \"Anger\",\n                \"Fear\",\n                \"Respect\",\n                \"Contempt\",\n\
+        \                \"Affection\",\n                \"Rivalry\",\n                \"Indifference\",\n               \
+        \ \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get character's view of encounter\",\n    \"description\": \"Retrieves
         a specific character's perspective on an encounter.\\nIncludes emotional impact, sentiment shift, and memory strength.\\\
         n\",\n    \"tags\": [\n        \"Perspectives\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getPerspective\"\
@@ -1298,10 +1298,10 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\"\
         : true,\n                    \"description\": \"New memory description\"\n                }\n            }\n     \
         \   },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How the
-        encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n       \
-        \         \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n   \
-        \             \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n                \"\
-        GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
+        encounter emotionally affected the character\",\n            \"enum\": [\n                \"Gratitude\",\n       \
+        \         \"Anger\",\n                \"Fear\",\n                \"Respect\",\n                \"Contempt\",\n   \
+        \             \"Affection\",\n                \"Rivalry\",\n                \"Indifference\",\n                \"\
+        Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PerspectiveResponse\"\
         ,\n    \"$defs\": {\n        \"PerspectiveResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response containing a perspective\",\n            \"additionalProperties\": false,\n            \"required\":
@@ -1341,10 +1341,10 @@ paths:
         \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
         \        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How
-        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n   \
-        \             \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n\
-        \                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n               \
-        \ \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
+        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"Gratitude\",\n   \
+        \             \"Anger\",\n                \"Fear\",\n                \"Respect\",\n                \"Contempt\",\n\
+        \                \"Affection\",\n                \"Rivalry\",\n                \"Indifference\",\n               \
+        \ \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update perspective (reflection)\",\n    \"description\": \"Updates a character's
         perspective on an encounter. Used when a character\\nreflects on past events or gains new information about an encounter.\\\
         n\",\n    \"tags\": [\n        \"Perspectives\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updatePerspective\"\
@@ -1425,10 +1425,10 @@ paths:
         \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
         \        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How
-        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n   \
-        \             \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n\
-        \                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n               \
-        \ \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
+        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"Gratitude\",\n   \
+        \             \"Anger\",\n                \"Fear\",\n                \"Respect\",\n                \"Contempt\",\n\
+        \                \"Affection\",\n                \"Rivalry\",\n                \"Indifference\",\n               \
+        \ \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Strengthen memory (referenced)\",\n    \"description\": \"Strengthens a
         character's memory of an encounter. Called when the encounter\\nis referenced in dialogue, thought, or action. Counteracts
         memory decay.\\n\",\n    \"tags\": [\n        \"Perspectives\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -1661,8 +1661,8 @@ paths:
         createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
         \              \"description\": \"System timestamp when record was created\"\n                }\n            }\n \
         \       },\n        \"EncounterOutcome\": {\n            \"type\": \"string\",\n            \"description\": \"Overall
-        outcome of an encounter\",\n            \"enum\": [\n                \"POSITIVE\",\n                \"NEGATIVE\",\n\
-        \                \"NEUTRAL\",\n                \"MEMORABLE\",\n                \"TRANSFORMATIVE\"\n            ]\n\
+        outcome of an encounter\",\n            \"enum\": [\n                \"Positive\",\n                \"Negative\",\n\
+        \                \"Neutral\",\n                \"Memorable\",\n                \"Transformative\"\n            ]\n\
         \        },\n        \"EncounterPerspectiveModel\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"A character's individual perspective on an encounter\",\n            \"additionalProperties\": false,\n      \
         \      \"required\": [\n                \"perspectiveId\",\n                \"encounterId\",\n                \"characterId\"\
@@ -1696,9 +1696,9 @@ paths:
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification
         timestamp\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How the encounter emotionally affected the character\",\n            \"\
-        enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n               \
-        \ \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\",\n    \
-        \            \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n\
+        enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n               \
+        \ \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n    \
+        \            \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n\
         \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get encounter data for compression\",\n    \"description\": \"Called by
         Resource service during character compression.\\nReturns encounters and perspectives involving this character for
@@ -1763,25 +1763,25 @@ components:
       type: string
       description: Overall outcome of an encounter
       enum:
-      - POSITIVE
-      - NEGATIVE
-      - NEUTRAL
-      - MEMORABLE
-      - TRANSFORMATIVE
+      - Positive
+      - Negative
+      - Neutral
+      - Memorable
+      - Transformative
     EmotionalImpact:
       type: string
       description: How the encounter emotionally affected the character
       enum:
-      - GRATITUDE
-      - ANGER
-      - FEAR
-      - RESPECT
-      - CONTEMPT
-      - AFFECTION
-      - RIVALRY
-      - INDIFFERENCE
-      - GUILT
-      - PRIDE
+      - Gratitude
+      - Anger
+      - Fear
+      - Respect
+      - Contempt
+      - Affection
+      - Rivalry
+      - Indifference
+      - Guilt
+      - Pride
     EncounterModel:
       type: object
       description: Core encounter record representing a memorable interaction

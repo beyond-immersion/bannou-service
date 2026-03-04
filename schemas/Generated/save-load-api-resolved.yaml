@@ -759,7 +759,7 @@ components:
 
     SaveCategory:
       type: string
-      enum: [QUICK_SAVE, AUTO_SAVE, MANUAL_SAVE, CHECKPOINT, STATE_SNAPSHOT]
+      enum: [QuickSave, AutoSave, ManualSave, Checkpoint, StateSnapshot]
       description: |
         Category of save with predefined behaviors.
         QUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).
@@ -770,12 +770,12 @@ components:
 
     CompressionType:
       type: string
-      enum: [NONE, GZIP, BROTLI]
+      enum: [None, Gzip, Brotli]
       description: Compression algorithm used for save data
 
     ConflictResolution:
       type: string
-      enum: [SKIP, OVERWRITE, RENAME, FAIL]
+      enum: [Skip, Overwrite, Rename, Fail]
       description: Strategy for handling conflicts during import
 
     JsonPatchOperation:
@@ -2018,8 +2018,8 @@ components:
 
     DeltaAlgorithm:
       type: string
-      enum: [JSON_PATCH, BSDIFF, XDELTA]
-      default: JSON_PATCH
+      enum: [JsonPatch, Bsdiff, Xdelta]
+      default: JsonPatch
       description: |
         Algorithm used for delta computation.
         JSON_PATCH: RFC 6902, best for structured JSON data
@@ -2149,24 +2149,24 @@ components:
         service-specific roles that include non-entity values (use service-specific enums).
         See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
       enum:
-      - system
-      - account
-      - character
-      - actor
-      - guild
-      - organization
-      - government
-      - faction
-      - location
-      - realm
-      - item
-      - monster
-      - relationship
-      - session
-      - deity
-      - dungeon
-      - custom
-      - other
+      - System
+      - Account
+      - Character
+      - Actor
+      - Guild
+      - Organization
+      - Government
+      - Faction
+      - Location
+      - Realm
+      - Item
+      - Monster
+      - Relationship
+      - Session
+      - Deity
+      - Dungeon
+      - Custom
+      - Other
 
 x-inlined-types:
 - EntityType

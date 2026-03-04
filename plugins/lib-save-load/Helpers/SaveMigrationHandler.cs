@@ -348,9 +348,9 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
 
             // Compress data
             var compressionType = slot.CompressionType;
-            var migrationCompressionLevel = compressionType == CompressionType.BROTLI
+            var migrationCompressionLevel = compressionType == CompressionType.Brotli
                 ? _configuration.BrotliCompressionLevel
-                : compressionType == CompressionType.GZIP
+                : compressionType == CompressionType.Gzip
                     ? _configuration.GzipCompressionLevel
                     : (int?)null;
             var compressedData = CompressionHelper.Compress(migrationResult.Data, compressionType, migrationCompressionLevel);

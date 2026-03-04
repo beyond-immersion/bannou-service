@@ -117,8 +117,8 @@ public partial class LicenseController
             "type": "string",
             "description": "Grid traversal adjacency mode for a board template.\n- four_way: Orthogonal only (up, down, left, right)\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\n",
             "enum": [
-                "four_way",
-                "eight_way"
+                "FourWay",
+                "EightWay"
             ]
         }
     }
@@ -238,8 +238,8 @@ public partial class LicenseController
             "type": "string",
             "description": "Grid traversal adjacency mode for a board template.\n- four_way: Orthogonal only (up, down, left, right)\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\n",
             "enum": [
-                "four_way",
-                "eight_way"
+                "FourWay",
+                "EightWay"
             ]
         }
     }
@@ -439,8 +439,8 @@ public partial class LicenseController
             "type": "string",
             "description": "Grid traversal adjacency mode for a board template.\n- four_way: Orthogonal only (up, down, left, right)\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\n",
             "enum": [
-                "four_way",
-                "eight_way"
+                "FourWay",
+                "EightWay"
             ]
         }
     }
@@ -679,8 +679,8 @@ public partial class LicenseController
             "type": "string",
             "description": "Grid traversal adjacency mode for a board template.\n- four_way: Orthogonal only (up, down, left, right)\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\n",
             "enum": [
-                "four_way",
-                "eight_way"
+                "FourWay",
+                "EightWay"
             ]
         }
     }
@@ -904,8 +904,8 @@ public partial class LicenseController
             "type": "string",
             "description": "Grid traversal adjacency mode for a board template.\n- four_way: Orthogonal only (up, down, left, right)\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\n",
             "enum": [
-                "four_way",
-                "eight_way"
+                "FourWay",
+                "EightWay"
             ]
         }
     }
@@ -1105,8 +1105,8 @@ public partial class LicenseController
             "type": "string",
             "description": "Grid traversal adjacency mode for a board template.\n- four_way: Orthogonal only (up, down, left, right)\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\n",
             "enum": [
-                "four_way",
-                "eight_way"
+                "FourWay",
+                "EightWay"
             ]
         }
     }
@@ -3244,9 +3244,9 @@ public partial class LicenseController
             "type": "string",
             "description": "Unlock status of a license node on a board.\n- locked: Not adjacent to any unlocked node (cannot be unlocked)\n- unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)\n- unlocked: Already unlocked (item placed at this position)\n",
             "enum": [
-                "locked",
-                "unlockable",
-                "unlocked"
+                "Locked",
+                "Unlockable",
+                "Unlocked"
             ]
         }
     }

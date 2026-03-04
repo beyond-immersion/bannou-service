@@ -2571,7 +2571,7 @@ public class AssetServiceTests
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-1),
             UpdatedAt = DateTimeOffset.UtcNow,
             CompletedAt = DateTimeOffset.UtcNow,
-            ErrorCode = MetabundleErrorCode.TIMEOUT,
+            ErrorCode = MetabundleErrorCode.Timeout,
             ErrorMessage = "Job timed out before processing could start"
         };
 
@@ -2587,7 +2587,7 @@ public class AssetServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.Equal(BundleStatus.Failed, result.Status);
-        Assert.Equal(MetabundleErrorCode.TIMEOUT, result.ErrorCode);
+        Assert.Equal(MetabundleErrorCode.Timeout, result.ErrorCode);
         Assert.Equal("Job timed out before processing could start", result.ErrorMessage);
     }
 
@@ -2783,7 +2783,7 @@ public class AssetServiceTests
             null,
             null,
             null,
-            MetabundleErrorCode.CANCELLED,
+            MetabundleErrorCode.Cancelled,
             It.IsAny<string>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
@@ -2808,7 +2808,7 @@ public class AssetServiceTests
             null,
             null,
             null,
-            MetabundleErrorCode.CANCELLED,
+            MetabundleErrorCode.Cancelled,
             It.IsAny<string>(),
             It.IsAny<CancellationToken>()),
             Times.Once);
@@ -3165,7 +3165,7 @@ public class AssetEventEmitterTests
             sessionId,
             uploadId,
             success: false,
-            errorCode: UploadErrorCode.SIZE_EXCEEDED,
+            errorCode: UploadErrorCode.SizeExceeded,
             errorMessage: "File exceeds maximum size");
 
         // Assert

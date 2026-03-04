@@ -328,7 +328,7 @@ public partial class CharacterService : ICharacterService
                     {
                         ResourceType = "character",
                         ResourceId = body.CharacterId,
-                        CleanupPolicy = Resource.CleanupPolicy.ALL_REQUIRED
+                        CleanupPolicy = Resource.CleanupPolicy.AllRequired
                     }, cancellationToken);
 
                 if (!cleanupResult.Success)

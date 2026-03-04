@@ -39,9 +39,9 @@ public partial class WebsiteController
                 "status": {
                     "type": "string",
                     "enum": [
-                        "healthy",
-                        "degraded",
-                        "maintenance"
+                        "Healthy",
+                        "Degraded",
+                        "Maintenance"
                     ],
                     "description": "Current health status of the website service"
                 },
@@ -159,9 +159,9 @@ public partial class WebsiteController
                 "contentType": {
                     "type": "string",
                     "enum": [
-                        "html",
-                        "markdown",
-                        "blazor"
+                        "Html",
+                        "Markdown",
+                        "Blazor"
                     ],
                     "description": "Format of the page content"
                 },
@@ -518,9 +518,9 @@ public partial class WebsiteController
         "Platform": {
             "type": "string",
             "enum": [
-                "windows",
-                "macos",
-                "linux"
+                "Windows",
+                "Macos",
+                "Linux"
             ],
             "description": "Target operating system platform"
         }
@@ -624,13 +624,13 @@ public partial class WebsiteController
                 "category": {
                     "type": "string",
                     "enum": [
-                        "general",
-                        "support",
-                        "bug",
-                        "feedback",
-                        "business"
+                        "General",
+                        "Support",
+                        "Bug",
+                        "Feedback",
+                        "Business"
                     ],
-                    "default": "general",
+                    "default": "General",
                     "description": "Category to route the contact request"
                 }
             }
@@ -979,9 +979,9 @@ public partial class WebsiteController
                 "contentType": {
                     "type": "string",
                     "enum": [
-                        "html",
-                        "markdown",
-                        "blazor"
+                        "Html",
+                        "Markdown",
+                        "Blazor"
                     ],
                     "description": "Format of the page content"
                 },
@@ -1094,9 +1094,9 @@ public partial class WebsiteController
                 "contentType": {
                     "type": "string",
                     "enum": [
-                        "html",
-                        "markdown",
-                        "blazor"
+                        "Html",
+                        "Markdown",
+                        "Blazor"
                     ],
                     "description": "Format of the page content"
                 },
@@ -1265,9 +1265,9 @@ public partial class WebsiteController
                 "contentType": {
                     "type": "string",
                     "enum": [
-                        "html",
-                        "markdown",
-                        "blazor"
+                        "Html",
+                        "Markdown",
+                        "Blazor"
                     ],
                     "description": "Format of the page content"
                 },
@@ -1380,9 +1380,9 @@ public partial class WebsiteController
                 "contentType": {
                     "type": "string",
                     "enum": [
-                        "html",
-                        "markdown",
-                        "blazor"
+                        "Html",
+                        "Markdown",
+                        "Blazor"
                     ],
                     "description": "Format of the page content"
                 },
@@ -2159,10 +2159,10 @@ public partial class WebsiteController
                 "target": {
                     "type": "string",
                     "enum": [
-                        "_self",
-                        "_blank"
+                        "Self",
+                        "Blank"
                     ],
-                    "default": "_self",
+                    "default": "Self",
                     "description": "Link target attribute for opening behavior"
                 },
                 "children": {
@@ -2341,10 +2341,10 @@ public partial class WebsiteController
                 "target": {
                     "type": "string",
                     "enum": [
-                        "_self",
-                        "_blank"
+                        "Self",
+                        "Blank"
                     ],
-                    "default": "_self",
+                    "default": "Self",
                     "description": "Link target attribute for opening behavior"
                 },
                 "children": {

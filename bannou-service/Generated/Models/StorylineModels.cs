@@ -44,19 +44,19 @@ using System = global::System;
 public enum StorylineGoal
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"revenge")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Revenge")]
     Revenge = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"resurrection")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Resurrection")]
     Resurrection = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"legacy")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Legacy")]
     Legacy = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"mystery")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Mystery")]
     Mystery = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"peace")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Peace")]
     Peace = 4,
 
 }
@@ -2849,13 +2849,13 @@ public partial class StorylineParticipation
 public enum StorylineRiskSeverity
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"low")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Low")]
     Low = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"medium")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Medium")]
     Medium = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"high")]
+    [System.Runtime.Serialization.EnumMember(Value = @"High")]
     High = 2,
 
 }

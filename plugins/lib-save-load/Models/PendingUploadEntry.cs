@@ -50,7 +50,7 @@ public sealed class PendingUploadEntry
     /// <summary>
     /// Compression type applied
     /// </summary>
-    public CompressionType CompressionType { get; set; } = CompressionType.GZIP;
+    public CompressionType CompressionType { get; set; } = CompressionType.Gzip;
 
     /// <summary>
     /// Size of uncompressed data in bytes

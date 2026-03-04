@@ -53,8 +53,7 @@ public sealed class RelationshipDataCache : IRelationshipDataCache
         using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipDataCache.GetOrLoadAsync");
 
         // Check cache first
-        CachedEntry? cached = null;
-        if (_cache.TryGetValue(characterId, out cached) && cached.ExpiresAt > DateTimeOffset.UtcNow)
+        if (_cache.TryGetValue(characterId, out CachedEntry? cached) && cached.ExpiresAt > DateTimeOffset.UtcNow)
         {
             return cached.Data;
         }

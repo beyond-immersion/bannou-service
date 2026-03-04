@@ -1102,8 +1102,8 @@ public partial class AnalyticsController
             "type": "string",
             "description": "Type of controller action",
             "enum": [
-                "possess",
-                "release"
+                "Possess",
+                "Release"
             ]
         }
     }
@@ -1304,8 +1304,8 @@ public partial class AnalyticsController
             "type": "string",
             "description": "Type of controller action",
             "enum": [
-                "possess",
-                "release"
+                "Possess",
+                "Release"
             ]
         }
     }

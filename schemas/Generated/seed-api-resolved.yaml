@@ -1659,24 +1659,24 @@ components:
         service-specific roles that include non-entity values (use service-specific enums).
         See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
       enum:
-      - system
-      - account
-      - character
-      - actor
-      - guild
-      - organization
-      - government
-      - faction
-      - location
-      - realm
-      - item
-      - monster
-      - relationship
-      - session
-      - deity
-      - dungeon
-      - custom
-      - other
+      - System
+      - Account
+      - Character
+      - Actor
+      - Guild
+      - Organization
+      - Government
+      - Faction
+      - Location
+      - Realm
+      - Item
+      - Monster
+      - Relationship
+      - Session
+      - Deity
+      - Dungeon
+      - Custom
+      - Other
 
 x-inlined-types:
 - EntityType

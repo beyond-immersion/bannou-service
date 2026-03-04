@@ -44,19 +44,19 @@ using System = global::System;
 public enum GrantFailureReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"already_unlocked")]
+    [System.Runtime.Serialization.EnumMember(Value = @"AlreadyUnlocked")]
     AlreadyUnlocked = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"entry_not_found")]
+    [System.Runtime.Serialization.EnumMember(Value = @"EntryNotFound")]
     EntryNotFound = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"collection_not_found")]
+    [System.Runtime.Serialization.EnumMember(Value = @"CollectionNotFound")]
     CollectionNotFound = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"max_entries_reached")]
+    [System.Runtime.Serialization.EnumMember(Value = @"MaxEntriesReached")]
     MaxEntriesReached = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"item_creation_failed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ItemCreationFailed")]
     ItemCreationFailed = 4,
 
 }

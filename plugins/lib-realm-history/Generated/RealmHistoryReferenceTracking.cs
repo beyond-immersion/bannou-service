@@ -95,7 +95,7 @@ public partial class RealmHistoryService
                 {
                     ResourceType = "realm",
                     SourceType = "realm-history",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "realm-history",
                     CallbackEndpoint = "/realm-history/delete-all",
                     PayloadTemplate = "{\"realmId\": \"{{resourceId}}\"}",

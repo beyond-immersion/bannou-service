@@ -67,7 +67,7 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// Default compression algorithm
     /// Environment variable: SAVE_LOAD_DEFAULT_COMPRESSION_TYPE
     /// </summary>
-    public CompressionType DefaultCompressionType { get; set; } = CompressionType.GZIP;
+    public CompressionType DefaultCompressionType { get; set; } = CompressionType.Gzip;
 
     /// <summary>
     /// TTL for hot cache entries in minutes
@@ -207,7 +207,7 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// Default algorithm for delta computation
     /// Environment variable: SAVE_LOAD_DEFAULT_DELTA_ALGORITHM
     /// </summary>
-    public DeltaAlgorithm DefaultDeltaAlgorithm { get; set; } = DeltaAlgorithm.JSON_PATCH;
+    public DeltaAlgorithm DefaultDeltaAlgorithm { get; set; } = DeltaAlgorithm.JsonPatch;
 
     /// <summary>
     /// Maximum number of deltas before forcing collapse. Longer chains increase load latency.

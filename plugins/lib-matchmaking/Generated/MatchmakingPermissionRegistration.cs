@@ -48,7 +48,7 @@ public static class MatchmakingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/matchmaking/queue/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listQueues",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class MatchmakingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/matchmaking/queue/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getQueue",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class MatchmakingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/matchmaking/queue/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createQueue",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class MatchmakingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/matchmaking/queue/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateQueue",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class MatchmakingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/matchmaking/queue/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteQueue",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class MatchmakingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/matchmaking/join",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "joinMatchmaking",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class MatchmakingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/matchmaking/leave",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "leaveMatchmaking",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class MatchmakingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/matchmaking/status",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getMatchmakingStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class MatchmakingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/matchmaking/accept",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "acceptMatch",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class MatchmakingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/matchmaking/decline",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "declineMatch",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class MatchmakingPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/matchmaking/stats",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getMatchmakingStats",
             Permissions = new List<PermissionRequirement>
             {

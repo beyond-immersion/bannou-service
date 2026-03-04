@@ -110,7 +110,7 @@ for path, methods in paths.items():
 
         endpoint_info = {
             'path': path,
-            'method': method.upper(),
+            'method': method.title(),
             'operationId': operation.get('operationId', ''),
             'permissions': []
         }

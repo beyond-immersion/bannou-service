@@ -150,7 +150,7 @@ Achievement and trophy system with progress tracking and platform synchronizatio
 | `GetAchievementdefinitionAsync` | `GetAchievementDefinitionRequest` | `AchievementDefinitionResponse` | Get achievement definition |
 | `ListAchievementdefinitionsAsync` | `ListAchievementDefinitionsRequest` | `ListAchievementDefinitionsResponse` | List achievement definitions |
 | `UpdateAchievementdefinitionAsync` | `UpdateAchievementDefinitionRequest` | `AchievementDefinitionResponse` | Update achievement definition |
-| `DeleteAchievementdefinitionEventAsync` | `DeleteAchievementDefinitionRequest` | *(fire-and-forget)* | Delete achievement definition |
+| `DeprecateachievementdefinitionAsync` | `DeprecateAchievementDefinitionRequest` | `AchievementDefinitionResponse` | Deprecate an achievement definition |
 
 ### Platform Sync
 

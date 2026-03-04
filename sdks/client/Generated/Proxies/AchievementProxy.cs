@@ -99,19 +99,21 @@ public sealed class AchievementProxy
     }
 
     /// <summary>
-    /// Delete achievement definition
+    /// Deprecate an achievement definition
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Task that completes when the event is sent.</returns>
-    public Task DeleteAchievementDefinitionEventAsync(
-        DeleteAchievementDefinitionRequest request,
+    /// <returns>ApiResponse containing AchievementDefinitionResponse on success.</returns>
+    public Task<ApiResponse<AchievementDefinitionResponse>> DeprecateAchievementDefinitionAsync(
+        DeprecateAchievementDefinitionRequest request,
         ushort channel = 0,
+        TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.SendEventAsync<DeleteAchievementDefinitionRequest>(
-            "/achievement/definition/delete", request, channel, cancellationToken);
+        return _client.InvokeAsync<DeprecateAchievementDefinitionRequest, AchievementDefinitionResponse>(
+            "/achievement/definition/deprecate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>

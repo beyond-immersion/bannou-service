@@ -48,7 +48,7 @@ public static class AchievementPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/achievement/definition/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createAchievementDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class AchievementPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/achievement/definition/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listAchievementDefinitions",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class AchievementPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/achievement/definition/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateAchievementDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class AchievementPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/achievement/definition/deprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deprecateAchievementDefinition",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class AchievementPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/achievement/progress/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getAchievementProgress",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class AchievementPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/achievement/list-unlocked",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listUnlockedAchievements",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class AchievementPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/achievement/platform/sync",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "syncPlatformAchievements",
             Permissions = new List<PermissionRequirement>
             {

@@ -38,20 +38,20 @@ using System = global::System;
 public enum EncounterOutcome
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"POSITIVE")]
-    POSITIVE = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Positive")]
+    Positive = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"NEGATIVE")]
-    NEGATIVE = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Negative")]
+    Negative = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"NEUTRAL")]
-    NEUTRAL = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Neutral")]
+    Neutral = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"MEMORABLE")]
-    MEMORABLE = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Memorable")]
+    Memorable = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TRANSFORMATIVE")]
-    TRANSFORMATIVE = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Transformative")]
+    Transformative = 4,
 
 }
 #pragma warning restore CS1591
@@ -64,35 +64,35 @@ public enum EncounterOutcome
 public enum EmotionalImpact
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"GRATITUDE")]
-    GRATITUDE = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Gratitude")]
+    Gratitude = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ANGER")]
-    ANGER = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Anger")]
+    Anger = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"FEAR")]
-    FEAR = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Fear")]
+    Fear = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"RESPECT")]
-    RESPECT = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Respect")]
+    Respect = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CONTEMPT")]
-    CONTEMPT = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Contempt")]
+    Contempt = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"AFFECTION")]
-    AFFECTION = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"Affection")]
+    Affection = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"RIVALRY")]
-    RIVALRY = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"Rivalry")]
+    Rivalry = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"INDIFFERENCE")]
-    INDIFFERENCE = 7,
+    [System.Runtime.Serialization.EnumMember(Value = @"Indifference")]
+    Indifference = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"GUILT")]
-    GUILT = 8,
+    [System.Runtime.Serialization.EnumMember(Value = @"Guilt")]
+    Guilt = 8,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"PRIDE")]
-    PRIDE = 9,
+    [System.Runtime.Serialization.EnumMember(Value = @"Pride")]
+    Pride = 9,
 
 }
 #pragma warning restore CS1591

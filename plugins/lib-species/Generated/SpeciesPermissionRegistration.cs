@@ -48,7 +48,7 @@ public static class SpeciesPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/species/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getSpecies",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class SpeciesPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/species/get-by-code",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getSpeciesByCode",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class SpeciesPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/species/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listSpecies",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class SpeciesPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/species/list-by-realm",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listSpeciesByRealm",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class SpeciesPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/species/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createSpecies",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class SpeciesPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/species/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateSpecies",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class SpeciesPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/species/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteSpecies",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class SpeciesPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/species/deprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deprecateSpecies",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class SpeciesPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/species/undeprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "undeprecateSpecies",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class SpeciesPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/species/merge",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "mergeSpecies",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class SpeciesPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/species/add-to-realm",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "addSpeciesToRealm",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class SpeciesPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/species/remove-from-realm",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "removeSpeciesFromRealm",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class SpeciesPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/species/seed",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "seedSpecies",
             Permissions = new List<PermissionRequirement>
             {

@@ -139,7 +139,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/achievement/definition/delete': {
+  '/achievement/definition/deprecate': {
     parameters: {
       query?: never;
       header?: never;
@@ -149,11 +149,15 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Delete achievement definition
-     * @description Delete an achievement. Earned instances are preserved in history.
-     *     Developer-only endpoint.
+     * Deprecate an achievement definition
+     * @description Mark an achievement definition as deprecated (Category B per IMPLEMENTATION TENETS).
+     *     Deprecated definitions:
+     *     - Remain queryable for historical data and earned instances
+     *     - Cannot be used for new progress tracking or unlocks
+     *     - Persist forever (no delete endpoint — instances outlive template relevance)
+     *     Idempotent: returns OK if already deprecated.
      */
-    post: operations['achievement_deleteAchievementDefinition'];
+    post: operations['achievement_deprecateAchievementDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -13016,7 +13020,7 @@ export interface components {
       /** @description Classification of the achievement */
       achievementType: components['schemas']['AchievementType'];
       /** @description Allowed entity types */
-      entityTypes?: components['schemas']['EntityType'][];
+      entityTypes?: components['schemas']['EntityType'][] | null;
       /** @description Target for progressive achievements */
       progressTarget?: number | null;
       /** @description Point value */
@@ -13024,26 +13028,51 @@ export interface components {
       /** @description Achievement icon URL */
       iconUrl?: string | null;
       /** @description Available platforms */
-      platforms?: components['schemas']['Platform'][];
-      /** @description Platform-specific IDs */
-      platformIds?: {
-        [key: string]: string;
-      } | null;
+      platforms?: components['schemas']['Platform'][] | null;
+      /** @description Platform-specific achievement ID mappings */
+      platformMappings?: components['schemas']['PlatformMapping'][] | null;
       /** @description Required achievements */
       prerequisites?: string[] | null;
+      /** @description Score type code for matching analytics.score.updated events (progressive achievements) */
+      scoreType?: string | null;
+      /** @description Milestone type code for matching analytics.milestone.reached events */
+      milestoneType?: string | null;
+      /**
+       * Format: double
+       * @description Expected milestone value for matching analytics.milestone.reached events
+       */
+      milestoneValue?: number | null;
+      /** @description Expected milestone name for matching analytics.milestone.reached events */
+      milestoneName?: string | null;
+      /** @description Leaderboard ID for matching leaderboard.rank.changed events */
+      leaderboardId?: string | null;
+      /**
+       * Format: int64
+       * @description Rank threshold for leaderboard achievements (unlock when rank <= threshold)
+       */
+      rankThreshold?: number | null;
       /** @description Whether achievement is earnable */
       isActive: boolean;
+      /** @description Whether this definition is deprecated and should not be used for new progress */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When deprecation occurred, null if not deprecated
+       */
+      deprecatedAt?: string | null;
+      /** @description Audit reason for deprecation, null if not deprecated */
+      deprecationReason?: string | null;
       /**
        * Format: int64
        * @description How many entities have earned this
        */
-      earnedCount?: number;
+      earnedCount: number;
       /**
        * Format: date-time
        * @description When the achievement was created
        */
       createdAt: string;
-      /** @description Additional metadata */
+      /** @description Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -13053,7 +13082,7 @@ export interface components {
       /** @description Achievement identifier */
       achievementId: string;
       /** @description Achievement display name */
-      displayName?: string;
+      displayName: string;
       /** @description Current progress (for progressive) */
       currentProgress?: number | null;
       /** @description Target progress (for progressive) */
@@ -13083,15 +13112,15 @@ export interface components {
       /** @description Progress for each achievement */
       progress: components['schemas']['AchievementProgress'][];
       /** @description Total points from unlocked achievements */
-      totalPoints?: number;
+      totalPoints: number;
       /** @description Number of unlocked achievements */
-      unlockedCount?: number;
+      unlockedCount: number;
     };
     /**
      * @description Type of achievement
      * @enum {string}
      */
-    AchievementType: 'standard' | 'progressive' | 'hidden' | 'secret';
+    AchievementType: 'Standard' | 'Progressive' | 'Hidden' | 'Secret';
     /** @description Effect of an action on world state */
     ActionEffect: {
       /** @description State key to modify */
@@ -13235,15 +13264,15 @@ export interface components {
     };
     /**
      * @description Size classification affecting cover requirements and passage width
-     * @default medium
+     * @default Medium
      * @enum {string}
      */
-    ActorSize: 'tiny' | 'small' | 'medium' | 'large' | 'huge';
+    ActorSize: 'Tiny' | 'Small' | 'Medium' | 'Large' | 'Huge';
     /**
      * @description Current actor lifecycle state
      * @enum {string}
      */
-    ActorStatus: 'pending' | 'starting' | 'running' | 'paused' | 'stopping' | 'stopped' | 'error';
+    ActorStatus: 'Pending' | 'Starting' | 'Running' | 'Paused' | 'Stopping' | 'Stopped' | 'Error';
     /** @description Response containing actor template details */
     ActorTemplateResponse: {
       /**
@@ -13375,7 +13404,7 @@ export interface components {
      *     - eight_way: Orthogonal + diagonal (all 8 surrounding cells)
      * @enum {string}
      */
-    AdjacencyMode: 'four_way' | 'eight_way';
+    AdjacencyMode: 'FourWay' | 'EightWay';
     /** @description Result of admin-triggered idle room cleanup */
     AdminCleanupResponse: {
       /** @description Total rooms processed by cleanup */
@@ -13508,10 +13537,10 @@ export interface components {
     };
     /**
      * @description Controls caching behavior for affordance queries
-     * @default cached
+     * @default Cached
      * @enum {string}
      */
-    AffordanceFreshness: 'fresh' | 'cached' | 'aggressive_cache';
+    AffordanceFreshness: 'Fresh' | 'Cached' | 'AggressiveCache';
     /** @description A location that affords the requested action */
     AffordanceLocation: {
       /** @description Location position */
@@ -13587,15 +13616,15 @@ export interface components {
      * @enum {string}
      */
     AffordanceType:
-      | 'ambush'
-      | 'shelter'
-      | 'vista'
-      | 'choke_point'
-      | 'gathering_spot'
-      | 'dramatic_reveal'
-      | 'hidden_path'
-      | 'defensible_position'
-      | 'custom';
+      | 'Ambush'
+      | 'Shelter'
+      | 'Vista'
+      | 'ChokePoint'
+      | 'GatheringSpot'
+      | 'DramaticReveal'
+      | 'HiddenPath'
+      | 'DefensiblePosition'
+      | 'Custom';
     /** @description Analytics and tracking configuration for website visitor metrics */
     Analytics: {
       /** @description Google Analytics tracking ID */
@@ -13894,7 +13923,7 @@ export interface components {
      * @description Type classification for assets
      * @enum {string}
      */
-    AssetType: 'texture' | 'model' | 'audio' | 'behavior' | 'bundle' | 'prefab' | 'other';
+    AssetType: 'Texture' | 'Model' | 'Audio' | 'Behavior' | 'Bundle' | 'Prefab' | 'Other';
     /** @description Information about asset usage */
     AssetUsageInfo: {
       /**
@@ -14021,7 +14050,7 @@ export interface components {
      * @description All authentication provider types including email
      * @enum {string}
      */
-    AuthProvider: 'email' | 'google' | 'discord' | 'twitch' | 'steam';
+    AuthProvider: 'Email' | 'Google' | 'Discord' | 'Twitch' | 'Steam';
     /** @description Successful authentication response containing tokens and session information */
     AuthResponse: {
       /**
@@ -14047,7 +14076,7 @@ export interface components {
      * @description Authentication mechanism type (oauth = browser redirect, ticket = game client token)
      * @enum {string}
      */
-    AuthType: 'oauth' | 'ticket';
+    AuthType: 'Oauth' | 'Ticket';
     /** @description Request to checkout for authoring */
     AuthoringCheckoutRequest: {
       /**
@@ -14167,7 +14196,7 @@ export interface components {
      * @description How autogain (energy/interest) is calculated
      * @enum {string}
      */
-    AutogainMode: 'simple' | 'compound';
+    AutogainMode: 'Simple' | 'Compound';
     /** @description A machine-readable backstory element for behavior system consumption */
     BackstoryElement: {
       /** @description Category of this backstory element */
@@ -14203,15 +14232,15 @@ export interface components {
      * @enum {string}
      */
     BackstoryElementType:
-      | 'ORIGIN'
-      | 'OCCUPATION'
-      | 'TRAINING'
-      | 'TRAUMA'
-      | 'ACHIEVEMENT'
-      | 'SECRET'
-      | 'GOAL'
-      | 'FEAR'
-      | 'BELIEF';
+      | 'Origin'
+      | 'Occupation'
+      | 'Training'
+      | 'Trauma'
+      | 'Achievement'
+      | 'Secret'
+      | 'Goal'
+      | 'Fear'
+      | 'Belief';
     /** @description Complete backstory data for a character */
     BackstoryResponse: {
       /**
@@ -14624,7 +14653,7 @@ export interface components {
      * @description Status of a repository binding
      * @enum {string}
      */
-    BindingStatus: 'pending' | 'syncing' | 'synced' | 'error' | 'disabled';
+    BindingStatus: 'Pending' | 'Syncing' | 'Synced' | 'Error' | 'Disabled';
     /** @description Full blessing record response */
     BlessingResponse: {
       /**
@@ -14672,7 +14701,7 @@ export interface components {
      * @description Current status of a granted blessing
      * @enum {string}
      */
-    BlessingStatus: 'active' | 'revoked';
+    BlessingStatus: 'Active' | 'Revoked';
     /** @description Compact blessing record for list responses */
     BlessingSummary: {
       /**
@@ -14711,7 +14740,7 @@ export interface components {
      * @description Tier of a blessing determining its power, cost, and storage mechanism
      * @enum {string}
      */
-    BlessingTier: 'minor' | 'standard' | 'greater' | 'supreme';
+    BlessingTier: 'Minor' | 'Standard' | 'Greater' | 'Supreme';
     /** @description State of a single license node on a board, including unlock status */
     BoardNodeState: {
       /** @description Unique license code within this board template */
@@ -15031,12 +15060,12 @@ export interface components {
      * @enum {string}
      */
     BreachStatus:
-      | 'detected'
-      | 'cure_period'
-      | 'cured'
-      | 'consequences_applied'
-      | 'disputed'
-      | 'forgiven';
+      | 'Detected'
+      | 'CurePeriod'
+      | 'Cured'
+      | 'ConsequencesApplied'
+      | 'Disputed'
+      | 'Forgiven';
     /** @description Brief breach information */
     BreachSummary: {
       /**
@@ -15054,11 +15083,11 @@ export interface components {
      * @enum {string}
      */
     BreachType:
-      | 'term_violation'
-      | 'milestone_missed'
-      | 'milestone_deadline'
-      | 'unauthorized_action'
-      | 'non_payment';
+      | 'TermViolation'
+      | 'MilestoneMissed'
+      | 'MilestoneDeadline'
+      | 'UnauthorizedAction'
+      | 'NonPayment';
     /** @description Request to initiate broadcast consent for a voice room */
     BroadcastConsentRequest: {
       /**
@@ -15197,7 +15226,7 @@ export interface components {
      * @description Bundle file format
      * @enum {string}
      */
-    BundleFormat: 'bannou' | 'zip';
+    BundleFormat: 'Bannou' | 'Zip';
     /** @description Complete metadata for an asset bundle (API response model) */
     BundleInfo: {
       /** @description Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1") */
@@ -15252,7 +15281,7 @@ export interface components {
      *     - processing: Bundle is being processed (metabundle creation)
      * @enum {string}
      */
-    BundleLifecycle: 'active' | 'deleted' | 'processing';
+    BundleLifecycle: 'Active' | 'Deleted' | 'Processing';
     /** @description Preview of bundle manifest for validation */
     BundleManifestPreview: {
       /** @description Human-readable bundle identifier from the manifest */
@@ -15266,7 +15295,7 @@ export interface components {
      * @description Fields available for sorting bundle query results
      * @enum {string}
      */
-    BundleSortField: 'created_at' | 'updated_at' | 'name' | 'size';
+    BundleSortField: 'CreatedAt' | 'UpdatedAt' | 'Name' | 'Size';
     /**
      * @description Bundle processing status:
      *     - queued: Bundle creation is queued for processing
@@ -15276,7 +15305,7 @@ export interface components {
      *     - cancelled: Bundle creation was cancelled
      * @enum {string}
      */
-    BundleStatus: 'queued' | 'processing' | 'ready' | 'failed' | 'cancelled';
+    BundleStatus: 'Queued' | 'Processing' | 'Ready' | 'Failed' | 'Cancelled';
     /** @description Summary information about a bundle */
     BundleSummary: {
       /** @description Human-readable bundle identifier */
@@ -15306,7 +15335,7 @@ export interface components {
      *     - metabundle: Composed from other bundles server-side
      * @enum {string}
      */
-    BundleType: 'source' | 'metabundle';
+    BundleType: 'Source' | 'Metabundle';
     /** @description Request to upload a pre-built asset bundle file */
     BundleUploadRequest: {
       /**
@@ -15509,7 +15538,7 @@ export interface components {
      *     - warn_and_proceed: CanUse failure logs warning but proceeds with use
      * @enum {string}
      */
-    CanUseBehavior: 'disabled' | 'block' | 'warn_and_proceed';
+    CanUseBehavior: 'Disabled' | 'Block' | 'WarnAndProceed';
     /** @description Request to cancel an async metabundle creation job */
     CancelJobRequest: {
       /**
@@ -15561,7 +15590,7 @@ export interface components {
      * @description What happens when a credit would exceed the wallet cap
      * @enum {string}
      */
-    CapOverflowBehavior: 'reject' | 'cap_and_lose' | 'cap_and_return';
+    CapOverflowBehavior: 'Reject' | 'CapAndLose' | 'CapAndReturn';
     /** @description A single capability entry in the manifest. */
     Capability: {
       /** @description Unique capability identifier. Consumer-interpreted (e.g., UX module ID, spawning permission, faction action). */
@@ -16006,7 +16035,7 @@ export interface components {
      * @description Character lifecycle status
      * @enum {string}
      */
-    CharacterStatus: 'alive' | 'dead' | 'dormant';
+    CharacterStatus: 'Alive' | 'Dead' | 'Dormant';
     /** @description Request to send a chat message to players in a game session */
     ChatMessageRequest: {
       /**
@@ -16071,7 +16100,7 @@ export interface components {
      * @description Type of chat message
      * @enum {string}
      */
-    ChatMessageType: 'public' | 'whisper' | 'system';
+    ChatMessageType: 'Public' | 'Whisper' | 'System';
     /**
      * @description Participant role within a chat room determining moderation privileges
      * @enum {string}
@@ -16376,7 +16405,7 @@ export interface components {
      * @description Category of clause type
      * @enum {string}
      */
-    ClauseCategory: 'validation' | 'execution' | 'both';
+    ClauseCategory: 'Validation' | 'Execution' | 'Both';
     /** @description Per-clause distribution outcome during contract execution; excludes wallet/container IDs so consumers correlate via clauseId */
     ClauseDistributionResult: {
       /**
@@ -16547,11 +16576,11 @@ export interface components {
     };
     /**
      * @description Policy for cleanup callback execution.
-     *     BEST_EFFORT: Proceed with deletion even if some callbacks fail
-     *     ALL_REQUIRED: Abort deletion if any callback fails
+     *     BestEffort: Proceed with deletion even if some callbacks fail
+     *     AllRequired: Abort deletion if any callback fails
      * @enum {string}
      */
-    CleanupPolicy: 'BEST_EFFORT' | 'ALL_REQUIRED';
+    CleanupPolicy: 'BestEffort' | 'AllRequired';
     /** @description Result of an owner cleanup operation */
     CleanupResponse: {
       /** @description Number of status instances removed */
@@ -16843,7 +16872,7 @@ export interface components {
      *     ability usage, and engagement decisions.
      * @enum {string}
      */
-    CombatStyle: 'DEFENSIVE' | 'BALANCED' | 'AGGRESSIVE' | 'BERSERKER' | 'TACTICAL';
+    CombatStyle: 'Defensive' | 'Balanced' | 'Aggressive' | 'Berserker' | 'Tactical';
     /** @description Request to commit checkout changes */
     CommitRequest: {
       /**
@@ -16871,7 +16900,7 @@ export interface components {
      * @description Comparison operators for numeric conditions
      * @enum {string}
      */
-    ComparisonOperator: 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte';
+    ComparisonOperator: 'Eq' | 'Ne' | 'Gt' | 'Gte' | 'Lt' | 'Lte';
     /** @description Options controlling the ABML compilation process including optimizations and caching */
     CompilationOptions: {
       /**
@@ -17186,16 +17215,16 @@ export interface components {
     };
     /**
      * @description Policy for compression callback execution.
-     *     BEST_EFFORT: Create archive even if some callbacks fail (partial archive)
-     *     ALL_REQUIRED: Abort compression if any callback fails
+     *     BestEffort: Create archive even if some callbacks fail (partial archive)
+     *     AllRequired: Abort compression if any callback fails
      * @enum {string}
      */
-    CompressionPolicy: 'BEST_EFFORT' | 'ALL_REQUIRED';
+    CompressionPolicy: 'BestEffort' | 'AllRequired';
     /**
      * @description Compression algorithm for bundles
      * @enum {string}
      */
-    CompressionType: 'lz4' | 'lzma' | 'none';
+    CompressionType: 'Lz4' | 'Lzma' | 'None';
     /** @description Result of evaluating a single condition */
     ConditionResult: {
       /** @description Condition type */
@@ -17298,7 +17327,7 @@ export interface components {
      * @description Operational status of a transit connection
      * @enum {string}
      */
-    ConnectionStatus: 'open' | 'closed' | 'dangerous' | 'blocked' | 'seasonal_closed';
+    ConnectionStatus: 'Open' | 'Closed' | 'Dangerous' | 'Blocked' | 'SeasonalClosed';
     /**
      * @description How a scenario instance connects to the broader game world
      * @enum {string}
@@ -17342,7 +17371,7 @@ export interface components {
      * @description Party's consent status
      * @enum {string}
      */
-    ConsentStatus: 'pending' | 'consented' | 'declined' | 'implicit';
+    ConsentStatus: 'Pending' | 'Consented' | 'Declined' | 'Implicit';
     /** @description Request to consent to a contract */
     ConsentToContractRequest: {
       /**
@@ -17362,7 +17391,7 @@ export interface components {
      * @description Type of constraint to check
      * @enum {string}
      */
-    ConstraintType: 'exclusivity' | 'non_compete' | 'time_commitment';
+    ConstraintType: 'Exclusivity' | 'NonCompete' | 'TimeCommitment';
     /** @description User-submitted contact form data */
     ContactRequest: {
       /**
@@ -17378,10 +17407,10 @@ export interface components {
       message: string;
       /**
        * @description Category to route the contact request
-       * @default general
+       * @default General
        * @enum {string}
        */
-      category: 'general' | 'support' | 'bug' | 'feedback' | 'business';
+      category: 'General' | 'Support' | 'Bug' | 'Feedback' | 'Business';
     };
     /** @description Confirmation response after submitting a contact form */
     ContactResponse: {
@@ -17401,12 +17430,12 @@ export interface components {
      * @enum {string}
      */
     ContainerConstraintModel:
-      | 'slot_only'
-      | 'weight_only'
-      | 'slot_and_weight'
-      | 'grid'
-      | 'volumetric'
-      | 'unlimited';
+      | 'SlotOnly'
+      | 'WeightOnly'
+      | 'SlotAndWeight'
+      | 'Grid'
+      | 'Volumetric'
+      | 'Unlimited';
     /** @description Item in a container */
     ContainerItem: {
       /**
@@ -17438,14 +17467,14 @@ export interface components {
      * @enum {string}
      */
     ContainerOwnerType:
-      | 'character'
-      | 'account'
-      | 'location'
-      | 'vehicle'
-      | 'guild'
-      | 'escrow'
-      | 'mail'
-      | 'other';
+      | 'Character'
+      | 'Account'
+      | 'Location'
+      | 'Vehicle'
+      | 'Guild'
+      | 'Escrow'
+      | 'Mail'
+      | 'Other';
     /** @description Container details */
     ContainerResponse: {
       /**
@@ -17569,7 +17598,7 @@ export interface components {
      * @description Format of the content field in a document response
      * @enum {string}
      */
-    ContentFormat: 'markdown' | 'html' | 'none';
+    ContentFormat: 'Markdown' | 'Html' | 'None';
     /** @description Selected content entry for an area */
     ContentSelectionResponse: {
       /** @description Code of the selected entry */
@@ -17598,7 +17627,7 @@ export interface components {
      *     - lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)
      * @enum {string}
      */
-    ContractBindingType: 'none' | 'session' | 'lifecycle';
+    ContractBindingType: 'None' | 'Session' | 'Lifecycle';
     /** @description An asset requirement within a clause definition */
     ContractClauseAsset: {
       /** @description Asset type (currency, item) */
@@ -17780,17 +17809,17 @@ export interface components {
      * @enum {string}
      */
     ContractStatus:
-      | 'draft'
-      | 'proposed'
-      | 'pending'
-      | 'active'
-      | 'fulfilled'
-      | 'expired'
-      | 'terminated'
-      | 'breached'
-      | 'suspended'
-      | 'disputed'
-      | 'declined';
+      | 'Draft'
+      | 'Proposed'
+      | 'Pending'
+      | 'Active'
+      | 'Fulfilled'
+      | 'Expired'
+      | 'Terminated'
+      | 'Breached'
+      | 'Suspended'
+      | 'Disputed'
+      | 'Declined';
     /** @description Brief contract information */
     ContractSummary: {
       /**
@@ -18030,11 +18059,11 @@ export interface components {
       hiddenDescription?: string | null;
       /**
        * @description Classification of the achievement (affects visibility and progress behavior)
-       * @default standard
+       * @default Standard
        */
       achievementType: components['schemas']['AchievementType'];
       /** @description Which entity types can earn this achievement */
-      entityTypes?: components['schemas']['EntityType'][];
+      entityTypes?: components['schemas']['EntityType'][] | null;
       /** @description Target value for progressive achievements */
       progressTarget?: number | null;
       /**
@@ -18045,19 +18074,35 @@ export interface components {
       /** @description URL to achievement icon */
       iconUrl?: string | null;
       /** @description Platforms where this achievement exists */
-      platforms?: components['schemas']['Platform'][];
-      /** @description Platform-specific achievement IDs (e.g., {"steam": "ACH_001"}) */
-      platformIds?: {
-        [key: string]: string;
-      } | null;
+      platforms?: components['schemas']['Platform'][] | null;
+      /** @description Platform-specific achievement ID mappings */
+      platformMappings?: components['schemas']['PlatformMapping'][] | null;
       /** @description Achievement IDs that must be unlocked first */
       prerequisites?: string[] | null;
+      /** @description Score type code for matching analytics.score.updated events (progressive achievements) */
+      scoreType?: string | null;
+      /** @description Milestone type code for matching analytics.milestone.reached events */
+      milestoneType?: string | null;
+      /**
+       * Format: double
+       * @description Expected milestone value for matching analytics.milestone.reached events
+       */
+      milestoneValue?: number | null;
+      /** @description Expected milestone name for matching analytics.milestone.reached events */
+      milestoneName?: string | null;
+      /** @description Leaderboard ID for matching leaderboard.rank.changed events */
+      leaderboardId?: string | null;
+      /**
+       * Format: int64
+       * @description Rank threshold for leaderboard achievements (unlock when rank <= threshold)
+       */
+      rankThreshold?: number | null;
       /**
        * @description Whether this achievement can be earned
        * @default true
        */
       isActive: boolean;
-      /** @description Additional achievement-specific metadata */
+      /** @description Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -19464,17 +19509,17 @@ export interface components {
      * @enum {string}
      */
     CurrencyPrecision:
-      | 'integer'
-      | 'decimal_2'
-      | 'decimal_4'
-      | 'decimal_8'
-      | 'decimal_full'
-      | 'big_integer';
+      | 'Integer'
+      | 'Decimal2'
+      | 'Decimal4'
+      | 'Decimal8'
+      | 'DecimalFull'
+      | 'BigInteger';
     /**
      * @description Scope of currency availability across realms
      * @enum {string}
      */
-    CurrencyScope: 'global' | 'realm_specific' | 'multi_realm';
+    CurrencyScope: 'Global' | 'RealmSpecific' | 'MultiRealm';
     /** @description Immutable record of a currency transaction */
     CurrencyTransactionRecord: {
       /**
@@ -19814,17 +19859,7 @@ export interface components {
      * @description Lifecycle status of a deity entity
      * @enum {string}
      */
-    DeityStatus: 'active' | 'dormant' | 'archived';
-    /** @description Request to delete an achievement */
-    DeleteAchievementDefinitionRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the game service
-       */
-      gameServiceId: string;
-      /** @description ID of the achievement to delete */
-      achievementId: string;
-    };
+    DeityStatus: 'Active' | 'Dormant' | 'Archived';
     /** @description Request to delete an action tag mapping */
     DeleteActionMappingRequest: {
       /** @description The GOAP action tag whose mapping should be deleted */
@@ -20079,16 +20114,16 @@ export interface components {
      *     - permanently_deleted: Permanently removed (unrecoverable)
      * @enum {string}
      */
-    DeletionStatus: 'deleted' | 'permanently_deleted';
+    DeletionStatus: 'Deleted' | 'PermanentlyDeleted';
     /**
      * @description Algorithm used for delta computation.
      *     JSON_PATCH: RFC 6902, best for structured JSON data
      *     BSDIFF: Binary diff, good for general binary data
      *     XDELTA: RFC 3284 VCDIFF, efficient for large binary files
-     * @default JSON_PATCH
+     * @default JsonPatch
      * @enum {string}
      */
-    DeltaAlgorithm: 'JSON_PATCH' | 'BSDIFF' | 'XDELTA';
+    DeltaAlgorithm: 'JsonPatch' | 'Bsdiff' | 'Xdelta';
     /** @description Request to start a prepared journey */
     DepartJourneyRequest: {
       /**
@@ -20133,6 +20168,18 @@ export interface components {
       fullyFunded: boolean;
       /** @description Release tokens (issued when fully funded) */
       releaseTokens: components['schemas']['PartyToken'][];
+    };
+    /** @description Request to deprecate an achievement definition */
+    DeprecateAchievementDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the game service
+       */
+      gameServiceId: string;
+      /** @description ID of the achievement to deprecate */
+      achievementId: string;
+      /** @description Audit reason for deprecation, explaining why this achievement is being phased out */
+      deprecationReason?: string | null;
     };
     /** @description Request to deprecate a faction */
     DeprecateFactionRequest: {
@@ -20229,7 +20276,7 @@ export interface components {
      * @description Reason for destroying an item instance
      * @enum {string}
      */
-    DestroyReason: 'consumed' | 'destroyed' | 'expired' | 'admin';
+    DestroyReason: 'Consumed' | 'Destroyed' | 'Expired' | 'Admin';
     /** @description Information about the client device used for authentication or session tracking */
     DeviceInfo: {
       /** @description Category of the device */
@@ -20245,7 +20292,7 @@ export interface components {
      * @description Category of client device used for authentication or session tracking
      * @enum {string}
      */
-    DeviceType: 'desktop' | 'mobile' | 'tablet' | 'console';
+    DeviceType: 'Desktop' | 'Mobile' | 'Tablet' | 'Console';
     /** @description Request to discard checkout */
     DiscardRequest: {
       /**
@@ -20441,16 +20488,16 @@ export interface components {
      * @enum {string}
      */
     DocumentCategory:
-      | 'getting-started'
-      | 'api-reference'
-      | 'architecture'
-      | 'deployment'
-      | 'troubleshooting'
-      | 'tutorials'
-      | 'game-systems'
-      | 'world-lore'
-      | 'npc-ai'
-      | 'other';
+      | 'GettingStarted'
+      | 'ApiReference'
+      | 'Architecture'
+      | 'Deployment'
+      | 'Troubleshooting'
+      | 'Tutorials'
+      | 'GameSystems'
+      | 'WorldLore'
+      | 'NpcAi'
+      | 'Other';
     /** @description Search result with relevance scoring and match highlights */
     DocumentResult: {
       /**
@@ -20610,22 +20657,22 @@ export interface components {
      *     - seed_derived: passive capability computed from seed growth state
      * @enum {string}
      */
-    EffectSource: 'item_based' | 'seed_derived';
+    EffectSource: 'ItemBased' | 'SeedDerived';
     /**
      * @description How the encounter emotionally affected the character
      * @enum {string}
      */
     EmotionalImpact:
-      | 'GRATITUDE'
-      | 'ANGER'
-      | 'FEAR'
-      | 'RESPECT'
-      | 'CONTEMPT'
-      | 'AFFECTION'
-      | 'RIVALRY'
-      | 'INDIFFERENCE'
-      | 'GUILT'
-      | 'PRIDE';
+      | 'Gratitude'
+      | 'Anger'
+      | 'Fear'
+      | 'Respect'
+      | 'Contempt'
+      | 'Affection'
+      | 'Rivalry'
+      | 'Indifference'
+      | 'Guilt'
+      | 'Pride';
     /** @description 6-dimensional emotional state input (all values 0-1) */
     EmotionalStateInput: {
       /** @description Tension level (0=resolved, 1=maximum tension) */
@@ -20719,7 +20766,7 @@ export interface components {
      * @description Overall outcome of an encounter
      * @enum {string}
      */
-    EncounterOutcome: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' | 'MEMORABLE' | 'TRANSFORMATIVE';
+    EncounterOutcome: 'Positive' | 'Negative' | 'Neutral' | 'Memorable' | 'Transformative';
     /** @description A character's individual perspective on an encounter */
     EncounterPerspectiveModel: {
       /**
@@ -20834,7 +20881,7 @@ export interface components {
      * @description How contract breaches are handled
      * @enum {string}
      */
-    EnforcementMode: 'advisory' | 'event_only' | 'consequence_based' | 'community';
+    EnforcementMode: 'Advisory' | 'EventOnly' | 'ConsequenceBased' | 'Community';
     /**
      * @description Character data with optional enriched fields.
      *     Fields are only populated if the corresponding include flag was set in the request.
@@ -21003,24 +21050,24 @@ export interface components {
      * @enum {string}
      */
     EntityType:
-      | 'system'
-      | 'account'
-      | 'character'
-      | 'actor'
-      | 'guild'
-      | 'organization'
-      | 'government'
-      | 'faction'
-      | 'location'
-      | 'realm'
-      | 'item'
-      | 'monster'
-      | 'relationship'
-      | 'session'
-      | 'deity'
-      | 'dungeon'
-      | 'custom'
-      | 'other';
+      | 'System'
+      | 'Account'
+      | 'Character'
+      | 'Actor'
+      | 'Guild'
+      | 'Organization'
+      | 'Government'
+      | 'Faction'
+      | 'Location'
+      | 'Realm'
+      | 'Item'
+      | 'Monster'
+      | 'Relationship'
+      | 'Session'
+      | 'Deity'
+      | 'Dungeon'
+      | 'Custom'
+      | 'Other';
     /** @description Metadata for an unlocked entry instance tracking usage and discovery state */
     EntryMetadata: {
       /** @description Context where the entry was unlocked (e.g., location code) */
@@ -21384,7 +21431,7 @@ export interface components {
      *     - reaffirm: Re-affirms after validation failure
      * @enum {string}
      */
-    EscrowConsentType: 'release' | 'refund' | 'dispute' | 'reaffirm';
+    EscrowConsentType: 'Release' | 'Refund' | 'Dispute' | 'Reaffirm';
     /** @description Records an actual deposit */
     EscrowDeposit: {
       /**
@@ -21514,7 +21561,7 @@ export interface components {
      *     - observer: Can view status but cannot act
      * @enum {string}
      */
-    EscrowPartyRole: 'depositor' | 'recipient' | 'depositor_recipient' | 'arbiter' | 'observer';
+    EscrowPartyRole: 'Depositor' | 'Recipient' | 'DepositorRecipient' | 'Arbiter' | 'Observer';
     /** @description Request from lib-escrow to credit depositor on refund */
     EscrowRefundRequest: {
       /**
@@ -21596,12 +21643,12 @@ export interface components {
      * @enum {string}
      */
     EscrowResolution:
-      | 'released'
-      | 'refunded'
-      | 'split'
-      | 'expired_refunded'
-      | 'cancelled_refunded'
-      | 'violation_refunded';
+      | 'Released'
+      | 'Refunded'
+      | 'Split'
+      | 'ExpiredRefunded'
+      | 'CancelledRefunded'
+      | 'ViolationRefunded';
     /**
      * @description Current status of the escrow agreement.
      *     - pending_deposits: Waiting for parties to deposit
@@ -21621,20 +21668,20 @@ export interface components {
      * @enum {string}
      */
     EscrowStatus:
-      | 'pending_deposits'
-      | 'partially_funded'
-      | 'funded'
-      | 'pending_consent'
-      | 'pending_condition'
-      | 'finalizing'
-      | 'releasing'
-      | 'released'
-      | 'refunding'
-      | 'refunded'
-      | 'disputed'
-      | 'expired'
-      | 'cancelled'
-      | 'validation_failed';
+      | 'PendingDeposits'
+      | 'PartiallyFunded'
+      | 'Funded'
+      | 'PendingConsent'
+      | 'PendingCondition'
+      | 'Finalizing'
+      | 'Releasing'
+      | 'Released'
+      | 'Refunding'
+      | 'Refunded'
+      | 'Disputed'
+      | 'Expired'
+      | 'Cancelled'
+      | 'ValidationFailed';
     /**
      * @description Trust model for the escrow agreement.
      *     - full_consent: All parties must explicitly consent using tokens
@@ -21642,7 +21689,7 @@ export interface components {
      *     - single_party_trusted: A designated party can complete unilaterally
      * @enum {string}
      */
-    EscrowTrustMode: 'full_consent' | 'initiator_trusted' | 'single_party_trusted';
+    EscrowTrustMode: 'FullConsent' | 'InitiatorTrusted' | 'SinglePartyTrusted';
     /**
      * @description Type of escrow agreement.
      *     - two_party: Simple trade escrow between Party A and Party B
@@ -21651,19 +21698,19 @@ export interface components {
      *     - auction: Winner-takes-all with refunds to losers
      * @enum {string}
      */
-    EscrowType: 'two_party' | 'multi_party' | 'conditional' | 'auction';
+    EscrowType: 'TwoParty' | 'MultiParty' | 'Conditional' | 'Auction';
     /**
      * @description Categories of historical events that characters can participate in
      * @enum {string}
      */
     EventCategory:
-      | 'WAR'
-      | 'NATURAL_DISASTER'
-      | 'POLITICAL'
-      | 'ECONOMIC'
-      | 'RELIGIOUS'
-      | 'CULTURAL'
-      | 'PERSONAL';
+      | 'War'
+      | 'NaturalDisaster'
+      | 'Political'
+      | 'Economic'
+      | 'Religious'
+      | 'Cultural'
+      | 'Personal';
     /** @description Request to execute cleanup for a resource */
     ExecuteCleanupRequest: {
       /** @description Type of resource to clean up (opaque identifier) */
@@ -21955,7 +22002,7 @@ export interface components {
      * @description How currency expiration is determined
      * @enum {string}
      */
-    ExpirationPolicy: 'fixed_date' | 'duration_from_earn' | 'end_of_season';
+    ExpirationPolicy: 'FixedDate' | 'DurationFromEarn' | 'EndOfSeason';
     /** @description Request to export all saves for an owner to a downloadable archive */
     ExportSavesRequest: {
       /** @description Game identifier for namespace isolation */
@@ -22280,7 +22327,7 @@ export interface components {
      * @description Type of game action
      * @enum {string}
      */
-    GameActionType: 'move' | 'interact' | 'attack' | 'cast_spell' | 'use_item';
+    GameActionType: 'Move' | 'Interact' | 'Attack' | 'CastSpell' | 'UseItem';
     /** @description Information about a player currently participating in a game session */
     GamePlayer: {
       /**
@@ -24595,7 +24642,7 @@ export interface components {
      *     - replaced: existing instance removed and new one created
      * @enum {string}
      */
-    GrantResult: 'granted' | 'stacked' | 'refreshed' | 'replaced';
+    GrantResult: 'Granted' | 'Stacked' | 'Refreshed' | 'Replaced';
     /** @description Request to grant a status effect to an entity */
     GrantStatusRequest: {
       /**
@@ -24670,7 +24717,7 @@ export interface components {
      *     target priority, and coordination behavior.
      * @enum {string}
      */
-    GroupRole: 'FRONTLINE' | 'SUPPORT' | 'FLANKER' | 'LEADER' | 'SOLO';
+    GroupRole: 'Frontline' | 'Support' | 'Flanker' | 'Leader' | 'Solo';
     /** @description A single domain-amount pair for batch growth recording. */
     GrowthEntry: {
       /** @description Dot-separated domain path. */
@@ -25065,12 +25112,12 @@ export interface components {
      * @description Current status of an authorization hold
      * @enum {string}
      */
-    HoldStatus: 'active' | 'captured' | 'released' | 'expired';
+    HoldStatus: 'Active' | 'Captured' | 'Released' | 'Expired';
     /**
      * @description HTTP method for endpoint invocation
      * @enum {string}
      */
-    HttpMethodType: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+    HttpMethodType: 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch';
     /** @description Request to initialize a clock for a realm */
     InitializeRealmClockRequest: {
       /**
@@ -25221,16 +25268,16 @@ export interface components {
      * @enum {string}
      */
     ItemCategory:
-      | 'weapon'
-      | 'armor'
-      | 'accessory'
-      | 'consumable'
-      | 'material'
-      | 'container'
-      | 'quest'
-      | 'currency_like'
-      | 'misc'
-      | 'custom';
+      | 'Weapon'
+      | 'Armor'
+      | 'Accessory'
+      | 'Consumable'
+      | 'Material'
+      | 'Container'
+      | 'Quest'
+      | 'CurrencyLike'
+      | 'Misc'
+      | 'Custom';
     /** @description Item instance details */
     ItemInstanceResponse: {
       /**
@@ -25317,17 +25364,17 @@ export interface components {
      * @description How currency is linked to inventory items
      * @enum {string}
      */
-    ItemLinkageMode: 'none' | 'visual_only' | 'reference_only';
+    ItemLinkageMode: 'None' | 'VisualOnly' | 'ReferenceOnly';
     /**
      * @description How an item instance was created
      * @enum {string}
      */
-    ItemOriginType: 'loot' | 'quest' | 'craft' | 'trade' | 'purchase' | 'spawn' | 'other';
+    ItemOriginType: 'Loot' | 'Quest' | 'Craft' | 'Trade' | 'Purchase' | 'Spawn' | 'Other';
     /**
      * @description Item rarity tier
      * @enum {string}
      */
-    ItemRarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'custom';
+    ItemRarity: 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary' | 'Custom';
     /** @description Required item and quantity */
     ItemRequirement: {
       /**
@@ -25345,7 +25392,7 @@ export interface components {
      * @description Realm availability scope (consistent with CurrencyScope)
      * @enum {string}
      */
-    ItemScope: 'global' | 'realm_specific' | 'multi_realm';
+    ItemScope: 'Global' | 'RealmSpecific' | 'MultiRealm';
     /** @description Item template details */
     ItemTemplateResponse: {
       /**
@@ -25475,7 +25522,7 @@ export interface components {
      *     - destroy_always: Item consumed regardless of success/failure
      * @enum {string}
      */
-    ItemUseBehavior: 'disabled' | 'destroy_on_success' | 'destroy_always';
+    ItemUseBehavior: 'Disabled' | 'DestroyOnSuccess' | 'DestroyAlways';
     /** @description Request to join a matchmaking queue */
     JoinMatchmakingRequest: {
       /**
@@ -25562,7 +25609,7 @@ export interface components {
      * @description Lifecycle status of a journey leg
      * @enum {string}
      */
-    JourneyLegStatus: 'pending' | 'in_progress' | 'completed' | 'skipped';
+    JourneyLegStatus: 'Pending' | 'InProgress' | 'Completed' | 'Skipped';
     /** @description Response containing a single transit journey */
     JourneyResponse: {
       /** @description The transit journey */
@@ -25573,12 +25620,12 @@ export interface components {
      * @enum {string}
      */
     JourneyStatus:
-      | 'preparing'
-      | 'in_transit'
-      | 'at_waypoint'
-      | 'arrived'
-      | 'interrupted'
-      | 'abandoned';
+      | 'Preparing'
+      | 'InTransit'
+      | 'AtWaypoint'
+      | 'Arrived'
+      | 'Interrupted'
+      | 'Abandoned';
     /**
      * @description JSON Patch operation per RFC 6902.
      *     Uses JsonPatch.Net library (MIT licensed).
@@ -25644,10 +25691,10 @@ export interface components {
       kind: components['schemas']['MapKind'];
       /**
        * @description How this layer's data should be stored
-       * @default cached
+       * @default Cached
        * @enum {string}
        */
-      storageMode: 'durable' | 'cached' | 'ephemeral';
+      storageMode: 'Durable' | 'Cached' | 'Ephemeral';
       /** @description TTL for cached/ephemeral data (0 = no TTL) */
       ttlSeconds?: number | null;
       /** @description Default non-authority handling for channels using this layer */
@@ -25860,7 +25907,7 @@ export interface components {
      *     - unlocked: Already unlocked (item placed at this position)
      * @enum {string}
      */
-    LicenseStatus: 'locked' | 'unlockable' | 'unlocked';
+    LicenseStatus: 'Locked' | 'Unlockable' | 'Unlocked';
     /** @description Request to list achievement definitions */
     ListAchievementDefinitionsRequest: {
       /**
@@ -25879,6 +25926,11 @@ export interface components {
        * @default false
        */
       includeHidden: boolean;
+      /**
+       * @description Whether to include deprecated definitions in results
+       * @default false
+       */
+      includeDeprecated: boolean;
     };
     /** @description Response containing achievement definitions */
     ListAchievementDefinitionsResponse: {
@@ -27443,10 +27495,10 @@ export interface components {
     };
     /**
      * @description Fields available for sorting document lists
-     * @default updated_at
+     * @default UpdatedAt
      * @enum {string}
      */
-    ListSortField: 'created_at' | 'updated_at' | 'title';
+    ListSortField: 'CreatedAt' | 'UpdatedAt' | 'Title';
     /** @description Request to list species available within a specific realm */
     ListSpeciesByRealmRequest: {
       /**
@@ -27659,6 +27711,11 @@ export interface components {
       entityType: components['schemas']['EntityType'];
       /** @description Filter by platform */
       platform?: components['schemas']['Platform'];
+      /**
+       * @description Whether to include achievements earned from deprecated definitions
+       * @default false
+       */
+      includeDeprecated: boolean;
     };
     /** @description Response containing unlocked achievements */
     ListUnlockedAchievementsResponse: {
@@ -27861,16 +27918,16 @@ export interface components {
      * @enum {string}
      */
     LocationType:
-      | 'CONTINENT'
-      | 'REGION'
-      | 'CITY'
-      | 'DISTRICT'
-      | 'BUILDING'
-      | 'ROOM'
-      | 'LANDMARK'
-      | 'WILDERNESS'
-      | 'DUNGEON'
-      | 'OTHER';
+      | 'Continent'
+      | 'Region'
+      | 'City'
+      | 'District'
+      | 'Building'
+      | 'Room'
+      | 'Landmark'
+      | 'Wilderness'
+      | 'Dungeon'
+      | 'Other';
     /** @description Request to lock a contract under guardian custody */
     LockContractRequest: {
       /**
@@ -28000,18 +28057,18 @@ export interface components {
      * @enum {string}
      */
     MapKind:
-      | 'terrain'
-      | 'static_geometry'
-      | 'navigation'
-      | 'resources'
-      | 'spawn_points'
-      | 'points_of_interest'
-      | 'dynamic_objects'
-      | 'hazards'
-      | 'weather_effects'
-      | 'ownership'
-      | 'combat_effects'
-      | 'visual_effects';
+      | 'Terrain'
+      | 'StaticGeometry'
+      | 'Navigation'
+      | 'Resources'
+      | 'SpawnPoints'
+      | 'PointsOfInterest'
+      | 'DynamicObjects'
+      | 'Hazards'
+      | 'WeatherEffects'
+      | 'Ownership'
+      | 'CombatEffects'
+      | 'VisualEffects';
     /** @description A stored map object with full metadata */
     MapObject: {
       /**
@@ -28057,14 +28114,14 @@ export interface components {
      * @enum {string}
      */
     MarkerType:
-      | 'generic'
-      | 'spawn_point'
-      | 'npc_spawn'
-      | 'waypoint'
-      | 'camera_point'
-      | 'light_point'
-      | 'audio_point'
-      | 'trigger_point';
+      | 'Generic'
+      | 'SpawnPoint'
+      | 'NpcSpawn'
+      | 'Waypoint'
+      | 'CameraPoint'
+      | 'LightPoint'
+      | 'AudioPoint'
+      | 'TriggerPoint';
     /** @description Request to check if a relationship type matches or descends from an ancestor type in the hierarchy */
     MatchesHierarchyRequest: {
       /**
@@ -28203,21 +28260,21 @@ export interface components {
      * @enum {string}
      */
     MetabundleErrorCode:
-      | 'SOURCE_BUNDLE_NOT_FOUND'
-      | 'SOURCE_BUNDLE_NOT_READY'
-      | 'STANDALONE_ASSET_NOT_FOUND'
-      | 'STANDALONE_ASSET_NOT_READY'
-      | 'REALM_MISMATCH'
-      | 'ASSET_CONFLICT'
-      | 'STORAGE_ERROR'
-      | 'TIMEOUT'
-      | 'CANCELLED'
-      | 'INTERNAL_ERROR';
+      | 'SourceBundleNotFound'
+      | 'SourceBundleNotReady'
+      | 'StandaloneAssetNotFound'
+      | 'StandaloneAssetNotReady'
+      | 'RealmMismatch'
+      | 'AssetConflict'
+      | 'StorageError'
+      | 'Timeout'
+      | 'Cancelled'
+      | 'InternalError';
     /**
      * @description Type of metadata to update
      * @enum {string}
      */
-    MetadataType: 'instance_data' | 'runtime_state';
+    MetadataType: 'InstanceData' | 'RuntimeState';
     /** @description Request to disable MFA. Exactly one of totpCode or recoveryCode must be provided. */
     MfaDisableRequest: {
       /** @description Current 6-digit TOTP code from authenticator app */
@@ -28356,7 +28413,7 @@ export interface components {
      * @description Behavior when optional milestone deadline passes
      * @enum {string}
      */
-    MilestoneDeadlineBehavior: 'skip' | 'warn' | 'breach';
+    MilestoneDeadlineBehavior: 'Skip' | 'Warn' | 'Breach';
     /** @description Milestone definition in a template */
     MilestoneDefinition: {
       /** @description Unique milestone code within template */
@@ -28434,7 +28491,7 @@ export interface components {
      * @description Current status of a milestone
      * @enum {string}
      */
-    MilestoneStatus: 'pending' | 'active' | 'completed' | 'failed' | 'skipped';
+    MilestoneStatus: 'Pending' | 'Active' | 'Completed' | 'Failed' | 'Skipped';
     /** @description Availability result for a single transit mode for an entity */
     ModeAvailabilityResult: {
       /** @description Transit mode code */
@@ -28699,10 +28756,10 @@ export interface components {
       order: number;
       /**
        * @description Link target attribute for opening behavior
-       * @default _self
+       * @default Self
        * @enum {string}
        */
-      target: '_self' | '_blank';
+      target: 'Self' | 'Blank';
       /** @description Nested child navigation items for dropdowns */
       children?: components['schemas']['NavigationItem'][];
     };
@@ -28770,13 +28827,13 @@ export interface components {
      *     to their own needs via tags and annotations.
      * @enum {string}
      */
-    NodeType: 'group' | 'mesh' | 'marker' | 'volume' | 'emitter' | 'reference' | 'custom';
+    NodeType: 'Group' | 'Mesh' | 'Marker' | 'Volume' | 'Emitter' | 'Reference' | 'Custom';
     /**
      * @description How to handle publish attempts from non-authority sources
-     * @default reject_and_alert
+     * @default RejectAndAlert
      * @enum {string}
      */
-    NonAuthorityHandlingMode: 'reject_and_alert' | 'accept_and_alert' | 'reject_silent';
+    NonAuthorityHandlingMode: 'RejectAndAlert' | 'AcceptAndAlert' | 'RejectSilent';
     /** @description A behavioral norm definition stored in a faction */
     NormDefinitionResponse: {
       /**
@@ -28922,22 +28979,22 @@ export interface components {
      * @description When a hidden objective is revealed in the quest log
      * @enum {string}
      */
-    ObjectiveRevealBehavior: 'ALWAYS' | 'ON_PROGRESS' | 'ON_COMPLETE' | 'NEVER';
+    ObjectiveRevealBehavior: 'Always' | 'OnProgress' | 'OnComplete' | 'Never';
     /**
      * @description Type of objective determining progress tracking logic
      * @enum {string}
      */
     ObjectiveType:
-      | 'KILL'
-      | 'COLLECT'
-      | 'DELIVER'
-      | 'TRAVEL'
-      | 'DISCOVER'
-      | 'TALK'
-      | 'CRAFT'
-      | 'ESCORT'
-      | 'DEFEND'
-      | 'CUSTOM';
+      | 'Kill'
+      | 'Collect'
+      | 'Deliver'
+      | 'Travel'
+      | 'Discover'
+      | 'Talk'
+      | 'Craft'
+      | 'Escort'
+      | 'Defend'
+      | 'Custom';
     /**
      * @description Complete obligation data for archive storage and storyline SDK consumption.
      *     Inherits base archive properties from ResourceArchiveBase.
@@ -28958,12 +29015,12 @@ export interface components {
     } & components['schemas']['ResourceArchiveBase'];
     /**
      * @description Action to take when the referenced resource is deleted.
-     *     CASCADE: Delete dependent entities when resource is deleted
-     *     RESTRICT: Block resource deletion if references exist
-     *     DETACH: Set reference to null when resource is deleted
+     *     Cascade: Delete dependent entities when resource is deleted
+     *     Restrict: Block resource deletion if references exist
+     *     Detach: Set reference to null when resource is deleted
      * @enum {string}
      */
-    OnDeleteAction: 'CASCADE' | 'RESTRICT' | 'DETACH';
+    OnDeleteAction: 'Cascade' | 'Restrict' | 'Detach';
     /** @description Full content and metadata for a CMS-managed page */
     PageContent: {
       /** @description URL-friendly identifier for the page */
@@ -28976,7 +29033,7 @@ export interface components {
        * @description Format of the page content
        * @enum {string}
        */
-      contentType: 'html' | 'markdown' | 'blazor';
+      contentType: 'Html' | 'Markdown' | 'Blazor';
       /** @description Template name for custom layouts */
       template?: string | null;
       /** @description Whether the page is publicly visible */
@@ -29097,14 +29154,14 @@ export interface components {
      * @enum {string}
      */
     ParticipationRole:
-      | 'LEADER'
-      | 'COMBATANT'
-      | 'VICTIM'
-      | 'WITNESS'
-      | 'BENEFICIARY'
-      | 'CONSPIRATOR'
-      | 'HERO'
-      | 'SURVIVOR';
+      | 'Leader'
+      | 'Combatant'
+      | 'Victim'
+      | 'Witness'
+      | 'Beneficiary'
+      | 'Conspirator'
+      | 'Hero'
+      | 'Survivor';
     /** @description Public summary of a bond partner's seed. */
     PartnerSummary: {
       /**
@@ -29184,7 +29241,7 @@ export interface components {
      * @description Method for aggregating party member skills
      * @enum {string}
      */
-    PartySkillAggregation: 'highest' | 'average' | 'weighted';
+    PartySkillAggregation: 'Highest' | 'Average' | 'Weighted';
     /** @description Token issued to a party for deposit or release operations */
     PartyToken: {
       /**
@@ -29234,7 +29291,7 @@ export interface components {
      * @description When payments occur
      * @enum {string}
      */
-    PaymentSchedule: 'one_time' | 'recurring' | 'milestone_based';
+    PaymentSchedule: 'OneTime' | 'Recurring' | 'MilestoneBased';
     /** @description Summary of pending consent */
     PendingConsentSummary: {
       /**
@@ -29294,15 +29351,15 @@ export interface components {
      * @enum {string}
      */
     PerceptionSourceType:
-      | 'character'
-      | 'npc'
-      | 'object'
-      | 'environment'
-      | 'coordinator'
-      | 'scheduled'
-      | 'message'
-      | 'service'
-      | 'system';
+      | 'Character'
+      | 'Npc'
+      | 'Object'
+      | 'Environment'
+      | 'Coordinator'
+      | 'Scheduled'
+      | 'Message'
+      | 'Service'
+      | 'System';
     /**
      * @description Whether room messages are stored in Redis (TTL) or MySQL (durable)
      * @enum {string}
@@ -29510,12 +29567,19 @@ export interface components {
      * @description External platform for achievement sync
      * @enum {string}
      */
-    Platform: 'steam' | 'xbox' | 'playstation' | 'internal';
+    Platform: 'Steam' | 'Xbox' | 'PlayStation' | 'Internal';
+    /** @description Maps an achievement to a platform-specific ID */
+    PlatformMapping: {
+      /** @description External platform */
+      platform: components['schemas']['Platform'];
+      /** @description Platform-specific achievement identifier */
+      platformAchievementId: string;
+    };
     /**
      * @description Role of the player in the game session
      * @enum {string}
      */
-    PlayerRole: 'player' | 'spectator' | 'moderator';
+    PlayerRole: 'Player' | 'Spectator' | 'Moderator';
     /** @description Result of interacting with a POI */
     PoiInteractionResponse: {
       /**
@@ -29633,7 +29697,7 @@ export interface components {
      * @description How to execute a prebound API call
      * @enum {string}
      */
-    PreboundApiExecutionMode: 'sync' | 'async' | 'fire_and_forget';
+    PreboundApiExecutionMode: 'Sync' | 'Async' | 'FireAndForget';
     /** @description Mutation that would be applied */
     PredictedMutation: {
       /** @description Type of mutation */
@@ -29646,7 +29710,7 @@ export interface components {
      *     ability selection in combat.
      * @enum {string}
      */
-    PreferredRange: 'MELEE' | 'CLOSE' | 'MEDIUM' | 'RANGED';
+    PreferredRange: 'Melee' | 'Close' | 'Medium' | 'Ranged';
     /** @description Requirement that must be met before a quest can be accepted */
     PrerequisiteDefinition: {
       /** @description Type of prerequisite check */
@@ -29671,16 +29735,16 @@ export interface components {
      * @enum {string}
      */
     PrerequisiteType:
-      | 'QUEST_COMPLETED'
-      | 'CHARACTER_LEVEL'
-      | 'REPUTATION'
-      | 'ITEM_OWNED'
-      | 'CURRENCY_AMOUNT';
+      | 'QuestCompleted'
+      | 'CharacterLevel'
+      | 'Reputation'
+      | 'ItemOwned'
+      | 'CurrencyAmount';
     /**
      * @description Asset processing pipeline status
      * @enum {string}
      */
-    ProcessingStatus: 'pending' | 'processing' | 'complete' | 'failed';
+    ProcessingStatus: 'Pending' | 'Processing' | 'Complete' | 'Failed';
     /** @description Analysis of a chord progression */
     ProgressionAnalysis: {
       /** @description Roman numeral analysis */
@@ -29720,7 +29784,7 @@ export interface components {
      * @description Authentication provider type
      * @enum {string}
      */
-    Provider: 'google' | 'discord' | 'twitch' | 'steam';
+    Provider: 'Google' | 'Discord' | 'Twitch' | 'Steam';
     /** @description Information about an available authentication provider */
     ProviderInfo: {
       /**
@@ -29751,7 +29815,7 @@ export interface components {
      * @description How quantities are tracked for this item type
      * @enum {string}
      */
-    QuantityModel: 'discrete' | 'continuous' | 'unique';
+    QuantityModel: 'Discrete' | 'Continuous' | 'Unique';
     /** @description Rotation represented as a quaternion */
     Quaternion: {
       /**
@@ -30490,7 +30554,7 @@ export interface components {
      * @description Category of quest for organization
      * @enum {string}
      */
-    QuestCategory: 'MAIN' | 'SIDE' | 'BOUNTY' | 'DAILY' | 'WEEKLY' | 'EVENT' | 'TUTORIAL';
+    QuestCategory: 'Main' | 'Side' | 'Bounty' | 'Daily' | 'Weekly' | 'Event' | 'Tutorial';
     /** @description Complete quest definition including objectives, prerequisites, and rewards */
     QuestDefinitionResponse: {
       /**
@@ -30555,7 +30619,7 @@ export interface components {
      * @description Difficulty rating of the quest
      * @enum {string}
      */
-    QuestDifficulty: 'TRIVIAL' | 'EASY' | 'NORMAL' | 'HARD' | 'HEROIC' | 'LEGENDARY';
+    QuestDifficulty: 'Trivial' | 'Easy' | 'Normal' | 'Hard' | 'Heroic' | 'Legendary';
     /** @description Active or completed quest instance with progress information */
     QuestInstanceResponse: {
       /**
@@ -30650,7 +30714,7 @@ export interface components {
      * @description Current status of a quest instance
      * @enum {string}
      */
-    QuestStatus: 'ACTIVE' | 'COMPLETED' | 'FAILED' | 'ABANDONED' | 'EXPIRED';
+    QuestStatus: 'Active' | 'Completed' | 'Failed' | 'Abandoned' | 'Expired';
     /** @description Full configuration details of a matchmaking queue */
     QueueResponse: {
       /** @description Unique identifier for the queue */
@@ -31157,7 +31221,7 @@ export interface components {
      *     Refunds typically use 'immediate' since parties get their own assets back.
      * @enum {string}
      */
-    RefundMode: 'immediate' | 'service_only' | 'party_required';
+    RefundMode: 'Immediate' | 'ServiceOnly' | 'PartyRequired';
     /** @description Request to trigger escrow refund to depositors */
     RefundRequest: {
       /**
@@ -31425,10 +31489,10 @@ export interface components {
      *     - none: No related documents included
      *     - direct: Only directly linked documents (depth 1)
      *     - extended: Related documents + their related documents (depth 2)
-     * @default direct
+     * @default Direct
      * @enum {string}
      */
-    RelatedDepth: 'none' | 'direct' | 'extended';
+    RelatedDepth: 'None' | 'Direct' | 'Extended';
     /** @description Paginated list of relationships with metadata for navigation */
     RelationshipListResponse: {
       /** @description List of relationships matching the query */
@@ -31634,7 +31698,7 @@ export interface components {
      *     - service_and_party: Wait for both service completion AND party confirmation.
      * @enum {string}
      */
-    ReleaseMode: 'immediate' | 'service_only' | 'party_required' | 'service_and_party';
+    ReleaseMode: 'Immediate' | 'ServiceOnly' | 'PartyRequired' | 'ServiceAndParty';
     /** @description Request to trigger escrow release to recipients */
     ReleaseRequest: {
       /**
@@ -32254,7 +32318,7 @@ export interface components {
      * @description Type of reward granted on quest completion
      * @enum {string}
      */
-    RewardType: 'CURRENCY' | 'ITEM' | 'EXPERIENCE' | 'REPUTATION';
+    RewardType: 'Currency' | 'Item' | 'Experience' | 'Reputation';
     /** @description Room type definition with current configuration and status */
     RoomTypeResponse: {
       /** @description Unique room type code */
@@ -32311,7 +32375,7 @@ export interface components {
      * @description Sort criteria for route calculation results
      * @enum {string}
      */
-    RouteSortBy: 'fastest' | 'safest' | 'shortest';
+    RouteSortBy: 'Fastest' | 'Safest' | 'Shortest';
     /** @description Search engine optimization and social media sharing metadata */
     SEOMetadata: {
       /** @description Meta description for search engines */
@@ -32337,7 +32401,7 @@ export interface components {
      *     STATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).
      * @enum {string}
      */
-    SaveCategory: 'QUICK_SAVE' | 'AUTO_SAVE' | 'MANUAL_SAVE' | 'CHECKPOINT' | 'STATE_SNAPSHOT';
+    SaveCategory: 'QuickSave' | 'AutoSave' | 'ManualSave' | 'Checkpoint' | 'StateSnapshot';
     /** @description Request to save incremental changes as a delta from a base version */
     SaveDeltaRequest: {
       /** @description Game identifier for namespace isolation */
@@ -33068,19 +33132,19 @@ export interface components {
      * @enum {string}
      */
     SceneType:
-      | 'unknown'
-      | 'region'
-      | 'city'
-      | 'district'
-      | 'lot'
-      | 'building'
-      | 'room'
-      | 'dungeon'
-      | 'arena'
-      | 'vehicle'
-      | 'prefab'
-      | 'cutscene'
-      | 'other';
+      | 'Unknown'
+      | 'Region'
+      | 'City'
+      | 'District'
+      | 'Lot'
+      | 'Building'
+      | 'Room'
+      | 'Dungeon'
+      | 'Arena'
+      | 'Vehicle'
+      | 'Prefab'
+      | 'Cutscene'
+      | 'Other';
     /** @description Registered schema definition with version lineage information */
     SchemaResponse: {
       /** @description Schema namespace */
@@ -33138,12 +33202,12 @@ export interface components {
      * @description Fields that can be searched within documents
      * @enum {string}
      */
-    SearchField: 'title' | 'content' | 'tags' | 'summary';
+    SearchField: 'Title' | 'Content' | 'Tags' | 'Summary';
     /**
      * @description Where the search match was found
      * @enum {string}
      */
-    SearchMatchType: 'name' | 'description' | 'tag' | 'node_name';
+    SearchMatchType: 'Name' | 'Description' | 'Tag' | 'NodeName';
     /** @description Request to full-text search messages in a persistent room */
     SearchMessagesRequest: {
       /**
@@ -33203,10 +33267,10 @@ export interface components {
     };
     /**
      * @description How to sort search results
-     * @default relevance
+     * @default Relevance
      * @enum {string}
      */
-    SearchSortBy: 'relevance' | 'recency' | 'alphabetical';
+    SearchSortBy: 'Relevance' | 'Recency' | 'Alphabetical';
     /** @description A season within a calendar template year */
     SeasonDefinition: {
       /** @description Season identifier code (e.g., "winter", "spring", "summer", "autumn") */
@@ -33656,12 +33720,12 @@ export interface components {
      * @description Current status of the game session
      * @enum {string}
      */
-    SessionStatus: 'waiting' | 'active' | 'full' | 'finished';
+    SessionStatus: 'Waiting' | 'Active' | 'Full' | 'Finished';
     /**
      * @description Type of game session - determines join behavior
      * @enum {string}
      */
-    SessionType: 'lobby' | 'matchmade';
+    SessionType: 'Lobby' | 'Matchmade';
     /** @description Response containing a list of all active sessions for an account */
     SessionsResponse: {
       /** @description List of active sessions for the account */
@@ -33741,7 +33805,7 @@ export interface components {
      * @description Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is managed by the Seasonal Connection Worker)
      * @enum {string}
      */
-    SettableConnectionStatus: 'open' | 'closed' | 'dangerous' | 'blocked';
+    SettableConnectionStatus: 'Open' | 'Closed' | 'Dangerous' | 'Blocked';
     /** @description Shared garden state for bonded players */
     SharedGardenStateResponse: {
       /**
@@ -33852,12 +33916,12 @@ export interface components {
      * @description Sort direction for query results
      * @enum {string}
      */
-    SortOrder: 'asc' | 'desc';
+    SortOrder: 'Asc' | 'Desc';
     /**
      * @description When item becomes bound to a character
      * @enum {string}
      */
-    SoulboundType: 'none' | 'on_pickup' | 'on_equip' | 'on_use';
+    SoulboundType: 'None' | 'OnPickup' | 'OnEquip' | 'OnUse';
     /** @description Provenance reference to a source bundle used in metabundle creation */
     SourceBundleReference: {
       /** @description Source bundle identifier */
@@ -34077,7 +34141,7 @@ export interface components {
      *     - ignore: cannot apply if already present
      * @enum {string}
      */
-    StackBehavior: 'refresh_duration' | 'independent' | 'increase_intensity' | 'replace' | 'ignore';
+    StackBehavior: 'RefreshDuration' | 'Independent' | 'IncreaseIntensity' | 'Replace' | 'Ignore';
     /** @description Request to start an encounter managed by an Event Brain actor */
     StartEncounterRequest: {
       /** @description ID of the Event Brain actor that will manage this encounter */
@@ -34144,7 +34208,7 @@ export interface components {
      *     - passive: seed-derived passive capability (used in unified queries)
      * @enum {string}
      */
-    StatusCategory: 'buff' | 'debuff' | 'death' | 'subscription' | 'event' | 'passive';
+    StatusCategory: 'Buff' | 'Debuff' | 'Death' | 'Subscription' | 'Event' | 'Passive';
     /** @description Unified summary of an active effect from any source (item-based or seed-derived) */
     StatusEffectSummary: {
       /** @description Status template code (item-based) or capability code (seed-derived) */
@@ -34235,14 +34299,14 @@ export interface components {
      *     - admin: removed by administrative action
      * @enum {string}
      */
-    StatusRemoveReason: 'expired' | 'cleansed' | 'cancelled' | 'source_removed' | 'admin';
+    StatusRemoveReason: 'Expired' | 'Cleansed' | 'Cancelled' | 'SourceRemoved' | 'Admin';
     /** @description Health and version status information for the website service */
     StatusResponse: {
       /**
        * @description Current health status of the website service
        * @enum {string}
        */
-      status: 'healthy' | 'degraded' | 'maintenance';
+      status: 'Healthy' | 'Degraded' | 'Maintenance';
       /**
        * @description Current version of the website service
        * @example 1.0.0
@@ -34390,7 +34454,7 @@ export interface components {
      *     peace: Resolving conflicts and finding harmony
      * @enum {string}
      */
-    StorylineGoal: 'revenge' | 'resurrection' | 'legacy' | 'mystery' | 'peace';
+    StorylineGoal: 'Revenge' | 'Resurrection' | 'Legacy' | 'Mystery' | 'Peace';
     /** @description A relationship link in the storyline */
     StorylineLink: {
       /** @description Source entity role */
@@ -34475,7 +34539,7 @@ export interface components {
        * @description Risk severity
        * @enum {string}
        */
-      severity: 'low' | 'medium' | 'high';
+      severity: 'Low' | 'Medium' | 'High';
       /** @description Suggested mitigation */
       mitigation?: string | null;
     };
@@ -34608,7 +34672,7 @@ export interface components {
      * @description Source type for generating related topic suggestions
      * @enum {string}
      */
-    SuggestionSource: 'document_id' | 'slug' | 'topic' | 'category';
+    SuggestionSource: 'DocumentId' | 'Slug' | 'Topic' | 'Category';
     /** @description Information about a repository sync operation */
     SyncInfo: {
       /**
@@ -34673,18 +34737,18 @@ export interface components {
      * @description Status of platform synchronization
      * @enum {string}
      */
-    SyncStatus: 'pending' | 'synced' | 'failed' | 'not_linked';
+    SyncStatus: 'Pending' | 'Synced' | 'Failed' | 'NotLinked';
     /**
      * @description What triggered the sync operation
      * @enum {string}
      */
-    SyncTrigger: 'manual' | 'scheduled';
+    SyncTrigger: 'Manual' | 'Scheduled';
     /**
      * @description Whether documents must match all specified tags or any tag
-     * @default all
+     * @default All
      * @enum {string}
      */
-    TagMatchMode: 'all' | 'any';
+    TagMatchMode: 'All' | 'Any';
     /**
      * @description Current lifecycle status of a scenario template
      * @enum {string}
@@ -34737,10 +34801,10 @@ export interface components {
      * @enum {string}
      */
     TerminationPolicy:
-      | 'mutual_consent'
-      | 'unilateral_with_notice'
-      | 'unilateral_immediate'
-      | 'non_terminable';
+      | 'MutualConsent'
+      | 'UnilateralWithNotice'
+      | 'UnilateralImmediate'
+      | 'NonTerminable';
     /** @description Per-terrain speed multiplier applied to a mode's base speed */
     TerrainSpeedModifier: {
       /** @description Terrain type code (e.g., "road", "trail", "forest"). Category B content code (game-configurable). */
@@ -34858,12 +34922,12 @@ export interface components {
      * @description Current status of a matchmaking ticket
      * @enum {string}
      */
-    TicketStatus: 'searching' | 'match_found' | 'match_accepted' | 'cancelled' | 'expired';
+    TicketStatus: 'Searching' | 'MatchFound' | 'MatchAccepted' | 'Cancelled' | 'Expired';
     /**
      * @description Type of time commitment for scheduling constraints
      * @enum {string}
      */
-    TimeCommitmentType: 'exclusive' | 'partial';
+    TimeCommitmentType: 'Exclusive' | 'Partial';
     /**
      * @description Why the time ratio was changed
      * @enum {string}
@@ -34900,14 +34964,14 @@ export interface components {
      * @enum {string}
      */
     TraitAxis:
-      | 'OPENNESS'
-      | 'CONSCIENTIOUSNESS'
-      | 'EXTRAVERSION'
-      | 'AGREEABLENESS'
-      | 'NEUROTICISM'
-      | 'HONESTY'
-      | 'AGGRESSION'
-      | 'LOYALTY';
+      | 'Openness'
+      | 'Conscientiousness'
+      | 'Extraversion'
+      | 'Agreeableness'
+      | 'Neuroticism'
+      | 'Honesty'
+      | 'Aggression'
+      | 'Loyalty';
     /** @description Snapshot of a personality trait */
     TraitSnapshot: {
       /** @description Trait axis name (e.g., AGGRESSION, OPENNESS) */
@@ -34948,25 +35012,25 @@ export interface components {
      * @enum {string}
      */
     TransactionType:
-      | 'mint'
-      | 'quest_reward'
-      | 'loot_drop'
-      | 'vendor_sale'
-      | 'autogain'
-      | 'refund'
-      | 'conversion_credit'
-      | 'burn'
-      | 'vendor_purchase'
-      | 'fee'
-      | 'expiration'
-      | 'cap_overflow'
-      | 'conversion_debit'
-      | 'transfer'
-      | 'trade'
-      | 'gift'
-      | 'escrow_deposit'
-      | 'escrow_release'
-      | 'escrow_refund';
+      | 'Mint'
+      | 'QuestReward'
+      | 'LootDrop'
+      | 'VendorSale'
+      | 'Autogain'
+      | 'Refund'
+      | 'ConversionCredit'
+      | 'Burn'
+      | 'VendorPurchase'
+      | 'Fee'
+      | 'Expiration'
+      | 'CapOverflow'
+      | 'ConversionDebit'
+      | 'Transfer'
+      | 'Trade'
+      | 'Gift'
+      | 'EscrowDeposit'
+      | 'EscrowRelease'
+      | 'EscrowRefund';
     /** @description Request to transfer a party role to a new entity */
     TransferContractPartyRequest: {
       /**
@@ -35689,7 +35753,7 @@ export interface components {
       /** @description Achievement name */
       displayName: string;
       /** @description Achievement description */
-      description?: string;
+      description: string;
       /** @description Point value */
       points: number;
       /** @description Achievement icon */
@@ -35837,11 +35901,7 @@ export interface components {
      * @description Reason why a scene reference could not be resolved
      * @enum {string}
      */
-    UnresolvedReferenceReason:
-      | 'not_found'
-      | 'circular_reference'
-      | 'depth_exceeded'
-      | 'access_denied';
+    UnresolvedReferenceReason: 'NotFound' | 'CircularReference' | 'DepthExceeded' | 'AccessDenied';
     /** @description Request to update an achievement definition */
     UpdateAchievementDefinitionRequest: {
       /**
@@ -35858,9 +35918,25 @@ export interface components {
       /** @description New active status */
       isActive?: boolean | null;
       /** @description Updated platform ID mappings */
-      platformIds?: {
-        [key: string]: string;
-      } | null;
+      platformMappings?: components['schemas']['PlatformMapping'][] | null;
+      /** @description Score type code for matching analytics.score.updated events (progressive achievements) */
+      scoreType?: string | null;
+      /** @description Milestone type code for matching analytics.milestone.reached events */
+      milestoneType?: string | null;
+      /**
+       * Format: double
+       * @description Expected milestone value for matching analytics.milestone.reached events
+       */
+      milestoneValue?: number | null;
+      /** @description Expected milestone name for matching analytics.milestone.reached events */
+      milestoneName?: string | null;
+      /** @description Leaderboard ID for matching leaderboard.rank.changed events */
+      leaderboardId?: string | null;
+      /**
+       * Format: int64
+       * @description Rank threshold for leaderboard achievements (unlock when rank <= threshold)
+       */
+      rankThreshold?: number | null;
     };
     /** @description Request to update an existing actor template */
     UpdateActorTemplateRequest: {
@@ -36334,7 +36410,7 @@ export interface components {
      * @description How to handle score updates
      * @enum {string}
      */
-    UpdateMode: 'replace' | 'increment' | 'max' | 'min';
+    UpdateMode: 'Replace' | 'Increment' | 'Max' | 'Min';
     /** @description Request to update a transit mode. Only provided fields are updated. */
     UpdateModeRequest: {
       /** @description Mode code to update (identifier, not updatable) */
@@ -36914,18 +36990,18 @@ export interface components {
        * @enum {string}
        */
       reason:
-        | 'none'
-        | 'preconditionInvalidated'
-        | 'actionFailed'
-        | 'betterGoalAvailable'
-        | 'planCompleted'
-        | 'goalAlreadySatisfied'
-        | 'suboptimalPlan';
+        | 'None'
+        | 'PreconditionInvalidated'
+        | 'ActionFailed'
+        | 'BetterGoalAvailable'
+        | 'PlanCompleted'
+        | 'GoalAlreadySatisfied'
+        | 'SuboptimalPlan';
       /**
        * @description Suggested action based on validation
        * @enum {string}
        */
-      suggestedAction: 'continue' | 'replan' | 'abort';
+      suggestedAction: 'Continue' | 'Replan' | 'Abort';
       /** @description Index where plan became invalid (if applicable) */
       invalidatedAtIndex?: number;
       /** @description Additional details about the validation result. Null when no additional context is needed. */
@@ -37024,14 +37100,14 @@ export interface components {
      * @enum {string}
      */
     ValidationConditionType:
-      | 'statusCodeIn'
-      | 'jsonPathEquals'
-      | 'jsonPathNotEquals'
-      | 'jsonPathExists'
-      | 'jsonPathNotExists'
-      | 'jsonPathGreaterThan'
-      | 'jsonPathLessThan'
-      | 'jsonPathContains';
+      | 'StatusCodeIn'
+      | 'JsonPathEquals'
+      | 'JsonPathNotEquals'
+      | 'JsonPathExists'
+      | 'JsonPathNotExists'
+      | 'JsonPathGreaterThan'
+      | 'JsonPathLessThan'
+      | 'JsonPathContains';
     /** @description Detailed validation error with type, location, and message information */
     ValidationError: {
       /**
@@ -37084,7 +37160,7 @@ export interface components {
      *     - balance_mismatch: Wallet balance does not match expected held amount
      * @enum {string}
      */
-    ValidationFailureType: 'asset_missing' | 'asset_mutated' | 'asset_expired' | 'balance_mismatch';
+    ValidationFailureType: 'AssetMissing' | 'AssetMutated' | 'AssetExpired' | 'BalanceMismatch';
     /** @description Result of scene validation */
     ValidationResult: {
       /** @description Whether the scene passed all validation checks */
@@ -37127,16 +37203,16 @@ export interface components {
      * @enum {string}
      */
     ValidationRuleType:
-      | 'require_tag'
-      | 'require_node_type'
-      | 'forbid_tag'
-      | 'require_annotation'
-      | 'custom_expression';
+      | 'RequireTag'
+      | 'RequireNodeType'
+      | 'ForbidTag'
+      | 'RequireAnnotation'
+      | 'CustomExpression';
     /**
      * @description Severity level of a validation issue
      * @enum {string}
      */
-    ValidationSeverity: 'error' | 'warning';
+    ValidationSeverity: 'Error' | 'Warning';
     /** @description Validation rules applied to messages in rooms of this type */
     ValidatorConfig: {
       /** @description Maximum message length in characters for text and custom formats */
@@ -37435,7 +37511,7 @@ export interface components {
      * @description Shape of a volume node for spatial bounds
      * @enum {string}
      */
-    VolumeShape: 'box' | 'sphere' | 'capsule' | 'cylinder';
+    VolumeShape: 'Box' | 'Sphere' | 'Capsule' | 'Cylinder';
     /** @description Wallet details */
     WalletResponse: {
       /**
@@ -37481,7 +37557,7 @@ export interface components {
      * @description Current status of a wallet
      * @enum {string}
      */
-    WalletStatus: 'active' | 'frozen' | 'closed';
+    WalletStatus: 'Active' | 'Frozen' | 'Closed';
     /** @description Wallet with all non-zero balances */
     WalletWithBalancesResponse: {
       /** @description Wallet details */
@@ -37517,12 +37593,12 @@ export interface components {
      * @description How container weight propagates to parent
      * @enum {string}
      */
-    WeightContribution: 'none' | 'self_only' | 'self_plus_contents';
+    WeightContribution: 'None' | 'SelfOnly' | 'SelfPlusContents';
     /**
      * @description Precision for weight values (consistent with CurrencyPrecision)
      * @enum {string}
      */
-    WeightPrecision: 'integer' | 'decimal_1' | 'decimal_2' | 'decimal_3';
+    WeightPrecision: 'Integer' | 'Decimal1' | 'Decimal2' | 'Decimal3';
   };
   responses: never;
   parameters: never;
@@ -37743,7 +37819,7 @@ export interface operations {
       };
     };
   };
-  achievement_deleteAchievementDefinition: {
+  achievement_deprecateAchievementDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -37752,18 +37828,20 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['DeleteAchievementDefinitionRequest'];
+        'application/json': components['schemas']['DeprecateAchievementDefinitionRequest'];
       };
     };
     responses: {
-      /** @description Achievement deleted successfully */
+      /** @description Achievement definition deprecated successfully */
       200: {
         headers: {
           [name: string]: unknown;
         };
-        content?: never;
+        content: {
+          'application/json': components['schemas']['AchievementDefinitionResponse'];
+        };
       };
-      /** @description Achievement not found */
+      /** @description Achievement definition not found */
       404: {
         headers: {
           [name: string]: unknown;

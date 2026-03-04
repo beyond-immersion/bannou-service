@@ -38,19 +38,19 @@ using System = global::System;
 public enum ConnectionStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"open")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Open")]
     Open = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"closed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Closed")]
     Closed = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"dangerous")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Dangerous")]
     Dangerous = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"blocked")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Blocked")]
     Blocked = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"seasonal_closed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"SeasonalClosed")]
     SeasonalClosed = 4,
 
 }
@@ -64,16 +64,16 @@ public enum ConnectionStatus
 public enum SettableConnectionStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"open")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Open")]
     Open = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"closed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Closed")]
     Closed = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"dangerous")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Dangerous")]
     Dangerous = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"blocked")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Blocked")]
     Blocked = 3,
 
 }
@@ -87,22 +87,22 @@ public enum SettableConnectionStatus
 public enum JourneyStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"preparing")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Preparing")]
     Preparing = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"in_transit")]
+    [System.Runtime.Serialization.EnumMember(Value = @"InTransit")]
     InTransit = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"at_waypoint")]
+    [System.Runtime.Serialization.EnumMember(Value = @"AtWaypoint")]
     AtWaypoint = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"arrived")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Arrived")]
     Arrived = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"interrupted")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Interrupted")]
     Interrupted = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"abandoned")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Abandoned")]
     Abandoned = 5,
 
 }
@@ -116,16 +116,16 @@ public enum JourneyStatus
 public enum JourneyLegStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"pending")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Pending")]
     Pending = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"in_progress")]
+    [System.Runtime.Serialization.EnumMember(Value = @"InProgress")]
     InProgress = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"completed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Completed")]
     Completed = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"skipped")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Skipped")]
     Skipped = 3,
 
 }
@@ -139,13 +139,13 @@ public enum JourneyLegStatus
 public enum RouteSortBy
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"fastest")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Fastest")]
     Fastest = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"safest")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Safest")]
     Safest = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"shortest")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Shortest")]
     Shortest = 2,
 
 }

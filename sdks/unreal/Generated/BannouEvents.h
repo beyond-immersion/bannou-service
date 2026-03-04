@@ -18,6 +18,12 @@ namespace Bannou
 {{
     namespace Events
     {{
+        /** Sent to the entity's WebSocket sessions when a significant progress milestone */
+        constexpr const TCHAR* AchievementProgressMilestoneReached = TEXT("achievement.progress.milestone-reached");
+
+        /** Sent to the unlocking entity's WebSocket sessions when an achievement is unlocked. */
+        constexpr const TCHAR* AchievementUnlocked = TEXT("achievement.unlocked");
+
         /** Sent when bundle creation from asset_ids completes. */
         constexpr const TCHAR* AssetBundleCreationComplete = TEXT("asset.bundle.creation.complete");
 

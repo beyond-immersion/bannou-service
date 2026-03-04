@@ -1020,7 +1020,7 @@ public partial class LocationService : ILocationService
                     {
                         ResourceType = "location",
                         ResourceId = body.LocationId,
-                        CleanupPolicy = CleanupPolicy.ALL_REQUIRED
+                        CleanupPolicy = CleanupPolicy.AllRequired
                     }, cancellationToken);
 
                 if (!cleanupResult.Success)
@@ -2261,7 +2261,7 @@ public partial class LocationService : ILocationService
         public string Code { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public LocationType LocationType { get; set; } = LocationType.OTHER;
+        public LocationType LocationType { get; set; } = LocationType.Other;
         public Guid? ParentLocationId { get; set; }
         public int Depth { get; set; }
         public bool IsDeprecated { get; set; }

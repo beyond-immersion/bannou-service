@@ -24,9 +24,9 @@ public static class CompressionHelper
 
         return compressionType switch
         {
-            CompressionType.NONE => data,
-            CompressionType.GZIP => CompressGzip(data, compressionLevel),
-            CompressionType.BROTLI => CompressBrotli(data, compressionLevel),
+            CompressionType.None => data,
+            CompressionType.Gzip => CompressGzip(data, compressionLevel),
+            CompressionType.Brotli => CompressBrotli(data, compressionLevel),
             _ => data
         };
     }
@@ -46,9 +46,9 @@ public static class CompressionHelper
 
         return compressionType switch
         {
-            CompressionType.NONE => compressedData,
-            CompressionType.GZIP => DecompressGzip(compressedData),
-            CompressionType.BROTLI => DecompressBrotli(compressedData),
+            CompressionType.None => compressedData,
+            CompressionType.Gzip => DecompressGzip(compressedData),
+            CompressionType.Brotli => DecompressBrotli(compressedData),
             _ => compressedData
         };
     }

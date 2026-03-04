@@ -57,13 +57,13 @@ public partial class InfrastructureHealthRequest
 public enum ServiceHealthSource
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"all")]
+    [System.Runtime.Serialization.EnumMember(Value = @"All")]
     All = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"control_plane_only")]
+    [System.Runtime.Serialization.EnumMember(Value = @"ControlPlaneOnly")]
     ControlPlaneOnly = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"deployed_only")]
+    [System.Runtime.Serialization.EnumMember(Value = @"DeployedOnly")]
     DeployedOnly = 2,
 
 }
@@ -719,16 +719,16 @@ public partial class RestartRecommendation
 public enum BackendType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"kubernetes")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Kubernetes")]
     Kubernetes = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"portainer")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Portainer")]
     Portainer = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"swarm")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Swarm")]
     Swarm = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"compose")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Compose")]
     Compose = 3,
 
 }
@@ -1175,13 +1175,13 @@ public partial class ResourceLimits
 public enum DeploymentMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"graceful")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Graceful")]
     Graceful = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"force")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Force")]
     Force = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"clean")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Clean")]
     Clean = 2,
 
 }
@@ -1492,13 +1492,13 @@ public partial class ResourceUsage
 public enum TeardownMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"graceful")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Graceful")]
     Graceful = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"force")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Force")]
     Force = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"preserve-data")]
+    [System.Runtime.Serialization.EnumMember(Value = @"PreserveData")]
     PreserveData = 2,
 
 }
@@ -1612,19 +1612,19 @@ public partial class TeardownResponse
 public enum CleanTarget
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"containers")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Containers")]
     Containers = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"networks")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Networks")]
     Networks = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"volumes")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Volumes")]
     Volumes = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"images")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Images")]
     Images = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"all")]
+    [System.Runtime.Serialization.EnumMember(Value = @"All")]
     All = 4,
 
 }
@@ -1935,16 +1935,16 @@ public partial class AppliedChange
 public enum DeploymentAction
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"started")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Started")]
     Started = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"completed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Completed")]
     Completed = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Failed")]
     Failed = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"topology-changed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"TopologyChanged")]
     TopologyChanged = 3,
 
 }
@@ -1958,16 +1958,16 @@ public enum DeploymentAction
 public enum PresetCategory
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"development")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Development")]
     Development = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"testing")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Testing")]
     Testing = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"production")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Production")]
     Production = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Custom")]
     Custom = 3,
 
 }
@@ -2007,19 +2007,19 @@ public enum ServiceLayerType
 public enum ContainerStatusType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"running")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Running")]
     Running = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"starting")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Starting")]
     Starting = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"stopping")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Stopping")]
     Stopping = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"stopped")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Stopped")]
     Stopped = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"unhealthy")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Unhealthy")]
     Unhealthy = 4,
 
 }
@@ -2033,19 +2033,19 @@ public enum ContainerStatusType
 public enum DeployedServiceStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"starting")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Starting")]
     Starting = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"running")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Running")]
     Running = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Healthy")]
     Healthy = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"unhealthy")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Unhealthy")]
     Unhealthy = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"stopped")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Stopped")]
     Stopped = 4,
 
 }
@@ -2059,19 +2059,19 @@ public enum DeployedServiceStatus
 public enum TopologyChangeAction
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"add-node")]
+    [System.Runtime.Serialization.EnumMember(Value = @"AddNode")]
     AddNode = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"remove-node")]
+    [System.Runtime.Serialization.EnumMember(Value = @"RemoveNode")]
     RemoveNode = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"move-service")]
+    [System.Runtime.Serialization.EnumMember(Value = @"MoveService")]
     MoveService = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"scale")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Scale")]
     Scale = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"update-env")]
+    [System.Runtime.Serialization.EnumMember(Value = @"UpdateEnv")]
     UpdateEnv = 4,
 
 }
@@ -2085,10 +2085,10 @@ public enum TopologyChangeAction
 public enum LogStreamType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"stdout")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Stdout")]
     Stdout = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"stderr")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Stderr")]
     Stderr = 1,
 
 }
@@ -2102,16 +2102,16 @@ public enum LogStreamType
 public enum IngressType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"openresty")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Openresty")]
     Openresty = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"nginx")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Nginx")]
     Nginx = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"traefik")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Traefik")]
     Traefik = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    [System.Runtime.Serialization.EnumMember(Value = @"None")]
     None = 3,
 
 }
@@ -2125,10 +2125,10 @@ public enum IngressType
 public enum RestartStrategy
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"rolling")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Rolling")]
     Rolling = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"simultaneous")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Simultaneous")]
     Simultaneous = 1,
 
 }
@@ -2142,13 +2142,13 @@ public enum RestartStrategy
 public enum ComponentHealthStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Healthy")]
     Healthy = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"degraded")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Degraded")]
     Degraded = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"unavailable")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Unavailable")]
     Unavailable = 2,
 
 }
@@ -2166,13 +2166,13 @@ public enum ComponentHealthStatus
 public enum RestartPriority
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"graceful")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Graceful")]
     Graceful = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"immediate")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Immediate")]
     Immediate = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"force")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Force")]
     Force = 2,
 
 }

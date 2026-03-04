@@ -267,9 +267,9 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
 
                 // Compress the reconstructed data
                 var compressionType = _configuration.DefaultCompressionType;
-                var compressionLevel = compressionType == CompressionType.BROTLI
+                var compressionLevel = compressionType == CompressionType.Brotli
                     ? _configuration.BrotliCompressionLevel
-                    : compressionType == CompressionType.GZIP
+                    : compressionType == CompressionType.Gzip
                         ? _configuration.GzipCompressionLevel
                         : (int?)null;
                 var compressedData = CompressionHelper.Compress(reconstructedData, compressionType, compressionLevel);
@@ -302,7 +302,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
                     VersionNumber = currentVersion.VersionNumber,
                     Data = Convert.ToBase64String(compressedData),
                     ContentHash = contentHash,
-                    IsCompressed = compressionType != CompressionType.NONE,
+                    IsCompressed = compressionType != CompressionType.None,
                     CompressionType = compressionType,
                     SizeBytes = reconstructedData.Length,
                     CachedAt = DateTimeOffset.UtcNow,

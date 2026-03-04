@@ -364,12 +364,12 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                 {
                     switch (body.ConflictResolution)
                     {
-                        case ConflictResolution.SKIP:
+                        case ConflictResolution.Skip:
                             conflicts.Add(slotEntry.SlotName);
                             skippedSlots++;
                             continue;
 
-                        case ConflictResolution.OVERWRITE:
+                        case ConflictResolution.Overwrite:
                             // Delete existing slot and versions
                             var existingVersions = await _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions)
                                 .QueryAsync(v => v.SlotId == existingSlot.SlotId, cancellationToken);
@@ -380,7 +380,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                             await slotStore.DeleteAsync(existingSlot.GetStateKey(), cancellationToken);
                             break;
 
-                        case ConflictResolution.RENAME:
+                        case ConflictResolution.Rename:
                             var counter = 1;
                             var baseName = slotEntry.SlotName;
                             while (existingSlot != null)
@@ -402,7 +402,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                     OwnerId = body.TargetOwnerId,
                     OwnerType = body.TargetOwnerType,
                     SlotName = slotEntry.SlotName,
-                    Category = Enum.TryParse<SaveCategory>(slotEntry.Category, out var cat) ? cat : SaveCategory.MANUAL_SAVE,
+                    Category = Enum.TryParse<SaveCategory>(slotEntry.Category, out var cat) ? cat : SaveCategory.ManualSave,
                     MaxVersions = _configuration.DefaultMaxVersionsManualSave,
                     LatestVersion = 1,
                     CreatedAt = DateTimeOffset.UtcNow,
@@ -415,9 +415,9 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                 var contentHash = Hashing.ContentHasher.ComputeHash(data);
                 // Configuration already provides typed enum (T25 compliant)
                 var compressionTypeEnum = _configuration.DefaultCompressionType;
-                var importCompressionLevel = compressionTypeEnum == CompressionType.BROTLI
+                var importCompressionLevel = compressionTypeEnum == CompressionType.Brotli
                     ? _configuration.BrotliCompressionLevel
-                    : compressionTypeEnum == CompressionType.GZIP
+                    : compressionTypeEnum == CompressionType.Gzip
                         ? _configuration.GzipCompressionLevel
                         : (int?)null;
                 var compressedData = CompressionHelper.Compress(data, compressionTypeEnum, importCompressionLevel);
@@ -449,7 +449,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                     VersionNumber = 1,
                     Data = Convert.ToBase64String(compressedData),
                     ContentHash = contentHash,
-                    IsCompressed = compressionTypeEnum != CompressionType.NONE,
+                    IsCompressed = compressionTypeEnum != CompressionType.None,
                     CompressionType = compressionTypeEnum,
                     SizeBytes = data.Length,
                     CachedAt = DateTimeOffset.UtcNow

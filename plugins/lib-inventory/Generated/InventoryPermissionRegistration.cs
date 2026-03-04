@@ -48,7 +48,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/container/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createContainer",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/container/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getContainer",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/container/get-or-create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getOrCreateContainer",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/container/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listContainers",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/container/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateContainer",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/container/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteContainer",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/add",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "addItemToContainer",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/remove",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "removeItemFromContainer",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/move",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "moveItem",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/transfer",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "transferItem",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/split",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "splitStack",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/merge",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "mergeStacks",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/query",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryItems",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/count",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "countItems",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/has",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "hasItems",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class InventoryPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/inventory/find-space",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "findSpace",
             Permissions = new List<PermissionRequirement>
             {

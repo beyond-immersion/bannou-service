@@ -890,11 +890,11 @@ components:
         - contract: Contract instance locked under escrow guardianship
         - custom: Custom asset type via registered handler
       enum:
-      - currency
-      - item
-      - item_stack
-      - contract
-      - custom
+      - Currency
+      - Item
+      - ItemStack
+      - Contract
+      - Custom
 
     EscrowAsset:
       type: object

@@ -526,7 +526,7 @@ public partial class SpeciesService : ISpeciesService
                     {
                         ResourceType = "species",
                         ResourceId = body.SpeciesId,
-                        CleanupPolicy = Resource.CleanupPolicy.ALL_REQUIRED
+                        CleanupPolicy = Resource.CleanupPolicy.AllRequired
                     }, cancellationToken);
 
                 if (!cleanupResult.Success)

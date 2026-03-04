@@ -48,7 +48,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/health/infrastructure",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetInfrastructureHealth",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/health/services",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetServicesHealth",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/services/restart",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "RestartService",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/services/should-restart",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ShouldRestartService",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/backends/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetBackends",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/presets/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetPresets",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/deploy",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "Deploy",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/service-routing",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetServiceRouting",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/status",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/teardown",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "Teardown",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/clean",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "Clean",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/logs",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetLogs",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/topology",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "UpdateTopology",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/containers/request-restart",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "RequestContainerRestart",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/containers/status",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetContainerStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/config/rollback",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "RollbackConfiguration",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/config/version",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetConfigVersion",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/processing-pool/acquire",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "AcquireProcessor",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/processing-pool/release",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ReleaseProcessor",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/processing-pool/status",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetPoolStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -348,7 +348,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/processing-pool/scale",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ScalePool",
             Permissions = new List<PermissionRequirement>
             {
@@ -363,7 +363,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/processing-pool/cleanup",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "CleanupPool",
             Permissions = new List<PermissionRequirement>
             {

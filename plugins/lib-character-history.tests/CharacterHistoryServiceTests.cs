@@ -126,8 +126,8 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             EventId = eventId,
             EventName = "The Great Battle",
-            EventCategory = EventCategory.WAR,
-            Role = ParticipationRole.COMBATANT,
+            EventCategory = EventCategory.War,
+            Role = ParticipationRole.Combatant,
             EventDate = DateTimeOffset.UtcNow.AddDays(-30),
             Significance = 0.8f,
             Metadata = null
@@ -145,8 +145,8 @@ public class CharacterHistoryServiceTests
         Assert.Equal(characterId, result.CharacterId);
         Assert.Equal(eventId, result.EventId);
         Assert.Equal("The Great Battle", result.EventName);
-        Assert.Equal(EventCategory.WAR, result.EventCategory);
-        Assert.Equal(ParticipationRole.COMBATANT, result.Role);
+        Assert.Equal(EventCategory.War, result.EventCategory);
+        Assert.Equal(ParticipationRole.Combatant, result.Role);
         Assert.NotEqual(Guid.Empty, result.ParticipationId);
 
         // Verify state was saved
@@ -184,8 +184,8 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             EventId = existingEventId, // Different from the new request
             EventName = "Previous Event",
-            EventCategory = EventCategory.WAR,
-            Role = ParticipationRole.COMBATANT,
+            EventCategory = EventCategory.War,
+            Role = ParticipationRole.Combatant,
             EventDateUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds(),
             Significance = 0.7f
         };
@@ -195,8 +195,8 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             EventId = Guid.NewGuid(), // New event, different from existingEventId
             EventName = "New Event",
-            EventCategory = EventCategory.CULTURAL,
-            Role = ParticipationRole.WITNESS,
+            EventCategory = EventCategory.Cultural,
+            Role = ParticipationRole.Witness,
             EventDate = DateTimeOffset.UtcNow,
             Significance = 0.5f
         };
@@ -274,8 +274,8 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             EventId = Guid.NewGuid(),
             EventName = "War Event",
-            EventCategory = EventCategory.WAR,
-            Role = ParticipationRole.COMBATANT,
+            EventCategory = EventCategory.War,
+            Role = ParticipationRole.Combatant,
             EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Significance = 0.8f,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -287,7 +287,7 @@ public class CharacterHistoryServiceTests
         var request = new GetParticipationRequest
         {
             CharacterId = characterId,
-            EventCategory = EventCategory.WAR,
+            EventCategory = EventCategory.War,
             Page = 1,
             PageSize = 20
         };
@@ -326,8 +326,8 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             EventId = Guid.NewGuid(),
             EventName = "Page 2 Event",
-            EventCategory = EventCategory.WAR,
-            Role = ParticipationRole.COMBATANT,
+            EventCategory = EventCategory.War,
+            Role = ParticipationRole.Combatant,
             EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Significance = 0.8f,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -403,8 +403,8 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             EventId = eventId,
             EventName = "Battle",
-            EventCategory = EventCategory.WAR,
-            Role = ParticipationRole.LEADER,
+            EventCategory = EventCategory.War,
+            Role = ParticipationRole.Leader,
             EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Significance = 0.9f,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -416,7 +416,7 @@ public class CharacterHistoryServiceTests
         var request = new GetEventParticipantsRequest
         {
             EventId = eventId,
-            Role = ParticipationRole.LEADER,
+            Role = ParticipationRole.Leader,
             Page = 1,
             PageSize = 20
         };
@@ -428,7 +428,7 @@ public class CharacterHistoryServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.Single(result.Participations);
-        Assert.Equal(ParticipationRole.LEADER, result.Participations.First().Role);
+        Assert.Equal(ParticipationRole.Leader, result.Participations.First().Role);
 
         // Verify query conditions include EventId and Role filters
         _mockJsonQueryableStore.Verify(s => s.JsonQueryPagedAsync(
@@ -480,7 +480,7 @@ public class CharacterHistoryServiceTests
             {
                 new BackstoryElement
                 {
-                    ElementType = BackstoryElementType.ORIGIN,
+                    ElementType = BackstoryElementType.Origin,
                     Key = "homeland",
                     Value = "Born in the northern mountains",
                     Strength = 0.9f
@@ -522,7 +522,7 @@ public class CharacterHistoryServiceTests
             {
                 new BackstoryElementData
                 {
-                    ElementType = BackstoryElementType.ORIGIN,
+                    ElementType = BackstoryElementType.Origin,
                     Key = "homeland",
                     Value = "Old value",
                     Strength = 0.5f
@@ -542,7 +542,7 @@ public class CharacterHistoryServiceTests
             {
                 new BackstoryElement
                 {
-                    ElementType = BackstoryElementType.ORIGIN,
+                    ElementType = BackstoryElementType.Origin,
                     Key = "homeland",
                     Value = "Updated value",
                     Strength = 0.9f
@@ -581,10 +581,10 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             Elements = new List<BackstoryElement>
             {
-                new BackstoryElement { ElementType = BackstoryElementType.ORIGIN, Key = "a", Value = "v", Strength = 0.5f },
-                new BackstoryElement { ElementType = BackstoryElementType.TRAUMA, Key = "b", Value = "v", Strength = 0.5f },
-                new BackstoryElement { ElementType = BackstoryElementType.GOAL, Key = "c", Value = "v", Strength = 0.5f },
-                new BackstoryElement { ElementType = BackstoryElementType.FEAR, Key = "d", Value = "v", Strength = 0.5f }
+                new BackstoryElement { ElementType = BackstoryElementType.Origin, Key = "a", Value = "v", Strength = 0.5f },
+                new BackstoryElement { ElementType = BackstoryElementType.Trauma, Key = "b", Value = "v", Strength = 0.5f },
+                new BackstoryElement { ElementType = BackstoryElementType.Goal, Key = "c", Value = "v", Strength = 0.5f },
+                new BackstoryElement { ElementType = BackstoryElementType.Fear, Key = "d", Value = "v", Strength = 0.5f }
             },
             ReplaceExisting = true
         };
@@ -615,8 +615,8 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             Elements = new List<BackstoryElementData>
             {
-                new BackstoryElementData { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "north", Strength = 0.9f },
-                new BackstoryElementData { ElementType = BackstoryElementType.TRAUMA, Key = "war", Value = "siege", Strength = 0.7f }
+                new BackstoryElementData { ElementType = BackstoryElementType.Origin, Key = "homeland", Value = "north", Strength = 0.9f },
+                new BackstoryElementData { ElementType = BackstoryElementType.Trauma, Key = "war", Value = "siege", Strength = 0.7f }
             },
             CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds(),
             UpdatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds()
@@ -631,7 +631,7 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             Elements = new List<BackstoryElement>
             {
-                new BackstoryElement { ElementType = BackstoryElementType.GOAL, Key = "revenge", Value = "v", Strength = 0.8f }
+                new BackstoryElement { ElementType = BackstoryElementType.Goal, Key = "revenge", Value = "v", Strength = 0.8f }
             },
             ReplaceExisting = false
         };
@@ -657,8 +657,8 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             Elements = new List<BackstoryElementData>
             {
-                new BackstoryElementData { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "old", Strength = 0.5f },
-                new BackstoryElementData { ElementType = BackstoryElementType.TRAUMA, Key = "war", Value = "old", Strength = 0.3f }
+                new BackstoryElementData { ElementType = BackstoryElementType.Origin, Key = "homeland", Value = "old", Strength = 0.5f },
+                new BackstoryElementData { ElementType = BackstoryElementType.Trauma, Key = "war", Value = "old", Strength = 0.3f }
             },
             CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds(),
             UpdatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds()
@@ -673,8 +673,8 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             Elements = new List<BackstoryElement>
             {
-                new BackstoryElement { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "updated", Strength = 0.9f },
-                new BackstoryElement { ElementType = BackstoryElementType.TRAUMA, Key = "war", Value = "updated", Strength = 0.8f }
+                new BackstoryElement { ElementType = BackstoryElementType.Origin, Key = "homeland", Value = "updated", Strength = 0.9f },
+                new BackstoryElement { ElementType = BackstoryElementType.Trauma, Key = "war", Value = "updated", Strength = 0.8f }
             },
             ReplaceExisting = false
         };
@@ -700,8 +700,8 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             Elements = new List<BackstoryElementData>
             {
-                new BackstoryElementData { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "north", Strength = 0.9f },
-                new BackstoryElementData { ElementType = BackstoryElementType.TRAUMA, Key = "war", Value = "siege", Strength = 0.7f }
+                new BackstoryElementData { ElementType = BackstoryElementType.Origin, Key = "homeland", Value = "north", Strength = 0.9f },
+                new BackstoryElementData { ElementType = BackstoryElementType.Trauma, Key = "war", Value = "siege", Strength = 0.7f }
             },
             CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds(),
             UpdatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds()
@@ -714,7 +714,7 @@ public class CharacterHistoryServiceTests
         var request = new AddBackstoryElementRequest
         {
             CharacterId = characterId,
-            Element = new BackstoryElement { ElementType = BackstoryElementType.GOAL, Key = "revenge", Value = "avenge", Strength = 0.8f }
+            Element = new BackstoryElement { ElementType = BackstoryElementType.Goal, Key = "revenge", Value = "avenge", Strength = 0.8f }
         };
 
         // Act
@@ -738,8 +738,8 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             Elements = new List<BackstoryElementData>
             {
-                new BackstoryElementData { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "north", Strength = 0.5f },
-                new BackstoryElementData { ElementType = BackstoryElementType.TRAUMA, Key = "war", Value = "siege", Strength = 0.7f }
+                new BackstoryElementData { ElementType = BackstoryElementType.Origin, Key = "homeland", Value = "north", Strength = 0.5f },
+                new BackstoryElementData { ElementType = BackstoryElementType.Trauma, Key = "war", Value = "siege", Strength = 0.7f }
             },
             CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds(),
             UpdatedAtUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds()
@@ -752,7 +752,7 @@ public class CharacterHistoryServiceTests
         var request = new AddBackstoryElementRequest
         {
             CharacterId = characterId,
-            Element = new BackstoryElement { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "updated value", Strength = 0.95f }
+            Element = new BackstoryElement { ElementType = BackstoryElementType.Origin, Key = "homeland", Value = "updated value", Strength = 0.95f }
         };
 
         // Act
@@ -869,8 +869,8 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             EventId = eventId,
             EventName = "Test Event",
-            EventCategory = EventCategory.WAR,
-            Role = ParticipationRole.WITNESS,
+            EventCategory = EventCategory.War,
+            Role = ParticipationRole.Witness,
             EventDate = DateTimeOffset.UtcNow
         };
 
@@ -913,7 +913,7 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             Elements = new List<BackstoryElement>
             {
-                new BackstoryElement { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "Test origin", Strength = 0.8f }
+                new BackstoryElement { ElementType = BackstoryElementType.Origin, Key = "homeland", Value = "Test origin", Strength = 0.8f }
             }
         };
 
@@ -953,7 +953,7 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             Elements = new List<BackstoryElement>
             {
-                new BackstoryElement { ElementType = BackstoryElementType.ORIGIN, Key = "homeland", Value = "Updated origin", Strength = 0.8f }
+                new BackstoryElement { ElementType = BackstoryElementType.Origin, Key = "homeland", Value = "Updated origin", Strength = 0.8f }
             }
         };
 
@@ -1092,8 +1092,8 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             EventId = eventId,
             EventName = "The Great Battle",
-            EventCategory = EventCategory.WAR,
-            Role = ParticipationRole.COMBATANT,
+            EventCategory = EventCategory.War,
+            Role = ParticipationRole.Combatant,
             EventDateUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds(),
             Significance = 0.8f,
             CreatedAtUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds()
@@ -1106,7 +1106,7 @@ public class CharacterHistoryServiceTests
             {
                 new BackstoryElementData
                 {
-                    ElementType = BackstoryElementType.ORIGIN,
+                    ElementType = BackstoryElementType.Origin,
                     Key = "homeland",
                     Value = "Northern mountains",
                     Strength = 0.9f
@@ -1162,8 +1162,8 @@ public class CharacterHistoryServiceTests
             CharacterId = characterId,
             EventId = Guid.NewGuid(),
             EventName = "Event",
-            EventCategory = EventCategory.CULTURAL,
-            Role = ParticipationRole.WITNESS,
+            EventCategory = EventCategory.Cultural,
+            Role = ParticipationRole.Witness,
             EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Significance = 0.5f,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -1214,7 +1214,7 @@ public class CharacterHistoryServiceTests
             {
                 new BackstoryElementData
                 {
-                    ElementType = BackstoryElementType.TRAUMA,
+                    ElementType = BackstoryElementType.Trauma,
                     Key = "childhood",
                     Value = "Lost family early",
                     Strength = 0.7f
@@ -1314,8 +1314,8 @@ public class CharacterHistoryServiceTests
                     ParticipationId = participationId,
                     EventId = eventId,
                     EventName = "Battle of Test",
-                    EventCategory = EventCategory.WAR,
-                    Role = ParticipationRole.COMBATANT,
+                    EventCategory = EventCategory.War,
+                    Role = ParticipationRole.Combatant,
                     EventDate = DateTimeOffset.UtcNow.AddDays(-30),
                     Significance = 0.8f,
                     CreatedAt = DateTimeOffset.UtcNow.AddDays(-30)
@@ -1329,7 +1329,7 @@ public class CharacterHistoryServiceTests
                 {
                     new BackstoryElement
                     {
-                        ElementType = BackstoryElementType.ORIGIN,
+                        ElementType = BackstoryElementType.Origin,
                         Key = "homeland",
                         Value = "Test Land",
                         Strength = 0.9f
@@ -1395,8 +1395,8 @@ public class CharacterHistoryServiceTests
                     ParticipationId = participationId,
                     EventId = eventId,
                     EventName = "Test Event",
-                    EventCategory = EventCategory.CULTURAL,
-                    Role = ParticipationRole.WITNESS,
+                    EventCategory = EventCategory.Cultural,
+                    Role = ParticipationRole.Witness,
                     EventDate = DateTimeOffset.UtcNow,
                     Significance = 0.5f,
                     CreatedAt = DateTimeOffset.UtcNow
@@ -1507,7 +1507,7 @@ public class CharacterHistoryServiceTests
                 {
                     new BackstoryElement
                     {
-                        ElementType = BackstoryElementType.ORIGIN,
+                        ElementType = BackstoryElementType.Origin,
                         Key = "homeland",
                         Value = "Test",
                         Strength = 0.5f

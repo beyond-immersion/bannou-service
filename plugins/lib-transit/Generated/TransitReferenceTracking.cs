@@ -141,7 +141,7 @@ public partial class TransitService
                 {
                     ResourceType = "location",
                     SourceType = "transit",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "transit",
                     CallbackEndpoint = "/transit/cleanup-by-location",
                     PayloadTemplate = "{\"locationId\": \"{{resourceId}}\"}",
@@ -162,7 +162,7 @@ public partial class TransitService
                 {
                     ResourceType = "character",
                     SourceType = "transit",
-                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    OnDeleteAction = OnDeleteAction.Cascade,
                     ServiceName = "transit",
                     CallbackEndpoint = "/transit/cleanup-by-character",
                     PayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",

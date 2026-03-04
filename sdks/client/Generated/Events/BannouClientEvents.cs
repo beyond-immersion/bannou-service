@@ -14,6 +14,7 @@ namespace BeyondImmersion.Bannou.Client.Events;
 public sealed class BannouClientEvents
 {
     private readonly BannouClient _client;
+    private AchievementEventSubscriptions? _achievement;
     private AssetEventSubscriptions? _asset;
     private AuthEventSubscriptions? _auth;
     private CharacterEventSubscriptions? _character;
@@ -35,6 +36,12 @@ public sealed class BannouClientEvents
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
     }
+
+    /// <summary>
+    /// Event subscriptions for Achievement service.
+    /// </summary>
+    public AchievementEventSubscriptions Achievement =>
+        _achievement ??= new AchievementEventSubscriptions(_client);
 
     /// <summary>
     /// Event subscriptions for Asset service.

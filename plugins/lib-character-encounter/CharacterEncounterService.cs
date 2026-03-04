@@ -60,12 +60,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     // Built-in encounter types
     private static readonly List<BuiltInEncounterType> BuiltInTypes = new()
     {
-        new("COMBAT", "Combat", "Physical confrontation between characters", EmotionalImpact.ANGER, 10),
-        new("DIALOGUE", "Dialogue", "Conversation or negotiation between characters", EmotionalImpact.INDIFFERENCE, 20),
-        new("TRADE", "Trade", "Economic exchange between characters", EmotionalImpact.GRATITUDE, 30),
-        new("QUEST", "Quest", "Shared objective completion", EmotionalImpact.RESPECT, 40),
-        new("SOCIAL", "Social", "Casual social interaction", EmotionalImpact.AFFECTION, 50),
-        new("CEREMONY", "Ceremony", "Formal event participation", EmotionalImpact.PRIDE, 60)
+        new("COMBAT", "Combat", "Physical confrontation between characters", EmotionalImpact.Anger, 10),
+        new("DIALOGUE", "Dialogue", "Conversation or negotiation between characters", EmotionalImpact.Indifference, 20),
+        new("TRADE", "Trade", "Economic exchange between characters", EmotionalImpact.Gratitude, 30),
+        new("QUEST", "Quest", "Shared objective completion", EmotionalImpact.Respect, 40),
+        new("SOCIAL", "Social", "Casual social interaction", EmotionalImpact.Affection, 50),
+        new("CEREMONY", "Ceremony", "Formal event participation", EmotionalImpact.Pride, 60)
     };
 
     /// <summary>
@@ -2805,12 +2805,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         return outcome switch
         {
-            EncounterOutcome.POSITIVE => EmotionalImpact.GRATITUDE,
-            EncounterOutcome.NEGATIVE => EmotionalImpact.ANGER,
-            EncounterOutcome.NEUTRAL => EmotionalImpact.INDIFFERENCE,
-            EncounterOutcome.MEMORABLE => EmotionalImpact.RESPECT,
-            EncounterOutcome.TRANSFORMATIVE => EmotionalImpact.PRIDE,
-            _ => EmotionalImpact.INDIFFERENCE
+            EncounterOutcome.Positive => EmotionalImpact.Gratitude,
+            EncounterOutcome.Negative => EmotionalImpact.Anger,
+            EncounterOutcome.Neutral => EmotionalImpact.Indifference,
+            EncounterOutcome.Memorable => EmotionalImpact.Respect,
+            EncounterOutcome.Transformative => EmotionalImpact.Pride,
+            _ => EmotionalImpact.Indifference
         };
     }
 
@@ -2818,11 +2818,11 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         return outcome switch
         {
-            EncounterOutcome.POSITIVE => (float)_configuration.SentimentShiftPositive,
-            EncounterOutcome.NEGATIVE => (float)_configuration.SentimentShiftNegative,
-            EncounterOutcome.NEUTRAL => 0f,
-            EncounterOutcome.MEMORABLE => (float)_configuration.SentimentShiftMemorable,
-            EncounterOutcome.TRANSFORMATIVE => (float)_configuration.SentimentShiftTransformative,
+            EncounterOutcome.Positive => (float)_configuration.SentimentShiftPositive,
+            EncounterOutcome.Negative => (float)_configuration.SentimentShiftNegative,
+            EncounterOutcome.Neutral => 0f,
+            EncounterOutcome.Memorable => (float)_configuration.SentimentShiftMemorable,
+            EncounterOutcome.Transformative => (float)_configuration.SentimentShiftTransformative,
             _ => 0f
         };
     }

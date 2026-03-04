@@ -113,19 +113,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         },
         "SceneNode": {
@@ -248,13 +248,13 @@ public partial class SceneController
             "type": "string",
             "description": "Structural node type. Indicates what kind of data the node contains,\nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
             "enum": [
-                "group",
-                "mesh",
-                "marker",
-                "volume",
-                "emitter",
-                "reference",
-                "custom"
+                "Group",
+                "Mesh",
+                "Marker",
+                "Volume",
+                "Emitter",
+                "Reference",
+                "Custom"
             ]
         },
         "Transform": {
@@ -422,15 +422,15 @@ public partial class SceneController
             "type": "string",
             "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
             "enum": [
-                "walkable",
-                "climbable",
-                "sittable",
-                "interactive",
-                "collectible",
-                "destructible",
-                "container",
-                "door",
-                "teleport"
+                "Walkable",
+                "Climbable",
+                "Sittable",
+                "Interactive",
+                "Collectible",
+                "Destructible",
+                "Container",
+                "Door",
+                "Teleport"
             ]
         },
         "AssetSlot": {
@@ -469,24 +469,24 @@ public partial class SceneController
             "type": "string",
             "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
             "enum": [
-                "generic",
-                "spawn_point",
-                "npc_spawn",
-                "waypoint",
-                "camera_point",
-                "light_point",
-                "audio_point",
-                "trigger_point"
+                "Generic",
+                "SpawnPoint",
+                "NpcSpawn",
+                "Waypoint",
+                "CameraPoint",
+                "LightPoint",
+                "AudioPoint",
+                "TriggerPoint"
             ]
         },
         "VolumeShape": {
             "type": "string",
             "description": "Shape of a volume node for spatial bounds",
             "enum": [
-                "box",
-                "sphere",
-                "capsule",
-                "cylinder"
+                "Box",
+                "Sphere",
+                "Capsule",
+                "Cylinder"
             ]
         }
     }
@@ -589,19 +589,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         },
         "SceneNode": {
@@ -724,13 +724,13 @@ public partial class SceneController
             "type": "string",
             "description": "Structural node type. Indicates what kind of data the node contains,\nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
             "enum": [
-                "group",
-                "mesh",
-                "marker",
-                "volume",
-                "emitter",
-                "reference",
-                "custom"
+                "Group",
+                "Mesh",
+                "Marker",
+                "Volume",
+                "Emitter",
+                "Reference",
+                "Custom"
             ]
         },
         "Transform": {
@@ -898,15 +898,15 @@ public partial class SceneController
             "type": "string",
             "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
             "enum": [
-                "walkable",
-                "climbable",
-                "sittable",
-                "interactive",
-                "collectible",
-                "destructible",
-                "container",
-                "door",
-                "teleport"
+                "Walkable",
+                "Climbable",
+                "Sittable",
+                "Interactive",
+                "Collectible",
+                "Destructible",
+                "Container",
+                "Door",
+                "Teleport"
             ]
         },
         "AssetSlot": {
@@ -945,24 +945,24 @@ public partial class SceneController
             "type": "string",
             "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
             "enum": [
-                "generic",
-                "spawn_point",
-                "npc_spawn",
-                "waypoint",
-                "camera_point",
-                "light_point",
-                "audio_point",
-                "trigger_point"
+                "Generic",
+                "SpawnPoint",
+                "NpcSpawn",
+                "Waypoint",
+                "CameraPoint",
+                "LightPoint",
+                "AudioPoint",
+                "TriggerPoint"
             ]
         },
         "VolumeShape": {
             "type": "string",
             "description": "Shape of a volume node for spatial bounds",
             "enum": [
-                "box",
-                "sphere",
-                "capsule",
-                "cylinder"
+                "Box",
+                "Sphere",
+                "Capsule",
+                "Cylinder"
             ]
         }
     }
@@ -1185,19 +1185,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         },
         "SceneNode": {
@@ -1320,13 +1320,13 @@ public partial class SceneController
             "type": "string",
             "description": "Structural node type. Indicates what kind of data the node contains,\nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
             "enum": [
-                "group",
-                "mesh",
-                "marker",
-                "volume",
-                "emitter",
-                "reference",
-                "custom"
+                "Group",
+                "Mesh",
+                "Marker",
+                "Volume",
+                "Emitter",
+                "Reference",
+                "Custom"
             ]
         },
         "Transform": {
@@ -1494,15 +1494,15 @@ public partial class SceneController
             "type": "string",
             "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
             "enum": [
-                "walkable",
-                "climbable",
-                "sittable",
-                "interactive",
-                "collectible",
-                "destructible",
-                "container",
-                "door",
-                "teleport"
+                "Walkable",
+                "Climbable",
+                "Sittable",
+                "Interactive",
+                "Collectible",
+                "Destructible",
+                "Container",
+                "Door",
+                "Teleport"
             ]
         },
         "AssetSlot": {
@@ -1541,24 +1541,24 @@ public partial class SceneController
             "type": "string",
             "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
             "enum": [
-                "generic",
-                "spawn_point",
-                "npc_spawn",
-                "waypoint",
-                "camera_point",
-                "light_point",
-                "audio_point",
-                "trigger_point"
+                "Generic",
+                "SpawnPoint",
+                "NpcSpawn",
+                "Waypoint",
+                "CameraPoint",
+                "LightPoint",
+                "AudioPoint",
+                "TriggerPoint"
             ]
         },
         "VolumeShape": {
             "type": "string",
             "description": "Shape of a volume node for spatial bounds",
             "enum": [
-                "box",
-                "sphere",
-                "capsule",
-                "cylinder"
+                "Box",
+                "Sphere",
+                "Capsule",
+                "Cylinder"
             ]
         },
         "ResolvedReference": {
@@ -1643,10 +1643,10 @@ public partial class SceneController
             "type": "string",
             "description": "Reason why a scene reference could not be resolved",
             "enum": [
-                "not_found",
-                "circular_reference",
-                "depth_exceeded",
-                "access_denied"
+                "NotFound",
+                "CircularReference",
+                "DepthExceeded",
+                "AccessDenied"
             ]
         }
     }
@@ -1768,19 +1768,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         }
     }
@@ -1889,19 +1889,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         }
     }
@@ -2065,19 +2065,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         },
         "SceneNode": {
@@ -2200,13 +2200,13 @@ public partial class SceneController
             "type": "string",
             "description": "Structural node type. Indicates what kind of data the node contains,\nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
             "enum": [
-                "group",
-                "mesh",
-                "marker",
-                "volume",
-                "emitter",
-                "reference",
-                "custom"
+                "Group",
+                "Mesh",
+                "Marker",
+                "Volume",
+                "Emitter",
+                "Reference",
+                "Custom"
             ]
         },
         "Transform": {
@@ -2374,15 +2374,15 @@ public partial class SceneController
             "type": "string",
             "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
             "enum": [
-                "walkable",
-                "climbable",
-                "sittable",
-                "interactive",
-                "collectible",
-                "destructible",
-                "container",
-                "door",
-                "teleport"
+                "Walkable",
+                "Climbable",
+                "Sittable",
+                "Interactive",
+                "Collectible",
+                "Destructible",
+                "Container",
+                "Door",
+                "Teleport"
             ]
         },
         "AssetSlot": {
@@ -2421,24 +2421,24 @@ public partial class SceneController
             "type": "string",
             "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
             "enum": [
-                "generic",
-                "spawn_point",
-                "npc_spawn",
-                "waypoint",
-                "camera_point",
-                "light_point",
-                "audio_point",
-                "trigger_point"
+                "Generic",
+                "SpawnPoint",
+                "NpcSpawn",
+                "Waypoint",
+                "CameraPoint",
+                "LightPoint",
+                "AudioPoint",
+                "TriggerPoint"
             ]
         },
         "VolumeShape": {
             "type": "string",
             "description": "Shape of a volume node for spatial bounds",
             "enum": [
-                "box",
-                "sphere",
-                "capsule",
-                "cylinder"
+                "Box",
+                "Sphere",
+                "Capsule",
+                "Cylinder"
             ]
         }
     }
@@ -2541,19 +2541,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         },
         "SceneNode": {
@@ -2676,13 +2676,13 @@ public partial class SceneController
             "type": "string",
             "description": "Structural node type. Indicates what kind of data the node contains,\nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
             "enum": [
-                "group",
-                "mesh",
-                "marker",
-                "volume",
-                "emitter",
-                "reference",
-                "custom"
+                "Group",
+                "Mesh",
+                "Marker",
+                "Volume",
+                "Emitter",
+                "Reference",
+                "Custom"
             ]
         },
         "Transform": {
@@ -2850,15 +2850,15 @@ public partial class SceneController
             "type": "string",
             "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
             "enum": [
-                "walkable",
-                "climbable",
-                "sittable",
-                "interactive",
-                "collectible",
-                "destructible",
-                "container",
-                "door",
-                "teleport"
+                "Walkable",
+                "Climbable",
+                "Sittable",
+                "Interactive",
+                "Collectible",
+                "Destructible",
+                "Container",
+                "Door",
+                "Teleport"
             ]
         },
         "AssetSlot": {
@@ -2897,24 +2897,24 @@ public partial class SceneController
             "type": "string",
             "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
             "enum": [
-                "generic",
-                "spawn_point",
-                "npc_spawn",
-                "waypoint",
-                "camera_point",
-                "light_point",
-                "audio_point",
-                "trigger_point"
+                "Generic",
+                "SpawnPoint",
+                "NpcSpawn",
+                "Waypoint",
+                "CameraPoint",
+                "LightPoint",
+                "AudioPoint",
+                "TriggerPoint"
             ]
         },
         "VolumeShape": {
             "type": "string",
             "description": "Shape of a volume node for spatial bounds",
             "enum": [
-                "box",
-                "sphere",
-                "capsule",
-                "cylinder"
+                "Box",
+                "Sphere",
+                "Capsule",
+                "Cylinder"
             ]
         }
     }
@@ -3198,19 +3198,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         },
         "SceneNode": {
@@ -3333,13 +3333,13 @@ public partial class SceneController
             "type": "string",
             "description": "Structural node type. Indicates what kind of data the node contains,\nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
             "enum": [
-                "group",
-                "mesh",
-                "marker",
-                "volume",
-                "emitter",
-                "reference",
-                "custom"
+                "Group",
+                "Mesh",
+                "Marker",
+                "Volume",
+                "Emitter",
+                "Reference",
+                "Custom"
             ]
         },
         "Transform": {
@@ -3507,15 +3507,15 @@ public partial class SceneController
             "type": "string",
             "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
             "enum": [
-                "walkable",
-                "climbable",
-                "sittable",
-                "interactive",
-                "collectible",
-                "destructible",
-                "container",
-                "door",
-                "teleport"
+                "Walkable",
+                "Climbable",
+                "Sittable",
+                "Interactive",
+                "Collectible",
+                "Destructible",
+                "Container",
+                "Door",
+                "Teleport"
             ]
         },
         "AssetSlot": {
@@ -3554,24 +3554,24 @@ public partial class SceneController
             "type": "string",
             "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
             "enum": [
-                "generic",
-                "spawn_point",
-                "npc_spawn",
-                "waypoint",
-                "camera_point",
-                "light_point",
-                "audio_point",
-                "trigger_point"
+                "Generic",
+                "SpawnPoint",
+                "NpcSpawn",
+                "Waypoint",
+                "CameraPoint",
+                "LightPoint",
+                "AudioPoint",
+                "TriggerPoint"
             ]
         },
         "VolumeShape": {
             "type": "string",
             "description": "Shape of a volume node for spatial bounds",
             "enum": [
-                "box",
-                "sphere",
-                "capsule",
-                "cylinder"
+                "Box",
+                "Sphere",
+                "Capsule",
+                "Cylinder"
             ]
         }
     }
@@ -3656,8 +3656,8 @@ public partial class SceneController
             "type": "string",
             "description": "Severity level of a validation issue",
             "enum": [
-                "error",
-                "warning"
+                "Error",
+                "Warning"
             ]
         }
     }
@@ -4203,19 +4203,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         },
         "SceneNode": {
@@ -4338,13 +4338,13 @@ public partial class SceneController
             "type": "string",
             "description": "Structural node type. Indicates what kind of data the node contains,\nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
             "enum": [
-                "group",
-                "mesh",
-                "marker",
-                "volume",
-                "emitter",
-                "reference",
-                "custom"
+                "Group",
+                "Mesh",
+                "Marker",
+                "Volume",
+                "Emitter",
+                "Reference",
+                "Custom"
             ]
         },
         "Transform": {
@@ -4512,15 +4512,15 @@ public partial class SceneController
             "type": "string",
             "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
             "enum": [
-                "walkable",
-                "climbable",
-                "sittable",
-                "interactive",
-                "collectible",
-                "destructible",
-                "container",
-                "door",
-                "teleport"
+                "Walkable",
+                "Climbable",
+                "Sittable",
+                "Interactive",
+                "Collectible",
+                "Destructible",
+                "Container",
+                "Door",
+                "Teleport"
             ]
         },
         "AssetSlot": {
@@ -4559,24 +4559,24 @@ public partial class SceneController
             "type": "string",
             "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
             "enum": [
-                "generic",
-                "spawn_point",
-                "npc_spawn",
-                "waypoint",
-                "camera_point",
-                "light_point",
-                "audio_point",
-                "trigger_point"
+                "Generic",
+                "SpawnPoint",
+                "NpcSpawn",
+                "Waypoint",
+                "CameraPoint",
+                "LightPoint",
+                "AudioPoint",
+                "TriggerPoint"
             ]
         },
         "VolumeShape": {
             "type": "string",
             "description": "Shape of a volume node for spatial bounds",
             "enum": [
-                "box",
-                "sphere",
-                "capsule",
-                "cylinder"
+                "Box",
+                "Sphere",
+                "Capsule",
+                "Cylinder"
             ]
         }
     }
@@ -4751,19 +4751,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         },
         "SceneNode": {
@@ -4886,13 +4886,13 @@ public partial class SceneController
             "type": "string",
             "description": "Structural node type. Indicates what kind of data the node contains,\nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
             "enum": [
-                "group",
-                "mesh",
-                "marker",
-                "volume",
-                "emitter",
-                "reference",
-                "custom"
+                "Group",
+                "Mesh",
+                "Marker",
+                "Volume",
+                "Emitter",
+                "Reference",
+                "Custom"
             ]
         },
         "Transform": {
@@ -5060,15 +5060,15 @@ public partial class SceneController
             "type": "string",
             "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
             "enum": [
-                "walkable",
-                "climbable",
-                "sittable",
-                "interactive",
-                "collectible",
-                "destructible",
-                "container",
-                "door",
-                "teleport"
+                "Walkable",
+                "Climbable",
+                "Sittable",
+                "Interactive",
+                "Collectible",
+                "Destructible",
+                "Container",
+                "Door",
+                "Teleport"
             ]
         },
         "AssetSlot": {
@@ -5107,24 +5107,24 @@ public partial class SceneController
             "type": "string",
             "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
             "enum": [
-                "generic",
-                "spawn_point",
-                "npc_spawn",
-                "waypoint",
-                "camera_point",
-                "light_point",
-                "audio_point",
-                "trigger_point"
+                "Generic",
+                "SpawnPoint",
+                "NpcSpawn",
+                "Waypoint",
+                "CameraPoint",
+                "LightPoint",
+                "AudioPoint",
+                "TriggerPoint"
             ]
         },
         "VolumeShape": {
             "type": "string",
             "description": "Shape of a volume node for spatial bounds",
             "enum": [
-                "box",
-                "sphere",
-                "capsule",
-                "cylinder"
+                "Box",
+                "Sphere",
+                "Capsule",
+                "Cylinder"
             ]
         }
     }
@@ -5237,19 +5237,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         },
         "SceneNode": {
@@ -5372,13 +5372,13 @@ public partial class SceneController
             "type": "string",
             "description": "Structural node type. Indicates what kind of data the node contains,\nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
             "enum": [
-                "group",
-                "mesh",
-                "marker",
-                "volume",
-                "emitter",
-                "reference",
-                "custom"
+                "Group",
+                "Mesh",
+                "Marker",
+                "Volume",
+                "Emitter",
+                "Reference",
+                "Custom"
             ]
         },
         "Transform": {
@@ -5546,15 +5546,15 @@ public partial class SceneController
             "type": "string",
             "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
             "enum": [
-                "walkable",
-                "climbable",
-                "sittable",
-                "interactive",
-                "collectible",
-                "destructible",
-                "container",
-                "door",
-                "teleport"
+                "Walkable",
+                "Climbable",
+                "Sittable",
+                "Interactive",
+                "Collectible",
+                "Destructible",
+                "Container",
+                "Door",
+                "Teleport"
             ]
         },
         "AssetSlot": {
@@ -5593,24 +5593,24 @@ public partial class SceneController
             "type": "string",
             "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
             "enum": [
-                "generic",
-                "spawn_point",
-                "npc_spawn",
-                "waypoint",
-                "camera_point",
-                "light_point",
-                "audio_point",
-                "trigger_point"
+                "Generic",
+                "SpawnPoint",
+                "NpcSpawn",
+                "Waypoint",
+                "CameraPoint",
+                "LightPoint",
+                "AudioPoint",
+                "TriggerPoint"
             ]
         },
         "VolumeShape": {
             "type": "string",
             "description": "Shape of a volume node for spatial bounds",
             "enum": [
-                "box",
-                "sphere",
-                "capsule",
-                "cylinder"
+                "Box",
+                "Sphere",
+                "Capsule",
+                "Cylinder"
             ]
         }
     }
@@ -6082,19 +6082,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         },
         "ValidationRule": {
@@ -6134,19 +6134,19 @@ public partial class SceneController
             "type": "string",
             "description": "Severity level of a validation issue",
             "enum": [
-                "error",
-                "warning"
+                "Error",
+                "Warning"
             ]
         },
         "ValidationRuleType": {
             "type": "string",
             "description": "Type of validation check to perform",
             "enum": [
-                "require_tag",
-                "require_node_type",
-                "forbid_tag",
-                "require_annotation",
-                "custom_expression"
+                "RequireTag",
+                "RequireNodeType",
+                "ForbidTag",
+                "RequireAnnotation",
+                "CustomExpression"
             ]
         },
         "ValidationRuleConfig": {
@@ -6299,19 +6299,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         }
     }
@@ -6352,19 +6352,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         },
         "ValidationRule": {
@@ -6404,19 +6404,19 @@ public partial class SceneController
             "type": "string",
             "description": "Severity level of a validation issue",
             "enum": [
-                "error",
-                "warning"
+                "Error",
+                "Warning"
             ]
         },
         "ValidationRuleType": {
             "type": "string",
             "description": "Type of validation check to perform",
             "enum": [
-                "require_tag",
-                "require_node_type",
-                "forbid_tag",
-                "require_annotation",
-                "custom_expression"
+                "RequireTag",
+                "RequireNodeType",
+                "ForbidTag",
+                "RequireAnnotation",
+                "CustomExpression"
             ]
         },
         "ValidationRuleConfig": {
@@ -6560,19 +6560,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         }
     }
@@ -6696,29 +6696,29 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         },
         "SearchMatchType": {
             "type": "string",
             "description": "Where the search match was found",
             "enum": [
-                "name",
-                "description",
-                "tag",
-                "node_name"
+                "Name",
+                "Description",
+                "Tag",
+                "NodeName"
             ]
         }
     }
@@ -7010,13 +7010,13 @@ public partial class SceneController
             "type": "string",
             "description": "Structural node type. Indicates what kind of data the node contains,\nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
             "enum": [
-                "group",
-                "mesh",
-                "marker",
-                "volume",
-                "emitter",
-                "reference",
-                "custom"
+                "Group",
+                "Mesh",
+                "Marker",
+                "Volume",
+                "Emitter",
+                "Reference",
+                "Custom"
             ]
         }
     }
@@ -7117,19 +7117,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         }
     }
@@ -7232,19 +7232,19 @@ public partial class SceneController
             "type": "string",
             "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
-                "unknown",
-                "region",
-                "city",
-                "district",
-                "lot",
-                "building",
-                "room",
-                "dungeon",
-                "arena",
-                "vehicle",
-                "prefab",
-                "cutscene",
-                "other"
+                "Unknown",
+                "Region",
+                "City",
+                "District",
+                "Lot",
+                "Building",
+                "Room",
+                "Dungeon",
+                "Arena",
+                "Vehicle",
+                "Prefab",
+                "Cutscene",
+                "Other"
             ]
         },
         "SceneNode": {
@@ -7367,13 +7367,13 @@ public partial class SceneController
             "type": "string",
             "description": "Structural node type. Indicates what kind of data the node contains,\nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
             "enum": [
-                "group",
-                "mesh",
-                "marker",
-                "volume",
-                "emitter",
-                "reference",
-                "custom"
+                "Group",
+                "Mesh",
+                "Marker",
+                "Volume",
+                "Emitter",
+                "Reference",
+                "Custom"
             ]
         },
         "Transform": {
@@ -7541,15 +7541,15 @@ public partial class SceneController
             "type": "string",
             "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
             "enum": [
-                "walkable",
-                "climbable",
-                "sittable",
-                "interactive",
-                "collectible",
-                "destructible",
-                "container",
-                "door",
-                "teleport"
+                "Walkable",
+                "Climbable",
+                "Sittable",
+                "Interactive",
+                "Collectible",
+                "Destructible",
+                "Container",
+                "Door",
+                "Teleport"
             ]
         },
         "AssetSlot": {
@@ -7588,24 +7588,24 @@ public partial class SceneController
             "type": "string",
             "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
             "enum": [
-                "generic",
-                "spawn_point",
-                "npc_spawn",
-                "waypoint",
-                "camera_point",
-                "light_point",
-                "audio_point",
-                "trigger_point"
+                "Generic",
+                "SpawnPoint",
+                "NpcSpawn",
+                "Waypoint",
+                "CameraPoint",
+                "LightPoint",
+                "AudioPoint",
+                "TriggerPoint"
             ]
         },
         "VolumeShape": {
             "type": "string",
             "description": "Shape of a volume node for spatial bounds",
             "enum": [
-                "box",
-                "sphere",
-                "capsule",
-                "cylinder"
+                "Box",
+                "Sphere",
+                "Capsule",
+                "Cylinder"
             ]
         }
     }

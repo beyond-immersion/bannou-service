@@ -48,7 +48,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/assets/upload/request",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "requestUpload",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/assets/upload/complete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "completeUpload",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/assets/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getAsset",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/assets/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteAsset",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/assets/list-versions",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listAssetVersions",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/assets/search",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "searchAssets",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/bundles/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createBundle",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/bundles/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getBundle",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/bundles/upload/request",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "requestBundleUpload",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/bundles/metabundle/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createMetabundle",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/bundles/job/status",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getJobStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/bundles/job/cancel",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cancelJob",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/bundles/resolve",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "resolveBundles",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/bundles/query/by-asset",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryBundlesByAsset",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/bundles/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateBundle",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/bundles/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteBundle",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/bundles/restore",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "restoreBundle",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/bundles/query",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryBundles",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/bundles/list-versions",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listBundleVersions",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class AssetPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/assets/bulk-get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "bulkGetAssets",
             Permissions = new List<PermissionRequirement>
             {

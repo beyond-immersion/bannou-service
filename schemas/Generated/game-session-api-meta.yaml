@@ -60,8 +60,8 @@ paths:
         ,\n            \"description\": \"Game service stub name for this session. Use the game service's stubName property
         (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific sessions.\"\n        },\n        \"SessionStatus\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Current status of the game session\",\n   \
-        \         \"enum\": [\n                \"waiting\",\n                \"active\",\n                \"full\",\n    \
-        \            \"finished\"\n            ]\n        }\n    }\n}"
+        \         \"enum\": [\n                \"Waiting\",\n                \"Active\",\n                \"Full\",\n    \
+        \            \"Finished\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GameSessionListResponse\"\
         ,\n    \"$defs\": {\n        \"GameSessionListResponse\": {\n            \"description\": \"Response containing a
         list of game sessions matching filter criteria\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -108,10 +108,10 @@ paths:
         : \"Game service stub name for this session. Use the game service's stubName property (e.g., \\\"my-game\\\"). Use
         \\\"generic\\\" for non-game-specific sessions.\"\n        },\n        \"SessionType\": {\n            \"type\": \"\
         string\",\n            \"description\": \"Type of game session - determines join behavior\",\n            \"enum\"\
-        : [\n                \"lobby\",\n                \"matchmade\"\n            ]\n        },\n        \"SessionStatus\"\
+        : [\n                \"Lobby\",\n                \"Matchmade\"\n            ]\n        },\n        \"SessionStatus\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Current status of the game session\",\n   \
-        \         \"enum\": [\n                \"waiting\",\n                \"active\",\n                \"full\",\n    \
-        \            \"finished\"\n            ]\n        },\n        \"GamePlayer\": {\n            \"description\": \"Information
+        \         \"enum\": [\n                \"Waiting\",\n                \"Active\",\n                \"Full\",\n    \
+        \            \"Finished\"\n            ]\n        },\n        \"GamePlayer\": {\n            \"description\": \"Information
         about a player currently participating in a game session\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"accountId\",\n                \"sessionId\",\n          \
         \      \"joinedAt\",\n                \"role\"\n            ],\n            \"properties\": {\n                \"\
@@ -129,8 +129,8 @@ paths:
         : true,\n                    \"nullable\": true,\n                    \"description\": \"Game-specific character data
         for this player. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n      \
         \      }\n        },\n        \"PlayerRole\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Role of the player in the game session\",\n            \"enum\": [\n                \"player\",\n                \"\
-        spectator\",\n                \"moderator\"\n            ]\n        },\n        \"ReservationInfo\": {\n         \
+        Role of the player in the game session\",\n            \"enum\": [\n                \"Player\",\n                \"\
+        Spectator\",\n                \"Moderator\"\n            ]\n        },\n        \"ReservationInfo\": {\n         \
         \   \"type\": \"object\",\n            \"description\": \"Reservation token returned when creating a matchmade session\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\",\n   \
         \             \"token\",\n                \"expiresAt\"\n            ],\n            \"properties\": {\n         \
@@ -202,7 +202,7 @@ paths:
         : \"string\",\n            \"description\": \"Game service stub name for this session. Use the game service's stubName
         property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific sessions.\"\n        },\n        \"SessionType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Type of game session - determines join behavior\"\
-        ,\n            \"enum\": [\n                \"lobby\",\n                \"matchmade\"\n            ]\n        }\n\
+        ,\n            \"enum\": [\n                \"Lobby\",\n                \"Matchmade\"\n            ]\n        }\n\
         \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GameSessionResponse\"\
         ,\n    \"$defs\": {\n        \"GameSessionResponse\": {\n            \"description\": \"Complete details of a game
@@ -242,10 +242,10 @@ paths:
         GameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game service stub name for this session.
         Use the game service's stubName property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific sessions.\"\
         \n        },\n        \"SessionType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of
-        game session - determines join behavior\",\n            \"enum\": [\n                \"lobby\",\n                \"\
-        matchmade\"\n            ]\n        },\n        \"SessionStatus\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Current status of the game session\",\n            \"enum\": [\n                \"waiting\"\
-        ,\n                \"active\",\n                \"full\",\n                \"finished\"\n            ]\n        },\n\
+        game session - determines join behavior\",\n            \"enum\": [\n                \"Lobby\",\n                \"\
+        Matchmade\"\n            ]\n        },\n        \"SessionStatus\": {\n            \"type\": \"string\",\n        \
+        \    \"description\": \"Current status of the game session\",\n            \"enum\": [\n                \"Waiting\"\
+        ,\n                \"Active\",\n                \"Full\",\n                \"Finished\"\n            ]\n        },\n\
         \        \"GamePlayer\": {\n            \"description\": \"Information about a player currently participating in a
         game session\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"accountId\",\n                \"sessionId\",\n                \"joinedAt\",\n             \
@@ -264,7 +264,7 @@ paths:
         \                    \"description\": \"Game-specific character data for this player. No Bannou plugin reads specific
         keys from this field by convention.\"\n                }\n            }\n        },\n        \"PlayerRole\": {\n \
         \           \"type\": \"string\",\n            \"description\": \"Role of the player in the game session\",\n    \
-        \        \"enum\": [\n                \"player\",\n                \"spectator\",\n                \"moderator\"\n\
+        \        \"enum\": [\n                \"Player\",\n                \"Spectator\",\n                \"Moderator\"\n\
         \            ]\n        },\n        \"ReservationInfo\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Reservation token returned when creating a matchmade session\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"accountId\",\n                \"token\",\n                \"expiresAt\"\
@@ -348,10 +348,10 @@ paths:
         GameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game service stub name for this session.
         Use the game service's stubName property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific sessions.\"\
         \n        },\n        \"SessionType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of
-        game session - determines join behavior\",\n            \"enum\": [\n                \"lobby\",\n                \"\
-        matchmade\"\n            ]\n        },\n        \"SessionStatus\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Current status of the game session\",\n            \"enum\": [\n                \"waiting\"\
-        ,\n                \"active\",\n                \"full\",\n                \"finished\"\n            ]\n        },\n\
+        game session - determines join behavior\",\n            \"enum\": [\n                \"Lobby\",\n                \"\
+        Matchmade\"\n            ]\n        },\n        \"SessionStatus\": {\n            \"type\": \"string\",\n        \
+        \    \"description\": \"Current status of the game session\",\n            \"enum\": [\n                \"Waiting\"\
+        ,\n                \"Active\",\n                \"Full\",\n                \"Finished\"\n            ]\n        },\n\
         \        \"GamePlayer\": {\n            \"description\": \"Information about a player currently participating in a
         game session\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"accountId\",\n                \"sessionId\",\n                \"joinedAt\",\n             \
@@ -370,7 +370,7 @@ paths:
         \                    \"description\": \"Game-specific character data for this player. No Bannou plugin reads specific
         keys from this field by convention.\"\n                }\n            }\n        },\n        \"PlayerRole\": {\n \
         \           \"type\": \"string\",\n            \"description\": \"Role of the player in the game session\",\n    \
-        \        \"enum\": [\n                \"player\",\n                \"spectator\",\n                \"moderator\"\n\
+        \        \"enum\": [\n                \"Player\",\n                \"Spectator\",\n                \"Moderator\"\n\
         \            ]\n        },\n        \"ReservationInfo\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Reservation token returned when creating a matchmade session\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"accountId\",\n                \"token\",\n                \"expiresAt\"\
@@ -449,8 +449,8 @@ paths:
         \        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                 \
         \   \"description\": \"Additional permissions granted by joining\"\n                }\n            }\n        },\n\
         \        \"PlayerRole\": {\n            \"type\": \"string\",\n            \"description\": \"Role of the player in
-        the game session\",\n            \"enum\": [\n                \"player\",\n                \"spectator\",\n      \
-        \          \"moderator\"\n            ]\n        }\n    }\n}"
+        the game session\",\n            \"enum\": [\n                \"Player\",\n                \"Spectator\",\n      \
+        \          \"Moderator\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Join a game session\",\n    \"description\": \"Join an existing game session.
         This endpoint is not directly accessible via WebSocket API.\\nAccess is granted through session shortcuts published
         by the game-session service when\\na subscribed user connects. The shortcut contains a pre-bound JoinGameSessionRequest\\
@@ -577,7 +577,7 @@ paths:
         type\": \"string\",\n            \"description\": \"Game service stub name for this session. Use the game service's
         stubName property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific sessions.\"\n        },\n   \
         \     \"ChatMessageType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of chat message\"\
-        ,\n            \"enum\": [\n                \"public\",\n                \"whisper\",\n                \"system\"\n\
+        ,\n            \"enum\": [\n                \"Public\",\n                \"Whisper\",\n                \"System\"\n\
         \            ]\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Send chat message to game session\",\n    \"description\": \"\",\n    \"\
@@ -633,9 +633,9 @@ paths:
         \ },\n        \"GameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game service stub
         name for this session. Use the game service's stubName property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific
         sessions.\"\n        },\n        \"GameActionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of game action\",\n            \"enum\": [\n                \"move\",\n                \"interact\",\n  \
-        \              \"attack\",\n                \"cast_spell\",\n                \"use_item\"\n            ]\n       \
-        \ }\n    }\n}"
+        : \"Type of game action\",\n            \"enum\": [\n                \"Move\",\n                \"Interact\",\n  \
+        \              \"Attack\",\n                \"CastSpell\",\n                \"UseItem\"\n            ]\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GameActionResponse\"\
         ,\n    \"$defs\": {\n        \"GameActionResponse\": {\n            \"description\": \"Response indicating the result
         of a game action with any state changes\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -717,8 +717,8 @@ paths:
         \        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                 \
         \   \"description\": \"Additional permissions granted by joining\"\n                }\n            }\n        },\n\
         \        \"PlayerRole\": {\n            \"type\": \"string\",\n            \"description\": \"Role of the player in
-        the game session\",\n            \"enum\": [\n                \"player\",\n                \"spectator\",\n      \
-        \          \"moderator\"\n            ]\n        }\n    }\n}"
+        the game session\",\n            \"enum\": [\n                \"Player\",\n                \"Spectator\",\n      \
+        \          \"Moderator\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Join a specific game session by ID\",\n    \"description\": \"Join a game
         session by its session ID. Used for matchmade games where the session\\nis pre-created by the matchmaking service
         and the player has a reservation.\\nFor matchmade sessions, a valid reservation token is required.\\nFor lobby sessions,
@@ -1226,8 +1226,8 @@ components:
       type: string
       description: Type of game session - determines join behavior
       enum:
-      - lobby
-      - matchmade
+      - Lobby
+      - Matchmade
     GameType:
       type: string
       description: Game service stub name for this session. Use the game service's stubName property (e.g., "my-game"). 
@@ -1236,33 +1236,33 @@ components:
       type: string
       description: Current status of the game session
       enum:
-      - waiting
-      - active
-      - full
-      - finished
+      - Waiting
+      - Active
+      - Full
+      - Finished
     PlayerRole:
       type: string
       description: Role of the player in the game session
       enum:
-      - player
-      - spectator
-      - moderator
+      - Player
+      - Spectator
+      - Moderator
     ChatMessageType:
       type: string
       description: Type of chat message
       enum:
-      - public
-      - whisper
-      - system
+      - Public
+      - Whisper
+      - System
     GameActionType:
       type: string
       description: Type of game action
       enum:
-      - move
-      - interact
-      - attack
-      - cast_spell
-      - use_item
+      - Move
+      - Interact
+      - Attack
+      - CastSpell
+      - UseItem
     ReservationInfo:
       type: object
       description: Reservation token returned when creating a matchmade session

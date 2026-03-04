@@ -697,7 +697,7 @@ public partial class QuestService : IQuestService
             ContractInstanceId = contractResponse.ContractId,
             Code = definition.Code,
             Name = definition.Name,
-            Status = QuestStatus.ACTIVE,
+            Status = QuestStatus.Active,
             QuestorCharacterIds = new List<Guid> { body.QuestorCharacterId },
             QuestGiverCharacterId = body.QuestGiverCharacterId,
             AcceptedAt = now,
@@ -781,7 +781,7 @@ public partial class QuestService : IQuestService
                 return (StatusCodes.NotFound, null);
             }
 
-            if (instance.Status != QuestStatus.ACTIVE)
+            if (instance.Status != QuestStatus.Active)
             {
                 _logger.LogWarning("Cannot abandon quest {QuestInstanceId} in status {Status}",
                     body.QuestInstanceId, instance.Status);
@@ -796,7 +796,7 @@ public partial class QuestService : IQuestService
             }
 
             var now = DateTimeOffset.UtcNow;
-            instance.Status = QuestStatus.ABANDONED;
+            instance.Status = QuestStatus.Abandoned;
             instance.CompletedAt = now;
 
             // GetWithETagAsync returns non-null etag for existing records;
@@ -1002,7 +1002,7 @@ public partial class QuestService : IQuestService
                 var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
 
                 // Apply category filter if specified
-                var questCategory = definition?.Category ?? QuestCategory.SIDE;
+                var questCategory = definition?.Category ?? QuestCategory.Side;
                 if (body.Category.HasValue && questCategory != body.Category.Value)
                 {
                     continue;
@@ -1034,9 +1034,9 @@ public partial class QuestService : IQuestService
                 // Filter visible objectives using internal model's RevealBehavior
                 var visibleProgressModels = internalProgressList.Where(p =>
                     !p.Hidden ||
-                    p.RevealBehavior == ObjectiveRevealBehavior.ALWAYS ||
-                    (p.RevealBehavior == ObjectiveRevealBehavior.ON_PROGRESS && p.CurrentCount > 0) ||
-                    (p.RevealBehavior == ObjectiveRevealBehavior.ON_COMPLETE && p.IsComplete)
+                    p.RevealBehavior == ObjectiveRevealBehavior.Always ||
+                    (p.RevealBehavior == ObjectiveRevealBehavior.OnProgress && p.CurrentCount > 0) ||
+                    (p.RevealBehavior == ObjectiveRevealBehavior.OnComplete && p.IsComplete)
                 ).ToList();
 
                 // Map filtered internal models to response type
@@ -1059,7 +1059,7 @@ public partial class QuestService : IQuestService
 
         // Count failed quests
         var allInstances = await InstanceStore.QueryAsync(
-            i => i.QuestorCharacterIds.Contains(body.CharacterId) && i.Status == QuestStatus.FAILED,
+            i => i.QuestorCharacterIds.Contains(body.CharacterId) && i.Status == QuestStatus.Failed,
             cancellationToken: cancellationToken);
         failedCount = allInstances.Count;
 
@@ -1090,7 +1090,7 @@ public partial class QuestService : IQuestService
             return (StatusCodes.NotFound, null);
         }
 
-        if (instance.Status != QuestStatus.ACTIVE)
+        if (instance.Status != QuestStatus.Active)
         {
             _logger.LogWarning("Cannot report progress on quest {QuestInstanceId} in status {Status}",
                 body.QuestInstanceId, instance.Status);
@@ -1434,7 +1434,7 @@ public partial class QuestService : IQuestService
         if (definition.Prerequisites == null || definition.Prerequisites.Count == 0)
             return failures;
 
-        var failFast = _configuration.PrerequisiteValidationMode == PrerequisiteValidationMode.FAIL_FAST;
+        var failFast = _configuration.PrerequisiteValidationMode == PrerequisiteValidationMode.FailFast;
 
         foreach (var prereq in definition.Prerequisites)
         {
@@ -1442,24 +1442,24 @@ public partial class QuestService : IQuestService
 
             switch (prereq.Type)
             {
-                case PrerequisiteType.QUEST_COMPLETED:
+                case PrerequisiteType.QuestCompleted:
                     failure = CheckQuestCompletedPrerequisite(prereq, completedCodes, definition.Code, characterId);
                     break;
 
-                case PrerequisiteType.CURRENCY_AMOUNT:
+                case PrerequisiteType.CurrencyAmount:
                     failure = await CheckCurrencyPrerequisiteAsync(prereq, characterId, cancellationToken);
                     break;
 
-                case PrerequisiteType.ITEM_OWNED:
+                case PrerequisiteType.ItemOwned:
                     failure = await CheckItemPrerequisiteAsync(prereq, characterId, cancellationToken);
                     break;
 
-                case PrerequisiteType.CHARACTER_LEVEL:
+                case PrerequisiteType.CharacterLevel:
                     // Dynamic: Check via IPrerequisiteProviderFactory (no built-in L2 level tracking)
                     failure = await CheckDynamicPrerequisiteAsync("character_level", prereq, characterId, cancellationToken);
                     break;
 
-                case PrerequisiteType.REPUTATION:
+                case PrerequisiteType.Reputation:
                     // Dynamic: Check via IPrerequisiteProviderFactory
                     failure = await CheckDynamicPrerequisiteAsync("reputation", prereq, characterId, cancellationToken);
                     break;
@@ -1503,7 +1503,7 @@ public partial class QuestService : IQuestService
 
         return new PrerequisiteFailure
         {
-            Type = PrerequisiteType.QUEST_COMPLETED,
+            Type = PrerequisiteType.QuestCompleted,
             Code = prereq.QuestCode,
             Reason = $"Must complete quest '{prereq.QuestCode}' first",
             CurrentValue = "Not completed",
@@ -1540,7 +1540,7 @@ public partial class QuestService : IQuestService
             {
                 return new PrerequisiteFailure
                 {
-                    Type = PrerequisiteType.CURRENCY_AMOUNT,
+                    Type = PrerequisiteType.CurrencyAmount,
                     Code = prereq.CurrencyCode,
                     Reason = $"Unknown currency: {prereq.CurrencyCode}"
                 };
@@ -1562,7 +1562,7 @@ public partial class QuestService : IQuestService
             {
                 return new PrerequisiteFailure
                 {
-                    Type = PrerequisiteType.CURRENCY_AMOUNT,
+                    Type = PrerequisiteType.CurrencyAmount,
                     Code = prereq.CurrencyCode,
                     Reason = "Could not access wallet",
                     CurrentValue = "0",
@@ -1574,7 +1574,7 @@ public partial class QuestService : IQuestService
             {
                 return new PrerequisiteFailure
                 {
-                    Type = PrerequisiteType.CURRENCY_AMOUNT,
+                    Type = PrerequisiteType.CurrencyAmount,
                     Code = prereq.CurrencyCode,
                     Reason = "Could not access wallet",
                     CurrentValue = "0",
@@ -1599,7 +1599,7 @@ public partial class QuestService : IQuestService
                 // No balance means 0
                 return new PrerequisiteFailure
                 {
-                    Type = PrerequisiteType.CURRENCY_AMOUNT,
+                    Type = PrerequisiteType.CurrencyAmount,
                     Code = prereq.CurrencyCode,
                     Reason = $"Insufficient {prereq.CurrencyCode}: have 0, need {prereq.MinAmount.Value}",
                     CurrentValue = "0",
@@ -1613,7 +1613,7 @@ public partial class QuestService : IQuestService
 
             return new PrerequisiteFailure
             {
-                Type = PrerequisiteType.CURRENCY_AMOUNT,
+                Type = PrerequisiteType.CurrencyAmount,
                 Code = prereq.CurrencyCode,
                 Reason = $"Insufficient {prereq.CurrencyCode}: have {currentAmount}, need {prereq.MinAmount.Value}",
                 CurrentValue = currentAmount.ToString(),
@@ -1637,7 +1637,7 @@ public partial class QuestService : IQuestService
 
             return new PrerequisiteFailure
             {
-                Type = PrerequisiteType.CURRENCY_AMOUNT,
+                Type = PrerequisiteType.CurrencyAmount,
                 Code = prereq.CurrencyCode,
                 Reason = "Error checking currency balance"
             };
@@ -1675,7 +1675,7 @@ public partial class QuestService : IQuestService
             {
                 return new PrerequisiteFailure
                 {
-                    Type = PrerequisiteType.ITEM_OWNED,
+                    Type = PrerequisiteType.ItemOwned,
                     Code = prereq.ItemCode,
                     Reason = $"Unknown item: {prereq.ItemCode}"
                 };
@@ -1702,7 +1702,7 @@ public partial class QuestService : IQuestService
                 // Character has no containers or items
                 return new PrerequisiteFailure
                 {
-                    Type = PrerequisiteType.ITEM_OWNED,
+                    Type = PrerequisiteType.ItemOwned,
                     Code = prereq.ItemCode,
                     Reason = $"Insufficient {prereq.ItemCode}: have 0, need {requiredQuantity}",
                     CurrentValue = "0",
@@ -1716,7 +1716,7 @@ public partial class QuestService : IQuestService
             var currentQuantity = hasResponse.Results?.FirstOrDefault()?.Available ?? 0;
             return new PrerequisiteFailure
             {
-                Type = PrerequisiteType.ITEM_OWNED,
+                Type = PrerequisiteType.ItemOwned,
                 Code = prereq.ItemCode,
                 Reason = $"Insufficient {prereq.ItemCode}: have {currentQuantity}, need {requiredQuantity}",
                 CurrentValue = currentQuantity.ToString(),
@@ -1740,7 +1740,7 @@ public partial class QuestService : IQuestService
 
             return new PrerequisiteFailure
             {
-                Type = PrerequisiteType.ITEM_OWNED,
+                Type = PrerequisiteType.ItemOwned,
                 Code = prereq.ItemCode,
                 Reason = "Error checking item ownership"
             };
@@ -1851,10 +1851,10 @@ public partial class QuestService : IQuestService
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (current, etag) = await InstanceStore.GetWithETagAsync(instanceKey, cancellationToken);
-            if (current == null || current.Status != QuestStatus.ACTIVE) return;
+            if (current == null || current.Status != QuestStatus.Active) return;
 
             var now = DateTimeOffset.UtcNow;
-            current.Status = QuestStatus.COMPLETED;
+            current.Status = QuestStatus.Completed;
             current.CompletedAt = now;
 
             // GetWithETagAsync returns non-null etag for existing records;
@@ -1991,7 +1991,7 @@ public partial class QuestService : IQuestService
         {
             switch (reward.Type)
             {
-                case RewardType.CURRENCY:
+                case RewardType.Currency:
                     if (!string.IsNullOrEmpty(reward.CurrencyCode) && reward.Amount.HasValue)
                     {
                         // Use template variable for wallet ID - resolved at quest acceptance
@@ -2012,7 +2012,7 @@ public partial class QuestService : IQuestService
                     }
                     break;
 
-                case RewardType.ITEM:
+                case RewardType.Item:
                     if (!string.IsNullOrEmpty(reward.ItemCode) && reward.Quantity.HasValue)
                     {
                         // Use template variable for container ID - resolved at quest acceptance
@@ -2032,14 +2032,14 @@ public partial class QuestService : IQuestService
                     }
                     break;
 
-                case RewardType.EXPERIENCE:
+                case RewardType.Experience:
                     // Stub: Experience system not implemented
                     _logger.LogWarning(
                         "EXPERIENCE reward for quest {QuestCode} skipped: experience system not implemented",
                         questCode);
                     break;
 
-                case RewardType.REPUTATION:
+                case RewardType.Reputation:
                     // Stub: Reputation system not implemented
                     _logger.LogWarning(
                         "REPUTATION reward for quest {QuestCode} skipped: reputation system not implemented",
@@ -2068,8 +2068,8 @@ public partial class QuestService : IQuestService
         var values = new Dictionary<string, string>();
 
         // Check if we have any currency or item rewards that need wallet/container IDs
-        var hasCurrencyRewards = definition.Rewards?.Any(r => r.Type == RewardType.CURRENCY) ?? false;
-        var hasItemRewards = definition.Rewards?.Any(r => r.Type == RewardType.ITEM) ?? false;
+        var hasCurrencyRewards = definition.Rewards?.Any(r => r.Type == RewardType.Currency) ?? false;
+        var hasItemRewards = definition.Rewards?.Any(r => r.Type == RewardType.Item) ?? false;
 
         if (hasCurrencyRewards)
         {
@@ -2172,7 +2172,7 @@ public partial class QuestService : IQuestService
             TargetEntitySubtype = o.TargetEntitySubtype,
             TargetLocationId = o.TargetLocationId,
             Hidden = o.Hidden,
-            RevealBehavior = o.RevealBehavior ?? ObjectiveRevealBehavior.ALWAYS,
+            RevealBehavior = o.RevealBehavior ?? ObjectiveRevealBehavior.Always,
             Optional = o.Optional
         }).ToList();
     }

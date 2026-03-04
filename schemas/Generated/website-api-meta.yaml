@@ -37,8 +37,8 @@ paths:
         for the website service\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
         \        \"required\": [\n                \"status\",\n                \"version\",\n                \"uptime\"\n\
         \            ],\n            \"properties\": {\n                \"status\": {\n                    \"type\": \"string\"\
-        ,\n                    \"enum\": [\n                        \"healthy\",\n                        \"degraded\",\n\
-        \                        \"maintenance\"\n                    ],\n                    \"description\": \"Current health
+        ,\n                    \"enum\": [\n                        \"Healthy\",\n                        \"Degraded\",\n\
+        \                        \"Maintenance\"\n                    ],\n                    \"description\": \"Current health
         status of the website service\"\n                },\n                \"version\": {\n                    \"type\"\
         : \"string\",\n                    \"example\": \"1.0.0\",\n                    \"description\": \"Current version
         of the website service\"\n                },\n                \"uptime\": {\n                    \"type\": \"integer\"\
@@ -85,7 +85,7 @@ paths:
         of the page\"\n                },\n                \"content\": {\n                    \"type\": \"string\",\n   \
         \                 \"description\": \"HTML, Markdown, or custom template content\"\n                },\n          \
         \      \"contentType\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n          \
-        \              \"html\",\n                        \"markdown\",\n                        \"blazor\"\n            \
+        \              \"Html\",\n                        \"Markdown\",\n                        \"Blazor\"\n            \
         \        ],\n                    \"description\": \"Format of the page content\"\n                },\n           \
         \     \"template\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
         \              \"description\": \"Template name for custom layouts\"\n                },\n                \"published\"\
@@ -226,8 +226,8 @@ paths:
         \                \"minimumRequirements\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
         : true,\n                    \"description\": \"Minimum system requirements for the client. No Bannou plugin reads
         specific keys from this field by convention.\"\n                }\n            }\n        },\n        \"Platform\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"windows\",\n                \"\
-        macos\",\n                \"linux\"\n            ],\n            \"description\": \"Target operating system platform\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Windows\",\n                \"\
+        Macos\",\n                \"Linux\"\n            ],\n            \"description\": \"Target operating system platform\"\
         \n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get download links for game clients\",\n    \"description\": \"\",\n  \
         \  \"tags\": [\n        \"Downloads\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getDownloads\"\n\
@@ -271,9 +271,9 @@ paths:
         \n                },\n                \"message\": {\n                    \"type\": \"string\",\n                \
         \    \"minLength\": 10,\n                    \"maxLength\": 2000,\n                    \"description\": \"Body content
         of the contact message\"\n                },\n                \"category\": {\n                    \"type\": \"string\"\
-        ,\n                    \"enum\": [\n                        \"general\",\n                        \"support\",\n \
-        \                       \"bug\",\n                        \"feedback\",\n                        \"business\"\n  \
-        \                  ],\n                    \"default\": \"general\",\n                    \"description\": \"Category
+        ,\n                    \"enum\": [\n                        \"General\",\n                        \"Support\",\n \
+        \                       \"Bug\",\n                        \"Feedback\",\n                        \"Business\"\n  \
+        \                  ],\n                    \"default\": \"General\",\n                    \"description\": \"Category
         to route the contact request\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContactResponse\"\
         ,\n    \"$defs\": {\n        \"ContactResponse\": {\n            \"description\": \"Confirmation response after submitting
@@ -405,7 +405,7 @@ paths:
         of the page\"\n                },\n                \"content\": {\n                    \"type\": \"string\",\n   \
         \                 \"description\": \"HTML, Markdown, or custom template content\"\n                },\n          \
         \      \"contentType\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n          \
-        \              \"html\",\n                        \"markdown\",\n                        \"blazor\"\n            \
+        \              \"Html\",\n                        \"Markdown\",\n                        \"Blazor\"\n            \
         \        ],\n                    \"description\": \"Format of the page content\"\n                },\n           \
         \     \"template\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
         \              \"description\": \"Template name for custom layouts\"\n                },\n                \"published\"\
@@ -445,7 +445,7 @@ paths:
         of the page\"\n                },\n                \"content\": {\n                    \"type\": \"string\",\n   \
         \                 \"description\": \"HTML, Markdown, or custom template content\"\n                },\n          \
         \      \"contentType\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n          \
-        \              \"html\",\n                        \"markdown\",\n                        \"blazor\"\n            \
+        \              \"Html\",\n                        \"Markdown\",\n                        \"Blazor\"\n            \
         \        ],\n                    \"description\": \"Format of the page content\"\n                },\n           \
         \     \"template\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
         \              \"description\": \"Template name for custom layouts\"\n                },\n                \"published\"\
@@ -517,7 +517,7 @@ paths:
         of the page\"\n                },\n                \"content\": {\n                    \"type\": \"string\",\n   \
         \                 \"description\": \"HTML, Markdown, or custom template content\"\n                },\n          \
         \      \"contentType\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n          \
-        \              \"html\",\n                        \"markdown\",\n                        \"blazor\"\n            \
+        \              \"Html\",\n                        \"Markdown\",\n                        \"Blazor\"\n            \
         \        ],\n                    \"description\": \"Format of the page content\"\n                },\n           \
         \     \"template\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
         \              \"description\": \"Template name for custom layouts\"\n                },\n                \"published\"\
@@ -557,7 +557,7 @@ paths:
         of the page\"\n                },\n                \"content\": {\n                    \"type\": \"string\",\n   \
         \                 \"description\": \"HTML, Markdown, or custom template content\"\n                },\n          \
         \      \"contentType\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n          \
-        \              \"html\",\n                        \"markdown\",\n                        \"blazor\"\n            \
+        \              \"Html\",\n                        \"Markdown\",\n                        \"Blazor\"\n            \
         \        ],\n                    \"description\": \"Format of the page content\"\n                },\n           \
         \     \"template\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
         \              \"description\": \"Template name for custom layouts\"\n                },\n                \"published\"\
@@ -838,10 +838,10 @@ paths:
         : \"string\",\n                    \"description\": \"Target URL or path for the navigation link\"\n             \
         \   },\n                \"order\": {\n                    \"type\": \"integer\",\n                    \"description\"\
         : \"Sort order for the navigation item\"\n                },\n                \"target\": {\n                    \"\
-        type\": \"string\",\n                    \"enum\": [\n                        \"_self\",\n                       \
-        \ \"_blank\"\n                    ],\n                    \"default\": \"_self\",\n                    \"description\"\
-        : \"Link target attribute for opening behavior\"\n                },\n                \"children\": {\n          \
-        \          \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/NavigationItem\"\
+        type\": \"string\",\n                    \"enum\": [\n                        \"Self\",\n                        \"\
+        Blank\"\n                    ],\n                    \"default\": \"Self\",\n                    \"description\":
+        \"Link target attribute for opening behavior\"\n                },\n                \"children\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/NavigationItem\"\
         \n                    },\n                    \"description\": \"Nested child navigation items for dropdowns\"\n \
         \               }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get current theme configuration\",\n    \"description\": \"\",\n    \"\
@@ -902,10 +902,10 @@ paths:
         : \"string\",\n                    \"description\": \"Target URL or path for the navigation link\"\n             \
         \   },\n                \"order\": {\n                    \"type\": \"integer\",\n                    \"description\"\
         : \"Sort order for the navigation item\"\n                },\n                \"target\": {\n                    \"\
-        type\": \"string\",\n                    \"enum\": [\n                        \"_self\",\n                       \
-        \ \"_blank\"\n                    ],\n                    \"default\": \"_self\",\n                    \"description\"\
-        : \"Link target attribute for opening behavior\"\n                },\n                \"children\": {\n          \
-        \          \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/NavigationItem\"\
+        type\": \"string\",\n                    \"enum\": [\n                        \"Self\",\n                        \"\
+        Blank\"\n                    ],\n                    \"default\": \"Self\",\n                    \"description\":
+        \"Link target attribute for opening behavior\"\n                },\n                \"children\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/NavigationItem\"\
         \n                    },\n                    \"description\": \"Nested child navigation items for dropdowns\"\n \
         \               }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
@@ -921,9 +921,9 @@ components:
     Platform:
       type: string
       enum:
-      - windows
-      - macos
-      - linux
+      - Windows
+      - Macos
+      - Linux
       description: Target operating system platform
     StatusResponse:
       description: Health and version status information for the website service
@@ -937,9 +937,9 @@ components:
         status:
           type: string
           enum:
-          - healthy
-          - degraded
-          - maintenance
+          - Healthy
+          - Degraded
+          - Maintenance
           description: Current health status of the website service
         version:
           type: string
@@ -977,9 +977,9 @@ components:
         contentType:
           type: string
           enum:
-          - html
-          - markdown
-          - blazor
+          - Html
+          - Markdown
+          - Blazor
           description: Format of the page content
         template:
           type: string
@@ -1231,9 +1231,9 @@ components:
         target:
           type: string
           enum:
-          - _self
-          - _blank
-          default: _self
+          - Self
+          - Blank
+          default: Self
           description: Link target attribute for opening behavior
         children:
           type: array
@@ -1378,12 +1378,12 @@ components:
         category:
           type: string
           enum:
-          - general
-          - support
-          - bug
-          - feedback
-          - business
-          default: general
+          - General
+          - Support
+          - Bug
+          - Feedback
+          - Business
+          default: General
           description: Category to route the contact request
     ContactResponse:
       description: Confirmation response after submitting a contact form

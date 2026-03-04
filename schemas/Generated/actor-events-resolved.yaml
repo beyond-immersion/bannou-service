@@ -881,15 +881,15 @@ components:
       type: string
       description: Type of source generating a perception event
       enum:
-      - character
-      - npc
-      - object
-      - environment
-      - coordinator
-      - scheduled
-      - message
-      - service
-      - system
+      - Character
+      - Npc
+      - Object
+      - Environment
+      - Coordinator
+      - Scheduled
+      - Message
+      - Service
+      - System
 
     SpatialContext:
       type: object

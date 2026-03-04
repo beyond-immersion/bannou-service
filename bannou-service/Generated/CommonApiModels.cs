@@ -41,58 +41,58 @@ using System = global::System;
 public enum EntityType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"system")]
+    [System.Runtime.Serialization.EnumMember(Value = @"System")]
     System = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"account")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Account")]
     Account = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"character")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Character")]
     Character = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"actor")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Actor")]
     Actor = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"guild")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Guild")]
     Guild = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"organization")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Organization")]
     Organization = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"government")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Government")]
     Government = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"faction")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Faction")]
     Faction = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"location")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Location")]
     Location = 8,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"realm")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Realm")]
     Realm = 9,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"item")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Item")]
     Item = 10,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"monster")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Monster")]
     Monster = 11,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"relationship")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Relationship")]
     Relationship = 12,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"session")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Session")]
     Session = 13,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"deity")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Deity")]
     Deity = 14,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"dungeon")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Dungeon")]
     Dungeon = 15,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Custom")]
     Custom = 16,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"other")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Other")]
     Other = 17,
 
 }
@@ -106,13 +106,13 @@ public enum EntityType
 public enum ServiceHealthStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Healthy")]
     Healthy = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"degraded")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Degraded")]
     Degraded = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"unavailable")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Unavailable")]
     Unavailable = 2,
 
 }
@@ -126,19 +126,19 @@ public enum ServiceHealthStatus
 public enum InstanceHealthStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Healthy")]
     Healthy = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"degraded")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Degraded")]
     Degraded = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"overloaded")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Overloaded")]
     Overloaded = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"shutting_down")]
-    Shutting_down = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"ShuttingDown")]
+    ShuttingDown = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"unavailable")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Unavailable")]
     Unavailable = 4,
 
 }
@@ -398,20 +398,20 @@ public partial class ResourceArchiveBase
 public enum ServiceEndpointMethod
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"GET")]
-    GET = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Get")]
+    Get = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"POST")]
-    POST = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Post")]
+    Post = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"PUT")]
-    PUT = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Put")]
+    Put = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"DELETE")]
-    DELETE = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Delete")]
+    Delete = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"PATCH")]
-    PATCH = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Patch")]
+    Patch = 4,
 
 }
 #pragma warning restore CS1591

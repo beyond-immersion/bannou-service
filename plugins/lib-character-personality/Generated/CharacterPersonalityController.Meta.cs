@@ -128,14 +128,14 @@ public partial class CharacterPersonalityController
             "type": "string",
             "description": "Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.\nBased on psychological research (Big Five + game-relevant extensions).\n",
             "enum": [
-                "OPENNESS",
-                "CONSCIENTIOUSNESS",
-                "EXTRAVERSION",
-                "AGREEABLENESS",
-                "NEUROTICISM",
-                "HONESTY",
-                "AGGRESSION",
-                "LOYALTY"
+                "Openness",
+                "Conscientiousness",
+                "Extraversion",
+                "Agreeableness",
+                "Neuroticism",
+                "Honesty",
+                "Aggression",
+                "Loyalty"
             ]
         }
     }
@@ -269,14 +269,14 @@ public partial class CharacterPersonalityController
             "type": "string",
             "description": "Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.\nBased on psychological research (Big Five + game-relevant extensions).\n",
             "enum": [
-                "OPENNESS",
-                "CONSCIENTIOUSNESS",
-                "EXTRAVERSION",
-                "AGREEABLENESS",
-                "NEUROTICISM",
-                "HONESTY",
-                "AGGRESSION",
-                "LOYALTY"
+                "Openness",
+                "Conscientiousness",
+                "Extraversion",
+                "Agreeableness",
+                "Neuroticism",
+                "Honesty",
+                "Aggression",
+                "Loyalty"
             ]
         }
     }
@@ -370,14 +370,14 @@ public partial class CharacterPersonalityController
             "type": "string",
             "description": "Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.\nBased on psychological research (Big Five + game-relevant extensions).\n",
             "enum": [
-                "OPENNESS",
-                "CONSCIENTIOUSNESS",
-                "EXTRAVERSION",
-                "AGREEABLENESS",
-                "NEUROTICISM",
-                "HONESTY",
-                "AGGRESSION",
-                "LOYALTY"
+                "Openness",
+                "Conscientiousness",
+                "Extraversion",
+                "Agreeableness",
+                "Neuroticism",
+                "Honesty",
+                "Aggression",
+                "Loyalty"
             ]
         }
     }
@@ -483,15 +483,15 @@ public partial class CharacterPersonalityController
             "type": "string",
             "description": "Categories of significant experiences that may cause personality evolution.\nEach type has predefined trait impact tendencies.\n",
             "enum": [
-                "TRAUMA",
-                "BETRAYAL",
-                "LOSS",
-                "VICTORY",
-                "FRIENDSHIP",
-                "REDEMPTION",
-                "CORRUPTION",
-                "ENLIGHTENMENT",
-                "SACRIFICE"
+                "Trauma",
+                "Betrayal",
+                "Loss",
+                "Victory",
+                "Friendship",
+                "Redemption",
+                "Corruption",
+                "Enlightenment",
+                "Sacrifice"
             ]
         }
     }
@@ -577,14 +577,14 @@ public partial class CharacterPersonalityController
             "type": "string",
             "description": "Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.\nBased on psychological research (Big Five + game-relevant extensions).\n",
             "enum": [
-                "OPENNESS",
-                "CONSCIENTIOUSNESS",
-                "EXTRAVERSION",
-                "AGREEABLENESS",
-                "NEUROTICISM",
-                "HONESTY",
-                "AGGRESSION",
-                "LOYALTY"
+                "Openness",
+                "Conscientiousness",
+                "Extraversion",
+                "Agreeableness",
+                "Neuroticism",
+                "Honesty",
+                "Aggression",
+                "Loyalty"
             ]
         }
     }
@@ -789,14 +789,14 @@ public partial class CharacterPersonalityController
             "type": "string",
             "description": "Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.\nBased on psychological research (Big Five + game-relevant extensions).\n",
             "enum": [
-                "OPENNESS",
-                "CONSCIENTIOUSNESS",
-                "EXTRAVERSION",
-                "AGREEABLENESS",
-                "NEUROTICISM",
-                "HONESTY",
-                "AGGRESSION",
-                "LOYALTY"
+                "Openness",
+                "Conscientiousness",
+                "Extraversion",
+                "Agreeableness",
+                "Neuroticism",
+                "Honesty",
+                "Aggression",
+                "Loyalty"
             ]
         }
     }
@@ -1058,32 +1058,32 @@ public partial class CharacterPersonalityController
             "type": "string",
             "description": "Overall approach to combat situations. Affects target selection,\nability usage, and engagement decisions.\n",
             "enum": [
-                "DEFENSIVE",
-                "BALANCED",
-                "AGGRESSIVE",
-                "BERSERKER",
-                "TACTICAL"
+                "Defensive",
+                "Balanced",
+                "Aggressive",
+                "Berserker",
+                "Tactical"
             ]
         },
         "PreferredRange": {
             "type": "string",
             "description": "Preferred engagement distance. Influences positioning and\nability selection in combat.\n",
             "enum": [
-                "MELEE",
-                "CLOSE",
-                "MEDIUM",
-                "RANGED"
+                "Melee",
+                "Close",
+                "Medium",
+                "Ranged"
             ]
         },
         "GroupRole": {
             "type": "string",
             "description": "Preferred role when fighting in groups. Affects positioning,\ntarget priority, and coordination behavior.\n",
             "enum": [
-                "FRONTLINE",
-                "SUPPORT",
-                "FLANKER",
-                "LEADER",
-                "SOLO"
+                "Frontline",
+                "Support",
+                "Flanker",
+                "Leader",
+                "Solo"
             ]
         }
     }
@@ -1220,32 +1220,32 @@ public partial class CharacterPersonalityController
             "type": "string",
             "description": "Overall approach to combat situations. Affects target selection,\nability usage, and engagement decisions.\n",
             "enum": [
-                "DEFENSIVE",
-                "BALANCED",
-                "AGGRESSIVE",
-                "BERSERKER",
-                "TACTICAL"
+                "Defensive",
+                "Balanced",
+                "Aggressive",
+                "Berserker",
+                "Tactical"
             ]
         },
         "PreferredRange": {
             "type": "string",
             "description": "Preferred engagement distance. Influences positioning and\nability selection in combat.\n",
             "enum": [
-                "MELEE",
-                "CLOSE",
-                "MEDIUM",
-                "RANGED"
+                "Melee",
+                "Close",
+                "Medium",
+                "Ranged"
             ]
         },
         "GroupRole": {
             "type": "string",
             "description": "Preferred role when fighting in groups. Affects positioning,\ntarget priority, and coordination behavior.\n",
             "enum": [
-                "FRONTLINE",
-                "SUPPORT",
-                "FLANKER",
-                "LEADER",
-                "SOLO"
+                "Frontline",
+                "Support",
+                "Flanker",
+                "Leader",
+                "Solo"
             ]
         }
     }
@@ -1343,32 +1343,32 @@ public partial class CharacterPersonalityController
             "type": "string",
             "description": "Overall approach to combat situations. Affects target selection,\nability usage, and engagement decisions.\n",
             "enum": [
-                "DEFENSIVE",
-                "BALANCED",
-                "AGGRESSIVE",
-                "BERSERKER",
-                "TACTICAL"
+                "Defensive",
+                "Balanced",
+                "Aggressive",
+                "Berserker",
+                "Tactical"
             ]
         },
         "PreferredRange": {
             "type": "string",
             "description": "Preferred engagement distance. Influences positioning and\nability selection in combat.\n",
             "enum": [
-                "MELEE",
-                "CLOSE",
-                "MEDIUM",
-                "RANGED"
+                "Melee",
+                "Close",
+                "Medium",
+                "Ranged"
             ]
         },
         "GroupRole": {
             "type": "string",
             "description": "Preferred role when fighting in groups. Affects positioning,\ntarget priority, and coordination behavior.\n",
             "enum": [
-                "FRONTLINE",
-                "SUPPORT",
-                "FLANKER",
-                "LEADER",
-                "SOLO"
+                "Frontline",
+                "Support",
+                "Flanker",
+                "Leader",
+                "Solo"
             ]
         }
     }
@@ -1474,16 +1474,16 @@ public partial class CharacterPersonalityController
             "type": "string",
             "description": "Categories of combat experiences that may cause preference evolution.\nEach type affects different aspects of combat behavior.\n",
             "enum": [
-                "DECISIVE_VICTORY",
-                "NARROW_VICTORY",
-                "DEFEAT",
-                "NEAR_DEATH",
-                "ALLY_SAVED",
-                "ALLY_LOST",
-                "SUCCESSFUL_RETREAT",
-                "FAILED_RETREAT",
-                "AMBUSH_SUCCESS",
-                "AMBUSH_SURVIVED"
+                "DecisiveVictory",
+                "NarrowVictory",
+                "Defeat",
+                "NearDeath",
+                "AllySaved",
+                "AllyLost",
+                "SuccessfulRetreat",
+                "FailedRetreat",
+                "AmbushSuccess",
+                "AmbushSurvived"
             ]
         }
     }
@@ -1584,32 +1584,32 @@ public partial class CharacterPersonalityController
             "type": "string",
             "description": "Overall approach to combat situations. Affects target selection,\nability usage, and engagement decisions.\n",
             "enum": [
-                "DEFENSIVE",
-                "BALANCED",
-                "AGGRESSIVE",
-                "BERSERKER",
-                "TACTICAL"
+                "Defensive",
+                "Balanced",
+                "Aggressive",
+                "Berserker",
+                "Tactical"
             ]
         },
         "PreferredRange": {
             "type": "string",
             "description": "Preferred engagement distance. Influences positioning and\nability selection in combat.\n",
             "enum": [
-                "MELEE",
-                "CLOSE",
-                "MEDIUM",
-                "RANGED"
+                "Melee",
+                "Close",
+                "Medium",
+                "Ranged"
             ]
         },
         "GroupRole": {
             "type": "string",
             "description": "Preferred role when fighting in groups. Affects positioning,\ntarget priority, and coordination behavior.\n",
             "enum": [
-                "FRONTLINE",
-                "SUPPORT",
-                "FLANKER",
-                "LEADER",
-                "SOLO"
+                "Frontline",
+                "Support",
+                "Flanker",
+                "Leader",
+                "Solo"
             ]
         }
     }
@@ -1908,14 +1908,14 @@ public partial class CharacterPersonalityController
             "type": "string",
             "description": "Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.\nBased on psychological research (Big Five + game-relevant extensions).\n",
             "enum": [
-                "OPENNESS",
-                "CONSCIENTIOUSNESS",
-                "EXTRAVERSION",
-                "AGREEABLENESS",
-                "NEUROTICISM",
-                "HONESTY",
-                "AGGRESSION",
-                "LOYALTY"
+                "Openness",
+                "Conscientiousness",
+                "Extraversion",
+                "Agreeableness",
+                "Neuroticism",
+                "Honesty",
+                "Aggression",
+                "Loyalty"
             ]
         },
         "CombatPreferencesResponse": {
@@ -2004,32 +2004,32 @@ public partial class CharacterPersonalityController
             "type": "string",
             "description": "Overall approach to combat situations. Affects target selection,\nability usage, and engagement decisions.\n",
             "enum": [
-                "DEFENSIVE",
-                "BALANCED",
-                "AGGRESSIVE",
-                "BERSERKER",
-                "TACTICAL"
+                "Defensive",
+                "Balanced",
+                "Aggressive",
+                "Berserker",
+                "Tactical"
             ]
         },
         "PreferredRange": {
             "type": "string",
             "description": "Preferred engagement distance. Influences positioning and\nability selection in combat.\n",
             "enum": [
-                "MELEE",
-                "CLOSE",
-                "MEDIUM",
-                "RANGED"
+                "Melee",
+                "Close",
+                "Medium",
+                "Ranged"
             ]
         },
         "GroupRole": {
             "type": "string",
             "description": "Preferred role when fighting in groups. Affects positioning,\ntarget priority, and coordination behavior.\n",
             "enum": [
-                "FRONTLINE",
-                "SUPPORT",
-                "FLANKER",
-                "LEADER",
-                "SOLO"
+                "Frontline",
+                "Support",
+                "Flanker",
+                "Leader",
+                "Solo"
             ]
         }
     }

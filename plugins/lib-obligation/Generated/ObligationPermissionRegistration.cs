@@ -48,7 +48,7 @@ public static class ObligationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/obligation/action-mapping/set",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "setActionMapping",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class ObligationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/obligation/action-mapping/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listActionMappings",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class ObligationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/obligation/action-mapping/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteActionMapping",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class ObligationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/obligation/query-violations",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryViolations",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class ObligationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/obligation/invalidate-cache",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "invalidateCache",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class ObligationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/obligation/get-compress-data",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getCompressData",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class ObligationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/obligation/restore-from-archive",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "restoreFromArchive",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class ObligationPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/obligation/cleanup-by-character",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cleanupByCharacter",
             Permissions = new List<PermissionRequirement>
             {

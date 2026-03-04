@@ -614,10 +614,10 @@ public partial class GameActionResponse
 public enum SessionType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"lobby")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Lobby")]
     Lobby = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"matchmade")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Matchmade")]
     Matchmade = 1,
 
 }
@@ -631,16 +631,16 @@ public enum SessionType
 public enum SessionStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"waiting")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Waiting")]
     Waiting = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"active")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Active")]
     Active = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"full")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Full")]
     Full = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"finished")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Finished")]
     Finished = 3,
 
 }
@@ -654,13 +654,13 @@ public enum SessionStatus
 public enum PlayerRole
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"player")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Player")]
     Player = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"spectator")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Spectator")]
     Spectator = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"moderator")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Moderator")]
     Moderator = 2,
 
 }
@@ -674,13 +674,13 @@ public enum PlayerRole
 public enum ChatMessageType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"public")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Public")]
     Public = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"whisper")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Whisper")]
     Whisper = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"system")]
+    [System.Runtime.Serialization.EnumMember(Value = @"System")]
     System = 2,
 
 }
@@ -694,19 +694,19 @@ public enum ChatMessageType
 public enum GameActionType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"move")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Move")]
     Move = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"interact")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Interact")]
     Interact = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"attack")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Attack")]
     Attack = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"cast_spell")]
+    [System.Runtime.Serialization.EnumMember(Value = @"CastSpell")]
     CastSpell = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"use_item")]
+    [System.Runtime.Serialization.EnumMember(Value = @"UseItem")]
     UseItem = 4,
 
 }

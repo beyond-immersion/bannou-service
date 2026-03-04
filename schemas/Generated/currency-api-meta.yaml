@@ -139,22 +139,21 @@ paths:
         \                    \"nullable\": true,\n                    \"description\": \"Format string for display (e.g. '{amount}
         gold', '${amount}')\"\n                }\n            }\n        },\n        \"CurrencyScope\": {\n            \"\
         type\": \"string\",\n            \"description\": \"Scope of currency availability across realms\",\n            \"\
-        enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n   \
-        \         ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
+        enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\n     \
+        \       ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How the currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n             \
-        \   \"integer\",\n                \"decimal_2\",\n                \"decimal_4\",\n                \"decimal_8\",\n\
-        \                \"decimal_full\",\n                \"big_integer\"\n            ]\n        },\n        \"CapOverflowBehavior\"\
+        \   \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\",\n                \"Decimal8\",\n  \
+        \              \"DecimalFull\",\n                \"BigInteger\"\n            ]\n        },\n        \"CapOverflowBehavior\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the
-        wallet cap\",\n            \"enum\": [\n                \"reject\",\n                \"cap_and_lose\",\n         \
-        \       \"cap_and_return\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n     \
-        \           \"simple\",\n                \"compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n\
+        wallet cap\",\n            \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n           \
+        \     \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n       \
+        \         \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n    \
-        \        \"enum\": [\n                \"fixed_date\",\n                \"duration_from_earn\",\n                \"\
-        end_of_season\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\": \"string\",\n  \
-        \          \"description\": \"How currency is linked to inventory items\",\n            \"enum\": [\n            \
-        \    \"none\",\n                \"visual_only\",\n                \"reference_only\"\n            ]\n        }\n \
-        \   }\n}"
+        \        \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
+        \n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How currency is linked to inventory items\",\n            \"enum\": [\n                \"None\",\n           \
+        \     \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CurrencyDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"CurrencyDefinitionResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Currency definition details\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -234,21 +233,21 @@ paths:
         string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
         \       \"description\": \"Last modification timestamp\"\n                }\n            }\n        },\n        \"\
         CurrencyScope\": {\n            \"type\": \"string\",\n            \"description\": \"Scope of currency availability
-        across realms\",\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n    \
-        \            \"multi_realm\"\n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"\
+        across realms\",\n            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n     \
+        \           \"MultiRealm\"\n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How the currency handles decimal values (immutable after creation)\",\n\
-        \            \"enum\": [\n                \"integer\",\n                \"decimal_2\",\n                \"decimal_4\"\
-        ,\n                \"decimal_8\",\n                \"decimal_full\",\n                \"big_integer\"\n          \
-        \  ]\n        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"reject\"\
-        ,\n                \"cap_and_lose\",\n                \"cap_and_return\"\n            ]\n        },\n        \"AutogainMode\"\
+        \            \"enum\": [\n                \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\"\
+        ,\n                \"Decimal8\",\n                \"DecimalFull\",\n                \"BigInteger\"\n            ]\n\
+        \        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"Reject\",\n\
+        \                \"CapAndLose\",\n                \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How autogain (energy/interest) is calculated\"\
-        ,\n            \"enum\": [\n                \"simple\",\n                \"compound\"\n            ]\n        },\n\
+        ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        },\n\
         \        \"ExpirationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How currency expiration
-        is determined\",\n            \"enum\": [\n                \"fixed_date\",\n                \"duration_from_earn\"\
-        ,\n                \"end_of_season\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\"\
+        is determined\",\n            \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n\
+        \                \"EndOfSeason\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"How currency is linked to inventory items\",\n            \"enum\":
-        [\n                \"none\",\n                \"visual_only\",\n                \"reference_only\"\n            ]\n\
+        [\n                \"None\",\n                \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n\
         \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new currency definition\",\n    \"description\": \"Creates a new
         currency type with its behavior rules. Code, precision, and scope\\nare immutable after creation. Only one base currency
@@ -371,21 +370,21 @@ paths:
         string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
         \       \"description\": \"Last modification timestamp\"\n                }\n            }\n        },\n        \"\
         CurrencyScope\": {\n            \"type\": \"string\",\n            \"description\": \"Scope of currency availability
-        across realms\",\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n    \
-        \            \"multi_realm\"\n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"\
+        across realms\",\n            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n     \
+        \           \"MultiRealm\"\n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How the currency handles decimal values (immutable after creation)\",\n\
-        \            \"enum\": [\n                \"integer\",\n                \"decimal_2\",\n                \"decimal_4\"\
-        ,\n                \"decimal_8\",\n                \"decimal_full\",\n                \"big_integer\"\n          \
-        \  ]\n        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"reject\"\
-        ,\n                \"cap_and_lose\",\n                \"cap_and_return\"\n            ]\n        },\n        \"AutogainMode\"\
+        \            \"enum\": [\n                \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\"\
+        ,\n                \"Decimal8\",\n                \"DecimalFull\",\n                \"BigInteger\"\n            ]\n\
+        \        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"Reject\",\n\
+        \                \"CapAndLose\",\n                \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How autogain (energy/interest) is calculated\"\
-        ,\n            \"enum\": [\n                \"simple\",\n                \"compound\"\n            ]\n        },\n\
+        ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        },\n\
         \        \"ExpirationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How currency expiration
-        is determined\",\n            \"enum\": [\n                \"fixed_date\",\n                \"duration_from_earn\"\
-        ,\n                \"end_of_season\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\"\
+        is determined\",\n            \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n\
+        \                \"EndOfSeason\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"How currency is linked to inventory items\",\n            \"enum\":
-        [\n                \"none\",\n                \"visual_only\",\n                \"reference_only\"\n            ]\n\
+        [\n                \"None\",\n                \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n\
         \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get currency definition by ID or code\",\n    \"description\": \"Retrieves
         a currency definition by its unique ID or code.\\nAt least one of definitionId or code must be provided.\\n\",\n \
@@ -429,8 +428,7 @@ paths:
         \           \"nullable\": true,\n                    \"description\": \"Filter by base currency flag\"\n         \
         \       }\n            }\n        },\n        \"CurrencyScope\": {\n            \"type\": \"string\",\n          \
         \  \"description\": \"Scope of currency availability across realms\",\n            \"enum\": [\n                \"\
-        global\",\n                \"realm_specific\",\n                \"multi_realm\"\n            ]\n        }\n    }\n\
-        }"
+        Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListCurrencyDefinitionsResponse\"\
         ,\n    \"$defs\": {\n        \"ListCurrencyDefinitionsResponse\": {\n            \"type\": \"object\",\n         \
         \   \"description\": \"List of currency definitions\",\n            \"additionalProperties\": false,\n           \
@@ -516,22 +514,21 @@ paths:
         date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification timestamp\"\
         \n                }\n            }\n        },\n        \"CurrencyScope\": {\n            \"type\": \"string\",\n\
         \            \"description\": \"Scope of currency availability across realms\",\n            \"enum\": [\n       \
-        \         \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n            ]\n     \
-        \   },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"How the
-        currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n                \"integer\"\
-        ,\n                \"decimal_2\",\n                \"decimal_4\",\n                \"decimal_8\",\n              \
-        \  \"decimal_full\",\n                \"big_integer\"\n            ]\n        },\n        \"CapOverflowBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the
-        wallet cap\",\n            \"enum\": [\n                \"reject\",\n                \"cap_and_lose\",\n         \
-        \       \"cap_and_return\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n     \
-        \           \"simple\",\n                \"compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n    \
-        \        \"enum\": [\n                \"fixed_date\",\n                \"duration_from_earn\",\n                \"\
-        end_of_season\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\": \"string\",\n  \
-        \          \"description\": \"How currency is linked to inventory items\",\n            \"enum\": [\n            \
-        \    \"none\",\n                \"visual_only\",\n                \"reference_only\"\n            ]\n        }\n \
-        \   }\n}"
+        \         \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\n            ]\n       \
+        \ },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"How the
+        currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n                \"Integer\"\
+        ,\n                \"Decimal2\",\n                \"Decimal4\",\n                \"Decimal8\",\n                \"\
+        DecimalFull\",\n                \"BigInteger\"\n            ]\n        },\n        \"CapOverflowBehavior\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the wallet
+        cap\",\n            \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n                \"\
+        CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n      \
+        \      \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n             \
+        \   \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n      \
+        \      \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n          \
+        \  \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
+        \n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How currency is linked to inventory items\",\n            \"enum\": [\n                \"None\",\n           \
+        \     \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List currency definitions with filters\",\n    \"description\": \"Lists
         currency definitions with optional filtering by realm, scope,\\nactive status, and base currency flag.\\n\",\n   \
         \ \"tags\": [\n        \"Currency Definition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listCurrencyDefinitions\"\
@@ -611,10 +608,10 @@ paths:
         \             },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                  \
         \  \"nullable\": true,\n                    \"description\": \"Active status\"\n                }\n            }\n\
         \        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"reject\",\n\
-        \                \"cap_and_lose\",\n                \"cap_and_return\"\n            ]\n        },\n        \"AutogainMode\"\
+        What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"Reject\",\n\
+        \                \"CapAndLose\",\n                \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How autogain (energy/interest) is calculated\"\
-        ,\n            \"enum\": [\n                \"simple\",\n                \"compound\"\n            ]\n        }\n\
+        ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        }\n\
         \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CurrencyDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"CurrencyDefinitionResponse\": {\n            \"type\": \"object\",\n            \"\
@@ -695,21 +692,21 @@ paths:
         string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
         \       \"description\": \"Last modification timestamp\"\n                }\n            }\n        },\n        \"\
         CurrencyScope\": {\n            \"type\": \"string\",\n            \"description\": \"Scope of currency availability
-        across realms\",\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n    \
-        \            \"multi_realm\"\n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"\
+        across realms\",\n            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n     \
+        \           \"MultiRealm\"\n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"\
         string\",\n            \"description\": \"How the currency handles decimal values (immutable after creation)\",\n\
-        \            \"enum\": [\n                \"integer\",\n                \"decimal_2\",\n                \"decimal_4\"\
-        ,\n                \"decimal_8\",\n                \"decimal_full\",\n                \"big_integer\"\n          \
-        \  ]\n        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"reject\"\
-        ,\n                \"cap_and_lose\",\n                \"cap_and_return\"\n            ]\n        },\n        \"AutogainMode\"\
+        \            \"enum\": [\n                \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\"\
+        ,\n                \"Decimal8\",\n                \"DecimalFull\",\n                \"BigInteger\"\n            ]\n\
+        \        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"Reject\",\n\
+        \                \"CapAndLose\",\n                \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How autogain (energy/interest) is calculated\"\
-        ,\n            \"enum\": [\n                \"simple\",\n                \"compound\"\n            ]\n        },\n\
+        ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        },\n\
         \        \"ExpirationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How currency expiration
-        is determined\",\n            \"enum\": [\n                \"fixed_date\",\n                \"duration_from_earn\"\
-        ,\n                \"end_of_season\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\"\
+        is determined\",\n            \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n\
+        \                \"EndOfSeason\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"How currency is linked to inventory items\",\n            \"enum\":
-        [\n                \"none\",\n                \"visual_only\",\n                \"reference_only\"\n            ]\n\
+        [\n                \"None\",\n                \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n\
         \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update mutable fields of a currency definition\",\n    \"description\"\
         : \"Updates mutable fields of a currency definition. Code, precision, and scope\\nare immutable after creation and
@@ -776,8 +773,8 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"Last transaction timestamp\"\n                }\n\
         \            }\n        },\n        \"WalletStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Current status of a wallet\",\n            \"enum\": [\n                \"active\",\n                \"frozen\"\
-        ,\n                \"closed\"\n            ]\n        }\n    }\n}"
+        : \"Current status of a wallet\",\n            \"enum\": [\n                \"Active\",\n                \"Frozen\"\
+        ,\n                \"Closed\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new wallet for an owner\",\n    \"description\": \"Creates a new
         wallet for a polymorphic owner (account, character, NPC, guild, etc.).\\nEach owner+ownerType+realm combination can
         have at most one wallet.\\n\",\n    \"tags\": [\n        \"Wallet\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -852,8 +849,8 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"Last transaction timestamp\"\n                }\n\
         \            }\n        },\n        \"WalletStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Current status of a wallet\",\n            \"enum\": [\n                \"active\",\n                \"frozen\"\
-        ,\n                \"closed\"\n            ]\n        },\n        \"BalanceSummary\": {\n            \"type\": \"\
+        : \"Current status of a wallet\",\n            \"enum\": [\n                \"Active\",\n                \"Frozen\"\
+        ,\n                \"Closed\"\n            ]\n        },\n        \"BalanceSummary\": {\n            \"type\": \"\
         object\",\n            \"description\": \"Summary of a balance in a wallet\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"currencyDefinitionId\",\n                \"currencyCode\"\
         ,\n                \"amount\",\n                \"lockedAmount\",\n                \"effectiveAmount\"\n         \
@@ -938,7 +935,7 @@ paths:
         \           \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Last transaction timestamp\"\n                }\n            }\n        },\n        \"WalletStatus\": {\n    \
         \        \"type\": \"string\",\n            \"description\": \"Current status of a wallet\",\n            \"enum\"\
-        : [\n                \"active\",\n                \"frozen\",\n                \"closed\"\n            ]\n       \
+        : [\n                \"Active\",\n                \"Frozen\",\n                \"Closed\"\n            ]\n       \
         \ },\n        \"BalanceSummary\": {\n            \"type\": \"object\",\n            \"description\": \"Summary of
         a balance in a wallet\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
         \    \"currencyDefinitionId\",\n                \"currencyCode\",\n                \"amount\",\n                \"\
@@ -1018,8 +1015,8 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"Last transaction timestamp\"\n                }\n\
         \            }\n        },\n        \"WalletStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Current status of a wallet\",\n            \"enum\": [\n                \"active\",\n                \"frozen\"\
-        ,\n                \"closed\"\n            ]\n        }\n    }\n}"
+        : \"Current status of a wallet\",\n            \"enum\": [\n                \"Active\",\n                \"Frozen\"\
+        ,\n                \"Closed\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Freeze a wallet to prevent transactions\",\n    \"description\": \"Freezes
         a wallet, preventing all transactions. The reason is recorded\\nfor audit purposes. Frozen wallets can still be queried.\\\
         n\",\n    \"tags\": [\n        \"Wallet\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"freezeWallet\"\
@@ -1081,8 +1078,8 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"Last transaction timestamp\"\n                }\n\
         \            }\n        },\n        \"WalletStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Current status of a wallet\",\n            \"enum\": [\n                \"active\",\n                \"frozen\"\
-        ,\n                \"closed\"\n            ]\n        }\n    }\n}"
+        : \"Current status of a wallet\",\n            \"enum\": [\n                \"Active\",\n                \"Frozen\"\
+        ,\n                \"Closed\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Unfreeze a frozen wallet\",\n    \"description\": \"Restores a frozen wallet
         to active status, allowing transactions again.\",\n    \"tags\": [\n        \"Wallet\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"unfreezeWallet\"\n}"
@@ -1155,8 +1152,8 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"Last transaction timestamp\"\n                }\n\
         \            }\n        },\n        \"WalletStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Current status of a wallet\",\n            \"enum\": [\n                \"active\",\n                \"frozen\"\
-        ,\n                \"closed\"\n            ]\n        },\n        \"TransferredBalance\": {\n            \"type\"\
+        : \"Current status of a wallet\",\n            \"enum\": [\n                \"Active\",\n                \"Frozen\"\
+        ,\n                \"Closed\"\n            ]\n        },\n        \"TransferredBalance\": {\n            \"type\"\
         : \"object\",\n            \"description\": \"A balance that was transferred during wallet close\",\n            \"\
         additionalProperties\": false,\n            \"required\": [\n                \"currencyDefinitionId\",\n         \
         \       \"amount\"\n            ],\n            \"properties\": {\n                \"currencyDefinitionId\": {\n \
@@ -1251,7 +1248,7 @@ paths:
         next gain amount\"\n                },\n                \"mode\": {\n                    \"$ref\": \"#/$defs/AutogainMode\"\
         ,\n                    \"description\": \"Current autogain mode\"\n                }\n            }\n        },\n\
         \        \"AutogainMode\": {\n            \"type\": \"string\",\n            \"description\": \"How autogain (energy/interest)
-        is calculated\",\n            \"enum\": [\n                \"simple\",\n                \"compound\"\n           \
+        is calculated\",\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n           \
         \ ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get balance for a specific currency in a wallet\",\n    \"description\"\
         : \"Retrieves the current balance for a specific currency in a wallet.\\nIn lazy autogain mode, this may trigger autogain
@@ -1378,13 +1375,13 @@ paths:
         : true,\n                    \"nullable\": true,\n                    \"description\": \"Free-form transaction metadata.
         No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
         \        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\": \"Classification
-        of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\"\
-        ,\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\",\n             \
-        \   \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\"\
-        ,\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\",\n                \"\
-        conversion_debit\",\n                \"transfer\",\n                \"trade\",\n                \"gift\",\n      \
-        \          \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\n         \
-        \   ]\n        }\n    }\n}"
+        of the currency transaction\",\n            \"enum\": [\n                \"Mint\",\n                \"QuestReward\"\
+        ,\n                \"LootDrop\",\n                \"VendorSale\",\n                \"Autogain\",\n               \
+        \ \"Refund\",\n                \"ConversionCredit\",\n                \"Burn\",\n                \"VendorPurchase\"\
+        ,\n                \"Fee\",\n                \"Expiration\",\n                \"CapOverflow\",\n                \"\
+        ConversionDebit\",\n                \"Transfer\",\n                \"Trade\",\n                \"Gift\",\n       \
+        \         \"EscrowDeposit\",\n                \"EscrowRelease\",\n                \"EscrowRefund\"\n            ]\n\
+        \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreditCurrencyResponse\"\
         ,\n    \"$defs\": {\n        \"CreditCurrencyResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of credit operation\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
@@ -1448,12 +1445,12 @@ paths:
         \                \"description\": \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\
         \n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n\
         \            \"description\": \"Classification of the currency transaction\",\n            \"enum\": [\n         \
-        \       \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\"\
-        ,\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\",\n          \
-        \      \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n\
-        \                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n       \
-        \         \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
-        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        \       \"Mint\",\n                \"QuestReward\",\n                \"LootDrop\",\n                \"VendorSale\"\
+        ,\n                \"Autogain\",\n                \"Refund\",\n                \"ConversionCredit\",\n           \
+        \     \"Burn\",\n                \"VendorPurchase\",\n                \"Fee\",\n                \"Expiration\",\n\
+        \                \"CapOverflow\",\n                \"ConversionDebit\",\n                \"Transfer\",\n         \
+        \       \"Trade\",\n                \"Gift\",\n                \"EscrowDeposit\",\n                \"EscrowRelease\"\
+        ,\n                \"EscrowRefund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Credit currency to a wallet (faucet operation)\",\n    \"description\"\
         : \"Credits currency to a wallet. This is a faucet operation (currency enters the system).\\nEnforces earn caps, wallet
         caps, and global supply caps. Requires idempotency key.\\n\",\n    \"tags\": [\n        \"Balance\"\n    ],\n    \"\
@@ -1515,12 +1512,12 @@ paths:
         \      \"nullable\": true,\n                    \"description\": \"Free-form transaction metadata. No Bannou plugin
         reads specific keys from this field by convention.\"\n                }\n            }\n        },\n        \"TransactionType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency transaction\"\
-        ,\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n                \"loot_drop\"\
-        ,\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\",\n                \"\
-        conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n\
-        \                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\",\n     \
-        \           \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
-        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        ,\n            \"enum\": [\n                \"Mint\",\n                \"QuestReward\",\n                \"LootDrop\"\
+        ,\n                \"VendorSale\",\n                \"Autogain\",\n                \"Refund\",\n                \"\
+        ConversionCredit\",\n                \"Burn\",\n                \"VendorPurchase\",\n                \"Fee\",\n  \
+        \              \"Expiration\",\n                \"CapOverflow\",\n                \"ConversionDebit\",\n         \
+        \       \"Transfer\",\n                \"Trade\",\n                \"Gift\",\n                \"EscrowDeposit\",\n\
+        \                \"EscrowRelease\",\n                \"EscrowRefund\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DebitCurrencyResponse\"\
         ,\n    \"$defs\": {\n        \"DebitCurrencyResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of debit operation\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
@@ -1575,12 +1572,12 @@ paths:
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
         : \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
         \            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n          \
-        \      \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\"\
-        ,\n                \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n              \
-        \  \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\"\
-        ,\n                \"conversion_debit\",\n                \"transfer\",\n                \"trade\",\n            \
-        \    \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\
+        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"Mint\",\n          \
+        \      \"QuestReward\",\n                \"LootDrop\",\n                \"VendorSale\",\n                \"Autogain\"\
+        ,\n                \"Refund\",\n                \"ConversionCredit\",\n                \"Burn\",\n               \
+        \ \"VendorPurchase\",\n                \"Fee\",\n                \"Expiration\",\n                \"CapOverflow\"\
+        ,\n                \"ConversionDebit\",\n                \"Transfer\",\n                \"Trade\",\n             \
+        \   \"Gift\",\n                \"EscrowDeposit\",\n                \"EscrowRelease\",\n                \"EscrowRefund\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Debit currency from a wallet (sink operation)\",\n    \"description\":
         \"Debits currency from a wallet. This is a sink operation (currency exits the system).\\nChecks for sufficient funds
@@ -1643,13 +1640,13 @@ paths:
         : true,\n                    \"nullable\": true,\n                    \"description\": \"Free-form transaction metadata.
         No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
         \        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\": \"Classification
-        of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\"\
-        ,\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\",\n             \
-        \   \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\"\
-        ,\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\",\n                \"\
-        conversion_debit\",\n                \"transfer\",\n                \"trade\",\n                \"gift\",\n      \
-        \          \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\n         \
-        \   ]\n        }\n    }\n}"
+        of the currency transaction\",\n            \"enum\": [\n                \"Mint\",\n                \"QuestReward\"\
+        ,\n                \"LootDrop\",\n                \"VendorSale\",\n                \"Autogain\",\n               \
+        \ \"Refund\",\n                \"ConversionCredit\",\n                \"Burn\",\n                \"VendorPurchase\"\
+        ,\n                \"Fee\",\n                \"Expiration\",\n                \"CapOverflow\",\n                \"\
+        ConversionDebit\",\n                \"Transfer\",\n                \"Trade\",\n                \"Gift\",\n       \
+        \         \"EscrowDeposit\",\n                \"EscrowRelease\",\n                \"EscrowRefund\"\n            ]\n\
+        \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TransferCurrencyResponse\"\
         ,\n    \"$defs\": {\n        \"TransferCurrencyResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of transfer operation\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
@@ -1711,12 +1708,12 @@ paths:
         \                \"description\": \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\
         \n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n\
         \            \"description\": \"Classification of the currency transaction\",\n            \"enum\": [\n         \
-        \       \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\"\
-        ,\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\",\n          \
-        \      \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n\
-        \                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n       \
-        \         \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
-        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        \       \"Mint\",\n                \"QuestReward\",\n                \"LootDrop\",\n                \"VendorSale\"\
+        ,\n                \"Autogain\",\n                \"Refund\",\n                \"ConversionCredit\",\n           \
+        \     \"Burn\",\n                \"VendorPurchase\",\n                \"Fee\",\n                \"Expiration\",\n\
+        \                \"CapOverflow\",\n                \"ConversionDebit\",\n                \"Transfer\",\n         \
+        \       \"Trade\",\n                \"Gift\",\n                \"EscrowDeposit\",\n                \"EscrowRelease\"\
+        ,\n                \"EscrowRefund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Transfer currency between wallets\",\n    \"description\": \"Transfers
         currency from one wallet to another. Validates transferability,\\nrealm compatibility, and sufficient funds.\\n\"\
         ,\n    \"tags\": [\n        \"Balance\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"transferCurrency\"\
@@ -1773,12 +1770,12 @@ paths:
         \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Reference ID\"\n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Classification of the currency transaction\",\n            \"enum\"\
-        : [\n                \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n              \
-        \  \"vendor_sale\",\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\"\
-        ,\n                \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\"\
-        ,\n                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n     \
-        \           \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
-        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        : [\n                \"Mint\",\n                \"QuestReward\",\n                \"LootDrop\",\n                \"\
+        VendorSale\",\n                \"Autogain\",\n                \"Refund\",\n                \"ConversionCredit\",\n\
+        \                \"Burn\",\n                \"VendorPurchase\",\n                \"Fee\",\n                \"Expiration\"\
+        ,\n                \"CapOverflow\",\n                \"ConversionDebit\",\n                \"Transfer\",\n       \
+        \         \"Trade\",\n                \"Gift\",\n                \"EscrowDeposit\",\n                \"EscrowRelease\"\
+        ,\n                \"EscrowRefund\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BatchCreditResponse\"\
         ,\n    \"$defs\": {\n        \"BatchCreditResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Results of batch credit operations\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1841,12 +1838,12 @@ paths:
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
         : \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
         \            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n          \
-        \      \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\"\
-        ,\n                \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n              \
-        \  \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\"\
-        ,\n                \"conversion_debit\",\n                \"transfer\",\n                \"trade\",\n            \
-        \    \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\
+        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"Mint\",\n          \
+        \      \"QuestReward\",\n                \"LootDrop\",\n                \"VendorSale\",\n                \"Autogain\"\
+        ,\n                \"Refund\",\n                \"ConversionCredit\",\n                \"Burn\",\n               \
+        \ \"VendorPurchase\",\n                \"Fee\",\n                \"Expiration\",\n                \"CapOverflow\"\
+        ,\n                \"ConversionDebit\",\n                \"Transfer\",\n                \"Trade\",\n             \
+        \   \"Gift\",\n                \"EscrowDeposit\",\n                \"EscrowRelease\",\n                \"EscrowRefund\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Credit multiple wallets in one call\",\n    \"description\": \"Credits
         currency to multiple wallets in one call. Each operation is independent;\\nfailures do not rollback others. For atomic
@@ -1909,12 +1906,12 @@ paths:
         \      \"nullable\": true,\n                    \"description\": \"Free-form transaction metadata. No Bannou plugin
         reads specific keys from this field by convention.\"\n                }\n            }\n        },\n        \"TransactionType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency transaction\"\
-        ,\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n                \"loot_drop\"\
-        ,\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\",\n                \"\
-        conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n\
-        \                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\",\n     \
-        \           \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
-        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        ,\n            \"enum\": [\n                \"Mint\",\n                \"QuestReward\",\n                \"LootDrop\"\
+        ,\n                \"VendorSale\",\n                \"Autogain\",\n                \"Refund\",\n                \"\
+        ConversionCredit\",\n                \"Burn\",\n                \"VendorPurchase\",\n                \"Fee\",\n  \
+        \              \"Expiration\",\n                \"CapOverflow\",\n                \"ConversionDebit\",\n         \
+        \       \"Transfer\",\n                \"Trade\",\n                \"Gift\",\n                \"EscrowDeposit\",\n\
+        \                \"EscrowRelease\",\n                \"EscrowRefund\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BatchDebitResponse\"\
         ,\n    \"$defs\": {\n        \"BatchDebitResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Results of batch debit operations\",\n            \"additionalProperties\": false,\n            \"required\":
@@ -1977,12 +1974,12 @@ paths:
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
         : \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
         \            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n          \
-        \      \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\"\
-        ,\n                \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n              \
-        \  \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\"\
-        ,\n                \"conversion_debit\",\n                \"transfer\",\n                \"trade\",\n            \
-        \    \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\
+        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"Mint\",\n          \
+        \      \"QuestReward\",\n                \"LootDrop\",\n                \"VendorSale\",\n                \"Autogain\"\
+        ,\n                \"Refund\",\n                \"ConversionCredit\",\n                \"Burn\",\n               \
+        \ \"VendorPurchase\",\n                \"Fee\",\n                \"Expiration\",\n                \"CapOverflow\"\
+        ,\n                \"ConversionDebit\",\n                \"Transfer\",\n                \"Trade\",\n             \
+        \   \"Gift\",\n                \"EscrowDeposit\",\n                \"EscrowRelease\",\n                \"EscrowRefund\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Debit multiple wallets in one call\",\n    \"description\": \"Debits currency
         from multiple wallets in one call. Each operation is independent;\\nfailures do not rollback others. For atomic multi-wallet
@@ -2160,12 +2157,12 @@ paths:
         \                \"description\": \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\
         \n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n\
         \            \"description\": \"Classification of the currency transaction\",\n            \"enum\": [\n         \
-        \       \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\"\
-        ,\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\",\n          \
-        \      \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n\
-        \                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n       \
-        \         \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
-        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        \       \"Mint\",\n                \"QuestReward\",\n                \"LootDrop\",\n                \"VendorSale\"\
+        ,\n                \"Autogain\",\n                \"Refund\",\n                \"ConversionCredit\",\n           \
+        \     \"Burn\",\n                \"VendorPurchase\",\n                \"Fee\",\n                \"Expiration\",\n\
+        \                \"CapOverflow\",\n                \"ConversionDebit\",\n                \"Transfer\",\n         \
+        \       \"Trade\",\n                \"Gift\",\n                \"EscrowDeposit\",\n                \"EscrowRelease\"\
+        ,\n                \"EscrowRefund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Execute currency conversion in a wallet\",\n    \"description\": \"Executes
         a currency conversion within a single wallet. Debits the source\\ncurrency and credits the target currency at the
         computed exchange rate.\\n\",\n    \"tags\": [\n        \"Conversion\"\n    ],\n    \"deprecated\": false,\n    \"\
@@ -2350,22 +2347,21 @@ paths:
         date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification timestamp\"\
         \n                }\n            }\n        },\n        \"CurrencyScope\": {\n            \"type\": \"string\",\n\
         \            \"description\": \"Scope of currency availability across realms\",\n            \"enum\": [\n       \
-        \         \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n            ]\n     \
-        \   },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"How the
-        currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n                \"integer\"\
-        ,\n                \"decimal_2\",\n                \"decimal_4\",\n                \"decimal_8\",\n              \
-        \  \"decimal_full\",\n                \"big_integer\"\n            ]\n        },\n        \"CapOverflowBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the
-        wallet cap\",\n            \"enum\": [\n                \"reject\",\n                \"cap_and_lose\",\n         \
-        \       \"cap_and_return\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n     \
-        \           \"simple\",\n                \"compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n    \
-        \        \"enum\": [\n                \"fixed_date\",\n                \"duration_from_earn\",\n                \"\
-        end_of_season\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\": \"string\",\n  \
-        \          \"description\": \"How currency is linked to inventory items\",\n            \"enum\": [\n            \
-        \    \"none\",\n                \"visual_only\",\n                \"reference_only\"\n            ]\n        }\n \
-        \   }\n}"
+        \         \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\n            ]\n       \
+        \ },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"How the
+        currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n                \"Integer\"\
+        ,\n                \"Decimal2\",\n                \"Decimal4\",\n                \"Decimal8\",\n                \"\
+        DecimalFull\",\n                \"BigInteger\"\n            ]\n        },\n        \"CapOverflowBehavior\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the wallet
+        cap\",\n            \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n                \"\
+        CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n      \
+        \      \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n             \
+        \   \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n      \
+        \      \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n          \
+        \  \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
+        \n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How currency is linked to inventory items\",\n            \"enum\": [\n                \"None\",\n           \
+        \     \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a currency's exchange rate to base\",\n    \"description\": \"Updates
         the exchange rate of a currency relative to the base currency.\\nCannot set rate on the base currency itself.\\n\"\
         ,\n    \"tags\": [\n        \"Conversion\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateExchangeRate\"\
@@ -2453,12 +2449,12 @@ paths:
         \                \"description\": \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\
         \n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n\
         \            \"description\": \"Classification of the currency transaction\",\n            \"enum\": [\n         \
-        \       \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\"\
-        ,\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\",\n          \
-        \      \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n\
-        \                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n       \
-        \         \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
-        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        \       \"Mint\",\n                \"QuestReward\",\n                \"LootDrop\",\n                \"VendorSale\"\
+        ,\n                \"Autogain\",\n                \"Refund\",\n                \"ConversionCredit\",\n           \
+        \     \"Burn\",\n                \"VendorPurchase\",\n                \"Fee\",\n                \"Expiration\",\n\
+        \                \"CapOverflow\",\n                \"ConversionDebit\",\n                \"Transfer\",\n         \
+        \       \"Trade\",\n                \"Gift\",\n                \"EscrowDeposit\",\n                \"EscrowRelease\"\
+        ,\n                \"EscrowRefund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a transaction by ID\",\n    \"description\": \"Retrieves a single transaction
         record by its unique ID.\",\n    \"tags\": [\n        \"Transaction History\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"getTransaction\"\n}"
@@ -2510,12 +2506,12 @@ paths:
         \              \"minimum\": 0,\n                    \"default\": 0,\n                    \"description\": \"Result
         offset\"\n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Classification of the currency transaction\",\n            \"enum\": [\n       \
-        \         \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\"\
-        ,\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\",\n          \
-        \      \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n\
-        \                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n       \
-        \         \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
-        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        \         \"Mint\",\n                \"QuestReward\",\n                \"LootDrop\",\n                \"VendorSale\"\
+        ,\n                \"Autogain\",\n                \"Refund\",\n                \"ConversionCredit\",\n           \
+        \     \"Burn\",\n                \"VendorPurchase\",\n                \"Fee\",\n                \"Expiration\",\n\
+        \                \"CapOverflow\",\n                \"ConversionDebit\",\n                \"Transfer\",\n         \
+        \       \"Trade\",\n                \"Gift\",\n                \"EscrowDeposit\",\n                \"EscrowRelease\"\
+        ,\n                \"EscrowRefund\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetTransactionHistoryResponse\"\
         ,\n    \"$defs\": {\n        \"GetTransactionHistoryResponse\": {\n            \"type\": \"object\",\n           \
         \ \"description\": \"Paginated transaction history\",\n            \"additionalProperties\": false,\n            \"\
@@ -2571,12 +2567,12 @@ paths:
         \                \"description\": \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\
         \n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n\
         \            \"description\": \"Classification of the currency transaction\",\n            \"enum\": [\n         \
-        \       \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\"\
-        ,\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\",\n          \
-        \      \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n\
-        \                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n       \
-        \         \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
-        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        \       \"Mint\",\n                \"QuestReward\",\n                \"LootDrop\",\n                \"VendorSale\"\
+        ,\n                \"Autogain\",\n                \"Refund\",\n                \"ConversionCredit\",\n           \
+        \     \"Burn\",\n                \"VendorPurchase\",\n                \"Fee\",\n                \"Expiration\",\n\
+        \                \"CapOverflow\",\n                \"ConversionDebit\",\n                \"Transfer\",\n         \
+        \       \"Trade\",\n                \"Gift\",\n                \"EscrowDeposit\",\n                \"EscrowRelease\"\
+        ,\n                \"EscrowRefund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get paginated transaction history for a wallet\",\n    \"description\"\
         : \"Retrieves transaction history for a wallet with optional filters\\nby currency, transaction type, and date range.\\\
         n\",\n    \"tags\": [\n        \"Transaction History\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -2668,12 +2664,12 @@ paths:
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
         : \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
         \            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n          \
-        \      \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\"\
-        ,\n                \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n              \
-        \  \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\"\
-        ,\n                \"conversion_debit\",\n                \"transfer\",\n                \"trade\",\n            \
-        \    \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\
+        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"Mint\",\n          \
+        \      \"QuestReward\",\n                \"LootDrop\",\n                \"VendorSale\",\n                \"Autogain\"\
+        ,\n                \"Refund\",\n                \"ConversionCredit\",\n                \"Burn\",\n               \
+        \ \"VendorPurchase\",\n                \"Fee\",\n                \"Expiration\",\n                \"CapOverflow\"\
+        ,\n                \"ConversionDebit\",\n                \"Transfer\",\n                \"Trade\",\n             \
+        \   \"Gift\",\n                \"EscrowDeposit\",\n                \"EscrowRelease\",\n                \"EscrowRefund\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get transactions by reference type and ID\",\n    \"description\": \"Retrieves
         all transactions linked to a specific reference (quest, auction,\\nescrow, etc.).\\n\",\n    \"tags\": [\n       \
@@ -2904,12 +2900,12 @@ paths:
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
         : \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
         \            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n          \
-        \      \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\"\
-        ,\n                \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n              \
-        \  \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\"\
-        ,\n                \"conversion_debit\",\n                \"transfer\",\n                \"trade\",\n            \
-        \    \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\
+        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"Mint\",\n          \
+        \      \"QuestReward\",\n                \"LootDrop\",\n                \"VendorSale\",\n                \"Autogain\"\
+        ,\n                \"Refund\",\n                \"ConversionCredit\",\n                \"Burn\",\n               \
+        \ \"VendorPurchase\",\n                \"Fee\",\n                \"Expiration\",\n                \"CapOverflow\"\
+        ,\n                \"ConversionDebit\",\n                \"Transfer\",\n                \"Trade\",\n             \
+        \   \"Gift\",\n                \"EscrowDeposit\",\n                \"EscrowRelease\",\n                \"EscrowRefund\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Debit wallet for escrow deposit\",\n    \"description\": \"Called by lib-escrow
         when a party deposits currency into an escrow agreement.\\nImmediately debits the wallet (no lock tracking needed
@@ -3012,12 +3008,12 @@ paths:
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
         : \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
         \            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n          \
-        \      \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\"\
-        ,\n                \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n              \
-        \  \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\"\
-        ,\n                \"conversion_debit\",\n                \"transfer\",\n                \"trade\",\n            \
-        \    \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\
+        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"Mint\",\n          \
+        \      \"QuestReward\",\n                \"LootDrop\",\n                \"VendorSale\",\n                \"Autogain\"\
+        ,\n                \"Refund\",\n                \"ConversionCredit\",\n                \"Burn\",\n               \
+        \ \"VendorPurchase\",\n                \"Fee\",\n                \"Expiration\",\n                \"CapOverflow\"\
+        ,\n                \"ConversionDebit\",\n                \"Transfer\",\n                \"Trade\",\n             \
+        \   \"Gift\",\n                \"EscrowDeposit\",\n                \"EscrowRelease\",\n                \"EscrowRefund\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Credit recipient on escrow completion\",\n    \"description\": \"Called
         by lib-escrow when an escrow agreement completes successfully.\\nCredits the recipient wallet with the released funds.\\\
@@ -3120,12 +3116,12 @@ paths:
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
         : \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
         \            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n          \
-        \      \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\"\
-        ,\n                \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n              \
-        \  \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\"\
-        ,\n                \"conversion_debit\",\n                \"transfer\",\n                \"trade\",\n            \
-        \    \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\
+        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"Mint\",\n          \
+        \      \"QuestReward\",\n                \"LootDrop\",\n                \"VendorSale\",\n                \"Autogain\"\
+        ,\n                \"Refund\",\n                \"ConversionCredit\",\n                \"Burn\",\n               \
+        \ \"VendorPurchase\",\n                \"Fee\",\n                \"Expiration\",\n                \"CapOverflow\"\
+        ,\n                \"ConversionDebit\",\n                \"Transfer\",\n                \"Trade\",\n             \
+        \   \"Gift\",\n                \"EscrowDeposit\",\n                \"EscrowRelease\",\n                \"EscrowRefund\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Credit depositor on escrow refund\",\n    \"description\": \"Called by
         lib-escrow when an escrow agreement is cancelled or refunded.\\nCredits the original depositor wallet with the refunded
@@ -3212,8 +3208,8 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"When hold was captured/released/expired\"\n      \
         \          }\n            }\n        },\n        \"HoldStatus\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Current status of an authorization hold\",\n            \"enum\": [\n                \"active\"\
-        ,\n                \"captured\",\n                \"released\",\n                \"expired\"\n            ]\n    \
+        \  \"description\": \"Current status of an authorization hold\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Captured\",\n                \"Released\",\n                \"Expired\"\n            ]\n    \
         \    }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create an authorization hold (reserve funds)\",\n    \"description\": \"\
         Creates an authorization hold that reserves funds without debiting.\\nThe held amount reduces the effective balance
@@ -3299,8 +3295,8 @@ paths:
         \        \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"When hold was captured/released/expired\"\n                }\n            }\n        },\n        \"HoldStatus\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Current status of an authorization hold\",\n\
-        \            \"enum\": [\n                \"active\",\n                \"captured\",\n                \"released\"\
-        ,\n                \"expired\"\n            ]\n        },\n        \"CurrencyTransactionRecord\": {\n            \"\
+        \            \"enum\": [\n                \"Active\",\n                \"Captured\",\n                \"Released\"\
+        ,\n                \"Expired\"\n            ]\n        },\n        \"CurrencyTransactionRecord\": {\n            \"\
         type\": \"object\",\n            \"description\": \"Immutable record of a currency transaction\",\n            \"\
         additionalProperties\": false,\n            \"required\": [\n                \"transactionId\",\n                \"\
         currencyDefinitionId\",\n                \"amount\",\n                \"transactionType\",\n                \"idempotencyKey\"\
@@ -3347,12 +3343,12 @@ paths:
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
         : \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
         \            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n          \
-        \      \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\"\
-        ,\n                \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n              \
-        \  \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\"\
-        ,\n                \"conversion_debit\",\n                \"transfer\",\n                \"trade\",\n            \
-        \    \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\
+        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"Mint\",\n          \
+        \      \"QuestReward\",\n                \"LootDrop\",\n                \"VendorSale\",\n                \"Autogain\"\
+        ,\n                \"Refund\",\n                \"ConversionCredit\",\n                \"Burn\",\n               \
+        \ \"VendorPurchase\",\n                \"Fee\",\n                \"Expiration\",\n                \"CapOverflow\"\
+        ,\n                \"ConversionDebit\",\n                \"Transfer\",\n                \"Trade\",\n             \
+        \   \"Gift\",\n                \"EscrowDeposit\",\n                \"EscrowRelease\",\n                \"EscrowRefund\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Capture held funds (debit final amount)\",\n    \"description\": \"Captures
         an active hold by debiting the final amount (which may be less than\\nor equal to the held amount). Any difference
@@ -3424,8 +3420,8 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"When hold was captured/released/expired\"\n      \
         \          }\n            }\n        },\n        \"HoldStatus\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Current status of an authorization hold\",\n            \"enum\": [\n                \"active\"\
-        ,\n                \"captured\",\n                \"released\",\n                \"expired\"\n            ]\n    \
+        \  \"description\": \"Current status of an authorization hold\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Captured\",\n                \"Released\",\n                \"Expired\"\n            ]\n    \
         \    }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Release held funds (make available again)\",\n    \"description\": \"Releases
         an active hold, making all held funds available again.\\nNo debit occurs.\\n\",\n    \"tags\": [\n        \"Authorization
@@ -3492,8 +3488,8 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"When hold was captured/released/expired\"\n      \
         \          }\n            }\n        },\n        \"HoldStatus\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Current status of an authorization hold\",\n            \"enum\": [\n                \"active\"\
-        ,\n                \"captured\",\n                \"released\",\n                \"expired\"\n            ]\n    \
+        \  \"description\": \"Current status of an authorization hold\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Captured\",\n                \"Released\",\n                \"Expired\"\n            ]\n    \
         \    }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get hold status and details\",\n    \"description\": \"Retrieves the current
         status and details of an authorization hold.\",\n    \"tags\": [\n        \"Authorization Hold\"\n    ],\n    \"deprecated\"\
@@ -3504,96 +3500,96 @@ components:
       type: string
       description: Scope of currency availability across realms
       enum:
-      - global
-      - realm_specific
-      - multi_realm
+      - Global
+      - RealmSpecific
+      - MultiRealm
     CurrencyPrecision:
       type: string
       description: How the currency handles decimal values (immutable after creation)
       enum:
-      - integer
-      - decimal_2
-      - decimal_4
-      - decimal_8
-      - decimal_full
-      - big_integer
+      - Integer
+      - Decimal2
+      - Decimal4
+      - Decimal8
+      - DecimalFull
+      - BigInteger
     WalletStatus:
       type: string
       description: Current status of a wallet
       enum:
-      - active
-      - frozen
-      - closed
+      - Active
+      - Frozen
+      - Closed
     CapOverflowBehavior:
       type: string
       description: What happens when a credit would exceed the wallet cap
       enum:
-      - reject
-      - cap_and_lose
-      - cap_and_return
+      - Reject
+      - CapAndLose
+      - CapAndReturn
     AutogainMode:
       type: string
       description: How autogain (energy/interest) is calculated
       enum:
-      - simple
-      - compound
+      - Simple
+      - Compound
     ExpirationPolicy:
       type: string
       description: How currency expiration is determined
       enum:
-      - fixed_date
-      - duration_from_earn
-      - end_of_season
+      - FixedDate
+      - DurationFromEarn
+      - EndOfSeason
     ItemLinkageMode:
       type: string
       description: How currency is linked to inventory items
       enum:
-      - none
-      - visual_only
-      - reference_only
+      - None
+      - VisualOnly
+      - ReferenceOnly
     TransactionType:
       type: string
       description: Classification of the currency transaction
       enum:
-      - mint
-      - quest_reward
-      - loot_drop
-      - vendor_sale
-      - autogain
-      - refund
-      - conversion_credit
-      - burn
-      - vendor_purchase
-      - fee
-      - expiration
-      - cap_overflow
-      - conversion_debit
-      - transfer
-      - trade
-      - gift
-      - escrow_deposit
-      - escrow_release
-      - escrow_refund
+      - Mint
+      - QuestReward
+      - LootDrop
+      - VendorSale
+      - Autogain
+      - Refund
+      - ConversionCredit
+      - Burn
+      - VendorPurchase
+      - Fee
+      - Expiration
+      - CapOverflow
+      - ConversionDebit
+      - Transfer
+      - Trade
+      - Gift
+      - EscrowDeposit
+      - EscrowRelease
+      - EscrowRefund
     AutogainProcessingMode:
       type: string
       description: How autogain processing is triggered
       enum:
-      - lazy
-      - task
+      - Lazy
+      - Task
     HoldStatus:
       type: string
       description: Current status of an authorization hold
       enum:
-      - active
-      - captured
-      - released
-      - expired
+      - Active
+      - Captured
+      - Released
+      - Expired
     EarnCapType:
       type: string
       description: Type of earn cap that was applied
       enum:
-      - daily
-      - weekly
+      - Daily
+      - Weekly
     CreateCurrencyDefinitionRequest:
       type: object
       description: Request to create a new currency definition

@@ -102,13 +102,13 @@ public partial class AssetController
         "AssetType": {
             "type": "string",
             "enum": [
-                "texture",
-                "model",
-                "audio",
-                "behavior",
-                "bundle",
-                "prefab",
-                "other"
+                "Texture",
+                "Model",
+                "Audio",
+                "Behavior",
+                "Bundle",
+                "Prefab",
+                "Other"
             ],
             "description": "Type classification for assets"
         },
@@ -427,13 +427,13 @@ public partial class AssetController
         "AssetType": {
             "type": "string",
             "enum": [
-                "texture",
-                "model",
-                "audio",
-                "behavior",
-                "bundle",
-                "prefab",
-                "other"
+                "Texture",
+                "Model",
+                "Audio",
+                "Behavior",
+                "Bundle",
+                "Prefab",
+                "Other"
             ],
             "description": "Type classification for assets"
         },
@@ -445,10 +445,10 @@ public partial class AssetController
         "ProcessingStatus": {
             "type": "string",
             "enum": [
-                "pending",
-                "processing",
-                "complete",
-                "failed"
+                "Pending",
+                "Processing",
+                "Complete",
+                "Failed"
             ],
             "description": "Asset processing pipeline status"
         }
@@ -683,13 +683,13 @@ public partial class AssetController
         "AssetType": {
             "type": "string",
             "enum": [
-                "texture",
-                "model",
-                "audio",
-                "behavior",
-                "bundle",
-                "prefab",
-                "other"
+                "Texture",
+                "Model",
+                "Audio",
+                "Behavior",
+                "Bundle",
+                "Prefab",
+                "Other"
             ],
             "description": "Type classification for assets"
         },
@@ -701,10 +701,10 @@ public partial class AssetController
         "ProcessingStatus": {
             "type": "string",
             "enum": [
-                "pending",
-                "processing",
-                "complete",
-                "failed"
+                "Pending",
+                "Processing",
+                "Complete",
+                "Failed"
             ],
             "description": "Asset processing pipeline status"
         }
@@ -1094,13 +1094,13 @@ public partial class AssetController
         "AssetType": {
             "type": "string",
             "enum": [
-                "texture",
-                "model",
-                "audio",
-                "behavior",
-                "bundle",
-                "prefab",
-                "other"
+                "Texture",
+                "Model",
+                "Audio",
+                "Behavior",
+                "Bundle",
+                "Prefab",
+                "Other"
             ],
             "description": "Type classification for assets"
         },
@@ -1234,13 +1234,13 @@ public partial class AssetController
         "AssetType": {
             "type": "string",
             "enum": [
-                "texture",
-                "model",
-                "audio",
-                "behavior",
-                "bundle",
-                "prefab",
-                "other"
+                "Texture",
+                "Model",
+                "Audio",
+                "Behavior",
+                "Bundle",
+                "Prefab",
+                "Other"
             ],
             "description": "Type classification for assets"
         },
@@ -1252,10 +1252,10 @@ public partial class AssetController
         "ProcessingStatus": {
             "type": "string",
             "enum": [
-                "pending",
-                "processing",
-                "complete",
-                "failed"
+                "Pending",
+                "Processing",
+                "Complete",
+                "Failed"
             ],
             "description": "Asset processing pipeline status"
         }
@@ -1386,9 +1386,9 @@ public partial class AssetController
         "CompressionType": {
             "type": "string",
             "enum": [
-                "lz4",
-                "lzma",
-                "none"
+                "Lz4",
+                "Lzma",
+                "None"
             ],
             "description": "Compression algorithm for bundles"
         }
@@ -1429,11 +1429,11 @@ public partial class AssetController
         "BundleStatus": {
             "type": "string",
             "enum": [
-                "queued",
-                "processing",
-                "ready",
-                "failed",
-                "cancelled"
+                "Queued",
+                "Processing",
+                "Ready",
+                "Failed",
+                "Cancelled"
             ],
             "description": "Bundle processing status:\n- queued: Bundle creation is queued for processing\n- processing: Bundle is being processed\n- ready: Bundle is ready for download\n- failed: Bundle creation failed\n- cancelled: Bundle creation was cancelled\n"
         }
@@ -1525,8 +1525,8 @@ public partial class AssetController
         "BundleFormat": {
             "type": "string",
             "enum": [
-                "bannou",
-                "zip"
+                "Bannou",
+                "Zip"
             ],
             "description": "Bundle file format"
         }
@@ -1594,8 +1594,8 @@ public partial class AssetController
         "BundleFormat": {
             "type": "string",
             "enum": [
-                "bannou",
-                "zip"
+                "Bannou",
+                "Zip"
             ],
             "description": "Bundle file format"
         }
@@ -2041,11 +2041,11 @@ public partial class AssetController
         "BundleStatus": {
             "type": "string",
             "enum": [
-                "queued",
-                "processing",
-                "ready",
-                "failed",
-                "cancelled"
+                "Queued",
+                "Processing",
+                "Ready",
+                "Failed",
+                "Cancelled"
             ],
             "description": "Bundle processing status:\n- queued: Bundle creation is queued for processing\n- processing: Bundle is being processed\ n- ready: Bundle is ready for download\n- failed: Bundle creation failed\n- cancelled: Bundle creation was cancelled\n"
         },
@@ -2308,11 +2308,11 @@ public partial class AssetController
         "BundleStatus": {
             "type": "string",
             "enum": [
-                "queued",
-                "processing",
-                "ready",
-                "failed",
-                "cancelled"
+                "Queued",
+                "Processing",
+                "Ready",
+                "Failed",
+                "Cancelled"
             ],
             "description": "Bundle processing status:\n- queued: Bundle creation is queued for processing\n- processing: Bundle is being processed\n- ready: Bundle is ready for download\n- failed: Bundle creation failed\n- cancelled: Bundle creation was cancelled\n"
         },
@@ -2351,16 +2351,16 @@ public partial class AssetController
         "MetabundleErrorCode": {
             "type": "string",
             "enum": [
-                "SOURCE_BUNDLE_NOT_FOUND",
-                "SOURCE_BUNDLE_NOT_READY",
-                "STANDALONE_ASSET_NOT_FOUND",
-                "STANDALONE_ASSET_NOT_READY",
-                "REALM_MISMATCH",
-                "ASSET_CONFLICT",
-                "STORAGE_ERROR",
-                "TIMEOUT",
-                "CANCELLED",
-                "INTERNAL_ERROR"
+                "SourceBundleNotFound",
+                "SourceBundleNotReady",
+                "StandaloneAssetNotFound",
+                "StandaloneAssetNotReady",
+                "RealmMismatch",
+                "AssetConflict",
+                "StorageError",
+                "Timeout",
+                "Cancelled",
+                "InternalError"
             ],
             "description": "Error codes for metabundle creation failures"
         }
@@ -2476,11 +2476,11 @@ public partial class AssetController
         "BundleStatus": {
             "type": "string",
             "enum": [
-                "queued",
-                "processing",
-                "ready",
-                "failed",
-                "cancelled"
+                "Queued",
+                "Processing",
+                "Ready",
+                "Failed",
+                "Cancelled"
             ],
             "description": "Bundle processing status:\n- queued: Bundle creation is queued for processing\n- processing: Bundle is being processed\ n- ready: Bundle is ready for download\n- failed: Bundle creation failed\n- cancelled: Bundle creation was cancelled\n"
         }
@@ -2692,8 +2692,8 @@ public partial class AssetController
         "BundleType": {
             "type": "string",
             "enum": [
-                "source",
-                "metabundle"
+                "Source",
+                "Metabundle"
             ],
             "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
@@ -2880,8 +2880,8 @@ public partial class AssetController
         "BundleType": {
             "type": "string",
             "enum": [
-                "source",
-                "metabundle"
+                "Source",
+                "Metabundle"
             ],
             "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         }
@@ -2979,8 +2979,8 @@ public partial class AssetController
         "BundleType": {
             "type": "string",
             "enum": [
-                "source",
-                "metabundle"
+                "Source",
+                "Metabundle"
             ],
             "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
@@ -3279,8 +3279,8 @@ public partial class AssetController
         "DeletionStatus": {
             "type": "string",
             "enum": [
-                "deleted",
-                "permanently_deleted"
+                "Deleted",
+                "PermanentlyDeleted"
             ],
             "description": "Result of a deletion operation:\n- deleted: Soft-deleted (within retention period, can be restored)\n- permanently_deleted: Permanently removed (unrecoverable)\n"
         }
@@ -3401,9 +3401,9 @@ public partial class AssetController
         "BundleLifecycle": {
             "type": "string",
             "enum": [
-                "active",
-                "deleted",
-                "processing"
+                "Active",
+                "Deleted",
+                "Processing"
             ],
             "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
         }
@@ -3588,9 +3588,9 @@ public partial class AssetController
         "BundleLifecycle": {
             "type": "string",
             "enum": [
-                "active",
-                "deleted",
-                "processing"
+                "Active",
+                "Deleted",
+                "Processing"
             ],
             "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
         },
@@ -3602,26 +3602,26 @@ public partial class AssetController
         "BundleType": {
             "type": "string",
             "enum": [
-                "source",
-                "metabundle"
+                "Source",
+                "Metabundle"
             ],
             "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
         "BundleSortField": {
             "type": "string",
             "enum": [
-                "created_at",
-                "updated_at",
-                "name",
-                "size"
+                "CreatedAt",
+                "UpdatedAt",
+                "Name",
+                "Size"
             ],
             "description": "Fields available for sorting bundle query results"
         },
         "SortOrder": {
             "type": "string",
             "enum": [
-                "asc",
-                "desc"
+                "Asc",
+                "Desc"
             ],
             "description": "Sort direction for query results"
         }
@@ -3764,8 +3764,8 @@ public partial class AssetController
         "BundleType": {
             "type": "string",
             "enum": [
-                "source",
-                "metabundle"
+                "Source",
+                "Metabundle"
             ],
             "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
@@ -3777,9 +3777,9 @@ public partial class AssetController
         "BundleLifecycle": {
             "type": "string",
             "enum": [
-                "active",
-                "deleted",
-                "processing"
+                "Active",
+                "Deleted",
+                "Processing"
             ],
             "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
         }
@@ -4062,8 +4062,8 @@ public partial class AssetController
         "BundleType": {
             "type": "string",
             "enum": [
-                "source",
-                "metabundle"
+                "Source",
+                "Metabundle"
             ],
             "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
@@ -4075,9 +4075,9 @@ public partial class AssetController
         "BundleLifecycle": {
             "type": "string",
             "enum": [
-                "active",
-                "deleted",
-                "processing"
+                "Active",
+                "Deleted",
+                "Processing"
             ],
             "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
         }
@@ -4340,13 +4340,13 @@ public partial class AssetController
         "AssetType": {
             "type": "string",
             "enum": [
-                "texture",
-                "model",
-                "audio",
-                "behavior",
-                "bundle",
-                "prefab",
-                "other"
+                "Texture",
+                "Model",
+                "Audio",
+                "Behavior",
+                "Bundle",
+                "Prefab",
+                "Other"
             ],
             "description": "Type classification for assets"
         },
@@ -4358,10 +4358,10 @@ public partial class AssetController
         "ProcessingStatus": {
             "type": "string",
             "enum": [
-                "pending",
-                "processing",
-                "complete",
-                "failed"
+                "Pending",
+                "Processing",
+                "Complete",
+                "Failed"
             ],
             "description": "Asset processing pipeline status"
         }

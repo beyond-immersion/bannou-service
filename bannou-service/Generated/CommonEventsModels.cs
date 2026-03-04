@@ -765,16 +765,16 @@ public partial class BehaviorCompositionChange
 public enum ServiceErrorEventSeverity
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"info")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Info")]
     Info = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"warning")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Warning")]
     Warning = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"error")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Error")]
     Error = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"critical")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Critical")]
     Critical = 3,
 
 }
@@ -785,13 +785,13 @@ public enum ServiceErrorEventSeverity
 public enum MemoryUpdateOperation
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"add")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Add")]
     Add = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"remove")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Remove")]
     Remove = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"modify")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Modify")]
     Modify = 2,
 
 }

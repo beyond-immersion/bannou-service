@@ -48,7 +48,7 @@ public static class VoicePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/voice/room/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getVoiceRoom",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class VoicePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/voice/peer/heartbeat",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "peerHeartbeat",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class VoicePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/voice/peer/answer",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "answerPeer",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class VoicePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/voice/room/broadcast/request",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "requestBroadcastConsent",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class VoicePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/voice/room/broadcast/consent",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "respondBroadcastConsent",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class VoicePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/voice/room/broadcast/stop",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "stopBroadcast",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class VoicePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/voice/room/broadcast/status",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getBroadcastStatus",
             Permissions = new List<PermissionRequirement>
             {

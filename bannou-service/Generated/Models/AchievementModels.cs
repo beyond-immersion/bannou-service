@@ -25,21 +25,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Achievement;
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Achievement;
 
@@ -53,16 +38,16 @@ using System = global::System;
 public enum AchievementType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"standard")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Standard")]
     Standard = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"progressive")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Progressive")]
     Progressive = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"hidden")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Hidden")]
     Hidden = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"secret")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Secret")]
     Secret = 3,
 
 }
@@ -76,16 +61,16 @@ public enum AchievementType
 public enum Platform
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Steam")]
     Steam = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"xbox")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Xbox")]
     Xbox = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"playstation")]
-    Playstation = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"PlayStation")]
+    PlayStation = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"internal")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Internal")]
     Internal = 3,
 
 }
@@ -99,16 +84,16 @@ public enum Platform
 public enum SyncStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"pending")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Pending")]
     Pending = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"synced")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Synced")]
     Synced = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Failed")]
     Failed = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"not_linked")]
+    [System.Runtime.Serialization.EnumMember(Value = @"NotLinked")]
     NotLinked = 3,
 
 }
@@ -1183,12 +1168,6 @@ public partial class SyncPlatformAchievementsRequest
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public Platform Platform { get; set; } = default!;
-
-    /// <summary>
-    /// Force resync even if already synced
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("forceResync")]
-    public bool ForceResync { get; set; } = false;
 
 }
 

@@ -48,7 +48,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/entry-template/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createEntryTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/entry-template/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getEntryTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/entry-template/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listEntryTemplates",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/entry-template/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateEntryTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/entry-template/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteEntryTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/entry-template/seed",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "seedEntryTemplates",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createCollection",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getCollection",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listCollections",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteCollection",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/grant",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "grantEntry",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/has",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "hasEntry",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/query",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "queryEntries",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/update-metadata",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateEntryMetadata",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/stats",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getCompletionStats",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/content/select-for-area",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "selectContentForArea",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/content/area-config/set",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "setAreaContentConfig",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/content/area-config/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getAreaContentConfig",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/content/area-config/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listAreaContentConfigs",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/discovery/advance",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "advanceDiscovery",
             Permissions = new List<PermissionRequirement>
             {
@@ -348,7 +348,7 @@ public static class CollectionPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/collection/cleanup-by-character",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cleanupByCharacter",
             Permissions = new List<PermissionRequirement>
             {

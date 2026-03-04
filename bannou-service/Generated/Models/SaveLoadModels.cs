@@ -44,20 +44,20 @@ using System = global::System;
 public enum SaveCategory
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"QUICK_SAVE")]
-    QUICK_SAVE = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"QuickSave")]
+    QuickSave = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"AUTO_SAVE")]
-    AUTO_SAVE = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"AutoSave")]
+    AutoSave = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"MANUAL_SAVE")]
-    MANUAL_SAVE = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"ManualSave")]
+    ManualSave = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CHECKPOINT")]
-    CHECKPOINT = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Checkpoint")]
+    Checkpoint = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"STATE_SNAPSHOT")]
-    STATE_SNAPSHOT = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"StateSnapshot")]
+    StateSnapshot = 4,
 
 }
 #pragma warning restore CS1591
@@ -70,14 +70,14 @@ public enum SaveCategory
 public enum CompressionType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"NONE")]
-    NONE = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"None")]
+    None = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"GZIP")]
-    GZIP = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Gzip")]
+    Gzip = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"BROTLI")]
-    BROTLI = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Brotli")]
+    Brotli = 2,
 
 }
 #pragma warning restore CS1591
@@ -90,17 +90,17 @@ public enum CompressionType
 public enum ConflictResolution
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"SKIP")]
-    SKIP = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Skip")]
+    Skip = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"OVERWRITE")]
-    OVERWRITE = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Overwrite")]
+    Overwrite = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"RENAME")]
-    RENAME = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Rename")]
+    Rename = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"FAIL")]
-    FAIL = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Fail")]
+    Fail = 3,
 
 }
 #pragma warning restore CS1591
@@ -2808,14 +2808,14 @@ public partial class PromoteVersionRequest
 public enum DeltaAlgorithm
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"JSON_PATCH")]
-    JSON_PATCH = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"JsonPatch")]
+    JsonPatch = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"BSDIFF")]
-    BSDIFF = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Bsdiff")]
+    Bsdiff = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"XDELTA")]
-    XDELTA = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Xdelta")]
+    Xdelta = 2,
 
 }
 #pragma warning restore CS1591

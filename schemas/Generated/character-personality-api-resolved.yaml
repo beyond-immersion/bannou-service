@@ -425,14 +425,14 @@ components:
         Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.
         Based on psychological research (Big Five + game-relevant extensions).
       enum:
-      - OPENNESS
-      - CONSCIENTIOUSNESS
-      - EXTRAVERSION
-      - AGREEABLENESS
-      - NEUROTICISM
-      - HONESTY
-      - AGGRESSION
-      - LOYALTY
+      - Openness
+      - Conscientiousness
+      - Extraversion
+      - Agreeableness
+      - Neuroticism
+      - Honesty
+      - Aggression
+      - Loyalty
 
     ExperienceType:
       type: string
@@ -440,15 +440,15 @@ components:
         Categories of significant experiences that may cause personality evolution.
         Each type has predefined trait impact tendencies.
       enum:
-      - TRAUMA
-      - BETRAYAL
-      - LOSS
-      - VICTORY
-      - FRIENDSHIP
-      - REDEMPTION
-      - CORRUPTION
-      - ENLIGHTENMENT
-      - SACRIFICE
+      - Trauma
+      - Betrayal
+      - Loss
+      - Victory
+      - Friendship
+      - Redemption
+      - Corruption
+      - Enlightenment
+      - Sacrifice
 
     # Combat Preference Enums
     CombatStyle:
@@ -457,11 +457,11 @@ components:
         Overall approach to combat situations. Affects target selection,
         ability usage, and engagement decisions.
       enum:
-      - DEFENSIVE
-      - BALANCED
-      - AGGRESSIVE
-      - BERSERKER
-      - TACTICAL
+      - Defensive
+      - Balanced
+      - Aggressive
+      - Berserker
+      - Tactical
 
     PreferredRange:
       type: string
@@ -469,10 +469,10 @@ components:
         Preferred engagement distance. Influences positioning and
         ability selection in combat.
       enum:
-      - MELEE
-      - CLOSE
-      - MEDIUM
-      - RANGED
+      - Melee
+      - Close
+      - Medium
+      - Ranged
 
     GroupRole:
       type: string
@@ -480,11 +480,11 @@ components:
         Preferred role when fighting in groups. Affects positioning,
         target priority, and coordination behavior.
       enum:
-      - FRONTLINE
-      - SUPPORT
-      - FLANKER
-      - LEADER
-      - SOLO
+      - Frontline
+      - Support
+      - Flanker
+      - Leader
+      - Solo
 
     CombatExperienceType:
       type: string
@@ -492,16 +492,16 @@ components:
         Categories of combat experiences that may cause preference evolution.
         Each type affects different aspects of combat behavior.
       enum:
-      - DECISIVE_VICTORY
-      - NARROW_VICTORY
-      - DEFEAT
-      - NEAR_DEATH
-      - ALLY_SAVED
-      - ALLY_LOST
-      - SUCCESSFUL_RETREAT
-      - FAILED_RETREAT
-      - AMBUSH_SUCCESS
-      - AMBUSH_SURVIVED
+      - DecisiveVictory
+      - NarrowVictory
+      - Defeat
+      - NearDeath
+      - AllySaved
+      - AllyLost
+      - SuccessfulRetreat
+      - FailedRetreat
+      - AmbushSuccess
+      - AmbushSurvived
 
     # Core Models
     TraitValue:

@@ -38,20 +38,20 @@ using System = global::System;
 public enum QuestStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ACTIVE")]
-    ACTIVE = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Active")]
+    Active = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"COMPLETED")]
-    COMPLETED = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Completed")]
+    Completed = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"FAILED")]
-    FAILED = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Failed")]
+    Failed = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ABANDONED")]
-    ABANDONED = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Abandoned")]
+    Abandoned = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"EXPIRED")]
-    EXPIRED = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Expired")]
+    Expired = 4,
 
 }
 #pragma warning restore CS1591
@@ -64,26 +64,26 @@ public enum QuestStatus
 public enum QuestCategory
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"MAIN")]
-    MAIN = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Main")]
+    Main = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"SIDE")]
-    SIDE = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Side")]
+    Side = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"BOUNTY")]
-    BOUNTY = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Bounty")]
+    Bounty = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"DAILY")]
-    DAILY = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Daily")]
+    Daily = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"WEEKLY")]
-    WEEKLY = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Weekly")]
+    Weekly = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"EVENT")]
-    EVENT = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"Event")]
+    Event = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TUTORIAL")]
-    TUTORIAL = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"Tutorial")]
+    Tutorial = 6,
 
 }
 #pragma warning restore CS1591
@@ -96,23 +96,23 @@ public enum QuestCategory
 public enum QuestDifficulty
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TRIVIAL")]
-    TRIVIAL = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Trivial")]
+    Trivial = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"EASY")]
-    EASY = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Easy")]
+    Easy = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"NORMAL")]
-    NORMAL = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Normal")]
+    Normal = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"HARD")]
-    HARD = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Hard")]
+    Hard = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"HEROIC")]
-    HEROIC = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Heroic")]
+    Heroic = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"LEGENDARY")]
-    LEGENDARY = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"Legendary")]
+    Legendary = 5,
 
 }
 #pragma warning restore CS1591
@@ -125,35 +125,35 @@ public enum QuestDifficulty
 public enum ObjectiveType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"KILL")]
-    KILL = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Kill")]
+    Kill = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"COLLECT")]
-    COLLECT = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Collect")]
+    Collect = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"DELIVER")]
-    DELIVER = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Deliver")]
+    Deliver = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TRAVEL")]
-    TRAVEL = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Travel")]
+    Travel = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"DISCOVER")]
-    DISCOVER = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Discover")]
+    Discover = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TALK")]
-    TALK = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"Talk")]
+    Talk = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CRAFT")]
-    CRAFT = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"Craft")]
+    Craft = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ESCORT")]
-    ESCORT = 7,
+    [System.Runtime.Serialization.EnumMember(Value = @"Escort")]
+    Escort = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"DEFEND")]
-    DEFEND = 8,
+    [System.Runtime.Serialization.EnumMember(Value = @"Defend")]
+    Defend = 8,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CUSTOM")]
-    CUSTOM = 9,
+    [System.Runtime.Serialization.EnumMember(Value = @"Custom")]
+    Custom = 9,
 
 }
 #pragma warning restore CS1591
@@ -166,17 +166,17 @@ public enum ObjectiveType
 public enum ObjectiveRevealBehavior
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ALWAYS")]
-    ALWAYS = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Always")]
+    Always = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ON_PROGRESS")]
-    ON_PROGRESS = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"OnProgress")]
+    OnProgress = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ON_COMPLETE")]
-    ON_COMPLETE = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"OnComplete")]
+    OnComplete = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"NEVER")]
-    NEVER = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Never")]
+    Never = 3,
 
 }
 #pragma warning restore CS1591
@@ -189,20 +189,20 @@ public enum ObjectiveRevealBehavior
 public enum PrerequisiteType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"QUEST_COMPLETED")]
-    QUEST_COMPLETED = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"QuestCompleted")]
+    QuestCompleted = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CHARACTER_LEVEL")]
-    CHARACTER_LEVEL = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"CharacterLevel")]
+    CharacterLevel = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"REPUTATION")]
-    REPUTATION = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Reputation")]
+    Reputation = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ITEM_OWNED")]
-    ITEM_OWNED = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"ItemOwned")]
+    ItemOwned = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CURRENCY_AMOUNT")]
-    CURRENCY_AMOUNT = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"CurrencyAmount")]
+    CurrencyAmount = 4,
 
 }
 #pragma warning restore CS1591
@@ -218,11 +218,11 @@ public enum PrerequisiteType
 public enum PrerequisiteValidationMode
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"FAIL_FAST")]
-    FAIL_FAST = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"FailFast")]
+    FailFast = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CHECK_ALL")]
-    CHECK_ALL = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"CheckAll")]
+    CheckAll = 1,
 
 }
 #pragma warning restore CS1591
@@ -235,17 +235,17 @@ public enum PrerequisiteValidationMode
 public enum RewardType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CURRENCY")]
-    CURRENCY = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Currency")]
+    Currency = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ITEM")]
-    ITEM = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Item")]
+    Item = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"EXPERIENCE")]
-    EXPERIENCE = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Experience")]
+    Experience = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"REPUTATION")]
-    REPUTATION = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Reputation")]
+    Reputation = 3,
 
 }
 #pragma warning restore CS1591

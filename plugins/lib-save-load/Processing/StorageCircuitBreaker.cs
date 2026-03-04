@@ -275,9 +275,9 @@ public class StorageCircuitBreaker
     {
         return state switch
         {
-            "Open" => CircuitBreakerStateChangedEventPreviousState.OPEN,
-            "HalfOpen" => CircuitBreakerStateChangedEventPreviousState.HALF_OPEN,
-            _ => CircuitBreakerStateChangedEventPreviousState.CLOSED
+            "Open" => CircuitBreakerStateChangedEventPreviousState.Open,
+            "HalfOpen" => CircuitBreakerStateChangedEventPreviousState.HalfOpen,
+            _ => CircuitBreakerStateChangedEventPreviousState.Closed
         };
     }
 
@@ -285,9 +285,9 @@ public class StorageCircuitBreaker
     {
         return state switch
         {
-            "Open" => CircuitBreakerStateChangedEventNewState.OPEN,
-            "HalfOpen" => CircuitBreakerStateChangedEventNewState.HALF_OPEN,
-            _ => CircuitBreakerStateChangedEventNewState.CLOSED
+            "Open" => CircuitBreakerStateChangedEventNewState.Open,
+            "HalfOpen" => CircuitBreakerStateChangedEventNewState.HalfOpen,
+            _ => CircuitBreakerStateChangedEventNewState.Closed
         };
     }
 

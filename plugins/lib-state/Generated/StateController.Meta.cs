@@ -478,21 +478,21 @@ public partial class StateController
             "type": "string",
             "description": "Comparison operator for query conditions",
             "enum": [
-                "equals",
-                "notEquals",
-                "greaterThan",
-                "greaterThanOrEqual",
-                "lessThan",
-                "lessThanOrEqual",
-                "contains",
-                "startsWith",
-                "endsWith",
-                "in",
-                "exists",
-                "notExists",
-                "fullText"
+                "Equals",
+                "NotEquals",
+                "GreaterThan",
+                "GreaterThanOrEqual",
+                "LessThan",
+                "LessThanOrEqual",
+                "Contains",
+                "StartsWith",
+                "EndsWith",
+                "In",
+                "Exists",
+                "NotExists",
+                "FullText"
             ],
-            "default": "equals"
+            "default": "Equals"
         },
         "SortField": {
             "description": "Specifies a field and direction for sorting query results",
@@ -511,10 +511,10 @@ public partial class StateController
                 "order": {
                     "type": "string",
                     "enum": [
-                        "asc",
-                        "desc"
+                        "Asc",
+                        "Desc"
                     ],
-                    "default": "asc",
+                    "default": "Asc",
                     "description": "Sort direction"
                 }
             }
@@ -1219,8 +1219,8 @@ public partial class StateController
                 "backendFilter": {
                     "type": "string",
                     "enum": [
-                        "redis",
-                        "mysql"
+                        "Redis",
+                        "Mysql"
                     ],
                     "nullable": true,
                     "description": "Filter stores by backend type"
@@ -1276,8 +1276,8 @@ public partial class StateController
                 "backend": {
                     "type": "string",
                     "enum": [
-                        "redis",
-                        "mysql"
+                        "Redis",
+                        "Mysql"
                     ],
                     "description": "Backend type"
                 },

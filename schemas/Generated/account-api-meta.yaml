@@ -59,8 +59,8 @@ paths:
         : \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"\
         default\": 20,\n                    \"description\": \"Number of accounts per page\"\n                }\n        \
         \    }\n        },\n        \"AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        All authentication provider types including email\",\n            \"enum\": [\n                \"email\",\n      \
-        \          \"google\",\n                \"discord\",\n                \"twitch\",\n                \"steam\"\n   \
+        All authentication provider types including email\",\n            \"enum\": [\n                \"Email\",\n      \
+        \          \"Google\",\n                \"Discord\",\n                \"Twitch\",\n                \"Steam\"\n   \
         \         ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountListResponse\"\
         ,\n    \"$defs\": {\n        \"AccountListResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -127,8 +127,8 @@ paths:
         \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
         AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
-        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
-        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        including email\",\n            \"enum\": [\n                \"Email\",\n                \"Google\",\n           \
+        \     \"Discord\",\n                \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List accounts with filtering\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listAccounts\"\n}"
   /account/create:
@@ -228,8 +228,8 @@ paths:
         \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
         method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
-        enum\": [\n                \"email\",\n                \"google\",\n                \"discord\",\n               \
-        \ \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        enum\": [\n                \"Email\",\n                \"Google\",\n                \"Discord\",\n               \
+        \ \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new account\",\n    \"description\": \"\",\n    \"tags\": [\n  \
         \      \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createAccount\"\n}"
   /account/get:
@@ -313,8 +313,8 @@ paths:
         \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
         method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
-        enum\": [\n                \"email\",\n                \"google\",\n                \"discord\",\n               \
-        \ \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        enum\": [\n                \"Email\",\n                \"Google\",\n                \"Discord\",\n               \
+        \ \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get account by ID\",\n    \"description\": \"\",\n    \"tags\": [\n   \
         \     \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccount\"\n}"
   /account/update:
@@ -409,8 +409,8 @@ paths:
         \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
         method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
-        enum\": [\n                \"email\",\n                \"google\",\n                \"discord\",\n               \
-        \ \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        enum\": [\n                \"Email\",\n                \"Google\",\n                \"Discord\",\n               \
+        \ \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update account\",\n    \"description\": \"\",\n    \"tags\": [\n      \
         \  \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateAccount\"\n}"
   /account/delete:
@@ -526,8 +526,8 @@ paths:
         \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
         method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
-        enum\": [\n                \"email\",\n                \"google\",\n                \"discord\",\n               \
-        \ \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        enum\": [\n                \"Email\",\n                \"Google\",\n                \"Discord\",\n               \
+        \ \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get account by email\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"Account Lookup\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccountByEmail\"\n}"
   /account/auth-methods/list:
@@ -582,8 +582,8 @@ paths:
         \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
         AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
-        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
-        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        including email\",\n            \"enum\": [\n                \"Email\",\n                \"Google\",\n           \
+        \     \"Discord\",\n                \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get authentication methods for account\",\n    \"description\": \"\",\n\
         \    \"tags\": [\n        \"Authentication Methods\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
         getAuthMethods\"\n}"
@@ -627,8 +627,8 @@ paths:
         \            \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Display name from the OAuth provider\"\n                }\n            }\n\
         \        },\n        \"OAuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"OAuth
-        provider types (excludes email)\",\n            \"enum\": [\n                \"google\",\n                \"discord\"\
-        ,\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        provider types (excludes email)\",\n            \"enum\": [\n                \"Google\",\n                \"Discord\"\
+        ,\n                \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthMethodResponse\"\
         ,\n    \"$defs\": {\n        \"AuthMethodResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after adding an authentication method\",\n            \"additionalProperties\": false,\n            \"\
@@ -645,8 +645,8 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"description\": \"Timestamp when the authentication method was linked\"\n                }\n            }\n \
         \       },\n        \"OAuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"OAuth
-        provider types (excludes email)\",\n            \"enum\": [\n                \"google\",\n                \"discord\"\
-        ,\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        provider types (excludes email)\",\n            \"enum\": [\n                \"Google\",\n                \"Discord\"\
+        ,\n                \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Add authentication method to account\",\n    \"description\": \"\",\n \
         \   \"tags\": [\n        \"Authentication Methods\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"addAuthMethod\"\
         \n}"
@@ -719,8 +719,8 @@ paths:
         externalId\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 255,\n            \
         \        \"description\": \"External ID from the provider\"\n                }\n            }\n        },\n      \
         \  \"OAuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"OAuth provider types (excludes
-        email)\",\n            \"enum\": [\n                \"google\",\n                \"discord\",\n                \"\
-        twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        email)\",\n            \"enum\": [\n                \"Google\",\n                \"Discord\",\n                \"\
+        Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
         ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
@@ -772,8 +772,8 @@ paths:
         \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
         method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
-        enum\": [\n                \"email\",\n                \"google\",\n                \"discord\",\n               \
-        \ \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        enum\": [\n                \"Email\",\n                \"Google\",\n                \"Discord\",\n               \
+        \ \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get account by external provider ID\",\n    \"description\": \"\",\n  \
         \  \"tags\": [\n        \"Account Lookup\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccountByProvider\"\
         \n}"
@@ -863,8 +863,8 @@ paths:
         \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
         method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
-        enum\": [\n                \"email\",\n                \"google\",\n                \"discord\",\n               \
-        \ \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        enum\": [\n                \"Email\",\n                \"Google\",\n                \"Discord\",\n               \
+        \ \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update account profile\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"Profile Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateProfile\"\n}"
   /account/password/update:
@@ -1036,8 +1036,8 @@ paths:
         \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
         AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
-        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
-        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        },\n        \"\
+        including email\",\n            \"enum\": [\n                \"Email\",\n                \"Google\",\n           \
+        \     \"Discord\",\n                \"Twitch\",\n                \"Steam\"\n            ]\n        },\n        \"\
         BulkOperationFailure\": {\n            \"type\": \"object\",\n            \"description\": \"Details of a failed bulk
         operation item\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\"\
         ,\n                \"error\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n  \
@@ -1265,8 +1265,8 @@ paths:
         \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
         method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
-        enum\": [\n                \"email\",\n                \"google\",\n                \"discord\",\n               \
-        \ \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        enum\": [\n                \"Email\",\n                \"Google\",\n                \"Discord\",\n               \
+        \ \"Twitch\",\n                \"Steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update account email address\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateEmail\"\n}"
 components:
@@ -1275,19 +1275,19 @@ components:
       type: string
       description: All authentication provider types including email
       enum:
-      - email
-      - google
-      - discord
-      - twitch
-      - steam
+      - Email
+      - Google
+      - Discord
+      - Twitch
+      - Steam
     OAuthProvider:
       type: string
       description: OAuth provider types (excludes email)
       enum:
-      - google
-      - discord
-      - twitch
-      - steam
+      - Google
+      - Discord
+      - Twitch
+      - Steam
     ListAccountsRequest:
       type: object
       description: Request to list accounts with optional filtering

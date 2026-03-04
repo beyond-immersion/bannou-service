@@ -24,12 +24,16 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `AchievementDefinitionCreatedEvent` | Lifecycle (Created) | `achievement-definition.created` | Published when a new achievement definition is cre... |
-| `AchievementDefinitionDeletedEvent` | Lifecycle (Deleted) | `achievement-definition.deleted` | Published when an achievement definition is delete... |
-| `AchievementDefinitionUpdatedEvent` | Lifecycle (Updated) | `achievement-definition.updated` | Published when an achievement definition is update... |
 | `AchievementPlatformSyncedEvent` | Custom | `achievement-platform-synced` | Published when an achievement is synced to an exte... |
 | `AchievementProgressUpdatedEvent` | Lifecycle (Updated) | `achievement-progress.updated` | Published when progress is made on a progressive a... |
 | `AchievementUnlockedEvent` | Custom | `achievement-unlocked` | Published when an entity unlocks an achievement |
+
+### Achievement (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `AchievementProgressMilestoneClientEvent` | Custom | `achievement-progress-milestone-client` | Sent to the entity's WebSocket sessions when a sig... |
+| `AchievementUnlockedClientEvent` | Custom | `achievement-unlocked-client` | Sent to the unlocking entity's WebSocket sessions ... |
 
 ### Actor
 

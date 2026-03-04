@@ -456,7 +456,7 @@ paths:
         \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Game session ID (if applicable)\"\n                }\n            }\n        },\n        \"ControllerAction\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Type of controller action\",\n            \"\
-        enum\": [\n                \"possess\",\n                \"release\"\n            ]\n        }\n    }\n}"
+        enum\": [\n                \"Possess\",\n                \"Release\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Record controller possession event\",\n    \"description\": \"Record when
         an account takes or releases control of an entity.\\nUsed for tracking which player controlled which character/actor
@@ -531,7 +531,7 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Associated game session ID\"\n                }\n      \
         \      }\n        },\n        \"ControllerAction\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of controller action\",\n            \"enum\": [\n                \"possess\",\n                \"release\"\
+        : \"Type of controller action\",\n            \"enum\": [\n                \"Possess\",\n                \"Release\"\
         \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query controller history\",\n    \"description\": \"Query who controlled
         what entity during a time range.\\nUseful for audit trails and replays.\\n\",\n    \"tags\": [\n        \"Controller
@@ -591,8 +591,8 @@ components:
       type: string
       description: Type of controller action
       enum:
-      - possess
-      - release
+      - Possess
+      - Release
     IngestEventRequest:
       type: object
       description: Request to ingest a single analytics event

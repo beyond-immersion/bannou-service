@@ -48,7 +48,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/slot/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "CreateSlot",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/slot/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "GetSlot",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/slot/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ListSlots",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/slot/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "DeleteSlot",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/slot/rename",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "RenameSlot",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/slot/bulk-delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "BulkDeleteSlots",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/save",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "Save",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/load",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "Load",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/save-delta",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "SaveDelta",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/load-with-deltas",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "LoadWithDeltas",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/collapse-deltas",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "CollapseDeltas",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/version/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ListVersions",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/version/pin",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "PinVersion",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/version/unpin",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "UnpinVersion",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/version/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "DeleteVersion",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/query",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "QuerySaves",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/copy",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "CopySave",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/export",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ExportSaves",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/import",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ImportSaves",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/verify",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "VerifyIntegrity",
             Permissions = new List<PermissionRequirement>
             {
@@ -348,7 +348,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/version/promote",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "PromoteVersion",
             Permissions = new List<PermissionRequirement>
             {
@@ -363,7 +363,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/migrate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "MigrateSave",
             Permissions = new List<PermissionRequirement>
             {
@@ -378,7 +378,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/schema/register",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "RegisterSchema",
             Permissions = new List<PermissionRequirement>
             {
@@ -393,7 +393,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/schema/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "ListSchemas",
             Permissions = new List<PermissionRequirement>
             {
@@ -408,7 +408,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/admin/cleanup",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "AdminCleanup",
             Permissions = new List<PermissionRequirement>
             {
@@ -423,7 +423,7 @@ public static class SaveLoadPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/save-load/admin/stats",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "AdminStats",
             Permissions = new List<PermissionRequirement>
             {

@@ -38,26 +38,26 @@ using System = global::System;
 public enum EventCategory
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"WAR")]
-    WAR = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"War")]
+    War = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"NATURAL_DISASTER")]
-    NATURAL_DISASTER = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"NaturalDisaster")]
+    NaturalDisaster = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"POLITICAL")]
-    POLITICAL = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Political")]
+    Political = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ECONOMIC")]
-    ECONOMIC = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Economic")]
+    Economic = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"RELIGIOUS")]
-    RELIGIOUS = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Religious")]
+    Religious = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CULTURAL")]
-    CULTURAL = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"Cultural")]
+    Cultural = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"PERSONAL")]
-    PERSONAL = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"Personal")]
+    Personal = 6,
 
 }
 #pragma warning restore CS1591
@@ -70,29 +70,29 @@ public enum EventCategory
 public enum ParticipationRole
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"LEADER")]
-    LEADER = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Leader")]
+    Leader = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"COMBATANT")]
-    COMBATANT = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Combatant")]
+    Combatant = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"VICTIM")]
-    VICTIM = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Victim")]
+    Victim = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"WITNESS")]
-    WITNESS = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Witness")]
+    Witness = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"BENEFICIARY")]
-    BENEFICIARY = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Beneficiary")]
+    Beneficiary = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"CONSPIRATOR")]
-    CONSPIRATOR = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"Conspirator")]
+    Conspirator = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"HERO")]
-    HERO = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"Hero")]
+    Hero = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"SURVIVOR")]
-    SURVIVOR = 7,
+    [System.Runtime.Serialization.EnumMember(Value = @"Survivor")]
+    Survivor = 7,
 
 }
 #pragma warning restore CS1591
@@ -107,32 +107,32 @@ public enum ParticipationRole
 public enum BackstoryElementType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ORIGIN")]
-    ORIGIN = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"Origin")]
+    Origin = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"OCCUPATION")]
-    OCCUPATION = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"Occupation")]
+    Occupation = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TRAINING")]
-    TRAINING = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"Training")]
+    Training = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TRAUMA")]
-    TRAUMA = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"Trauma")]
+    Trauma = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"ACHIEVEMENT")]
-    ACHIEVEMENT = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"Achievement")]
+    Achievement = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"SECRET")]
-    SECRET = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"Secret")]
+    Secret = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"GOAL")]
-    GOAL = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"Goal")]
+    Goal = 6,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"FEAR")]
-    FEAR = 7,
+    [System.Runtime.Serialization.EnumMember(Value = @"Fear")]
+    Fear = 7,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"BELIEF")]
-    BELIEF = 8,
+    [System.Runtime.Serialization.EnumMember(Value = @"Belief")]
+    Belief = 8,
 
 }
 #pragma warning restore CS1591

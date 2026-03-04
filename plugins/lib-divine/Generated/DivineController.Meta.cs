@@ -305,9 +305,9 @@ public partial class DivineController
             "type": "string",
             "description": "Lifecycle status of a deity entity",
             "enum": [
-                "active",
-                "dormant",
-                "archived"
+                "Active",
+                "Dormant",
+                "Archived"
             ]
         }
     }
@@ -560,9 +560,9 @@ public partial class DivineController
             "type": "string",
             "description": "Lifecycle status of a deity entity",
             "enum": [
-                "active",
-                "dormant",
-                "archived"
+                "Active",
+                "Dormant",
+                "Archived"
             ]
         }
     }
@@ -820,9 +820,9 @@ public partial class DivineController
             "type": "string",
             "description": "Lifecycle status of a deity entity",
             "enum": [
-                "active",
-                "dormant",
-                "archived"
+                "Active",
+                "Dormant",
+                "Archived"
             ]
         }
     }
@@ -932,9 +932,9 @@ public partial class DivineController
             "type": "string",
             "description": "Lifecycle status of a deity entity",
             "enum": [
-                "active",
-                "dormant",
-                "archived"
+                "Active",
+                "Dormant",
+                "Archived"
             ]
         }
     }
@@ -1139,9 +1139,9 @@ public partial class DivineController
             "type": "string",
             "description": "Lifecycle status of a deity entity",
             "enum": [
-                "active",
-                "dormant",
-                "archived"
+                "Active",
+                "Dormant",
+                "Archived"
             ]
         }
     }
@@ -1484,9 +1484,9 @@ public partial class DivineController
             "type": "string",
             "description": "Lifecycle status of a deity entity",
             "enum": [
-                "active",
-                "dormant",
-                "archived"
+                "Active",
+                "Dormant",
+                "Archived"
             ]
         }
     }
@@ -1739,9 +1739,9 @@ public partial class DivineController
             "type": "string",
             "description": "Lifecycle status of a deity entity",
             "enum": [
-                "active",
-                "dormant",
-                "archived"
+                "Active",
+                "Dormant",
+                "Archived"
             ]
         }
     }
@@ -1994,9 +1994,9 @@ public partial class DivineController
             "type": "string",
             "description": "Lifecycle status of a deity entity",
             "enum": [
-                "active",
-                "dormant",
-                "archived"
+                "Active",
+                "Dormant",
+                "Archived"
             ]
         }
     }
@@ -2787,10 +2787,10 @@ public partial class DivineController
             "type": "string",
             "description": "Tier of a blessing determining its power, cost, and storage mechanism",
             "enum": [
-                "minor",
-                "standard",
-                "greater",
-                "supreme"
+                "Minor",
+                "Standard",
+                "Greater",
+                "Supreme"
             ]
         }
     }
@@ -2876,18 +2876,18 @@ public partial class DivineController
             "type": "string",
             "description": "Tier of a blessing determining its power, cost, and storage mechanism",
             "enum": [
-                "minor",
-                "standard",
-                "greater",
-                "supreme"
+                "Minor",
+                "Standard",
+                "Greater",
+                "Supreme"
             ]
         },
         "BlessingStatus": {
             "type": "string",
             "description": "Current status of a granted blessing",
             "enum": [
-                "active",
-                "revoked"
+                "Active",
+                "Revoked"
             ]
         }
     }
@@ -3058,18 +3058,18 @@ public partial class DivineController
             "type": "string",
             "description": "Tier of a blessing determining its power, cost, and storage mechanism",
             "enum": [
-                "minor",
-                "standard",
-                "greater",
-                "supreme"
+                "Minor",
+                "Standard",
+                "Greater",
+                "Supreme"
             ]
         },
         "BlessingStatus": {
             "type": "string",
             "description": "Current status of a granted blessing",
             "enum": [
-                "active",
-                "revoked"
+                "Active",
+                "Revoked"
             ]
         }
     }
@@ -3269,18 +3269,18 @@ public partial class DivineController
             "type": "string",
             "description": "Tier of a blessing determining its power, cost, and storage mechanism",
             "enum": [
-                "minor",
-                "standard",
-                "greater",
-                "supreme"
+                "Minor",
+                "Standard",
+                "Greater",
+                "Supreme"
             ]
         },
         "BlessingStatus": {
             "type": "string",
             "description": "Current status of a granted blessing",
             "enum": [
-                "active",
-                "revoked"
+                "Active",
+                "Revoked"
             ]
         }
     }
@@ -3385,10 +3385,10 @@ public partial class DivineController
             "type": "string",
             "description": "Tier of a blessing determining its power, cost, and storage mechanism",
             "enum": [
-                "minor",
-                "standard",
-                "greater",
-                "supreme"
+                "Minor",
+                "Standard",
+                "Greater",
+                "Supreme"
             ]
         }
     }
@@ -3490,18 +3490,18 @@ public partial class DivineController
             "type": "string",
             "description": "Tier of a blessing determining its power, cost, and storage mechanism",
             "enum": [
-                "minor",
-                "standard",
-                "greater",
-                "supreme"
+                "Minor",
+                "Standard",
+                "Greater",
+                "Supreme"
             ]
         },
         "BlessingStatus": {
             "type": "string",
             "description": "Current status of a granted blessing",
             "enum": [
-                "active",
-                "revoked"
+                "Active",
+                "Revoked"
             ]
         }
     }
@@ -3667,18 +3667,18 @@ public partial class DivineController
             "type": "string",
             "description": "Tier of a blessing determining its power, cost, and storage mechanism",
             "enum": [
-                "minor",
-                "standard",
-                "greater",
-                "supreme"
+                "Minor",
+                "Standard",
+                "Greater",
+                "Supreme"
             ]
         },
         "BlessingStatus": {
             "type": "string",
             "description": "Current status of a granted blessing",
             "enum": [
-                "active",
-                "revoked"
+                "Active",
+                "Revoked"
             ]
         }
     }

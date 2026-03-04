@@ -209,18 +209,18 @@ paths:
         \             \"value\": {\n                    \"description\": \"Value to compare against. Not required for exists/notExists
         operators.\"\n                }\n            }\n        },\n        \"QueryOperator\": {\n            \"type\": \"\
         string\",\n            \"description\": \"Comparison operator for query conditions\",\n            \"enum\": [\n \
-        \               \"equals\",\n                \"notEquals\",\n                \"greaterThan\",\n                \"\
-        greaterThanOrEqual\",\n                \"lessThan\",\n                \"lessThanOrEqual\",\n                \"contains\"\
-        ,\n                \"startsWith\",\n                \"endsWith\",\n                \"in\",\n                \"exists\"\
-        ,\n                \"notExists\",\n                \"fullText\"\n            ],\n            \"default\": \"equals\"\
+        \               \"Equals\",\n                \"NotEquals\",\n                \"GreaterThan\",\n                \"\
+        GreaterThanOrEqual\",\n                \"LessThan\",\n                \"LessThanOrEqual\",\n                \"Contains\"\
+        ,\n                \"StartsWith\",\n                \"EndsWith\",\n                \"In\",\n                \"Exists\"\
+        ,\n                \"NotExists\",\n                \"FullText\"\n            ],\n            \"default\": \"Equals\"\
         \n        },\n        \"SortField\": {\n            \"description\": \"Specifies a field and direction for sorting
         query results\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"\
         required\": [\n                \"field\"\n            ],\n            \"properties\": {\n                \"field\"\
         : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
         : 200,\n                    \"description\": \"Field name to sort by (JSON path for MySQL, field name for Redis)\"\
         \n                },\n                \"order\": {\n                    \"type\": \"string\",\n                  \
-        \  \"enum\": [\n                        \"asc\",\n                        \"desc\"\n                    ],\n     \
-        \               \"default\": \"asc\",\n                    \"description\": \"Sort direction\"\n                }\n\
+        \  \"enum\": [\n                        \"Asc\",\n                        \"Desc\"\n                    ],\n     \
+        \               \"default\": \"Asc\",\n                    \"description\": \"Sort direction\"\n                }\n\
         \            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryStateResponse\"\
         ,\n    \"$defs\": {\n        \"QueryStateResponse\": {\n            \"description\": \"Response containing paginated
@@ -459,7 +459,7 @@ paths:
         ,\n    \"$defs\": {\n        \"ListStoresRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Optional filters for store listing (empty object returns all)\",\n      \
         \      \"properties\": {\n                \"backendFilter\": {\n                    \"type\": \"string\",\n      \
-        \              \"enum\": [\n                        \"redis\",\n                        \"mysql\"\n              \
+        \              \"enum\": [\n                        \"Redis\",\n                        \"Mysql\"\n              \
         \      ],\n                    \"nullable\": true,\n                    \"description\": \"Filter stores by backend
         type\"\n                },\n                \"includeStats\": {\n                    \"type\": \"boolean\",\n    \
         \                \"default\": false,\n                    \"description\": \"Include key counts (may be slow for large
@@ -476,8 +476,8 @@ paths:
         \         \"name\",\n                \"backend\"\n            ],\n            \"properties\": {\n                \"\
         name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"\
         maxLength\": 100,\n                    \"description\": \"Store name\"\n                },\n                \"backend\"\
-        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"redis\"\
-        ,\n                        \"mysql\"\n                    ],\n                    \"description\": \"Backend type\"\
+        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"Redis\"\
+        ,\n                        \"Mysql\"\n                    ],\n                    \"description\": \"Backend type\"\
         \n                },\n                \"keyCount\": {\n                    \"type\": \"integer\",\n              \
         \      \"minimum\": 0,\n                    \"nullable\": true,\n                    \"description\": \"Number of
         keys (only if includeStats=true)\"\n                }\n            }\n        }\n    }\n}"
@@ -671,9 +671,9 @@ components:
         order:
           type: string
           enum:
-          - asc
-          - desc
-          default: asc
+          - Asc
+          - Desc
+          default: Asc
           description: Sort direction
     QueryCondition:
       type: object
@@ -696,20 +696,20 @@ components:
       type: string
       description: Comparison operator for query conditions
       enum:
-      - equals
-      - notEquals
-      - greaterThan
-      - greaterThanOrEqual
-      - lessThan
-      - lessThanOrEqual
-      - contains
-      - startsWith
-      - endsWith
-      - in
-      - exists
-      - notExists
-      - fullText
-      default: equals
+      - Equals
+      - NotEquals
+      - GreaterThan
+      - GreaterThanOrEqual
+      - LessThan
+      - LessThanOrEqual
+      - Contains
+      - StartsWith
+      - EndsWith
+      - In
+      - Exists
+      - NotExists
+      - FullText
+      default: Equals
     QueryStateResponse:
       description: Response containing paginated query results with total count information
       type: object
@@ -947,8 +947,8 @@ components:
         backendFilter:
           type: string
           enum:
-          - redis
-          - mysql
+          - Redis
+          - Mysql
           nullable: true
           description: Filter stores by backend type
         includeStats:
@@ -983,8 +983,8 @@ components:
         backend:
           type: string
           enum:
-          - redis
-          - mysql
+          - Redis
+          - Mysql
           description: Backend type
         keyCount:
           type: integer

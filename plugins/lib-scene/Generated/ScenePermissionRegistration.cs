@@ -48,7 +48,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createScene",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getScene",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listScenes",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateScene",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteScene",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/validate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "validateScene",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/checkout",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "checkoutScene",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/commit",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "commitScene",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/discard",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "discardCheckout",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/heartbeat",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "heartbeatCheckout",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/history",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getSceneHistory",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/register-validation-rules",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "registerValidationRules",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/get-validation-rules",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getValidationRules",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/search",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "searchScenes",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/find-references",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "findReferences",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/find-asset-usage",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "findAssetUsage",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class ScenePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/scene/duplicate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "duplicateScene",
             Permissions = new List<PermissionRequirement>
             {

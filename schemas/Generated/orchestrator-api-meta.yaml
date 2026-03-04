@@ -95,8 +95,8 @@ paths:
         \             \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
         : true,\n                    \"description\": \"Component-specific metrics reported by the service. No Bannou plugin
         reads specific keys from this field by convention.\"\n                }\n            }\n        },\n        \"ComponentHealthStatus\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"healthy\",\n                \"\
-        degraded\",\n                \"unavailable\"\n            ],\n            \"description\": \"Health status for an
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Healthy\",\n                \"\
+        Degraded\",\n                \"Unavailable\"\n            ],\n            \"description\": \"Health status for an
         individual infrastructure component\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Check infrastructure component health\",\n    \"description\": \"Validates
         connectivity and health of core infrastructure components:\\n- Redis (direct connection via StackExchange.Redis)\\
@@ -138,8 +138,8 @@ paths:
         \    \"type\": \"string\",\n            \"description\": \"Filter for which services to include in health reports.\\
         n- all: Include both control plane services and deployed services (default)\\n- control_plane_only: Only services
         running on the control plane (main bannou instance)\\n- deployed_only: Only services running on explicitly deployed
-        nodes (split topology)\\n\",\n            \"enum\": [\n                \"all\",\n                \"control_plane_only\"\
-        ,\n                \"deployed_only\"\n            ]\n        }\n    }\n}"
+        nodes (split topology)\\n\",\n            \"enum\": [\n                \"All\",\n                \"ControlPlaneOnly\"\
+        ,\n                \"DeployedOnly\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ServiceHealthReport\"\
         ,\n    \"$defs\": {\n        \"ServiceHealthReport\": {\n            \"description\": \"Aggregated health report for
         services based on heartbeat monitoring.\\nServices are categorized as healthy or unhealthy based on heartbeat recency.\\
@@ -167,8 +167,8 @@ paths:
         \ \"ServiceHealthSource\": {\n            \"type\": \"string\",\n            \"description\": \"Filter for which services
         to include in health reports.\\n- all: Include both control plane services and deployed services (default)\\n- control_plane_only:
         Only services running on the control plane (main bannou instance)\\n- deployed_only: Only services running on explicitly
-        deployed nodes (split topology)\\n\",\n            \"enum\": [\n                \"all\",\n                \"control_plane_only\"\
-        ,\n                \"deployed_only\"\n            ]\n        },\n        \"ServiceHealthEntry\": {\n            \"\
+        deployed nodes (split topology)\\n\",\n            \"enum\": [\n                \"All\",\n                \"ControlPlaneOnly\"\
+        ,\n                \"DeployedOnly\"\n            ]\n        },\n        \"ServiceHealthEntry\": {\n            \"\
         type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Individual service
         health entry from heartbeat monitoring. Uses InstanceHealthStatus enum from common-api.yaml for status classification.\"\
         ,\n            \"required\": [\n                \"serviceId\",\n                \"appId\",\n                \"status\"\
@@ -381,8 +381,8 @@ paths:
         rolling-update, secrets, volumes, networks)\"\n                },\n                \"error\": {\n                \
         \    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Error
         message if detection failed\"\n                }\n            }\n        },\n        \"BackendType\": {\n        \
-        \    \"type\": \"string\",\n            \"enum\": [\n                \"kubernetes\",\n                \"portainer\"\
-        ,\n                \"swarm\",\n                \"compose\"\n            ],\n            \"description\": \"Container
+        \    \"type\": \"string\",\n            \"enum\": [\n                \"Kubernetes\",\n                \"Portainer\"\
+        ,\n                \"Swarm\",\n                \"Compose\"\n            ],\n            \"description\": \"Container
         orchestration backend type.\\nPriority order: kubernetes > portainer > swarm > compose\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Detect available container orchestration backends\",\n    \"description\"\
         : \"Detects which container orchestration backends are available on this system.\\nReturns availability status and
@@ -429,8 +429,8 @@ paths:
         properties\": {\n                \"category\": {\n                    \"$ref\": \"#/$defs/PresetCategory\",\n    \
         \                \"description\": \"Optional filter by category\",\n                    \"nullable\": true\n     \
         \           }\n            }\n        },\n        \"PresetCategory\": {\n            \"type\": \"string\",\n     \
-        \       \"enum\": [\n                \"development\",\n                \"testing\",\n                \"production\"\
-        ,\n                \"custom\"\n            ],\n            \"description\": \"Category classification for deployment
+        \       \"enum\": [\n                \"Development\",\n                \"Testing\",\n                \"Production\"\
+        ,\n                \"Custom\"\n            ],\n            \"description\": \"Category classification for deployment
         presets\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PresetsResponse\"\
         ,\n    \"$defs\": {\n        \"PresetsResponse\": {\n            \"description\": \"Response containing available
@@ -461,8 +461,8 @@ paths:
         ,\n                    \"description\": \"Whether this is a built-in preset\"\n                },\n              \
         \  \"filePath\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n         \
         \           \"description\": \"Path to preset configuration file\"\n                }\n            }\n        },\n\
-        \        \"PresetCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"development\"\
-        ,\n                \"testing\",\n                \"production\",\n                \"custom\"\n            ],\n   \
+        \        \"PresetCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Development\"\
+        ,\n                \"Testing\",\n                \"Production\",\n                \"Custom\"\n            ],\n   \
         \         \"description\": \"Category classification for deployment presets\"\n        },\n        \"ServiceTopology\"\
         : {\n            \"description\": \"Service distribution topology defining which services run on which nodes\",\n\
         \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n  \
@@ -541,8 +541,8 @@ paths:
         \                \"description\": \"Port configuration for HTTP and HTTPS traffic\"\n                },\n        \
         \        \"ssl\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n       \
         \             \"description\": \"Whether SSL/TLS is enabled\"\n                }\n            }\n        },\n    \
-        \    \"IngressType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"openresty\"\
-        ,\n                \"nginx\",\n                \"traefik\",\n                \"none\"\n            ],\n          \
+        \    \"IngressType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Openresty\"\
+        ,\n                \"Nginx\",\n                \"Traefik\",\n                \"None\"\n            ],\n          \
         \  \"description\": \"Type of ingress or reverse proxy to use\"\n        },\n        \"Ports\": {\n            \"\
         type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Port configuration
         for ingress specifying HTTP and HTTPS port numbers\",\n            \"properties\": {\n                \"http\": {\n\
@@ -551,8 +551,8 @@ paths:
         \         },\n                \"https\": {\n                    \"type\": \"integer\",\n                    \"default\"\
         : 443,\n                    \"minimum\": 1,\n                    \"maximum\": 65535,\n                    \"description\"\
         : \"HTTPS port number\"\n                }\n            }\n        },\n        \"BackendType\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"kubernetes\",\n                \"portainer\",\n  \
-        \              \"swarm\",\n                \"compose\"\n            ],\n            \"description\": \"Container orchestration
+        type\": \"string\",\n            \"enum\": [\n                \"Kubernetes\",\n                \"Portainer\",\n  \
+        \              \"Swarm\",\n                \"Compose\"\n            ],\n            \"description\": \"Container orchestration
         backend type.\\nPriority order: kubernetes > portainer > swarm > compose\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List available deployment presets\",\n    \"description\": \"Returns all
         available deployment presets from the orchestrator's preset directory.\\nPresets define service combinations and configuration
@@ -705,8 +705,8 @@ paths:
         \                \"description\": \"Port configuration for HTTP and HTTPS traffic\"\n                },\n        \
         \        \"ssl\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n       \
         \             \"description\": \"Whether SSL/TLS is enabled\"\n                }\n            }\n        },\n    \
-        \    \"IngressType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"openresty\"\
-        ,\n                \"nginx\",\n                \"traefik\",\n                \"none\"\n            ],\n          \
+        \    \"IngressType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Openresty\"\
+        ,\n                \"Nginx\",\n                \"Traefik\",\n                \"None\"\n            ],\n          \
         \  \"description\": \"Type of ingress or reverse proxy to use\"\n        },\n        \"Ports\": {\n            \"\
         type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Port configuration
         for ingress specifying HTTP and HTTPS port numbers\",\n            \"properties\": {\n                \"http\": {\n\
@@ -715,11 +715,11 @@ paths:
         \         },\n                \"https\": {\n                    \"type\": \"integer\",\n                    \"default\"\
         : 443,\n                    \"minimum\": 1,\n                    \"maximum\": 65535,\n                    \"description\"\
         : \"HTTPS port number\"\n                }\n            }\n        },\n        \"BackendType\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"kubernetes\",\n                \"portainer\",\n  \
-        \              \"swarm\",\n                \"compose\"\n            ],\n            \"description\": \"Container orchestration
+        type\": \"string\",\n            \"enum\": [\n                \"Kubernetes\",\n                \"Portainer\",\n  \
+        \              \"Swarm\",\n                \"Compose\"\n            ],\n            \"description\": \"Container orchestration
         backend type.\\nPriority order: kubernetes > portainer > swarm > compose\\n\"\n        },\n        \"DeploymentMode\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"graceful\",\n                \"\
-        force\",\n                \"clean\"\n            ],\n            \"description\": \"Deployment mode:\\n- graceful:
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Graceful\",\n                \"\
+        Force\",\n                \"Clean\"\n            ],\n            \"description\": \"Deployment mode:\\n- graceful:
         Wait for connections to drain\\n- force: Apply immediately\\n- clean: Tear down and rebuild\\n\"\n        }\n    }\n\
         }"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeployResponse\"\
@@ -743,8 +743,8 @@ paths:
         \           \"warnings\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n \
         \                   \"items\": {\n                        \"type\": \"string\"\n                    },\n         \
         \           \"description\": \"Non-fatal warnings during deployment\"\n                }\n            }\n        },\n\
-        \        \"BackendType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"kubernetes\"\
-        ,\n                \"portainer\",\n                \"swarm\",\n                \"compose\"\n            ],\n     \
+        \        \"BackendType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Kubernetes\"\
+        ,\n                \"Portainer\",\n                \"Swarm\",\n                \"Compose\"\n            ],\n     \
         \       \"description\": \"Container orchestration backend type.\\nPriority order: kubernetes > portainer > swarm
         > compose\\n\"\n        },\n        \"ServiceTopology\": {\n            \"description\": \"Service distribution topology
         defining which services run on which nodes\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -824,8 +824,8 @@ paths:
         HTTPS traffic\"\n                },\n                \"ssl\": {\n                    \"type\": \"boolean\",\n    \
         \                \"default\": false,\n                    \"description\": \"Whether SSL/TLS is enabled\"\n      \
         \          }\n            }\n        },\n        \"IngressType\": {\n            \"type\": \"string\",\n         \
-        \   \"enum\": [\n                \"openresty\",\n                \"nginx\",\n                \"traefik\",\n      \
-        \          \"none\"\n            ],\n            \"description\": \"Type of ingress or reverse proxy to use\"\n  \
+        \   \"enum\": [\n                \"Openresty\",\n                \"Nginx\",\n                \"Traefik\",\n      \
+        \          \"None\"\n            ],\n            \"description\": \"Type of ingress or reverse proxy to use\"\n  \
         \      },\n        \"Ports\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"description\": \"Port configuration for ingress specifying HTTP and HTTPS port numbers\",\n       \
         \     \"properties\": {\n                \"http\": {\n                    \"type\": \"integer\",\n               \
@@ -848,8 +848,8 @@ paths:
         \            \"endpoints\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
         \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
         \            \"description\": \"Exposed endpoints\"\n                }\n            }\n        },\n        \"DeployedServiceStatus\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"starting\",\n                \"\
-        running\",\n                \"healthy\",\n                \"unhealthy\",\n                \"stopped\"\n          \
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Starting\",\n                \"\
+        Running\",\n                \"Healthy\",\n                \"Unhealthy\",\n                \"Stopped\"\n          \
         \  ],\n            \"description\": \"Current status of a deployed service instance\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deploy or update an environment\",\n    \"description\": \"Deploys a complete
         environment using a preset or custom configuration.\\nSupports graceful transitions, forced deployments, and clean
@@ -980,8 +980,8 @@ paths:
         not collected)\"\n                },\n                \"uptime\": {\n                    \"type\": \"string\",\n \
         \                   \"nullable\": true,\n                    \"description\": \"Time since deployment (null if not
         deployed)\"\n                }\n            }\n        },\n        \"BackendType\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"kubernetes\",\n                \"portainer\",\n                \"swarm\"\
-        ,\n                \"compose\"\n            ],\n            \"description\": \"Container orchestration backend type.\\
+        ,\n            \"enum\": [\n                \"Kubernetes\",\n                \"Portainer\",\n                \"Swarm\"\
+        ,\n                \"Compose\"\n            ],\n            \"description\": \"Container orchestration backend type.\\
         nPriority order: kubernetes > portainer > swarm > compose\\n\"\n        },\n        \"ServiceTopology\": {\n     \
         \       \"description\": \"Service distribution topology defining which services run on which nodes\",\n         \
         \   \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n           \
@@ -1060,8 +1060,8 @@ paths:
         \                \"description\": \"Port configuration for HTTP and HTTPS traffic\"\n                },\n        \
         \        \"ssl\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n       \
         \             \"description\": \"Whether SSL/TLS is enabled\"\n                }\n            }\n        },\n    \
-        \    \"IngressType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"openresty\"\
-        ,\n                \"nginx\",\n                \"traefik\",\n                \"none\"\n            ],\n          \
+        \    \"IngressType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Openresty\"\
+        ,\n                \"Nginx\",\n                \"Traefik\",\n                \"None\"\n            ],\n          \
         \  \"description\": \"Type of ingress or reverse proxy to use\"\n        },\n        \"Ports\": {\n            \"\
         type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Port configuration
         for ingress specifying HTTP and HTTPS port numbers\",\n            \"properties\": {\n                \"http\": {\n\
@@ -1085,8 +1085,8 @@ paths:
         \     \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n      \
         \              },\n                    \"description\": \"Exposed endpoints\"\n                }\n            }\n\
         \        },\n        \"DeployedServiceStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n  \
-        \              \"starting\",\n                \"running\",\n                \"healthy\",\n                \"unhealthy\"\
-        ,\n                \"stopped\"\n            ],\n            \"description\": \"Current status of a deployed service
+        \              \"Starting\",\n                \"Running\",\n                \"Healthy\",\n                \"Unhealthy\"\
+        ,\n                \"Stopped\"\n            ],\n            \"description\": \"Current status of a deployed service
         instance\"\n        },\n        \"InfrastructureHealthResponse\": {\n            \"description\": \"Response containing
         overall infrastructure health status and individual component details\",\n            \"type\": \"object\",\n    \
         \        \"additionalProperties\": false,\n            \"required\": [\n                \"healthy\",\n           \
@@ -1111,8 +1111,8 @@ paths:
         \             \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
         : true,\n                    \"description\": \"Component-specific metrics reported by the service. No Bannou plugin
         reads specific keys from this field by convention.\"\n                }\n            }\n        },\n        \"ComponentHealthStatus\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"healthy\",\n                \"\
-        degraded\",\n                \"unavailable\"\n            ],\n            \"description\": \"Health status for an
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Healthy\",\n                \"\
+        Degraded\",\n                \"Unavailable\"\n            ],\n            \"description\": \"Health status for an
         individual infrastructure component\"\n        },\n        \"ResourceUsage\": {\n            \"description\": \"System
         resource utilization metrics including CPU, memory, disk, and network\",\n            \"type\": \"object\",\n    \
         \        \"additionalProperties\": false,\n            \"properties\": {\n                \"cpuPercent\": {\n    \
@@ -1181,8 +1181,8 @@ paths:
         infrastructure (Redis, RabbitMQ, MySQL, etc.).\\nThis is determined by scanning compose files or finding containers
         in the same\\nDocker swarm/Kubernetes namespace as bannou services. USE WITH EXTREME CAUTION -\\nthis will destroy
         all data and require a full re-deployment.\\n\"\n                }\n            }\n        },\n        \"TeardownMode\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"graceful\",\n                \"\
-        force\",\n                \"preserve-data\"\n            ],\n            \"description\": \"Teardown mode:\\n- graceful:
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Graceful\",\n                \"\
+        Force\",\n                \"PreserveData\"\n            ],\n            \"description\": \"Teardown mode:\\n- graceful:
         Signal shutdown, wait for clean exit\\n- force: Immediately stop (SIGKILL)\\n- preserve-data: Keep volumes/networks,
         remove containers\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TeardownResponse\"\
@@ -1259,8 +1259,8 @@ paths:
         type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\
         \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Only clean
         resources matching labels\"\n                }\n            }\n        },\n        \"CleanTarget\": {\n          \
-        \  \"type\": \"string\",\n            \"enum\": [\n                \"containers\",\n                \"networks\",\n\
-        \                \"volumes\",\n                \"images\",\n                \"all\"\n            ],\n            \"\
+        \  \"type\": \"string\",\n            \"enum\": [\n                \"Containers\",\n                \"Networks\",\n\
+        \                \"Volumes\",\n                \"Images\",\n                \"All\"\n            ],\n            \"\
         description\": \"Type of resource to clean\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanResponse\"\
         ,\n    \"$defs\": {\n        \"CleanResponse\": {\n            \"description\": \"Result of a cleanup operation including
@@ -1349,7 +1349,7 @@ paths:
         \                    \"description\": \"Output stream type (stdout or stderr)\"\n                },\n            \
         \    \"message\": {\n                    \"type\": \"string\",\n                    \"description\": \"Log message
         content\"\n                }\n            }\n        },\n        \"LogStreamType\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"stdout\",\n                \"stderr\"\n            ],\n            \"\
+        ,\n            \"enum\": [\n                \"Stdout\",\n                \"Stderr\"\n            ],\n            \"\
         description\": \"Output stream type for log entries\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get service/container logs\",\n    \"description\": \"Retrieves logs from
         services or containers with filtering options.\\nSupports real-time streaming via WebSocket upgrade.\\n\",\n    \"\
@@ -1417,8 +1417,8 @@ paths:
         \n                },\n                \"nodeConfig\": {\n                    \"$ref\": \"#/$defs/TopologyNode\",\n\
         \                    \"nullable\": true,\n                    \"description\": \"Full node config (for add-node action)\"\
         \n                }\n            }\n        },\n        \"TopologyChangeAction\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"add-node\",\n                \"remove-node\",\n                \"move-service\"\
-        ,\n                \"scale\",\n                \"update-env\"\n            ],\n            \"description\": \"Type
+        ,\n            \"enum\": [\n                \"AddNode\",\n                \"RemoveNode\",\n                \"MoveService\"\
+        ,\n                \"Scale\",\n                \"UpdateEnv\"\n            ],\n            \"description\": \"Type
         of topology modification to apply\"\n        },\n        \"TopologyNode\": {\n            \"description\": \"A container
         or pod in the service topology with its assigned services and configuration\",\n            \"type\": \"object\",\n\
         \            \"additionalProperties\": false,\n            \"required\": [\n                \"name\"\n           \
@@ -1456,8 +1456,8 @@ paths:
         \                    \"description\": \"CPU request (Kubernetes)\"\n                },\n                \"memoryRequest\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Memory request (Kubernetes)\"\n                }\n            }\n        },\n        \"DeploymentMode\": {\n \
-        \           \"type\": \"string\",\n            \"enum\": [\n                \"graceful\",\n                \"force\"\
-        ,\n                \"clean\"\n            ],\n            \"description\": \"Deployment mode:\\n- graceful: Wait for
+        \           \"type\": \"string\",\n            \"enum\": [\n                \"Graceful\",\n                \"Force\"\
+        ,\n                \"Clean\"\n            ],\n            \"description\": \"Deployment mode:\\n- graceful: Wait for
         connections to drain\\n- force: Apply immediately\\n- clean: Tear down and rebuild\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TopologyUpdateResponse\"\
         ,\n    \"$defs\": {\n        \"TopologyUpdateResponse\": {\n            \"description\": \"Result of a topology update
@@ -1561,8 +1561,8 @@ paths:
         HTTPS traffic\"\n                },\n                \"ssl\": {\n                    \"type\": \"boolean\",\n    \
         \                \"default\": false,\n                    \"description\": \"Whether SSL/TLS is enabled\"\n      \
         \          }\n            }\n        },\n        \"IngressType\": {\n            \"type\": \"string\",\n         \
-        \   \"enum\": [\n                \"openresty\",\n                \"nginx\",\n                \"traefik\",\n      \
-        \          \"none\"\n            ],\n            \"description\": \"Type of ingress or reverse proxy to use\"\n  \
+        \   \"enum\": [\n                \"Openresty\",\n                \"Nginx\",\n                \"Traefik\",\n      \
+        \          \"None\"\n            ],\n            \"description\": \"Type of ingress or reverse proxy to use\"\n  \
         \      },\n        \"Ports\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"description\": \"Port configuration for ingress specifying HTTP and HTTPS port numbers\",\n       \
         \     \"properties\": {\n                \"http\": {\n                    \"type\": \"integer\",\n               \
@@ -1628,8 +1628,8 @@ paths:
         \                },\n                \"shutdownGracePeriod\": {\n                    \"type\": \"integer\",\n    \
         \                \"default\": 30,\n                    \"minimum\": 1,\n                    \"description\": \"Seconds
         to allow graceful shutdown before force-kill\"\n                }\n            }\n        },\n        \"RestartPriority\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"graceful\",\n                \"\
-        immediate\",\n                \"force\"\n            ],\n            \"description\": \"Restart urgency level:\\n-
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Graceful\",\n                \"\
+        Immediate\",\n                \"Force\"\n            ],\n            \"description\": \"Restart urgency level:\\n-
         graceful: Rolling update, wait for healthy before cycling next instance\\n- immediate: Rolling update but don't wait
         for connection drain\\n- force: Kill all instances simultaneously (causes downtime)\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContainerRestartResponse\"\
@@ -1644,8 +1644,8 @@ paths:
         \             \"description\": \"Number of running instances\"\n                },\n                \"restartStrategy\"\
         : {\n                    \"$ref\": \"#/$defs/RestartStrategy\",\n                    \"nullable\": true,\n       \
         \             \"description\": \"How restart will be performed\"\n                }\n            }\n        },\n \
-        \       \"RestartStrategy\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"rolling\"\
-        ,\n                \"simultaneous\"\n            ],\n            \"description\": \"Strategy for performing container
+        \       \"RestartStrategy\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Rolling\"\
+        ,\n                \"Simultaneous\"\n            ],\n            \"description\": \"Strategy for performing container
         restarts\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Request container restart (self-service pattern)\",\n    \"description\"\
         : \"Plugins call this endpoint to request restart of their own container.\\nThis is part of the self-service configuration
@@ -1714,8 +1714,8 @@ paths:
         \ \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n            \
         \        \"nullable\": true,\n                    \"description\": \"Container labels for metadata and management\"\
         \n                }\n            }\n        },\n        \"ContainerStatusType\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"running\",\n                \"starting\",\n                \"stopping\"\
-        ,\n                \"stopped\",\n                \"unhealthy\"\n            ],\n            \"description\": \"Current
+        ,\n            \"enum\": [\n                \"Running\",\n                \"Starting\",\n                \"Stopping\"\
+        ,\n                \"Stopped\",\n                \"Unhealthy\"\n            ],\n            \"description\": \"Current
         runtime status of a container\"\n        },\n        \"RestartHistoryEntry\": {\n            \"description\": \"Record
         of a past container restart including reason, timing, and outcome\",\n            \"type\": \"object\",\n        \
         \    \"additionalProperties\": false,\n            \"required\": [\n                \"timestamp\",\n             \
@@ -1731,7 +1731,7 @@ paths:
         \n                },\n                \"error\": {\n                    \"type\": \"string\",\n                  \
         \  \"nullable\": true,\n                    \"description\": \"Error message if restart failed (null on success)\"\
         \n                }\n            }\n        },\n        \"RestartPriority\": {\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"graceful\",\n                \"immediate\",\n                \"force\"\
+        \            \"enum\": [\n                \"Graceful\",\n                \"Immediate\",\n                \"Force\"\
         \n            ],\n            \"description\": \"Restart urgency level:\\n- graceful: Rolling update, wait for healthy
         before cycling next instance\\n- immediate: Rolling update but don't wait for connection drain\\n- force: Kill all
         instances simultaneously (causes downtime)\\n\"\n        },\n        \"HealthChecks\": {\n            \"type\": \"\
@@ -2140,9 +2140,9 @@ components:
         - control_plane_only: Only services running on the control plane (main bannou instance)
         - deployed_only: Only services running on explicitly deployed nodes (split topology)
       enum:
-      - all
-      - control_plane_only
-      - deployed_only
+      - All
+      - ControlPlaneOnly
+      - DeployedOnly
     ServiceHealthRequest:
       type: object
       additionalProperties: false
@@ -2553,10 +2553,10 @@ components:
     BackendType:
       type: string
       enum:
-      - kubernetes
-      - portainer
-      - swarm
-      - compose
+      - Kubernetes
+      - Portainer
+      - Swarm
+      - Compose
       description: |
         Container orchestration backend type.
         Priority order: kubernetes > portainer > swarm > compose
@@ -2854,9 +2854,9 @@ components:
     DeploymentMode:
       type: string
       enum:
-      - graceful
-      - force
-      - clean
+      - Graceful
+      - Force
+      - Clean
       description: |
         Deployment mode:
         - graceful: Wait for connections to drain
@@ -3057,9 +3057,9 @@ components:
     TeardownMode:
       type: string
       enum:
-      - graceful
-      - force
-      - preserve-data
+      - Graceful
+      - Force
+      - PreserveData
       description: |
         Teardown mode:
         - graceful: Signal shutdown, wait for clean exit
@@ -3145,11 +3145,11 @@ components:
     CleanTarget:
       type: string
       enum:
-      - containers
-      - networks
-      - volumes
-      - images
-      - all
+      - Containers
+      - Networks
+      - Volumes
+      - Images
+      - All
       description: Type of resource to clean
     CleanRequest:
       description: Request to clean up Docker resources such as containers, volumes, and images
@@ -3353,18 +3353,18 @@ components:
     DeploymentAction:
       type: string
       enum:
-      - started
-      - completed
-      - failed
-      - topology-changed
+      - Started
+      - Completed
+      - Failed
+      - TopologyChanged
       description: Type of deployment action that triggered an event
     PresetCategory:
       type: string
       enum:
-      - development
-      - testing
-      - production
-      - custom
+      - Development
+      - Testing
+      - Production
+      - Custom
       description: Category classification for deployment presets
     ServiceLayerType:
       type: string
@@ -3378,63 +3378,63 @@ components:
     ContainerStatusType:
       type: string
       enum:
-      - running
-      - starting
-      - stopping
-      - stopped
-      - unhealthy
+      - Running
+      - Starting
+      - Stopping
+      - Stopped
+      - Unhealthy
       description: Current runtime status of a container
     DeployedServiceStatus:
       type: string
       enum:
-      - starting
-      - running
-      - healthy
-      - unhealthy
-      - stopped
+      - Starting
+      - Running
+      - Healthy
+      - Unhealthy
+      - Stopped
       description: Current status of a deployed service instance
     TopologyChangeAction:
       type: string
       enum:
-      - add-node
-      - remove-node
-      - move-service
-      - scale
-      - update-env
+      - AddNode
+      - RemoveNode
+      - MoveService
+      - Scale
+      - UpdateEnv
       description: Type of topology modification to apply
     LogStreamType:
       type: string
       enum:
-      - stdout
-      - stderr
+      - Stdout
+      - Stderr
       description: Output stream type for log entries
     IngressType:
       type: string
       enum:
-      - openresty
-      - nginx
-      - traefik
-      - none
+      - Openresty
+      - Nginx
+      - Traefik
+      - None
       description: Type of ingress or reverse proxy to use
     RestartStrategy:
       type: string
       enum:
-      - rolling
-      - simultaneous
+      - Rolling
+      - Simultaneous
       description: Strategy for performing container restarts
     ComponentHealthStatus:
       type: string
       enum:
-      - healthy
-      - degraded
-      - unavailable
+      - Healthy
+      - Degraded
+      - Unavailable
       description: Health status for an individual infrastructure component
     RestartPriority:
       type: string
       enum:
-      - graceful
-      - immediate
-      - force
+      - Graceful
+      - Immediate
+      - Force
       description: |
         Restart urgency level:
         - graceful: Rolling update, wait for healthy before cycling next instance

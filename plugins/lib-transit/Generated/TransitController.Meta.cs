@@ -2793,11 +2793,11 @@ public partial class TransitController
             "type": "string",
             "description": "Operational status of a transit connection",
             "enum": [
-                "open",
-                "closed",
-                "dangerous",
-                "blocked",
-                "seasonal_closed"
+                "Open",
+                "Closed",
+                "Dangerous",
+                "Blocked",
+                "SeasonalClosed"
             ]
         }
     }
@@ -3078,11 +3078,11 @@ public partial class TransitController
             "type": "string",
             "description": "Operational status of a transit connection",
             "enum": [
-                "open",
-                "closed",
-                "dangerous",
-                "blocked",
-                "seasonal_closed"
+                "Open",
+                "Closed",
+                "Dangerous",
+                "Blocked",
+                "SeasonalClosed"
             ]
         }
     }
@@ -3235,11 +3235,11 @@ public partial class TransitController
             "type": "string",
             "description": "Operational status of a transit connection",
             "enum": [
-                "open",
-                "closed",
-                "dangerous",
-                "blocked",
-                "seasonal_closed"
+                "Open",
+                "Closed",
+                "Dangerous",
+                "Blocked",
+                "SeasonalClosed"
             ]
         }
     }
@@ -3442,11 +3442,11 @@ public partial class TransitController
             "type": "string",
             "description": "Operational status of a transit connection",
             "enum": [
-                "open",
-                "closed",
-                "dangerous",
-                "blocked",
-                "seasonal_closed"
+                "Open",
+                "Closed",
+                "Dangerous",
+                "Blocked",
+                "SeasonalClosed"
             ]
         }
     }
@@ -3807,11 +3807,11 @@ public partial class TransitController
             "type": "string",
             "description": "Operational status of a transit connection",
             "enum": [
-                "open",
-                "closed",
-                "dangerous",
-                "blocked",
-                "seasonal_closed"
+                "Open",
+                "Closed",
+                "Dangerous",
+                "Blocked",
+                "SeasonalClosed"
             ]
         }
     }
@@ -3926,21 +3926,21 @@ public partial class TransitController
             "type": "string",
             "description": "Operational status of a transit connection",
             "enum": [
-                "open",
-                "closed",
-                "dangerous",
-                "blocked",
-                "seasonal_closed"
+                "Open",
+                "Closed",
+                "Dangerous",
+                "Blocked",
+                "SeasonalClosed"
             ]
         },
         "SettableConnectionStatus": {
             "type": "string",
             "description": "Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is managed by the Seasonal Connection Worker)",
             "enum": [
-                "open",
-                "closed",
-                "dangerous",
-                "blocked"
+                "Open",
+                "Closed",
+                "Dangerous",
+                "Blocked"
             ]
         }
     }
@@ -4138,11 +4138,11 @@ public partial class TransitController
             "type": "string",
             "description": "Operational status of a transit connection",
             "enum": [
-                "open",
-                "closed",
-                "dangerous",
-                "blocked",
-                "seasonal_closed"
+                "Open",
+                "Closed",
+                "Dangerous",
+                "Blocked",
+                "SeasonalClosed"
             ]
         }
     }
@@ -4837,22 +4837,22 @@ public partial class TransitController
             "type": "string",
             "description": "Lifecycle status of a journey leg",
             "enum": [
-                "pending",
-                "in_progress",
-                "completed",
-                "skipped"
+                "Pending",
+                "InProgress",
+                "Completed",
+                "Skipped"
             ]
         },
         "JourneyStatus": {
             "type": "string",
             "description": "Lifecycle status of a transit journey",
             "enum": [
-                "preparing",
-                "in_transit",
-                "at_waypoint",
-                "arrived",
-                "interrupted",
-                "abandoned"
+                "Preparing",
+                "InTransit",
+                "AtWaypoint",
+                "Arrived",
+                "Interrupted",
+                "Abandoned"
             ]
         },
         "TransitInterruption": {
@@ -5215,22 +5215,22 @@ public partial class TransitController
             "type": "string",
             "description": "Lifecycle status of a journey leg",
             "enum": [
-                "pending",
-                "in_progress",
-                "completed",
-                "skipped"
+                "Pending",
+                "InProgress",
+                "Completed",
+                "Skipped"
             ]
         },
         "JourneyStatus": {
             "type": "string",
             "description": "Lifecycle status of a transit journey",
             "enum": [
-                "preparing",
-                "in_transit",
-                "at_waypoint",
-                "arrived",
-                "interrupted",
-                "abandoned"
+                "Preparing",
+                "InTransit",
+                "AtWaypoint",
+                "Arrived",
+                "Interrupted",
+                "Abandoned"
             ]
         },
         "TransitInterruption": {
@@ -5593,22 +5593,22 @@ public partial class TransitController
             "type": "string",
             "description": "Lifecycle status of a journey leg",
             "enum": [
-                "pending",
-                "in_progress",
-                "completed",
-                "skipped"
+                "Pending",
+                "InProgress",
+                "Completed",
+                "Skipped"
             ]
         },
         "JourneyStatus": {
             "type": "string",
             "description": "Lifecycle status of a transit journey",
             "enum": [
-                "preparing",
-                "in_transit",
-                "at_waypoint",
-                "arrived",
-                "interrupted",
-                "abandoned"
+                "Preparing",
+                "InTransit",
+                "AtWaypoint",
+                "Arrived",
+                "Interrupted",
+                "Abandoned"
             ]
         },
         "TransitInterruption": {
@@ -6011,22 +6011,22 @@ public partial class TransitController
             "type": "string",
             "description": "Lifecycle status of a journey leg",
             "enum": [
-                "pending",
-                "in_progress",
-                "completed",
-                "skipped"
+                "Pending",
+                "InProgress",
+                "Completed",
+                "Skipped"
             ]
         },
         "JourneyStatus": {
             "type": "string",
             "description": "Lifecycle status of a transit journey",
             "enum": [
-                "preparing",
-                "in_transit",
-                "at_waypoint",
-                "arrived",
-                "interrupted",
-                "abandoned"
+                "Preparing",
+                "InTransit",
+                "AtWaypoint",
+                "Arrived",
+                "Interrupted",
+                "Abandoned"
             ]
         },
         "TransitInterruption": {
@@ -6474,22 +6474,22 @@ public partial class TransitController
             "type": "string",
             "description": "Lifecycle status of a journey leg",
             "enum": [
-                "pending",
-                "in_progress",
-                "completed",
-                "skipped"
+                "Pending",
+                "InProgress",
+                "Completed",
+                "Skipped"
             ]
         },
         "JourneyStatus": {
             "type": "string",
             "description": "Lifecycle status of a transit journey",
             "enum": [
-                "preparing",
-                "in_transit",
-                "at_waypoint",
-                "arrived",
-                "interrupted",
-                "abandoned"
+                "Preparing",
+                "InTransit",
+                "AtWaypoint",
+                "Arrived",
+                "Interrupted",
+                "Abandoned"
             ]
         },
         "TransitInterruption": {
@@ -6863,22 +6863,22 @@ public partial class TransitController
             "type": "string",
             "description": "Lifecycle status of a journey leg",
             "enum": [
-                "pending",
-                "in_progress",
-                "completed",
-                "skipped"
+                "Pending",
+                "InProgress",
+                "Completed",
+                "Skipped"
             ]
         },
         "JourneyStatus": {
             "type": "string",
             "description": "Lifecycle status of a transit journey",
             "enum": [
-                "preparing",
-                "in_transit",
-                "at_waypoint",
-                "arrived",
-                "interrupted",
-                "abandoned"
+                "Preparing",
+                "InTransit",
+                "AtWaypoint",
+                "Arrived",
+                "Interrupted",
+                "Abandoned"
             ]
         },
         "TransitInterruption": {
@@ -7252,22 +7252,22 @@ public partial class TransitController
             "type": "string",
             "description": "Lifecycle status of a journey leg",
             "enum": [
-                "pending",
-                "in_progress",
-                "completed",
-                "skipped"
+                "Pending",
+                "InProgress",
+                "Completed",
+                "Skipped"
             ]
         },
         "JourneyStatus": {
             "type": "string",
             "description": "Lifecycle status of a transit journey",
             "enum": [
-                "preparing",
-                "in_transit",
-                "at_waypoint",
-                "arrived",
-                "interrupted",
-                "abandoned"
+                "Preparing",
+                "InTransit",
+                "AtWaypoint",
+                "Arrived",
+                "Interrupted",
+                "Abandoned"
             ]
         },
         "TransitInterruption": {
@@ -7635,22 +7635,22 @@ public partial class TransitController
             "type": "string",
             "description": "Lifecycle status of a journey leg",
             "enum": [
-                "pending",
-                "in_progress",
-                "completed",
-                "skipped"
+                "Pending",
+                "InProgress",
+                "Completed",
+                "Skipped"
             ]
         },
         "JourneyStatus": {
             "type": "string",
             "description": "Lifecycle status of a transit journey",
             "enum": [
-                "preparing",
-                "in_transit",
-                "at_waypoint",
-                "arrived",
-                "interrupted",
-                "abandoned"
+                "Preparing",
+                "InTransit",
+                "AtWaypoint",
+                "Arrived",
+                "Interrupted",
+                "Abandoned"
             ]
         },
         "TransitInterruption": {
@@ -8013,22 +8013,22 @@ public partial class TransitController
             "type": "string",
             "description": "Lifecycle status of a journey leg",
             "enum": [
-                "pending",
-                "in_progress",
-                "completed",
-                "skipped"
+                "Pending",
+                "InProgress",
+                "Completed",
+                "Skipped"
             ]
         },
         "JourneyStatus": {
             "type": "string",
             "description": "Lifecycle status of a transit journey",
             "enum": [
-                "preparing",
-                "in_transit",
-                "at_waypoint",
-                "arrived",
-                "interrupted",
-                "abandoned"
+                "Preparing",
+                "InTransit",
+                "AtWaypoint",
+                "Arrived",
+                "Interrupted",
+                "Abandoned"
             ]
         },
         "TransitInterruption": {
@@ -8174,12 +8174,12 @@ public partial class TransitController
             "type": "string",
             "description": "Lifecycle status of a transit journey",
             "enum": [
-                "preparing",
-                "in_transit",
-                "at_waypoint",
-                "arrived",
-                "interrupted",
-                "abandoned"
+                "Preparing",
+                "InTransit",
+                "AtWaypoint",
+                "Arrived",
+                "Interrupted",
+                "Abandoned"
             ]
         }
     }
@@ -8430,22 +8430,22 @@ public partial class TransitController
             "type": "string",
             "description": "Lifecycle status of a journey leg",
             "enum": [
-                "pending",
-                "in_progress",
-                "completed",
-                "skipped"
+                "Pending",
+                "InProgress",
+                "Completed",
+                "Skipped"
             ]
         },
         "JourneyStatus": {
             "type": "string",
             "description": "Lifecycle status of a transit journey",
             "enum": [
-                "preparing",
-                "in_transit",
-                "at_waypoint",
-                "arrived",
-                "interrupted",
-                "abandoned"
+                "Preparing",
+                "InTransit",
+                "AtWaypoint",
+                "Arrived",
+                "Interrupted",
+                "Abandoned"
             ]
         },
         "TransitInterruption": {
@@ -8610,12 +8610,12 @@ public partial class TransitController
             "type": "string",
             "description": "Lifecycle status of a transit journey",
             "enum": [
-                "preparing",
-                "in_transit",
-                "at_waypoint",
-                "arrived",
-                "interrupted",
-                "abandoned"
+                "Preparing",
+                "InTransit",
+                "AtWaypoint",
+                "Arrived",
+                "Interrupted",
+                "Abandoned"
             ]
         }
     }
@@ -8866,22 +8866,22 @@ public partial class TransitController
             "type": "string",
             "description": "Lifecycle status of a journey leg",
             "enum": [
-                "pending",
-                "in_progress",
-                "completed",
-                "skipped"
+                "Pending",
+                "InProgress",
+                "Completed",
+                "Skipped"
             ]
         },
         "JourneyStatus": {
             "type": "string",
             "description": "Lifecycle status of a transit journey",
             "enum": [
-                "preparing",
-                "in_transit",
-                "at_waypoint",
-                "arrived",
-                "interrupted",
-                "abandoned"
+                "Preparing",
+                "InTransit",
+                "AtWaypoint",
+                "Arrived",
+                "Interrupted",
+                "Abandoned"
             ]
         },
         "TransitInterruption": {
@@ -9070,12 +9070,12 @@ public partial class TransitController
             "type": "string",
             "description": "Lifecycle status of a transit journey",
             "enum": [
-                "preparing",
-                "in_transit",
-                "at_waypoint",
-                "arrived",
-                "interrupted",
-                "abandoned"
+                "Preparing",
+                "InTransit",
+                "AtWaypoint",
+                "Arrived",
+                "Interrupted",
+                "Abandoned"
             ]
         }
     }
@@ -9326,22 +9326,22 @@ public partial class TransitController
             "type": "string",
             "description": "Lifecycle status of a journey leg",
             "enum": [
-                "pending",
-                "in_progress",
-                "completed",
-                "skipped"
+                "Pending",
+                "InProgress",
+                "Completed",
+                "Skipped"
             ]
         },
         "JourneyStatus": {
             "type": "string",
             "description": "Lifecycle status of a transit journey",
             "enum": [
-                "preparing",
-                "in_transit",
-                "at_waypoint",
-                "arrived",
-                "interrupted",
-                "abandoned"
+                "Preparing",
+                "InTransit",
+                "AtWaypoint",
+                "Arrived",
+                "Interrupted",
+                "Abandoned"
             ]
         },
         "TransitInterruption": {
@@ -9513,9 +9513,9 @@ public partial class TransitController
             "type": "string",
             "description": "Sort criteria for route calculation results",
             "enum": [
-                "fastest",
-                "safest",
-                "shortest"
+                "Fastest",
+                "Safest",
+                "Shortest"
             ]
         }
     }

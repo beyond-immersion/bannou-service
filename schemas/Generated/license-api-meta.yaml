@@ -113,7 +113,7 @@ paths:
         \n                }\n            }\n        },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n\
         \            \"description\": \"Grid traversal adjacency mode for a board template.\\n- four_way: Orthogonal only
         (up, down, left, right)\\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\"\
-        : [\n                \"four_way\",\n                \"eight_way\"\n            ]\n        }\n    }\n}"
+        : [\n                \"FourWay\",\n                \"EightWay\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"BoardTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Board template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -154,8 +154,8 @@ paths:
         \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
         \       },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal
         adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
-        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"four_way\",\n             \
-        \   \"eight_way\"\n            ]\n        }\n    }\n}"
+        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"FourWay\",\n              \
+        \  \"EightWay\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new board template\",\n    \"description\": \"Create a board template
         with grid dimensions, starting nodes, adjacency mode,\\nand a reference to the contract template that controls unlock
         behavior.\\nBoard templates are scoped to a game service.\\n\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n\
@@ -231,8 +231,8 @@ paths:
         \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
         \       },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal
         adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
-        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"four_way\",\n             \
-        \   \"eight_way\"\n            ]\n        }\n    }\n}"
+        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"FourWay\",\n              \
+        \  \"EightWay\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a board template by ID\",\n    \"description\": \"Retrieves a board
         template by its unique identifier.\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"getBoardTemplate\"\n}"
@@ -319,8 +319,8 @@ paths:
         \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
         \       },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal
         adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
-        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"four_way\",\n             \
-        \   \"eight_way\"\n            ]\n        }\n    }\n}"
+        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"FourWay\",\n              \
+        \  \"EightWay\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List board templates for a game service\",\n    \"description\": \"Paginated
         list of board templates filtered by game service ID.\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"\
         deprecated\": false,\n    \"operationId\": \"listBoardTemplates\"\n}"
@@ -407,8 +407,8 @@ paths:
         \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
         \       },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal
         adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
-        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"four_way\",\n             \
-        \   \"eight_way\"\n            ]\n        }\n    }\n}"
+        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"FourWay\",\n              \
+        \  \"EightWay\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a board template\",\n    \"description\": \"Update mutable fields
         of a board template. Grid dimensions, starting nodes,\\nand contract template are immutable after creation.\\n\",\n\
         \    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateBoardTemplate\"\
@@ -489,8 +489,8 @@ paths:
         \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
         \       },\n        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal
         adjacency mode for a board template.\\n- four_way: Orthogonal only (up, down, left, right)\\n- eight_way: Orthogonal
-        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"four_way\",\n             \
-        \   \"eight_way\"\n            ]\n        }\n    }\n}"
+        + diagonal (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"FourWay\",\n              \
+        \  \"EightWay\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Delete a board template\",\n    \"description\": \"Delete a board template.
         Blocked if active board instances exist\\nthat reference this template.\\n\",\n    \"tags\": [\n        \"BoardTemplate\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteBoardTemplate\"\n}"
@@ -1364,8 +1364,8 @@ paths:
         \n                }\n            }\n        },\n        \"LicenseStatus\": {\n            \"type\": \"string\",\n\
         \            \"description\": \"Unlock status of a license node on a board.\\n- locked: Not adjacent to any unlocked
         node (cannot be unlocked)\\n- unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)\\n-
-        unlocked: Already unlocked (item placed at this position)\\n\",\n            \"enum\": [\n                \"locked\"\
-        ,\n                \"unlockable\",\n                \"unlocked\"\n            ]\n        }\n    }\n}"
+        unlocked: Already unlocked (item placed at this position)\\n\",\n            \"enum\": [\n                \"Locked\"\
+        ,\n                \"Unlockable\",\n                \"Unlocked\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get full board state\",\n    \"description\": \"Get the full board state:
         all defined license positions with unlock status\\n(unlocked, locked, unlockable) and adjacency info. Primary endpoint
         for\\nclient UI rendering.\\n\",\n    \"tags\": [\n        \"Gameplay\"\n    ],\n    \"deprecated\": false,\n    \"\
@@ -1617,8 +1617,8 @@ components:
         - four_way: Orthogonal only (up, down, left, right)
         - eight_way: Orthogonal + diagonal (all 8 surrounding cells)
       enum:
-      - four_way
-      - eight_way
+      - FourWay
+      - EightWay
     LicenseStatus:
       type: string
       description: |
@@ -1627,9 +1627,9 @@ components:
         - unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)
         - unlocked: Already unlocked (item placed at this position)
       enum:
-      - locked
-      - unlockable
-      - unlocked
+      - Locked
+      - Unlockable
+      - Unlocked
     UnlockFailureReason:
       type: string
       description: |
@@ -1642,13 +1642,13 @@ components:
         - board_not_found: Board instance does not exist
         - license_not_found: License definition does not exist on this board template
       enum:
-      - not_adjacent
-      - insufficient_lp
-      - prerequisites_not_met
-      - contract_failed
-      - already_unlocked
-      - board_not_found
-      - license_not_found
+      - NotAdjacent
+      - InsufficientLp
+      - PrerequisitesNotMet
+      - ContractFailed
+      - AlreadyUnlocked
+      - BoardNotFound
+      - LicenseNotFound
     GridPosition:
       type: object
       description: A position on the board grid (zero-indexed)

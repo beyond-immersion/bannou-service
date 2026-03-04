@@ -151,10 +151,10 @@ public partial class TelemetryStatusResponse
 public enum OtlpProtocol
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"grpc")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Grpc")]
     Grpc = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"http")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Http")]
     Http = 1,
 
 }

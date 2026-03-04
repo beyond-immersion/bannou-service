@@ -308,10 +308,10 @@ paths:
         with {{resourceId}} placeholder\"\n                },\n                \"description\": {\n                    \"\
         type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable
         description of cleanup action\"\n                }\n            }\n        },\n        \"OnDeleteAction\": {\n   \
-        \         \"type\": \"string\",\n            \"enum\": [\n                \"CASCADE\",\n                \"RESTRICT\"\
-        ,\n                \"DETACH\"\n            ],\n            \"description\": \"Action to take when the referenced resource
-        is deleted.\\nCASCADE: Delete dependent entities when resource is deleted\\nRESTRICT: Block resource deletion if references
-        exist\\nDETACH: Set reference to null when resource is deleted\\n\"\n        }\n    }\n}"
+        \         \"type\": \"string\",\n            \"enum\": [\n                \"Cascade\",\n                \"Restrict\"\
+        ,\n                \"Detach\"\n            ],\n            \"description\": \"Action to take when the referenced resource
+        is deleted.\\nCascade: Delete dependent entities when resource is deleted\\nRestrict: Block resource deletion if references
+        exist\\nDetach: Set reference to null when resource is deleted\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DefineCleanupResponse\"\
         ,\n    \"$defs\": {\n        \"DefineCleanupResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response after defining a cleanup callback\",\n            \"required\":
@@ -369,9 +369,9 @@ paths:
         \    \"nullable\": true,\n                    \"description\": \"If true, returns what callbacks WOULD execute without
         actually\\nexecuting them. Useful for pre-deletion validation and debugging.\\nDefaults to false.\\n\"\n         \
         \       }\n            }\n        },\n        \"CleanupPolicy\": {\n            \"type\": \"string\",\n          \
-        \  \"enum\": [\n                \"BEST_EFFORT\",\n                \"ALL_REQUIRED\"\n            ],\n            \"\
-        description\": \"Policy for cleanup callback execution.\\nBEST_EFFORT: Proceed with deletion even if some callbacks
-        fail\\nALL_REQUIRED: Abort deletion if any callback fails\\n\"\n        }\n    }\n}"
+        \  \"enum\": [\n                \"BestEffort\",\n                \"AllRequired\"\n            ],\n            \"description\"\
+        : \"Policy for cleanup callback execution.\\nBestEffort: Proceed with deletion even if some callbacks fail\\nAllRequired:
+        Abort deletion if any callback fails\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExecuteCleanupResponse\"\
         ,\n    \"$defs\": {\n        \"ExecuteCleanupResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response after attempting to execute cleanup\",\n            \"required\"\
@@ -467,10 +467,10 @@ paths:
         \   \"description\": \"When this callback was registered\"\n                },\n                \"description\": {\n\
         \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Human-readable description\"\n                }\n            }\n        },\n        \"OnDeleteAction\": {\n  \
-        \          \"type\": \"string\",\n            \"enum\": [\n                \"CASCADE\",\n                \"RESTRICT\"\
-        ,\n                \"DETACH\"\n            ],\n            \"description\": \"Action to take when the referenced resource
-        is deleted.\\nCASCADE: Delete dependent entities when resource is deleted\\nRESTRICT: Block resource deletion if references
-        exist\\nDETACH: Set reference to null when resource is deleted\\n\"\n        }\n    }\n}"
+        \          \"type\": \"string\",\n            \"enum\": [\n                \"Cascade\",\n                \"Restrict\"\
+        ,\n                \"Detach\"\n            ],\n            \"description\": \"Action to take when the referenced resource
+        is deleted.\\nCascade: Delete dependent entities when resource is deleted\\nRestrict: Block resource deletion if references
+        exist\\nDetach: Set reference to null when resource is deleted\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List registered cleanup callbacks\",\n    \"description\": \"Returns all
         cleanup callbacks registered for a resource type.\\nUseful for debugging and admin inspection of cleanup chains.\\\
         n\",\n    \"tags\": [\n        \"Cleanup Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -648,13 +648,13 @@ paths:
         \ },\n                \"dryRun\": {\n                    \"type\": \"boolean\",\n                    \"default\":
         false,\n                    \"description\": \"If true, return what would be compressed without executing\"\n    \
         \            }\n            }\n        },\n        \"CleanupPolicy\": {\n            \"type\": \"string\",\n     \
-        \       \"enum\": [\n                \"BEST_EFFORT\",\n                \"ALL_REQUIRED\"\n            ],\n        \
-        \    \"description\": \"Policy for cleanup callback execution.\\nBEST_EFFORT: Proceed with deletion even if some callbacks
-        fail\\nALL_REQUIRED: Abort deletion if any callback fails\\n\"\n        },\n        \"CompressionPolicy\": {\n   \
-        \         \"type\": \"string\",\n            \"enum\": [\n                \"BEST_EFFORT\",\n                \"ALL_REQUIRED\"\
-        \n            ],\n            \"description\": \"Policy for compression callback execution.\\nBEST_EFFORT: Create
-        archive even if some callbacks fail (partial archive)\\nALL_REQUIRED: Abort compression if any callback fails\\n\"\
-        \n        }\n    }\n}"
+        \       \"enum\": [\n                \"BestEffort\",\n                \"AllRequired\"\n            ],\n          \
+        \  \"description\": \"Policy for cleanup callback execution.\\nBestEffort: Proceed with deletion even if some callbacks
+        fail\\nAllRequired: Abort deletion if any callback fails\\n\"\n        },\n        \"CompressionPolicy\": {\n    \
+        \        \"type\": \"string\",\n            \"enum\": [\n                \"BestEffort\",\n                \"AllRequired\"\
+        \n            ],\n            \"description\": \"Policy for compression callback execution.\\nBestEffort: Create archive
+        even if some callbacks fail (partial archive)\\nAllRequired: Abort compression if any callback fails\\n\"\n      \
+        \  }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExecuteCompressResponse\"\
         ,\n    \"$defs\": {\n        \"ExecuteCompressResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Compression execution result\",\n            \"required\": [\n          \
@@ -988,9 +988,9 @@ paths:
         callbacks matching these source types will be executed.\\nIf omitted or empty, all registered compression callbacks
         are executed.\\nExample: [\\\"character-personality\\\", \\\"character-history\\\"]\\n\"\n                }\n    \
         \        }\n        },\n        \"CompressionPolicy\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"BEST_EFFORT\",\n                \"ALL_REQUIRED\"\n            ],\n            \"description\"\
-        : \"Policy for compression callback execution.\\nBEST_EFFORT: Create archive even if some callbacks fail (partial
-        archive)\\nALL_REQUIRED: Abort compression if any callback fails\\n\"\n        }\n    }\n}"
+        : [\n                \"BestEffort\",\n                \"AllRequired\"\n            ],\n            \"description\"\
+        : \"Policy for compression callback execution.\\nBestEffort: Create archive even if some callbacks fail (partial archive)\\
+        nAllRequired: Abort compression if any callback fails\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExecuteSnapshotResponse\"\
         ,\n    \"$defs\": {\n        \"ExecuteSnapshotResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Result of snapshot execution\",\n            \"required\": [\n          \
@@ -1252,32 +1252,32 @@ components:
     OnDeleteAction:
       type: string
       enum:
-      - CASCADE
-      - RESTRICT
-      - DETACH
+      - Cascade
+      - Restrict
+      - Detach
       description: |
         Action to take when the referenced resource is deleted.
-        CASCADE: Delete dependent entities when resource is deleted
-        RESTRICT: Block resource deletion if references exist
-        DETACH: Set reference to null when resource is deleted
+        Cascade: Delete dependent entities when resource is deleted
+        Restrict: Block resource deletion if references exist
+        Detach: Set reference to null when resource is deleted
     CleanupPolicy:
       type: string
       enum:
-      - BEST_EFFORT
-      - ALL_REQUIRED
+      - BestEffort
+      - AllRequired
       description: |
         Policy for cleanup callback execution.
-        BEST_EFFORT: Proceed with deletion even if some callbacks fail
-        ALL_REQUIRED: Abort deletion if any callback fails
+        BestEffort: Proceed with deletion even if some callbacks fail
+        AllRequired: Abort deletion if any callback fails
     CompressionPolicy:
       type: string
       enum:
-      - BEST_EFFORT
-      - ALL_REQUIRED
+      - BestEffort
+      - AllRequired
       description: |
         Policy for compression callback execution.
-        BEST_EFFORT: Create archive even if some callbacks fail (partial archive)
-        ALL_REQUIRED: Abort compression if any callback fails
+        BestEffort: Create archive even if some callbacks fail (partial archive)
+        AllRequired: Abort compression if any callback fails
     RegisterReferenceRequest:
       type: object
       additionalProperties: false

@@ -48,7 +48,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createRelationship",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getRelationship",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship/list-by-entity",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listRelationshipsByEntity",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship/get-between",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getRelationshipsBetween",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship/list-by-type",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listRelationshipsByType",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateRelationship",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship/end",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "endRelationship",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship/cleanup-by-entity",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cleanupByEntity",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship-type/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getRelationshipType",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship-type/get-by-code",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getRelationshipTypeByCode",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship-type/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listRelationshipTypes",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship-type/get-children",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getChildRelationshipTypes",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship-type/matches-hierarchy",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "matchesHierarchy",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship-type/get-ancestors",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getAncestors",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship-type/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createRelationshipType",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship-type/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateRelationshipType",
             Permissions = new List<PermissionRequirement>
             {
@@ -288,7 +288,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship-type/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteRelationshipType",
             Permissions = new List<PermissionRequirement>
             {
@@ -303,7 +303,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship-type/deprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deprecateRelationshipType",
             Permissions = new List<PermissionRequirement>
             {
@@ -318,7 +318,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship-type/undeprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "undeprecateRelationshipType",
             Permissions = new List<PermissionRequirement>
             {
@@ -333,7 +333,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship-type/merge",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "mergeRelationshipType",
             Permissions = new List<PermissionRequirement>
             {
@@ -348,7 +348,7 @@ public static class RelationshipPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/relationship-type/seed",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "seedRelationshipTypes",
             Permissions = new List<PermissionRequirement>
             {

@@ -107,7 +107,7 @@ paths:
         set, defaults to http://localhost:4317)\"\n                },\n                \"otlpProtocol\": {\n             \
         \       \"$ref\": \"#/$defs/OtlpProtocol\",\n                    \"description\": \"OTLP transport protocol (grpc
         or http)\"\n                }\n            }\n        },\n        \"OtlpProtocol\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"grpc\",\n                \"http\"\n            ],\n            \"description\"\
+        ,\n            \"enum\": [\n                \"Grpc\",\n                \"Http\"\n            ],\n            \"description\"\
         : \"OTLP transport protocol\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get telemetry status and configuration\",\n    \"description\": \"Returns
         detailed telemetry status including active exporters, sampling configuration, and service identity.\",\n    \"tags\"\
@@ -184,6 +184,6 @@ components:
     OtlpProtocol:
       type: string
       enum:
-      - grpc
-      - http
+      - Grpc
+      - Http
       description: OTLP transport protocol

@@ -379,11 +379,11 @@
         }
       }
     },
-    "/achievement/definition/delete": {
+    "/achievement/definition/deprecate": {
       "post": {
-        "summary": "Delete achievement definition",
-        "description": "Delete an achievement. Earned instances are preserved in history.\nDeveloper-only endpoint.\n",
-        "operationId": "achievement_deleteAchievementDefinition",
+        "summary": "Deprecate an achievement definition",
+        "description": "Mark an achievement definition as deprecated (Category B per IMPLEMENTATION TENETS).\nDeprecated definitions:\n- Remain queryable for historical data and earned instances\n- Cannot be used for new progress tracking or unlocks\n- Persist forever (no delete endpoint \u2014 instances outlive template relevance)\nIdempotent: returns OK if already deprecated.\n",
+        "operationId": "achievement_deprecateAchievementDefinition",
         "tags": [
           "Definitions"
         ],
@@ -398,17 +398,24 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DeleteAchievementDefinitionRequest"
+                "$ref": "#/components/schemas/DeprecateAchievementDefinitionRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Achievement deleted successfully"
+            "description": "Achievement definition deprecated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AchievementDefinitionResponse"
+                }
+              }
+            }
           },
           "404": {
-            "description": "Achievement not found"
+            "description": "Achievement definition not found"
           }
         }
       }
@@ -24937,6 +24944,8 @@
           "achievementType",
           "points",
           "isActive",
+          "isDeprecated",
+          "earnedCount",
           "createdAt"
         ],
         "properties": {
@@ -24971,6 +24980,7 @@
             "items": {
               "$ref": "#/components/schemas/EntityType"
             },
+            "nullable": true,
             "description": "Allowed entity types"
           },
           "progressTarget": {
@@ -24992,15 +25002,16 @@
             "items": {
               "$ref": "#/components/schemas/Platform"
             },
+            "nullable": true,
             "description": "Available platforms"
           },
-          "platformIds": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
+          "platformMappings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformMapping"
             },
             "nullable": true,
-            "description": "Platform-specific IDs"
+            "description": "Platform-specific achievement ID mappings"
           },
           "prerequisites": {
             "type": "array",
@@ -25010,9 +25021,62 @@
             "nullable": true,
             "description": "Required achievements"
           },
+          "scoreType": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true,
+            "description": "Score type code for matching analytics.score.updated events (progressive achievements)"
+          },
+          "milestoneType": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true,
+            "description": "Milestone type code for matching analytics.milestone.reached events"
+          },
+          "milestoneValue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Expected milestone value for matching analytics.milestone.reached events"
+          },
+          "milestoneName": {
+            "type": "string",
+            "maxLength": 200,
+            "nullable": true,
+            "description": "Expected milestone name for matching analytics.milestone.reached events"
+          },
+          "leaderboardId": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true,
+            "description": "Leaderboard ID for matching leaderboard.rank.changed events"
+          },
+          "rankThreshold": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "minimum": 1,
+            "description": "Rank threshold for leaderboard achievements (unlock when rank <= threshold)"
+          },
           "isActive": {
             "type": "boolean",
             "description": "Whether achievement is earnable"
+          },
+          "isDeprecated": {
+            "type": "boolean",
+            "description": "Whether this definition is deprecated and should not be used for new progress"
+          },
+          "deprecatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When deprecation occurred, null if not deprecated"
+          },
+          "deprecationReason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Audit reason for deprecation, null if not deprecated"
           },
           "earnedCount": {
             "type": "integer",
@@ -25028,7 +25092,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Additional metadata"
+            "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -25038,6 +25102,7 @@
         "additionalProperties": false,
         "required": [
           "achievementId",
+          "displayName",
           "isUnlocked"
         ],
         "properties": {
@@ -25084,7 +25149,9 @@
         "required": [
           "entityId",
           "entityType",
-          "progress"
+          "progress",
+          "totalPoints",
+          "unlockedCount"
         ],
         "properties": {
           "entityId": {
@@ -25117,10 +25184,10 @@
         "type": "string",
         "description": "Type of achievement",
         "enum": [
-          "standard",
-          "progressive",
-          "hidden",
-          "secret"
+          "Standard",
+          "Progressive",
+          "Hidden",
+          "Secret"
         ]
       },
       "ActionEffect": {
@@ -25390,24 +25457,24 @@
         "type": "string",
         "description": "Size classification affecting cover requirements and passage width",
         "enum": [
-          "tiny",
-          "small",
-          "medium",
-          "large",
-          "huge"
+          "Tiny",
+          "Small",
+          "Medium",
+          "Large",
+          "Huge"
         ],
-        "default": "medium"
+        "default": "Medium"
       },
       "ActorStatus": {
         "type": "string",
         "enum": [
-          "pending",
-          "starting",
-          "running",
-          "paused",
-          "stopping",
-          "stopped",
-          "error"
+          "Pending",
+          "Starting",
+          "Running",
+          "Paused",
+          "Stopping",
+          "Stopped",
+          "Error"
         ],
         "description": "Current actor lifecycle state"
       },
@@ -25649,8 +25716,8 @@
         "type": "string",
         "description": "Grid traversal adjacency mode for a board template.\n- four_way: Orthogonal only (up, down, left, right)\n- eight_way: Orthogonal + diagonal (all 8 surrounding cells)\n",
         "enum": [
-          "four_way",
-          "eight_way"
+          "FourWay",
+          "EightWay"
         ]
       },
       "AdminCleanupResponse": {
@@ -25963,11 +26030,11 @@
         "type": "string",
         "description": "Controls caching behavior for affordance queries",
         "enum": [
-          "fresh",
-          "cached",
-          "aggressive_cache"
+          "Fresh",
+          "Cached",
+          "AggressiveCache"
         ],
-        "default": "cached"
+        "default": "Cached"
       },
       "AffordanceLocation": {
         "type": "object",
@@ -26128,15 +26195,15 @@
         "type": "string",
         "description": "Well-known affordance types with predefined scoring logic.\nUse 'custom' for novel affordance definitions.\n",
         "enum": [
-          "ambush",
-          "shelter",
-          "vista",
-          "choke_point",
-          "gathering_spot",
-          "dramatic_reveal",
-          "hidden_path",
-          "defensible_position",
-          "custom"
+          "Ambush",
+          "Shelter",
+          "Vista",
+          "ChokePoint",
+          "GatheringSpot",
+          "DramaticReveal",
+          "HiddenPath",
+          "DefensiblePosition",
+          "Custom"
         ]
       },
       "Analytics": {
@@ -26711,13 +26778,13 @@
       "AssetType": {
         "type": "string",
         "enum": [
-          "texture",
-          "model",
-          "audio",
-          "behavior",
-          "bundle",
-          "prefab",
-          "other"
+          "Texture",
+          "Model",
+          "Audio",
+          "Behavior",
+          "Bundle",
+          "Prefab",
+          "Other"
         ],
         "description": "Type classification for assets"
       },
@@ -26954,11 +27021,11 @@
         "type": "string",
         "description": "All authentication provider types including email",
         "enum": [
-          "email",
-          "google",
-          "discord",
-          "twitch",
-          "steam"
+          "Email",
+          "Google",
+          "Discord",
+          "Twitch",
+          "Steam"
         ]
       },
       "AuthResponse": {
@@ -27008,8 +27075,8 @@
       "AuthType": {
         "type": "string",
         "enum": [
-          "oauth",
-          "ticket"
+          "Oauth",
+          "Ticket"
         ],
         "description": "Authentication mechanism type (oauth = browser redirect, ticket = game client token)"
       },
@@ -27210,8 +27277,8 @@
         "type": "string",
         "description": "How autogain (energy/interest) is calculated",
         "enum": [
-          "simple",
-          "compound"
+          "Simple",
+          "Compound"
         ]
       },
       "BackstoryElement": {
@@ -27265,15 +27332,15 @@
         "type": "string",
         "description": "Types of backstory elements. Each type represents a different aspect\nof the character's background that influences behavior.\n",
         "enum": [
-          "ORIGIN",
-          "OCCUPATION",
-          "TRAINING",
-          "TRAUMA",
-          "ACHIEVEMENT",
-          "SECRET",
-          "GOAL",
-          "FEAR",
-          "BELIEF"
+          "Origin",
+          "Occupation",
+          "Training",
+          "Trauma",
+          "Achievement",
+          "Secret",
+          "Goal",
+          "Fear",
+          "Belief"
         ]
       },
       "BackstoryResponse": {
@@ -28139,11 +28206,11 @@
       "BindingStatus": {
         "type": "string",
         "enum": [
-          "pending",
-          "syncing",
-          "synced",
-          "error",
-          "disabled"
+          "Pending",
+          "Syncing",
+          "Synced",
+          "Error",
+          "Disabled"
         ],
         "description": "Status of a repository binding"
       },
@@ -28221,8 +28288,8 @@
         "type": "string",
         "description": "Current status of a granted blessing",
         "enum": [
-          "active",
-          "revoked"
+          "Active",
+          "Revoked"
         ]
       },
       "BlessingSummary": {
@@ -28283,10 +28350,10 @@
         "type": "string",
         "description": "Tier of a blessing determining its power, cost, and storage mechanism",
         "enum": [
-          "minor",
-          "standard",
-          "greater",
-          "supreme"
+          "Minor",
+          "Standard",
+          "Greater",
+          "Supreme"
         ]
       },
       "BoardNodeState": {
@@ -28848,12 +28915,12 @@
         "type": "string",
         "description": "Current status of a breach record",
         "enum": [
-          "detected",
-          "cure_period",
-          "cured",
-          "consequences_applied",
-          "disputed",
-          "forgiven"
+          "Detected",
+          "CurePeriod",
+          "Cured",
+          "ConsequencesApplied",
+          "Disputed",
+          "Forgiven"
         ]
       },
       "BreachSummary": {
@@ -28885,11 +28952,11 @@
         "type": "string",
         "description": "Type of contract breach",
         "enum": [
-          "term_violation",
-          "milestone_missed",
-          "milestone_deadline",
-          "unauthorized_action",
-          "non_payment"
+          "TermViolation",
+          "MilestoneMissed",
+          "MilestoneDeadline",
+          "UnauthorizedAction",
+          "NonPayment"
         ]
       },
       "BroadcastConsentRequest": {
@@ -29199,8 +29266,8 @@
       "BundleFormat": {
         "type": "string",
         "enum": [
-          "bannou",
-          "zip"
+          "Bannou",
+          "Zip"
         ],
         "description": "Bundle file format"
       },
@@ -29302,9 +29369,9 @@
       "BundleLifecycle": {
         "type": "string",
         "enum": [
-          "active",
-          "deleted",
-          "processing"
+          "Active",
+          "Deleted",
+          "Processing"
         ],
         "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
       },
@@ -29335,21 +29402,21 @@
       "BundleSortField": {
         "type": "string",
         "enum": [
-          "created_at",
-          "updated_at",
-          "name",
-          "size"
+          "CreatedAt",
+          "UpdatedAt",
+          "Name",
+          "Size"
         ],
         "description": "Fields available for sorting bundle query results"
       },
       "BundleStatus": {
         "type": "string",
         "enum": [
-          "queued",
-          "processing",
-          "ready",
-          "failed",
-          "cancelled"
+          "Queued",
+          "Processing",
+          "Ready",
+          "Failed",
+          "Cancelled"
         ],
         "description": "Bundle processing status:\n- queued: Bundle creation is queued for processing\n- processing: Bundle is being processed\n- ready: Bundle is ready for download\n- failed: Bundle creation failed\n- cancelled: Bundle creation was cancelled\n"
       },
@@ -29406,8 +29473,8 @@
       "BundleType": {
         "type": "string",
         "enum": [
-          "source",
-          "metabundle"
+          "Source",
+          "Metabundle"
         ],
         "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
       },
@@ -29829,9 +29896,9 @@
         "type": "string",
         "description": "Controls CanUse validation behavior.\n- disabled: Skip CanUse validation even if template is configured\n- block: CanUse failure prevents use (default)\n- warn_and_proceed: CanUse failure logs warning but proceeds with use\n",
         "enum": [
-          "disabled",
-          "block",
-          "warn_and_proceed"
+          "Disabled",
+          "Block",
+          "WarnAndProceed"
         ]
       },
       "CancelJobRequest": {
@@ -29939,9 +30006,9 @@
         "type": "string",
         "description": "What happens when a credit would exceed the wallet cap",
         "enum": [
-          "reject",
-          "cap_and_lose",
-          "cap_and_return"
+          "Reject",
+          "CapAndLose",
+          "CapAndReturn"
         ]
       },
       "Capability": {
@@ -30731,9 +30798,9 @@
         "type": "string",
         "description": "Character lifecycle status",
         "enum": [
-          "alive",
-          "dead",
-          "dormant"
+          "Alive",
+          "Dead",
+          "Dormant"
         ]
       },
       "ChatMessageRequest": {
@@ -30849,9 +30916,9 @@
         "type": "string",
         "description": "Type of chat message",
         "enum": [
-          "public",
-          "whisper",
-          "system"
+          "Public",
+          "Whisper",
+          "System"
         ]
       },
       "ChatParticipantRole": {
@@ -31485,9 +31552,9 @@
         "type": "string",
         "description": "Category of clause type",
         "enum": [
-          "validation",
-          "execution",
-          "both"
+          "Validation",
+          "Execution",
+          "Both"
         ]
       },
       "ClauseDistributionResult": {
@@ -31884,10 +31951,10 @@
       "CleanupPolicy": {
         "type": "string",
         "enum": [
-          "BEST_EFFORT",
-          "ALL_REQUIRED"
+          "BestEffort",
+          "AllRequired"
         ],
-        "description": "Policy for cleanup callback execution.\nBEST_EFFORT: Proceed with deletion even if some callbacks fail\nALL_REQUIRED: Abort deletion if any callback fails\n"
+        "description": "Policy for cleanup callback execution.\nBestEffort: Proceed with deletion even if some callbacks fail\nAllRequired: Abort deletion if any callback fails\n"
       },
       "CleanupResponse": {
         "type": "object",
@@ -32393,11 +32460,11 @@
         "type": "string",
         "description": "Overall approach to combat situations. Affects target selection,\nability usage, and engagement decisions.\n",
         "enum": [
-          "DEFENSIVE",
-          "BALANCED",
-          "AGGRESSIVE",
-          "BERSERKER",
-          "TACTICAL"
+          "Defensive",
+          "Balanced",
+          "Aggressive",
+          "Berserker",
+          "Tactical"
         ]
       },
       "CommitRequest": {
@@ -32456,12 +32523,12 @@
         "type": "string",
         "description": "Comparison operators for numeric conditions",
         "enum": [
-          "eq",
-          "ne",
-          "gt",
-          "gte",
-          "lt",
-          "lte"
+          "Eq",
+          "Ne",
+          "Gt",
+          "Gte",
+          "Lt",
+          "Lte"
         ]
       },
       "CompilationOptions": {
@@ -33079,17 +33146,17 @@
       "CompressionPolicy": {
         "type": "string",
         "enum": [
-          "BEST_EFFORT",
-          "ALL_REQUIRED"
+          "BestEffort",
+          "AllRequired"
         ],
-        "description": "Policy for compression callback execution.\nBEST_EFFORT: Create archive even if some callbacks fail (partial archive)\nALL_REQUIRED: Abort compression if any callback fails\n"
+        "description": "Policy for compression callback execution.\nBestEffort: Create archive even if some callbacks fail (partial archive)\nAllRequired: Abort compression if any callback fails\n"
       },
       "CompressionType": {
         "type": "string",
         "enum": [
-          "lz4",
-          "lzma",
-          "none"
+          "Lz4",
+          "Lzma",
+          "None"
         ],
         "description": "Compression algorithm for bundles"
       },
@@ -33306,11 +33373,11 @@
         "type": "string",
         "description": "Operational status of a transit connection",
         "enum": [
-          "open",
-          "closed",
-          "dangerous",
-          "blocked",
-          "seasonal_closed"
+          "Open",
+          "Closed",
+          "Dangerous",
+          "Blocked",
+          "SeasonalClosed"
         ]
       },
       "ConnectivityMode": {
@@ -33399,10 +33466,10 @@
         "type": "string",
         "description": "Party's consent status",
         "enum": [
-          "pending",
-          "consented",
-          "declined",
-          "implicit"
+          "Pending",
+          "Consented",
+          "Declined",
+          "Implicit"
         ]
       },
       "ConsentToContractRequest": {
@@ -33435,9 +33502,9 @@
         "type": "string",
         "description": "Type of constraint to check",
         "enum": [
-          "exclusivity",
-          "non_compete",
-          "time_commitment"
+          "Exclusivity",
+          "NonCompete",
+          "TimeCommitment"
         ]
       },
       "ContactRequest": {
@@ -33475,13 +33542,13 @@
           "category": {
             "type": "string",
             "enum": [
-              "general",
-              "support",
-              "bug",
-              "feedback",
-              "business"
+              "General",
+              "Support",
+              "Bug",
+              "Feedback",
+              "Business"
             ],
-            "default": "general",
+            "default": "General",
             "description": "Category to route the contact request"
           }
         }
@@ -33511,12 +33578,12 @@
         "type": "string",
         "description": "Container capacity constraint type",
         "enum": [
-          "slot_only",
-          "weight_only",
-          "slot_and_weight",
-          "grid",
-          "volumetric",
-          "unlimited"
+          "SlotOnly",
+          "WeightOnly",
+          "SlotAndWeight",
+          "Grid",
+          "Volumetric",
+          "Unlimited"
         ]
       },
       "ContainerItem": {
@@ -33570,14 +33637,14 @@
         "type": "string",
         "description": "Type of entity that owns this container",
         "enum": [
-          "character",
-          "account",
-          "location",
-          "vehicle",
-          "guild",
-          "escrow",
-          "mail",
-          "other"
+          "Character",
+          "Account",
+          "Location",
+          "Vehicle",
+          "Guild",
+          "Escrow",
+          "Mail",
+          "Other"
         ]
       },
       "ContainerResponse": {
@@ -33810,9 +33877,9 @@
       "ContentFormat": {
         "type": "string",
         "enum": [
-          "markdown",
-          "html",
-          "none"
+          "Markdown",
+          "Html",
+          "None"
         ],
         "description": "Format of the content field in a document response"
       },
@@ -33875,9 +33942,9 @@
         "type": "string",
         "description": "Type of contract binding on an item instance.\n- none: No contract bound\n- session: Temporary binding for multi-step use (managed by Item service)\n- lifecycle: Persistent binding for status effects, licenses, etc. (managed by external orchestrators)\n",
         "enum": [
-          "none",
-          "session",
-          "lifecycle"
+          "None",
+          "Session",
+          "Lifecycle"
         ]
       },
       "ContractClauseAsset": {
@@ -34251,17 +34318,17 @@
         "type": "string",
         "description": "Current status of a contract instance",
         "enum": [
-          "draft",
-          "proposed",
-          "pending",
-          "active",
-          "fulfilled",
-          "expired",
-          "terminated",
-          "breached",
-          "suspended",
-          "disputed",
-          "declined"
+          "Draft",
+          "Proposed",
+          "Pending",
+          "Active",
+          "Fulfilled",
+          "Expired",
+          "Terminated",
+          "Breached",
+          "Suspended",
+          "Disputed",
+          "Declined"
         ]
       },
       "ContractSummary": {
@@ -34735,17 +34802,20 @@
           },
           "achievementId": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 64,
             "pattern": "^[a-z0-9_-]+$",
             "description": "Unique identifier for this achievement (lowercase, no spaces)"
           },
           "displayName": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 100,
             "description": "Human-readable name"
           },
           "description": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 500,
             "description": "Description of how to earn this achievement"
           },
@@ -34757,7 +34827,7 @@
           },
           "achievementType": {
             "$ref": "#/components/schemas/AchievementType",
-            "default": "standard",
+            "default": "Standard",
             "description": "Classification of the achievement (affects visibility and progress behavior)"
           },
           "entityTypes": {
@@ -34765,6 +34835,7 @@
             "items": {
               "$ref": "#/components/schemas/EntityType"
             },
+            "nullable": true,
             "description": "Which entity types can earn this achievement"
           },
           "progressTarget": {
@@ -34787,15 +34858,16 @@
             "items": {
               "$ref": "#/components/schemas/Platform"
             },
+            "nullable": true,
             "description": "Platforms where this achievement exists"
           },
-          "platformIds": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
+          "platformMappings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformMapping"
             },
             "nullable": true,
-            "description": "Platform-specific achievement IDs (e.g., {\"steam\": \"ACH_001\"})"
+            "description": "Platform-specific achievement ID mappings"
           },
           "prerequisites": {
             "type": "array",
@@ -34804,6 +34876,43 @@
             },
             "nullable": true,
             "description": "Achievement IDs that must be unlocked first"
+          },
+          "scoreType": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true,
+            "description": "Score type code for matching analytics.score.updated events (progressive achievements)"
+          },
+          "milestoneType": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true,
+            "description": "Milestone type code for matching analytics.milestone.reached events"
+          },
+          "milestoneValue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Expected milestone value for matching analytics.milestone.reached events"
+          },
+          "milestoneName": {
+            "type": "string",
+            "maxLength": 200,
+            "nullable": true,
+            "description": "Expected milestone name for matching analytics.milestone.reached events"
+          },
+          "leaderboardId": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true,
+            "description": "Leaderboard ID for matching leaderboard.rank.changed events"
+          },
+          "rankThreshold": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "minimum": 1,
+            "description": "Rank threshold for leaderboard achievements (unlock when rank <= threshold)"
           },
           "isActive": {
             "type": "boolean",
@@ -34814,7 +34923,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Additional achievement-specific metadata"
+            "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -37537,21 +37646,21 @@
         "type": "string",
         "description": "How the currency handles decimal values (immutable after creation)",
         "enum": [
-          "integer",
-          "decimal_2",
-          "decimal_4",
-          "decimal_8",
-          "decimal_full",
-          "big_integer"
+          "Integer",
+          "Decimal2",
+          "Decimal4",
+          "Decimal8",
+          "DecimalFull",
+          "BigInteger"
         ]
       },
       "CurrencyScope": {
         "type": "string",
         "description": "Scope of currency availability across realms",
         "enum": [
-          "global",
-          "realm_specific",
-          "multi_realm"
+          "Global",
+          "RealmSpecific",
+          "MultiRealm"
         ]
       },
       "CurrencyTransactionRecord": {
@@ -38148,30 +38257,10 @@
         "type": "string",
         "description": "Lifecycle status of a deity entity",
         "enum": [
-          "active",
-          "dormant",
-          "archived"
+          "Active",
+          "Dormant",
+          "Archived"
         ]
-      },
-      "DeleteAchievementDefinitionRequest": {
-        "type": "object",
-        "description": "Request to delete an achievement",
-        "additionalProperties": false,
-        "required": [
-          "gameServiceId",
-          "achievementId"
-        ],
-        "properties": {
-          "gameServiceId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "ID of the game service"
-          },
-          "achievementId": {
-            "type": "string",
-            "description": "ID of the achievement to delete"
-          }
-        }
       },
       "DeleteActionMappingRequest": {
         "type": "object",
@@ -38678,19 +38767,19 @@
       "DeletionStatus": {
         "type": "string",
         "enum": [
-          "deleted",
-          "permanently_deleted"
+          "Deleted",
+          "PermanentlyDeleted"
         ],
         "description": "Result of a deletion operation:\n- deleted: Soft-deleted (within retention period, can be restored)\n- permanently_deleted: Permanently removed (unrecoverable)\n"
       },
       "DeltaAlgorithm": {
         "type": "string",
         "enum": [
-          "JSON_PATCH",
-          "BSDIFF",
-          "XDELTA"
+          "JsonPatch",
+          "Bsdiff",
+          "Xdelta"
         ],
-        "default": "JSON_PATCH",
+        "default": "JsonPatch",
         "description": "Algorithm used for delta computation.\nJSON_PATCH: RFC 6902, best for structured JSON data\nBSDIFF: Binary diff, good for general binary data\nXDELTA: RFC 3284 VCDIFF, efficient for large binary files\n"
       },
       "DepartJourneyRequest": {
@@ -38785,6 +38874,34 @@
               "$ref": "#/components/schemas/PartyToken"
             },
             "description": "Release tokens (issued when fully funded)"
+          }
+        }
+      },
+      "DeprecateAchievementDefinitionRequest": {
+        "type": "object",
+        "description": "Request to deprecate an achievement definition",
+        "additionalProperties": false,
+        "required": [
+          "gameServiceId",
+          "achievementId"
+        ],
+        "properties": {
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the game service"
+          },
+          "achievementId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "ID of the achievement to deprecate"
+          },
+          "deprecationReason": {
+            "type": "string",
+            "maxLength": 500,
+            "nullable": true,
+            "description": "Audit reason for deprecation, explaining why this achievement is being phased out"
           }
         }
       },
@@ -38980,10 +39097,10 @@
         "type": "string",
         "description": "Reason for destroying an item instance",
         "enum": [
-          "consumed",
-          "destroyed",
-          "expired",
-          "admin"
+          "Consumed",
+          "Destroyed",
+          "Expired",
+          "Admin"
         ]
       },
       "DeviceInfo": {
@@ -39020,10 +39137,10 @@
       "DeviceType": {
         "type": "string",
         "enum": [
-          "desktop",
-          "mobile",
-          "tablet",
-          "console"
+          "Desktop",
+          "Mobile",
+          "Tablet",
+          "Console"
         ],
         "description": "Category of client device used for authentication or session tracking"
       },
@@ -39404,16 +39521,16 @@
       "DocumentCategory": {
         "type": "string",
         "enum": [
-          "getting-started",
-          "api-reference",
-          "architecture",
-          "deployment",
-          "troubleshooting",
-          "tutorials",
-          "game-systems",
-          "world-lore",
-          "npc-ai",
-          "other"
+          "GettingStarted",
+          "ApiReference",
+          "Architecture",
+          "Deployment",
+          "Troubleshooting",
+          "Tutorials",
+          "GameSystems",
+          "WorldLore",
+          "NpcAi",
+          "Other"
         ],
         "description": "Fixed categories for type-safe filtering"
       },
@@ -39721,24 +39838,24 @@
         "type": "string",
         "description": "Whether an effect comes from a status item or a seed capability.\n- item_based: temporary effect stored as an item in a status container\n- seed_derived: passive capability computed from seed growth state\n",
         "enum": [
-          "item_based",
-          "seed_derived"
+          "ItemBased",
+          "SeedDerived"
         ]
       },
       "EmotionalImpact": {
         "type": "string",
         "description": "How the encounter emotionally affected the character",
         "enum": [
-          "GRATITUDE",
-          "ANGER",
-          "FEAR",
-          "RESPECT",
-          "CONTEMPT",
-          "AFFECTION",
-          "RIVALRY",
-          "INDIFFERENCE",
-          "GUILT",
-          "PRIDE"
+          "Gratitude",
+          "Anger",
+          "Fear",
+          "Respect",
+          "Contempt",
+          "Affection",
+          "Rivalry",
+          "Indifference",
+          "Guilt",
+          "Pride"
         ]
       },
       "EmotionalStateInput": {
@@ -39955,11 +40072,11 @@
         "type": "string",
         "description": "Overall outcome of an encounter",
         "enum": [
-          "POSITIVE",
-          "NEGATIVE",
-          "NEUTRAL",
-          "MEMORABLE",
-          "TRANSFORMATIVE"
+          "Positive",
+          "Negative",
+          "Neutral",
+          "Memorable",
+          "Transformative"
         ]
       },
       "EncounterPerspectiveModel": {
@@ -40193,10 +40310,10 @@
         "type": "string",
         "description": "How contract breaches are handled",
         "enum": [
-          "advisory",
-          "event_only",
-          "consequence_based",
-          "community"
+          "Advisory",
+          "EventOnly",
+          "ConsequenceBased",
+          "Community"
         ]
       },
       "EnrichedCharacterResponse": {
@@ -40456,24 +40573,24 @@
         "type": "string",
         "description": "Universal entity type identifier for first-class Bannou entities.\nUsed for polymorphic entity references (ownerType, entityType, partyType).\n\nNOT for game-configurable content type codes (use opaque strings) or\nservice-specific roles that include non-entity values (use service-specific enums).\nSee IMPLEMENTATION TENETS polymorphic type field classification for guidance.\n",
         "enum": [
-          "system",
-          "account",
-          "character",
-          "actor",
-          "guild",
-          "organization",
-          "government",
-          "faction",
-          "location",
-          "realm",
-          "item",
-          "monster",
-          "relationship",
-          "session",
-          "deity",
-          "dungeon",
-          "custom",
-          "other"
+          "System",
+          "Account",
+          "Character",
+          "Actor",
+          "Guild",
+          "Organization",
+          "Government",
+          "Faction",
+          "Location",
+          "Realm",
+          "Item",
+          "Monster",
+          "Relationship",
+          "Session",
+          "Deity",
+          "Dungeon",
+          "Custom",
+          "Other"
         ]
       },
       "EntryMetadata": {
@@ -41170,10 +41287,10 @@
         "type": "string",
         "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
         "enum": [
-          "release",
-          "refund",
-          "dispute",
-          "reaffirm"
+          "Release",
+          "Refund",
+          "Dispute",
+          "Reaffirm"
         ]
       },
       "EscrowDeposit": {
@@ -41384,11 +41501,11 @@
         "type": "string",
         "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
         "enum": [
-          "depositor",
-          "recipient",
-          "depositor_recipient",
-          "arbiter",
-          "observer"
+          "Depositor",
+          "Recipient",
+          "DepositorRecipient",
+          "Arbiter",
+          "Observer"
         ]
       },
       "EscrowRefundRequest": {
@@ -41519,64 +41636,64 @@
         "type": "string",
         "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
         "enum": [
-          "released",
-          "refunded",
-          "split",
-          "expired_refunded",
-          "cancelled_refunded",
-          "violation_refunded"
+          "Released",
+          "Refunded",
+          "Split",
+          "ExpiredRefunded",
+          "CancelledRefunded",
+          "ViolationRefunded"
         ]
       },
       "EscrowStatus": {
         "type": "string",
         "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
         "enum": [
-          "pending_deposits",
-          "partially_funded",
-          "funded",
-          "pending_consent",
-          "pending_condition",
-          "finalizing",
-          "releasing",
-          "released",
-          "refunding",
-          "refunded",
-          "disputed",
-          "expired",
-          "cancelled",
-          "validation_failed"
+          "PendingDeposits",
+          "PartiallyFunded",
+          "Funded",
+          "PendingConsent",
+          "PendingCondition",
+          "Finalizing",
+          "Releasing",
+          "Released",
+          "Refunding",
+          "Refunded",
+          "Disputed",
+          "Expired",
+          "Cancelled",
+          "ValidationFailed"
         ]
       },
       "EscrowTrustMode": {
         "type": "string",
         "description": "Trust model for the escrow agreement.\n- full_consent: All parties must explicitly consent using tokens\n- initiator_trusted: The service that created the escrow can complete unilaterally\n- single_party_trusted: A designated party can complete unilaterally\n",
         "enum": [
-          "full_consent",
-          "initiator_trusted",
-          "single_party_trusted"
+          "FullConsent",
+          "InitiatorTrusted",
+          "SinglePartyTrusted"
         ]
       },
       "EscrowType": {
         "type": "string",
         "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
         "enum": [
-          "two_party",
-          "multi_party",
-          "conditional",
-          "auction"
+          "TwoParty",
+          "MultiParty",
+          "Conditional",
+          "Auction"
         ]
       },
       "EventCategory": {
         "type": "string",
         "description": "Categories of historical events that characters can participate in",
         "enum": [
-          "WAR",
-          "NATURAL_DISASTER",
-          "POLITICAL",
-          "ECONOMIC",
-          "RELIGIOUS",
-          "CULTURAL",
-          "PERSONAL"
+          "War",
+          "NaturalDisaster",
+          "Political",
+          "Economic",
+          "Religious",
+          "Cultural",
+          "Personal"
         ]
       },
       "ExecuteCleanupRequest": {
@@ -42105,9 +42222,9 @@
         "type": "string",
         "description": "How currency expiration is determined",
         "enum": [
-          "fixed_date",
-          "duration_from_earn",
-          "end_of_season"
+          "FixedDate",
+          "DurationFromEarn",
+          "EndOfSeason"
         ]
       },
       "ExportSavesRequest": {
@@ -42744,11 +42861,11 @@
         "type": "string",
         "description": "Type of game action",
         "enum": [
-          "move",
-          "interact",
-          "attack",
-          "cast_spell",
-          "use_item"
+          "Move",
+          "Interact",
+          "Attack",
+          "CastSpell",
+          "UseItem"
         ]
       },
       "GamePlayer": {
@@ -47142,10 +47259,10 @@
         "type": "string",
         "description": "How a successful status grant was resolved.\n- granted: new status applied (no prior instance)\n- stacked: stack count increased on existing instance\n- refreshed: timer reset on existing instance\n- replaced: existing instance removed and new one created\n",
         "enum": [
-          "granted",
-          "stacked",
-          "refreshed",
-          "replaced"
+          "Granted",
+          "Stacked",
+          "Refreshed",
+          "Replaced"
         ]
       },
       "GrantStatusRequest": {
@@ -47274,11 +47391,11 @@
         "type": "string",
         "description": "Preferred role when fighting in groups. Affects positioning,\ntarget priority, and coordination behavior.\n",
         "enum": [
-          "FRONTLINE",
-          "SUPPORT",
-          "FLANKER",
-          "LEADER",
-          "SOLO"
+          "Frontline",
+          "Support",
+          "Flanker",
+          "Leader",
+          "Solo"
         ]
       },
       "GrowthEntry": {
@@ -47997,21 +48114,21 @@
         "type": "string",
         "description": "Current status of an authorization hold",
         "enum": [
-          "active",
-          "captured",
-          "released",
-          "expired"
+          "Active",
+          "Captured",
+          "Released",
+          "Expired"
         ]
       },
       "HttpMethodType": {
         "type": "string",
         "description": "HTTP method for endpoint invocation",
         "enum": [
-          "GET",
-          "POST",
-          "PUT",
-          "DELETE",
-          "PATCH"
+          "Get",
+          "Post",
+          "Put",
+          "Delete",
+          "Patch"
         ]
       },
       "InitializeRealmClockRequest": {
@@ -48296,16 +48413,16 @@
         "type": "string",
         "description": "Item classification category",
         "enum": [
-          "weapon",
-          "armor",
-          "accessory",
-          "consumable",
-          "material",
-          "container",
-          "quest",
-          "currency_like",
-          "misc",
-          "custom"
+          "Weapon",
+          "Armor",
+          "Accessory",
+          "Consumable",
+          "Material",
+          "Container",
+          "Quest",
+          "CurrencyLike",
+          "Misc",
+          "Custom"
         ]
       },
       "ItemInstanceResponse": {
@@ -48437,34 +48554,34 @@
         "type": "string",
         "description": "How currency is linked to inventory items",
         "enum": [
-          "none",
-          "visual_only",
-          "reference_only"
+          "None",
+          "VisualOnly",
+          "ReferenceOnly"
         ]
       },
       "ItemOriginType": {
         "type": "string",
         "description": "How an item instance was created",
         "enum": [
-          "loot",
-          "quest",
-          "craft",
-          "trade",
-          "purchase",
-          "spawn",
-          "other"
+          "Loot",
+          "Quest",
+          "Craft",
+          "Trade",
+          "Purchase",
+          "Spawn",
+          "Other"
         ]
       },
       "ItemRarity": {
         "type": "string",
         "description": "Item rarity tier",
         "enum": [
-          "common",
-          "uncommon",
-          "rare",
-          "epic",
-          "legendary",
-          "custom"
+          "Common",
+          "Uncommon",
+          "Rare",
+          "Epic",
+          "Legendary",
+          "Custom"
         ]
       },
       "ItemRequirement": {
@@ -48493,9 +48610,9 @@
         "type": "string",
         "description": "Realm availability scope (consistent with CurrencyScope)",
         "enum": [
-          "global",
-          "realm_specific",
-          "multi_realm"
+          "Global",
+          "RealmSpecific",
+          "MultiRealm"
         ]
       },
       "ItemTemplateResponse": {
@@ -48745,9 +48862,9 @@
         "type": "string",
         "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\n- destroy_always: Item consumed regardless of success/failure\n",
         "enum": [
-          "disabled",
-          "destroy_on_success",
-          "destroy_always"
+          "Disabled",
+          "DestroyOnSuccess",
+          "DestroyAlways"
         ]
       },
       "JoinMatchmakingRequest": {
@@ -48920,10 +49037,10 @@
         "type": "string",
         "description": "Lifecycle status of a journey leg",
         "enum": [
-          "pending",
-          "in_progress",
-          "completed",
-          "skipped"
+          "Pending",
+          "InProgress",
+          "Completed",
+          "Skipped"
         ]
       },
       "JourneyResponse": {
@@ -48948,12 +49065,12 @@
         "type": "string",
         "description": "Lifecycle status of a transit journey",
         "enum": [
-          "preparing",
-          "in_transit",
-          "at_waypoint",
-          "arrived",
-          "interrupted",
-          "abandoned"
+          "Preparing",
+          "InTransit",
+          "AtWaypoint",
+          "Arrived",
+          "Interrupted",
+          "Abandoned"
         ]
       },
       "JsonPatchOperation": {
@@ -49085,11 +49202,11 @@
           "storageMode": {
             "type": "string",
             "enum": [
-              "durable",
-              "cached",
-              "ephemeral"
+              "Durable",
+              "Cached",
+              "Ephemeral"
             ],
-            "default": "cached",
+            "default": "Cached",
             "description": "How this layer's data should be stored"
           },
           "ttlSeconds": {
@@ -49459,9 +49576,9 @@
         "type": "string",
         "description": "Unlock status of a license node on a board.\n- locked: Not adjacent to any unlocked node (cannot be unlocked)\n- unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)\n- unlocked: Already unlocked (item placed at this position)\n",
         "enum": [
-          "locked",
-          "unlockable",
-          "unlocked"
+          "Locked",
+          "Unlockable",
+          "Unlocked"
         ]
       },
       "ListAchievementDefinitionsRequest": {
@@ -49496,6 +49613,11 @@
             "type": "boolean",
             "default": false,
             "description": "Include hidden achievements in response"
+          },
+          "includeDeprecated": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to include deprecated definitions in results"
           }
         }
       },
@@ -52712,11 +52834,11 @@
       "ListSortField": {
         "type": "string",
         "enum": [
-          "created_at",
-          "updated_at",
-          "title"
+          "CreatedAt",
+          "UpdatedAt",
+          "Title"
         ],
-        "default": "updated_at",
+        "default": "UpdatedAt",
         "description": "Fields available for sorting document lists"
       },
       "ListSpeciesByRealmRequest": {
@@ -53143,6 +53265,11 @@
             "$ref": "#/components/schemas/Platform",
             "nullable": true,
             "description": "Filter by platform"
+          },
+          "includeDeprecated": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to include achievements earned from deprecated definitions"
           }
         }
       },
@@ -53566,16 +53693,16 @@
         "type": "string",
         "description": "Type classification for locations",
         "enum": [
-          "CONTINENT",
-          "REGION",
-          "CITY",
-          "DISTRICT",
-          "BUILDING",
-          "ROOM",
-          "LANDMARK",
-          "WILDERNESS",
-          "DUNGEON",
-          "OTHER"
+          "Continent",
+          "Region",
+          "City",
+          "District",
+          "Building",
+          "Room",
+          "Landmark",
+          "Wilderness",
+          "Dungeon",
+          "Other"
         ]
       },
       "LockContractRequest": {
@@ -53807,18 +53934,18 @@
         "type": "string",
         "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
         "enum": [
-          "terrain",
-          "static_geometry",
-          "navigation",
-          "resources",
-          "spawn_points",
-          "points_of_interest",
-          "dynamic_objects",
-          "hazards",
-          "weather_effects",
-          "ownership",
-          "combat_effects",
-          "visual_effects"
+          "Terrain",
+          "StaticGeometry",
+          "Navigation",
+          "Resources",
+          "SpawnPoints",
+          "PointsOfInterest",
+          "DynamicObjects",
+          "Hazards",
+          "WeatherEffects",
+          "Ownership",
+          "CombatEffects",
+          "VisualEffects"
         ]
       },
       "MapObject": {
@@ -53888,14 +54015,14 @@
         "type": "string",
         "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
         "enum": [
-          "generic",
-          "spawn_point",
-          "npc_spawn",
-          "waypoint",
-          "camera_point",
-          "light_point",
-          "audio_point",
-          "trigger_point"
+          "Generic",
+          "SpawnPoint",
+          "NpcSpawn",
+          "Waypoint",
+          "CameraPoint",
+          "LightPoint",
+          "AudioPoint",
+          "TriggerPoint"
         ]
       },
       "MatchesHierarchyRequest": {
@@ -54163,16 +54290,16 @@
       "MetabundleErrorCode": {
         "type": "string",
         "enum": [
-          "SOURCE_BUNDLE_NOT_FOUND",
-          "SOURCE_BUNDLE_NOT_READY",
-          "STANDALONE_ASSET_NOT_FOUND",
-          "STANDALONE_ASSET_NOT_READY",
-          "REALM_MISMATCH",
-          "ASSET_CONFLICT",
-          "STORAGE_ERROR",
-          "TIMEOUT",
-          "CANCELLED",
-          "INTERNAL_ERROR"
+          "SourceBundleNotFound",
+          "SourceBundleNotReady",
+          "StandaloneAssetNotFound",
+          "StandaloneAssetNotReady",
+          "RealmMismatch",
+          "AssetConflict",
+          "StorageError",
+          "Timeout",
+          "Cancelled",
+          "InternalError"
         ],
         "description": "Error codes for metabundle creation failures"
       },
@@ -54180,8 +54307,8 @@
         "type": "string",
         "description": "Type of metadata to update",
         "enum": [
-          "instance_data",
-          "runtime_state"
+          "InstanceData",
+          "RuntimeState"
         ]
       },
       "MfaDisableRequest": {
@@ -54551,9 +54678,9 @@
         "type": "string",
         "description": "Behavior when optional milestone deadline passes",
         "enum": [
-          "skip",
-          "warn",
-          "breach"
+          "Skip",
+          "Warn",
+          "Breach"
         ]
       },
       "MilestoneDefinition": {
@@ -54726,11 +54853,11 @@
         "type": "string",
         "description": "Current status of a milestone",
         "enum": [
-          "pending",
-          "active",
-          "completed",
-          "failed",
-          "skipped"
+          "Pending",
+          "Active",
+          "Completed",
+          "Failed",
+          "Skipped"
         ]
       },
       "ModeAvailabilityResult": {
@@ -55214,10 +55341,10 @@
           "target": {
             "type": "string",
             "enum": [
-              "_self",
-              "_blank"
+              "Self",
+              "Blank"
             ],
-            "default": "_self",
+            "default": "Self",
             "description": "Link target attribute for opening behavior"
           },
           "children": {
@@ -55352,24 +55479,24 @@
         "type": "string",
         "description": "Structural node type. Indicates what kind of data the node contains,\nnot how it will be used at runtime. Consumers interpret nodes according\nto their own needs via tags and annotations.\n",
         "enum": [
-          "group",
-          "mesh",
-          "marker",
-          "volume",
-          "emitter",
-          "reference",
-          "custom"
+          "Group",
+          "Mesh",
+          "Marker",
+          "Volume",
+          "Emitter",
+          "Reference",
+          "Custom"
         ]
       },
       "NonAuthorityHandlingMode": {
         "type": "string",
         "description": "How to handle publish attempts from non-authority sources",
         "enum": [
-          "reject_and_alert",
-          "accept_and_alert",
-          "reject_silent"
+          "RejectAndAlert",
+          "AcceptAndAlert",
+          "RejectSilent"
         ],
-        "default": "reject_and_alert"
+        "default": "RejectAndAlert"
       },
       "NormDefinitionResponse": {
         "type": "object",
@@ -55668,26 +55795,26 @@
       "ObjectiveRevealBehavior": {
         "type": "string",
         "enum": [
-          "ALWAYS",
-          "ON_PROGRESS",
-          "ON_COMPLETE",
-          "NEVER"
+          "Always",
+          "OnProgress",
+          "OnComplete",
+          "Never"
         ],
         "description": "When a hidden objective is revealed in the quest log"
       },
       "ObjectiveType": {
         "type": "string",
         "enum": [
-          "KILL",
-          "COLLECT",
-          "DELIVER",
-          "TRAVEL",
-          "DISCOVER",
-          "TALK",
-          "CRAFT",
-          "ESCORT",
-          "DEFEND",
-          "CUSTOM"
+          "Kill",
+          "Collect",
+          "Deliver",
+          "Travel",
+          "Discover",
+          "Talk",
+          "Craft",
+          "Escort",
+          "Defend",
+          "Custom"
         ],
         "description": "Type of objective determining progress tracking logic"
       },
@@ -55735,11 +55862,11 @@
       "OnDeleteAction": {
         "type": "string",
         "enum": [
-          "CASCADE",
-          "RESTRICT",
-          "DETACH"
+          "Cascade",
+          "Restrict",
+          "Detach"
         ],
-        "description": "Action to take when the referenced resource is deleted.\nCASCADE: Delete dependent entities when resource is deleted\nRESTRICT: Block resource deletion if references exist\nDETACH: Set reference to null when resource is deleted\n"
+        "description": "Action to take when the referenced resource is deleted.\nCascade: Delete dependent entities when resource is deleted\nRestrict: Block resource deletion if references exist\nDetach: Set reference to null when resource is deleted\n"
       },
       "PageContent": {
         "description": "Full content and metadata for a CMS-managed page",
@@ -55770,9 +55897,9 @@
           "contentType": {
             "type": "string",
             "enum": [
-              "html",
-              "markdown",
-              "blazor"
+              "Html",
+              "Markdown",
+              "Blazor"
             ],
             "description": "Format of the page content"
           },
@@ -55997,14 +56124,14 @@
         "type": "string",
         "description": "How the character participated in the historical event",
         "enum": [
-          "LEADER",
-          "COMBATANT",
-          "VICTIM",
-          "WITNESS",
-          "BENEFICIARY",
-          "CONSPIRATOR",
-          "HERO",
-          "SURVIVOR"
+          "Leader",
+          "Combatant",
+          "Victim",
+          "Witness",
+          "Beneficiary",
+          "Conspirator",
+          "Hero",
+          "Survivor"
         ]
       },
       "PartnerSummary": {
@@ -56177,9 +56304,9 @@
         "type": "string",
         "description": "Method for aggregating party member skills",
         "enum": [
-          "highest",
-          "average",
-          "weighted"
+          "Highest",
+          "Average",
+          "Weighted"
         ]
       },
       "PartyToken": {
@@ -56274,9 +56401,9 @@
         "type": "string",
         "description": "When payments occur",
         "enum": [
-          "one_time",
-          "recurring",
-          "milestone_based"
+          "OneTime",
+          "Recurring",
+          "MilestoneBased"
         ]
       },
       "PendingConsentSummary": {
@@ -56367,15 +56494,15 @@
         "type": "string",
         "description": "Type of source generating a perception event",
         "enum": [
-          "character",
-          "npc",
-          "object",
-          "environment",
-          "coordinator",
-          "scheduled",
-          "message",
-          "service",
-          "system"
+          "Character",
+          "Npc",
+          "Object",
+          "Environment",
+          "Coordinator",
+          "Scheduled",
+          "Message",
+          "Service",
+          "System"
         ]
       },
       "PersistenceMode": {
@@ -56774,19 +56901,40 @@
         "type": "string",
         "description": "External platform for achievement sync",
         "enum": [
-          "steam",
-          "xbox",
-          "playstation",
-          "internal"
+          "Steam",
+          "Xbox",
+          "PlayStation",
+          "Internal"
         ]
+      },
+      "PlatformMapping": {
+        "type": "object",
+        "description": "Maps an achievement to a platform-specific ID",
+        "additionalProperties": false,
+        "required": [
+          "platform",
+          "platformAchievementId"
+        ],
+        "properties": {
+          "platform": {
+            "$ref": "#/components/schemas/Platform",
+            "description": "External platform"
+          },
+          "platformAchievementId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Platform-specific achievement identifier"
+          }
+        }
       },
       "PlayerRole": {
         "type": "string",
         "description": "Role of the player in the game session",
         "enum": [
-          "player",
-          "spectator",
-          "moderator"
+          "Player",
+          "Spectator",
+          "Moderator"
         ]
       },
       "PoiInteractionResponse": {
@@ -57015,9 +57163,9 @@
         "type": "string",
         "description": "How to execute a prebound API call",
         "enum": [
-          "sync",
-          "async",
-          "fire_and_forget"
+          "Sync",
+          "Async",
+          "FireAndForget"
         ]
       },
       "PredictedMutation": {
@@ -57043,10 +57191,10 @@
         "type": "string",
         "description": "Preferred engagement distance. Influences positioning and\nability selection in combat.\n",
         "enum": [
-          "MELEE",
-          "CLOSE",
-          "MEDIUM",
-          "RANGED"
+          "Melee",
+          "Close",
+          "Medium",
+          "Ranged"
         ]
       },
       "PrerequisiteDefinition": {
@@ -57103,21 +57251,21 @@
       "PrerequisiteType": {
         "type": "string",
         "enum": [
-          "QUEST_COMPLETED",
-          "CHARACTER_LEVEL",
-          "REPUTATION",
-          "ITEM_OWNED",
-          "CURRENCY_AMOUNT"
+          "QuestCompleted",
+          "CharacterLevel",
+          "Reputation",
+          "ItemOwned",
+          "CurrencyAmount"
         ],
         "description": "Type of prerequisite check"
       },
       "ProcessingStatus": {
         "type": "string",
         "enum": [
-          "pending",
-          "processing",
-          "complete",
-          "failed"
+          "Pending",
+          "Processing",
+          "Complete",
+          "Failed"
         ],
         "description": "Asset processing pipeline status"
       },
@@ -57215,10 +57363,10 @@
       "Provider": {
         "type": "string",
         "enum": [
-          "google",
-          "discord",
-          "twitch",
-          "steam"
+          "Google",
+          "Discord",
+          "Twitch",
+          "Steam"
         ],
         "description": "Authentication provider type"
       },
@@ -57276,9 +57424,9 @@
         "type": "string",
         "description": "How quantities are tracked for this item type",
         "enum": [
-          "discrete",
-          "continuous",
-          "unique"
+          "Discrete",
+          "Continuous",
+          "Unique"
         ]
       },
       "Quaternion": {
@@ -58732,13 +58880,13 @@
       "QuestCategory": {
         "type": "string",
         "enum": [
-          "MAIN",
-          "SIDE",
-          "BOUNTY",
-          "DAILY",
-          "WEEKLY",
-          "EVENT",
-          "TUTORIAL"
+          "Main",
+          "Side",
+          "Bounty",
+          "Daily",
+          "Weekly",
+          "Event",
+          "Tutorial"
         ],
         "description": "Category of quest for organization"
       },
@@ -58877,12 +59025,12 @@
       "QuestDifficulty": {
         "type": "string",
         "enum": [
-          "TRIVIAL",
-          "EASY",
-          "NORMAL",
-          "HARD",
-          "HEROIC",
-          "LEGENDARY"
+          "Trivial",
+          "Easy",
+          "Normal",
+          "Hard",
+          "Heroic",
+          "Legendary"
         ],
         "description": "Difficulty rating of the quest"
       },
@@ -59060,11 +59208,11 @@
       "QuestStatus": {
         "type": "string",
         "enum": [
-          "ACTIVE",
-          "COMPLETED",
-          "FAILED",
-          "ABANDONED",
-          "EXPIRED"
+          "Active",
+          "Completed",
+          "Failed",
+          "Abandoned",
+          "Expired"
         ],
         "description": "Current status of a quest instance"
       },
@@ -60044,9 +60192,9 @@
         "type": "string",
         "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
         "enum": [
-          "immediate",
-          "service_only",
-          "party_required"
+          "Immediate",
+          "ServiceOnly",
+          "PartyRequired"
         ]
       },
       "RefundRequest": {
@@ -60625,11 +60773,11 @@
       "RelatedDepth": {
         "type": "string",
         "enum": [
-          "none",
-          "direct",
-          "extended"
+          "None",
+          "Direct",
+          "Extended"
         ],
-        "default": "direct",
+        "default": "Direct",
         "description": "How deep to traverse related document links:\n- none: No related documents included\n- direct: Only directly linked documents (depth 1)\n- extended: Related documents + their related documents (depth 2)\n"
       },
       "RelationshipListResponse": {
@@ -60992,10 +61140,10 @@
         "type": "string",
         "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\n- service_and_party: Wait for both service completion AND party confirmation.\n",
         "enum": [
-          "immediate",
-          "service_only",
-          "party_required",
-          "service_and_party"
+          "Immediate",
+          "ServiceOnly",
+          "PartyRequired",
+          "ServiceAndParty"
         ]
       },
       "ReleaseRequest": {
@@ -62237,10 +62385,10 @@
       "RewardType": {
         "type": "string",
         "enum": [
-          "CURRENCY",
-          "ITEM",
-          "EXPERIENCE",
-          "REPUTATION"
+          "Currency",
+          "Item",
+          "Experience",
+          "Reputation"
         ],
         "description": "Type of reward granted on quest completion"
       },
@@ -62353,9 +62501,9 @@
         "type": "string",
         "description": "Sort criteria for route calculation results",
         "enum": [
-          "fastest",
-          "safest",
-          "shortest"
+          "Fastest",
+          "Safest",
+          "Shortest"
         ]
       },
       "SEOMetadata": {
@@ -62396,11 +62544,11 @@
       "SaveCategory": {
         "type": "string",
         "enum": [
-          "QUICK_SAVE",
-          "AUTO_SAVE",
-          "MANUAL_SAVE",
-          "CHECKPOINT",
-          "STATE_SNAPSHOT"
+          "QuickSave",
+          "AutoSave",
+          "ManualSave",
+          "Checkpoint",
+          "StateSnapshot"
         ],
         "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
       },
@@ -63724,19 +63872,19 @@
         "type": "string",
         "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
         "enum": [
-          "unknown",
-          "region",
-          "city",
-          "district",
-          "lot",
-          "building",
-          "room",
-          "dungeon",
-          "arena",
-          "vehicle",
-          "prefab",
-          "cutscene",
-          "other"
+          "Unknown",
+          "Region",
+          "City",
+          "District",
+          "Lot",
+          "Building",
+          "Room",
+          "Dungeon",
+          "Arena",
+          "Vehicle",
+          "Prefab",
+          "Cutscene",
+          "Other"
         ]
       },
       "SchemaResponse": {
@@ -63859,10 +64007,10 @@
       "SearchField": {
         "type": "string",
         "enum": [
-          "title",
-          "content",
-          "tags",
-          "summary"
+          "Title",
+          "Content",
+          "Tags",
+          "Summary"
         ],
         "description": "Fields that can be searched within documents"
       },
@@ -63870,10 +64018,10 @@
         "type": "string",
         "description": "Where the search match was found",
         "enum": [
-          "name",
-          "description",
-          "tag",
-          "node_name"
+          "Name",
+          "Description",
+          "Tag",
+          "NodeName"
         ]
       },
       "SearchMessagesRequest": {
@@ -64010,11 +64158,11 @@
       "SearchSortBy": {
         "type": "string",
         "enum": [
-          "relevance",
-          "recency",
-          "alphabetical"
+          "Relevance",
+          "Recency",
+          "Alphabetical"
         ],
-        "default": "relevance",
+        "default": "Relevance",
         "description": "How to sort search results"
       },
       "SeasonDefinition": {
@@ -64945,18 +65093,18 @@
         "type": "string",
         "description": "Current status of the game session",
         "enum": [
-          "waiting",
-          "active",
-          "full",
-          "finished"
+          "Waiting",
+          "Active",
+          "Full",
+          "Finished"
         ]
       },
       "SessionType": {
         "type": "string",
         "description": "Type of game session - determines join behavior",
         "enum": [
-          "lobby",
-          "matchmade"
+          "Lobby",
+          "Matchmade"
         ]
       },
       "SessionsResponse": {
@@ -65143,10 +65291,10 @@
         "type": "string",
         "description": "Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is managed by the Seasonal Connection Worker)",
         "enum": [
-          "open",
-          "closed",
-          "dangerous",
-          "blocked"
+          "Open",
+          "Closed",
+          "Dangerous",
+          "Blocked"
         ]
       },
       "SharedGardenStateResponse": {
@@ -65352,8 +65500,8 @@
       "SortOrder": {
         "type": "string",
         "enum": [
-          "asc",
-          "desc"
+          "Asc",
+          "Desc"
         ],
         "description": "Sort direction for query results"
       },
@@ -65361,10 +65509,10 @@
         "type": "string",
         "description": "When item becomes bound to a character",
         "enum": [
-          "none",
-          "on_pickup",
-          "on_equip",
-          "on_use"
+          "None",
+          "OnPickup",
+          "OnEquip",
+          "OnUse"
         ]
       },
       "SourceBundleReference": {
@@ -65777,11 +65925,11 @@
         "type": "string",
         "description": "How multiple applications of the same status template interact.\n- refresh_duration: resets timer, preserves or increments stack count\n- independent: each application is a separate item with own timer\n- increase_intensity: stacks increase effect magnitude, shared timer reset\n- replace: new application replaces existing entirely\n- ignore: cannot apply if already present\n",
         "enum": [
-          "refresh_duration",
-          "independent",
-          "increase_intensity",
-          "replace",
-          "ignore"
+          "RefreshDuration",
+          "Independent",
+          "IncreaseIntensity",
+          "Replace",
+          "Ignore"
         ]
       },
       "StartEncounterRequest": {
@@ -65921,12 +66069,12 @@
         "type": "string",
         "description": "Classification of status effects for filtering and cleanse targeting.\n- buff: positive temporary effect (strength boost, speed increase)\n- debuff: negative temporary effect (poison, slow, weakness)\n- death: death penalty or incapacitation state\n- subscription: account-level subscription benefit\n- event: time-limited event effect (festival bonus, seasonal)\n- passive: seed-derived passive capability (used in unified queries)\n",
         "enum": [
-          "buff",
-          "debuff",
-          "death",
-          "subscription",
-          "event",
-          "passive"
+          "Buff",
+          "Debuff",
+          "Death",
+          "Subscription",
+          "Event",
+          "Passive"
         ]
       },
       "StatusEffectSummary": {
@@ -66063,11 +66211,11 @@
         "type": "string",
         "description": "Why a status was removed from an entity.\n- expired: TTL or contract duration elapsed\n- cleansed: removed by category cleanse mechanic\n- cancelled: explicitly cancelled by service or admin\n- source_removed: source entity was deleted (cascading removal)\n- admin: removed by administrative action\n",
         "enum": [
-          "expired",
-          "cleansed",
-          "cancelled",
-          "source_removed",
-          "admin"
+          "Expired",
+          "Cleansed",
+          "Cancelled",
+          "SourceRemoved",
+          "Admin"
         ]
       },
       "StatusResponse": {
@@ -66083,9 +66231,9 @@
           "status": {
             "type": "string",
             "enum": [
-              "healthy",
-              "degraded",
-              "maintenance"
+              "Healthy",
+              "Degraded",
+              "Maintenance"
             ],
             "description": "Current health status of the website service"
           },
@@ -66349,11 +66497,11 @@
       "StorylineGoal": {
         "type": "string",
         "enum": [
-          "revenge",
-          "resurrection",
-          "legacy",
-          "mystery",
-          "peace"
+          "Revenge",
+          "Resurrection",
+          "Legacy",
+          "Mystery",
+          "Peace"
         ],
         "description": "High-level story goal that drives arc selection.\nrevenge: Character seeks vengeance for past wrongs\nresurrection: Restoring something/someone lost\nlegacy: Creating or continuing a lasting impact\nmystery: Uncovering hidden truths\npeace: Resolving conflicts and finding harmony\n"
       },
@@ -66555,9 +66703,9 @@
           "severity": {
             "type": "string",
             "enum": [
-              "low",
-              "medium",
-              "high"
+              "Low",
+              "Medium",
+              "High"
             ],
             "description": "Risk severity"
           },
@@ -66834,10 +66982,10 @@
       "SuggestionSource": {
         "type": "string",
         "enum": [
-          "document_id",
-          "slug",
-          "topic",
-          "category"
+          "DocumentId",
+          "Slug",
+          "Topic",
+          "Category"
         ],
         "description": "Source type for generating related topic suggestions"
       },
@@ -66960,27 +67108,27 @@
         "type": "string",
         "description": "Status of platform synchronization",
         "enum": [
-          "pending",
-          "synced",
-          "failed",
-          "not_linked"
+          "Pending",
+          "Synced",
+          "Failed",
+          "NotLinked"
         ]
       },
       "SyncTrigger": {
         "type": "string",
         "enum": [
-          "manual",
-          "scheduled"
+          "Manual",
+          "Scheduled"
         ],
         "description": "What triggered the sync operation"
       },
       "TagMatchMode": {
         "type": "string",
         "enum": [
-          "all",
-          "any"
+          "All",
+          "Any"
         ],
-        "default": "all",
+        "default": "All",
         "description": "Whether documents must match all specified tags or any tag"
       },
       "TemplateStatus": {
@@ -67090,10 +67238,10 @@
         "type": "string",
         "description": "How the contract can be terminated",
         "enum": [
-          "mutual_consent",
-          "unilateral_with_notice",
-          "unilateral_immediate",
-          "non_terminable"
+          "MutualConsent",
+          "UnilateralWithNotice",
+          "UnilateralImmediate",
+          "NonTerminable"
         ]
       },
       "TerrainSpeedModifier": {
@@ -67325,19 +67473,19 @@
         "type": "string",
         "description": "Current status of a matchmaking ticket",
         "enum": [
-          "searching",
-          "match_found",
-          "match_accepted",
-          "cancelled",
-          "expired"
+          "Searching",
+          "MatchFound",
+          "MatchAccepted",
+          "Cancelled",
+          "Expired"
         ]
       },
       "TimeCommitmentType": {
         "type": "string",
         "description": "Type of time commitment for scheduling constraints",
         "enum": [
-          "exclusive",
-          "partial"
+          "Exclusive",
+          "Partial"
         ]
       },
       "TimeRatioChangeReason": {
@@ -67420,14 +67568,14 @@
         "type": "string",
         "description": "Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.\nBased on psychological research (Big Five + game-relevant extensions).\n",
         "enum": [
-          "OPENNESS",
-          "CONSCIENTIOUSNESS",
-          "EXTRAVERSION",
-          "AGREEABLENESS",
-          "NEUROTICISM",
-          "HONESTY",
-          "AGGRESSION",
-          "LOYALTY"
+          "Openness",
+          "Conscientiousness",
+          "Extraversion",
+          "Agreeableness",
+          "Neuroticism",
+          "Honesty",
+          "Aggression",
+          "Loyalty"
         ]
       },
       "TraitSnapshot": {
@@ -67501,25 +67649,25 @@
         "type": "string",
         "description": "Classification of the currency transaction",
         "enum": [
-          "mint",
-          "quest_reward",
-          "loot_drop",
-          "vendor_sale",
-          "autogain",
-          "refund",
-          "conversion_credit",
-          "burn",
-          "vendor_purchase",
-          "fee",
-          "expiration",
-          "cap_overflow",
-          "conversion_debit",
-          "transfer",
-          "trade",
-          "gift",
-          "escrow_deposit",
-          "escrow_release",
-          "escrow_refund"
+          "Mint",
+          "QuestReward",
+          "LootDrop",
+          "VendorSale",
+          "Autogain",
+          "Refund",
+          "ConversionCredit",
+          "Burn",
+          "VendorPurchase",
+          "Fee",
+          "Expiration",
+          "CapOverflow",
+          "ConversionDebit",
+          "Transfer",
+          "Trade",
+          "Gift",
+          "EscrowDeposit",
+          "EscrowRelease",
+          "EscrowRefund"
         ]
       },
       "TransferContractPartyRequest": {
@@ -68860,6 +69008,7 @@
         "required": [
           "achievementId",
           "displayName",
+          "description",
           "points",
           "unlockedAt"
         ],
@@ -69152,10 +69301,10 @@
         "type": "string",
         "description": "Reason why a scene reference could not be resolved",
         "enum": [
-          "not_found",
-          "circular_reference",
-          "depth_exceeded",
-          "access_denied"
+          "NotFound",
+          "CircularReference",
+          "DepthExceeded",
+          "AccessDenied"
         ]
       },
       "UpdateAchievementDefinitionRequest": {
@@ -69174,6 +69323,8 @@
           },
           "achievementId": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "ID of the achievement to update"
           },
           "displayName": {
@@ -69193,13 +69344,50 @@
             "nullable": true,
             "description": "New active status"
           },
-          "platformIds": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
+          "platformMappings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformMapping"
             },
             "nullable": true,
             "description": "Updated platform ID mappings"
+          },
+          "scoreType": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true,
+            "description": "Score type code for matching analytics.score.updated events (progressive achievements)"
+          },
+          "milestoneType": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true,
+            "description": "Milestone type code for matching analytics.milestone.reached events"
+          },
+          "milestoneValue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Expected milestone value for matching analytics.milestone.reached events"
+          },
+          "milestoneName": {
+            "type": "string",
+            "maxLength": 200,
+            "nullable": true,
+            "description": "Expected milestone name for matching analytics.milestone.reached events"
+          },
+          "leaderboardId": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true,
+            "description": "Leaderboard ID for matching leaderboard.rank.changed events"
+          },
+          "rankThreshold": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "minimum": 1,
+            "description": "Rank threshold for leaderboard achievements (unlock when rank <= threshold)"
           }
         }
       },
@@ -70286,10 +70474,10 @@
         "type": "string",
         "description": "How to handle score updates",
         "enum": [
-          "replace",
-          "increment",
-          "max",
-          "min"
+          "Replace",
+          "Increment",
+          "Max",
+          "Min"
         ]
       },
       "UpdateModeRequest": {
@@ -71590,22 +71778,22 @@
           "reason": {
             "type": "string",
             "enum": [
-              "none",
-              "preconditionInvalidated",
-              "actionFailed",
-              "betterGoalAvailable",
-              "planCompleted",
-              "goalAlreadySatisfied",
-              "suboptimalPlan"
+              "None",
+              "PreconditionInvalidated",
+              "ActionFailed",
+              "BetterGoalAvailable",
+              "PlanCompleted",
+              "GoalAlreadySatisfied",
+              "SuboptimalPlan"
             ],
             "description": "Reason for the validation result"
           },
           "suggestedAction": {
             "type": "string",
             "enum": [
-              "continue",
-              "replan",
-              "abort"
+              "Continue",
+              "Replan",
+              "Abort"
             ],
             "description": "Suggested action based on validation"
           },
@@ -71831,14 +72019,14 @@
         "type": "string",
         "description": "Type of validation condition",
         "enum": [
-          "statusCodeIn",
-          "jsonPathEquals",
-          "jsonPathNotEquals",
-          "jsonPathExists",
-          "jsonPathNotExists",
-          "jsonPathGreaterThan",
-          "jsonPathLessThan",
-          "jsonPathContains"
+          "StatusCodeIn",
+          "JsonPathEquals",
+          "JsonPathNotEquals",
+          "JsonPathExists",
+          "JsonPathNotExists",
+          "JsonPathGreaterThan",
+          "JsonPathLessThan",
+          "JsonPathContains"
         ]
       },
       "ValidationError": {
@@ -71931,10 +72119,10 @@
         "type": "string",
         "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
         "enum": [
-          "asset_missing",
-          "asset_mutated",
-          "asset_expired",
-          "balance_mismatch"
+          "AssetMissing",
+          "AssetMutated",
+          "AssetExpired",
+          "BalanceMismatch"
         ]
       },
       "ValidationResult": {
@@ -72039,19 +72227,19 @@
         "type": "string",
         "description": "Type of validation check to perform",
         "enum": [
-          "require_tag",
-          "require_node_type",
-          "forbid_tag",
-          "require_annotation",
-          "custom_expression"
+          "RequireTag",
+          "RequireNodeType",
+          "ForbidTag",
+          "RequireAnnotation",
+          "CustomExpression"
         ]
       },
       "ValidationSeverity": {
         "type": "string",
         "description": "Severity level of a validation issue",
         "enum": [
-          "error",
-          "warning"
+          "Error",
+          "Warning"
         ]
       },
       "ValidatorConfig": {
@@ -72636,10 +72824,10 @@
         "type": "string",
         "description": "Shape of a volume node for spatial bounds",
         "enum": [
-          "box",
-          "sphere",
-          "capsule",
-          "cylinder"
+          "Box",
+          "Sphere",
+          "Capsule",
+          "Cylinder"
         ]
       },
       "WalletResponse": {
@@ -72711,9 +72899,9 @@
         "type": "string",
         "description": "Current status of a wallet",
         "enum": [
-          "active",
-          "frozen",
-          "closed"
+          "Active",
+          "Frozen",
+          "Closed"
         ]
       },
       "WalletWithBalancesResponse": {
@@ -72784,19 +72972,19 @@
         "type": "string",
         "description": "How container weight propagates to parent",
         "enum": [
-          "none",
-          "self_only",
-          "self_plus_contents"
+          "None",
+          "SelfOnly",
+          "SelfPlusContents"
         ]
       },
       "WeightPrecision": {
         "type": "string",
         "description": "Precision for weight values (consistent with CurrencyPrecision)",
         "enum": [
-          "integer",
-          "decimal_1",
-          "decimal_2",
-          "decimal_3"
+          "Integer",
+          "Decimal1",
+          "Decimal2",
+          "Decimal3"
         ]
       }
     },

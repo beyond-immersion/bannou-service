@@ -134,7 +134,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         Guid? realmId = null,
         string code = "TEST",
         string name = "Test Location",
-        LocationType locationType = LocationType.CITY,
+        LocationType locationType = LocationType.City,
         Guid? parentLocationId = null,
         int depth = 0,
         bool isDeprecated = false)

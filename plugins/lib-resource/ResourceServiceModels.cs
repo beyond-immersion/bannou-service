@@ -114,7 +114,7 @@ internal class CleanupCallbackDefinition
     /// RESTRICT: Block deletion if references of this type exist.
     /// DETACH: Nullify references via callback (consumer implements).
     /// </summary>
-    public OnDeleteAction OnDeleteAction { get; set; } = OnDeleteAction.CASCADE;
+    public OnDeleteAction OnDeleteAction { get; set; } = OnDeleteAction.Cascade;
 
     /// <summary>
     /// Target service name for callback invocation.

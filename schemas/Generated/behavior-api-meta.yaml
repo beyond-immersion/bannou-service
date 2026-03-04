@@ -639,12 +639,12 @@ paths:
         \ \"suggestedAction\"\n            ],\n            \"properties\": {\n                \"isValid\": {\n           \
         \         \"type\": \"boolean\",\n                    \"description\": \"Whether the plan is still valid\"\n     \
         \           },\n                \"reason\": {\n                    \"type\": \"string\",\n                    \"enum\"\
-        : [\n                        \"none\",\n                        \"preconditionInvalidated\",\n                   \
-        \     \"actionFailed\",\n                        \"betterGoalAvailable\",\n                        \"planCompleted\"\
-        ,\n                        \"goalAlreadySatisfied\",\n                        \"suboptimalPlan\"\n               \
+        : [\n                        \"None\",\n                        \"PreconditionInvalidated\",\n                   \
+        \     \"ActionFailed\",\n                        \"BetterGoalAvailable\",\n                        \"PlanCompleted\"\
+        ,\n                        \"GoalAlreadySatisfied\",\n                        \"SuboptimalPlan\"\n               \
         \     ],\n                    \"description\": \"Reason for the validation result\"\n                },\n        \
         \        \"suggestedAction\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n    \
-        \                    \"continue\",\n                        \"replan\",\n                        \"abort\"\n     \
+        \                    \"Continue\",\n                        \"Replan\",\n                        \"Abort\"\n     \
         \               ],\n                    \"description\": \"Suggested action based on validation\"\n              \
         \  },\n                \"invalidatedAtIndex\": {\n                    \"type\": \"integer\",\n                   \
         \ \"description\": \"Index where plan became invalid (if applicable)\"\n                },\n                \"message\"\
@@ -1163,20 +1163,20 @@ components:
         reason:
           type: string
           enum:
-          - none
-          - preconditionInvalidated
-          - actionFailed
-          - betterGoalAvailable
-          - planCompleted
-          - goalAlreadySatisfied
-          - suboptimalPlan
+          - None
+          - PreconditionInvalidated
+          - ActionFailed
+          - BetterGoalAvailable
+          - PlanCompleted
+          - GoalAlreadySatisfied
+          - SuboptimalPlan
           description: Reason for the validation result
         suggestedAction:
           type: string
           enum:
-          - continue
-          - replan
-          - abort
+          - Continue
+          - Replan
+          - Abort
           description: Suggested action based on validation
         invalidatedAtIndex:
           type: integer

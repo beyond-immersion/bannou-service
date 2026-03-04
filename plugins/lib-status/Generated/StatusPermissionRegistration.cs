@@ -48,7 +48,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/template/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createStatusTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/template/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getStatusTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/template/get-by-code",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getStatusTemplateByCode",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/template/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listStatusTemplates",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/template/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateStatusTemplate",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/template/seed",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "seedStatusTemplates",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/grant",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "grantStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/remove",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "removeStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/remove-by-source",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "removeBySource",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/remove-by-category",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "removeByCategory",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/has",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "hasStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listStatuses",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/effects/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getEffects",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/effects/get-seed",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getSeedEffects",
             Permissions = new List<PermissionRequirement>
             {
@@ -273,7 +273,7 @@ public static class StatusPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/status/cleanup-by-owner",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "cleanupByOwner",
             Permissions = new List<PermissionRequirement>
             {

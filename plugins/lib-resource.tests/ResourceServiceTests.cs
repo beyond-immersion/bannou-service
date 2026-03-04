@@ -90,8 +90,8 @@ public class ResourceServiceTests
             DefaultGracePeriodSeconds = 3600, // 1 hour for faster tests
             CleanupCallbackTimeoutSeconds = 30,
             CleanupLockExpirySeconds = 300,
-            DefaultCleanupPolicy = CleanupPolicy.BEST_EFFORT,
-            DefaultCompressionPolicy = CompressionPolicy.ALL_REQUIRED,
+            DefaultCleanupPolicy = CleanupPolicy.BestEffort,
+            DefaultCompressionPolicy = CompressionPolicy.AllRequired,
             CompressionCallbackTimeoutSeconds = 60,
             CompressionLockExpirySeconds = 600,
             // Snapshot configuration for tests
@@ -338,10 +338,10 @@ public class ResourceServiceTests
         Assert.Equal(604800, config.DefaultGracePeriodSeconds); // 7 days
         Assert.Equal(30, config.CleanupCallbackTimeoutSeconds);
         Assert.Equal(300, config.CleanupLockExpirySeconds);
-        Assert.Equal(CleanupPolicy.BEST_EFFORT, config.DefaultCleanupPolicy);
+        Assert.Equal(CleanupPolicy.BestEffort, config.DefaultCleanupPolicy);
 
         // Compression defaults
-        Assert.Equal(CompressionPolicy.ALL_REQUIRED, config.DefaultCompressionPolicy);
+        Assert.Equal(CompressionPolicy.AllRequired, config.DefaultCompressionPolicy);
         Assert.Equal(60, config.CompressionCallbackTimeoutSeconds);
         Assert.Equal(600, config.CompressionLockExpirySeconds);
 
@@ -1058,7 +1058,7 @@ public class ResourceServiceTests
         {
             ResourceType = "character",
             SourceType = "scene",
-            OnDeleteAction = OnDeleteAction.RESTRICT,
+            OnDeleteAction = OnDeleteAction.Restrict,
             ServiceName = "scene",
             CallbackEndpoint = "/scene/cleanup-by-character",
             PayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
@@ -1077,7 +1077,7 @@ public class ResourceServiceTests
         _mockCleanupStore.Verify(s => s.SaveAsync(
             "callback:character:scene",
             It.Is<CleanupCallbackDefinition>(c =>
-                c.OnDeleteAction == OnDeleteAction.RESTRICT),
+                c.OnDeleteAction == OnDeleteAction.Restrict),
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -1107,7 +1107,7 @@ public class ResourceServiceTests
         _mockCleanupStore.Verify(s => s.SaveAsync(
             "callback:character:actor",
             It.Is<CleanupCallbackDefinition>(c =>
-                c.OnDeleteAction == OnDeleteAction.CASCADE),
+                c.OnDeleteAction == OnDeleteAction.Cascade),
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -1149,7 +1149,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "scene",
-                OnDeleteAction = OnDeleteAction.RESTRICT,
+                OnDeleteAction = OnDeleteAction.Restrict,
                 ServiceName = "scene",
                 CallbackEndpoint = "/scene/cleanup-by-character",
                 PayloadTemplate = "{}"
@@ -1221,7 +1221,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "scene",
-                OnDeleteAction = OnDeleteAction.RESTRICT,
+                OnDeleteAction = OnDeleteAction.Restrict,
                 ServiceName = "scene",
                 CallbackEndpoint = "/scene/cleanup-by-character",
                 PayloadTemplate = "{}"
@@ -1291,7 +1291,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "actor",
-                OnDeleteAction = OnDeleteAction.CASCADE,
+                OnDeleteAction = OnDeleteAction.Cascade,
                 ServiceName = "actor",
                 CallbackEndpoint = "/actor/cleanup-by-character",
                 PayloadTemplate = "{}"
@@ -1303,7 +1303,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "scene",
-                OnDeleteAction = OnDeleteAction.RESTRICT,
+                OnDeleteAction = OnDeleteAction.Restrict,
                 ServiceName = "scene",
                 CallbackEndpoint = "/scene/cleanup-by-character",
                 PayloadTemplate = "{}"
@@ -1315,7 +1315,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "encounter",
-                OnDeleteAction = OnDeleteAction.DETACH,
+                OnDeleteAction = OnDeleteAction.Detach,
                 ServiceName = "encounter",
                 CallbackEndpoint = "/character-encounter/detach-by-character",
                 PayloadTemplate = "{}"
@@ -1700,7 +1700,7 @@ public class ResourceServiceTests
         {
             ResourceType = "character",
             ResourceId = resourceId,
-            CompressionPolicy = CompressionPolicy.ALL_REQUIRED
+            CompressionPolicy = CompressionPolicy.AllRequired
         };
 
         // Act
@@ -1766,7 +1766,7 @@ public class ResourceServiceTests
         {
             ResourceType = "character",
             ResourceId = resourceId,
-            CompressionPolicy = CompressionPolicy.BEST_EFFORT
+            CompressionPolicy = CompressionPolicy.BestEffort
         };
 
         // Act
@@ -2577,7 +2577,7 @@ public class ResourceServiceTests
         {
             ResourceType = "character",
             ResourceId = resourceId,
-            CompressionPolicy = CompressionPolicy.ALL_REQUIRED
+            CompressionPolicy = CompressionPolicy.AllRequired
         };
 
         // Act
@@ -2637,7 +2637,7 @@ public class ResourceServiceTests
         {
             ResourceType = "character",
             ResourceId = resourceId,
-            CompressionPolicy = CompressionPolicy.BEST_EFFORT
+            CompressionPolicy = CompressionPolicy.BestEffort
         };
 
         // Act
@@ -2689,7 +2689,7 @@ public class ResourceServiceTests
         {
             ResourceType = "character",
             ResourceId = resourceId,
-            CompressionPolicy = CompressionPolicy.BEST_EFFORT
+            CompressionPolicy = CompressionPolicy.BestEffort
         };
 
         // Act
@@ -2858,7 +2858,7 @@ public class ResourceServiceTests
         // Assert
         foreach (var endpoint in endpoints)
         {
-            Assert.Equal(ServiceEndpointMethod.POST, endpoint.Method);
+            Assert.Equal(ServiceEndpointMethod.Post, endpoint.Method);
         }
     }
 
@@ -3123,7 +3123,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "actor",
-                OnDeleteAction = OnDeleteAction.CASCADE,
+                OnDeleteAction = OnDeleteAction.Cascade,
                 ServiceName = "actor",
                 CallbackEndpoint = "/actor/cleanup-by-character",
                 PayloadTemplate = "{}",
@@ -3136,7 +3136,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "encounter",
-                OnDeleteAction = OnDeleteAction.CASCADE,
+                OnDeleteAction = OnDeleteAction.Cascade,
                 ServiceName = "character-encounter",
                 CallbackEndpoint = "/character-encounter/cleanup-by-character",
                 PayloadTemplate = "{}",
@@ -3170,7 +3170,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "actor",
-                OnDeleteAction = OnDeleteAction.CASCADE,
+                OnDeleteAction = OnDeleteAction.Cascade,
                 ServiceName = "actor",
                 CallbackEndpoint = "/actor/cleanup-by-character",
                 PayloadTemplate = "{}"
@@ -3445,7 +3445,7 @@ public class ResourceServiceTests
             ResourceType = "character",
             ResourceId = resourceId,
             DeleteSourceData = true,
-            DeleteSourceDataPolicy = CleanupPolicy.ALL_REQUIRED
+            DeleteSourceDataPolicy = CleanupPolicy.AllRequired
         };
 
         // Act
@@ -3689,7 +3689,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "scene",
-                OnDeleteAction = OnDeleteAction.RESTRICT,
+                OnDeleteAction = OnDeleteAction.Restrict,
                 ServiceName = "scene",
                 CallbackEndpoint = "/scene/cleanup",
                 PayloadTemplate = "{}"
@@ -3771,7 +3771,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "actor",
-                OnDeleteAction = OnDeleteAction.CASCADE,
+                OnDeleteAction = OnDeleteAction.Cascade,
                 ServiceName = "actor",
                 CallbackEndpoint = "/actor/cleanup-by-character",
                 PayloadTemplate = "{}"
@@ -3808,7 +3808,7 @@ public class ResourceServiceTests
             ResourceType = "character",
             ResourceId = resourceId,
             GracePeriodSeconds = 0,
-            CleanupPolicy = CleanupPolicy.BEST_EFFORT // Continue despite failures
+            CleanupPolicy = CleanupPolicy.BestEffort // Continue despite failures
         };
 
         // Act
@@ -3868,7 +3868,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "encounter",
-                OnDeleteAction = OnDeleteAction.DETACH,
+                OnDeleteAction = OnDeleteAction.Detach,
                 ServiceName = "character-encounter",
                 CallbackEndpoint = "/character-encounter/detach-by-character",
                 PayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}"
@@ -3962,7 +3962,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "actor",
-                OnDeleteAction = OnDeleteAction.CASCADE,
+                OnDeleteAction = OnDeleteAction.Cascade,
                 ServiceName = "actor",
                 CallbackEndpoint = "/actor/cleanup-by-character",
                 PayloadTemplate = "{}"
@@ -3999,7 +3999,7 @@ public class ResourceServiceTests
             ResourceType = "character",
             ResourceId = resourceId,
             GracePeriodSeconds = 0,
-            CleanupPolicy = CleanupPolicy.ALL_REQUIRED
+            CleanupPolicy = CleanupPolicy.AllRequired
         };
 
         // Act
@@ -4058,7 +4058,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "actor",
-                OnDeleteAction = OnDeleteAction.CASCADE,
+                OnDeleteAction = OnDeleteAction.Cascade,
                 ServiceName = "actor",
                 CallbackEndpoint = "/actor/cleanup",
                 PayloadTemplate = "{}"
@@ -4070,7 +4070,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "encounter",
-                OnDeleteAction = OnDeleteAction.CASCADE,
+                OnDeleteAction = OnDeleteAction.Cascade,
                 ServiceName = "character-encounter",
                 CallbackEndpoint = "/encounter/cleanup",
                 PayloadTemplate = "{}"
@@ -4114,7 +4114,7 @@ public class ResourceServiceTests
             ResourceType = "character",
             ResourceId = resourceId,
             GracePeriodSeconds = 0,
-            CleanupPolicy = CleanupPolicy.BEST_EFFORT
+            CleanupPolicy = CleanupPolicy.BestEffort
         };
 
         // Act
@@ -4192,7 +4192,7 @@ public class ResourceServiceTests
             ResourceType = "character",
             ResourceId = resourceId,
             DeleteSourceData = true,
-            DeleteSourceDataPolicy = CleanupPolicy.BEST_EFFORT
+            DeleteSourceDataPolicy = CleanupPolicy.BestEffort
         };
 
         // Act
@@ -4657,7 +4657,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "actor",
-                OnDeleteAction = OnDeleteAction.CASCADE,
+                OnDeleteAction = OnDeleteAction.Cascade,
                 ServiceName = "actor",
                 CallbackEndpoint = "/actor/cleanup",
                 PayloadTemplate = "{}"
@@ -4773,7 +4773,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "actor",
-                OnDeleteAction = OnDeleteAction.CASCADE,
+                OnDeleteAction = OnDeleteAction.Cascade,
                 ServiceName = "actor",
                 CallbackEndpoint = "/actor/cleanup",
                 PayloadTemplate = "{}",
@@ -4786,7 +4786,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "encounter",
-                OnDeleteAction = OnDeleteAction.CASCADE,
+                OnDeleteAction = OnDeleteAction.Cascade,
                 ServiceName = "character-encounter",
                 CallbackEndpoint = "/encounter/cleanup",
                 PayloadTemplate = "{}",
@@ -4799,7 +4799,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "realm",
                 SourceType = "location",
-                OnDeleteAction = OnDeleteAction.CASCADE,
+                OnDeleteAction = OnDeleteAction.Cascade,
                 ServiceName = "location",
                 CallbackEndpoint = "/location/cleanup",
                 PayloadTemplate = "{}",
@@ -4860,7 +4860,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "actor",
-                OnDeleteAction = OnDeleteAction.CASCADE,
+                OnDeleteAction = OnDeleteAction.Cascade,
                 ServiceName = "actor",
                 CallbackEndpoint = "/actor/cleanup",
                 PayloadTemplate = "{}"
@@ -4872,7 +4872,7 @@ public class ResourceServiceTests
             {
                 ResourceType = "character",
                 SourceType = "encounter",
-                OnDeleteAction = OnDeleteAction.CASCADE,
+                OnDeleteAction = OnDeleteAction.Cascade,
                 ServiceName = "character-encounter",
                 CallbackEndpoint = "/encounter/cleanup",
                 PayloadTemplate = "{}"
@@ -4908,7 +4908,7 @@ public class ResourceServiceTests
             ResourceType = "character",
             ResourceId = resourceId,
             GracePeriodSeconds = 0,
-            CleanupPolicy = CleanupPolicy.BEST_EFFORT
+            CleanupPolicy = CleanupPolicy.BestEffort
         };
 
         // Act
@@ -4970,7 +4970,7 @@ public class ResourceServiceTests
 
         Assert.Equal(string.Empty, callback.ResourceType);
         Assert.Equal(string.Empty, callback.SourceType);
-        Assert.Equal(OnDeleteAction.CASCADE, callback.OnDeleteAction);
+        Assert.Equal(OnDeleteAction.Cascade, callback.OnDeleteAction);
         Assert.Equal(string.Empty, callback.ServiceName);
         Assert.Equal(string.Empty, callback.CallbackEndpoint);
         Assert.Equal(string.Empty, callback.PayloadTemplate);
@@ -4987,7 +4987,7 @@ public class ResourceServiceTests
         {
             ResourceType = "character",
             SourceType = "actor",
-            OnDeleteAction = OnDeleteAction.RESTRICT,
+            OnDeleteAction = OnDeleteAction.Restrict,
             ServiceName = "actor",
             CallbackEndpoint = "/actor/cleanup",
             PayloadTemplate = "{\"id\": \"{{resourceId}}\"}",
@@ -4997,7 +4997,7 @@ public class ResourceServiceTests
 
         Assert.Equal("character", callback.ResourceType);
         Assert.Equal("actor", callback.SourceType);
-        Assert.Equal(OnDeleteAction.RESTRICT, callback.OnDeleteAction);
+        Assert.Equal(OnDeleteAction.Restrict, callback.OnDeleteAction);
         Assert.Equal("actor", callback.ServiceName);
         Assert.Equal("/actor/cleanup", callback.CallbackEndpoint);
         Assert.Equal("{\"id\": \"{{resourceId}}\"}", callback.PayloadTemplate);

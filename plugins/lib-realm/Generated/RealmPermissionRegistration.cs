@@ -48,7 +48,7 @@ public static class RealmPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getRealm",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class RealmPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm/get-by-code",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getRealmByCode",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class RealmPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listRealms",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class RealmPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createRealm",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class RealmPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateRealm",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class RealmPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteRealm",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class RealmPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm/deprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deprecateRealm",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class RealmPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm/undeprecate",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "undeprecateRealm",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class RealmPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm/merge",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "mergeRealms",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class RealmPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm/exists",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "realmExists",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class RealmPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm/exists-batch",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "realmsExistBatch",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class RealmPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/realm/seed",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "seedRealms",
             Permissions = new List<PermissionRequirement>
             {

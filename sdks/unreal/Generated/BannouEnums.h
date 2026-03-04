@@ -19,34 +19,34 @@
 UENUM(BlueprintType)
 enum class EAchievementType : uint8
 {
-    Standard UMETA(DisplayName = "standard"),
-    Progressive UMETA(DisplayName = "progressive"),
-    Hidden UMETA(DisplayName = "hidden"),
-    Secret UMETA(DisplayName = "secret"),
+    Standard UMETA(DisplayName = "Standard"),
+    Progressive UMETA(DisplayName = "Progressive"),
+    Hidden UMETA(DisplayName = "Hidden"),
+    Secret UMETA(DisplayName = "Secret"),
 };
 
 /** Size classification affecting cover requirements and passage width */
 UENUM(BlueprintType)
 enum class EActorSize : uint8
 {
-    Tiny UMETA(DisplayName = "tiny"),
-    Small UMETA(DisplayName = "small"),
-    Medium UMETA(DisplayName = "medium"),
-    Large UMETA(DisplayName = "large"),
-    Huge UMETA(DisplayName = "huge"),
+    Tiny UMETA(DisplayName = "Tiny"),
+    Small UMETA(DisplayName = "Small"),
+    Medium UMETA(DisplayName = "Medium"),
+    Large UMETA(DisplayName = "Large"),
+    Huge UMETA(DisplayName = "Huge"),
 };
 
 /** Current actor lifecycle state */
 UENUM(BlueprintType)
 enum class EActorStatus : uint8
 {
-    Pending UMETA(DisplayName = "pending"),
-    Starting UMETA(DisplayName = "starting"),
-    Running UMETA(DisplayName = "running"),
-    Paused UMETA(DisplayName = "paused"),
-    Stopping UMETA(DisplayName = "stopping"),
-    Stopped UMETA(DisplayName = "stopped"),
-    Error UMETA(DisplayName = "error"),
+    Pending UMETA(DisplayName = "Pending"),
+    Starting UMETA(DisplayName = "Starting"),
+    Running UMETA(DisplayName = "Running"),
+    Paused UMETA(DisplayName = "Paused"),
+    Stopping UMETA(DisplayName = "Stopping"),
+    Stopped UMETA(DisplayName = "Stopped"),
+    Error UMETA(DisplayName = "Error"),
 };
 
 /** Grid traversal adjacency mode for a board template.
@@ -56,17 +56,17 @@ enum class EActorStatus : uint8
 UENUM(BlueprintType)
 enum class EAdjacencyMode : uint8
 {
-    FourWay UMETA(DisplayName = "four_way"),
-    EightWay UMETA(DisplayName = "eight_way"),
+    FourWay UMETA(DisplayName = "FourWay"),
+    EightWay UMETA(DisplayName = "EightWay"),
 };
 
 /** Controls caching behavior for affordance queries */
 UENUM(BlueprintType)
 enum class EAffordanceFreshness : uint8
 {
-    Fresh UMETA(DisplayName = "fresh"),
-    Cached UMETA(DisplayName = "cached"),
-    AggressiveCache UMETA(DisplayName = "aggressive_cache"),
+    Fresh UMETA(DisplayName = "Fresh"),
+    Cached UMETA(DisplayName = "Cached"),
+    AggressiveCache UMETA(DisplayName = "AggressiveCache"),
 };
 
 /** Well-known affordance types with predefined scoring logic.
@@ -75,15 +75,15 @@ Use 'custom' for novel affordance definitions.
 UENUM(BlueprintType)
 enum class EAffordanceType : uint8
 {
-    Ambush UMETA(DisplayName = "ambush"),
-    Shelter UMETA(DisplayName = "shelter"),
-    Vista UMETA(DisplayName = "vista"),
-    ChokePoint UMETA(DisplayName = "choke_point"),
-    GatheringSpot UMETA(DisplayName = "gathering_spot"),
-    DramaticReveal UMETA(DisplayName = "dramatic_reveal"),
-    HiddenPath UMETA(DisplayName = "hidden_path"),
-    DefensiblePosition UMETA(DisplayName = "defensible_position"),
-    Custom UMETA(DisplayName = "custom"),
+    Ambush UMETA(DisplayName = "Ambush"),
+    Shelter UMETA(DisplayName = "Shelter"),
+    Vista UMETA(DisplayName = "Vista"),
+    ChokePoint UMETA(DisplayName = "ChokePoint"),
+    GatheringSpot UMETA(DisplayName = "GatheringSpot"),
+    DramaticReveal UMETA(DisplayName = "DramaticReveal"),
+    HiddenPath UMETA(DisplayName = "HiddenPath"),
+    DefensiblePosition UMETA(DisplayName = "DefensiblePosition"),
+    Custom UMETA(DisplayName = "Custom"),
 };
 
 /** Emotional arc shapes from Reagan et al. research.
@@ -109,40 +109,40 @@ enum class EArcType : uint8
 UENUM(BlueprintType)
 enum class EAssetType : uint8
 {
-    Texture UMETA(DisplayName = "texture"),
-    Model UMETA(DisplayName = "model"),
-    Audio UMETA(DisplayName = "audio"),
-    Behavior UMETA(DisplayName = "behavior"),
-    Bundle UMETA(DisplayName = "bundle"),
-    Prefab UMETA(DisplayName = "prefab"),
-    Other UMETA(DisplayName = "other"),
+    Texture UMETA(DisplayName = "Texture"),
+    Model UMETA(DisplayName = "Model"),
+    Audio UMETA(DisplayName = "Audio"),
+    Behavior UMETA(DisplayName = "Behavior"),
+    Bundle UMETA(DisplayName = "Bundle"),
+    Prefab UMETA(DisplayName = "Prefab"),
+    Other UMETA(DisplayName = "Other"),
 };
 
 /** All authentication provider types including email */
 UENUM(BlueprintType)
 enum class EAuthProvider : uint8
 {
-    Email UMETA(DisplayName = "email"),
-    Google UMETA(DisplayName = "google"),
-    Discord UMETA(DisplayName = "discord"),
-    Twitch UMETA(DisplayName = "twitch"),
-    Steam UMETA(DisplayName = "steam"),
+    Email UMETA(DisplayName = "Email"),
+    Google UMETA(DisplayName = "Google"),
+    Discord UMETA(DisplayName = "Discord"),
+    Twitch UMETA(DisplayName = "Twitch"),
+    Steam UMETA(DisplayName = "Steam"),
 };
 
 /** Authentication mechanism type (oauth = browser redirect, ticket = game client token) */
 UENUM(BlueprintType)
 enum class EAuthType : uint8
 {
-    Oauth UMETA(DisplayName = "oauth"),
-    Ticket UMETA(DisplayName = "ticket"),
+    Oauth UMETA(DisplayName = "Oauth"),
+    Ticket UMETA(DisplayName = "Ticket"),
 };
 
 /** How autogain (energy/interest) is calculated */
 UENUM(BlueprintType)
 enum class EAutogainMode : uint8
 {
-    Simple UMETA(DisplayName = "simple"),
-    Compound UMETA(DisplayName = "compound"),
+    Simple UMETA(DisplayName = "Simple"),
+    Compound UMETA(DisplayName = "Compound"),
 };
 
 /** Types of backstory elements. Each type represents a different aspect
@@ -151,44 +151,44 @@ of the character's background that influences behavior.
 UENUM(BlueprintType)
 enum class EBackstoryElementType : uint8
 {
-    ORIGIN UMETA(DisplayName = "ORIGIN"),
-    OCCUPATION UMETA(DisplayName = "OCCUPATION"),
-    TRAINING UMETA(DisplayName = "TRAINING"),
-    TRAUMA UMETA(DisplayName = "TRAUMA"),
-    ACHIEVEMENT UMETA(DisplayName = "ACHIEVEMENT"),
-    SECRET UMETA(DisplayName = "SECRET"),
-    GOAL UMETA(DisplayName = "GOAL"),
-    FEAR UMETA(DisplayName = "FEAR"),
-    BELIEF UMETA(DisplayName = "BELIEF"),
+    Origin UMETA(DisplayName = "Origin"),
+    Occupation UMETA(DisplayName = "Occupation"),
+    Training UMETA(DisplayName = "Training"),
+    Trauma UMETA(DisplayName = "Trauma"),
+    Achievement UMETA(DisplayName = "Achievement"),
+    Secret UMETA(DisplayName = "Secret"),
+    Goal UMETA(DisplayName = "Goal"),
+    Fear UMETA(DisplayName = "Fear"),
+    Belief UMETA(DisplayName = "Belief"),
 };
 
 /** Status of a repository binding */
 UENUM(BlueprintType)
 enum class EBindingStatus : uint8
 {
-    Pending UMETA(DisplayName = "pending"),
-    Syncing UMETA(DisplayName = "syncing"),
-    Synced UMETA(DisplayName = "synced"),
-    Error UMETA(DisplayName = "error"),
-    Disabled UMETA(DisplayName = "disabled"),
+    Pending UMETA(DisplayName = "Pending"),
+    Syncing UMETA(DisplayName = "Syncing"),
+    Synced UMETA(DisplayName = "Synced"),
+    Error UMETA(DisplayName = "Error"),
+    Disabled UMETA(DisplayName = "Disabled"),
 };
 
 /** Current status of a granted blessing */
 UENUM(BlueprintType)
 enum class EBlessingStatus : uint8
 {
-    Active UMETA(DisplayName = "active"),
-    Revoked UMETA(DisplayName = "revoked"),
+    Active UMETA(DisplayName = "Active"),
+    Revoked UMETA(DisplayName = "Revoked"),
 };
 
 /** Tier of a blessing determining its power, cost, and storage mechanism */
 UENUM(BlueprintType)
 enum class EBlessingTier : uint8
 {
-    Minor UMETA(DisplayName = "minor"),
-    Standard UMETA(DisplayName = "standard"),
-    Greater UMETA(DisplayName = "greater"),
-    Supreme UMETA(DisplayName = "supreme"),
+    Minor UMETA(DisplayName = "Minor"),
+    Standard UMETA(DisplayName = "Standard"),
+    Greater UMETA(DisplayName = "Greater"),
+    Supreme UMETA(DisplayName = "Supreme"),
 };
 
 /** Lifecycle status of a seed bond. */
@@ -212,23 +212,23 @@ enum class EBoundsPrecision : uint8
 UENUM(BlueprintType)
 enum class EBreachStatus : uint8
 {
-    Detected UMETA(DisplayName = "detected"),
-    CurePeriod UMETA(DisplayName = "cure_period"),
-    Cured UMETA(DisplayName = "cured"),
-    ConsequencesApplied UMETA(DisplayName = "consequences_applied"),
-    Disputed UMETA(DisplayName = "disputed"),
-    Forgiven UMETA(DisplayName = "forgiven"),
+    Detected UMETA(DisplayName = "Detected"),
+    CurePeriod UMETA(DisplayName = "CurePeriod"),
+    Cured UMETA(DisplayName = "Cured"),
+    ConsequencesApplied UMETA(DisplayName = "ConsequencesApplied"),
+    Disputed UMETA(DisplayName = "Disputed"),
+    Forgiven UMETA(DisplayName = "Forgiven"),
 };
 
 /** Type of contract breach */
 UENUM(BlueprintType)
 enum class EBreachType : uint8
 {
-    TermViolation UMETA(DisplayName = "term_violation"),
-    MilestoneMissed UMETA(DisplayName = "milestone_missed"),
-    MilestoneDeadline UMETA(DisplayName = "milestone_deadline"),
-    UnauthorizedAction UMETA(DisplayName = "unauthorized_action"),
-    NonPayment UMETA(DisplayName = "non_payment"),
+    TermViolation UMETA(DisplayName = "TermViolation"),
+    MilestoneMissed UMETA(DisplayName = "MilestoneMissed"),
+    MilestoneDeadline UMETA(DisplayName = "MilestoneDeadline"),
+    UnauthorizedAction UMETA(DisplayName = "UnauthorizedAction"),
+    NonPayment UMETA(DisplayName = "NonPayment"),
 };
 
 /** Current state of broadcast consent for a room. Inactive: No broadcast request pending. Pending: Consent request sent, awaiting all responses. Approved: All participants consented. Voice treats this as terminal.
@@ -245,8 +245,8 @@ enum class EBroadcastConsentState : uint8
 UENUM(BlueprintType)
 enum class EBundleFormat : uint8
 {
-    Bannou UMETA(DisplayName = "bannou"),
-    Zip UMETA(DisplayName = "zip"),
+    Bannou UMETA(DisplayName = "Bannou"),
+    Zip UMETA(DisplayName = "Zip"),
 };
 
 /** Bundle lifecycle status:
@@ -257,19 +257,19 @@ enum class EBundleFormat : uint8
 UENUM(BlueprintType)
 enum class EBundleLifecycle : uint8
 {
-    Active UMETA(DisplayName = "active"),
-    Deleted UMETA(DisplayName = "deleted"),
-    Processing UMETA(DisplayName = "processing"),
+    Active UMETA(DisplayName = "Active"),
+    Deleted UMETA(DisplayName = "Deleted"),
+    Processing UMETA(DisplayName = "Processing"),
 };
 
 /** Fields available for sorting bundle query results */
 UENUM(BlueprintType)
 enum class EBundleSortField : uint8
 {
-    CreatedAt UMETA(DisplayName = "created_at"),
-    UpdatedAt UMETA(DisplayName = "updated_at"),
-    Name UMETA(DisplayName = "name"),
-    Size UMETA(DisplayName = "size"),
+    CreatedAt UMETA(DisplayName = "CreatedAt"),
+    UpdatedAt UMETA(DisplayName = "UpdatedAt"),
+    Name UMETA(DisplayName = "Name"),
+    Size UMETA(DisplayName = "Size"),
 };
 
 /** Bundle processing status:
@@ -282,11 +282,11 @@ enum class EBundleSortField : uint8
 UENUM(BlueprintType)
 enum class EBundleStatus : uint8
 {
-    Queued UMETA(DisplayName = "queued"),
-    Processing UMETA(DisplayName = "processing"),
-    Ready UMETA(DisplayName = "ready"),
-    Failed UMETA(DisplayName = "failed"),
-    Cancelled UMETA(DisplayName = "cancelled"),
+    Queued UMETA(DisplayName = "Queued"),
+    Processing UMETA(DisplayName = "Processing"),
+    Ready UMETA(DisplayName = "Ready"),
+    Failed UMETA(DisplayName = "Failed"),
+    Cancelled UMETA(DisplayName = "Cancelled"),
 };
 
 /** Bundle category:
@@ -296,8 +296,8 @@ enum class EBundleStatus : uint8
 UENUM(BlueprintType)
 enum class EBundleType : uint8
 {
-    Source UMETA(DisplayName = "source"),
-    Metabundle UMETA(DisplayName = "metabundle"),
+    Source UMETA(DisplayName = "Source"),
+    Metabundle UMETA(DisplayName = "Metabundle"),
 };
 
 /** Controls CanUse validation behavior.
@@ -308,36 +308,36 @@ enum class EBundleType : uint8
 UENUM(BlueprintType)
 enum class ECanUseBehavior : uint8
 {
-    Disabled UMETA(DisplayName = "disabled"),
-    Block UMETA(DisplayName = "block"),
-    WarnAndProceed UMETA(DisplayName = "warn_and_proceed"),
+    Disabled UMETA(DisplayName = "Disabled"),
+    Block UMETA(DisplayName = "Block"),
+    WarnAndProceed UMETA(DisplayName = "WarnAndProceed"),
 };
 
 /** What happens when a credit would exceed the wallet cap */
 UENUM(BlueprintType)
 enum class ECapOverflowBehavior : uint8
 {
-    Reject UMETA(DisplayName = "reject"),
-    CapAndLose UMETA(DisplayName = "cap_and_lose"),
-    CapAndReturn UMETA(DisplayName = "cap_and_return"),
+    Reject UMETA(DisplayName = "Reject"),
+    CapAndLose UMETA(DisplayName = "CapAndLose"),
+    CapAndReturn UMETA(DisplayName = "CapAndReturn"),
 };
 
 /** Character lifecycle status */
 UENUM(BlueprintType)
 enum class ECharacterStatus : uint8
 {
-    Alive UMETA(DisplayName = "alive"),
-    Dead UMETA(DisplayName = "dead"),
-    Dormant UMETA(DisplayName = "dormant"),
+    Alive UMETA(DisplayName = "Alive"),
+    Dead UMETA(DisplayName = "Dead"),
+    Dormant UMETA(DisplayName = "Dormant"),
 };
 
 /** Type of chat message */
 UENUM(BlueprintType)
 enum class EChatMessageType : uint8
 {
-    Public UMETA(DisplayName = "public"),
-    Whisper UMETA(DisplayName = "whisper"),
-    System UMETA(DisplayName = "system"),
+    Public UMETA(DisplayName = "Public"),
+    Whisper UMETA(DisplayName = "Whisper"),
+    System UMETA(DisplayName = "System"),
 };
 
 /** Participant role within a chat room determining moderation privileges */
@@ -363,20 +363,20 @@ enum class EChatRoomStatus : uint8
 UENUM(BlueprintType)
 enum class EClauseCategory : uint8
 {
-    Validation UMETA(DisplayName = "validation"),
-    Execution UMETA(DisplayName = "execution"),
-    Both UMETA(DisplayName = "both"),
+    Validation UMETA(DisplayName = "Validation"),
+    Execution UMETA(DisplayName = "Execution"),
+    Both UMETA(DisplayName = "Both"),
 };
 
 /** Policy for cleanup callback execution.
-BEST_EFFORT: Proceed with deletion even if some callbacks fail
-ALL_REQUIRED: Abort deletion if any callback fails
+BestEffort: Proceed with deletion even if some callbacks fail
+AllRequired: Abort deletion if any callback fails
  */
 UENUM(BlueprintType)
 enum class ECleanupPolicy : uint8
 {
-    BESTEFFORT UMETA(DisplayName = "BEST_EFFORT"),
-    ALLREQUIRED UMETA(DisplayName = "ALL_REQUIRED"),
+    BestEffort UMETA(DisplayName = "BestEffort"),
+    AllRequired UMETA(DisplayName = "AllRequired"),
 };
 
 /** Overall approach to combat situations. Affects target selection,
@@ -385,54 +385,54 @@ ability usage, and engagement decisions.
 UENUM(BlueprintType)
 enum class ECombatStyle : uint8
 {
-    DEFENSIVE UMETA(DisplayName = "DEFENSIVE"),
-    BALANCED UMETA(DisplayName = "BALANCED"),
-    AGGRESSIVE UMETA(DisplayName = "AGGRESSIVE"),
-    BERSERKER UMETA(DisplayName = "BERSERKER"),
-    TACTICAL UMETA(DisplayName = "TACTICAL"),
+    Defensive UMETA(DisplayName = "Defensive"),
+    Balanced UMETA(DisplayName = "Balanced"),
+    Aggressive UMETA(DisplayName = "Aggressive"),
+    Berserker UMETA(DisplayName = "Berserker"),
+    Tactical UMETA(DisplayName = "Tactical"),
 };
 
 /** Comparison operators for numeric conditions */
 UENUM(BlueprintType)
 enum class EComparisonOperator : uint8
 {
-    Eq UMETA(DisplayName = "eq"),
-    Ne UMETA(DisplayName = "ne"),
-    Gt UMETA(DisplayName = "gt"),
-    Gte UMETA(DisplayName = "gte"),
-    Lt UMETA(DisplayName = "lt"),
-    Lte UMETA(DisplayName = "lte"),
+    Eq UMETA(DisplayName = "Eq"),
+    Ne UMETA(DisplayName = "Ne"),
+    Gt UMETA(DisplayName = "Gt"),
+    Gte UMETA(DisplayName = "Gte"),
+    Lt UMETA(DisplayName = "Lt"),
+    Lte UMETA(DisplayName = "Lte"),
 };
 
 /** Policy for compression callback execution.
-BEST_EFFORT: Create archive even if some callbacks fail (partial archive)
-ALL_REQUIRED: Abort compression if any callback fails
+BestEffort: Create archive even if some callbacks fail (partial archive)
+AllRequired: Abort compression if any callback fails
  */
 UENUM(BlueprintType)
 enum class ECompressionPolicy : uint8
 {
-    BESTEFFORT UMETA(DisplayName = "BEST_EFFORT"),
-    ALLREQUIRED UMETA(DisplayName = "ALL_REQUIRED"),
+    BestEffort UMETA(DisplayName = "BestEffort"),
+    AllRequired UMETA(DisplayName = "AllRequired"),
 };
 
 /** Compression algorithm for bundles */
 UENUM(BlueprintType)
 enum class ECompressionType : uint8
 {
-    Lz4 UMETA(DisplayName = "lz4"),
-    Lzma UMETA(DisplayName = "lzma"),
-    None UMETA(DisplayName = "none"),
+    Lz4 UMETA(DisplayName = "Lz4"),
+    Lzma UMETA(DisplayName = "Lzma"),
+    None UMETA(DisplayName = "None"),
 };
 
 /** Operational status of a transit connection */
 UENUM(BlueprintType)
 enum class EConnectionStatus : uint8
 {
-    Open UMETA(DisplayName = "open"),
-    Closed UMETA(DisplayName = "closed"),
-    Dangerous UMETA(DisplayName = "dangerous"),
-    Blocked UMETA(DisplayName = "blocked"),
-    SeasonalClosed UMETA(DisplayName = "seasonal_closed"),
+    Open UMETA(DisplayName = "Open"),
+    Closed UMETA(DisplayName = "Closed"),
+    Dangerous UMETA(DisplayName = "Dangerous"),
+    Blocked UMETA(DisplayName = "Blocked"),
+    SeasonalClosed UMETA(DisplayName = "SeasonalClosed"),
 };
 
 /** How a scenario instance connects to the broader game world */
@@ -448,54 +448,54 @@ enum class EConnectivityMode : uint8
 UENUM(BlueprintType)
 enum class EConsentStatus : uint8
 {
-    Pending UMETA(DisplayName = "pending"),
-    Consented UMETA(DisplayName = "consented"),
-    Declined UMETA(DisplayName = "declined"),
-    Implicit UMETA(DisplayName = "implicit"),
+    Pending UMETA(DisplayName = "Pending"),
+    Consented UMETA(DisplayName = "Consented"),
+    Declined UMETA(DisplayName = "Declined"),
+    Implicit UMETA(DisplayName = "Implicit"),
 };
 
 /** Type of constraint to check */
 UENUM(BlueprintType)
 enum class EConstraintType : uint8
 {
-    Exclusivity UMETA(DisplayName = "exclusivity"),
-    NonCompete UMETA(DisplayName = "non_compete"),
-    TimeCommitment UMETA(DisplayName = "time_commitment"),
+    Exclusivity UMETA(DisplayName = "Exclusivity"),
+    NonCompete UMETA(DisplayName = "NonCompete"),
+    TimeCommitment UMETA(DisplayName = "TimeCommitment"),
 };
 
 /** Container capacity constraint type */
 UENUM(BlueprintType)
 enum class EContainerConstraintModel : uint8
 {
-    SlotOnly UMETA(DisplayName = "slot_only"),
-    WeightOnly UMETA(DisplayName = "weight_only"),
-    SlotAndWeight UMETA(DisplayName = "slot_and_weight"),
-    Grid UMETA(DisplayName = "grid"),
-    Volumetric UMETA(DisplayName = "volumetric"),
-    Unlimited UMETA(DisplayName = "unlimited"),
+    SlotOnly UMETA(DisplayName = "SlotOnly"),
+    WeightOnly UMETA(DisplayName = "WeightOnly"),
+    SlotAndWeight UMETA(DisplayName = "SlotAndWeight"),
+    Grid UMETA(DisplayName = "Grid"),
+    Volumetric UMETA(DisplayName = "Volumetric"),
+    Unlimited UMETA(DisplayName = "Unlimited"),
 };
 
 /** Type of entity that owns this container */
 UENUM(BlueprintType)
 enum class EContainerOwnerType : uint8
 {
-    Character UMETA(DisplayName = "character"),
-    Account UMETA(DisplayName = "account"),
-    Location UMETA(DisplayName = "location"),
-    Vehicle UMETA(DisplayName = "vehicle"),
-    Guild UMETA(DisplayName = "guild"),
-    Escrow UMETA(DisplayName = "escrow"),
-    Mail UMETA(DisplayName = "mail"),
-    Other UMETA(DisplayName = "other"),
+    Character UMETA(DisplayName = "Character"),
+    Account UMETA(DisplayName = "Account"),
+    Location UMETA(DisplayName = "Location"),
+    Vehicle UMETA(DisplayName = "Vehicle"),
+    Guild UMETA(DisplayName = "Guild"),
+    Escrow UMETA(DisplayName = "Escrow"),
+    Mail UMETA(DisplayName = "Mail"),
+    Other UMETA(DisplayName = "Other"),
 };
 
 /** Format of the content field in a document response */
 UENUM(BlueprintType)
 enum class EContentFormat : uint8
 {
-    Markdown UMETA(DisplayName = "markdown"),
-    Html UMETA(DisplayName = "html"),
-    None UMETA(DisplayName = "none"),
+    Markdown UMETA(DisplayName = "Markdown"),
+    Html UMETA(DisplayName = "Html"),
+    None UMETA(DisplayName = "None"),
 };
 
 /** Type of contract binding on an item instance.
@@ -506,9 +506,9 @@ enum class EContentFormat : uint8
 UENUM(BlueprintType)
 enum class EContractBindingType : uint8
 {
-    None UMETA(DisplayName = "none"),
-    Session UMETA(DisplayName = "session"),
-    Lifecycle UMETA(DisplayName = "lifecycle"),
+    None UMETA(DisplayName = "None"),
+    Session UMETA(DisplayName = "Session"),
+    Lifecycle UMETA(DisplayName = "Lifecycle"),
 };
 
 /** Action to take on a contract-governed room when contract state changes */
@@ -525,17 +525,17 @@ enum class EContractRoomAction : uint8
 UENUM(BlueprintType)
 enum class EContractStatus : uint8
 {
-    Draft UMETA(DisplayName = "draft"),
-    Proposed UMETA(DisplayName = "proposed"),
-    Pending UMETA(DisplayName = "pending"),
-    Active UMETA(DisplayName = "active"),
-    Fulfilled UMETA(DisplayName = "fulfilled"),
-    Expired UMETA(DisplayName = "expired"),
-    Terminated UMETA(DisplayName = "terminated"),
-    Breached UMETA(DisplayName = "breached"),
-    Suspended UMETA(DisplayName = "suspended"),
-    Disputed UMETA(DisplayName = "disputed"),
-    Declined UMETA(DisplayName = "declined"),
+    Draft UMETA(DisplayName = "Draft"),
+    Proposed UMETA(DisplayName = "Proposed"),
+    Pending UMETA(DisplayName = "Pending"),
+    Active UMETA(DisplayName = "Active"),
+    Fulfilled UMETA(DisplayName = "Fulfilled"),
+    Expired UMETA(DisplayName = "Expired"),
+    Terminated UMETA(DisplayName = "Terminated"),
+    Breached UMETA(DisplayName = "Breached"),
+    Suspended UMETA(DisplayName = "Suspended"),
+    Disputed UMETA(DisplayName = "Disputed"),
+    Declined UMETA(DisplayName = "Declined"),
 };
 
 /** How this location's coordinate system relates to its parent */
@@ -551,30 +551,30 @@ enum class ECoordinateMode : uint8
 UENUM(BlueprintType)
 enum class ECurrencyPrecision : uint8
 {
-    Integer UMETA(DisplayName = "integer"),
-    Decimal2 UMETA(DisplayName = "decimal_2"),
-    Decimal4 UMETA(DisplayName = "decimal_4"),
-    Decimal8 UMETA(DisplayName = "decimal_8"),
-    DecimalFull UMETA(DisplayName = "decimal_full"),
-    BigInteger UMETA(DisplayName = "big_integer"),
+    Integer UMETA(DisplayName = "Integer"),
+    Decimal2 UMETA(DisplayName = "Decimal2"),
+    Decimal4 UMETA(DisplayName = "Decimal4"),
+    Decimal8 UMETA(DisplayName = "Decimal8"),
+    DecimalFull UMETA(DisplayName = "DecimalFull"),
+    BigInteger UMETA(DisplayName = "BigInteger"),
 };
 
 /** Scope of currency availability across realms */
 UENUM(BlueprintType)
 enum class ECurrencyScope : uint8
 {
-    Global UMETA(DisplayName = "global"),
-    RealmSpecific UMETA(DisplayName = "realm_specific"),
-    MultiRealm UMETA(DisplayName = "multi_realm"),
+    Global UMETA(DisplayName = "Global"),
+    RealmSpecific UMETA(DisplayName = "RealmSpecific"),
+    MultiRealm UMETA(DisplayName = "MultiRealm"),
 };
 
 /** Lifecycle status of a deity entity */
 UENUM(BlueprintType)
 enum class EDeityStatus : uint8
 {
-    Active UMETA(DisplayName = "active"),
-    Dormant UMETA(DisplayName = "dormant"),
-    Archived UMETA(DisplayName = "archived"),
+    Active UMETA(DisplayName = "Active"),
+    Dormant UMETA(DisplayName = "Dormant"),
+    Archived UMETA(DisplayName = "Archived"),
 };
 
 /** Result of a deletion operation:
@@ -584,8 +584,8 @@ enum class EDeityStatus : uint8
 UENUM(BlueprintType)
 enum class EDeletionStatus : uint8
 {
-    Deleted UMETA(DisplayName = "deleted"),
-    PermanentlyDeleted UMETA(DisplayName = "permanently_deleted"),
+    Deleted UMETA(DisplayName = "Deleted"),
+    PermanentlyDeleted UMETA(DisplayName = "PermanentlyDeleted"),
 };
 
 /** Algorithm used for delta computation.
@@ -596,9 +596,9 @@ XDELTA: RFC 3284 VCDIFF, efficient for large binary files
 UENUM(BlueprintType)
 enum class EDeltaAlgorithm : uint8
 {
-    JSONPATCH UMETA(DisplayName = "JSON_PATCH"),
-    BSDIFF UMETA(DisplayName = "BSDIFF"),
-    XDELTA UMETA(DisplayName = "XDELTA"),
+    JsonPatch UMETA(DisplayName = "JsonPatch"),
+    Bsdiff UMETA(DisplayName = "Bsdiff"),
+    Xdelta UMETA(DisplayName = "Xdelta"),
 };
 
 /** Current deployment phase for scenario availability gating */
@@ -614,36 +614,36 @@ enum class EDeploymentPhase : uint8
 UENUM(BlueprintType)
 enum class EDestroyReason : uint8
 {
-    Consumed UMETA(DisplayName = "consumed"),
-    Destroyed UMETA(DisplayName = "destroyed"),
-    Expired UMETA(DisplayName = "expired"),
-    Admin UMETA(DisplayName = "admin"),
+    Consumed UMETA(DisplayName = "Consumed"),
+    Destroyed UMETA(DisplayName = "Destroyed"),
+    Expired UMETA(DisplayName = "Expired"),
+    Admin UMETA(DisplayName = "Admin"),
 };
 
 /** Category of client device used for authentication or session tracking */
 UENUM(BlueprintType)
 enum class EDeviceType : uint8
 {
-    Desktop UMETA(DisplayName = "desktop"),
-    Mobile UMETA(DisplayName = "mobile"),
-    Tablet UMETA(DisplayName = "tablet"),
-    Console UMETA(DisplayName = "console"),
+    Desktop UMETA(DisplayName = "Desktop"),
+    Mobile UMETA(DisplayName = "Mobile"),
+    Tablet UMETA(DisplayName = "Tablet"),
+    Console UMETA(DisplayName = "Console"),
 };
 
 /** Fixed categories for type-safe filtering */
 UENUM(BlueprintType)
 enum class EDocumentCategory : uint8
 {
-    GettingStarted UMETA(DisplayName = "getting-started"),
-    ApiReference UMETA(DisplayName = "api-reference"),
-    Architecture UMETA(DisplayName = "architecture"),
-    Deployment UMETA(DisplayName = "deployment"),
-    Troubleshooting UMETA(DisplayName = "troubleshooting"),
-    Tutorials UMETA(DisplayName = "tutorials"),
-    GameSystems UMETA(DisplayName = "game-systems"),
-    WorldLore UMETA(DisplayName = "world-lore"),
-    NpcAi UMETA(DisplayName = "npc-ai"),
-    Other UMETA(DisplayName = "other"),
+    GettingStarted UMETA(DisplayName = "GettingStarted"),
+    ApiReference UMETA(DisplayName = "ApiReference"),
+    Architecture UMETA(DisplayName = "Architecture"),
+    Deployment UMETA(DisplayName = "Deployment"),
+    Troubleshooting UMETA(DisplayName = "Troubleshooting"),
+    Tutorials UMETA(DisplayName = "Tutorials"),
+    GameSystems UMETA(DisplayName = "GameSystems"),
+    WorldLore UMETA(DisplayName = "WorldLore"),
+    NpcAi UMETA(DisplayName = "NpcAi"),
+    Other UMETA(DisplayName = "Other"),
 };
 
 /** How to handle clock gaps after service downtime */
@@ -672,45 +672,45 @@ enum class EEffectCardinality : uint8
 UENUM(BlueprintType)
 enum class EEffectSource : uint8
 {
-    ItemBased UMETA(DisplayName = "item_based"),
-    SeedDerived UMETA(DisplayName = "seed_derived"),
+    ItemBased UMETA(DisplayName = "ItemBased"),
+    SeedDerived UMETA(DisplayName = "SeedDerived"),
 };
 
 /** How the encounter emotionally affected the character */
 UENUM(BlueprintType)
 enum class EEmotionalImpact : uint8
 {
-    GRATITUDE UMETA(DisplayName = "GRATITUDE"),
-    ANGER UMETA(DisplayName = "ANGER"),
-    FEAR UMETA(DisplayName = "FEAR"),
-    RESPECT UMETA(DisplayName = "RESPECT"),
-    CONTEMPT UMETA(DisplayName = "CONTEMPT"),
-    AFFECTION UMETA(DisplayName = "AFFECTION"),
-    RIVALRY UMETA(DisplayName = "RIVALRY"),
-    INDIFFERENCE UMETA(DisplayName = "INDIFFERENCE"),
-    GUILT UMETA(DisplayName = "GUILT"),
-    PRIDE UMETA(DisplayName = "PRIDE"),
+    Gratitude UMETA(DisplayName = "Gratitude"),
+    Anger UMETA(DisplayName = "Anger"),
+    Fear UMETA(DisplayName = "Fear"),
+    Respect UMETA(DisplayName = "Respect"),
+    Contempt UMETA(DisplayName = "Contempt"),
+    Affection UMETA(DisplayName = "Affection"),
+    Rivalry UMETA(DisplayName = "Rivalry"),
+    Indifference UMETA(DisplayName = "Indifference"),
+    Guilt UMETA(DisplayName = "Guilt"),
+    Pride UMETA(DisplayName = "Pride"),
 };
 
 /** Overall outcome of an encounter */
 UENUM(BlueprintType)
 enum class EEncounterOutcome : uint8
 {
-    POSITIVE UMETA(DisplayName = "POSITIVE"),
-    NEGATIVE UMETA(DisplayName = "NEGATIVE"),
-    NEUTRAL UMETA(DisplayName = "NEUTRAL"),
-    MEMORABLE UMETA(DisplayName = "MEMORABLE"),
-    TRANSFORMATIVE UMETA(DisplayName = "TRANSFORMATIVE"),
+    Positive UMETA(DisplayName = "Positive"),
+    Negative UMETA(DisplayName = "Negative"),
+    Neutral UMETA(DisplayName = "Neutral"),
+    Memorable UMETA(DisplayName = "Memorable"),
+    Transformative UMETA(DisplayName = "Transformative"),
 };
 
 /** How contract breaches are handled */
 UENUM(BlueprintType)
 enum class EEnforcementMode : uint8
 {
-    Advisory UMETA(DisplayName = "advisory"),
-    EventOnly UMETA(DisplayName = "event_only"),
-    ConsequenceBased UMETA(DisplayName = "consequence_based"),
-    Community UMETA(DisplayName = "community"),
+    Advisory UMETA(DisplayName = "Advisory"),
+    EventOnly UMETA(DisplayName = "EventOnly"),
+    ConsequenceBased UMETA(DisplayName = "ConsequenceBased"),
+    Community UMETA(DisplayName = "Community"),
 };
 
 /** Universal entity type identifier for first-class Bannou entities.
@@ -723,24 +723,24 @@ See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
 UENUM(BlueprintType)
 enum class EEntityType : uint8
 {
-    System UMETA(DisplayName = "system"),
-    Account UMETA(DisplayName = "account"),
-    Character UMETA(DisplayName = "character"),
-    Actor UMETA(DisplayName = "actor"),
-    Guild UMETA(DisplayName = "guild"),
-    Organization UMETA(DisplayName = "organization"),
-    Government UMETA(DisplayName = "government"),
-    Faction UMETA(DisplayName = "faction"),
-    Location UMETA(DisplayName = "location"),
-    Realm UMETA(DisplayName = "realm"),
-    Item UMETA(DisplayName = "item"),
-    Monster UMETA(DisplayName = "monster"),
-    Relationship UMETA(DisplayName = "relationship"),
-    Session UMETA(DisplayName = "session"),
-    Deity UMETA(DisplayName = "deity"),
-    Dungeon UMETA(DisplayName = "dungeon"),
-    Custom UMETA(DisplayName = "custom"),
-    Other UMETA(DisplayName = "other"),
+    System UMETA(DisplayName = "System"),
+    Account UMETA(DisplayName = "Account"),
+    Character UMETA(DisplayName = "Character"),
+    Actor UMETA(DisplayName = "Actor"),
+    Guild UMETA(DisplayName = "Guild"),
+    Organization UMETA(DisplayName = "Organization"),
+    Government UMETA(DisplayName = "Government"),
+    Faction UMETA(DisplayName = "Faction"),
+    Location UMETA(DisplayName = "Location"),
+    Realm UMETA(DisplayName = "Realm"),
+    Item UMETA(DisplayName = "Item"),
+    Monster UMETA(DisplayName = "Monster"),
+    Relationship UMETA(DisplayName = "Relationship"),
+    Session UMETA(DisplayName = "Session"),
+    Deity UMETA(DisplayName = "Deity"),
+    Dungeon UMETA(DisplayName = "Dungeon"),
+    Custom UMETA(DisplayName = "Custom"),
+    Other UMETA(DisplayName = "Other"),
 };
 
 /** Type of consent being given.
@@ -752,10 +752,10 @@ enum class EEntityType : uint8
 UENUM(BlueprintType)
 enum class EEscrowConsentType : uint8
 {
-    Release UMETA(DisplayName = "release"),
-    Refund UMETA(DisplayName = "refund"),
-    Dispute UMETA(DisplayName = "dispute"),
-    Reaffirm UMETA(DisplayName = "reaffirm"),
+    Release UMETA(DisplayName = "Release"),
+    Refund UMETA(DisplayName = "Refund"),
+    Dispute UMETA(DisplayName = "Dispute"),
+    Reaffirm UMETA(DisplayName = "Reaffirm"),
 };
 
 /** Role of a party in the escrow.
@@ -768,11 +768,11 @@ enum class EEscrowConsentType : uint8
 UENUM(BlueprintType)
 enum class EEscrowPartyRole : uint8
 {
-    Depositor UMETA(DisplayName = "depositor"),
-    Recipient UMETA(DisplayName = "recipient"),
-    DepositorRecipient UMETA(DisplayName = "depositor_recipient"),
-    Arbiter UMETA(DisplayName = "arbiter"),
-    Observer UMETA(DisplayName = "observer"),
+    Depositor UMETA(DisplayName = "Depositor"),
+    Recipient UMETA(DisplayName = "Recipient"),
+    DepositorRecipient UMETA(DisplayName = "DepositorRecipient"),
+    Arbiter UMETA(DisplayName = "Arbiter"),
+    Observer UMETA(DisplayName = "Observer"),
 };
 
 /** How the escrow was resolved.
@@ -786,12 +786,12 @@ enum class EEscrowPartyRole : uint8
 UENUM(BlueprintType)
 enum class EEscrowResolution : uint8
 {
-    Released UMETA(DisplayName = "released"),
-    Refunded UMETA(DisplayName = "refunded"),
-    Split UMETA(DisplayName = "split"),
-    ExpiredRefunded UMETA(DisplayName = "expired_refunded"),
-    CancelledRefunded UMETA(DisplayName = "cancelled_refunded"),
-    ViolationRefunded UMETA(DisplayName = "violation_refunded"),
+    Released UMETA(DisplayName = "Released"),
+    Refunded UMETA(DisplayName = "Refunded"),
+    Split UMETA(DisplayName = "Split"),
+    ExpiredRefunded UMETA(DisplayName = "ExpiredRefunded"),
+    CancelledRefunded UMETA(DisplayName = "CancelledRefunded"),
+    ViolationRefunded UMETA(DisplayName = "ViolationRefunded"),
 };
 
 /** Current status of the escrow agreement.
@@ -813,20 +813,20 @@ enum class EEscrowResolution : uint8
 UENUM(BlueprintType)
 enum class EEscrowStatus : uint8
 {
-    PendingDeposits UMETA(DisplayName = "pending_deposits"),
-    PartiallyFunded UMETA(DisplayName = "partially_funded"),
-    Funded UMETA(DisplayName = "funded"),
-    PendingConsent UMETA(DisplayName = "pending_consent"),
-    PendingCondition UMETA(DisplayName = "pending_condition"),
-    Finalizing UMETA(DisplayName = "finalizing"),
-    Releasing UMETA(DisplayName = "releasing"),
-    Released UMETA(DisplayName = "released"),
-    Refunding UMETA(DisplayName = "refunding"),
-    Refunded UMETA(DisplayName = "refunded"),
-    Disputed UMETA(DisplayName = "disputed"),
-    Expired UMETA(DisplayName = "expired"),
-    Cancelled UMETA(DisplayName = "cancelled"),
-    ValidationFailed UMETA(DisplayName = "validation_failed"),
+    PendingDeposits UMETA(DisplayName = "PendingDeposits"),
+    PartiallyFunded UMETA(DisplayName = "PartiallyFunded"),
+    Funded UMETA(DisplayName = "Funded"),
+    PendingConsent UMETA(DisplayName = "PendingConsent"),
+    PendingCondition UMETA(DisplayName = "PendingCondition"),
+    Finalizing UMETA(DisplayName = "Finalizing"),
+    Releasing UMETA(DisplayName = "Releasing"),
+    Released UMETA(DisplayName = "Released"),
+    Refunding UMETA(DisplayName = "Refunding"),
+    Refunded UMETA(DisplayName = "Refunded"),
+    Disputed UMETA(DisplayName = "Disputed"),
+    Expired UMETA(DisplayName = "Expired"),
+    Cancelled UMETA(DisplayName = "Cancelled"),
+    ValidationFailed UMETA(DisplayName = "ValidationFailed"),
 };
 
 /** Trust model for the escrow agreement.
@@ -837,9 +837,9 @@ enum class EEscrowStatus : uint8
 UENUM(BlueprintType)
 enum class EEscrowTrustMode : uint8
 {
-    FullConsent UMETA(DisplayName = "full_consent"),
-    InitiatorTrusted UMETA(DisplayName = "initiator_trusted"),
-    SinglePartyTrusted UMETA(DisplayName = "single_party_trusted"),
+    FullConsent UMETA(DisplayName = "FullConsent"),
+    InitiatorTrusted UMETA(DisplayName = "InitiatorTrusted"),
+    SinglePartyTrusted UMETA(DisplayName = "SinglePartyTrusted"),
 };
 
 /** Type of escrow agreement.
@@ -851,32 +851,32 @@ enum class EEscrowTrustMode : uint8
 UENUM(BlueprintType)
 enum class EEscrowType : uint8
 {
-    TwoParty UMETA(DisplayName = "two_party"),
-    MultiParty UMETA(DisplayName = "multi_party"),
-    Conditional UMETA(DisplayName = "conditional"),
-    Auction UMETA(DisplayName = "auction"),
+    TwoParty UMETA(DisplayName = "TwoParty"),
+    MultiParty UMETA(DisplayName = "MultiParty"),
+    Conditional UMETA(DisplayName = "Conditional"),
+    Auction UMETA(DisplayName = "Auction"),
 };
 
 /** Categories of historical events that characters can participate in */
 UENUM(BlueprintType)
 enum class EEventCategory : uint8
 {
-    WAR UMETA(DisplayName = "WAR"),
-    NATURALDISASTER UMETA(DisplayName = "NATURAL_DISASTER"),
-    POLITICAL UMETA(DisplayName = "POLITICAL"),
-    ECONOMIC UMETA(DisplayName = "ECONOMIC"),
-    RELIGIOUS UMETA(DisplayName = "RELIGIOUS"),
-    CULTURAL UMETA(DisplayName = "CULTURAL"),
-    PERSONAL UMETA(DisplayName = "PERSONAL"),
+    War UMETA(DisplayName = "War"),
+    NaturalDisaster UMETA(DisplayName = "NaturalDisaster"),
+    Political UMETA(DisplayName = "Political"),
+    Economic UMETA(DisplayName = "Economic"),
+    Religious UMETA(DisplayName = "Religious"),
+    Cultural UMETA(DisplayName = "Cultural"),
+    Personal UMETA(DisplayName = "Personal"),
 };
 
 /** How currency expiration is determined */
 UENUM(BlueprintType)
 enum class EExpirationPolicy : uint8
 {
-    FixedDate UMETA(DisplayName = "fixed_date"),
-    DurationFromEarn UMETA(DisplayName = "duration_from_earn"),
-    EndOfSeason UMETA(DisplayName = "end_of_season"),
+    FixedDate UMETA(DisplayName = "FixedDate"),
+    DurationFromEarn UMETA(DisplayName = "DurationFromEarn"),
+    EndOfSeason UMETA(DisplayName = "EndOfSeason"),
 };
 
 /** Role hierarchy for faction membership */
@@ -902,11 +902,11 @@ enum class EFactionStatus : uint8
 UENUM(BlueprintType)
 enum class EGameActionType : uint8
 {
-    Move UMETA(DisplayName = "move"),
-    Interact UMETA(DisplayName = "interact"),
-    Attack UMETA(DisplayName = "attack"),
-    CastSpell UMETA(DisplayName = "cast_spell"),
-    UseItem UMETA(DisplayName = "use_item"),
+    Move UMETA(DisplayName = "Move"),
+    Interact UMETA(DisplayName = "Interact"),
+    Attack UMETA(DisplayName = "Attack"),
+    CastSpell UMETA(DisplayName = "CastSpell"),
+    UseItem UMETA(DisplayName = "UseItem"),
 };
 
 /** How a successful status grant was resolved.
@@ -918,10 +918,10 @@ enum class EGameActionType : uint8
 UENUM(BlueprintType)
 enum class EGrantResult : uint8
 {
-    Granted UMETA(DisplayName = "granted"),
-    Stacked UMETA(DisplayName = "stacked"),
-    Refreshed UMETA(DisplayName = "refreshed"),
-    Replaced UMETA(DisplayName = "replaced"),
+    Granted UMETA(DisplayName = "Granted"),
+    Stacked UMETA(DisplayName = "Stacked"),
+    Refreshed UMETA(DisplayName = "Refreshed"),
+    Replaced UMETA(DisplayName = "Replaced"),
 };
 
 /** Preferred role when fighting in groups. Affects positioning,
@@ -930,91 +930,91 @@ target priority, and coordination behavior.
 UENUM(BlueprintType)
 enum class EGroupRole : uint8
 {
-    FRONTLINE UMETA(DisplayName = "FRONTLINE"),
-    SUPPORT UMETA(DisplayName = "SUPPORT"),
-    FLANKER UMETA(DisplayName = "FLANKER"),
-    LEADER UMETA(DisplayName = "LEADER"),
-    SOLO UMETA(DisplayName = "SOLO"),
+    Frontline UMETA(DisplayName = "Frontline"),
+    Support UMETA(DisplayName = "Support"),
+    Flanker UMETA(DisplayName = "Flanker"),
+    Leader UMETA(DisplayName = "Leader"),
+    Solo UMETA(DisplayName = "Solo"),
 };
 
 /** Current status of an authorization hold */
 UENUM(BlueprintType)
 enum class EHoldStatus : uint8
 {
-    Active UMETA(DisplayName = "active"),
-    Captured UMETA(DisplayName = "captured"),
-    Released UMETA(DisplayName = "released"),
-    Expired UMETA(DisplayName = "expired"),
+    Active UMETA(DisplayName = "Active"),
+    Captured UMETA(DisplayName = "Captured"),
+    Released UMETA(DisplayName = "Released"),
+    Expired UMETA(DisplayName = "Expired"),
 };
 
 /** HTTP method for endpoint invocation */
 UENUM(BlueprintType)
 enum class EHttpMethodType : uint8
 {
-    GET UMETA(DisplayName = "GET"),
-    POST UMETA(DisplayName = "POST"),
-    PUT UMETA(DisplayName = "PUT"),
-    DELETE UMETA(DisplayName = "DELETE"),
-    PATCH UMETA(DisplayName = "PATCH"),
+    Get UMETA(DisplayName = "Get"),
+    Post UMETA(DisplayName = "Post"),
+    Put UMETA(DisplayName = "Put"),
+    Delete UMETA(DisplayName = "Delete"),
+    Patch UMETA(DisplayName = "Patch"),
 };
 
 /** Item classification category */
 UENUM(BlueprintType)
 enum class EItemCategory : uint8
 {
-    Weapon UMETA(DisplayName = "weapon"),
-    Armor UMETA(DisplayName = "armor"),
-    Accessory UMETA(DisplayName = "accessory"),
-    Consumable UMETA(DisplayName = "consumable"),
-    Material UMETA(DisplayName = "material"),
-    Container UMETA(DisplayName = "container"),
-    Quest UMETA(DisplayName = "quest"),
-    CurrencyLike UMETA(DisplayName = "currency_like"),
-    Misc UMETA(DisplayName = "misc"),
-    Custom UMETA(DisplayName = "custom"),
+    Weapon UMETA(DisplayName = "Weapon"),
+    Armor UMETA(DisplayName = "Armor"),
+    Accessory UMETA(DisplayName = "Accessory"),
+    Consumable UMETA(DisplayName = "Consumable"),
+    Material UMETA(DisplayName = "Material"),
+    Container UMETA(DisplayName = "Container"),
+    Quest UMETA(DisplayName = "Quest"),
+    CurrencyLike UMETA(DisplayName = "CurrencyLike"),
+    Misc UMETA(DisplayName = "Misc"),
+    Custom UMETA(DisplayName = "Custom"),
 };
 
 /** How currency is linked to inventory items */
 UENUM(BlueprintType)
 enum class EItemLinkageMode : uint8
 {
-    None UMETA(DisplayName = "none"),
-    VisualOnly UMETA(DisplayName = "visual_only"),
-    ReferenceOnly UMETA(DisplayName = "reference_only"),
+    None UMETA(DisplayName = "None"),
+    VisualOnly UMETA(DisplayName = "VisualOnly"),
+    ReferenceOnly UMETA(DisplayName = "ReferenceOnly"),
 };
 
 /** How an item instance was created */
 UENUM(BlueprintType)
 enum class EItemOriginType : uint8
 {
-    Loot UMETA(DisplayName = "loot"),
-    Quest UMETA(DisplayName = "quest"),
-    Craft UMETA(DisplayName = "craft"),
-    Trade UMETA(DisplayName = "trade"),
-    Purchase UMETA(DisplayName = "purchase"),
-    Spawn UMETA(DisplayName = "spawn"),
-    Other UMETA(DisplayName = "other"),
+    Loot UMETA(DisplayName = "Loot"),
+    Quest UMETA(DisplayName = "Quest"),
+    Craft UMETA(DisplayName = "Craft"),
+    Trade UMETA(DisplayName = "Trade"),
+    Purchase UMETA(DisplayName = "Purchase"),
+    Spawn UMETA(DisplayName = "Spawn"),
+    Other UMETA(DisplayName = "Other"),
 };
 
 /** Item rarity tier */
 UENUM(BlueprintType)
 enum class EItemRarity : uint8
 {
-    Common UMETA(DisplayName = "common"),
-    Uncommon UMETA(DisplayName = "uncommon"),
-    Rare UMETA(DisplayName = "rare"),
-    Epic UMETA(DisplayName = "epic"),
-    Legendary UMETA(DisplayName = "legendary"),
-    Custom UMETA(DisplayName = "custom"),
+    Common UMETA(DisplayName = "Common"),
+    Uncommon UMETA(DisplayName = "Uncommon"),
+    Rare UMETA(DisplayName = "Rare"),
+    Epic UMETA(DisplayName = "Epic"),
+    Legendary UMETA(DisplayName = "Legendary"),
+    Custom UMETA(DisplayName = "Custom"),
 };
 
 /** Realm availability scope (consistent with CurrencyScope) */
 UENUM(BlueprintType)
 enum class EItemScope : uint8
 {
-    Global UMETA(DisplayName = "global"),
-    RealmSpecific UMETA(DisplayName = "realm_specific"),
-    MultiRealm UMETA(DisplayName = "multi_realm"),
+    Global UMETA(DisplayName = "Global"),
+    RealmSpecific UMETA(DisplayName = "RealmSpecific"),
+    MultiRealm UMETA(DisplayName = "MultiRealm"),
 };
 
 /** Controls item consumption on use.
@@ -1025,31 +1025,31 @@ enum class EItemScope : uint8
 UENUM(BlueprintType)
 enum class EItemUseBehavior : uint8
 {
-    Disabled UMETA(DisplayName = "disabled"),
-    DestroyOnSuccess UMETA(DisplayName = "destroy_on_success"),
-    DestroyAlways UMETA(DisplayName = "destroy_always"),
+    Disabled UMETA(DisplayName = "Disabled"),
+    DestroyOnSuccess UMETA(DisplayName = "DestroyOnSuccess"),
+    DestroyAlways UMETA(DisplayName = "DestroyAlways"),
 };
 
 /** Lifecycle status of a journey leg */
 UENUM(BlueprintType)
 enum class EJourneyLegStatus : uint8
 {
-    Pending UMETA(DisplayName = "pending"),
-    InProgress UMETA(DisplayName = "in_progress"),
-    Completed UMETA(DisplayName = "completed"),
-    Skipped UMETA(DisplayName = "skipped"),
+    Pending UMETA(DisplayName = "Pending"),
+    InProgress UMETA(DisplayName = "InProgress"),
+    Completed UMETA(DisplayName = "Completed"),
+    Skipped UMETA(DisplayName = "Skipped"),
 };
 
 /** Lifecycle status of a transit journey */
 UENUM(BlueprintType)
 enum class EJourneyStatus : uint8
 {
-    Preparing UMETA(DisplayName = "preparing"),
-    InTransit UMETA(DisplayName = "in_transit"),
-    AtWaypoint UMETA(DisplayName = "at_waypoint"),
-    Arrived UMETA(DisplayName = "arrived"),
-    Interrupted UMETA(DisplayName = "interrupted"),
-    Abandoned UMETA(DisplayName = "abandoned"),
+    Preparing UMETA(DisplayName = "Preparing"),
+    InTransit UMETA(DisplayName = "InTransit"),
+    AtWaypoint UMETA(DisplayName = "AtWaypoint"),
+    Arrived UMETA(DisplayName = "Arrived"),
+    Interrupted UMETA(DisplayName = "Interrupted"),
+    Abandoned UMETA(DisplayName = "Abandoned"),
 };
 
 /** Unlock status of a license node on a board.
@@ -1060,34 +1060,34 @@ enum class EJourneyStatus : uint8
 UENUM(BlueprintType)
 enum class ELicenseStatus : uint8
 {
-    Locked UMETA(DisplayName = "locked"),
-    Unlockable UMETA(DisplayName = "unlockable"),
-    Unlocked UMETA(DisplayName = "unlocked"),
+    Locked UMETA(DisplayName = "Locked"),
+    Unlockable UMETA(DisplayName = "Unlockable"),
+    Unlocked UMETA(DisplayName = "Unlocked"),
 };
 
 /** Fields available for sorting document lists */
 UENUM(BlueprintType)
 enum class EListSortField : uint8
 {
-    CreatedAt UMETA(DisplayName = "created_at"),
-    UpdatedAt UMETA(DisplayName = "updated_at"),
-    Title UMETA(DisplayName = "title"),
+    CreatedAt UMETA(DisplayName = "CreatedAt"),
+    UpdatedAt UMETA(DisplayName = "UpdatedAt"),
+    Title UMETA(DisplayName = "Title"),
 };
 
 /** Type classification for locations */
 UENUM(BlueprintType)
 enum class ELocationType : uint8
 {
-    CONTINENT UMETA(DisplayName = "CONTINENT"),
-    REGION UMETA(DisplayName = "REGION"),
-    CITY UMETA(DisplayName = "CITY"),
-    DISTRICT UMETA(DisplayName = "DISTRICT"),
-    BUILDING UMETA(DisplayName = "BUILDING"),
-    ROOM UMETA(DisplayName = "ROOM"),
-    LANDMARK UMETA(DisplayName = "LANDMARK"),
-    WILDERNESS UMETA(DisplayName = "WILDERNESS"),
-    DUNGEON UMETA(DisplayName = "DUNGEON"),
-    OTHER UMETA(DisplayName = "OTHER"),
+    Continent UMETA(DisplayName = "Continent"),
+    Region UMETA(DisplayName = "Region"),
+    City UMETA(DisplayName = "City"),
+    District UMETA(DisplayName = "District"),
+    Building UMETA(DisplayName = "Building"),
+    Room UMETA(DisplayName = "Room"),
+    Landmark UMETA(DisplayName = "Landmark"),
+    Wilderness UMETA(DisplayName = "Wilderness"),
+    Dungeon UMETA(DisplayName = "Dungeon"),
+    Other UMETA(DisplayName = "Other"),
 };
 
 /** The category of spatial data this map contains.
@@ -1096,32 +1096,32 @@ Different kinds have different update frequencies, storage models, and TTLs.
 UENUM(BlueprintType)
 enum class EMapKind : uint8
 {
-    Terrain UMETA(DisplayName = "terrain"),
-    StaticGeometry UMETA(DisplayName = "static_geometry"),
-    Navigation UMETA(DisplayName = "navigation"),
-    Resources UMETA(DisplayName = "resources"),
-    SpawnPoints UMETA(DisplayName = "spawn_points"),
-    PointsOfInterest UMETA(DisplayName = "points_of_interest"),
-    DynamicObjects UMETA(DisplayName = "dynamic_objects"),
-    Hazards UMETA(DisplayName = "hazards"),
-    WeatherEffects UMETA(DisplayName = "weather_effects"),
-    Ownership UMETA(DisplayName = "ownership"),
-    CombatEffects UMETA(DisplayName = "combat_effects"),
-    VisualEffects UMETA(DisplayName = "visual_effects"),
+    Terrain UMETA(DisplayName = "Terrain"),
+    StaticGeometry UMETA(DisplayName = "StaticGeometry"),
+    Navigation UMETA(DisplayName = "Navigation"),
+    Resources UMETA(DisplayName = "Resources"),
+    SpawnPoints UMETA(DisplayName = "SpawnPoints"),
+    PointsOfInterest UMETA(DisplayName = "PointsOfInterest"),
+    DynamicObjects UMETA(DisplayName = "DynamicObjects"),
+    Hazards UMETA(DisplayName = "Hazards"),
+    WeatherEffects UMETA(DisplayName = "WeatherEffects"),
+    Ownership UMETA(DisplayName = "Ownership"),
+    CombatEffects UMETA(DisplayName = "CombatEffects"),
+    VisualEffects UMETA(DisplayName = "VisualEffects"),
 };
 
 /** Types of marker nodes for spawn points, waypoints, and other positional markers. */
 UENUM(BlueprintType)
 enum class EMarkerType : uint8
 {
-    Generic UMETA(DisplayName = "generic"),
-    SpawnPoint UMETA(DisplayName = "spawn_point"),
-    NpcSpawn UMETA(DisplayName = "npc_spawn"),
-    Waypoint UMETA(DisplayName = "waypoint"),
-    CameraPoint UMETA(DisplayName = "camera_point"),
-    LightPoint UMETA(DisplayName = "light_point"),
-    AudioPoint UMETA(DisplayName = "audio_point"),
-    TriggerPoint UMETA(DisplayName = "trigger_point"),
+    Generic UMETA(DisplayName = "Generic"),
+    SpawnPoint UMETA(DisplayName = "SpawnPoint"),
+    NpcSpawn UMETA(DisplayName = "NpcSpawn"),
+    Waypoint UMETA(DisplayName = "Waypoint"),
+    CameraPoint UMETA(DisplayName = "CameraPoint"),
+    LightPoint UMETA(DisplayName = "LightPoint"),
+    AudioPoint UMETA(DisplayName = "AudioPoint"),
+    TriggerPoint UMETA(DisplayName = "TriggerPoint"),
 };
 
 /** Determines what kind of content a room accepts */
@@ -1138,24 +1138,24 @@ enum class EMessageFormat : uint8
 UENUM(BlueprintType)
 enum class EMetabundleErrorCode : uint8
 {
-    SOURCEBUNDLENOTFOUND UMETA(DisplayName = "SOURCE_BUNDLE_NOT_FOUND"),
-    SOURCEBUNDLENOTREADY UMETA(DisplayName = "SOURCE_BUNDLE_NOT_READY"),
-    STANDALONEASSETNOTFOUND UMETA(DisplayName = "STANDALONE_ASSET_NOT_FOUND"),
-    STANDALONEASSETNOTREADY UMETA(DisplayName = "STANDALONE_ASSET_NOT_READY"),
-    REALMMISMATCH UMETA(DisplayName = "REALM_MISMATCH"),
-    ASSETCONFLICT UMETA(DisplayName = "ASSET_CONFLICT"),
-    STORAGEERROR UMETA(DisplayName = "STORAGE_ERROR"),
-    TIMEOUT UMETA(DisplayName = "TIMEOUT"),
-    CANCELLED UMETA(DisplayName = "CANCELLED"),
-    INTERNALERROR UMETA(DisplayName = "INTERNAL_ERROR"),
+    SourceBundleNotFound UMETA(DisplayName = "SourceBundleNotFound"),
+    SourceBundleNotReady UMETA(DisplayName = "SourceBundleNotReady"),
+    StandaloneAssetNotFound UMETA(DisplayName = "StandaloneAssetNotFound"),
+    StandaloneAssetNotReady UMETA(DisplayName = "StandaloneAssetNotReady"),
+    RealmMismatch UMETA(DisplayName = "RealmMismatch"),
+    AssetConflict UMETA(DisplayName = "AssetConflict"),
+    StorageError UMETA(DisplayName = "StorageError"),
+    Timeout UMETA(DisplayName = "Timeout"),
+    Cancelled UMETA(DisplayName = "Cancelled"),
+    InternalError UMETA(DisplayName = "InternalError"),
 };
 
 /** Type of metadata to update */
 UENUM(BlueprintType)
 enum class EMetadataType : uint8
 {
-    InstanceData UMETA(DisplayName = "instance_data"),
-    RuntimeState UMETA(DisplayName = "runtime_state"),
+    InstanceData UMETA(DisplayName = "InstanceData"),
+    RuntimeState UMETA(DisplayName = "RuntimeState"),
 };
 
 /** MIDI event type */
@@ -1172,20 +1172,20 @@ enum class EMidiEventType : uint8
 UENUM(BlueprintType)
 enum class EMilestoneDeadlineBehavior : uint8
 {
-    Skip UMETA(DisplayName = "skip"),
-    Warn UMETA(DisplayName = "warn"),
-    Breach UMETA(DisplayName = "breach"),
+    Skip UMETA(DisplayName = "Skip"),
+    Warn UMETA(DisplayName = "Warn"),
+    Breach UMETA(DisplayName = "Breach"),
 };
 
 /** Current status of a milestone */
 UENUM(BlueprintType)
 enum class EMilestoneStatus : uint8
 {
-    Pending UMETA(DisplayName = "pending"),
-    Active UMETA(DisplayName = "active"),
-    Completed UMETA(DisplayName = "completed"),
-    Failed UMETA(DisplayName = "failed"),
-    Skipped UMETA(DisplayName = "skipped"),
+    Pending UMETA(DisplayName = "Pending"),
+    Active UMETA(DisplayName = "Active"),
+    Completed UMETA(DisplayName = "Completed"),
+    Failed UMETA(DisplayName = "Failed"),
+    Skipped UMETA(DisplayName = "Skipped"),
 };
 
 /** Musical mode/scale type */
@@ -1233,22 +1233,22 @@ to their own needs via tags and annotations.
 UENUM(BlueprintType)
 enum class ENodeType : uint8
 {
-    Group UMETA(DisplayName = "group"),
-    Mesh UMETA(DisplayName = "mesh"),
-    Marker UMETA(DisplayName = "marker"),
-    Volume UMETA(DisplayName = "volume"),
-    Emitter UMETA(DisplayName = "emitter"),
-    Reference UMETA(DisplayName = "reference"),
-    Custom UMETA(DisplayName = "custom"),
+    Group UMETA(DisplayName = "Group"),
+    Mesh UMETA(DisplayName = "Mesh"),
+    Marker UMETA(DisplayName = "Marker"),
+    Volume UMETA(DisplayName = "Volume"),
+    Emitter UMETA(DisplayName = "Emitter"),
+    Reference UMETA(DisplayName = "Reference"),
+    Custom UMETA(DisplayName = "Custom"),
 };
 
 /** How to handle publish attempts from non-authority sources */
 UENUM(BlueprintType)
 enum class ENonAuthorityHandlingMode : uint8
 {
-    RejectAndAlert UMETA(DisplayName = "reject_and_alert"),
-    AcceptAndAlert UMETA(DisplayName = "accept_and_alert"),
-    RejectSilent UMETA(DisplayName = "reject_silent"),
+    RejectAndAlert UMETA(DisplayName = "RejectAndAlert"),
+    AcceptAndAlert UMETA(DisplayName = "AcceptAndAlert"),
+    RejectSilent UMETA(DisplayName = "RejectSilent"),
 };
 
 /** Applicability scope for a behavioral norm */
@@ -1272,86 +1272,86 @@ enum class ENormSeverity : uint8
 UENUM(BlueprintType)
 enum class EObjectiveRevealBehavior : uint8
 {
-    ALWAYS UMETA(DisplayName = "ALWAYS"),
-    ONPROGRESS UMETA(DisplayName = "ON_PROGRESS"),
-    ONCOMPLETE UMETA(DisplayName = "ON_COMPLETE"),
-    NEVER UMETA(DisplayName = "NEVER"),
+    Always UMETA(DisplayName = "Always"),
+    OnProgress UMETA(DisplayName = "OnProgress"),
+    OnComplete UMETA(DisplayName = "OnComplete"),
+    Never UMETA(DisplayName = "Never"),
 };
 
 /** Type of objective determining progress tracking logic */
 UENUM(BlueprintType)
 enum class EObjectiveType : uint8
 {
-    KILL UMETA(DisplayName = "KILL"),
-    COLLECT UMETA(DisplayName = "COLLECT"),
-    DELIVER UMETA(DisplayName = "DELIVER"),
-    TRAVEL UMETA(DisplayName = "TRAVEL"),
-    DISCOVER UMETA(DisplayName = "DISCOVER"),
-    TALK UMETA(DisplayName = "TALK"),
-    CRAFT UMETA(DisplayName = "CRAFT"),
-    ESCORT UMETA(DisplayName = "ESCORT"),
-    DEFEND UMETA(DisplayName = "DEFEND"),
-    CUSTOM UMETA(DisplayName = "CUSTOM"),
+    Kill UMETA(DisplayName = "Kill"),
+    Collect UMETA(DisplayName = "Collect"),
+    Deliver UMETA(DisplayName = "Deliver"),
+    Travel UMETA(DisplayName = "Travel"),
+    Discover UMETA(DisplayName = "Discover"),
+    Talk UMETA(DisplayName = "Talk"),
+    Craft UMETA(DisplayName = "Craft"),
+    Escort UMETA(DisplayName = "Escort"),
+    Defend UMETA(DisplayName = "Defend"),
+    Custom UMETA(DisplayName = "Custom"),
 };
 
 /** Action to take when the referenced resource is deleted.
-CASCADE: Delete dependent entities when resource is deleted
-RESTRICT: Block resource deletion if references exist
-DETACH: Set reference to null when resource is deleted
+Cascade: Delete dependent entities when resource is deleted
+Restrict: Block resource deletion if references exist
+Detach: Set reference to null when resource is deleted
  */
 UENUM(BlueprintType)
 enum class EOnDeleteAction : uint8
 {
-    CASCADE UMETA(DisplayName = "CASCADE"),
-    RESTRICT UMETA(DisplayName = "RESTRICT"),
-    DETACH UMETA(DisplayName = "DETACH"),
+    Cascade UMETA(DisplayName = "Cascade"),
+    Restrict UMETA(DisplayName = "Restrict"),
+    Detach UMETA(DisplayName = "Detach"),
 };
 
 /** How the character participated in the historical event */
 UENUM(BlueprintType)
 enum class EParticipationRole : uint8
 {
-    LEADER UMETA(DisplayName = "LEADER"),
-    COMBATANT UMETA(DisplayName = "COMBATANT"),
-    VICTIM UMETA(DisplayName = "VICTIM"),
-    WITNESS UMETA(DisplayName = "WITNESS"),
-    BENEFICIARY UMETA(DisplayName = "BENEFICIARY"),
-    CONSPIRATOR UMETA(DisplayName = "CONSPIRATOR"),
-    HERO UMETA(DisplayName = "HERO"),
-    SURVIVOR UMETA(DisplayName = "SURVIVOR"),
+    Leader UMETA(DisplayName = "Leader"),
+    Combatant UMETA(DisplayName = "Combatant"),
+    Victim UMETA(DisplayName = "Victim"),
+    Witness UMETA(DisplayName = "Witness"),
+    Beneficiary UMETA(DisplayName = "Beneficiary"),
+    Conspirator UMETA(DisplayName = "Conspirator"),
+    Hero UMETA(DisplayName = "Hero"),
+    Survivor UMETA(DisplayName = "Survivor"),
 };
 
 /** Method for aggregating party member skills */
 UENUM(BlueprintType)
 enum class EPartySkillAggregation : uint8
 {
-    Highest UMETA(DisplayName = "highest"),
-    Average UMETA(DisplayName = "average"),
-    Weighted UMETA(DisplayName = "weighted"),
+    Highest UMETA(DisplayName = "Highest"),
+    Average UMETA(DisplayName = "Average"),
+    Weighted UMETA(DisplayName = "Weighted"),
 };
 
 /** When payments occur */
 UENUM(BlueprintType)
 enum class EPaymentSchedule : uint8
 {
-    OneTime UMETA(DisplayName = "one_time"),
-    Recurring UMETA(DisplayName = "recurring"),
-    MilestoneBased UMETA(DisplayName = "milestone_based"),
+    OneTime UMETA(DisplayName = "OneTime"),
+    Recurring UMETA(DisplayName = "Recurring"),
+    MilestoneBased UMETA(DisplayName = "MilestoneBased"),
 };
 
 /** Type of source generating a perception event */
 UENUM(BlueprintType)
 enum class EPerceptionSourceType : uint8
 {
-    Character UMETA(DisplayName = "character"),
-    Npc UMETA(DisplayName = "npc"),
-    Object UMETA(DisplayName = "object"),
-    Environment UMETA(DisplayName = "environment"),
-    Coordinator UMETA(DisplayName = "coordinator"),
-    Scheduled UMETA(DisplayName = "scheduled"),
-    Message UMETA(DisplayName = "message"),
-    Service UMETA(DisplayName = "service"),
-    System UMETA(DisplayName = "system"),
+    Character UMETA(DisplayName = "Character"),
+    Npc UMETA(DisplayName = "Npc"),
+    Object UMETA(DisplayName = "Object"),
+    Environment UMETA(DisplayName = "Environment"),
+    Coordinator UMETA(DisplayName = "Coordinator"),
+    Scheduled UMETA(DisplayName = "Scheduled"),
+    Message UMETA(DisplayName = "Message"),
+    Service UMETA(DisplayName = "Service"),
+    System UMETA(DisplayName = "System"),
 };
 
 /** Whether room messages are stored in Redis (TTL) or MySQL (durable) */
@@ -1397,19 +1397,19 @@ enum class EPlanningUrgency : uint8
 UENUM(BlueprintType)
 enum class EPlatform : uint8
 {
-    Steam UMETA(DisplayName = "steam"),
-    Xbox UMETA(DisplayName = "xbox"),
-    Playstation UMETA(DisplayName = "playstation"),
-    Internal UMETA(DisplayName = "internal"),
+    Steam UMETA(DisplayName = "Steam"),
+    Xbox UMETA(DisplayName = "Xbox"),
+    PlayStation UMETA(DisplayName = "PlayStation"),
+    Internal UMETA(DisplayName = "Internal"),
 };
 
 /** Role of the player in the game session */
 UENUM(BlueprintType)
 enum class EPlayerRole : uint8
 {
-    Player UMETA(DisplayName = "player"),
-    Spectator UMETA(DisplayName = "spectator"),
-    Moderator UMETA(DisplayName = "moderator"),
+    Player UMETA(DisplayName = "Player"),
+    Spectator UMETA(DisplayName = "Spectator"),
+    Moderator UMETA(DisplayName = "Moderator"),
 };
 
 /** Outcome of interacting with a POI */
@@ -1447,9 +1447,9 @@ enum class EPoiType : uint8
 UENUM(BlueprintType)
 enum class EPreboundApiExecutionMode : uint8
 {
-    Sync UMETA(DisplayName = "sync"),
-    Async UMETA(DisplayName = "async"),
-    FireAndForget UMETA(DisplayName = "fire_and_forget"),
+    Sync UMETA(DisplayName = "Sync"),
+    Async UMETA(DisplayName = "Async"),
+    FireAndForget UMETA(DisplayName = "FireAndForget"),
 };
 
 /** Preferred engagement distance. Influences positioning and
@@ -1458,86 +1458,86 @@ ability selection in combat.
 UENUM(BlueprintType)
 enum class EPreferredRange : uint8
 {
-    MELEE UMETA(DisplayName = "MELEE"),
-    CLOSE UMETA(DisplayName = "CLOSE"),
-    MEDIUM UMETA(DisplayName = "MEDIUM"),
-    RANGED UMETA(DisplayName = "RANGED"),
+    Melee UMETA(DisplayName = "Melee"),
+    Close UMETA(DisplayName = "Close"),
+    Medium UMETA(DisplayName = "Medium"),
+    Ranged UMETA(DisplayName = "Ranged"),
 };
 
 /** Type of prerequisite check */
 UENUM(BlueprintType)
 enum class EPrerequisiteType : uint8
 {
-    QUESTCOMPLETED UMETA(DisplayName = "QUEST_COMPLETED"),
-    CHARACTERLEVEL UMETA(DisplayName = "CHARACTER_LEVEL"),
-    REPUTATION UMETA(DisplayName = "REPUTATION"),
-    ITEMOWNED UMETA(DisplayName = "ITEM_OWNED"),
-    CURRENCYAMOUNT UMETA(DisplayName = "CURRENCY_AMOUNT"),
+    QuestCompleted UMETA(DisplayName = "QuestCompleted"),
+    CharacterLevel UMETA(DisplayName = "CharacterLevel"),
+    Reputation UMETA(DisplayName = "Reputation"),
+    ItemOwned UMETA(DisplayName = "ItemOwned"),
+    CurrencyAmount UMETA(DisplayName = "CurrencyAmount"),
 };
 
 /** Asset processing pipeline status */
 UENUM(BlueprintType)
 enum class EProcessingStatus : uint8
 {
-    Pending UMETA(DisplayName = "pending"),
-    Processing UMETA(DisplayName = "processing"),
-    Complete UMETA(DisplayName = "complete"),
-    Failed UMETA(DisplayName = "failed"),
+    Pending UMETA(DisplayName = "Pending"),
+    Processing UMETA(DisplayName = "Processing"),
+    Complete UMETA(DisplayName = "Complete"),
+    Failed UMETA(DisplayName = "Failed"),
 };
 
 /** Authentication provider type */
 UENUM(BlueprintType)
 enum class EProvider : uint8
 {
-    Google UMETA(DisplayName = "google"),
-    Discord UMETA(DisplayName = "discord"),
-    Twitch UMETA(DisplayName = "twitch"),
-    Steam UMETA(DisplayName = "steam"),
+    Google UMETA(DisplayName = "Google"),
+    Discord UMETA(DisplayName = "Discord"),
+    Twitch UMETA(DisplayName = "Twitch"),
+    Steam UMETA(DisplayName = "Steam"),
 };
 
 /** How quantities are tracked for this item type */
 UENUM(BlueprintType)
 enum class EQuantityModel : uint8
 {
-    Discrete UMETA(DisplayName = "discrete"),
-    Continuous UMETA(DisplayName = "continuous"),
-    Unique UMETA(DisplayName = "unique"),
+    Discrete UMETA(DisplayName = "Discrete"),
+    Continuous UMETA(DisplayName = "Continuous"),
+    Unique UMETA(DisplayName = "Unique"),
 };
 
 /** Category of quest for organization */
 UENUM(BlueprintType)
 enum class EQuestCategory : uint8
 {
-    MAIN UMETA(DisplayName = "MAIN"),
-    SIDE UMETA(DisplayName = "SIDE"),
-    BOUNTY UMETA(DisplayName = "BOUNTY"),
-    DAILY UMETA(DisplayName = "DAILY"),
-    WEEKLY UMETA(DisplayName = "WEEKLY"),
-    EVENT UMETA(DisplayName = "EVENT"),
-    TUTORIAL UMETA(DisplayName = "TUTORIAL"),
+    Main UMETA(DisplayName = "Main"),
+    Side UMETA(DisplayName = "Side"),
+    Bounty UMETA(DisplayName = "Bounty"),
+    Daily UMETA(DisplayName = "Daily"),
+    Weekly UMETA(DisplayName = "Weekly"),
+    Event UMETA(DisplayName = "Event"),
+    Tutorial UMETA(DisplayName = "Tutorial"),
 };
 
 /** Difficulty rating of the quest */
 UENUM(BlueprintType)
 enum class EQuestDifficulty : uint8
 {
-    TRIVIAL UMETA(DisplayName = "TRIVIAL"),
-    EASY UMETA(DisplayName = "EASY"),
-    NORMAL UMETA(DisplayName = "NORMAL"),
-    HARD UMETA(DisplayName = "HARD"),
-    HEROIC UMETA(DisplayName = "HEROIC"),
-    LEGENDARY UMETA(DisplayName = "LEGENDARY"),
+    Trivial UMETA(DisplayName = "Trivial"),
+    Easy UMETA(DisplayName = "Easy"),
+    Normal UMETA(DisplayName = "Normal"),
+    Hard UMETA(DisplayName = "Hard"),
+    Heroic UMETA(DisplayName = "Heroic"),
+    Legendary UMETA(DisplayName = "Legendary"),
 };
 
 /** Current status of a quest instance */
 UENUM(BlueprintType)
 enum class EQuestStatus : uint8
 {
-    ACTIVE UMETA(DisplayName = "ACTIVE"),
-    COMPLETED UMETA(DisplayName = "COMPLETED"),
-    FAILED UMETA(DisplayName = "FAILED"),
-    ABANDONED UMETA(DisplayName = "ABANDONED"),
-    EXPIRED UMETA(DisplayName = "EXPIRED"),
+    Active UMETA(DisplayName = "Active"),
+    Completed UMETA(DisplayName = "Completed"),
+    Failed UMETA(DisplayName = "Failed"),
+    Abandoned UMETA(DisplayName = "Abandoned"),
+    Expired UMETA(DisplayName = "Expired"),
 };
 
 /** Categories of historical events that realms can participate in */
@@ -1591,9 +1591,9 @@ Refunds typically use 'immediate' since parties get their own assets back.
 UENUM(BlueprintType)
 enum class ERefundMode : uint8
 {
-    Immediate UMETA(DisplayName = "immediate"),
-    ServiceOnly UMETA(DisplayName = "service_only"),
-    PartyRequired UMETA(DisplayName = "party_required"),
+    Immediate UMETA(DisplayName = "Immediate"),
+    ServiceOnly UMETA(DisplayName = "ServiceOnly"),
+    PartyRequired UMETA(DisplayName = "PartyRequired"),
 };
 
 /** How deep to traverse related document links:
@@ -1604,9 +1604,9 @@ enum class ERefundMode : uint8
 UENUM(BlueprintType)
 enum class ERelatedDepth : uint8
 {
-    None UMETA(DisplayName = "none"),
-    Direct UMETA(DisplayName = "direct"),
-    Extended UMETA(DisplayName = "extended"),
+    None UMETA(DisplayName = "None"),
+    Direct UMETA(DisplayName = "Direct"),
+    Extended UMETA(DisplayName = "Extended"),
 };
 
 /** Controls how release confirmation is handled:
@@ -1621,20 +1621,20 @@ enum class ERelatedDepth : uint8
 UENUM(BlueprintType)
 enum class EReleaseMode : uint8
 {
-    Immediate UMETA(DisplayName = "immediate"),
-    ServiceOnly UMETA(DisplayName = "service_only"),
-    PartyRequired UMETA(DisplayName = "party_required"),
-    ServiceAndParty UMETA(DisplayName = "service_and_party"),
+    Immediate UMETA(DisplayName = "Immediate"),
+    ServiceOnly UMETA(DisplayName = "ServiceOnly"),
+    PartyRequired UMETA(DisplayName = "PartyRequired"),
+    ServiceAndParty UMETA(DisplayName = "ServiceAndParty"),
 };
 
 /** Type of reward granted on quest completion */
 UENUM(BlueprintType)
 enum class ERewardType : uint8
 {
-    CURRENCY UMETA(DisplayName = "CURRENCY"),
-    ITEM UMETA(DisplayName = "ITEM"),
-    EXPERIENCE UMETA(DisplayName = "EXPERIENCE"),
-    REPUTATION UMETA(DisplayName = "REPUTATION"),
+    Currency UMETA(DisplayName = "Currency"),
+    Item UMETA(DisplayName = "Item"),
+    Experience UMETA(DisplayName = "Experience"),
+    Reputation UMETA(DisplayName = "Reputation"),
 };
 
 /** Lifecycle status of a room type definition */
@@ -1649,9 +1649,9 @@ enum class ERoomTypeStatus : uint8
 UENUM(BlueprintType)
 enum class ERouteSortBy : uint8
 {
-    Fastest UMETA(DisplayName = "fastest"),
-    Safest UMETA(DisplayName = "safest"),
-    Shortest UMETA(DisplayName = "shortest"),
+    Fastest UMETA(DisplayName = "Fastest"),
+    Safest UMETA(DisplayName = "Safest"),
+    Shortest UMETA(DisplayName = "Shortest"),
 };
 
 /** Category of save with predefined behaviors.
@@ -1664,11 +1664,11 @@ STATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).
 UENUM(BlueprintType)
 enum class ESaveCategory : uint8
 {
-    QUICKSAVE UMETA(DisplayName = "QUICK_SAVE"),
-    AUTOSAVE UMETA(DisplayName = "AUTO_SAVE"),
-    MANUALSAVE UMETA(DisplayName = "MANUAL_SAVE"),
-    CHECKPOINT UMETA(DisplayName = "CHECKPOINT"),
-    STATESNAPSHOT UMETA(DisplayName = "STATE_SNAPSHOT"),
+    QuickSave UMETA(DisplayName = "QuickSave"),
+    AutoSave UMETA(DisplayName = "AutoSave"),
+    ManualSave UMETA(DisplayName = "ManualSave"),
+    Checkpoint UMETA(DisplayName = "Checkpoint"),
+    StateSnapshot UMETA(DisplayName = "StateSnapshot"),
 };
 
 /** Primary gameplay category for a scenario template */
@@ -1704,48 +1704,48 @@ Different types may have different validation requirements per game.
 UENUM(BlueprintType)
 enum class ESceneType : uint8
 {
-    Unknown UMETA(DisplayName = "unknown"),
-    Region UMETA(DisplayName = "region"),
-    City UMETA(DisplayName = "city"),
-    District UMETA(DisplayName = "district"),
-    Lot UMETA(DisplayName = "lot"),
-    Building UMETA(DisplayName = "building"),
-    Room UMETA(DisplayName = "room"),
-    Dungeon UMETA(DisplayName = "dungeon"),
-    Arena UMETA(DisplayName = "arena"),
-    Vehicle UMETA(DisplayName = "vehicle"),
-    Prefab UMETA(DisplayName = "prefab"),
-    Cutscene UMETA(DisplayName = "cutscene"),
-    Other UMETA(DisplayName = "other"),
+    Unknown UMETA(DisplayName = "Unknown"),
+    Region UMETA(DisplayName = "Region"),
+    City UMETA(DisplayName = "City"),
+    District UMETA(DisplayName = "District"),
+    Lot UMETA(DisplayName = "Lot"),
+    Building UMETA(DisplayName = "Building"),
+    Room UMETA(DisplayName = "Room"),
+    Dungeon UMETA(DisplayName = "Dungeon"),
+    Arena UMETA(DisplayName = "Arena"),
+    Vehicle UMETA(DisplayName = "Vehicle"),
+    Prefab UMETA(DisplayName = "Prefab"),
+    Cutscene UMETA(DisplayName = "Cutscene"),
+    Other UMETA(DisplayName = "Other"),
 };
 
 /** Fields that can be searched within documents */
 UENUM(BlueprintType)
 enum class ESearchField : uint8
 {
-    Title UMETA(DisplayName = "title"),
-    Content UMETA(DisplayName = "content"),
-    Tags UMETA(DisplayName = "tags"),
-    Summary UMETA(DisplayName = "summary"),
+    Title UMETA(DisplayName = "Title"),
+    Content UMETA(DisplayName = "Content"),
+    Tags UMETA(DisplayName = "Tags"),
+    Summary UMETA(DisplayName = "Summary"),
 };
 
 /** Where the search match was found */
 UENUM(BlueprintType)
 enum class ESearchMatchType : uint8
 {
-    Name UMETA(DisplayName = "name"),
-    Description UMETA(DisplayName = "description"),
-    Tag UMETA(DisplayName = "tag"),
-    NodeName UMETA(DisplayName = "node_name"),
+    Name UMETA(DisplayName = "Name"),
+    Description UMETA(DisplayName = "Description"),
+    Tag UMETA(DisplayName = "Tag"),
+    NodeName UMETA(DisplayName = "NodeName"),
 };
 
 /** How to sort search results */
 UENUM(BlueprintType)
 enum class ESearchSortBy : uint8
 {
-    Relevance UMETA(DisplayName = "relevance"),
-    Recency UMETA(DisplayName = "recency"),
-    Alphabetical UMETA(DisplayName = "alphabetical"),
+    Relevance UMETA(DisplayName = "Relevance"),
+    Recency UMETA(DisplayName = "Recency"),
+    Alphabetical UMETA(DisplayName = "Alphabetical"),
 };
 
 /** Lifecycle status of a seed. */
@@ -1776,46 +1776,46 @@ enum class ESentimentCategory : uint8
 UENUM(BlueprintType)
 enum class ESessionStatus : uint8
 {
-    Waiting UMETA(DisplayName = "waiting"),
-    Active UMETA(DisplayName = "active"),
-    Full UMETA(DisplayName = "full"),
-    Finished UMETA(DisplayName = "finished"),
+    Waiting UMETA(DisplayName = "Waiting"),
+    Active UMETA(DisplayName = "Active"),
+    Full UMETA(DisplayName = "Full"),
+    Finished UMETA(DisplayName = "Finished"),
 };
 
 /** Type of game session - determines join behavior */
 UENUM(BlueprintType)
 enum class ESessionType : uint8
 {
-    Lobby UMETA(DisplayName = "lobby"),
-    Matchmade UMETA(DisplayName = "matchmade"),
+    Lobby UMETA(DisplayName = "Lobby"),
+    Matchmade UMETA(DisplayName = "Matchmade"),
 };
 
 /** Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is managed by the Seasonal Connection Worker) */
 UENUM(BlueprintType)
 enum class ESettableConnectionStatus : uint8
 {
-    Open UMETA(DisplayName = "open"),
-    Closed UMETA(DisplayName = "closed"),
-    Dangerous UMETA(DisplayName = "dangerous"),
-    Blocked UMETA(DisplayName = "blocked"),
+    Open UMETA(DisplayName = "Open"),
+    Closed UMETA(DisplayName = "Closed"),
+    Dangerous UMETA(DisplayName = "Dangerous"),
+    Blocked UMETA(DisplayName = "Blocked"),
 };
 
 /** Sort direction for query results */
 UENUM(BlueprintType)
 enum class ESortOrder : uint8
 {
-    Asc UMETA(DisplayName = "asc"),
-    Desc UMETA(DisplayName = "desc"),
+    Asc UMETA(DisplayName = "Asc"),
+    Desc UMETA(DisplayName = "Desc"),
 };
 
 /** When item becomes bound to a character */
 UENUM(BlueprintType)
 enum class ESoulboundType : uint8
 {
-    None UMETA(DisplayName = "none"),
-    OnPickup UMETA(DisplayName = "on_pickup"),
-    OnEquip UMETA(DisplayName = "on_equip"),
-    OnUse UMETA(DisplayName = "on_use"),
+    None UMETA(DisplayName = "None"),
+    OnPickup UMETA(DisplayName = "OnPickup"),
+    OnEquip UMETA(DisplayName = "OnEquip"),
+    OnUse UMETA(DisplayName = "OnUse"),
 };
 
 /** The 10 Story Grid Life Value spectrums.
@@ -1846,11 +1846,11 @@ enum class ESpectrumType : uint8
 UENUM(BlueprintType)
 enum class EStackBehavior : uint8
 {
-    RefreshDuration UMETA(DisplayName = "refresh_duration"),
-    Independent UMETA(DisplayName = "independent"),
-    IncreaseIntensity UMETA(DisplayName = "increase_intensity"),
-    Replace UMETA(DisplayName = "replace"),
-    Ignore UMETA(DisplayName = "ignore"),
+    RefreshDuration UMETA(DisplayName = "RefreshDuration"),
+    Independent UMETA(DisplayName = "Independent"),
+    IncreaseIntensity UMETA(DisplayName = "IncreaseIntensity"),
+    Replace UMETA(DisplayName = "Replace"),
+    Ignore UMETA(DisplayName = "Ignore"),
 };
 
 /** Classification of status effects for filtering and cleanse targeting.
@@ -1864,12 +1864,12 @@ enum class EStackBehavior : uint8
 UENUM(BlueprintType)
 enum class EStatusCategory : uint8
 {
-    Buff UMETA(DisplayName = "buff"),
-    Debuff UMETA(DisplayName = "debuff"),
-    Death UMETA(DisplayName = "death"),
-    Subscription UMETA(DisplayName = "subscription"),
-    Event UMETA(DisplayName = "event"),
-    Passive UMETA(DisplayName = "passive"),
+    Buff UMETA(DisplayName = "Buff"),
+    Debuff UMETA(DisplayName = "Debuff"),
+    Death UMETA(DisplayName = "Death"),
+    Subscription UMETA(DisplayName = "Subscription"),
+    Event UMETA(DisplayName = "Event"),
+    Passive UMETA(DisplayName = "Passive"),
 };
 
 /** Why a status was removed from an entity.
@@ -1882,11 +1882,11 @@ enum class EStatusCategory : uint8
 UENUM(BlueprintType)
 enum class EStatusRemoveReason : uint8
 {
-    Expired UMETA(DisplayName = "expired"),
-    Cleansed UMETA(DisplayName = "cleansed"),
-    Cancelled UMETA(DisplayName = "cancelled"),
-    SourceRemoved UMETA(DisplayName = "source_removed"),
-    Admin UMETA(DisplayName = "admin"),
+    Expired UMETA(DisplayName = "Expired"),
+    Cleansed UMETA(DisplayName = "Cleansed"),
+    Cancelled UMETA(DisplayName = "Cancelled"),
+    SourceRemoved UMETA(DisplayName = "SourceRemoved"),
+    Admin UMETA(DisplayName = "Admin"),
 };
 
 /** High-level story goal that drives arc selection.
@@ -1899,47 +1899,47 @@ peace: Resolving conflicts and finding harmony
 UENUM(BlueprintType)
 enum class EStorylineGoal : uint8
 {
-    Revenge UMETA(DisplayName = "revenge"),
-    Resurrection UMETA(DisplayName = "resurrection"),
-    Legacy UMETA(DisplayName = "legacy"),
-    Mystery UMETA(DisplayName = "mystery"),
-    Peace UMETA(DisplayName = "peace"),
+    Revenge UMETA(DisplayName = "Revenge"),
+    Resurrection UMETA(DisplayName = "Resurrection"),
+    Legacy UMETA(DisplayName = "Legacy"),
+    Mystery UMETA(DisplayName = "Mystery"),
+    Peace UMETA(DisplayName = "Peace"),
 };
 
 /** Source type for generating related topic suggestions */
 UENUM(BlueprintType)
 enum class ESuggestionSource : uint8
 {
-    DocumentId UMETA(DisplayName = "document_id"),
-    Slug UMETA(DisplayName = "slug"),
-    Topic UMETA(DisplayName = "topic"),
-    Category UMETA(DisplayName = "category"),
+    DocumentId UMETA(DisplayName = "DocumentId"),
+    Slug UMETA(DisplayName = "Slug"),
+    Topic UMETA(DisplayName = "Topic"),
+    Category UMETA(DisplayName = "Category"),
 };
 
 /** Status of platform synchronization */
 UENUM(BlueprintType)
 enum class ESyncStatus : uint8
 {
-    Pending UMETA(DisplayName = "pending"),
-    Synced UMETA(DisplayName = "synced"),
-    Failed UMETA(DisplayName = "failed"),
-    NotLinked UMETA(DisplayName = "not_linked"),
+    Pending UMETA(DisplayName = "Pending"),
+    Synced UMETA(DisplayName = "Synced"),
+    Failed UMETA(DisplayName = "Failed"),
+    NotLinked UMETA(DisplayName = "NotLinked"),
 };
 
 /** What triggered the sync operation */
 UENUM(BlueprintType)
 enum class ESyncTrigger : uint8
 {
-    Manual UMETA(DisplayName = "manual"),
-    Scheduled UMETA(DisplayName = "scheduled"),
+    Manual UMETA(DisplayName = "Manual"),
+    Scheduled UMETA(DisplayName = "Scheduled"),
 };
 
 /** Whether documents must match all specified tags or any tag */
 UENUM(BlueprintType)
 enum class ETagMatchMode : uint8
 {
-    All UMETA(DisplayName = "all"),
-    Any UMETA(DisplayName = "any"),
+    All UMETA(DisplayName = "All"),
+    Any UMETA(DisplayName = "Any"),
 };
 
 /** Current lifecycle status of a scenario template */
@@ -1955,10 +1955,10 @@ enum class ETemplateStatus : uint8
 UENUM(BlueprintType)
 enum class ETerminationPolicy : uint8
 {
-    MutualConsent UMETA(DisplayName = "mutual_consent"),
-    UnilateralWithNotice UMETA(DisplayName = "unilateral_with_notice"),
-    UnilateralImmediate UMETA(DisplayName = "unilateral_immediate"),
-    NonTerminable UMETA(DisplayName = "non_terminable"),
+    MutualConsent UMETA(DisplayName = "MutualConsent"),
+    UnilateralWithNotice UMETA(DisplayName = "UnilateralWithNotice"),
+    UnilateralImmediate UMETA(DisplayName = "UnilateralImmediate"),
+    NonTerminable UMETA(DisplayName = "NonTerminable"),
 };
 
 /** Lifecycle status of a territory claim */
@@ -1982,19 +1982,19 @@ enum class ETerritoryMode : uint8
 UENUM(BlueprintType)
 enum class ETicketStatus : uint8
 {
-    Searching UMETA(DisplayName = "searching"),
-    MatchFound UMETA(DisplayName = "match_found"),
-    MatchAccepted UMETA(DisplayName = "match_accepted"),
-    Cancelled UMETA(DisplayName = "cancelled"),
-    Expired UMETA(DisplayName = "expired"),
+    Searching UMETA(DisplayName = "Searching"),
+    MatchFound UMETA(DisplayName = "MatchFound"),
+    MatchAccepted UMETA(DisplayName = "MatchAccepted"),
+    Cancelled UMETA(DisplayName = "Cancelled"),
+    Expired UMETA(DisplayName = "Expired"),
 };
 
 /** Type of time commitment for scheduling constraints */
 UENUM(BlueprintType)
 enum class ETimeCommitmentType : uint8
 {
-    Exclusive UMETA(DisplayName = "exclusive"),
-    Partial UMETA(DisplayName = "partial"),
+    Exclusive UMETA(DisplayName = "Exclusive"),
+    Partial UMETA(DisplayName = "Partial"),
 };
 
 /** Why the time ratio was changed */
@@ -2014,39 +2014,39 @@ Based on psychological research (Big Five + game-relevant extensions).
 UENUM(BlueprintType)
 enum class ETraitAxis : uint8
 {
-    OPENNESS UMETA(DisplayName = "OPENNESS"),
-    CONSCIENTIOUSNESS UMETA(DisplayName = "CONSCIENTIOUSNESS"),
-    EXTRAVERSION UMETA(DisplayName = "EXTRAVERSION"),
-    AGREEABLENESS UMETA(DisplayName = "AGREEABLENESS"),
-    NEUROTICISM UMETA(DisplayName = "NEUROTICISM"),
-    HONESTY UMETA(DisplayName = "HONESTY"),
-    AGGRESSION UMETA(DisplayName = "AGGRESSION"),
-    LOYALTY UMETA(DisplayName = "LOYALTY"),
+    Openness UMETA(DisplayName = "Openness"),
+    Conscientiousness UMETA(DisplayName = "Conscientiousness"),
+    Extraversion UMETA(DisplayName = "Extraversion"),
+    Agreeableness UMETA(DisplayName = "Agreeableness"),
+    Neuroticism UMETA(DisplayName = "Neuroticism"),
+    Honesty UMETA(DisplayName = "Honesty"),
+    Aggression UMETA(DisplayName = "Aggression"),
+    Loyalty UMETA(DisplayName = "Loyalty"),
 };
 
 /** Classification of the currency transaction */
 UENUM(BlueprintType)
 enum class ETransactionType : uint8
 {
-    Mint UMETA(DisplayName = "mint"),
-    QuestReward UMETA(DisplayName = "quest_reward"),
-    LootDrop UMETA(DisplayName = "loot_drop"),
-    VendorSale UMETA(DisplayName = "vendor_sale"),
-    Autogain UMETA(DisplayName = "autogain"),
-    Refund UMETA(DisplayName = "refund"),
-    ConversionCredit UMETA(DisplayName = "conversion_credit"),
-    Burn UMETA(DisplayName = "burn"),
-    VendorPurchase UMETA(DisplayName = "vendor_purchase"),
-    Fee UMETA(DisplayName = "fee"),
-    Expiration UMETA(DisplayName = "expiration"),
-    CapOverflow UMETA(DisplayName = "cap_overflow"),
-    ConversionDebit UMETA(DisplayName = "conversion_debit"),
-    Transfer UMETA(DisplayName = "transfer"),
-    Trade UMETA(DisplayName = "trade"),
-    Gift UMETA(DisplayName = "gift"),
-    EscrowDeposit UMETA(DisplayName = "escrow_deposit"),
-    EscrowRelease UMETA(DisplayName = "escrow_release"),
-    EscrowRefund UMETA(DisplayName = "escrow_refund"),
+    Mint UMETA(DisplayName = "Mint"),
+    QuestReward UMETA(DisplayName = "QuestReward"),
+    LootDrop UMETA(DisplayName = "LootDrop"),
+    VendorSale UMETA(DisplayName = "VendorSale"),
+    Autogain UMETA(DisplayName = "Autogain"),
+    Refund UMETA(DisplayName = "Refund"),
+    ConversionCredit UMETA(DisplayName = "ConversionCredit"),
+    Burn UMETA(DisplayName = "Burn"),
+    VendorPurchase UMETA(DisplayName = "VendorPurchase"),
+    Fee UMETA(DisplayName = "Fee"),
+    Expiration UMETA(DisplayName = "Expiration"),
+    CapOverflow UMETA(DisplayName = "CapOverflow"),
+    ConversionDebit UMETA(DisplayName = "ConversionDebit"),
+    Transfer UMETA(DisplayName = "Transfer"),
+    Trade UMETA(DisplayName = "Trade"),
+    Gift UMETA(DisplayName = "Gift"),
+    EscrowDeposit UMETA(DisplayName = "EscrowDeposit"),
+    EscrowRelease UMETA(DisplayName = "EscrowRelease"),
+    EscrowRefund UMETA(DisplayName = "EscrowRefund"),
 };
 
 /** Types of trigger conditions for scenario activation.
@@ -2088,34 +2088,34 @@ enum class ETriggerMode : uint8
 UENUM(BlueprintType)
 enum class EUnresolvedReferenceReason : uint8
 {
-    NotFound UMETA(DisplayName = "not_found"),
-    CircularReference UMETA(DisplayName = "circular_reference"),
-    DepthExceeded UMETA(DisplayName = "depth_exceeded"),
-    AccessDenied UMETA(DisplayName = "access_denied"),
+    NotFound UMETA(DisplayName = "NotFound"),
+    CircularReference UMETA(DisplayName = "CircularReference"),
+    DepthExceeded UMETA(DisplayName = "DepthExceeded"),
+    AccessDenied UMETA(DisplayName = "AccessDenied"),
 };
 
 /** How to handle score updates */
 UENUM(BlueprintType)
 enum class EUpdateMode : uint8
 {
-    Replace UMETA(DisplayName = "replace"),
-    Increment UMETA(DisplayName = "increment"),
-    Max UMETA(DisplayName = "max"),
-    Min UMETA(DisplayName = "min"),
+    Replace UMETA(DisplayName = "Replace"),
+    Increment UMETA(DisplayName = "Increment"),
+    Max UMETA(DisplayName = "Max"),
+    Min UMETA(DisplayName = "Min"),
 };
 
 /** Type of validation condition */
 UENUM(BlueprintType)
 enum class EValidationConditionType : uint8
 {
-    StatusCodeIn UMETA(DisplayName = "statusCodeIn"),
-    JsonPathEquals UMETA(DisplayName = "jsonPathEquals"),
-    JsonPathNotEquals UMETA(DisplayName = "jsonPathNotEquals"),
-    JsonPathExists UMETA(DisplayName = "jsonPathExists"),
-    JsonPathNotExists UMETA(DisplayName = "jsonPathNotExists"),
-    JsonPathGreaterThan UMETA(DisplayName = "jsonPathGreaterThan"),
-    JsonPathLessThan UMETA(DisplayName = "jsonPathLessThan"),
-    JsonPathContains UMETA(DisplayName = "jsonPathContains"),
+    StatusCodeIn UMETA(DisplayName = "StatusCodeIn"),
+    JsonPathEquals UMETA(DisplayName = "JsonPathEquals"),
+    JsonPathNotEquals UMETA(DisplayName = "JsonPathNotEquals"),
+    JsonPathExists UMETA(DisplayName = "JsonPathExists"),
+    JsonPathNotExists UMETA(DisplayName = "JsonPathNotExists"),
+    JsonPathGreaterThan UMETA(DisplayName = "JsonPathGreaterThan"),
+    JsonPathLessThan UMETA(DisplayName = "JsonPathLessThan"),
+    JsonPathContains UMETA(DisplayName = "JsonPathContains"),
 };
 
 /** Type of validation failure detected.
@@ -2127,29 +2127,29 @@ enum class EValidationConditionType : uint8
 UENUM(BlueprintType)
 enum class EValidationFailureType : uint8
 {
-    AssetMissing UMETA(DisplayName = "asset_missing"),
-    AssetMutated UMETA(DisplayName = "asset_mutated"),
-    AssetExpired UMETA(DisplayName = "asset_expired"),
-    BalanceMismatch UMETA(DisplayName = "balance_mismatch"),
+    AssetMissing UMETA(DisplayName = "AssetMissing"),
+    AssetMutated UMETA(DisplayName = "AssetMutated"),
+    AssetExpired UMETA(DisplayName = "AssetExpired"),
+    BalanceMismatch UMETA(DisplayName = "BalanceMismatch"),
 };
 
 /** Type of validation check to perform */
 UENUM(BlueprintType)
 enum class EValidationRuleType : uint8
 {
-    RequireTag UMETA(DisplayName = "require_tag"),
-    RequireNodeType UMETA(DisplayName = "require_node_type"),
-    ForbidTag UMETA(DisplayName = "forbid_tag"),
-    RequireAnnotation UMETA(DisplayName = "require_annotation"),
-    CustomExpression UMETA(DisplayName = "custom_expression"),
+    RequireTag UMETA(DisplayName = "RequireTag"),
+    RequireNodeType UMETA(DisplayName = "RequireNodeType"),
+    ForbidTag UMETA(DisplayName = "ForbidTag"),
+    RequireAnnotation UMETA(DisplayName = "RequireAnnotation"),
+    CustomExpression UMETA(DisplayName = "CustomExpression"),
 };
 
 /** Severity level of a validation issue */
 UENUM(BlueprintType)
 enum class EValidationSeverity : uint8
 {
-    Error UMETA(DisplayName = "error"),
-    Warning UMETA(DisplayName = "warning"),
+    Error UMETA(DisplayName = "Error"),
+    Warning UMETA(DisplayName = "Warning"),
 };
 
 /** Type of voice leading rule violation */
@@ -2169,38 +2169,38 @@ enum class EVoiceLeadingViolationType : uint8
 UENUM(BlueprintType)
 enum class EVolumeShape : uint8
 {
-    Box UMETA(DisplayName = "box"),
-    Sphere UMETA(DisplayName = "sphere"),
-    Capsule UMETA(DisplayName = "capsule"),
-    Cylinder UMETA(DisplayName = "cylinder"),
+    Box UMETA(DisplayName = "Box"),
+    Sphere UMETA(DisplayName = "Sphere"),
+    Capsule UMETA(DisplayName = "Capsule"),
+    Cylinder UMETA(DisplayName = "Cylinder"),
 };
 
 /** Current status of a wallet */
 UENUM(BlueprintType)
 enum class EWalletStatus : uint8
 {
-    Active UMETA(DisplayName = "active"),
-    Frozen UMETA(DisplayName = "frozen"),
-    Closed UMETA(DisplayName = "closed"),
+    Active UMETA(DisplayName = "Active"),
+    Frozen UMETA(DisplayName = "Frozen"),
+    Closed UMETA(DisplayName = "Closed"),
 };
 
 /** How container weight propagates to parent */
 UENUM(BlueprintType)
 enum class EWeightContribution : uint8
 {
-    None UMETA(DisplayName = "none"),
-    SelfOnly UMETA(DisplayName = "self_only"),
-    SelfPlusContents UMETA(DisplayName = "self_plus_contents"),
+    None UMETA(DisplayName = "None"),
+    SelfOnly UMETA(DisplayName = "SelfOnly"),
+    SelfPlusContents UMETA(DisplayName = "SelfPlusContents"),
 };
 
 /** Precision for weight values (consistent with CurrencyPrecision) */
 UENUM(BlueprintType)
 enum class EWeightPrecision : uint8
 {
-    Integer UMETA(DisplayName = "integer"),
-    Decimal1 UMETA(DisplayName = "decimal_1"),
-    Decimal2 UMETA(DisplayName = "decimal_2"),
-    Decimal3 UMETA(DisplayName = "decimal_3"),
+    Integer UMETA(DisplayName = "Integer"),
+    Decimal1 UMETA(DisplayName = "Decimal1"),
+    Decimal2 UMETA(DisplayName = "Decimal2"),
+    Decimal3 UMETA(DisplayName = "Decimal3"),
 };
 
 /** Category for organizing behaviors (e.g., profession, cultural, situational).
@@ -2231,20 +2231,20 @@ enum class ECadenceType : uint8
 UENUM(BlueprintType)
 enum class ECategory : uint8
 {
-    General UMETA(DisplayName = "general"),
-    Support UMETA(DisplayName = "support"),
-    Bug UMETA(DisplayName = "bug"),
-    Feedback UMETA(DisplayName = "feedback"),
-    Business UMETA(DisplayName = "business"),
+    General UMETA(DisplayName = "General"),
+    Support UMETA(DisplayName = "Support"),
+    Bug UMETA(DisplayName = "Bug"),
+    Feedback UMETA(DisplayName = "Feedback"),
+    Business UMETA(DisplayName = "Business"),
 };
 
 /** Format of the page content */
 UENUM(BlueprintType)
 enum class EContentType : uint8
 {
-    Html UMETA(DisplayName = "html"),
-    Markdown UMETA(DisplayName = "markdown"),
-    Blazor UMETA(DisplayName = "blazor"),
+    Html UMETA(DisplayName = "Html"),
+    Markdown UMETA(DisplayName = "Markdown"),
+    Blazor UMETA(DisplayName = "Blazor"),
 };
 
 /** Overall melodic contour */
@@ -2336,22 +2336,22 @@ enum class EQuality : uint8
 UENUM(BlueprintType)
 enum class EReason : uint8
 {
-    None UMETA(DisplayName = "none"),
-    PreconditionInvalidated UMETA(DisplayName = "preconditionInvalidated"),
-    ActionFailed UMETA(DisplayName = "actionFailed"),
-    BetterGoalAvailable UMETA(DisplayName = "betterGoalAvailable"),
-    PlanCompleted UMETA(DisplayName = "planCompleted"),
-    GoalAlreadySatisfied UMETA(DisplayName = "goalAlreadySatisfied"),
-    SuboptimalPlan UMETA(DisplayName = "suboptimalPlan"),
+    None UMETA(DisplayName = "None"),
+    PreconditionInvalidated UMETA(DisplayName = "PreconditionInvalidated"),
+    ActionFailed UMETA(DisplayName = "ActionFailed"),
+    BetterGoalAvailable UMETA(DisplayName = "BetterGoalAvailable"),
+    PlanCompleted UMETA(DisplayName = "PlanCompleted"),
+    GoalAlreadySatisfied UMETA(DisplayName = "GoalAlreadySatisfied"),
+    SuboptimalPlan UMETA(DisplayName = "SuboptimalPlan"),
 };
 
 /** Risk severity */
 UENUM(BlueprintType)
 enum class ESeverity : uint8
 {
-    Low UMETA(DisplayName = "low"),
-    Medium UMETA(DisplayName = "medium"),
-    High UMETA(DisplayName = "high"),
+    Low UMETA(DisplayName = "Low"),
+    Medium UMETA(DisplayName = "Medium"),
+    High UMETA(DisplayName = "High"),
 };
 
 /** Sort field */
@@ -2375,18 +2375,18 @@ enum class ESortOrder : uint8
 UENUM(BlueprintType)
 enum class EStatus : uint8
 {
-    Healthy UMETA(DisplayName = "healthy"),
-    Degraded UMETA(DisplayName = "degraded"),
-    Maintenance UMETA(DisplayName = "maintenance"),
+    Healthy UMETA(DisplayName = "Healthy"),
+    Degraded UMETA(DisplayName = "Degraded"),
+    Maintenance UMETA(DisplayName = "Maintenance"),
 };
 
 /** How this layer's data should be stored */
 UENUM(BlueprintType)
 enum class EStorageMode : uint8
 {
-    Durable UMETA(DisplayName = "durable"),
-    Cached UMETA(DisplayName = "cached"),
-    Ephemeral UMETA(DisplayName = "ephemeral"),
+    Durable UMETA(DisplayName = "Durable"),
+    Cached UMETA(DisplayName = "Cached"),
+    Ephemeral UMETA(DisplayName = "Ephemeral"),
 };
 
 /** Cadence strength */
@@ -2401,17 +2401,17 @@ enum class EStrength : uint8
 UENUM(BlueprintType)
 enum class ESuggestedAction : uint8
 {
-    Continue UMETA(DisplayName = "continue"),
-    Replan UMETA(DisplayName = "replan"),
-    Abort UMETA(DisplayName = "abort"),
+    Continue UMETA(DisplayName = "Continue"),
+    Replan UMETA(DisplayName = "Replan"),
+    Abort UMETA(DisplayName = "Abort"),
 };
 
 /** Link target attribute for opening behavior */
 UENUM(BlueprintType)
 enum class ETarget : uint8
 {
-    Self UMETA(DisplayName = "_self"),
-    Blank UMETA(DisplayName = "_blank"),
+    Self UMETA(DisplayName = "Self"),
+    Blank UMETA(DisplayName = "Blank"),
 };
 
 /** Preferred tension curve shape throughout the composition */

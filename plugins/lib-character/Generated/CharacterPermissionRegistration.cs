@@ -48,7 +48,7 @@ public static class CharacterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character/create",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "createCharacter",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class CharacterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getCharacter",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class CharacterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character/update",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "updateCharacter",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class CharacterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character/delete",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "deleteCharacter",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class CharacterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listCharacters",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class CharacterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character/get-enriched",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getEnrichedCharacter",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class CharacterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character/compress",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "compressCharacter",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class CharacterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character/get-archive",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getCharacterArchive",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class CharacterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character/check-references",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "checkCharacterReferences",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class CharacterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character/by-realm",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getCharactersByRealm",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class CharacterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character/transfer-realm",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "transferCharacterToRealm",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class CharacterPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/character/get-compress-data",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getCompressData",
             Permissions = new List<PermissionRequirement>
             {

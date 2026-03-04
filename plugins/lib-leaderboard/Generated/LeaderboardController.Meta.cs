@@ -93,18 +93,18 @@ public partial class LeaderboardController
             "type": "string",
             "description": "How scores are sorted",
             "enum": [
-                "descending",
-                "ascending"
+                "Descending",
+                "Ascending"
             ]
         },
         "UpdateMode": {
             "type": "string",
             "description": "How to handle score updates",
             "enum": [
-                "replace",
-                "increment",
-                "max",
-                "min"
+                "Replace",
+                "Increment",
+                "Max",
+                "Min"
             ]
         }
     }
@@ -199,18 +199,18 @@ public partial class LeaderboardController
             "type": "string",
             "description": "How scores are sorted",
             "enum": [
-                "descending",
-                "ascending"
+                "Descending",
+                "Ascending"
             ]
         },
         "UpdateMode": {
             "type": "string",
             "description": "How to handle score updates",
             "enum": [
-                "replace",
-                "increment",
-                "max",
-                "min"
+                "Replace",
+                "Increment",
+                "Max",
+                "Min"
             ]
         }
     }
@@ -390,18 +390,18 @@ public partial class LeaderboardController
             "type": "string",
             "description": "How scores are sorted",
             "enum": [
-                "descending",
-                "ascending"
+                "Descending",
+                "Ascending"
             ]
         },
         "UpdateMode": {
             "type": "string",
             "description": "How to handle score updates",
             "enum": [
-                "replace",
-                "increment",
-                "max",
-                "min"
+                "Replace",
+                "Increment",
+                "Max",
+                "Min"
             ]
         }
     }
@@ -598,18 +598,18 @@ public partial class LeaderboardController
             "type": "string",
             "description": "How scores are sorted",
             "enum": [
-                "descending",
-                "ascending"
+                "Descending",
+                "Ascending"
             ]
         },
         "UpdateMode": {
             "type": "string",
             "description": "How to handle score updates",
             "enum": [
-                "replace",
-                "increment",
-                "max",
-                "min"
+                "Replace",
+                "Increment",
+                "Max",
+                "Min"
             ]
         }
     }
@@ -806,18 +806,18 @@ public partial class LeaderboardController
             "type": "string",
             "description": "How scores are sorted",
             "enum": [
-                "descending",
-                "ascending"
+                "Descending",
+                "Ascending"
             ]
         },
         "UpdateMode": {
             "type": "string",
             "description": "How to handle score updates",
             "enum": [
-                "replace",
-                "increment",
-                "max",
-                "min"
+                "Replace",
+                "Increment",
+                "Max",
+                "Min"
             ]
         }
     }

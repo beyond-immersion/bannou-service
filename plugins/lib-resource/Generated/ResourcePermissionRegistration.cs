@@ -48,7 +48,7 @@ public static class ResourcePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/resource/register",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "registerReference",
             Permissions = new List<PermissionRequirement>
             {
@@ -63,7 +63,7 @@ public static class ResourcePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/resource/unregister",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "unregisterReference",
             Permissions = new List<PermissionRequirement>
             {
@@ -78,7 +78,7 @@ public static class ResourcePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/resource/check",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "checkReferences",
             Permissions = new List<PermissionRequirement>
             {
@@ -93,7 +93,7 @@ public static class ResourcePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/resource/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listReferences",
             Permissions = new List<PermissionRequirement>
             {
@@ -108,7 +108,7 @@ public static class ResourcePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/resource/cleanup/define",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "defineCleanupCallback",
             Permissions = new List<PermissionRequirement>
             {
@@ -123,7 +123,7 @@ public static class ResourcePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/resource/cleanup/execute",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "executeCleanup",
             Permissions = new List<PermissionRequirement>
             {
@@ -138,7 +138,7 @@ public static class ResourcePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/resource/cleanup/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listCleanupCallbacks",
             Permissions = new List<PermissionRequirement>
             {
@@ -153,7 +153,7 @@ public static class ResourcePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/resource/cleanup/remove",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "removeCleanupCallback",
             Permissions = new List<PermissionRequirement>
             {
@@ -168,7 +168,7 @@ public static class ResourcePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/resource/compress/define",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "defineCompressCallback",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class ResourcePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/resource/compress/execute",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "executeCompress",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,7 +198,7 @@ public static class ResourcePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/resource/decompress/execute",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "executeDecompress",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,7 +213,7 @@ public static class ResourcePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/resource/compress/list",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "listCompressCallbacks",
             Permissions = new List<PermissionRequirement>
             {
@@ -228,7 +228,7 @@ public static class ResourcePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/resource/archive/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getArchive",
             Permissions = new List<PermissionRequirement>
             {
@@ -243,7 +243,7 @@ public static class ResourcePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/resource/snapshot/execute",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "executeSnapshot",
             Permissions = new List<PermissionRequirement>
             {
@@ -258,7 +258,7 @@ public static class ResourcePermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/resource/snapshot/get",
-            Method = ServiceEndpointMethod.POST,
+            Method = ServiceEndpointMethod.Post,
             Description = "getSnapshot",
             Permissions = new List<PermissionRequirement>
             {
