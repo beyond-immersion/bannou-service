@@ -215,7 +215,7 @@ public partial class LeaderboardService
             return null;
         }
 
-        var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
+
         var normalized = eventType.Trim();
         var candidateIds = normalized.Equals(normalized.ToLowerInvariant(), StringComparison.Ordinal)
             ? new[] { normalized }
@@ -224,7 +224,7 @@ public partial class LeaderboardService
         foreach (var candidate in candidateIds)
         {
             var candidateKey = GetDefinitionKey(gameServiceId, candidate);
-            var direct = await definitionStore.GetAsync(candidateKey, cancellationToken);
+            var direct = await _definitionStore.GetAsync(candidateKey, cancellationToken);
             if (direct != null)
             {
                 return direct;
@@ -232,7 +232,7 @@ public partial class LeaderboardService
         }
 
         var indexKey = GetDefinitionIndexKey(gameServiceId);
-        var definitionIds = await definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
+        var definitionIds = await _definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
         if (definitionIds.Count == 0)
         {
             return null;
@@ -242,7 +242,7 @@ public partial class LeaderboardService
         foreach (var leaderboardId in definitionIds)
         {
             var key = GetDefinitionKey(gameServiceId, leaderboardId);
-            var definition = await definitionStore.GetAsync(key, cancellationToken);
+            var definition = await _definitionStore.GetAsync(key, cancellationToken);
             if (definition == null)
             {
                 continue;

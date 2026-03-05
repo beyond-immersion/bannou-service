@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFoundation
 > **State Stores**: quest-definition-statestore (MySQL), quest-instance-statestore (MySQL), quest-objective-progress (Redis), quest-definition-cache (Redis), quest-character-index (Redis), quest-cooldown (Redis)
+> **Implementation Map**: [docs/maps/QUEST.md](../maps/QUEST.md)
 
 ---
 

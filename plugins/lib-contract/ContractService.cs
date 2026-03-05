@@ -28,11 +28,40 @@ public partial class ContractService : IContractService
 {
     private readonly IMessageBus _messageBus;
     private readonly IServiceNavigator _navigator;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<ContractService> _logger;
     private readonly ContractServiceConfiguration _configuration;
     private readonly ITelemetryProvider _telemetryProvider;
+
+    /// <summary>State store for contract template data.</summary>
+    private readonly IStateStore<ContractTemplateModel> _templateStore;
+
+    /// <summary>State store for contract instance data.</summary>
+    private readonly IStateStore<ContractInstanceModel> _instanceStore;
+
+    /// <summary>State store for breach records.</summary>
+    private readonly IStateStore<BreachModel> _breachStore;
+
+    /// <summary>State store for clause type registrations.</summary>
+    private readonly IStateStore<ClauseTypeModel> _clauseTypeStore;
+
+    /// <summary>State store for string index lookups (template code to ID mappings).</summary>
+    private readonly IStateStore<string> _stringStore;
+
+    /// <summary>State store for list-based indexes (template lists, party indexes, status indexes).</summary>
+    private readonly IStateStore<List<string>> _listStore;
+
+    /// <summary>State store for lock contract idempotency cache.</summary>
+    private readonly IStateStore<LockContractResponse> _lockIdempotencyStore;
+
+    /// <summary>State store for unlock contract idempotency cache.</summary>
+    private readonly IStateStore<UnlockContractResponse> _unlockIdempotencyStore;
+
+    /// <summary>State store for transfer party idempotency cache.</summary>
+    private readonly IStateStore<TransferContractPartyResponse> _transferIdempotencyStore;
+
+    /// <summary>State store for execute contract idempotency cache.</summary>
+    private readonly IStateStore<ExecuteContractResponse> _executeIdempotencyStore;
 
     // State store key prefixes
     private const string TEMPLATE_PREFIX = "template:";
@@ -91,11 +120,22 @@ public partial class ContractService : IContractService
     {
         _messageBus = messageBus;
         _navigator = navigator;
-        _stateStoreFactory = stateStoreFactory;
         _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
         _telemetryProvider = telemetryProvider;
+
+        // Constructor-cache all state store references (FOUNDATION TENETS compliance)
+        _templateStore = stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract);
+        _instanceStore = stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        _breachStore = stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract);
+        _clauseTypeStore = stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract);
+        _stringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.Contract);
+        _listStore = stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract);
+        _lockIdempotencyStore = stateStoreFactory.GetStore<LockContractResponse>(StateStoreDefinitions.Contract);
+        _unlockIdempotencyStore = stateStoreFactory.GetStore<UnlockContractResponse>(StateStoreDefinitions.Contract);
+        _transferIdempotencyStore = stateStoreFactory.GetStore<TransferContractPartyResponse>(StateStoreDefinitions.Contract);
+        _executeIdempotencyStore = stateStoreFactory.GetStore<ExecuteContractResponse>(StateStoreDefinitions.Contract);
 
         // Register event handlers via partial class if needed
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -112,7 +152,7 @@ public partial class ContractService : IContractService
 
         // Check if template code already exists
         var codeIndexKey = $"{TEMPLATE_CODE_INDEX}{body.Code}";
-        var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Contract)
+        var existingId = await _stringStore
             .GetAsync(codeIndexKey, cancellationToken);
 
         if (!string.IsNullOrEmpty(existingId))
@@ -199,11 +239,11 @@ public partial class ContractService : IContractService
 
         // Save template
         var templateKey = $"{TEMPLATE_PREFIX}{templateId}";
-        await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+        await _templateStore
             .SaveAsync(templateKey, model, cancellationToken: cancellationToken);
 
         // Save code index
-        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Contract)
+        await _stringStore
             .SaveAsync(codeIndexKey, templateId.ToString(), cancellationToken: cancellationToken);
 
         // Add to all templates list
@@ -227,7 +267,7 @@ public partial class ContractService : IContractService
         if (string.IsNullOrEmpty(templateId) && !string.IsNullOrEmpty(body.Code))
         {
             var codeIndexKey = $"{TEMPLATE_CODE_INDEX}{body.Code}";
-            templateId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Contract)
+            templateId = await _stringStore
                 .GetAsync(codeIndexKey, cancellationToken);
         }
 
@@ -238,7 +278,7 @@ public partial class ContractService : IContractService
         }
 
         var templateKey = $"{TEMPLATE_PREFIX}{templateId}";
-        var model = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+        var model = await _templateStore
             .GetAsync(templateKey, cancellationToken);
 
         if (model == null || !model.IsActive)
@@ -262,7 +302,7 @@ public partial class ContractService : IContractService
         var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
 
         // Get all template IDs
-        var allTemplateIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+        var allTemplateIds = await _listStore
             .GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
 
         if (allTemplateIds.Count == 0)
@@ -277,7 +317,7 @@ public partial class ContractService : IContractService
 
         // Load all templates
         var keys = allTemplateIds.Select(id => $"{TEMPLATE_PREFIX}{id}").ToList();
-        var bulkResults = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+        var bulkResults = await _templateStore
             .GetBulkAsync(keys, cancellationToken);
 
         var templates = new List<ContractTemplateModel>();
@@ -331,7 +371,7 @@ public partial class ContractService : IContractService
         _logger.LogInformation("Updating contract template: {TemplateId}", body.TemplateId);
 
         var templateKey = $"{TEMPLATE_PREFIX}{body.TemplateId}";
-        var model = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+        var model = await _templateStore
             .GetAsync(templateKey, cancellationToken);
 
         if (model == null)
@@ -369,7 +409,7 @@ public partial class ContractService : IContractService
         if (changedFields.Count > 0)
         {
             model.UpdatedAt = DateTimeOffset.UtcNow;
-            await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+            await _templateStore
                 .SaveAsync(templateKey, model, cancellationToken: cancellationToken);
 
             await PublishTemplateUpdatedEventAsync(model, changedFields, cancellationToken);
@@ -386,7 +426,7 @@ public partial class ContractService : IContractService
         _logger.LogInformation("Deleting contract template: {TemplateId}", body.TemplateId);
 
         var templateKey = $"{TEMPLATE_PREFIX}{body.TemplateId}";
-        var model = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+        var model = await _templateStore
             .GetAsync(templateKey, cancellationToken);
 
         if (model == null)
@@ -397,14 +437,14 @@ public partial class ContractService : IContractService
 
         // Check for active instances
         var templateIndexKey = $"{TEMPLATE_INDEX_PREFIX}{body.TemplateId}";
-        var instanceIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+        var instanceIds = await _listStore
             .GetAsync(templateIndexKey, cancellationToken) ?? new List<string>();
 
         if (instanceIds.Count > 0)
         {
             // Check if any are active
             var instanceKeys = instanceIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
-            var instances = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+            var instances = await _instanceStore
                 .GetBulkAsync(instanceKeys, cancellationToken);
 
             var activeStatuses = new[] { ContractStatus.Draft, ContractStatus.Proposed, ContractStatus.Pending, ContractStatus.Active };
@@ -418,7 +458,7 @@ public partial class ContractService : IContractService
         // Soft delete - mark as inactive
         model.IsActive = false;
         model.UpdatedAt = DateTimeOffset.UtcNow;
-        await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+        await _templateStore
             .SaveAsync(templateKey, model, cancellationToken: cancellationToken);
 
         await PublishTemplateDeletedEventAsync(model, cancellationToken);
@@ -440,7 +480,7 @@ public partial class ContractService : IContractService
 
         // Load template
         var templateKey = $"{TEMPLATE_PREFIX}{body.TemplateId}";
-        var template = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+        var template = await _templateStore
             .GetAsync(templateKey, cancellationToken);
 
         if (template == null)
@@ -478,14 +518,14 @@ public partial class ContractService : IContractService
             foreach (var party in body.Parties)
             {
                 var partyIndexKey = $"{PARTY_INDEX_PREFIX}{party.EntityType}:{party.EntityId}";
-                var contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+                var contractIds = await _listStore
                     .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
 
                 // Count only contracts in active statuses
                 var activeCount = 0;
                 foreach (var contractIdStr in contractIds)
                 {
-                    var existingContract = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+                    var existingContract = await _instanceStore
                         .GetAsync($"{INSTANCE_PREFIX}{contractIdStr}", cancellationToken);
                     if (existingContract != null && ActiveStatuses.Contains(existingContract.Status))
                     {
@@ -563,7 +603,7 @@ public partial class ContractService : IContractService
 
         // Save instance
         var instanceKey = $"{INSTANCE_PREFIX}{contractId}";
-        await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+        await _instanceStore
             .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
 
         // Update indexes
@@ -590,7 +630,7 @@ public partial class ContractService : IContractService
         _logger.LogInformation("Proposing contract: {ContractId}", body.ContractId);
 
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var store = _instanceStore;
 
         // Acquire contract lock for state transition
         await using var contractLock = await _lockProvider.LockAsync(
@@ -650,7 +690,7 @@ public partial class ContractService : IContractService
             body.ContractId, body.PartyEntityId);
 
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var store = _instanceStore;
 
         // Acquire contract lock for state transition
         await using var contractLock = await _lockProvider.LockAsync(
@@ -823,7 +863,7 @@ public partial class ContractService : IContractService
         CancellationToken cancellationToken = default)
     {
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-        var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+        var model = await _instanceStore
             .GetAsync(instanceKey, cancellationToken);
 
         if (model == null)
@@ -851,13 +891,13 @@ public partial class ContractService : IContractService
         if (body.PartyEntityId.HasValue && body.PartyEntityType.HasValue)
         {
             var partyIndexKey = $"{PARTY_INDEX_PREFIX}{body.PartyEntityType}:{body.PartyEntityId}";
-            contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+            contractIds = await _listStore
                 .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
         }
         else if (body.TemplateId.HasValue)
         {
             var templateIndexKey = $"{TEMPLATE_INDEX_PREFIX}{body.TemplateId}";
-            contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+            contractIds = await _listStore
                 .GetAsync(templateIndexKey, cancellationToken) ?? new List<string>();
         }
         else if (body.Statuses?.Count > 0)
@@ -867,7 +907,7 @@ public partial class ContractService : IContractService
             foreach (var status in body.Statuses)
             {
                 var statusIndexKey = $"{STATUS_INDEX_PREFIX}{status.ToString().ToLowerInvariant()}";
-                var ids = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+                var ids = await _listStore
                     .GetAsync(statusIndexKey, cancellationToken) ?? new List<string>();
                 contractIds.AddRange(ids);
             }
@@ -891,7 +931,7 @@ public partial class ContractService : IContractService
 
         // Load contracts
         var keys = contractIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
-        var bulkResults = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+        var bulkResults = await _instanceStore
             .GetBulkAsync(keys, cancellationToken);
 
         // Filter null results and extract values - OfType safely handles the null filtering
@@ -936,7 +976,7 @@ public partial class ContractService : IContractService
         _logger.LogInformation("Terminating contract: {ContractId}", body.ContractId);
 
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var store = _instanceStore;
 
         // Acquire contract lock for state transition
         await using var contractLock = await _lockProvider.LockAsync(
@@ -1011,7 +1051,7 @@ public partial class ContractService : IContractService
 
         _logger.LogInformation("Deleting contract instance: {ContractId}", body.ContractId);
 
-        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var store = _instanceStore;
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
 
         var model = await store.GetAsync(instanceKey, cancellationToken);
@@ -1047,7 +1087,7 @@ public partial class ContractService : IContractService
         // Delete associated breach records
         if (model.BreachIds != null)
         {
-            var breachStore = _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract);
+            var breachStore = _breachStore;
             foreach (var breachId in model.BreachIds)
             {
                 await breachStore.DeleteAsync($"{BREACH_PREFIX}{breachId}", cancellationToken);
@@ -1067,7 +1107,7 @@ public partial class ContractService : IContractService
         CancellationToken cancellationToken = default)
     {
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var store = _instanceStore;
         var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
         if (model == null)
@@ -1189,7 +1229,7 @@ public partial class ContractService : IContractService
         if (model.BreachIds?.Count > 0)
         {
             var breachKeys = model.BreachIds.Select(id => $"{BREACH_PREFIX}{id}").ToList();
-            var breaches = await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
+            var breaches = await _breachStore
                 .GetBulkAsync(breachKeys, cancellationToken);
 
             var activeStatuses = new[] { BreachStatus.Detected, BreachStatus.CurePeriod };
@@ -1235,7 +1275,7 @@ public partial class ContractService : IContractService
             body.MilestoneCode, body.ContractId);
 
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var store = _instanceStore;
 
         // Acquire contract lock for state transition
         await using var contractLock = await _lockProvider.LockAsync(
@@ -1343,7 +1383,7 @@ public partial class ContractService : IContractService
             body.MilestoneCode, body.ContractId);
 
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var store = _instanceStore;
 
         // Acquire contract lock for state transition
         await using var contractLock = await _lockProvider.LockAsync(
@@ -1422,7 +1462,7 @@ public partial class ContractService : IContractService
         CancellationToken cancellationToken = default)
     {
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var store = _instanceStore;
         var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
         if (model == null)
@@ -1466,7 +1506,7 @@ public partial class ContractService : IContractService
         _logger.LogInformation("Reporting breach for contract: {ContractId}", body.ContractId);
 
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-        var instanceStore = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var instanceStore = _instanceStore;
 
         // Acquire contract lock for state transition
         await using var contractLock = await _lockProvider.LockAsync(
@@ -1518,7 +1558,7 @@ public partial class ContractService : IContractService
 
         // Save breach (new entity, no concurrency concern)
         var breachKey = $"{BREACH_PREFIX}{breachId}";
-        await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
+        await _breachStore
             .SaveAsync(breachKey, breachModel, cancellationToken: cancellationToken);
 
         // Link breach to contract
@@ -1553,7 +1593,7 @@ public partial class ContractService : IContractService
         _logger.LogInformation("Curing breach: {BreachId}", body.BreachId);
 
         var breachKey = $"{BREACH_PREFIX}{body.BreachId}";
-        var breachStore = _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract);
+        var breachStore = _breachStore;
         var (breachModel, etag) = await breachStore.GetWithETagAsync(breachKey, cancellationToken);
 
         if (breachModel == null)
@@ -1600,7 +1640,7 @@ public partial class ContractService : IContractService
         CancellationToken cancellationToken = default)
     {
         var breachKey = $"{BREACH_PREFIX}{body.BreachId}";
-        var breachModel = await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
+        var breachModel = await _breachStore
             .GetAsync(breachKey, cancellationToken);
 
         if (breachModel == null)
@@ -1623,7 +1663,7 @@ public partial class ContractService : IContractService
         _logger.LogInformation("Updating metadata for contract: {ContractId}", body.ContractId);
 
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var store = _instanceStore;
         var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
         if (model == null)
@@ -1669,7 +1709,7 @@ public partial class ContractService : IContractService
         CancellationToken cancellationToken = default)
     {
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-        var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+        var model = await _instanceStore
             .GetAsync(instanceKey, cancellationToken);
 
         if (model == null)
@@ -1698,7 +1738,7 @@ public partial class ContractService : IContractService
 
         // Get active contracts for entity
         var partyIndexKey = $"{PARTY_INDEX_PREFIX}{body.EntityType}:{body.EntityId}";
-        var contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+        var contractIds = await _listStore
             .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
 
         if (contractIds.Count == 0)
@@ -1713,7 +1753,7 @@ public partial class ContractService : IContractService
 
         // Load active contracts
         var keys = contractIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
-        var bulkResults = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+        var bulkResults = await _instanceStore
             .GetBulkAsync(keys, cancellationToken);
 
         // Filter null results and extract active contracts - OfType safely handles the null filtering
@@ -1827,7 +1867,7 @@ public partial class ContractService : IContractService
         _logger.LogDebug("Querying active contracts for entity: {EntityId}", body.EntityId);
 
         var partyIndexKey = $"{PARTY_INDEX_PREFIX}{body.EntityType}:{body.EntityId}";
-        var contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+        var contractIds = await _listStore
             .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
 
         if (contractIds.Count == 0)
@@ -1839,7 +1879,7 @@ public partial class ContractService : IContractService
         }
 
         var keys = contractIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
-        var bulkResults = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+        var bulkResults = await _instanceStore
             .GetBulkAsync(keys, cancellationToken);
 
         // Filter null results and extract active contracts - OfType safely handles the null filtering
@@ -1905,7 +1945,7 @@ public partial class ContractService : IContractService
             return;
         }
 
-        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract);
+        var store = _listStore;
         var list = await store.GetAsync(key, ct) ?? new List<string>();
         if (!list.Contains(value))
         {
@@ -1929,7 +1969,7 @@ public partial class ContractService : IContractService
             return;
         }
 
-        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract);
+        var store = _listStore;
         var list = await store.GetAsync(key, ct) ?? new List<string>();
         if (list.Remove(value))
         {
@@ -2395,7 +2435,7 @@ public partial class ContractService : IContractService
 
         // Save breach record
         var breachKey = $"{BREACH_PREFIX}{breachId}";
-        await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
+        await _breachStore
             .SaveAsync(breachKey, breach, cancellationToken: cancellationToken);
 
         // Add breach to contract
@@ -2430,7 +2470,7 @@ public partial class ContractService : IContractService
         var activeBreachCount = 0;
         foreach (var breachId in contract.BreachIds ?? new List<Guid>())
         {
-            var breach = await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
+            var breach = await _breachStore
                 .GetAsync($"{BREACH_PREFIX}{breachId}", cancellationToken);
 
             if (breach != null &&
@@ -2468,7 +2508,7 @@ public partial class ContractService : IContractService
 
         // Save the updated contract
         var instanceKey = $"{INSTANCE_PREFIX}{contract.ContractId}";
-        await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+        await _instanceStore
             .SaveAsync(instanceKey, contract, cancellationToken: cancellationToken);
 
         // Update status index

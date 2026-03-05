@@ -16,7 +16,7 @@ public partial class EscrowService
         CancellationToken cancellationToken = default)
     {
         var handlerKey = GetHandlerKey(body.AssetType);
-        var existing = await HandlerStore.GetAsync(handlerKey, cancellationToken);
+        var existing = await _handlerStore.GetAsync(handlerKey, cancellationToken);
 
         if (existing != null)
         {
@@ -42,7 +42,7 @@ public partial class EscrowService
             RegisteredAt = now
         };
 
-        await HandlerStore.SaveAsync(handlerKey, handlerModel, cancellationToken: cancellationToken);
+        await _handlerStore.SaveAsync(handlerKey, handlerModel, cancellationToken: cancellationToken);
 
         _logger.LogInformation("Registered handler for asset type {AssetType} from plugin {PluginId}",
             body.AssetType, body.PluginId);
@@ -60,7 +60,7 @@ public partial class EscrowService
         ListHandlersRequest body,
         CancellationToken cancellationToken = default)
     {
-        var allHandlers = await HandlerStore.QueryAsync(h => true, cancellationToken);
+        var allHandlers = await _handlerStore.QueryAsync(h => true, cancellationToken);
 
         var handlerInfos = new List<AssetHandlerInfo>();
         foreach (var handler in allHandlers)
@@ -91,7 +91,7 @@ public partial class EscrowService
         CancellationToken cancellationToken = default)
     {
         var handlerKey = GetHandlerKey(body.AssetType);
-        var existing = await HandlerStore.GetAsync(handlerKey, cancellationToken);
+        var existing = await _handlerStore.GetAsync(handlerKey, cancellationToken);
 
         if (existing == null)
         {
@@ -110,7 +110,7 @@ public partial class EscrowService
             });
         }
 
-        await HandlerStore.DeleteAsync(handlerKey, cancellationToken);
+        await _handlerStore.DeleteAsync(handlerKey, cancellationToken);
 
         _logger.LogInformation("Deregistered handler for asset type {AssetType}", body.AssetType);
 

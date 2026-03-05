@@ -21,7 +21,7 @@ public partial class EscrowService
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey, cancellationToken);
+            var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey, cancellationToken);
 
             if (agreementModel == null)
             {
@@ -69,7 +69,7 @@ public partial class EscrowService
 
                 var tokenHash = HashToken(body.ReleaseToken);
                 var tokenKey = GetTokenKey(tokenHash);
-                var tokenRecord = await TokenStore.GetAsync(tokenKey, cancellationToken);
+                var tokenRecord = await _tokenStore.GetAsync(tokenKey, cancellationToken);
 
                 if (tokenRecord == null ||
                     tokenRecord.EscrowId != body.EscrowId ||
@@ -170,7 +170,7 @@ public partial class EscrowService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
+            var saveResult = await _agreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
                 _logger.LogDebug("Concurrent modification during consent for escrow {EscrowId}, retrying (attempt {Attempt})",
@@ -186,19 +186,19 @@ public partial class EscrowService
             {
                 var tokenHash = HashToken(body.ReleaseToken);
                 var tokenKey = GetTokenKey(tokenHash);
-                var tokenRecord = await TokenStore.GetAsync(tokenKey, cancellationToken);
+                var tokenRecord = await _tokenStore.GetAsync(tokenKey, cancellationToken);
                 if (tokenRecord != null)
                 {
                     tokenRecord.Used = true;
                     tokenRecord.UsedAt = now;
-                    await TokenStore.SaveAsync(tokenKey, tokenRecord, cancellationToken: cancellationToken);
+                    await _tokenStore.SaveAsync(tokenKey, tokenRecord, cancellationToken: cancellationToken);
                 }
             }
 
             if (previousStatus != newStatus)
             {
                 var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
-                await StatusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
+                await _statusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
 
                 var newStatusKey = $"{GetStatusIndexKey(newStatus)}:{body.EscrowId}";
                 var statusEntry = new StatusIndexEntry
@@ -208,7 +208,7 @@ public partial class EscrowService
                     ExpiresAt = agreementModel.ExpiresAt,
                     AddedAt = now
                 };
-                await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
+                await _statusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
             }
 
             // Publish consent event
@@ -294,7 +294,7 @@ public partial class EscrowService
         CancellationToken cancellationToken = default)
     {
         var agreementKey = GetAgreementKey(body.EscrowId);
-        var agreementModel = await AgreementStore.GetAsync(agreementKey, cancellationToken);
+        var agreementModel = await _agreementStore.GetAsync(agreementKey, cancellationToken);
 
         if (agreementModel == null)
         {

@@ -122,6 +122,9 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
     /// <summary>
     /// Get compiled capabilities for a session from Redis.
     /// </summary>
+    /// <param name="body">The capability request containing the session ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and capability response with allowed endpoints.</returns>
     public async Task<(StatusCodes, CapabilityResponse?)> GetCapabilitiesAsync(
         CapabilityRequest body,
         CancellationToken cancellationToken = default)
@@ -177,6 +180,9 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
     /// <summary>
     /// Fast O(1) validation using lib-state lookup for specific API access.
     /// </summary>
+    /// <param name="body">The validation request with session, service, and endpoint.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and validation response indicating access allowed or denied.</returns>
     public async Task<(StatusCodes, ValidationResponse?)> ValidateApiAccessAsync(
         ValidationRequest body,
         CancellationToken cancellationToken = default)
@@ -217,6 +223,9 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
     /// Register service permission matrix and trigger recompilation for all active sessions.
     /// Uses ICacheableStateStore atomic set operations for multi-instance safety.
     /// </summary>
+    /// <param name="body">The permission matrix defining service states, roles, and allowed endpoints.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and registration response.</returns>
     public async Task<(StatusCodes, RegistrationResponse?)> RegisterServicePermissionsAsync(
         ServicePermissionMatrix body,
         CancellationToken cancellationToken = default)
@@ -305,7 +314,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
         var registrationInfo = new ServiceRegistrationInfo
         {
             ServiceId = body.ServiceId,
-            Version = body.Version ?? string.Empty,
+            Version = body.Version,
             RegisteredAt = DateTimeOffset.UtcNow
         };
         await _registrationStore
@@ -367,6 +376,9 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
     /// Update session state for specific service and recompile permissions.
     /// Uses distributed lock to prevent lost updates from concurrent modifications.
     /// </summary>
+    /// <param name="body">The state update containing session ID, service ID, and new state.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and session update response with recompiled permissions if changed.</returns>
     public async Task<(StatusCodes, SessionUpdateResponse?)> UpdateSessionStateAsync(
         SessionStateUpdate body,
         CancellationToken cancellationToken = default)
@@ -399,7 +411,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
         await _sessionStatesStore
             .SaveAsync(statesKey, sessionStates, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
 
-        var (permissionsChanged, newPermissions) = await RecompileSessionPermissionsAsync(sessionIdStr, sessionStates, CapabilityUpdateReason.SessionStateChanged, cancellationToken: cancellationToken);
+        var (_, newPermissions) = await RecompileSessionPermissionsAsync(sessionIdStr, sessionStates, CapabilityUpdateReason.SessionStateChanged, cancellationToken: cancellationToken);
 
         return (StatusCodes.OK, new SessionUpdateResponse
         {
@@ -411,6 +423,9 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
     /// Update session role and recompile all service permissions.
     /// Uses distributed lock to prevent lost updates from concurrent modifications.
     /// </summary>
+    /// <param name="body">The role update containing session ID and new role.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and session update response with recompiled permissions if changed.</returns>
     public async Task<(StatusCodes, SessionUpdateResponse?)> UpdateSessionRoleAsync(
         SessionRoleUpdate body,
         CancellationToken cancellationToken = default)
@@ -443,7 +458,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
         await _sessionStatesStore
             .SaveAsync(statesKey, sessionStates, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
 
-        var (permissionsChanged, newPermissions) = await RecompileSessionPermissionsAsync(sessionIdStr, sessionStates, CapabilityUpdateReason.RoleChanged, cancellationToken: cancellationToken);
+        var (_, newPermissions) = await RecompileSessionPermissionsAsync(sessionIdStr, sessionStates, CapabilityUpdateReason.RoleChanged, cancellationToken: cancellationToken);
 
         return (StatusCodes.OK, new SessionUpdateResponse
         {
@@ -453,14 +468,29 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
 
     /// <summary>
     /// Clear session state for a specific service and recompile permissions.
+    /// Uses distributed lock to prevent lost updates from concurrent modifications.
     /// If states list is provided, only clears if current state matches one of the values.
     /// If states list is empty or not provided, clears the state unconditionally.
     /// </summary>
+    /// <param name="body">The request containing session ID, service ID, and optional state filter.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and session update response with recompiled permissions if changed.</returns>
     public async Task<(StatusCodes, SessionUpdateResponse?)> ClearSessionStateAsync(
         ClearSessionStateRequest body,
         CancellationToken cancellationToken = default)
     {
+        var sessionIdStr = body.SessionId.ToString();
         var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
+
+        // Distributed lock to prevent lost updates from concurrent session modifications
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.PermissionLock, sessionIdStr, $"permission-clear:{Guid.NewGuid()}", _configuration.SessionLockTimeoutSeconds, cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for session {SessionId} state clear", body.SessionId);
+            return (StatusCodes.Conflict, null);
+        }
 
         var sessionStates = await _sessionStatesStore.GetAsync(statesKey, cancellationToken);
 
@@ -474,8 +504,6 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
             });
         }
 
-        var sessionIdStr = body.SessionId.ToString();
-
         // If serviceId is null, clear ALL states for the session
         if (string.IsNullOrEmpty(body.ServiceId))
         {
@@ -484,7 +512,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
 
             sessionStates.Clear();
             await _sessionStatesStore.SaveAsync(statesKey, sessionStates, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
-            var (changed, perms) = await RecompileSessionPermissionsAsync(sessionIdStr, sessionStates, CapabilityUpdateReason.SessionStateChanged, cancellationToken: cancellationToken);
+            var (_, perms) = await RecompileSessionPermissionsAsync(sessionIdStr, sessionStates, CapabilityUpdateReason.SessionStateChanged, cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, new SessionUpdateResponse
             {
@@ -529,7 +557,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
 
         await _sessionStatesStore.SaveAsync(statesKey, sessionStates, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
 
-        var (permChanged, newPerms) = await RecompileSessionPermissionsAsync(sessionIdStr, sessionStates, CapabilityUpdateReason.SessionStateChanged, cancellationToken: cancellationToken);
+        var (_, newPerms) = await RecompileSessionPermissionsAsync(sessionIdStr, sessionStates, CapabilityUpdateReason.SessionStateChanged, cancellationToken: cancellationToken);
 
         return (StatusCodes.OK, new SessionUpdateResponse
         {
@@ -540,6 +568,9 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
     /// <summary>
     /// Get complete session information including states, role, and compiled permissions.
     /// </summary>
+    /// <param name="body">The request containing the session ID to query.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and session info with states, role, and compiled permissions.</returns>
     public async Task<(StatusCodes, SessionInfo?)> GetSessionInfoAsync(
         SessionInfoRequest body,
         CancellationToken cancellationToken = default)
@@ -832,6 +863,9 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
     /// <summary>
     /// Get list of all registered services with their registration information.
     /// </summary>
+    /// <param name="body">The list services request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and response containing registered services with endpoint counts.</returns>
     public async Task<(StatusCodes, RegisteredServicesResponse?)> GetRegisteredServicesAsync(ListServicesRequest body, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Getting list of registered services");
@@ -879,8 +913,8 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
             {
                 ServiceId = serviceId,
                 ServiceName = serviceId,
-                Version = registrationData?.Version ?? string.Empty,
-                RegisteredAt = registrationData?.RegisteredAt ?? DateTimeOffset.MinValue,
+                Version = registrationData?.Version,
+                RegisteredAt = registrationData?.RegisteredAt,
                 EndpointCount = uniqueEndpoints.Count
             });
         }

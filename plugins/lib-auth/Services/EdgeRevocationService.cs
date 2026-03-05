@@ -25,12 +25,23 @@ public class EdgeRevocationService : IEdgeRevocationService
     /// </summary>
     private const int RevocationTtlBufferSeconds = 300;
 
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IEnumerable<IEdgeRevocationProvider> _providers;
     private readonly IMessageBus _messageBus;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<EdgeRevocationService> _logger;
     private readonly AuthServiceConfiguration _configuration;
+
+    /// <summary>Redis-backed store for token revocation entries.</summary>
+    private readonly IStateStore<TokenRevocationEntry> _tokenStore;
+
+    /// <summary>Redis-backed store for account revocation entries.</summary>
+    private readonly IStateStore<AccountRevocationEntry> _accountStore;
+
+    /// <summary>Redis-backed store for revocation index lists.</summary>
+    private readonly IStateStore<List<string>> _indexStore;
+
+    /// <summary>Redis-backed store for failed edge push entries.</summary>
+    private readonly IStateStore<FailedEdgePushEntry> _failedStore;
 
     /// <summary>
     /// Initializes a new instance of EdgeRevocationService.
@@ -49,12 +60,17 @@ public class EdgeRevocationService : IEdgeRevocationService
         AuthServiceConfiguration configuration,
         ILogger<EdgeRevocationService> logger)
     {
-        _stateStoreFactory = stateStoreFactory;
         _providers = providers;
         _messageBus = messageBus;
         _telemetryProvider = telemetryProvider;
         _configuration = configuration;
         _logger = logger;
+
+        // Constructor-cache state stores per FOUNDATION TENETS
+        _tokenStore = stateStoreFactory.GetStore<TokenRevocationEntry>(StateStoreDefinitions.EdgeRevocation);
+        _accountStore = stateStoreFactory.GetStore<AccountRevocationEntry>(StateStoreDefinitions.EdgeRevocation);
+        _indexStore = stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.EdgeRevocation);
+        _failedStore = stateStoreFactory.GetStore<FailedEdgePushEntry>(StateStoreDefinitions.EdgeRevocation);
     }
 
     /// <inheritdoc/>
@@ -82,12 +98,12 @@ public class EdgeRevocationService : IEdgeRevocationService
             Reason = reason
         };
 
-        var tokenStore = _stateStoreFactory.GetStore<TokenRevocationEntry>(StateStoreDefinitions.EdgeRevocation);
+        var tokenStore = _tokenStore;
         var ttlSeconds = (int)ttl.TotalSeconds;
         await tokenStore.SaveAsync($"token:{jti}", entry, new StateOptions { Ttl = ttlSeconds }, ct);
 
         // Add to index for listing
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.EdgeRevocation);
+        var indexStore = _indexStore;
         await AddToIndexAsync(indexStore, "token-index", jti, ct);
 
         // Retry any failed pushes from previous attempts
@@ -118,14 +134,14 @@ public class EdgeRevocationService : IEdgeRevocationService
             Reason = reason
         };
 
-        var accountStore = _stateStoreFactory.GetStore<AccountRevocationEntry>(StateStoreDefinitions.EdgeRevocation);
+        var accountStore = _accountStore;
         // Account revocations expire after all access tokens issued before issuedBefore have naturally expired.
         // TTL = JWT lifetime + buffer. After this, no valid access token can predate the revocation.
         var accountRevocationTtlSeconds = (_configuration.JwtExpirationMinutes * 60) + RevocationTtlBufferSeconds;
         await accountStore.SaveAsync($"account:{accountId}", entry, new StateOptions { Ttl = accountRevocationTtlSeconds }, ct);
 
         // Add to index for listing
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.EdgeRevocation);
+        var indexStore = _indexStore;
         await AddToIndexAsync(indexStore, "account-index", accountId.ToString(), ct);
 
         // Retry any failed pushes from previous attempts
@@ -144,14 +160,14 @@ public class EdgeRevocationService : IEdgeRevocationService
         var accounts = new List<RevokedAccountEntry>();
         int? totalTokenCount = null;
 
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.EdgeRevocation);
+        var indexStore = _indexStore;
 
         if (includeTokens)
         {
             var tokenIndex = await indexStore.GetAsync("token-index", ct) ?? new List<string>();
             totalTokenCount = tokenIndex.Count;
 
-            var tokenStore = _stateStoreFactory.GetStore<TokenRevocationEntry>(StateStoreDefinitions.EdgeRevocation);
+            var tokenStore = _tokenStore;
             var count = 0;
             foreach (var jti in tokenIndex.Take(limit))
             {
@@ -178,7 +194,7 @@ public class EdgeRevocationService : IEdgeRevocationService
         if (includeAccounts)
         {
             var accountIndex = await indexStore.GetAsync("account-index", ct) ?? new List<string>();
-            var accountStore = _stateStoreFactory.GetStore<AccountRevocationEntry>(StateStoreDefinitions.EdgeRevocation);
+            var accountStore = _accountStore;
             var count = 0;
             foreach (var accountIdStr in accountIndex.Take(limit))
             {
@@ -293,11 +309,11 @@ public class EdgeRevocationService : IEdgeRevocationService
         // Create unique key for this failed push
         var key = type == "token" ? $"failed:{providerId}:token:{jti}" : $"failed:{providerId}:account:{accountId}";
 
-        var failedStore = _stateStoreFactory.GetStore<FailedEdgePushEntry>(StateStoreDefinitions.EdgeRevocation);
+        var failedStore = _failedStore;
         await failedStore.SaveAsync(key, entry, null, ct);
 
         // Add to failed push index
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.EdgeRevocation);
+        var indexStore = _indexStore;
         await AddToIndexAsync(indexStore, "failed-push-index", key, ct);
     }
 
@@ -307,7 +323,7 @@ public class EdgeRevocationService : IEdgeRevocationService
     private async Task RetryFailedPushesAsync(CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "EdgeRevocationService.RetryFailedPushes");
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.EdgeRevocation);
+        var indexStore = _indexStore;
         var failedIndex = await indexStore.GetAsync("failed-push-index", ct);
 
         if (failedIndex == null || failedIndex.Count == 0)
@@ -317,7 +333,7 @@ public class EdgeRevocationService : IEdgeRevocationService
 
         _logger.LogDebug("Retrying {Count} failed edge pushes", failedIndex.Count);
 
-        var failedStore = _stateStoreFactory.GetStore<FailedEdgePushEntry>(StateStoreDefinitions.EdgeRevocation);
+        var failedStore = _failedStore;
         var successfulKeys = new List<string>();
         var giveUpKeys = new List<string>();
 

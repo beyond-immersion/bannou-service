@@ -85,11 +85,31 @@ public static class EscrowTopics
 public partial class EscrowService : IEscrowService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<EscrowService> _logger;
     private readonly EscrowServiceConfiguration _configuration;
     private readonly IEventConsumer _eventConsumer;
     private readonly ITelemetryProvider _telemetryProvider;
+
+    /// <summary>Queryable state store for escrow agreement persistence.</summary>
+    private readonly IQueryableStateStore<EscrowAgreementModel> _agreementStore;
+
+    /// <summary>State store for token hash persistence.</summary>
+    private readonly IStateStore<TokenHashModel> _tokenStore;
+
+    /// <summary>State store for idempotency record persistence.</summary>
+    private readonly IStateStore<IdempotencyRecord> _idempotencyStore;
+
+    /// <summary>Queryable state store for asset handler registry persistence.</summary>
+    private readonly IQueryableStateStore<AssetHandlerModel> _handlerStore;
+
+    /// <summary>State store for party pending count persistence.</summary>
+    private readonly IStateStore<PartyPendingCount> _partyPendingStore;
+
+    /// <summary>State store for status index entry persistence.</summary>
+    private readonly IStateStore<StatusIndexEntry> _statusIndexStore;
+
+    /// <summary>State store for validation tracking entry persistence.</summary>
+    private readonly IStateStore<ValidationTrackingEntry> _validationStore;
 
     #region State Store Keys
 
@@ -208,46 +228,21 @@ public partial class EscrowService : IEscrowService
         ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _eventConsumer = eventConsumer;
         _telemetryProvider = telemetryProvider;
 
+        _agreementStore = stateStoreFactory.GetQueryableStore<EscrowAgreementModel>(StateStoreDefinitions.EscrowAgreements);
+        _tokenStore = stateStoreFactory.GetStore<TokenHashModel>(StateStoreDefinitions.EscrowTokens);
+        _idempotencyStore = stateStoreFactory.GetStore<IdempotencyRecord>(StateStoreDefinitions.EscrowIdempotency);
+        _handlerStore = stateStoreFactory.GetQueryableStore<AssetHandlerModel>(StateStoreDefinitions.EscrowHandlerRegistry);
+        _partyPendingStore = stateStoreFactory.GetStore<PartyPendingCount>(StateStoreDefinitions.EscrowPartyPending);
+        _statusIndexStore = stateStoreFactory.GetStore<StatusIndexEntry>(StateStoreDefinitions.EscrowStatusIndex);
+        _validationStore = stateStoreFactory.GetStore<ValidationTrackingEntry>(StateStoreDefinitions.EscrowActiveValidation);
+
         RegisterEventConsumers(eventConsumer);
     }
-
-    #region State Store Accessors
-
-    private IQueryableStateStore<EscrowAgreementModel>? _agreementStore;
-    private IQueryableStateStore<EscrowAgreementModel> AgreementStore =>
-        _agreementStore ??= _stateStoreFactory.GetQueryableStore<EscrowAgreementModel>(StateStoreDefinitions.EscrowAgreements);
-
-    private IStateStore<TokenHashModel>? _tokenStore;
-    private IStateStore<TokenHashModel> TokenStore =>
-        _tokenStore ??= _stateStoreFactory.GetStore<TokenHashModel>(StateStoreDefinitions.EscrowTokens);
-
-    private IStateStore<IdempotencyRecord>? _idempotencyStore;
-    private IStateStore<IdempotencyRecord> IdempotencyStore =>
-        _idempotencyStore ??= _stateStoreFactory.GetStore<IdempotencyRecord>(StateStoreDefinitions.EscrowIdempotency);
-
-    private IQueryableStateStore<AssetHandlerModel>? _handlerStore;
-    private IQueryableStateStore<AssetHandlerModel> HandlerStore =>
-        _handlerStore ??= _stateStoreFactory.GetQueryableStore<AssetHandlerModel>(StateStoreDefinitions.EscrowHandlerRegistry);
-
-    private IStateStore<PartyPendingCount>? _partyPendingStore;
-    private IStateStore<PartyPendingCount> PartyPendingStore =>
-        _partyPendingStore ??= _stateStoreFactory.GetStore<PartyPendingCount>(StateStoreDefinitions.EscrowPartyPending);
-
-    private IStateStore<StatusIndexEntry>? _statusIndexStore;
-    private IStateStore<StatusIndexEntry> StatusIndexStore =>
-        _statusIndexStore ??= _stateStoreFactory.GetStore<StatusIndexEntry>(StateStoreDefinitions.EscrowStatusIndex);
-
-    private IStateStore<ValidationTrackingEntry>? _validationStore;
-    private IStateStore<ValidationTrackingEntry> ValidationStore =>
-        _validationStore ??= _stateStoreFactory.GetStore<ValidationTrackingEntry>(StateStoreDefinitions.EscrowActiveValidation);
-
-    #endregion
 
     #region Helper Methods
 
@@ -393,7 +388,7 @@ public partial class EscrowService : IEscrowService
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var (existing, etag) = await PartyPendingStore.GetWithETagAsync(partyKey, cancellationToken);
+            var (existing, etag) = await _partyPendingStore.GetWithETagAsync(partyKey, cancellationToken);
             var newCount = new PartyPendingCount
             {
                 PartyId = partyId,
@@ -404,7 +399,7 @@ public partial class EscrowService : IEscrowService
 
             // etag is null when key doesn't exist yet; empty string signals
             // "create new" to TrySaveAsync (will never conflict on new entries)
-            var saveResult = await PartyPendingStore.TrySaveAsync(partyKey, newCount, etag ?? string.Empty, cancellationToken);
+            var saveResult = await _partyPendingStore.TrySaveAsync(partyKey, newCount, etag ?? string.Empty, cancellationToken);
             if (saveResult != null)
             {
                 return;
@@ -433,7 +428,7 @@ public partial class EscrowService : IEscrowService
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var (existing, etag) = await PartyPendingStore.GetWithETagAsync(partyKey, cancellationToken);
+            var (existing, etag) = await _partyPendingStore.GetWithETagAsync(partyKey, cancellationToken);
             if (existing == null || existing.PendingCount <= 0)
             {
                 return;
@@ -444,7 +439,7 @@ public partial class EscrowService : IEscrowService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await PartyPendingStore.TrySaveAsync(partyKey, existing, etag ?? string.Empty, cancellationToken);
+            var saveResult = await _partyPendingStore.TrySaveAsync(partyKey, existing, etag ?? string.Empty, cancellationToken);
             if (saveResult != null)
             {
                 return;

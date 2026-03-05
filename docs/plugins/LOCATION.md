@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFoundation
 > **State Store**: location-statestore (MySQL)
+> **Implementation Map**: [docs/maps/LOCATION.md](../maps/LOCATION.md)
 
 ---
 

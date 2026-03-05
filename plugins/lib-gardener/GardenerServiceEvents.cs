@@ -77,12 +77,12 @@ public partial class GardenerService
                 var seed = await _seedClient.GetSeedAsync(
                     new GetSeedRequest { SeedId = participantSeedId }, CancellationToken.None);
 
-                var garden = await GardenStore.GetAsync(GardenKey(seed.OwnerId), CancellationToken.None);
+                var garden = await _gardenStore.GetAsync(GardenKey(seed.OwnerId), CancellationToken.None);
                 if (garden != null)
                 {
                     garden.BondId = evt.BondId;
                     garden.NeedsReEvaluation = true;
-                    await GardenStore.SaveAsync(GardenKey(seed.OwnerId), garden, options: null, cancellationToken: CancellationToken.None);
+                    await _gardenStore.SaveAsync(GardenKey(seed.OwnerId), garden, options: null, cancellationToken: CancellationToken.None);
                     updatedCount++;
                 }
             }
@@ -107,12 +107,12 @@ public partial class GardenerService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.gardener", "GardenerService.HandleSeedActivated");
 
-        var garden = await GardenStore.GetAsync(GardenKey(evt.OwnerId), CancellationToken.None);
+        var garden = await _gardenStore.GetAsync(GardenKey(evt.OwnerId), CancellationToken.None);
         if (garden == null) return;
 
         garden.SeedId = evt.SeedId;
         garden.NeedsReEvaluation = true;
-        await GardenStore.SaveAsync(GardenKey(evt.OwnerId), garden, options: null, cancellationToken: CancellationToken.None);
+        await _gardenStore.SaveAsync(GardenKey(evt.OwnerId), garden, options: null, cancellationToken: CancellationToken.None);
 
         _logger.LogInformation(
             "Updated active seed to {SeedId} for garden owner {OwnerId}",

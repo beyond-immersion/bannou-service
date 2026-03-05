@@ -123,7 +123,9 @@ public class ContractExpirationService : BackgroundService
         var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
         var contractService = scope.ServiceProvider.GetRequiredService<IContractService>();
 
+        // Resolve all needed stores once per scope (FOUNDATION TENETS compliance)
         var indexStore = stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract);
+        var instanceStore = stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
         var now = DateTimeOffset.UtcNow;
 
         // Cast to concrete type for access to payment schedule methods
@@ -209,7 +211,7 @@ public class ContractExpirationService : BackgroundService
                 if (contractServiceImpl != null)
                 {
                     paymentsDueCount += await CheckPaymentScheduleAsync(
-                        contractServiceImpl, stateStoreFactory, contractId, now, cancellationToken);
+                        contractServiceImpl, instanceStore, contractId, now, cancellationToken);
                 }
             }
             catch (Exception ex)
@@ -230,17 +232,21 @@ public class ContractExpirationService : BackgroundService
     /// Checks if a payment is due for a specific contract and publishes the event if so.
     /// Uses optimistic concurrency to safely advance the payment schedule.
     /// </summary>
+    /// <param name="contractService">The contract service implementation for payment schedule logic.</param>
+    /// <param name="instanceStore">Pre-resolved state store for contract instances (resolved once per scope).</param>
+    /// <param name="contractId">The contract to check.</param>
+    /// <param name="now">Current timestamp for payment due comparison.</param>
+    /// <param name="ct">Cancellation token.</param>
     /// <returns>The number of payment due events published (0 or 1).</returns>
     private static async Task<int> CheckPaymentScheduleAsync(
         ContractService contractService,
-        IStateStoreFactory stateStoreFactory,
+        IStateStore<ContractInstanceModel> instanceStore,
         Guid contractId,
         DateTimeOffset now,
         CancellationToken ct)
     {
-        var store = stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
         var instanceKey = $"instance:{contractId}";
-        var (model, etag) = await store.GetWithETagAsync(instanceKey, ct);
+        var (model, etag) = await instanceStore.GetWithETagAsync(instanceKey, ct);
 
         if (model == null || model.NextPaymentDue == null)
         {
@@ -259,7 +265,7 @@ public class ContractExpirationService : BackgroundService
         // GetWithETagAsync returns non-null etag for existing records;
         // coalesce satisfies compiler's nullable analysis (will never execute)
         model.UpdatedAt = now;
-        await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, ct);
+        await instanceStore.TrySaveAsync(instanceKey, model, etag ?? string.Empty, ct);
 
         return 1;
     }

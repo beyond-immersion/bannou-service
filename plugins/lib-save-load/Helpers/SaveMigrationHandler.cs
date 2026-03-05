@@ -15,7 +15,14 @@ namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
 /// </summary>
 public sealed class SaveMigrationHandler : ISaveMigrationHandler
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
+    /// <summary>Store for schema definitions (basic CRUD operations).</summary>
+    private readonly IStateStore<SaveSchemaDefinition> _schemaStore;
+    /// <summary>Queryable store for schema definitions (MySQL-backed for LINQ queries).</summary>
+    private readonly IQueryableStateStore<SaveSchemaDefinition> _schemaQueryStore;
+    /// <summary>Queryable store for save slot metadata (MySQL-backed for LINQ queries).</summary>
+    private readonly IQueryableStateStore<SaveSlotMetadata> _slotQueryStore;
+    /// <summary>Store for version manifests (basic CRUD operations).</summary>
+    private readonly IStateStore<SaveVersionManifest> _versionStore;
     private readonly SaveLoadServiceConfiguration _configuration;
     private readonly IAssetClient _assetClient;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -37,7 +44,10 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
         ILogger<SaveMigrationHandler> logger,
         ITelemetryProvider telemetryProvider)
     {
-        _stateStoreFactory = stateStoreFactory;
+        _schemaStore = stateStoreFactory.GetStore<SaveSchemaDefinition>(StateStoreDefinitions.SaveLoadSchemas);
+        _schemaQueryStore = stateStoreFactory.GetQueryableStore<SaveSchemaDefinition>(StateStoreDefinitions.SaveLoadSchemas);
+        _slotQueryStore = stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+        _versionStore = stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
         _configuration = configuration;
         _assetClient = assetClient;
         _httpClientFactory = httpClientFactory;
@@ -59,11 +69,9 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
 
         try
         {
-            var schemaStore = _stateStoreFactory.GetStore<SaveSchemaDefinition>(StateStoreDefinitions.SaveLoadSchemas);
-
             // Check if schema already exists
             var schemaKey = SaveSchemaDefinition.GetStateKey(body.Namespace, body.SchemaVersion);
-            var existingSchema = await schemaStore.GetAsync(schemaKey, cancellationToken);
+            var existingSchema = await _schemaStore.GetAsync(schemaKey, cancellationToken);
             if (existingSchema != null)
             {
                 _logger.LogWarning(
@@ -76,7 +84,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             if (!string.IsNullOrEmpty(body.PreviousVersion))
             {
                 var previousKey = SaveSchemaDefinition.GetStateKey(body.Namespace, body.PreviousVersion);
-                var previousSchema = await schemaStore.GetAsync(previousKey, cancellationToken);
+                var previousSchema = await _schemaStore.GetAsync(previousKey, cancellationToken);
                 if (previousSchema == null)
                 {
                     _logger.LogWarning(
@@ -104,7 +112,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
                 CreatedAt = DateTimeOffset.UtcNow
             };
 
-            await schemaStore.SaveAsync(schemaKey, schema, cancellationToken: cancellationToken);
+            await _schemaStore.SaveAsync(schemaKey, schema, cancellationToken: cancellationToken);
 
             _logger.LogInformation(
                 "Registered schema {Namespace}:{Version}",
@@ -147,10 +155,8 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
 
         try
         {
-            var schemaStore = _stateStoreFactory.GetQueryableStore<SaveSchemaDefinition>(StateStoreDefinitions.SaveLoadSchemas);
-
             // Query all schemas in the namespace
-            var schemas = await schemaStore.QueryAsync(
+            var schemas = await _schemaQueryStore.QueryAsync(
                 s => s.Namespace == body.Namespace,
                 cancellationToken);
 
@@ -234,15 +240,13 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
 
         try
         {
-            var slotStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
-            var schemaStore = _stateStoreFactory.GetQueryableStore<SaveSchemaDefinition>(StateStoreDefinitions.SaveLoadSchemas);
+            // Uses constructor-cached store references per FOUNDATION TENETS
 
             // Find source slot by querying by owner and slot name
             // SaveSlotMetadata.OwnerId and OwnerType are now Guid and enum - compare properly
 
             // Query slots for this owner and slot name
-            var slots = await slotStore.QueryAsync(
+            var slots = await _slotQueryStore.QueryAsync(
                 s => s.OwnerId == body.OwnerId && s.OwnerType == body.OwnerType && s.SlotName == body.SlotName,
                 cancellationToken);
             var slot = slots.FirstOrDefault();
@@ -265,7 +269,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
 
             // SlotId is Guid - convert to string for state key
             var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), versionNumber);
-            var version = await versionStore.GetAsync(versionKey, cancellationToken);
+            var version = await _versionStore.GetAsync(versionKey, cancellationToken);
 
             if (version == null)
             {
@@ -293,7 +297,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             }
 
             // Create migrator and find migration path (default max 10 steps)
-            var migrator = new SchemaMigrator(_logger, schemaStore, _telemetryProvider, maxMigrationSteps: 10);
+            var migrator = new SchemaMigrator(_logger, _schemaQueryStore, _telemetryProvider, maxMigrationSteps: 10);
             var migrationPath = await migrator.FindMigrationPathAsync(
                 slot.GameId,
                 currentSchemaVersion,
@@ -411,12 +415,12 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             };
 
             var newVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), newVersionNumber);
-            await versionStore.SaveAsync(newVersionKey, newVersion, cancellationToken: cancellationToken);
+            await _versionStore.SaveAsync(newVersionKey, newVersion, cancellationToken: cancellationToken);
 
             // Update slot's latest version
             slot.LatestVersion = newVersionNumber;
             slot.UpdatedAt = DateTimeOffset.UtcNow;
-            await slotStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
+            await _slotQueryStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
 
             // Publish event - SaveSlotMetadata.SlotId is now Guid
             await _messageBus.TryPublishAsync("save.migrated", new SaveMigratedEvent

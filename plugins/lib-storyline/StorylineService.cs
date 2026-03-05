@@ -58,7 +58,6 @@ namespace BeyondImmersion.BannouService.Storyline;
 public partial class StorylineService : IStorylineService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IResourceClient _resourceClient;
     private readonly IRelationshipClient _relationshipClient;
     private readonly IServiceProvider _serviceProvider;
@@ -108,7 +107,6 @@ public partial class StorylineService : IStorylineService
         ArgumentNullException.ThrowIfNull(configuration);
 
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _resourceClient = resourceClient;
         _relationshipClient = relationshipClient;
         _serviceProvider = serviceProvider;

@@ -23,7 +23,6 @@ namespace BeyondImmersion.BannouService.Faction;
 public partial class FactionService : IFactionService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IResourceClient _resourceClient;
     private readonly ILogger<FactionService> _logger;
     private readonly FactionServiceConfiguration _configuration;
@@ -34,23 +33,37 @@ public partial class FactionService : IFactionService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ITelemetryProvider _telemetryProvider;
 
-    // Faction store (MySQL)
+    /// <summary>Durable store for faction entity records (MySQL).</summary>
     private readonly IStateStore<FactionModel> _factionStore;
+
+    /// <summary>Queryable store for faction lookups by field (MySQL JSON path).</summary>
     private readonly IJsonQueryableStateStore<FactionModel> _factionQueryStore;
 
-    // Membership store (MySQL)
+    /// <summary>Durable store for individual faction membership records (MySQL).</summary>
     private readonly IStateStore<FactionMemberModel> _memberStore;
+
+    /// <summary>Queryable store for membership lookups by field (MySQL JSON path).</summary>
+    private readonly IJsonQueryableStateStore<FactionMemberModel> _memberQueryStore;
+
+    /// <summary>Durable store for per-entity membership list aggregates (MySQL).</summary>
     private readonly IStateStore<MembershipListModel> _memberListStore;
 
-    // Territory store (MySQL)
+    /// <summary>Durable store for territory claim records (MySQL).</summary>
     private readonly IStateStore<TerritoryClaimModel> _territoryStore;
+
+    /// <summary>Queryable store for territory claim lookups by field (MySQL JSON path).</summary>
+    private readonly IJsonQueryableStateStore<TerritoryClaimModel> _territoryQueryStore;
+
+    /// <summary>Durable store for per-faction territory claim list aggregates (MySQL).</summary>
     private readonly IStateStore<TerritoryClaimListModel> _territoryListStore;
 
-    // Norm store (MySQL)
+    /// <summary>Durable store for norm definition records (MySQL).</summary>
     private readonly IStateStore<NormDefinitionModel> _normStore;
+
+    /// <summary>Durable store for per-faction norm list aggregates (MySQL).</summary>
     private readonly IStateStore<NormListModel> _normListStore;
 
-    // Cache store (Redis)
+    /// <summary>Ephemeral cache for resolved norm hierarchies (Redis).</summary>
     private readonly IStateStore<ResolvedNormCacheModel> _normCacheStore;
 
     /// <summary>
@@ -71,7 +84,6 @@ public partial class FactionService : IFactionService
         ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _resourceClient = resourceClient;
         _logger = logger;
         _configuration = configuration;
@@ -85,8 +97,10 @@ public partial class FactionService : IFactionService
         _factionStore = stateStoreFactory.GetStore<FactionModel>(StateStoreDefinitions.Faction);
         _factionQueryStore = stateStoreFactory.GetJsonQueryableStore<FactionModel>(StateStoreDefinitions.Faction);
         _memberStore = stateStoreFactory.GetStore<FactionMemberModel>(StateStoreDefinitions.FactionMembership);
+        _memberQueryStore = stateStoreFactory.GetJsonQueryableStore<FactionMemberModel>(StateStoreDefinitions.FactionMembership);
         _memberListStore = stateStoreFactory.GetStore<MembershipListModel>(StateStoreDefinitions.FactionMembership);
         _territoryStore = stateStoreFactory.GetStore<TerritoryClaimModel>(StateStoreDefinitions.FactionTerritory);
+        _territoryQueryStore = stateStoreFactory.GetJsonQueryableStore<TerritoryClaimModel>(StateStoreDefinitions.FactionTerritory);
         _territoryListStore = stateStoreFactory.GetStore<TerritoryClaimListModel>(StateStoreDefinitions.FactionTerritory);
         _normStore = stateStoreFactory.GetStore<NormDefinitionModel>(StateStoreDefinitions.FactionNorm);
         _normListStore = stateStoreFactory.GetStore<NormListModel>(StateStoreDefinitions.FactionNorm);
@@ -270,15 +284,12 @@ public partial class FactionService : IFactionService
             new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Exists },
             new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Equals, Value = factionId.ToString() },
         };
-        var memberQuery = _stateStoreFactory.GetJsonQueryableStore<FactionMemberModel>(
-            StateStoreDefinitions.FactionMembership);
-
         var offset = 0;
         var pageSize = _configuration.SeedBulkPageSize;
         bool hasMore;
         do
         {
-            var members = await memberQuery.JsonQueryPagedAsync(
+            var members = await _memberQueryStore.JsonQueryPagedAsync(
                 memberConditions, offset, pageSize, cancellationToken: ct);
 
             foreach (var member in members.Items)
@@ -652,12 +663,11 @@ public partial class FactionService : IFactionService
             new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Exists },
             new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Equals, Value = body.FactionId.ToString() },
         };
-        var memberQuery = _stateStoreFactory.GetJsonQueryableStore<FactionMemberModel>(StateStoreDefinitions.FactionMembership);
         var memberOffset = 0;
         bool memberHasMore;
         do
         {
-            var members = await memberQuery.JsonQueryPagedAsync(
+            var members = await _memberQueryStore.JsonQueryPagedAsync(
                 memberConditions, memberOffset, _configuration.SeedBulkPageSize, cancellationToken: cancellationToken);
             foreach (var member in members.Items)
             {
@@ -1117,13 +1127,12 @@ public partial class FactionService : IFactionService
         if (body.Role.HasValue)
             conditions.Add(new QueryCondition { Path = "$.Role", Operator = QueryOperator.Equals, Value = body.Role.Value.ToString() });
 
-        var queryStore = _stateStoreFactory.GetJsonQueryableStore<FactionMemberModel>(StateStoreDefinitions.FactionMembership);
         var memberOffset = 0;
         if (!string.IsNullOrEmpty(body.Cursor) && int.TryParse(body.Cursor, out var parsedMemberOffset))
         {
             memberOffset = parsedMemberOffset;
         }
-        var result = await queryStore.JsonQueryPagedAsync(conditions, memberOffset, body.PageSize, cancellationToken: cancellationToken);
+        var result = await _memberQueryStore.JsonQueryPagedAsync(conditions, memberOffset, body.PageSize, cancellationToken: cancellationToken);
 
         var members = result.Items.Select(r => MapToMemberResponse(r.Value)).ToList();
 
@@ -1430,13 +1439,12 @@ public partial class FactionService : IFactionService
         if (body.Status.HasValue)
             conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = body.Status.Value.ToString() });
 
-        var queryStore = _stateStoreFactory.GetJsonQueryableStore<TerritoryClaimModel>(StateStoreDefinitions.FactionTerritory);
         var claimOffset = 0;
         if (!string.IsNullOrEmpty(body.Cursor) && int.TryParse(body.Cursor, out var parsedClaimOffset))
         {
             claimOffset = parsedClaimOffset;
         }
-        var result = await queryStore.JsonQueryPagedAsync(conditions, claimOffset, body.PageSize, cancellationToken: cancellationToken);
+        var result = await _territoryQueryStore.JsonQueryPagedAsync(conditions, claimOffset, body.PageSize, cancellationToken: cancellationToken);
 
         var claims = result.Items.Select(r => MapToClaimResponse(r.Value)).ToList();
 

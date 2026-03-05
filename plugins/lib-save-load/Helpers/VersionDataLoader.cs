@@ -13,7 +13,8 @@ namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
 /// </summary>
 public sealed class VersionDataLoader : IVersionDataLoader
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
+    /// <summary>Hot cache store for fast save data retrieval (Redis-backed with TTL).</summary>
+    private readonly IStateStore<HotSaveEntry> _hotCacheStore;
     private readonly SaveLoadServiceConfiguration _configuration;
     private readonly IAssetClient _assetClient;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -37,7 +38,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
         ILogger<VersionDataLoader> logger,
         ITelemetryProvider telemetryProvider)
     {
-        _stateStoreFactory = stateStoreFactory;
+        _hotCacheStore = stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
         _configuration = configuration;
         _assetClient = assetClient;
         _httpClientFactory = httpClientFactory;
@@ -53,9 +54,8 @@ public sealed class VersionDataLoader : IVersionDataLoader
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "VersionDataLoader.LoadVersionDataAsync");
         // Try hot cache first
-        var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
         var hotKey = HotSaveEntry.GetStateKey(slotId, version.VersionNumber);
-        var hotEntry = await hotCacheStore.GetAsync(hotKey, cancellationToken);
+        var hotEntry = await _hotCacheStore.GetAsync(hotKey, cancellationToken);
 
         if (hotEntry != null)
         {

@@ -62,7 +62,7 @@ public partial class StatusService
                 CancellationToken.None);
 
             var cacheKey = SeedEffectsCacheKey(seed.OwnerId, seed.OwnerType);
-            await SeedEffectsCacheStore.DeleteAsync(cacheKey);
+            await _seedEffectsCacheStore.DeleteAsync(cacheKey);
             _logger.LogDebug(
                 "Invalidated seed effects cache for {OwnerType} {OwnerId} via event (seed {SeedId})",
                 seed.OwnerType, seed.OwnerId, evt.SeedId);

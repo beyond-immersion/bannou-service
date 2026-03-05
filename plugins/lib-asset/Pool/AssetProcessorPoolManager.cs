@@ -25,12 +25,16 @@ namespace BeyondImmersion.BannouService.Asset.Pool;
 /// </remarks>
 public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<AssetProcessorPoolManager> _logger;
     private readonly AssetServiceConfiguration _configuration;
 
-    private const string ProcessorPoolStore = StateStoreDefinitions.AssetProcessorPool;
+    /// <summary>State store for processor node state entries.</summary>
+    private readonly IStateStore<ProcessorNodeState> _nodeStateStore;
+
+    /// <summary>State store for processor pool indexes.</summary>
+    private readonly IStateStore<ProcessorPoolIndex> _poolIndexStore;
+
     private const string INDEX_SUFFIX = ":index";
 
     /// <summary>
@@ -42,11 +46,14 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ILogger<AssetProcessorPoolManager> logger,
         AssetServiceConfiguration configuration)
     {
-        _stateStoreFactory = stateStoreFactory;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
         _logger = logger;
         _configuration = configuration;
+
+        // Constructor-cache all state stores per FOUNDATION TENETS
+        _nodeStateStore = stateStoreFactory.GetStore<ProcessorNodeState>(StateStoreDefinitions.AssetProcessorPool);
+        _poolIndexStore = stateStoreFactory.GetStore<ProcessorPoolIndex>(StateStoreDefinitions.AssetProcessorPool);
     }
 
     #region Node Registration
@@ -64,7 +71,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(appId);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
-        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(ProcessorPoolStore);
+        var store = _nodeStateStore;
         var nodeKey = GetNodeKey(poolType, nodeId);
 
         // Check if node already exists
@@ -117,7 +124,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
-        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(ProcessorPoolStore);
+        var store = _nodeStateStore;
         var nodeKey = GetNodeKey(poolType, nodeId);
         var state = await store.GetAsync(nodeKey, cancellationToken);
 
@@ -168,7 +175,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
-        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(ProcessorPoolStore);
+        var store = _nodeStateStore;
         var nodeKey = GetNodeKey(poolType, nodeId);
 
         // Remove from index first
@@ -194,7 +201,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
-        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(ProcessorPoolStore);
+        var store = _nodeStateStore;
         var nodeKey = GetNodeKey(poolType, nodeId);
         var state = await store.GetAsync(nodeKey, cancellationToken);
 
@@ -232,7 +239,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
-        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(ProcessorPoolStore);
+        var store = _nodeStateStore;
         var nodeKey = GetNodeKey(poolType, nodeId);
         return await store.GetAsync(nodeKey, cancellationToken);
     }
@@ -287,7 +294,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
             return Array.Empty<ProcessorNodeState>();
         }
 
-        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(ProcessorPoolStore);
+        var store = _nodeStateStore;
         var nodes = new List<ProcessorNodeState>();
         var staleNodeIds = new List<string>();
 
@@ -343,7 +350,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
     private async Task<ProcessorPoolIndex> GetPoolIndexAsync(string poolType, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessorPoolManager.GetPoolIndexAsync");
-        var store = _stateStoreFactory.GetStore<ProcessorPoolIndex>(ProcessorPoolStore);
+        var store = _poolIndexStore;
         var indexKey = GetIndexKey(poolType);
         var index = await store.GetAsync(indexKey, ct);
         return index ?? new ProcessorPoolIndex();
@@ -357,7 +364,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
     private async Task UpdatePoolIndexAsync(string poolType, string nodeId, bool add, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessorPoolManager.UpdatePoolIndexAsync");
-        var store = _stateStoreFactory.GetStore<ProcessorPoolIndex>(ProcessorPoolStore);
+        var store = _poolIndexStore;
         var indexKey = GetIndexKey(poolType);
         var maxRetries = _configuration.ProcessingMaxRetries;
 

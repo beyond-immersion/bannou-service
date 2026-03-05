@@ -22,12 +22,32 @@ namespace BeyondImmersion.BannouService.Item;
 public partial class ItemService : IItemService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IContractClient _contractClient;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<ItemService> _logger;
     private readonly ItemServiceConfiguration _configuration;
+
+    /// <summary>Persistent store for item template models (MySQL-backed).</summary>
+    private readonly IStateStore<ItemTemplateModel> _templateStore;
+
+    /// <summary>String store for item template index keys (code lookups, game indexes).</summary>
+    private readonly IStateStore<string> _templateStringStore;
+
+    /// <summary>Redis cache store for item template models (read-through cache).</summary>
+    private readonly IStateStore<ItemTemplateModel> _templateCacheStore;
+
+    /// <summary>Persistent store for item instance models (MySQL-backed).</summary>
+    private readonly IStateStore<ItemInstanceModel> _instanceStore;
+
+    /// <summary>String store for item instance index keys (container/template indexes).</summary>
+    private readonly IStateStore<string> _instanceStringStore;
+
+    /// <summary>Queryable store for item instance models (MySQL LINQ queries).</summary>
+    private readonly IQueryableStateStore<ItemInstanceModel> _instanceQueryableStore;
+
+    /// <summary>Redis cache store for item instance models (read-through cache).</summary>
+    private readonly IStateStore<ItemInstanceModel> _instanceCacheStore;
 
     // Parsed config defaults (boundary parsing per IMPLEMENTATION TENETS)
     private readonly ItemRarity _defaultRarity;
@@ -89,12 +109,20 @@ public partial class ItemService : IItemService
         ItemServiceConfiguration configuration)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _lockProvider = lockProvider;
         _contractClient = contractClient;
         _telemetryProvider = telemetryProvider;
         _logger = logger;
         _configuration = configuration;
+
+        // Constructor-cache all state store references per FOUNDATION TENETS
+        _templateStore = stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
+        _templateStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemTemplateStore);
+        _templateCacheStore = stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateCache);
+        _instanceStore = stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
+        _instanceStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemInstanceStore);
+        _instanceQueryableStore = stateStoreFactory.GetQueryableStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
+        _instanceCacheStore = stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceCache);
 
         // Configuration already provides typed enums (IMPLEMENTATION TENETS compliant)
         _defaultRarity = _configuration.DefaultRarity;
@@ -111,12 +139,9 @@ public partial class ItemService : IItemService
     {
         _logger.LogDebug("Creating item template with code {Code} for game {GameId}", body.Code, body.GameId);
 
-        var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemTemplateStore);
-
         // Check code uniqueness within game using atomic claim
         var codeKey = $"{TPL_CODE_INDEX}{body.GameId}:{body.Code}";
-        var (existingId, codeEtag) = await stringStore.GetWithETagAsync(codeKey, cancellationToken);
+        var (existingId, codeEtag) = await _templateStringStore.GetWithETagAsync(codeKey, cancellationToken);
         if (!string.IsNullOrEmpty(existingId))
         {
             _logger.LogWarning("Item template code already exists: {Code} for game {GameId}", body.Code, body.GameId);
@@ -173,7 +198,7 @@ public partial class ItemService : IItemService
         // Claim the code index key atomically (prevents TOCTOU race on code uniqueness)
         // GetWithETagAsync returns null etag when key doesn't exist; TrySaveAsync treats
         // empty string as "no existing version" for new entries (will never execute for updates)
-        var claimResult = await stringStore.TrySaveAsync(codeKey, templateId.ToString(), codeEtag ?? string.Empty, cancellationToken);
+        var claimResult = await _templateStringStore.TrySaveAsync(codeKey, templateId.ToString(), codeEtag ?? string.Empty, cancellationToken);
         if (claimResult == null)
         {
             _logger.LogWarning("Item template code claimed concurrently: {Code} for game {GameId}", body.Code, body.GameId);
@@ -181,9 +206,9 @@ public partial class ItemService : IItemService
         }
 
         // Save template
-        await templateStore.SaveAsync($"{TPL_PREFIX}{templateId}", model, cancellationToken: cancellationToken);
-        await AddToListAsync(StateStoreDefinitions.ItemTemplateStore, $"{TPL_GAME_INDEX}{body.GameId}", templateId.ToString(), cancellationToken);
-        await AddToListAsync(StateStoreDefinitions.ItemTemplateStore, ALL_TEMPLATES_KEY, templateId.ToString(), cancellationToken);
+        await _templateStore.SaveAsync($"{TPL_PREFIX}{templateId}", model, cancellationToken: cancellationToken);
+        await AddToListAsync(_templateStringStore, $"{TPL_GAME_INDEX}{body.GameId}", templateId.ToString(), cancellationToken);
+        await AddToListAsync(_templateStringStore, ALL_TEMPLATES_KEY, templateId.ToString(), cancellationToken);
 
         // Populate cache
         await PopulateTemplateCacheAsync(templateId.ToString(), model, cancellationToken);
@@ -239,15 +264,12 @@ public partial class ItemService : IItemService
         ListItemTemplatesRequest body,
         CancellationToken cancellationToken = default)
     {
-        var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemTemplateStore);
-
         // Get templates for game
         string listKey = !string.IsNullOrEmpty(body.GameId)
             ? $"{TPL_GAME_INDEX}{body.GameId}"
             : ALL_TEMPLATES_KEY;
 
-        var idsJson = await stringStore.GetAsync(listKey, cancellationToken);
+        var idsJson = await _templateStringStore.GetAsync(listKey, cancellationToken);
         var ids = string.IsNullOrEmpty(idsJson)
             ? new List<string>()
             : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
@@ -291,8 +313,7 @@ public partial class ItemService : IItemService
         UpdateItemTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
-        var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
-        var model = await templateStore.GetAsync($"{TPL_PREFIX}{body.TemplateId}", cancellationToken);
+        var model = await _templateStore.GetAsync($"{TPL_PREFIX}{body.TemplateId}", cancellationToken);
 
         if (model is null)
         {
@@ -332,7 +353,7 @@ public partial class ItemService : IItemService
         if (body.IsActive.HasValue) model.IsActive = body.IsActive.Value;
         model.UpdatedAt = now;
 
-        await templateStore.SaveAsync($"{TPL_PREFIX}{body.TemplateId}", model, cancellationToken: cancellationToken);
+        await _templateStore.SaveAsync($"{TPL_PREFIX}{body.TemplateId}", model, cancellationToken: cancellationToken);
 
         // Invalidate cache after write
         await InvalidateTemplateCacheAsync(body.TemplateId.ToString(), cancellationToken);
@@ -374,8 +395,7 @@ public partial class ItemService : IItemService
         DeprecateItemTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
-        var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
-        var model = await templateStore.GetAsync($"{TPL_PREFIX}{body.TemplateId}", cancellationToken);
+        var model = await _templateStore.GetAsync($"{TPL_PREFIX}{body.TemplateId}", cancellationToken);
 
         if (model is null)
         {
@@ -389,7 +409,7 @@ public partial class ItemService : IItemService
         model.MigrationTargetId = body.MigrationTargetId;
         model.UpdatedAt = now;
 
-        await templateStore.SaveAsync($"{TPL_PREFIX}{body.TemplateId}", model, cancellationToken: cancellationToken);
+        await _templateStore.SaveAsync($"{TPL_PREFIX}{body.TemplateId}", model, cancellationToken: cancellationToken);
 
         // Invalidate cache after write
         await InvalidateTemplateCacheAsync(body.TemplateId.ToString(), cancellationToken);
@@ -461,9 +481,6 @@ public partial class ItemService : IItemService
             return (StatusCodes.BadRequest, null);
         }
 
-        var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemInstanceStore);
-
         var instanceId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
 
@@ -506,9 +523,9 @@ public partial class ItemService : IItemService
             CreatedAt = now
         };
 
-        await instanceStore.SaveAsync($"{INST_PREFIX}{instanceId}", model, cancellationToken: cancellationToken);
-        await AddToListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{body.ContainerId}", instanceId.ToString(), cancellationToken);
-        await AddToListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_TEMPLATE_INDEX}{body.TemplateId}", instanceId.ToString(), cancellationToken);
+        await _instanceStore.SaveAsync($"{INST_PREFIX}{instanceId}", model, cancellationToken: cancellationToken);
+        await AddToListAsync(_instanceStringStore, $"{INST_CONTAINER_INDEX}{body.ContainerId}", instanceId.ToString(), cancellationToken);
+        await AddToListAsync(_instanceStringStore, $"{INST_TEMPLATE_INDEX}{body.TemplateId}", instanceId.ToString(), cancellationToken);
 
         // Populate instance cache
         await PopulateInstanceCacheAsync(instanceId.ToString(), model, cancellationToken);
@@ -603,8 +620,7 @@ public partial class ItemService : IItemService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.ModifyItemInstanceInternalAsync");
-        var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-        var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
+        var model = await _instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
 
         if (model is null)
         {
@@ -665,12 +681,12 @@ public partial class ItemService : IItemService
         model.ModifiedAt = now;
 
         // Save the model first, then update indexes
-        await instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
+        await _instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
 
         // Update container indexes if container changed or cleared (after successful save)
         if (containerCleared && oldContainerId.HasValue)
         {
-            await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{oldContainerId.Value}", body.InstanceId.ToString(), cancellationToken);
+            await RemoveFromListAsync(_instanceStringStore, $"{INST_CONTAINER_INDEX}{oldContainerId.Value}", body.InstanceId.ToString(), cancellationToken);
         }
         else if (containerChanged)
         {
@@ -678,9 +694,9 @@ public partial class ItemService : IItemService
                 ?? throw new InvalidOperationException("NewContainerId is null when containerChanged is true");
             if (oldContainerId.HasValue)
             {
-                await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{oldContainerId.Value}", body.InstanceId.ToString(), cancellationToken);
+                await RemoveFromListAsync(_instanceStringStore, $"{INST_CONTAINER_INDEX}{oldContainerId.Value}", body.InstanceId.ToString(), cancellationToken);
             }
-            await AddToListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{newContainerId}", body.InstanceId.ToString(), cancellationToken);
+            await AddToListAsync(_instanceStringStore, $"{INST_CONTAINER_INDEX}{newContainerId}", body.InstanceId.ToString(), cancellationToken);
         }
 
         // Invalidate cache after write
@@ -709,8 +725,7 @@ public partial class ItemService : IItemService
         BindItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
-        var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-        var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
+        var model = await _instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
 
         if (model is null)
         {
@@ -733,7 +748,7 @@ public partial class ItemService : IItemService
         model.BoundAt = now;
         model.ModifiedAt = now;
 
-        await instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
+        await _instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
 
         // Invalidate cache after write
         await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
@@ -770,8 +785,7 @@ public partial class ItemService : IItemService
         UnbindItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
-        var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-        var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
+        var model = await _instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
 
         if (model is null)
         {
@@ -792,7 +806,7 @@ public partial class ItemService : IItemService
         model.BoundAt = null;
         model.ModifiedAt = now;
 
-        await instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
+        await _instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
 
         // Invalidate cache after write
         await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
@@ -830,8 +844,7 @@ public partial class ItemService : IItemService
         DestroyItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
-        var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-        var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
+        var model = await _instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
 
         if (model is null)
         {
@@ -851,12 +864,12 @@ public partial class ItemService : IItemService
         // Remove from indexes
         if (model.ContainerId.HasValue)
         {
-            await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{model.ContainerId.Value}", body.InstanceId.ToString(), cancellationToken);
+            await RemoveFromListAsync(_instanceStringStore, $"{INST_CONTAINER_INDEX}{model.ContainerId.Value}", body.InstanceId.ToString(), cancellationToken);
         }
-        await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_TEMPLATE_INDEX}{model.TemplateId}", body.InstanceId.ToString(), cancellationToken);
+        await RemoveFromListAsync(_instanceStringStore, $"{INST_TEMPLATE_INDEX}{model.TemplateId}", body.InstanceId.ToString(), cancellationToken);
 
         // Delete instance
-        await instanceStore.DeleteAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
+        await _instanceStore.DeleteAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
 
         // Invalidate cache after delete
         await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
@@ -1131,8 +1144,7 @@ public partial class ItemService : IItemService
         }
 
         // 6. Re-read instance inside lock to get current state
-        var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-        var (currentInstance, etag) = await instanceStore.GetWithETagAsync(
+        var (currentInstance, etag) = await _instanceStore.GetWithETagAsync(
             $"{INST_PREFIX}{body.InstanceId}",
             cancellationToken);
 
@@ -1202,7 +1214,7 @@ public partial class ItemService : IItemService
 
             // Save updated instance
             // etag is non-null here (instance was found above); coalesce satisfies compiler nullable analysis
-            var saveResult = await instanceStore.TrySaveAsync(
+            var saveResult = await _instanceStore.TrySaveAsync(
                 $"{INST_PREFIX}{body.InstanceId}",
                 currentInstance,
                 etag ?? string.Empty,
@@ -1314,7 +1326,7 @@ public partial class ItemService : IItemService
                 currentInstance.ModifiedAt = DateTimeOffset.UtcNow;
 
                 // Re-fetch etag for optimistic concurrency
-                var (latestInstance, latestEtag) = await instanceStore.GetWithETagAsync(
+                var (latestInstance, latestEtag) = await _instanceStore.GetWithETagAsync(
                     $"{INST_PREFIX}{body.InstanceId}",
                     cancellationToken);
 
@@ -1325,7 +1337,7 @@ public partial class ItemService : IItemService
                     latestInstance.ModifiedAt = DateTimeOffset.UtcNow;
 
                     // latestEtag is non-null here (instance was found above); coalesce satisfies compiler nullable analysis
-                    await instanceStore.TrySaveAsync(
+                    await _instanceStore.TrySaveAsync(
                         $"{INST_PREFIX}{body.InstanceId}",
                         latestInstance,
                         latestEtag ?? string.Empty,
@@ -1745,7 +1757,6 @@ public partial class ItemService : IItemService
         using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.ConsumeItemAsync");
         // For now, always consume on use (MVP behavior)
         // Future: per-template configuration for consumable vs reusable items
-        var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
 
         if (instance.Quantity <= 1)
         {
@@ -1753,17 +1764,17 @@ public partial class ItemService : IItemService
             if (instance.ContainerId.HasValue)
             {
                 await RemoveFromListAsync(
-                    StateStoreDefinitions.ItemInstanceStore,
+                    _instanceStringStore,
                     $"{INST_CONTAINER_INDEX}{instance.ContainerId.Value}",
                     instanceId.ToString(),
                     cancellationToken);
             }
             await RemoveFromListAsync(
-                StateStoreDefinitions.ItemInstanceStore,
+                _instanceStringStore,
                 $"{INST_TEMPLATE_INDEX}{instance.TemplateId}",
                 instanceId.ToString(),
                 cancellationToken);
-            await instanceStore.DeleteAsync($"{INST_PREFIX}{instanceId}", cancellationToken);
+            await _instanceStore.DeleteAsync($"{INST_PREFIX}{instanceId}", cancellationToken);
             await InvalidateInstanceCacheAsync(instanceId.ToString(), cancellationToken);
 
             // Publish destroy event
@@ -1788,7 +1799,7 @@ public partial class ItemService : IItemService
             // Decrement quantity
             instance.Quantity -= 1;
             instance.ModifiedAt = DateTimeOffset.UtcNow;
-            await instanceStore.SaveAsync($"{INST_PREFIX}{instanceId}", instance, cancellationToken: cancellationToken);
+            await _instanceStore.SaveAsync($"{INST_PREFIX}{instanceId}", instance, cancellationToken: cancellationToken);
             await InvalidateInstanceCacheAsync(instanceId.ToString(), cancellationToken);
 
             // Publish modify event
@@ -1991,9 +2002,7 @@ public partial class ItemService : IItemService
         ListItemsByContainerRequest body,
         CancellationToken cancellationToken = default)
     {
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemInstanceStore);
-
-        var idsJson = await stringStore.GetAsync($"{INST_CONTAINER_INDEX}{body.ContainerId}", cancellationToken);
+        var idsJson = await _instanceStringStore.GetAsync($"{INST_CONTAINER_INDEX}{body.ContainerId}", cancellationToken);
         var ids = string.IsNullOrEmpty(idsJson)
             ? new List<string>()
             : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
@@ -2034,21 +2043,19 @@ public partial class ItemService : IItemService
         // Query MySQL directly with TemplateId + optional RealmId filter
         // per IMPLEMENTATION TENETS — pushes filtering to the database instead of
         // loading all instances and filtering in memory
-        var queryableStore = _stateStoreFactory.GetQueryableStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-
         var templateId = body.TemplateId;
         IReadOnlyList<ItemInstanceModel> matchingInstances;
 
         if (body.RealmId.HasValue)
         {
             var realmId = body.RealmId.Value;
-            matchingInstances = await queryableStore.QueryAsync(
+            matchingInstances = await _instanceQueryableStore.QueryAsync(
                 m => m.TemplateId == templateId && m.RealmId == realmId,
                 cancellationToken);
         }
         else
         {
-            matchingInstances = await queryableStore.QueryAsync(
+            matchingInstances = await _instanceQueryableStore.QueryAsync(
                 m => m.TemplateId == templateId,
                 cancellationToken);
         }
@@ -2125,8 +2132,7 @@ public partial class ItemService : IItemService
 
         if (!string.IsNullOrEmpty(code) && !string.IsNullOrEmpty(gameId))
         {
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemTemplateStore);
-            var id = await stringStore.GetAsync($"{TPL_CODE_INDEX}{gameId}:{code}", ct);
+            var id = await _templateStringStore.GetAsync($"{TPL_CODE_INDEX}{gameId}:{code}", ct);
             if (!string.IsNullOrEmpty(id))
             {
                 return await GetTemplateWithCacheAsync(id, ct);
@@ -2140,10 +2146,9 @@ public partial class ItemService : IItemService
     /// Add a value to a JSON-serialized list in a state store with optimistic concurrency.
     /// Uses GetWithETagAsync/TrySaveAsync to prevent distributed race conditions (IMPLEMENTATION TENETS).
     /// </summary>
-    private async Task AddToListAsync(string storeName, string key, string value, CancellationToken ct)
+    private async Task AddToListAsync(IStateStore<string> stringStore, string key, string value, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.AddToListAsync");
-        var stringStore = _stateStoreFactory.GetStore<string>(storeName);
         var maxRetries = _configuration.ListOperationMaxRetries;
 
         for (var attempt = 0; attempt < maxRetries; attempt++)
@@ -2174,10 +2179,9 @@ public partial class ItemService : IItemService
     /// Remove a value from a JSON-serialized list in a state store with optimistic concurrency.
     /// Uses GetWithETagAsync/TrySaveAsync to prevent distributed race conditions (IMPLEMENTATION TENETS).
     /// </summary>
-    private async Task RemoveFromListAsync(string storeName, string key, string value, CancellationToken ct)
+    private async Task RemoveFromListAsync(IStateStore<string> stringStore, string key, string value, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.RemoveFromListAsync");
-        var stringStore = _stateStoreFactory.GetStore<string>(storeName);
         var maxRetries = _configuration.ListOperationMaxRetries;
 
         for (var attempt = 0; attempt < maxRetries; attempt++)
@@ -2227,20 +2231,18 @@ public partial class ItemService : IItemService
     private async Task<ItemTemplateModel?> GetTemplateWithCacheAsync(string templateId, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.GetTemplateWithCacheAsync");
-        var cacheStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateCache);
         var cacheKey = $"{TPL_PREFIX}{templateId}";
 
         // Try cache first
-        var cached = await cacheStore.GetAsync(cacheKey, ct);
+        var cached = await _templateCacheStore.GetAsync(cacheKey, ct);
         if (cached is not null) return cached;
 
         // Fallback to persistent store
-        var store = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
-        var model = await store.GetAsync(cacheKey, ct);
+        var model = await _templateStore.GetAsync(cacheKey, ct);
         if (model is null) return null;
 
         // Populate cache
-        await cacheStore.SaveAsync(cacheKey, model,
+        await _templateCacheStore.SaveAsync(cacheKey, model,
             new StateOptions { Ttl = _configuration.TemplateCacheTtlSeconds }, ct);
         return model;
     }
@@ -2251,8 +2253,7 @@ public partial class ItemService : IItemService
     private async Task PopulateTemplateCacheAsync(string templateId, ItemTemplateModel model, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.PopulateTemplateCacheAsync");
-        var cacheStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateCache);
-        await cacheStore.SaveAsync($"{TPL_PREFIX}{templateId}", model,
+        await _templateCacheStore.SaveAsync($"{TPL_PREFIX}{templateId}", model,
             new StateOptions { Ttl = _configuration.TemplateCacheTtlSeconds }, ct);
     }
 
@@ -2262,8 +2263,7 @@ public partial class ItemService : IItemService
     private async Task InvalidateTemplateCacheAsync(string templateId, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.InvalidateTemplateCacheAsync");
-        var cacheStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateCache);
-        await cacheStore.DeleteAsync($"{TPL_PREFIX}{templateId}", ct);
+        await _templateCacheStore.DeleteAsync($"{TPL_PREFIX}{templateId}", ct);
     }
 
     /// <summary>
@@ -2272,20 +2272,18 @@ public partial class ItemService : IItemService
     private async Task<ItemInstanceModel?> GetInstanceWithCacheAsync(string instanceId, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.GetInstanceWithCacheAsync");
-        var cacheStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceCache);
         var cacheKey = $"{INST_PREFIX}{instanceId}";
 
         // Try cache first
-        var cached = await cacheStore.GetAsync(cacheKey, ct);
+        var cached = await _instanceCacheStore.GetAsync(cacheKey, ct);
         if (cached is not null) return cached;
 
         // Fallback to persistent store
-        var store = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-        var model = await store.GetAsync(cacheKey, ct);
+        var model = await _instanceStore.GetAsync(cacheKey, ct);
         if (model is null) return null;
 
         // Populate cache
-        await cacheStore.SaveAsync(cacheKey, model,
+        await _instanceCacheStore.SaveAsync(cacheKey, model,
             new StateOptions { Ttl = _configuration.InstanceCacheTtlSeconds }, ct);
         return model;
     }
@@ -2302,14 +2300,11 @@ public partial class ItemService : IItemService
         var idList = instanceIds.ToList();
         if (idList.Count == 0) return new Dictionary<string, ItemInstanceModel>();
 
-        var cacheStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceCache);
-        var persistentStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-
         // Build cache keys
         var cacheKeys = idList.Select(id => $"{INST_PREFIX}{id}").ToList();
 
         // Try cache first (single bulk call)
-        var cachedItems = await cacheStore.GetBulkAsync(cacheKeys, ct);
+        var cachedItems = await _instanceCacheStore.GetBulkAsync(cacheKeys, ct);
 
         // Build result from cache hits
         var result = new Dictionary<string, ItemInstanceModel>();
@@ -2333,7 +2328,7 @@ public partial class ItemService : IItemService
         if (cacheMissKeys.Count == 0) return result;
 
         // Fetch cache misses from persistent store (single bulk call)
-        var persistentItems = await persistentStore.GetBulkAsync(cacheMissKeys, ct);
+        var persistentItems = await _instanceStore.GetBulkAsync(cacheMissKeys, ct);
 
         // Add persistent store results and populate cache
         if (persistentItems.Count > 0)
@@ -2348,7 +2343,7 @@ public partial class ItemService : IItemService
             }
 
             // Bulk populate cache for all fetched items
-            await cacheStore.SaveBulkAsync(cachePopulation,
+            await _instanceCacheStore.SaveBulkAsync(cachePopulation,
                 new StateOptions { Ttl = _configuration.InstanceCacheTtlSeconds }, ct);
         }
 
@@ -2361,8 +2356,7 @@ public partial class ItemService : IItemService
     private async Task PopulateInstanceCacheAsync(string instanceId, ItemInstanceModel model, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.PopulateInstanceCacheAsync");
-        var cacheStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceCache);
-        await cacheStore.SaveAsync($"{INST_PREFIX}{instanceId}", model,
+        await _instanceCacheStore.SaveAsync($"{INST_PREFIX}{instanceId}", model,
             new StateOptions { Ttl = _configuration.InstanceCacheTtlSeconds }, ct);
     }
 
@@ -2372,8 +2366,7 @@ public partial class ItemService : IItemService
     private async Task InvalidateInstanceCacheAsync(string instanceId, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.InvalidateInstanceCacheAsync");
-        var cacheStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceCache);
-        await cacheStore.DeleteAsync($"{INST_PREFIX}{instanceId}", ct);
+        await _instanceCacheStore.DeleteAsync($"{INST_PREFIX}{instanceId}", ct);
     }
 
     #endregion

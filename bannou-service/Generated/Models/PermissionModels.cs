@@ -448,20 +448,16 @@ public partial class RegisteredServiceInfo
     public string ServiceName { get; set; } = default!;
 
     /// <summary>
-    /// Service API version
+    /// Service API version, null if not provided during registration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Version { get; set; } = default!;
+    public string? Version { get; set; } = default!;
 
     /// <summary>
-    /// When the service registered its permissions
+    /// When the service registered its permissions, null if registration data unavailable
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("registeredAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset RegisteredAt { get; set; } = default!;
+    public System.DateTimeOffset? RegisteredAt { get; set; } = default!;
 
     /// <summary>
     /// Number of API endpoints registered by this service

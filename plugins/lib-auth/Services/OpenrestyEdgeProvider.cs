@@ -31,9 +31,14 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 public class OpenrestyEdgeProvider : IEdgeRevocationProvider
 {
     private readonly AuthServiceConfiguration _configuration;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<OpenrestyEdgeProvider> _logger;
+
+    /// <summary>Redis-backed store for token revocation entries.</summary>
+    private readonly IStateStore<TokenRevocationEntry> _tokenRevocationStore;
+
+    /// <summary>Redis-backed store for account revocation entries.</summary>
+    private readonly IStateStore<AccountRevocationEntry> _accountRevocationStore;
 
     /// <summary>
     /// Initializes a new instance of OpenrestyEdgeProvider.
@@ -49,9 +54,12 @@ public class OpenrestyEdgeProvider : IEdgeRevocationProvider
         ILogger<OpenrestyEdgeProvider> logger)
     {
         _configuration = configuration;
-        _stateStoreFactory = stateStoreFactory;
         _telemetryProvider = telemetryProvider;
         _logger = logger;
+
+        // Constructor-cache state stores per FOUNDATION TENETS
+        _tokenRevocationStore = stateStoreFactory.GetStore<TokenRevocationEntry>(StateStoreDefinitions.EdgeRevocation);
+        _accountRevocationStore = stateStoreFactory.GetStore<AccountRevocationEntry>(StateStoreDefinitions.EdgeRevocation);
     }
 
     /// <inheritdoc/>
@@ -73,8 +81,7 @@ public class OpenrestyEdgeProvider : IEdgeRevocationProvider
         // This confirms OpenResty Lua can read it from the shared Redis instance
         try
         {
-            var store = _stateStoreFactory.GetStore<TokenRevocationEntry>(StateStoreDefinitions.EdgeRevocation);
-            var entry = await store.GetAsync($"token:{jti}", ct);
+            var entry = await _tokenRevocationStore.GetAsync($"token:{jti}", ct);
 
             if (entry != null)
             {
@@ -106,8 +113,7 @@ public class OpenrestyEdgeProvider : IEdgeRevocationProvider
         // Verify the revocation entry exists in Redis (written by EdgeRevocationService)
         try
         {
-            var store = _stateStoreFactory.GetStore<AccountRevocationEntry>(StateStoreDefinitions.EdgeRevocation);
-            var entry = await store.GetAsync($"account:{accountId}", ct);
+            var entry = await _accountRevocationStore.GetAsync($"account:{accountId}", ct);
 
             if (entry != null)
             {

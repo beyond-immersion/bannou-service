@@ -11,7 +11,6 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 /// </summary>
 public class SessionService : ISessionService
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly AuthServiceConfiguration _configuration;
     private readonly IEdgeRevocationService _edgeRevocationService;
@@ -30,6 +29,15 @@ public class SessionService : ISessionService
     /// </summary>
     private const int SessionIndexTtlBufferSeconds = 300;
 
+    /// <summary>Redis-backed cacheable store for session index set operations.</summary>
+    private readonly ICacheableStateStore<string> _cacheStore;
+
+    /// <summary>Redis-backed store for string-keyed session data (reverse indexes).</summary>
+    private readonly IStateStore<string> _stringStore;
+
+    /// <summary>Redis-backed store for session data models.</summary>
+    private readonly IStateStore<SessionDataModel> _sessionStore;
+
     /// <summary>
     /// Initializes a new instance of SessionService.
     /// </summary>
@@ -41,12 +49,16 @@ public class SessionService : ISessionService
         ITelemetryProvider telemetryProvider,
         ILogger<SessionService> logger)
     {
-        _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _configuration = configuration;
         _edgeRevocationService = edgeRevocationService;
         _telemetryProvider = telemetryProvider;
         _logger = logger;
+
+        // Constructor-cache state stores per FOUNDATION TENETS
+        _cacheStore = stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Auth);
+        _stringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
+        _sessionStore = stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
     }
 
     /// <inheritdoc/>
@@ -151,11 +163,10 @@ public class SessionService : ISessionService
         try
         {
             var indexKey = $"account-sessions:{accountId}";
-            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Auth);
             var ttlSeconds = (_configuration.JwtExpirationMinutes * 60) + SessionIndexTtlBufferSeconds;
 
             // Atomic Redis SADD — no read-modify-write race condition
-            await cacheStore.AddToSetAsync(indexKey, sessionKey, new StateOptions { Ttl = ttlSeconds }, cancellationToken);
+            await _cacheStore.AddToSetAsync(indexKey, sessionKey, new StateOptions { Ttl = ttlSeconds }, cancellationToken);
             _logger.LogDebug("Added session to account index: AccountId={AccountId}, SessionKey={SessionKey}", accountId, sessionKey);
         }
         catch (Exception ex)
@@ -179,11 +190,10 @@ public class SessionService : ISessionService
         try
         {
             var indexKey = $"account-sessions:{accountId}";
-            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Auth);
 
             // Atomic Redis SREM — no read-modify-write race condition
             // Redis automatically deletes the key when the set becomes empty
-            await cacheStore.RemoveFromSetAsync(indexKey, sessionKey, cancellationToken);
+            await _cacheStore.RemoveFromSetAsync(indexKey, sessionKey, cancellationToken);
             _logger.LogDebug("Removed session from account index: AccountId={AccountId}, SessionKey={SessionKey}", accountId, sessionKey);
         }
         catch (Exception ex)
@@ -206,8 +216,7 @@ public class SessionService : ISessionService
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "SessionService.AddSessionIdReverseIndex");
         try
         {
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
-            await stringStore.SaveAsync(
+            await _stringStore.SaveAsync(
                 $"session-id-index:{sessionId}",
                 sessionKey,
                 new StateOptions { Ttl = ttlSeconds },
@@ -235,8 +244,7 @@ public class SessionService : ISessionService
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "SessionService.RemoveSessionIdReverseIndex");
         try
         {
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
-            await stringStore.DeleteAsync($"session-id-index:{sessionId}", cancellationToken);
+            await _stringStore.DeleteAsync($"session-id-index:{sessionId}", cancellationToken);
             _logger.LogDebug("Removed reverse index: SessionId={SessionId}", sessionId);
         }
         catch (Exception ex)
@@ -251,8 +259,7 @@ public class SessionService : ISessionService
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "SessionService.FindSessionKeyBySessionId");
         try
         {
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
-            var sessionKey = await stringStore.GetAsync($"session-id-index:{sessionId}", cancellationToken);
+            var sessionKey = await _stringStore.GetAsync($"session-id-index:{sessionId}", cancellationToken);
 
             if (!string.IsNullOrEmpty(sessionKey))
             {
@@ -282,8 +289,7 @@ public class SessionService : ISessionService
     public async Task DeleteSessionAsync(string sessionKey, CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "SessionService.DeleteSession");
-        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
-        await sessionStore.DeleteAsync($"session:{sessionKey}", cancellationToken);
+        await _sessionStore.DeleteAsync($"session:{sessionKey}", cancellationToken);
         _logger.LogDebug("Deleted session: SessionKey={SessionKey}", sessionKey);
     }
 
@@ -291,8 +297,7 @@ public class SessionService : ISessionService
     public async Task<SessionDataModel?> GetSessionAsync(string sessionKey, CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "SessionService.GetSession");
-        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
-        return await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
+        return await _sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -303,8 +308,7 @@ public class SessionService : ISessionService
             ? new StateOptions { Ttl = ttlSeconds.Value }
             : null;
 
-        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
-        await sessionStore.SaveAsync(
+        await _sessionStore.SaveAsync(
             $"session:{sessionKey}",
             sessionData,
             options,
@@ -318,8 +322,7 @@ public class SessionService : ISessionService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "SessionService.GetSessionKeysForAccount");
         var indexKey = $"account-sessions:{accountId}";
-        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Auth);
-        var sessionKeys = await cacheStore.GetSetAsync<string>(indexKey, cancellationToken);
+        var sessionKeys = await _cacheStore.GetSetAsync<string>(indexKey, cancellationToken);
 
         return sessionKeys.ToList();
     }
@@ -329,8 +332,7 @@ public class SessionService : ISessionService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "SessionService.DeleteAccountSessionsIndex");
         var indexKey = $"account-sessions:{accountId}";
-        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Auth);
-        await cacheStore.DeleteAsync(indexKey, cancellationToken);
+        await _cacheStore.DeleteAsync(indexKey, cancellationToken);
         _logger.LogDebug("Deleted account sessions index: AccountId={AccountId}", accountId);
     }
 

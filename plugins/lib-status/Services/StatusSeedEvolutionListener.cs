@@ -20,15 +20,12 @@ namespace BeyondImmersion.BannouService.Status;
 /// </remarks>
 public class StatusSeedEvolutionListener : ISeedEvolutionListener
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly StatusServiceConfiguration _configuration;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<StatusSeedEvolutionListener> _logger;
 
-    private IStateStore<SeedEffectsCacheModel>? _seedEffectsCacheStore;
-    private IStateStore<SeedEffectsCacheModel> SeedEffectsCacheStore =>
-        _seedEffectsCacheStore ??= _stateStoreFactory.GetStore<SeedEffectsCacheModel>(
-            StateStoreDefinitions.StatusSeedEffectsCache);
+    /// <summary>Ephemeral cache for seed-derived passive capability effects per entity (Redis).</summary>
+    private readonly IStateStore<SeedEffectsCacheModel> _seedEffectsCacheStore;
 
     /// <summary>
     /// Empty set means interested in ALL seed types (wildcard).
@@ -49,10 +46,13 @@ public class StatusSeedEvolutionListener : ISeedEvolutionListener
         ITelemetryProvider telemetryProvider,
         ILogger<StatusSeedEvolutionListener> logger)
     {
-        _stateStoreFactory = stateStoreFactory;
         _configuration = configuration;
         _telemetryProvider = telemetryProvider;
         _logger = logger;
+
+        // Constructor-cache state store per FOUNDATION TENETS
+        _seedEffectsCacheStore = stateStoreFactory.GetStore<SeedEffectsCacheModel>(
+            StateStoreDefinitions.StatusSeedEffectsCache);
     }
 
     /// <summary>
@@ -100,7 +100,7 @@ public class StatusSeedEvolutionListener : ISeedEvolutionListener
         var cacheKey = $"seed:{ownerId}:{ownerTypeStr}";
         try
         {
-            await SeedEffectsCacheStore.DeleteAsync(cacheKey);
+            await _seedEffectsCacheStore.DeleteAsync(cacheKey);
             _logger.LogDebug(
                 "Invalidated seed effects cache for {OwnerType} {OwnerId} via DI listener",
                 ownerType, ownerId);

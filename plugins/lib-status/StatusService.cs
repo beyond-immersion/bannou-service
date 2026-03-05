@@ -42,7 +42,6 @@ namespace BeyondImmersion.BannouService.Status;
 public partial class StatusService : IStatusService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<StatusService> _logger;
     private readonly StatusServiceConfiguration _configuration;
     private readonly IInventoryClient _inventoryClient;
@@ -54,39 +53,31 @@ public partial class StatusService : IStatusService
     private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly ITelemetryProvider _telemetryProvider;
 
-    #region State Store Accessors
+    #region State Store Fields
 
-    private IStateStore<StatusTemplateModel>? _templateStore;
-    private IStateStore<StatusTemplateModel> TemplateStore =>
-        _templateStore ??= _stateStoreFactory.GetStore<StatusTemplateModel>(StateStoreDefinitions.StatusTemplates);
+    /// <summary>Durable store for status effect template definitions (MySQL).</summary>
+    private readonly IStateStore<StatusTemplateModel> _templateStore;
 
-    private IJsonQueryableStateStore<StatusTemplateModel>? _templateQueryStore;
-    private IJsonQueryableStateStore<StatusTemplateModel> TemplateQueryStore =>
-        _templateQueryStore ??= _stateStoreFactory.GetJsonQueryableStore<StatusTemplateModel>(StateStoreDefinitions.StatusTemplates);
+    /// <summary>Queryable store for status template lookups by field (MySQL JSON path).</summary>
+    private readonly IJsonQueryableStateStore<StatusTemplateModel> _templateQueryStore;
 
-    private IStateStore<StatusInstanceModel>? _instanceStore;
-    private IStateStore<StatusInstanceModel> InstanceStore =>
-        _instanceStore ??= _stateStoreFactory.GetStore<StatusInstanceModel>(StateStoreDefinitions.StatusInstances);
+    /// <summary>Durable store for active status effect instances (MySQL).</summary>
+    private readonly IStateStore<StatusInstanceModel> _instanceStore;
 
-    private IJsonQueryableStateStore<StatusInstanceModel>? _instanceQueryStore;
-    private IJsonQueryableStateStore<StatusInstanceModel> InstanceQueryStore =>
-        _instanceQueryStore ??= _stateStoreFactory.GetJsonQueryableStore<StatusInstanceModel>(StateStoreDefinitions.StatusInstances);
+    /// <summary>Queryable store for status instance lookups by field (MySQL JSON path).</summary>
+    private readonly IJsonQueryableStateStore<StatusInstanceModel> _instanceQueryStore;
 
-    private IStateStore<StatusContainerModel>? _containerStore;
-    private IStateStore<StatusContainerModel> ContainerStore =>
-        _containerStore ??= _stateStoreFactory.GetStore<StatusContainerModel>(StateStoreDefinitions.StatusContainers);
+    /// <summary>Durable store for per-entity status containers (MySQL).</summary>
+    private readonly IStateStore<StatusContainerModel> _containerStore;
 
-    private IJsonQueryableStateStore<StatusContainerModel>? _containerQueryStore;
-    private IJsonQueryableStateStore<StatusContainerModel> ContainerQueryStore =>
-        _containerQueryStore ??= _stateStoreFactory.GetJsonQueryableStore<StatusContainerModel>(StateStoreDefinitions.StatusContainers);
+    /// <summary>Queryable store for status container lookups by field (MySQL JSON path).</summary>
+    private readonly IJsonQueryableStateStore<StatusContainerModel> _containerQueryStore;
 
-    private IStateStore<ActiveStatusCacheModel>? _activeCacheStore;
-    private IStateStore<ActiveStatusCacheModel> ActiveCacheStore =>
-        _activeCacheStore ??= _stateStoreFactory.GetStore<ActiveStatusCacheModel>(StateStoreDefinitions.StatusActiveCache);
+    /// <summary>Ephemeral cache for aggregated active status effects per entity (Redis).</summary>
+    private readonly IStateStore<ActiveStatusCacheModel> _activeCacheStore;
 
-    private IStateStore<SeedEffectsCacheModel>? _seedEffectsCacheStore;
-    private IStateStore<SeedEffectsCacheModel> SeedEffectsCacheStore =>
-        _seedEffectsCacheStore ??= _stateStoreFactory.GetStore<SeedEffectsCacheModel>(StateStoreDefinitions.StatusSeedEffectsCache);
+    /// <summary>Ephemeral cache for seed-derived passive capability effects per entity (Redis).</summary>
+    private readonly IStateStore<SeedEffectsCacheModel> _seedEffectsCacheStore;
 
     #endregion
 
@@ -123,7 +114,6 @@ public partial class StatusService : IStatusService
         ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _inventoryClient = inventoryClient;
@@ -134,6 +124,16 @@ public partial class StatusService : IStatusService
         _serviceProvider = serviceProvider;
         _entitySessionRegistry = entitySessionRegistry;
         _telemetryProvider = telemetryProvider;
+
+        // Constructor-cache all state stores per FOUNDATION TENETS
+        _templateStore = stateStoreFactory.GetStore<StatusTemplateModel>(StateStoreDefinitions.StatusTemplates);
+        _templateQueryStore = stateStoreFactory.GetJsonQueryableStore<StatusTemplateModel>(StateStoreDefinitions.StatusTemplates);
+        _instanceStore = stateStoreFactory.GetStore<StatusInstanceModel>(StateStoreDefinitions.StatusInstances);
+        _instanceQueryStore = stateStoreFactory.GetJsonQueryableStore<StatusInstanceModel>(StateStoreDefinitions.StatusInstances);
+        _containerStore = stateStoreFactory.GetStore<StatusContainerModel>(StateStoreDefinitions.StatusContainers);
+        _containerQueryStore = stateStoreFactory.GetJsonQueryableStore<StatusContainerModel>(StateStoreDefinitions.StatusContainers);
+        _activeCacheStore = stateStoreFactory.GetStore<ActiveStatusCacheModel>(StateStoreDefinitions.StatusActiveCache);
+        _seedEffectsCacheStore = stateStoreFactory.GetStore<SeedEffectsCacheModel>(StateStoreDefinitions.StatusSeedEffectsCache);
 
         RegisterEventConsumers(eventConsumer);
 
@@ -175,7 +175,7 @@ public partial class StatusService : IStatusService
             new QueryCondition { Path = "$.StatusTemplateId", Operator = QueryOperator.Exists, Value = true },
             new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId }
         };
-        var existing = await TemplateQueryStore.JsonQueryPagedAsync(
+        var existing = await _templateQueryStore.JsonQueryPagedAsync(
             countConditions, 0, 1, null, cancellationToken);
         if (existing.TotalCount >= _configuration.MaxStatusTemplatesPerGameService)
         {
@@ -187,7 +187,7 @@ public partial class StatusService : IStatusService
 
         // Check code uniqueness
         var codeKey = TemplateCodeKey(body.GameServiceId, body.Code);
-        var existingByCode = await TemplateStore.GetAsync(codeKey, cancellationToken);
+        var existingByCode = await _templateStore.GetAsync(codeKey, cancellationToken);
         if (existingByCode != null)
         {
             _logger.LogWarning(
@@ -234,8 +234,8 @@ public partial class StatusService : IStatusService
         };
 
         // Save with dual keys
-        await TemplateStore.SaveAsync(TemplateIdKey(templateId), model, cancellationToken: cancellationToken);
-        await TemplateStore.SaveAsync(codeKey, model, cancellationToken: cancellationToken);
+        await _templateStore.SaveAsync(TemplateIdKey(templateId), model, cancellationToken: cancellationToken);
+        await _templateStore.SaveAsync(codeKey, model, cancellationToken: cancellationToken);
 
         // Publish lifecycle event
         await _messageBus.TryPublishAsync(
@@ -267,7 +267,7 @@ public partial class StatusService : IStatusService
     public async Task<(StatusCodes, StatusTemplateResponse?)> GetStatusTemplateAsync(
         GetStatusTemplateRequest body, CancellationToken cancellationToken)
     {
-        var template = await TemplateStore.GetAsync(
+        var template = await _templateStore.GetAsync(
             TemplateIdKey(body.StatusTemplateId), cancellationToken);
 
         if (template == null)
@@ -284,7 +284,7 @@ public partial class StatusService : IStatusService
     public async Task<(StatusCodes, StatusTemplateResponse?)> GetStatusTemplateByCodeAsync(
         GetStatusTemplateByCodeRequest body, CancellationToken cancellationToken)
     {
-        var template = await TemplateStore.GetAsync(
+        var template = await _templateStore.GetAsync(
             TemplateCodeKey(body.GameServiceId, body.Code), cancellationToken);
 
         if (template == null)
@@ -320,7 +320,7 @@ public partial class StatusService : IStatusService
         var pageSize = body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize;
         var offset = (body.Page - 1) * pageSize;
 
-        var result = await TemplateQueryStore.JsonQueryPagedAsync(
+        var result = await _templateQueryStore.JsonQueryPagedAsync(
             conditions, offset, pageSize,
             new JsonSortSpec { Path = "$.Code", Descending = false },
             cancellationToken);
@@ -357,7 +357,7 @@ public partial class StatusService : IStatusService
             return (StatusCodes.Conflict, null);
         }
 
-        var template = await TemplateStore.GetAsync(
+        var template = await _templateStore.GetAsync(
             TemplateIdKey(body.StatusTemplateId), cancellationToken);
 
         if (template == null)
@@ -416,8 +416,8 @@ public partial class StatusService : IStatusService
         template.UpdatedAt = DateTimeOffset.UtcNow;
 
         // Save with dual keys
-        await TemplateStore.SaveAsync(TemplateIdKey(template.StatusTemplateId), template, cancellationToken: cancellationToken);
-        await TemplateStore.SaveAsync(
+        await _templateStore.SaveAsync(TemplateIdKey(template.StatusTemplateId), template, cancellationToken: cancellationToken);
+        await _templateStore.SaveAsync(
             TemplateCodeKey(template.GameServiceId, template.Code), template, cancellationToken: cancellationToken);
 
         // Publish lifecycle event
@@ -471,7 +471,7 @@ public partial class StatusService : IStatusService
         foreach (var templateReq in body.Templates)
         {
             var codeKey = TemplateCodeKey(body.GameServiceId, templateReq.Code);
-            var existingByCode = await TemplateStore.GetAsync(codeKey, cancellationToken);
+            var existingByCode = await _templateStore.GetAsync(codeKey, cancellationToken);
 
             if (existingByCode != null)
             {
@@ -519,8 +519,8 @@ public partial class StatusService : IStatusService
                 CreatedAt = now
             };
 
-            await TemplateStore.SaveAsync(TemplateIdKey(templateId), model, cancellationToken: cancellationToken);
-            await TemplateStore.SaveAsync(codeKey, model, cancellationToken: cancellationToken);
+            await _templateStore.SaveAsync(TemplateIdKey(templateId), model, cancellationToken: cancellationToken);
+            await _templateStore.SaveAsync(codeKey, model, cancellationToken: cancellationToken);
 
             await _messageBus.TryPublishAsync(
                 "status.template.created",
@@ -565,7 +565,7 @@ public partial class StatusService : IStatusService
         GrantStatusRequest body, CancellationToken cancellationToken)
     {
         // Look up template by game service + code
-        var template = await TemplateStore.GetAsync(
+        var template = await _templateStore.GetAsync(
             TemplateCodeKey(body.GameServiceId, body.StatusTemplateCode), cancellationToken);
 
         if (template == null)
@@ -601,7 +601,7 @@ public partial class StatusService : IStatusService
             new QueryCondition { Path = "$.EntityType", Operator = QueryOperator.Equals, Value = body.EntityType },
             new QueryCondition { Path = "$.StatusTemplateCode", Operator = QueryOperator.Equals, Value = body.StatusTemplateCode }
         };
-        var existingResult = await InstanceQueryStore.JsonQueryPagedAsync(
+        var existingResult = await _instanceQueryStore.JsonQueryPagedAsync(
             existingConditions, 0, _configuration.MaxStacksPerStatus, null, cancellationToken);
 
         var existingInstances = existingResult.Items.Select(r => r.Value).ToList();
@@ -619,7 +619,7 @@ public partial class StatusService : IStatusService
             new QueryCondition { Path = "$.EntityId", Operator = QueryOperator.Equals, Value = body.EntityId },
             new QueryCondition { Path = "$.EntityType", Operator = QueryOperator.Equals, Value = body.EntityType }
         };
-        var entityCount = await InstanceQueryStore.JsonQueryPagedAsync(
+        var entityCount = await _instanceQueryStore.JsonQueryPagedAsync(
             entityCountConditions, 0, 1, null, cancellationToken);
 
         if (entityCount.TotalCount >= _configuration.MaxStatusesPerEntity)
@@ -641,7 +641,7 @@ public partial class StatusService : IStatusService
     public async Task<(StatusCodes, StatusInstanceResponse?)> RemoveStatusAsync(
         RemoveStatusRequest body, CancellationToken cancellationToken)
     {
-        var instance = await InstanceStore.GetAsync(
+        var instance = await _instanceStore.GetAsync(
             InstanceIdKey(body.StatusInstanceId), cancellationToken);
 
         if (instance == null)
@@ -699,7 +699,7 @@ public partial class StatusService : IStatusService
             new QueryCondition { Path = "$.SourceId", Operator = QueryOperator.Equals, Value = body.SourceId }
         };
 
-        var result = await InstanceQueryStore.JsonQueryPagedAsync(
+        var result = await _instanceQueryStore.JsonQueryPagedAsync(
             conditions, 0, _configuration.MaxStatusesPerEntity, null, cancellationToken);
 
         var removed = 0;
@@ -741,7 +741,7 @@ public partial class StatusService : IStatusService
             new QueryCondition { Path = "$.Category", Operator = QueryOperator.Equals, Value = body.Category.ToString() }
         };
 
-        var result = await InstanceQueryStore.JsonQueryPagedAsync(
+        var result = await _instanceQueryStore.JsonQueryPagedAsync(
             conditions, 0, _configuration.MaxStatusesPerEntity, null, cancellationToken);
 
         var removed = 0;
@@ -869,7 +869,7 @@ public partial class StatusService : IStatusService
     public async Task<(StatusCodes, StatusInstanceResponse?)> GetStatusAsync(
         GetStatusRequest body, CancellationToken cancellationToken)
     {
-        var instance = await InstanceStore.GetAsync(
+        var instance = await _instanceStore.GetAsync(
             InstanceIdKey(body.StatusInstanceId), cancellationToken);
 
         if (instance == null)
@@ -999,7 +999,7 @@ public partial class StatusService : IStatusService
             new QueryCondition { Path = "$.EntityId", Operator = QueryOperator.Equals, Value = body.OwnerId },
             new QueryCondition { Path = "$.EntityType", Operator = QueryOperator.Equals, Value = body.OwnerType }
         };
-        var containers = await ContainerQueryStore.JsonQueryPagedAsync(
+        var containers = await _containerQueryStore.JsonQueryPagedAsync(
             containerConditions, 0, 100, null, cancellationToken);
 
         foreach (var containerEntry in containers.Items)
@@ -1014,7 +1014,7 @@ public partial class StatusService : IStatusService
                 new QueryCondition { Path = "$.EntityType", Operator = QueryOperator.Equals, Value = body.OwnerType },
                 new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = container.GameServiceId }
             };
-            var instances = await InstanceQueryStore.JsonQueryPagedAsync(
+            var instances = await _instanceQueryStore.JsonQueryPagedAsync(
                 instanceConditions, 0, _configuration.MaxStatusesPerEntity, null, cancellationToken);
 
             foreach (var instanceEntry in instances.Items)
@@ -1036,7 +1036,7 @@ public partial class StatusService : IStatusService
                 }
 
                 // Delete instance record
-                await InstanceStore.DeleteAsync(
+                await _instanceStore.DeleteAsync(
                     InstanceIdKey(instance.StatusInstanceId), cancellationToken);
                 statusesRemoved++;
             }
@@ -1056,9 +1056,9 @@ public partial class StatusService : IStatusService
             }
 
             // Delete container records (dual keys)
-            await ContainerStore.DeleteAsync(
+            await _containerStore.DeleteAsync(
                 ContainerIdKey(container.ContainerId), cancellationToken);
-            await ContainerStore.DeleteAsync(
+            await _containerStore.DeleteAsync(
                 ContainerEntityKey(container.EntityId, container.EntityType, container.GameServiceId),
                 cancellationToken);
             containersDeleted++;
@@ -1114,7 +1114,7 @@ public partial class StatusService : IStatusService
             case StackBehavior.RefreshDuration:
                 // Update expiration on existing
                 existing.ExpiresAt = CalculateExpiry(body, template);
-                await InstanceStore.SaveAsync(
+                await _instanceStore.SaveAsync(
                     InstanceIdKey(existing.StatusInstanceId), existing, cancellationToken: cancellationToken);
                 await InvalidateActiveCacheAsync(body.EntityId, body.EntityType, cancellationToken);
 
@@ -1177,7 +1177,7 @@ public partial class StatusService : IStatusService
                 {
                     existing.ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(body.DurationOverrideSeconds.Value);
                 }
-                await InstanceStore.SaveAsync(
+                await _instanceStore.SaveAsync(
                     InstanceIdKey(existing.StatusInstanceId), existing, cancellationToken: cancellationToken);
                 await InvalidateActiveCacheAsync(body.EntityId, body.EntityType, cancellationToken);
 
@@ -1354,7 +1354,7 @@ public partial class StatusService : IStatusService
         };
 
         // Save instance
-        await InstanceStore.SaveAsync(InstanceIdKey(instanceId), instance, cancellationToken: cancellationToken);
+        await _instanceStore.SaveAsync(InstanceIdKey(instanceId), instance, cancellationToken: cancellationToken);
 
         // Invalidate active cache
         await InvalidateActiveCacheAsync(body.EntityId, body.EntityType, cancellationToken);
@@ -1421,7 +1421,7 @@ public partial class StatusService : IStatusService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.GetOrCreateContainerAsync");
         var entityKey = ContainerEntityKey(entityId, entityType, gameServiceId);
-        var existing = await ContainerStore.GetAsync(entityKey, cancellationToken);
+        var existing = await _containerStore.GetAsync(entityKey, cancellationToken);
         if (existing != null)
         {
             return existing;
@@ -1464,8 +1464,8 @@ public partial class StatusService : IStatusService
         };
 
         // Save with dual keys
-        await ContainerStore.SaveAsync(ContainerIdKey(container.ContainerId), container, cancellationToken: cancellationToken);
-        await ContainerStore.SaveAsync(entityKey, container, cancellationToken: cancellationToken);
+        await _containerStore.SaveAsync(ContainerIdKey(container.ContainerId), container, cancellationToken: cancellationToken);
+        await _containerStore.SaveAsync(entityKey, container, cancellationToken: cancellationToken);
 
         return container;
     }
@@ -1515,7 +1515,7 @@ public partial class StatusService : IStatusService
         }
 
         // Delete instance record
-        await InstanceStore.DeleteAsync(InstanceIdKey(instance.StatusInstanceId), cancellationToken);
+        await _instanceStore.DeleteAsync(InstanceIdKey(instance.StatusInstanceId), cancellationToken);
 
         // Invalidate active cache
         await InvalidateActiveCacheAsync(instance.EntityId, instance.EntityType, cancellationToken);
@@ -1604,7 +1604,7 @@ public partial class StatusService : IStatusService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.GetOrBuildActiveCacheAsync");
         var cacheKey = ActiveCacheKey(entityId, entityType);
-        var cached = await ActiveCacheStore.GetAsync(cacheKey, cancellationToken);
+        var cached = await _activeCacheStore.GetAsync(cacheKey, cancellationToken);
         if (cached != null)
         {
             return cached;
@@ -1617,7 +1617,7 @@ public partial class StatusService : IStatusService
             new QueryCondition { Path = "$.EntityId", Operator = QueryOperator.Equals, Value = entityId },
             new QueryCondition { Path = "$.EntityType", Operator = QueryOperator.Equals, Value = entityType }
         };
-        var result = await InstanceQueryStore.JsonQueryPagedAsync(
+        var result = await _instanceQueryStore.JsonQueryPagedAsync(
             conditions, 0, _configuration.MaxStatusesPerEntity, null, cancellationToken);
 
         var now = DateTimeOffset.UtcNow;
@@ -1659,7 +1659,7 @@ public partial class StatusService : IStatusService
                     }, cancellationToken);
 
                 // Remove expired instance (fire-and-forget the item deletion)
-                await InstanceStore.DeleteAsync(
+                await _instanceStore.DeleteAsync(
                     InstanceIdKey(instance.StatusInstanceId), cancellationToken);
                 continue;
             }
@@ -1684,7 +1684,7 @@ public partial class StatusService : IStatusService
         };
 
         // Save to cache with TTL; MaxCachedEntities is enforced by Redis eviction policy
-        await ActiveCacheStore.SaveAsync(cacheKey, cache,
+        await _activeCacheStore.SaveAsync(cacheKey, cache,
             new StateOptions { Ttl = _configuration.StatusCacheTtlSeconds },
             cancellationToken);
 
@@ -1699,7 +1699,7 @@ public partial class StatusService : IStatusService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.GetOrBuildSeedEffectsCacheAsync");
         var cacheKey = SeedEffectsCacheKey(entityId, entityType);
-        var cached = await SeedEffectsCacheStore.GetAsync(cacheKey, cancellationToken);
+        var cached = await _seedEffectsCacheStore.GetAsync(cacheKey, cancellationToken);
         if (cached != null)
         {
             return cached;
@@ -1757,7 +1757,7 @@ public partial class StatusService : IStatusService
         };
 
         // Save to cache with TTL
-        await SeedEffectsCacheStore.SaveAsync(cacheKey, cache,
+        await _seedEffectsCacheStore.SaveAsync(cacheKey, cache,
             new StateOptions { Ttl = _configuration.SeedEffectsCacheTtlSeconds },
             cancellationToken);
 
@@ -1773,7 +1773,7 @@ public partial class StatusService : IStatusService
         using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.InvalidateActiveCacheAsync");
         try
         {
-            await ActiveCacheStore.DeleteAsync(
+            await _activeCacheStore.DeleteAsync(
                 ActiveCacheKey(entityId, entityType), cancellationToken);
         }
         catch (Exception ex)
@@ -1800,7 +1800,7 @@ public partial class StatusService : IStatusService
         using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.InvalidateSeedEffectsCacheAsync");
         try
         {
-            await SeedEffectsCacheStore.DeleteAsync(
+            await _seedEffectsCacheStore.DeleteAsync(
                 SeedEffectsCacheKey(entityId, entityType), cancellationToken);
         }
         catch (Exception ex)

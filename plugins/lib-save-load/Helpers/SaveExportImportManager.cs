@@ -17,7 +17,18 @@ namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
 /// </summary>
 public sealed class SaveExportImportManager : ISaveExportImportManager
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
+    /// <summary>Queryable store for save slot metadata (MySQL-backed for LINQ queries).</summary>
+    private readonly IQueryableStateStore<SaveSlotMetadata> _slotQueryStore;
+    /// <summary>Store for save slot metadata (basic CRUD operations).</summary>
+    private readonly IStateStore<SaveSlotMetadata> _slotStore;
+    /// <summary>Store for version manifests (basic CRUD operations).</summary>
+    private readonly IStateStore<SaveVersionManifest> _versionStore;
+    /// <summary>Queryable store for version manifests (MySQL-backed for LINQ queries).</summary>
+    private readonly IQueryableStateStore<SaveVersionManifest> _versionQueryStore;
+    /// <summary>Hot cache store for fast save data retrieval (Redis-backed with TTL).</summary>
+    private readonly IStateStore<HotSaveEntry> _hotCacheStore;
+    /// <summary>Cacheable store for pending upload entries (Redis-backed with set operations).</summary>
+    private readonly ICacheableStateStore<PendingUploadEntry> _pendingStore;
     private readonly SaveLoadServiceConfiguration _configuration;
     private readonly IAssetClient _assetClient;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -47,7 +58,12 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
         ILogger<SaveExportImportManager> logger,
         ITelemetryProvider telemetryProvider)
     {
-        _stateStoreFactory = stateStoreFactory;
+        _slotQueryStore = stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+        _slotStore = stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+        _versionStore = stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
+        _versionQueryStore = stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
+        _hotCacheStore = stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
+        _pendingStore = stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
         _configuration = configuration;
         _assetClient = assetClient;
         _httpClientFactory = httpClientFactory;
@@ -74,8 +90,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
 
             // Query slots for this owner
             // SaveSlotMetadata.OwnerId and OwnerType are now Guid and enum
-            var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
-            var slots = await slotQueryStore.QueryAsync(
+            var slots = await _slotQueryStore.QueryAsync(
                 s => s.GameId == body.GameId && s.OwnerId == body.OwnerId && s.OwnerType == body.OwnerType,
                 cancellationToken);
 
@@ -96,7 +111,6 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
             using var memoryStream = new MemoryStream();
             using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
             {
-                var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
                 var manifest = new ExportManifest
                 {
                     GameId = body.GameId,
@@ -116,7 +130,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
 
                     // SaveSlotMetadata.SlotId is now Guid - convert to string for state key
                     var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), slot.LatestVersion.Value);
-                    var version = await versionStore.GetAsync(versionKey, cancellationToken);
+                    var version = await _versionStore.GetAsync(versionKey, cancellationToken);
                     if (version == null)
                     {
                         continue;
@@ -340,9 +354,6 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
 
             var targetOwnerIdStr = body.TargetOwnerId.ToString();
             var targetOwnerTypeStr = body.TargetOwnerType.ToString().ToLowerInvariant();
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
-
             var importedSlots = 0;
             var importedVersions = 0;
             var skippedSlots = 0;
@@ -358,7 +369,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                 // Check for existing slot
                 // SaveSlotMetadata.GetStateKey expects strings for ownerType and ownerId
                 var slotKey = SaveSlotMetadata.GetStateKey(body.TargetGameId, targetOwnerTypeStr, targetOwnerIdStr, slotEntry.SlotName);
-                var existingSlot = await slotStore.GetAsync(slotKey, cancellationToken);
+                var existingSlot = await _slotStore.GetAsync(slotKey, cancellationToken);
 
                 if (existingSlot != null)
                 {
@@ -371,13 +382,13 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
 
                         case ConflictResolution.Overwrite:
                             // Delete existing slot and versions
-                            var existingVersions = await _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions)
+                            var existingVersions = await _versionQueryStore
                                 .QueryAsync(v => v.SlotId == existingSlot.SlotId, cancellationToken);
                             foreach (var existingVersion in existingVersions)
                             {
-                                await versionStore.DeleteAsync(existingVersion.GetStateKey(), cancellationToken);
+                                await _versionStore.DeleteAsync(existingVersion.GetStateKey(), cancellationToken);
                             }
-                            await slotStore.DeleteAsync(existingSlot.GetStateKey(), cancellationToken);
+                            await _slotStore.DeleteAsync(existingSlot.GetStateKey(), cancellationToken);
                             break;
 
                         case ConflictResolution.Rename:
@@ -387,7 +398,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                             {
                                 slotEntry.SlotName = $"{baseName}_{counter}";
                                 slotKey = SaveSlotMetadata.GetStateKey(body.TargetGameId, targetOwnerTypeStr, targetOwnerIdStr, slotEntry.SlotName);
-                                existingSlot = await slotStore.GetAsync(slotKey, cancellationToken);
+                                existingSlot = await _slotStore.GetAsync(slotKey, cancellationToken);
                                 counter++;
                             }
                             break;
@@ -408,7 +419,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                     CreatedAt = DateTimeOffset.UtcNow,
                     UpdatedAt = DateTimeOffset.UtcNow
                 };
-                await slotStore.SaveAsync(newSlot.GetStateKey(), newSlot, cancellationToken: cancellationToken);
+                await _slotStore.SaveAsync(newSlot.GetStateKey(), newSlot, cancellationToken: cancellationToken);
                 importedSlots++;
 
                 // Create version
@@ -438,11 +449,11 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                     UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.PENDING : UploadStatus.COMPLETE,
                     CreatedAt = DateTimeOffset.UtcNow
                 };
-                await versionStore.SaveAsync(newVersion.GetStateKey(), newVersion, cancellationToken: cancellationToken);
+                await _versionStore.SaveAsync(newVersion.GetStateKey(), newVersion, cancellationToken: cancellationToken);
                 importedVersions++;
 
                 // Store in hot cache - HotSaveEntry fields are now proper types
-                var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
+                // Use constructor-cached hot cache store per FOUNDATION TENETS
                 var hotEntry = new HotSaveEntry
                 {
                     SlotId = newSlot.SlotId,
@@ -455,7 +466,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                     CachedAt = DateTimeOffset.UtcNow
                 };
                 var hotCacheTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.HotCacheTtlMinutes).TotalSeconds;
-                await hotCacheStore.SaveAsync(
+                await _hotCacheStore.SaveAsync(
                     hotEntry.GetStateKey(),
                     hotEntry,
                     new StateOptions { Ttl = hotCacheTtlSeconds },
@@ -464,7 +475,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                 // Queue for upload if enabled - PendingUploadEntry fields are now proper types
                 if (_configuration.AsyncUploadEnabled)
                 {
-                    var pendingStore = _stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
+                    // Use constructor-cached pending store per FOUNDATION TENETS
                     var uploadId = Guid.NewGuid();
                     var pendingEntry = new PendingUploadEntry
                     {
@@ -482,13 +493,13 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                         QueuedAt = DateTimeOffset.UtcNow
                     };
                     var pendingTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.PendingUploadTtlMinutes).TotalSeconds;
-                    await pendingStore.SaveAsync(
+                    await _pendingStore.SaveAsync(
                         pendingEntry.GetStateKey(),
                         pendingEntry,
                         new StateOptions { Ttl = pendingTtlSeconds },
                         cancellationToken);
                     // Add to tracking set for Redis-based queue processing
-                    await pendingStore.AddToSetAsync(SaveUploadWorker.PendingUploadIdsSetKey, uploadId.ToString(), cancellationToken: cancellationToken);
+                    await _pendingStore.AddToSetAsync(SaveUploadWorker.PendingUploadIdsSetKey, uploadId.ToString(), cancellationToken: cancellationToken);
                 }
             }
 

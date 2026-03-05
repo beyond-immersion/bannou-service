@@ -50,7 +50,7 @@ public partial class ContractService
         if (!string.IsNullOrEmpty(body.IdempotencyKey))
         {
             var idempotencyKey = $"{IDEMPOTENCY_PREFIX}lock:{body.IdempotencyKey}";
-            var existingResult = await _stateStoreFactory.GetStore<LockContractResponse>(StateStoreDefinitions.Contract)
+            var existingResult = await _lockIdempotencyStore
                 .GetAsync(idempotencyKey, cancellationToken);
             if (existingResult != null)
             {
@@ -60,7 +60,7 @@ public partial class ContractService
         }
 
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var store = _instanceStore;
         var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
         if (model == null)
@@ -71,7 +71,7 @@ public partial class ContractService
 
         // Load template to check if transferable
         var templateKey = $"{TEMPLATE_PREFIX}{model.TemplateId}";
-        var template = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+        var template = await _templateStore
             .GetAsync(templateKey, cancellationToken);
 
         if (template == null || !template.Transferable)
@@ -114,7 +114,7 @@ public partial class ContractService
         if (!string.IsNullOrEmpty(body.IdempotencyKey))
         {
             var idempotencyKey = $"{IDEMPOTENCY_PREFIX}lock:{body.IdempotencyKey}";
-            await _stateStoreFactory.GetStore<LockContractResponse>(StateStoreDefinitions.Contract)
+            await _lockIdempotencyStore
                 .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
         }
 
@@ -138,7 +138,7 @@ public partial class ContractService
         if (!string.IsNullOrEmpty(body.IdempotencyKey))
         {
             var idempotencyKey = $"{IDEMPOTENCY_PREFIX}unlock:{body.IdempotencyKey}";
-            var existingResult = await _stateStoreFactory.GetStore<UnlockContractResponse>(StateStoreDefinitions.Contract)
+            var existingResult = await _unlockIdempotencyStore
                 .GetAsync(idempotencyKey, cancellationToken);
             if (existingResult != null)
             {
@@ -147,7 +147,7 @@ public partial class ContractService
         }
 
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var store = _instanceStore;
         var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
         if (model == null)
@@ -196,7 +196,7 @@ public partial class ContractService
         if (!string.IsNullOrEmpty(body.IdempotencyKey))
         {
             var idempotencyKey = $"{IDEMPOTENCY_PREFIX}unlock:{body.IdempotencyKey}";
-            await _stateStoreFactory.GetStore<UnlockContractResponse>(StateStoreDefinitions.Contract)
+            await _unlockIdempotencyStore
                 .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
         }
 
@@ -220,7 +220,7 @@ public partial class ContractService
         if (!string.IsNullOrEmpty(body.IdempotencyKey))
         {
             var idempotencyKey = $"{IDEMPOTENCY_PREFIX}transfer:{body.IdempotencyKey}";
-            var existingResult = await _stateStoreFactory.GetStore<TransferContractPartyResponse>(StateStoreDefinitions.Contract)
+            var existingResult = await _transferIdempotencyStore
                 .GetAsync(idempotencyKey, cancellationToken);
             if (existingResult != null)
             {
@@ -229,7 +229,7 @@ public partial class ContractService
         }
 
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var store = _instanceStore;
         var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
         if (model == null)
@@ -297,7 +297,7 @@ public partial class ContractService
         if (!string.IsNullOrEmpty(body.IdempotencyKey))
         {
             var idempotencyKey = $"{IDEMPOTENCY_PREFIX}transfer:{body.IdempotencyKey}";
-            await _stateStoreFactory.GetStore<TransferContractPartyResponse>(StateStoreDefinitions.Contract)
+            await _transferIdempotencyStore
                 .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
         }
 
@@ -324,7 +324,7 @@ public partial class ContractService
 
         // Check if already exists
         var typeKey = $"{CLAUSE_TYPE_PREFIX}{body.TypeCode}";
-        var existing = await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
+        var existing = await _clauseTypeStore
             .GetAsync(typeKey, cancellationToken);
 
         if (existing != null)
@@ -356,7 +356,7 @@ public partial class ContractService
             CreatedAt = DateTimeOffset.UtcNow
         };
 
-        await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
+        await _clauseTypeStore
             .SaveAsync(typeKey, model, cancellationToken: cancellationToken);
 
         await AddToListAsync(ALL_CLAUSE_TYPES_KEY, body.TypeCode, cancellationToken);
@@ -382,7 +382,7 @@ public partial class ContractService
         await EnsureBuiltInClauseTypesAsync(cancellationToken);
 
         // Get all type codes
-        var allTypeCodes = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+        var allTypeCodes = await _listStore
             .GetAsync(ALL_CLAUSE_TYPES_KEY, cancellationToken) ?? new List<string>();
 
         var summaries = new List<ClauseTypeSummary>();
@@ -390,7 +390,7 @@ public partial class ContractService
         foreach (var typeCode in allTypeCodes)
         {
             var typeKey = $"{CLAUSE_TYPE_PREFIX}{typeCode}";
-            var model = await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
+            var model = await _clauseTypeStore
                 .GetAsync(typeKey, cancellationToken);
 
             if (model == null) continue;
@@ -434,7 +434,7 @@ public partial class ContractService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.contract", "ContractService.EnsureBuiltInClauseTypesAsync");
 
-        var allTypeCodes = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+        var allTypeCodes = await _listStore
             .GetAsync(ALL_CLAUSE_TYPES_KEY, ct) ?? new List<string>();
 
         // Check if built-in types are already registered
@@ -518,7 +518,7 @@ public partial class ContractService
         };
 
         // Save all
-        var store = _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract);
+        var store = _clauseTypeStore;
         await store.SaveAsync($"{CLAUSE_TYPE_PREFIX}asset_requirement", assetRequirement, cancellationToken: ct);
         await store.SaveAsync($"{CLAUSE_TYPE_PREFIX}currency_transfer", currencyTransfer, cancellationToken: ct);
         await store.SaveAsync($"{CLAUSE_TYPE_PREFIX}item_transfer", itemTransfer, cancellationToken: ct);
@@ -526,7 +526,7 @@ public partial class ContractService
 
         // Update list
         allTypeCodes.AddRange(new[] { "asset_requirement", "currency_transfer", "item_transfer", "fee" });
-        await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+        await _listStore
             .SaveAsync(ALL_CLAUSE_TYPES_KEY, allTypeCodes, cancellationToken: ct);
     }
 
@@ -542,7 +542,7 @@ public partial class ContractService
         _logger.LogInformation("Setting template values on contract: {ContractId}", body.ContractInstanceId);
 
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-        var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+        var model = await _instanceStore
             .GetAsync(instanceKey, cancellationToken);
 
         if (model == null)
@@ -569,7 +569,7 @@ public partial class ContractService
         }
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+        await _instanceStore
             .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
 
         // Publish event
@@ -594,7 +594,7 @@ public partial class ContractService
         _logger.LogInformation("Checking asset requirements for contract: {ContractId}", body.ContractInstanceId);
 
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-        var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+        var model = await _instanceStore
             .GetAsync(instanceKey, cancellationToken);
 
         if (model == null)
@@ -605,7 +605,7 @@ public partial class ContractService
 
         // Load template for clause definitions
         var templateKey = $"{TEMPLATE_PREFIX}{model.TemplateId}";
-        var template = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+        var template = await _templateStore
             .GetAsync(templateKey, cancellationToken);
 
         if (template == null)
@@ -681,7 +681,7 @@ public partial class ContractService
         }
 
         // Load the asset_requirement clause type handler
-        var clauseType = await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
+        var clauseType = await _clauseTypeStore
             .GetAsync($"{CLAUSE_TYPE_PREFIX}asset_requirement", ct);
 
         // Process each asset requirement clause
@@ -923,7 +923,7 @@ public partial class ContractService
         _logger.LogInformation("Executing contract: {ContractId}", body.ContractInstanceId);
 
         var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var store = _instanceStore;
 
         // Acquire contract lock for execution
         await using var contractLock = await _lockProvider.LockAsync(
@@ -968,7 +968,7 @@ public partial class ContractService
         if (!string.IsNullOrEmpty(body.IdempotencyKey))
         {
             var idempotencyKey = $"{IDEMPOTENCY_PREFIX}execute:{body.IdempotencyKey}";
-            var existingResult = await _stateStoreFactory.GetStore<ExecuteContractResponse>(StateStoreDefinitions.Contract)
+            var existingResult = await _executeIdempotencyStore
                 .GetAsync(idempotencyKey, cancellationToken);
             if (existingResult != null)
             {
@@ -1029,7 +1029,7 @@ public partial class ContractService
         if (!string.IsNullOrEmpty(body.IdempotencyKey))
         {
             var idempotencyKey = $"{IDEMPOTENCY_PREFIX}execute:{body.IdempotencyKey}";
-            await _stateStoreFactory.GetStore<ExecuteContractResponse>(StateStoreDefinitions.Contract)
+            await _executeIdempotencyStore
                 .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
         }
 
@@ -1060,7 +1060,7 @@ public partial class ContractService
 
         // Load the template to get clause definitions
         var templateKey = $"{TEMPLATE_PREFIX}{contract.TemplateId}";
-        var template = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+        var template = await _templateStore
             .GetAsync(templateKey, ct);
 
         if (template == null)
@@ -1132,13 +1132,13 @@ public partial class ContractService
         try
         {
             // Load the clause type to get its execution handler
-            var clauseType = await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
+            var clauseType = await _clauseTypeStore
                 .GetAsync($"{CLAUSE_TYPE_PREFIX}{clause.Type}", ct);
 
             // Fee type uses currency_transfer handler
             if (clauseType == null && string.Equals(clause.Type, "fee", StringComparison.OrdinalIgnoreCase))
             {
-                clauseType = await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
+                clauseType = await _clauseTypeStore
                     .GetAsync($"{CLAUSE_TYPE_PREFIX}fee", ct);
             }
 
@@ -1148,7 +1148,7 @@ public partial class ContractService
                 // Determine if currency or item based on clause properties
                 var hasSourceContainer = !string.IsNullOrEmpty(clause.GetProperty("sourceContainer"));
                 var typeCode = hasSourceContainer ? "item_transfer" : "currency_transfer";
-                clauseType = await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
+                clauseType = await _clauseTypeStore
                     .GetAsync($"{CLAUSE_TYPE_PREFIX}{typeCode}", ct);
             }
 

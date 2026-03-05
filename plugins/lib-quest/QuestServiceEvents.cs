@@ -69,7 +69,7 @@ public partial class QuestService
         try
         {
             // Find quest instance by contract ID
-            var instances = await InstanceStore.QueryAsync(
+            var instances = await _instanceStore.QueryAsync(
                 i => i.ContractInstanceId == evt.ContractId,
                 cancellationToken: CancellationToken.None);
 
@@ -88,7 +88,7 @@ public partial class QuestService
 
             for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
             {
-                var (progress, etag) = await ProgressStore.GetWithETagAsync(progressKey, CancellationToken.None);
+                var (progress, etag) = await _progressStore.GetWithETagAsync(progressKey, CancellationToken.None);
 
                 if (progress == null || progress.IsComplete)
                 {
@@ -102,7 +102,7 @@ public partial class QuestService
 
                 // GetWithETagAsync returns non-null etag for existing records;
                 // coalesce satisfies compiler's nullable analysis (will never execute)
-                var saveResult = await ProgressStore.TrySaveAsync(
+                var saveResult = await _progressStore.TrySaveAsync(
                     progressKey,
                     progress,
                     etag ?? string.Empty,
@@ -173,7 +173,7 @@ public partial class QuestService
         try
         {
             // Find quest instance by contract ID
-            var instances = await InstanceStore.QueryAsync(
+            var instances = await _instanceStore.QueryAsync(
                 i => i.ContractInstanceId == evt.ContractId,
                 cancellationToken: CancellationToken.None);
 
@@ -228,7 +228,7 @@ public partial class QuestService
         try
         {
             // Find quest instance by contract ID
-            var instances = await InstanceStore.QueryAsync(
+            var instances = await _instanceStore.QueryAsync(
                 i => i.ContractInstanceId == evt.ContractId,
                 cancellationToken: CancellationToken.None);
 
@@ -287,7 +287,7 @@ public partial class QuestService
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var (current, etag) = await InstanceStore.GetWithETagAsync(instanceKey, CancellationToken.None);
+            var (current, etag) = await _instanceStore.GetWithETagAsync(instanceKey, CancellationToken.None);
             if (current == null || current.Status != QuestStatus.Active)
             {
                 return;
@@ -298,7 +298,7 @@ public partial class QuestService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await InstanceStore.TrySaveAsync(
+            var saveResult = await _instanceStore.TrySaveAsync(
                 instanceKey,
                 current,
                 etag ?? string.Empty,

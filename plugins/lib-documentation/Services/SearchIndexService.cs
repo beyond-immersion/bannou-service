@@ -13,10 +13,15 @@ namespace BeyondImmersion.BannouService.Documentation.Services;
 /// </summary>
 public partial class SearchIndexService : ISearchIndexService
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<SearchIndexService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
     private readonly ITelemetryProvider _telemetryProvider;
+
+    /// <summary>State store for Guid set lookups (namespace document ID sets).</summary>
+    private readonly IStateStore<HashSet<Guid>> _guidSetStore;
+
+    /// <summary>State store for document index data used during index rebuilds.</summary>
+    private readonly IStateStore<DocumentIndexData> _docIndexStore;
 
     /// <summary>
     /// Thread-safe index storage per namespace.
@@ -42,10 +47,13 @@ public partial class SearchIndexService : ISearchIndexService
         ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
 
-        _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _telemetryProvider = telemetryProvider;
+
+        // Constructor-cache all state stores per FOUNDATION TENETS
+        _guidSetStore = stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
+        _docIndexStore = stateStoreFactory.GetStore<DocumentIndexData>(StateStoreDefinitions.Documentation);
     }
 
     /// <inheritdoc />
@@ -71,8 +79,7 @@ public partial class SearchIndexService : ISearchIndexService
 
         // Load document list from state store
         var docListKey = $"ns-docs:{namespaceId}";
-        var setStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
-        var documentIds = await setStore.GetAsync(docListKey, cancellationToken);
+        var documentIds = await _guidSetStore.GetAsync(docListKey, cancellationToken);
 
         if (documentIds == null || documentIds.Count == 0)
         {
@@ -81,14 +88,13 @@ public partial class SearchIndexService : ISearchIndexService
         }
 
         var indexedCount = 0;
-        var docStore = _stateStoreFactory.GetStore<DocumentIndexData>(StateStoreDefinitions.Documentation);
         foreach (var docId in documentIds)
         {
             try
             {
                 // Key without "doc:" prefix since store already prepends it via KeyPrefix config
                 var docKey = $"{namespaceId}:{docId}";
-                var doc = await docStore.GetAsync(docKey, cancellationToken);
+                var doc = await _docIndexStore.GetAsync(docKey, cancellationToken);
 
                 if (doc != null)
                 {

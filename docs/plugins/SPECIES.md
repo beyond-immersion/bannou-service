@@ -5,6 +5,7 @@
 > **Version**: 2.0.0
 > **Layer**: GameFoundation
 > **State Stores**: species (MySQL), species-lock (Redis)
+> **Implementation Map**: [docs/maps/SPECIES.md](../maps/SPECIES.md)
 
 ---
 

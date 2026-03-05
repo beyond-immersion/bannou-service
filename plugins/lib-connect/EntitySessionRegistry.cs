@@ -26,12 +26,17 @@ namespace BeyondImmersion.BannouService.Connect;
 /// </remarks>
 public class EntitySessionRegistry : IEntitySessionRegistry
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly IClientEventPublisher _clientEventPublisher;
     private readonly ConnectServiceConfiguration _configuration;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<EntitySessionRegistry> _logger;
+
+    /// <summary>Cacheable state store for Redis set operations (entity-session indexes).</summary>
+    private readonly ICacheableStateStore<string> _cacheableStringStore;
+
+    /// <summary>State store for session heartbeat cross-referencing (stale session filtering).</summary>
+    private readonly IStateStore<SessionHeartbeat> _heartbeatStore;
 
     // Forward index: entity -> sessions
     private const string ENTITY_SESSIONS_KEY_PREFIX = "entity-sessions:";
@@ -66,7 +71,8 @@ public class EntitySessionRegistry : IEntitySessionRegistry
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         ArgumentNullException.ThrowIfNull(logger, nameof(logger));
 
-        _stateStoreFactory = stateStoreFactory;
+        _cacheableStringStore = stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
+        _heartbeatStore = stateStoreFactory.GetStore<SessionHeartbeat>(StateStoreDefinitions.Connect);
         _messageBus = messageBus;
         _clientEventPublisher = clientEventPublisher;
         _configuration = configuration;
@@ -87,13 +93,12 @@ public class EntitySessionRegistry : IEntitySessionRegistry
             var reverseKey = BuildReverseKey(sessionId);
             var reverseValue = BuildReverseValue(entityType, entityId);
 
-            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
             var ttlSeconds = _configuration.SessionTtlSeconds;
 
             // Atomic SADD on both indexes
-            await cacheStore.AddToSetAsync(forwardKey, sessionId,
+            await _cacheableStringStore.AddToSetAsync(forwardKey, sessionId,
                 new StateOptions { Ttl = ttlSeconds }, ct);
-            await cacheStore.AddToSetAsync(reverseKey, reverseValue,
+            await _cacheableStringStore.AddToSetAsync(reverseKey, reverseValue,
                 new StateOptions { Ttl = ttlSeconds }, ct);
 
             _logger.LogDebug("Registered session {SessionId} for entity {EntityType}:{EntityId}",
@@ -128,17 +133,15 @@ public class EntitySessionRegistry : IEntitySessionRegistry
             var reverseKey = BuildReverseKey(sessionId);
             var reverseValue = BuildReverseValue(entityType, entityId);
 
-            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
-
             // Atomic SREM on both indexes
-            await cacheStore.RemoveFromSetAsync(forwardKey, sessionId, ct);
-            await cacheStore.RemoveFromSetAsync(reverseKey, reverseValue, ct);
+            await _cacheableStringStore.RemoveFromSetAsync(forwardKey, sessionId, ct);
+            await _cacheableStringStore.RemoveFromSetAsync(reverseKey, reverseValue, ct);
 
             // Clean up empty forward set
-            var remaining = await cacheStore.SetCountAsync(forwardKey, ct);
+            var remaining = await _cacheableStringStore.SetCountAsync(forwardKey, ct);
             if (remaining == 0)
             {
-                await cacheStore.DeleteSetAsync(forwardKey, ct);
+                await _cacheableStringStore.DeleteSetAsync(forwardKey, ct);
                 _logger.LogDebug("Removed last session from entity {EntityType}:{EntityId} index, deleted key",
                     entityType, entityId);
             }
@@ -173,26 +176,20 @@ public class EntitySessionRegistry : IEntitySessionRegistry
         try
         {
             var forwardKey = BuildForwardKey(entityType, entityId);
-            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
 
             // Get all session IDs from the atomic Redis set
-            var sessions = await cacheStore.GetSetAsync<string>(forwardKey, ct);
+            var sessions = await _cacheableStringStore.GetSetAsync<string>(forwardKey, ct);
             if (sessions.Count == 0)
             {
                 return new HashSet<string>();
             }
-
-            // Filter stale sessions by cross-referencing heartbeat data.
-            // Heartbeat keys have a TTL of HeartbeatTtlSeconds (default 5 min) and are updated
-            // every 30 seconds during active connections. Missing heartbeat = dead session.
-            var heartbeatStore = _stateStoreFactory.GetStore<SessionHeartbeat>(StateStoreDefinitions.Connect);
             var liveSessions = new HashSet<string>();
             var staleSessions = new List<string>();
 
             foreach (var sessionId in sessions)
             {
                 var heartbeatKey = SESSION_HEARTBEAT_KEY_PREFIX + sessionId;
-                var heartbeat = await heartbeatStore.GetAsync(heartbeatKey, ct);
+                var heartbeat = await _heartbeatStore.GetAsync(heartbeatKey, ct);
                 if (heartbeat != null)
                 {
                     liveSessions.Add(sessionId);
@@ -212,7 +209,7 @@ public class EntitySessionRegistry : IEntitySessionRegistry
                 {
                     try
                     {
-                        await cacheStore.RemoveFromSetAsync(forwardKey, staleSessionId, ct);
+                        await _cacheableStringStore.RemoveFromSetAsync(forwardKey, staleSessionId, ct);
                     }
                     catch (Exception ex)
                     {
@@ -250,9 +247,8 @@ public class EntitySessionRegistry : IEntitySessionRegistry
         try
         {
             var forwardKey = BuildForwardKey(entityType, entityId);
-            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
 
-            var sessions = await cacheStore.GetSetAsync<string>(forwardKey, ct);
+            var sessions = await _cacheableStringStore.GetSetAsync<string>(forwardKey, ct);
             if (sessions.Count == 0)
             {
                 return 0;
@@ -290,10 +286,9 @@ public class EntitySessionRegistry : IEntitySessionRegistry
         try
         {
             var reverseKey = BuildReverseKey(sessionId);
-            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
 
             // Get all entity bindings for this session from the reverse index
-            var entityBindings = await cacheStore.GetSetAsync<string>(reverseKey, ct);
+            var entityBindings = await _cacheableStringStore.GetSetAsync<string>(reverseKey, ct);
             if (entityBindings.Count == 0)
             {
                 _logger.LogDebug("No entity bindings to clean up for session {SessionId}", sessionId);
@@ -311,13 +306,13 @@ public class EntitySessionRegistry : IEntitySessionRegistry
                     var (entityType, entityId) = ParseReverseValue(binding);
                     var forwardKey = BuildForwardKey(entityType, entityId);
 
-                    await cacheStore.RemoveFromSetAsync(forwardKey, sessionId, ct);
+                    await _cacheableStringStore.RemoveFromSetAsync(forwardKey, sessionId, ct);
 
                     // Clean up empty forward set
-                    var remaining = await cacheStore.SetCountAsync(forwardKey, ct);
+                    var remaining = await _cacheableStringStore.SetCountAsync(forwardKey, ct);
                     if (remaining == 0)
                     {
-                        await cacheStore.DeleteSetAsync(forwardKey, ct);
+                        await _cacheableStringStore.DeleteSetAsync(forwardKey, ct);
                     }
                 }
                 catch (Exception ex)
@@ -329,7 +324,7 @@ public class EntitySessionRegistry : IEntitySessionRegistry
             }
 
             // Delete the reverse index key
-            await cacheStore.DeleteSetAsync(reverseKey, ct);
+            await _cacheableStringStore.DeleteSetAsync(reverseKey, ct);
 
             _logger.LogDebug("Completed entity binding cleanup for session {SessionId}, removed {Count} bindings",
                 sessionId, entityBindings.Count);

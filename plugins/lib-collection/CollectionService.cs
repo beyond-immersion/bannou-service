@@ -69,7 +69,6 @@ public static class CollectionTopics
 public partial class CollectionService : ICollectionService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<CollectionService> _logger;
     private readonly CollectionServiceConfiguration _configuration;
     private readonly IInventoryClient _inventoryClient;
@@ -81,29 +80,20 @@ public partial class CollectionService : ICollectionService
     private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly IReadOnlyList<ICollectionUnlockListener> _unlockListeners;
 
-    #region State Store Accessors
+    /// <summary>Queryable state store for collection entry templates (MySQL-backed).</summary>
+    private readonly IQueryableStateStore<EntryTemplateModel> _entryTemplateStore;
 
-    private IQueryableStateStore<EntryTemplateModel>? _entryTemplateStore;
-    private IQueryableStateStore<EntryTemplateModel> EntryTemplateStore =>
-        _entryTemplateStore ??= _stateStoreFactory.GetQueryableStore<EntryTemplateModel>(StateStoreDefinitions.CollectionEntryTemplates);
+    /// <summary>Queryable state store for collection instances (MySQL-backed).</summary>
+    private readonly IQueryableStateStore<CollectionInstanceModel> _collectionStore;
 
-    private IQueryableStateStore<CollectionInstanceModel>? _collectionStore;
-    private IQueryableStateStore<CollectionInstanceModel> CollectionStore =>
-        _collectionStore ??= _stateStoreFactory.GetQueryableStore<CollectionInstanceModel>(StateStoreDefinitions.CollectionInstances);
+    /// <summary>Queryable state store for area content configurations (MySQL-backed).</summary>
+    private readonly IQueryableStateStore<AreaContentConfigModel> _areaContentStore;
 
-    private IQueryableStateStore<AreaContentConfigModel>? _areaContentStore;
-    private IQueryableStateStore<AreaContentConfigModel> AreaContentStore =>
-        _areaContentStore ??= _stateStoreFactory.GetQueryableStore<AreaContentConfigModel>(StateStoreDefinitions.CollectionAreaContentConfigs);
+    /// <summary>State store for collection cache entries (Redis-backed).</summary>
+    private readonly IStateStore<CollectionCacheModel> _collectionCache;
 
-    private IStateStore<CollectionCacheModel>? _collectionCache;
-    private IStateStore<CollectionCacheModel> CollectionCache =>
-        _collectionCache ??= _stateStoreFactory.GetStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache);
-
-    private ICacheableStateStore<CollectionCacheModel>? _cacheableCollectionCache;
-    private ICacheableStateStore<CollectionCacheModel> CacheableCollectionCache =>
-        _cacheableCollectionCache ??= _stateStoreFactory.GetCacheableStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache);
-
-    #endregion
+    /// <summary>Cacheable state store for collection cache set operations (Redis-backed).</summary>
+    private readonly ICacheableStateStore<CollectionCacheModel> _cacheableCollectionCache;
 
     #region Key Building
 
@@ -214,7 +204,6 @@ public partial class CollectionService : ICollectionService
         IEnumerable<ICollectionUnlockListener> unlockListeners)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _inventoryClient = inventoryClient;
@@ -225,6 +214,12 @@ public partial class CollectionService : ICollectionService
         _telemetryProvider = telemetryProvider;
         _entitySessionRegistry = entitySessionRegistry;
         _unlockListeners = unlockListeners.ToList();
+
+        _entryTemplateStore = stateStoreFactory.GetQueryableStore<EntryTemplateModel>(StateStoreDefinitions.CollectionEntryTemplates);
+        _collectionStore = stateStoreFactory.GetQueryableStore<CollectionInstanceModel>(StateStoreDefinitions.CollectionInstances);
+        _areaContentStore = stateStoreFactory.GetQueryableStore<AreaContentConfigModel>(StateStoreDefinitions.CollectionAreaContentConfigs);
+        _collectionCache = stateStoreFactory.GetStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache);
+        _cacheableCollectionCache = stateStoreFactory.GetCacheableStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache);
 
         RegisterEventConsumers(eventConsumer);
 
@@ -352,7 +347,7 @@ public partial class CollectionService : ICollectionService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.collection", "CollectionService.LoadOrRebuildCollectionCache");
-        var cache = await CollectionCache.GetAsync(BuildCacheKey(collection.CollectionId), cancellationToken);
+        var cache = await _collectionCache.GetAsync(BuildCacheKey(collection.CollectionId), cancellationToken);
         if (cache != null)
         {
             return cache;
@@ -385,7 +380,7 @@ public partial class CollectionService : ICollectionService
         }
 
         // Load all entry templates for this collection type + game service to match items
-        var templates = await EntryTemplateStore.QueryAsync(
+        var templates = await _entryTemplateStore.QueryAsync(
             t => t.CollectionType == collection.CollectionType && t.GameServiceId == collection.GameServiceId,
             cancellationToken: cancellationToken);
 
@@ -422,7 +417,7 @@ public partial class CollectionService : ICollectionService
             LastUpdated = DateTimeOffset.UtcNow
         };
 
-        await CollectionCache.SaveAsync(
+        await _collectionCache.SaveAsync(
             BuildCacheKey(collection.CollectionId),
             cache,
             new StateOptions { Ttl = _configuration.CollectionCacheTtlSeconds },
@@ -482,12 +477,12 @@ public partial class CollectionService : ICollectionService
             CreatedAt = now
         };
 
-        await CollectionStore.SaveAsync(
+        await _collectionStore.SaveAsync(
             BuildCollectionKey(instance.CollectionId),
             instance,
             cancellationToken: cancellationToken);
 
-        await CollectionStore.SaveAsync(
+        await _collectionStore.SaveAsync(
             BuildCollectionByOwnerKey(ownerId, ownerType, gameServiceId, collectionType),
             instance,
             cancellationToken: cancellationToken);
@@ -622,7 +617,7 @@ public partial class CollectionService : ICollectionService
         }
 
         // Check code uniqueness within collection type + game service
-        var existing = await EntryTemplateStore.GetAsync(
+        var existing = await _entryTemplateStore.GetAsync(
             BuildTemplateByCodeKey(body.GameServiceId, body.CollectionType, body.Code),
             cancellationToken);
 
@@ -662,13 +657,13 @@ public partial class CollectionService : ICollectionService
         };
 
         // Save by ID
-        await EntryTemplateStore.SaveAsync(
+        await _entryTemplateStore.SaveAsync(
             BuildTemplateKey(template.EntryTemplateId),
             template,
             cancellationToken: cancellationToken);
 
         // Save by code lookup key
-        await EntryTemplateStore.SaveAsync(
+        await _entryTemplateStore.SaveAsync(
             BuildTemplateByCodeKey(template.GameServiceId, template.CollectionType, template.Code),
             template,
             cancellationToken: cancellationToken);
@@ -700,7 +695,7 @@ public partial class CollectionService : ICollectionService
         GetEntryTemplateRequest body,
         CancellationToken cancellationToken)
     {
-        var template = await EntryTemplateStore.GetAsync(
+        var template = await _entryTemplateStore.GetAsync(
             BuildTemplateKey(body.EntryTemplateId),
             cancellationToken);
 
@@ -719,7 +714,7 @@ public partial class CollectionService : ICollectionService
     {
         var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
 
-        var results = await EntryTemplateStore.QueryAsync(
+        var results = await _entryTemplateStore.QueryAsync(
             t => t.CollectionType == body.CollectionType && t.GameServiceId == body.GameServiceId,
             cancellationToken: cancellationToken);
 
@@ -775,7 +770,7 @@ public partial class CollectionService : ICollectionService
             return (StatusCodes.Conflict, null);
         }
 
-        var template = await EntryTemplateStore.GetAsync(
+        var template = await _entryTemplateStore.GetAsync(
             BuildTemplateKey(body.EntryTemplateId),
             cancellationToken);
 
@@ -857,12 +852,12 @@ public partial class CollectionService : ICollectionService
 
         template.UpdatedAt = now;
 
-        await EntryTemplateStore.SaveAsync(
+        await _entryTemplateStore.SaveAsync(
             BuildTemplateKey(template.EntryTemplateId),
             template,
             cancellationToken: cancellationToken);
 
-        await EntryTemplateStore.SaveAsync(
+        await _entryTemplateStore.SaveAsync(
             BuildTemplateByCodeKey(template.GameServiceId, template.CollectionType, template.Code),
             template,
             cancellationToken: cancellationToken);
@@ -910,7 +905,7 @@ public partial class CollectionService : ICollectionService
             return (StatusCodes.Conflict, null);
         }
 
-        var template = await EntryTemplateStore.GetAsync(
+        var template = await _entryTemplateStore.GetAsync(
             BuildTemplateKey(body.EntryTemplateId),
             cancellationToken);
 
@@ -922,7 +917,7 @@ public partial class CollectionService : ICollectionService
         // Category B idempotency: already deprecated → return OK
         if (template.IsDeprecated)
         {
-            _logger.LogInformation("Entry template {EntryTemplateId} already deprecated, returning OK", body.EntryTemplateId);
+            _logger.LogDebug("Entry template {EntryTemplateId} already deprecated, returning OK", body.EntryTemplateId);
             return (StatusCodes.OK, MapTemplateToResponse(template));
         }
 
@@ -931,12 +926,12 @@ public partial class CollectionService : ICollectionService
         template.DeprecationReason = body.Reason;
         template.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await EntryTemplateStore.SaveAsync(
+        await _entryTemplateStore.SaveAsync(
             BuildTemplateKey(template.EntryTemplateId),
             template,
             cancellationToken: cancellationToken);
 
-        await EntryTemplateStore.SaveAsync(
+        await _entryTemplateStore.SaveAsync(
             BuildTemplateByCodeKey(template.GameServiceId, template.CollectionType, template.Code),
             template,
             cancellationToken: cancellationToken);
@@ -998,7 +993,7 @@ public partial class CollectionService : ICollectionService
 
         foreach (var templateRequest in body.Templates)
         {
-            var existingByCode = await EntryTemplateStore.GetAsync(
+            var existingByCode = await _entryTemplateStore.GetAsync(
                 BuildTemplateByCodeKey(templateRequest.GameServiceId, templateRequest.CollectionType, templateRequest.Code),
                 cancellationToken);
 
@@ -1043,12 +1038,12 @@ public partial class CollectionService : ICollectionService
                 CreatedAt = now
             };
 
-            await EntryTemplateStore.SaveAsync(
+            await _entryTemplateStore.SaveAsync(
                 BuildTemplateKey(template.EntryTemplateId),
                 template,
                 cancellationToken: cancellationToken);
 
-            await EntryTemplateStore.SaveAsync(
+            await _entryTemplateStore.SaveAsync(
                 BuildTemplateByCodeKey(template.GameServiceId, template.CollectionType, template.Code),
                 template,
                 cancellationToken: cancellationToken);
@@ -1115,7 +1110,7 @@ public partial class CollectionService : ICollectionService
         }
 
         // Check uniqueness: one collection per type per game per owner
-        var existingCollection = await CollectionStore.GetAsync(
+        var existingCollection = await _collectionStore.GetAsync(
             BuildCollectionByOwnerKey(body.OwnerId, body.OwnerType, body.GameServiceId, body.CollectionType),
             cancellationToken);
 
@@ -1128,7 +1123,7 @@ public partial class CollectionService : ICollectionService
         }
 
         // Check max collections per owner
-        var ownerCollections = await CollectionStore.QueryAsync(
+        var ownerCollections = await _collectionStore.QueryAsync(
             c => c.OwnerId == body.OwnerId && c.OwnerType == body.OwnerType,
             cancellationToken: cancellationToken);
 
@@ -1151,7 +1146,7 @@ public partial class CollectionService : ICollectionService
         GetCollectionRequest body,
         CancellationToken cancellationToken)
     {
-        var collection = await CollectionStore.GetAsync(
+        var collection = await _collectionStore.GetAsync(
             BuildCollectionKey(body.CollectionId),
             cancellationToken);
 
@@ -1169,7 +1164,7 @@ public partial class CollectionService : ICollectionService
         ListCollectionsRequest body,
         CancellationToken cancellationToken)
     {
-        var collections = await CollectionStore.QueryAsync(
+        var collections = await _collectionStore.QueryAsync(
             c => c.OwnerId == body.OwnerId && c.OwnerType == body.OwnerType,
             cancellationToken: cancellationToken);
 
@@ -1185,7 +1180,7 @@ public partial class CollectionService : ICollectionService
         {
             // Try to load cache for entry count; use 0 if cache doesn't exist
             // (GetCollection will rebuild on demand)
-            var cache = await CollectionCache.GetAsync(BuildCacheKey(collection.CollectionId), cancellationToken);
+            var cache = await _collectionCache.GetAsync(BuildCacheKey(collection.CollectionId), cancellationToken);
             var entryCount = cache?.UnlockedEntries.Count ?? 0;
             results.Add(MapCollectionToResponse(collection, entryCount));
         }
@@ -1214,7 +1209,7 @@ public partial class CollectionService : ICollectionService
             return (StatusCodes.Conflict, null);
         }
 
-        var collection = await CollectionStore.GetAsync(
+        var collection = await _collectionStore.GetAsync(
             BuildCollectionKey(body.CollectionId),
             cancellationToken);
 
@@ -1236,11 +1231,11 @@ public partial class CollectionService : ICollectionService
         }
 
         // Delete cache
-        await CollectionCache.DeleteAsync(BuildCacheKey(collection.CollectionId), cancellationToken);
+        await _collectionCache.DeleteAsync(BuildCacheKey(collection.CollectionId), cancellationToken);
 
         // Delete collection instance records
-        await CollectionStore.DeleteAsync(BuildCollectionKey(collection.CollectionId), cancellationToken);
-        await CollectionStore.DeleteAsync(
+        await _collectionStore.DeleteAsync(BuildCollectionKey(collection.CollectionId), cancellationToken);
+        await _collectionStore.DeleteAsync(
             BuildCollectionByOwnerKey(collection.OwnerId, collection.OwnerType, collection.GameServiceId, collection.CollectionType),
             cancellationToken);
 
@@ -1290,7 +1285,7 @@ public partial class CollectionService : ICollectionService
         }
 
         // Look up entry template by code
-        var template = await EntryTemplateStore.GetAsync(
+        var template = await _entryTemplateStore.GetAsync(
             BuildTemplateByCodeKey(body.GameServiceId, body.CollectionType, body.EntryCode),
             cancellationToken);
 
@@ -1340,14 +1335,14 @@ public partial class CollectionService : ICollectionService
         }
 
         // Find or auto-create collection
-        var collection = await CollectionStore.GetAsync(
+        var collection = await _collectionStore.GetAsync(
             BuildCollectionByOwnerKey(body.OwnerId, body.OwnerType, body.GameServiceId, body.CollectionType),
             cancellationToken);
 
         if (collection == null)
         {
             // Check max collections per owner before auto-creating
-            var ownerCollections = await CollectionStore.QueryAsync(
+            var ownerCollections = await _collectionStore.QueryAsync(
                 c => c.OwnerId == body.OwnerId && c.OwnerType == body.OwnerType,
                 cancellationToken: cancellationToken);
 
@@ -1493,7 +1488,7 @@ public partial class CollectionService : ICollectionService
         // Update cache with ETag-based optimistic concurrency
         for (var retry = 0; retry < _configuration.MaxConcurrencyRetries; retry++)
         {
-            var (cachedValue, etag) = await CollectionCache.GetWithETagAsync(
+            var (cachedValue, etag) = await _collectionCache.GetWithETagAsync(
                 BuildCacheKey(collection.CollectionId), cancellationToken);
 
             var cacheToUpdate = cachedValue ?? cache;
@@ -1502,7 +1497,7 @@ public partial class CollectionService : ICollectionService
 
             if (etag != null)
             {
-                var newEtag = await CollectionCache.TrySaveAsync(
+                var newEtag = await _collectionCache.TrySaveAsync(
                     BuildCacheKey(collection.CollectionId),
                     cacheToUpdate,
                     etag,
@@ -1515,7 +1510,7 @@ public partial class CollectionService : ICollectionService
             }
             else
             {
-                await CollectionCache.SaveAsync(
+                await _collectionCache.SaveAsync(
                     BuildCacheKey(collection.CollectionId),
                     cacheToUpdate,
                     new StateOptions { Ttl = _configuration.CollectionCacheTtlSeconds },
@@ -1525,7 +1520,7 @@ public partial class CollectionService : ICollectionService
         }
 
         // Track global first-unlock via atomic Redis SADD (returns true if newly added)
-        var isFirstGlobal = await CacheableCollectionCache.AddToSetAsync(
+        var isFirstGlobal = await _cacheableCollectionCache.AddToSetAsync(
             BuildGlobalUnlocksSetKey(collection.GameServiceId, collection.CollectionType),
             template.Code,
             cancellationToken: cancellationToken);
@@ -1570,7 +1565,7 @@ public partial class CollectionService : ICollectionService
         await DispatchUnlockListenersAsync(collection, template, newEntry, cancellationToken);
 
         // Check and publish milestones
-        var totalTemplates = await EntryTemplateStore.QueryAsync(
+        var totalTemplates = await _entryTemplateStore.QueryAsync(
             t => t.CollectionType == collection.CollectionType && t.GameServiceId == collection.GameServiceId,
             cancellationToken: cancellationToken);
 
@@ -1600,7 +1595,7 @@ public partial class CollectionService : ICollectionService
         HasEntryRequest body,
         CancellationToken cancellationToken)
     {
-        var collection = await CollectionStore.GetAsync(
+        var collection = await _collectionStore.GetAsync(
             BuildCollectionByOwnerKey(body.OwnerId, body.OwnerType, body.GameServiceId, body.CollectionType),
             cancellationToken);
 
@@ -1624,7 +1619,7 @@ public partial class CollectionService : ICollectionService
         QueryEntriesRequest body,
         CancellationToken cancellationToken)
     {
-        var collection = await CollectionStore.GetAsync(
+        var collection = await _collectionStore.GetAsync(
             BuildCollectionKey(body.CollectionId),
             cancellationToken);
 
@@ -1636,7 +1631,7 @@ public partial class CollectionService : ICollectionService
         var cache = await LoadOrRebuildCollectionCacheAsync(collection, cancellationToken);
 
         // Load all templates for this collection to enrich responses
-        var templates = await EntryTemplateStore.QueryAsync(
+        var templates = await _entryTemplateStore.QueryAsync(
             t => t.CollectionType == collection.CollectionType && t.GameServiceId == collection.GameServiceId,
             cancellationToken: cancellationToken);
 
@@ -1709,7 +1704,7 @@ public partial class CollectionService : ICollectionService
             return (StatusCodes.Conflict, null);
         }
 
-        var collection = await CollectionStore.GetAsync(
+        var collection = await _collectionStore.GetAsync(
             BuildCollectionKey(body.CollectionId),
             cancellationToken);
 
@@ -1755,12 +1750,12 @@ public partial class CollectionService : ICollectionService
         // Save cache with ETag-based optimistic concurrency
         for (var retry = 0; retry < _configuration.MaxConcurrencyRetries; retry++)
         {
-            var (_, etag) = await CollectionCache.GetWithETagAsync(
+            var (_, etag) = await _collectionCache.GetWithETagAsync(
                 BuildCacheKey(collection.CollectionId), cancellationToken);
 
             if (etag != null)
             {
-                var newEtag = await CollectionCache.TrySaveAsync(
+                var newEtag = await _collectionCache.TrySaveAsync(
                     BuildCacheKey(collection.CollectionId),
                     cache,
                     etag,
@@ -1778,7 +1773,7 @@ public partial class CollectionService : ICollectionService
             }
             else
             {
-                await CollectionCache.SaveAsync(
+                await _collectionCache.SaveAsync(
                     BuildCacheKey(collection.CollectionId),
                     cache,
                     new StateOptions { Ttl = _configuration.CollectionCacheTtlSeconds },
@@ -1788,7 +1783,7 @@ public partial class CollectionService : ICollectionService
         }
 
         // Load template for response enrichment
-        var template = await EntryTemplateStore.GetAsync(
+        var template = await _entryTemplateStore.GetAsync(
             BuildTemplateByCodeKey(collection.GameServiceId, collection.CollectionType, body.EntryCode),
             cancellationToken);
 
@@ -1814,14 +1809,14 @@ public partial class CollectionService : ICollectionService
         CancellationToken cancellationToken)
     {
         // Count total templates for this collection type + game
-        var allTemplates = await EntryTemplateStore.QueryAsync(
+        var allTemplates = await _entryTemplateStore.QueryAsync(
             t => t.CollectionType == body.CollectionType && t.GameServiceId == body.GameServiceId,
             cancellationToken: cancellationToken);
 
         var totalEntries = allTemplates.Count;
 
         // Find the collection
-        var collection = await CollectionStore.GetAsync(
+        var collection = await _collectionStore.GetAsync(
             BuildCollectionByOwnerKey(body.OwnerId, body.OwnerType, body.GameServiceId, body.CollectionType),
             cancellationToken);
 
@@ -1887,7 +1882,7 @@ public partial class CollectionService : ICollectionService
         CancellationToken cancellationToken)
     {
         // Load area config
-        var areaConfig = await AreaContentStore.GetAsync(
+        var areaConfig = await _areaContentStore.GetAsync(
             BuildAreaContentByCodeKey(body.GameServiceId, body.CollectionType, body.AreaCode),
             cancellationToken);
 
@@ -1900,7 +1895,7 @@ public partial class CollectionService : ICollectionService
         }
 
         // Find the owner's collection of this type
-        var collection = await CollectionStore.GetAsync(
+        var collection = await _collectionStore.GetAsync(
             BuildCollectionByOwnerKey(body.OwnerId, body.OwnerType, body.GameServiceId, body.CollectionType),
             cancellationToken);
 
@@ -1920,7 +1915,7 @@ public partial class CollectionService : ICollectionService
         }
 
         // Load templates for matching
-        var templates = await EntryTemplateStore.QueryAsync(
+        var templates = await _entryTemplateStore.QueryAsync(
             t => t.CollectionType == body.CollectionType && t.GameServiceId == body.GameServiceId,
             cancellationToken: cancellationToken);
 
@@ -1986,7 +1981,7 @@ public partial class CollectionService : ICollectionService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.collection", "CollectionService.BuildDefaultContentResponse");
-        var defaultTemplate = await EntryTemplateStore.GetAsync(
+        var defaultTemplate = await _entryTemplateStore.GetAsync(
             BuildTemplateByCodeKey(gameServiceId, collectionType, areaConfig.DefaultEntryCode),
             cancellationToken);
 
@@ -2033,7 +2028,7 @@ public partial class CollectionService : ICollectionService
         }
 
         // Validate default entry template exists
-        var defaultEntry = await EntryTemplateStore.GetAsync(
+        var defaultEntry = await _entryTemplateStore.GetAsync(
             BuildTemplateByCodeKey(body.GameServiceId, body.CollectionType, body.DefaultEntryCode),
             cancellationToken);
 
@@ -2048,7 +2043,7 @@ public partial class CollectionService : ICollectionService
         var now = DateTimeOffset.UtcNow;
 
         // Check for existing config (upsert)
-        var existing = await AreaContentStore.GetAsync(
+        var existing = await _areaContentStore.GetAsync(
             BuildAreaContentByCodeKey(body.GameServiceId, body.CollectionType, body.AreaCode),
             cancellationToken);
 
@@ -2085,12 +2080,12 @@ public partial class CollectionService : ICollectionService
             };
         }
 
-        await AreaContentStore.SaveAsync(
+        await _areaContentStore.SaveAsync(
             BuildAreaContentKey(config.AreaConfigId),
             config,
             cancellationToken: cancellationToken);
 
-        await AreaContentStore.SaveAsync(
+        await _areaContentStore.SaveAsync(
             BuildAreaContentByCodeKey(config.GameServiceId, config.CollectionType, config.AreaCode),
             config,
             cancellationToken: cancellationToken);
@@ -2142,7 +2137,7 @@ public partial class CollectionService : ICollectionService
         GetAreaContentConfigRequest body,
         CancellationToken cancellationToken)
     {
-        var config = await AreaContentStore.GetAsync(
+        var config = await _areaContentStore.GetAsync(
             BuildAreaContentByCodeKey(body.GameServiceId, body.CollectionType, body.AreaCode),
             cancellationToken);
 
@@ -2159,7 +2154,7 @@ public partial class CollectionService : ICollectionService
         ListAreaContentConfigsRequest body,
         CancellationToken cancellationToken)
     {
-        var configs = await AreaContentStore.QueryAsync(
+        var configs = await _areaContentStore.QueryAsync(
             c => c.GameServiceId == body.GameServiceId && c.CollectionType == body.CollectionType,
             cancellationToken: cancellationToken);
 
@@ -2174,7 +2169,7 @@ public partial class CollectionService : ICollectionService
         DeleteAreaContentConfigRequest body,
         CancellationToken cancellationToken)
     {
-        var config = await AreaContentStore.GetAsync(
+        var config = await _areaContentStore.GetAsync(
             BuildAreaContentKey(body.AreaConfigId),
             cancellationToken);
 
@@ -2183,11 +2178,11 @@ public partial class CollectionService : ICollectionService
             return (StatusCodes.NotFound, null);
         }
 
-        await AreaContentStore.DeleteAsync(
+        await _areaContentStore.DeleteAsync(
             BuildAreaContentKey(config.AreaConfigId),
             cancellationToken);
 
-        await AreaContentStore.DeleteAsync(
+        await _areaContentStore.DeleteAsync(
             BuildAreaContentByCodeKey(config.GameServiceId, config.CollectionType, config.AreaCode),
             cancellationToken);
 
@@ -2232,7 +2227,7 @@ public partial class CollectionService : ICollectionService
             return (StatusCodes.Conflict, null);
         }
 
-        var collection = await CollectionStore.GetAsync(
+        var collection = await _collectionStore.GetAsync(
             BuildCollectionKey(body.CollectionId),
             cancellationToken);
 
@@ -2254,7 +2249,7 @@ public partial class CollectionService : ICollectionService
         }
 
         // Load template to check discovery levels
-        var template = await EntryTemplateStore.GetAsync(
+        var template = await _entryTemplateStore.GetAsync(
             BuildTemplateByCodeKey(collection.GameServiceId, collection.CollectionType, body.EntryCode),
             cancellationToken);
 
@@ -2289,12 +2284,12 @@ public partial class CollectionService : ICollectionService
         // Save cache with ETag-based optimistic concurrency
         for (var retry = 0; retry < _configuration.MaxConcurrencyRetries; retry++)
         {
-            var (_, etag) = await CollectionCache.GetWithETagAsync(
+            var (_, etag) = await _collectionCache.GetWithETagAsync(
                 BuildCacheKey(collection.CollectionId), cancellationToken);
 
             if (etag != null)
             {
-                var newEtag = await CollectionCache.TrySaveAsync(
+                var newEtag = await _collectionCache.TrySaveAsync(
                     BuildCacheKey(collection.CollectionId),
                     cache,
                     etag,
@@ -2307,7 +2302,7 @@ public partial class CollectionService : ICollectionService
             }
             else
             {
-                await CollectionCache.SaveAsync(
+                await _collectionCache.SaveAsync(
                     BuildCacheKey(collection.CollectionId),
                     cache,
                     new StateOptions { Ttl = _configuration.CollectionCacheTtlSeconds },

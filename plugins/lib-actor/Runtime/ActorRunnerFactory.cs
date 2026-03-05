@@ -19,13 +19,15 @@ public class ActorRunnerFactory : IActorRunnerFactory
     private readonly IMeshInvocationClient _meshClient;
     private readonly ActorServiceConfiguration _config;
     private readonly ILoggerFactory _loggerFactory;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IBehaviorDocumentLoader _behaviorLoader;
     private readonly IEnumerable<IVariableProviderFactory> _providerFactories;
     private readonly IDocumentExecutorFactory _executorFactory;
     private readonly IExpressionEvaluator _expressionEvaluator;
     private readonly ICognitionBuilder _cognitionBuilder;
     private readonly ITelemetryProvider _telemetryProvider;
+
+    /// <summary>State store for actor state snapshots, used for persistence during actor lifecycle.</summary>
+    private readonly IStateStore<ActorStateSnapshot> _actorStateStore;
 
     /// <summary>
     /// Creates a new actor runner factory.
@@ -35,7 +37,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
     /// <param name="meshClient">Mesh client for routing state updates to game servers.</param>
     /// <param name="config">Service configuration.</param>
     /// <param name="loggerFactory">Logger factory for creating loggers.</param>
-    /// <param name="stateStoreFactory">State store factory for actor persistence.</param>
+    /// <param name="stateStoreFactory">State store factory for resolving state stores (used in constructor only, not stored).</param>
     /// <param name="behaviorLoader">Behavior document loader for loading ABML.</param>
     /// <param name="providerFactories">Variable provider factories for ABML expressions (discovered via DI).</param>
     /// <param name="executorFactory">Document executor factory for behavior execution.</param>
@@ -61,13 +63,15 @@ public class ActorRunnerFactory : IActorRunnerFactory
         _meshClient = meshClient;
         _config = config;
         _loggerFactory = loggerFactory;
-        _stateStoreFactory = stateStoreFactory;
         _behaviorLoader = behaviorLoader;
         _providerFactories = providerFactories;
         _executorFactory = executorFactory;
         _expressionEvaluator = expressionEvaluator;
         _cognitionBuilder = cognitionBuilder;
         _telemetryProvider = telemetryProvider;
+
+        // Resolve state stores in constructor per FOUNDATION TENETS (constructor-cache pattern)
+        _actorStateStore = stateStoreFactory.GetStore<ActorStateSnapshot>(StateStoreDefinitions.ActorState);
     }
 
     /// <inheritdoc/>
@@ -89,8 +93,8 @@ public class ActorRunnerFactory : IActorRunnerFactory
 
         var logger = _loggerFactory.CreateLogger<ActorRunner>();
 
-        // Get the actor-state store for this actor
-        var stateStore = _stateStoreFactory.GetStore<ActorStateSnapshot>(StateStoreDefinitions.ActorState);
+        // Use constructor-cached state store per FOUNDATION TENETS
+        var stateStore = _actorStateStore;
 
         // Create a document executor for this actor
         var executor = _executorFactory.Create();

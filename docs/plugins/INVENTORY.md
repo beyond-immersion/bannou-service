@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFoundation
 > **State Stores**: inventory-container-store (MySQL), inventory-container-cache (Redis), inventory-lock (Redis)
+> **Implementation Map**: [docs/maps/INVENTORY.md](../maps/INVENTORY.md)
 
 ---
 

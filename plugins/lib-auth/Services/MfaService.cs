@@ -14,7 +14,6 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 /// </summary>
 public class MfaService : IMfaService
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly AuthServiceConfiguration _configuration;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<MfaService> _logger;
@@ -25,6 +24,12 @@ public class MfaService : IMfaService
     private const int NONCE_SIZE = 12; // AES-GCM nonce size in bytes
     private const int TAG_SIZE = 16; // AES-GCM authentication tag size in bytes
     private const int RECOVERY_CODE_SEGMENT_LENGTH = 4;
+
+    /// <summary>Redis-backed store for MFA challenge tokens.</summary>
+    private readonly IStateStore<MfaChallengeData> _challengeStore;
+
+    /// <summary>Redis-backed store for MFA setup tokens.</summary>
+    private readonly IStateStore<MfaSetupData> _setupStore;
 
     /// <summary>
     /// Initializes MFA service with state store and configuration dependencies.
@@ -39,10 +44,13 @@ public class MfaService : IMfaService
         ITelemetryProvider telemetryProvider,
         ILogger<MfaService> logger)
     {
-        _stateStoreFactory = stateStoreFactory;
         _configuration = configuration;
         _telemetryProvider = telemetryProvider;
         _logger = logger;
+
+        // Constructor-cache state stores per FOUNDATION TENETS
+        _challengeStore = stateStoreFactory.GetStore<MfaChallengeData>(StateStoreDefinitions.Auth);
+        _setupStore = stateStoreFactory.GetStore<MfaSetupData>(StateStoreDefinitions.Auth);
     }
 
     /// <inheritdoc/>
@@ -167,9 +175,8 @@ public class MfaService : IMfaService
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_configuration.MfaChallengeTtlMinutes)
         };
 
-        var store = _stateStoreFactory.GetStore<MfaChallengeData>(StateStoreDefinitions.Auth);
         var key = $"{MFA_CHALLENGE_KEY_PREFIX}{token}";
-        await store.SaveAsync(key, challengeData, new StateOptions { Ttl = _configuration.MfaChallengeTtlMinutes * 60 }, ct);
+        await _challengeStore.SaveAsync(key, challengeData, new StateOptions { Ttl = _configuration.MfaChallengeTtlMinutes * 60 }, ct);
 
         _logger.LogDebug("Created MFA challenge for account {AccountId}, TTL {TtlMinutes}m", accountId, _configuration.MfaChallengeTtlMinutes);
         return token;
@@ -179,10 +186,9 @@ public class MfaService : IMfaService
     public async Task<Guid?> ConsumeMfaChallengeAsync(string token, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "MfaService.ConsumeMfaChallenge");
-        var store = _stateStoreFactory.GetStore<MfaChallengeData>(StateStoreDefinitions.Auth);
         var key = $"{MFA_CHALLENGE_KEY_PREFIX}{token}";
 
-        var challenge = await store.GetAsync(key, ct);
+        var challenge = await _challengeStore.GetAsync(key, ct);
         if (challenge == null)
         {
             _logger.LogDebug("MFA challenge token not found or expired");
@@ -190,7 +196,7 @@ public class MfaService : IMfaService
         }
 
         // Delete immediately (single-use)
-        await store.DeleteAsync(key, ct);
+        await _challengeStore.DeleteAsync(key, ct);
 
         // Double-check expiry (Redis TTL should handle this, but verify in case of clock skew)
         if (challenge.ExpiresAt < DateTimeOffset.UtcNow)
@@ -216,9 +222,8 @@ public class MfaService : IMfaService
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_configuration.MfaChallengeTtlMinutes)
         };
 
-        var store = _stateStoreFactory.GetStore<MfaSetupData>(StateStoreDefinitions.Auth);
         var key = $"{MFA_SETUP_KEY_PREFIX}{token}";
-        await store.SaveAsync(key, setupData, new StateOptions { Ttl = _configuration.MfaChallengeTtlMinutes * 60 }, ct);
+        await _setupStore.SaveAsync(key, setupData, new StateOptions { Ttl = _configuration.MfaChallengeTtlMinutes * 60 }, ct);
 
         _logger.LogDebug("Created MFA setup token for account {AccountId}, TTL {TtlMinutes}m", accountId, _configuration.MfaChallengeTtlMinutes);
         return token;
@@ -228,10 +233,9 @@ public class MfaService : IMfaService
     public async Task<MfaSetupData?> ConsumeMfaSetupAsync(string token, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "MfaService.ConsumeMfaSetup");
-        var store = _stateStoreFactory.GetStore<MfaSetupData>(StateStoreDefinitions.Auth);
         var key = $"{MFA_SETUP_KEY_PREFIX}{token}";
 
-        var setup = await store.GetAsync(key, ct);
+        var setup = await _setupStore.GetAsync(key, ct);
         if (setup == null)
         {
             _logger.LogDebug("MFA setup token not found or expired");
@@ -239,7 +243,7 @@ public class MfaService : IMfaService
         }
 
         // Delete immediately (single-use)
-        await store.DeleteAsync(key, ct);
+        await _setupStore.DeleteAsync(key, ct);
 
         if (setup.ExpiresAt < DateTimeOffset.UtcNow)
         {

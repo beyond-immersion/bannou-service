@@ -18,7 +18,6 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 /// </summary>
 public class OAuthProviderService : IOAuthProviderService
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IAccountClient _accountClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly AuthServiceConfiguration _configuration;
@@ -35,6 +34,12 @@ public class OAuthProviderService : IOAuthProviderService
     private const string TWITCH_USER_URL = "https://api.twitch.tv/helix/users";
     private const string STEAM_AUTH_URL = "https://partner.steam-api.com/ISteamUserAuth/AuthenticateUserTicket/v1/";
 
+    /// <summary>Redis-backed store for OAuth link strings (provider:id -> accountId).</summary>
+    private readonly IStateStore<string> _linkStore;
+
+    /// <summary>Redis-backed store for OAuth link index lists (account -> link keys).</summary>
+    private readonly IStateStore<List<string>> _indexStore;
+
     /// <summary>
     /// Initializes a new instance of OAuthProviderService.
     /// </summary>
@@ -48,7 +53,6 @@ public class OAuthProviderService : IOAuthProviderService
         ITelemetryProvider telemetryProvider,
         ILogger<OAuthProviderService> logger)
     {
-        _stateStoreFactory = stateStoreFactory;
         _accountClient = accountClient;
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
@@ -56,6 +60,10 @@ public class OAuthProviderService : IOAuthProviderService
         _messageBus = messageBus;
         _telemetryProvider = telemetryProvider;
         _logger = logger;
+
+        // Constructor-cache state stores per FOUNDATION TENETS
+        _linkStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
+        _indexStore = stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
     }
 
     /// <inheritdoc/>
@@ -412,10 +420,8 @@ public class OAuthProviderService : IOAuthProviderService
 
         try
         {
-            var linkStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
-
             // Check existing link (stored as string since Guid is a value type)
-            var existingAccountIdStr = await linkStore.GetAsync(oauthLinkKey, cancellationToken);
+            var existingAccountIdStr = await _linkStore.GetAsync(oauthLinkKey, cancellationToken);
 
             // Defensive: guard against corrupt Redis data (stored accountId should always be a valid non-empty GUID)
             if (!string.IsNullOrEmpty(existingAccountIdStr) && Guid.TryParse(existingAccountIdStr, out var existingAccountId) && existingAccountId != Guid.Empty)
@@ -496,7 +502,7 @@ public class OAuthProviderService : IOAuthProviderService
             }
 
             // Store the OAuth link (as string since Guid is a value type)
-            await linkStore.SaveAsync(
+            await _linkStore.SaveAsync(
                 oauthLinkKey,
                 newAccount.AccountId.ToString(),
                 cancellationToken: cancellationToken);
@@ -662,8 +668,7 @@ public class OAuthProviderService : IOAuthProviderService
         try
         {
             var indexKey = $"account-oauth-links:{accountId}";
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
-            var linkKeys = await indexStore.GetAsync(indexKey, cancellationToken);
+            var linkKeys = await _indexStore.GetAsync(indexKey, cancellationToken);
 
             if (linkKeys == null || linkKeys.Count == 0)
             {
@@ -671,15 +676,13 @@ public class OAuthProviderService : IOAuthProviderService
                 return;
             }
 
-            var linkStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
-
             foreach (var linkKey in linkKeys)
             {
-                await linkStore.DeleteAsync(linkKey, cancellationToken);
+                await _linkStore.DeleteAsync(linkKey, cancellationToken);
             }
 
             // Remove the reverse index itself
-            await indexStore.DeleteAsync(indexKey, cancellationToken);
+            await _indexStore.DeleteAsync(indexKey, cancellationToken);
 
             _logger.LogInformation("Cleaned up {Count} OAuth link(s) for deleted account {AccountId}",
                 linkKeys.Count, accountId);
@@ -707,16 +710,15 @@ public class OAuthProviderService : IOAuthProviderService
         try
         {
             var indexKey = $"account-oauth-links:{accountId}";
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
 
-            var existingLinks = await indexStore.GetAsync(indexKey, cancellationToken) ?? new List<string>();
+            var existingLinks = await _indexStore.GetAsync(indexKey, cancellationToken) ?? new List<string>();
 
             if (!existingLinks.Contains(oauthLinkKey))
             {
                 existingLinks.Add(oauthLinkKey);
             }
 
-            await indexStore.SaveAsync(indexKey, existingLinks, cancellationToken: cancellationToken);
+            await _indexStore.SaveAsync(indexKey, existingLinks, cancellationToken: cancellationToken);
         }
         catch (Exception ex)
         {

@@ -36,7 +36,12 @@ namespace BeyondImmersion.Bannou.Behavior.Cognition;
 /// </remarks>
 public sealed class ActorLocalMemoryStore : IMemoryStore
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
+    /// <summary>State store for individual memory records keyed by entity and memory ID.</summary>
+    private readonly IStateStore<Memory> _memoryStore;
+
+    /// <summary>State store for per-entity memory index lists tracking memory IDs in chronological order.</summary>
+    private readonly IStateStore<List<string>> _memoryIndexStore;
+
     private readonly BeyondImmersion.BannouService.Behavior.BehaviorServiceConfiguration _configuration;
     private readonly ILogger<ActorLocalMemoryStore> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
@@ -56,7 +61,8 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         ILogger<ActorLocalMemoryStore> logger,
         ITelemetryProvider telemetryProvider)
     {
-        _stateStoreFactory = stateStoreFactory;
+        _memoryStore = stateStoreFactory.GetStore<Memory>(StateStoreDefinitions.AgentMemories);
+        _memoryIndexStore = stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.AgentMemories);
         _configuration = configuration;
         _logger = logger;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
@@ -147,9 +153,8 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
             memoryId, entityId, significance);
 
         // Store the memory data
-        var memoryStore = _stateStoreFactory.GetStore<Memory>(StateStoreDefinitions.AgentMemories);
         var memoryKey = BuildMemoryKey(entityId, memoryId);
-        await memoryStore.SaveAsync(memoryKey, memory, cancellationToken: ct);
+        await _memoryStore.SaveAsync(memoryKey, memory, cancellationToken: ct);
 
         // Add to the entity's memory index
         await AddToMemoryIndexAsync(entityId, memoryId, ct);
@@ -173,9 +178,8 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         }
 
         // Get the memory index for this entity
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.AgentMemories);
         var indexKey = BuildMemoryIndexKey(entityId);
-        var memoryIds = await indexStore.GetAsync(indexKey, ct) ?? [];
+        var memoryIds = await _memoryIndexStore.GetAsync(indexKey, ct) ?? [];
 
         if (memoryIds.Count == 0)
         {
@@ -186,9 +190,8 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         var idsToFetch = memoryIds.TakeLast(limit).ToList();
 
         // Bulk fetch the memories
-        var memoryStore = _stateStoreFactory.GetStore<Memory>(StateStoreDefinitions.AgentMemories);
         var memoryKeys = idsToFetch.Select(id => BuildMemoryKey(entityId, id));
-        var memoriesDict = await memoryStore.GetBulkAsync(memoryKeys, ct);
+        var memoriesDict = await _memoryStore.GetBulkAsync(memoryKeys, ct);
 
         // Return in order (most recent last)
         var memories = idsToFetch
@@ -217,9 +220,8 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
             memoryId, entityId);
 
         // Delete the memory data
-        var memoryStore = _stateStoreFactory.GetStore<Memory>(StateStoreDefinitions.AgentMemories);
         var memoryKey = BuildMemoryKey(entityId, memoryId);
-        await memoryStore.DeleteAsync(memoryKey, ct);
+        await _memoryStore.DeleteAsync(memoryKey, ct);
 
         // Remove from the entity's memory index
         await RemoveFromMemoryIndexAsync(entityId, memoryId, ct);
@@ -237,20 +239,18 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         _logger.LogDebug("Clearing all memories for entity {EntityId}", entityId);
 
         // Get the memory index
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.AgentMemories);
         var indexKey = BuildMemoryIndexKey(entityId);
-        var memoryIds = await indexStore.GetAsync(indexKey, ct) ?? [];
+        var memoryIds = await _memoryIndexStore.GetAsync(indexKey, ct) ?? [];
 
         // Delete all memory data
-        var memoryStore = _stateStoreFactory.GetStore<Memory>(StateStoreDefinitions.AgentMemories);
         foreach (var memoryId in memoryIds)
         {
             var memoryKey = BuildMemoryKey(entityId, memoryId);
-            await memoryStore.DeleteAsync(memoryKey, ct);
+            await _memoryStore.DeleteAsync(memoryKey, ct);
         }
 
         // Clear the index
-        await indexStore.DeleteAsync(indexKey, ct);
+        await _memoryIndexStore.DeleteAsync(indexKey, ct);
 
         _logger.LogInformation(
             "Cleared {Count} memories for entity {EntityId}",
@@ -273,12 +273,11 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
     {
         using var activity = _telemetryProvider.StartActivity("bannou.behavior", "ActorLocalMemoryStore.AddToMemoryIndexAsync");
         var indexKey = BuildMemoryIndexKey(entityId);
-        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.AgentMemories);
         List<string> evictedIds = [];
 
         for (int retry = 0; retry < _configuration.MemoryStoreMaxRetries; retry++)
         {
-            var (currentIndex, etag) = await store.GetWithETagAsync(indexKey, ct);
+            var (currentIndex, etag) = await _memoryIndexStore.GetWithETagAsync(indexKey, ct);
             var index = currentIndex ?? [];
 
             // Add the new memory ID (appending maintains chronological order)
@@ -296,7 +295,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
             // Try to save with ETag for concurrency safety
             if (etag != null)
             {
-                if (await store.TrySaveAsync(indexKey, index, etag, ct) != null)
+                if (await _memoryIndexStore.TrySaveAsync(indexKey, index, etag, ct) != null)
                 {
                     break; // Success - proceed to cleanup
                 }
@@ -305,7 +304,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
             else
             {
                 // First entry - no ETag needed
-                await store.SaveAsync(indexKey, index, cancellationToken: ct);
+                await _memoryIndexStore.SaveAsync(indexKey, index, cancellationToken: ct);
                 break;
             }
 
@@ -316,7 +315,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
                     "Memory index update for entity {EntityId} retries exhausted, forcing save",
                     entityId);
 
-                var finalIndex = await store.GetAsync(indexKey, ct) ?? [];
+                var finalIndex = await _memoryIndexStore.GetAsync(indexKey, ct) ?? [];
                 if (!finalIndex.Contains(memoryId))
                 {
                     finalIndex.Add(memoryId);
@@ -328,19 +327,18 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
                     evictedIds = finalIndex.GetRange(0, excessCount);
                     finalIndex.RemoveRange(0, excessCount);
                 }
-                await store.SaveAsync(indexKey, finalIndex, cancellationToken: ct);
+                await _memoryIndexStore.SaveAsync(indexKey, finalIndex, cancellationToken: ct);
             }
         }
 
         // Clean up evicted memory records (best-effort)
         if (evictedIds.Count > 0)
         {
-            var memoryStore = _stateStoreFactory.GetStore<Memory>(StateStoreDefinitions.AgentMemories);
             foreach (var evictedId in evictedIds)
             {
                 try
                 {
-                    await memoryStore.DeleteAsync(BuildMemoryKey(entityId, evictedId), ct);
+                    await _memoryStore.DeleteAsync(BuildMemoryKey(entityId, evictedId), ct);
                 }
                 catch (Exception ex)
                 {
@@ -360,11 +358,10 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
     {
         using var activity = _telemetryProvider.StartActivity("bannou.behavior", "ActorLocalMemoryStore.RemoveFromMemoryIndexAsync");
         var indexKey = BuildMemoryIndexKey(entityId);
-        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.AgentMemories);
 
         for (int retry = 0; retry < _configuration.MemoryStoreMaxRetries; retry++)
         {
-            var (currentIndex, etag) = await store.GetWithETagAsync(indexKey, ct);
+            var (currentIndex, etag) = await _memoryIndexStore.GetWithETagAsync(indexKey, ct);
             if (currentIndex == null || !currentIndex.Contains(memoryId))
             {
                 return; // Nothing to remove
@@ -374,7 +371,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
 
             if (etag != null)
             {
-                if (await store.TrySaveAsync(indexKey, currentIndex, etag, ct) != null)
+                if (await _memoryIndexStore.TrySaveAsync(indexKey, currentIndex, etag, ct) != null)
                 {
                     return; // Success
                 }
@@ -382,7 +379,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
             }
             else
             {
-                await store.SaveAsync(indexKey, currentIndex, cancellationToken: ct);
+                await _memoryIndexStore.SaveAsync(indexKey, currentIndex, cancellationToken: ct);
                 return;
             }
         }
@@ -392,10 +389,10 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
             "Memory index removal for entity {EntityId} retries exhausted, forcing save",
             entityId);
 
-        var finalIndex = await store.GetAsync(indexKey, ct);
+        var finalIndex = await _memoryIndexStore.GetAsync(indexKey, ct);
         if (finalIndex != null && finalIndex.Remove(memoryId))
         {
-            await store.SaveAsync(indexKey, finalIndex, cancellationToken: ct);
+            await _memoryIndexStore.SaveAsync(indexKey, finalIndex, cancellationToken: ct);
         }
     }
 

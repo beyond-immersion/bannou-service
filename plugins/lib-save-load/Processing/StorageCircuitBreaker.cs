@@ -12,7 +12,8 @@ namespace BeyondImmersion.BannouService.SaveLoad.Processing;
 /// </summary>
 public class StorageCircuitBreaker
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
+    /// <summary>Circuit breaker state store (Redis-backed for multi-instance coordination).</summary>
+    private readonly IStateStore<CircuitBreakerState> _circuitBreakerStore;
     private readonly IMessageBus _messageBus;
     private readonly SaveLoadServiceConfiguration _configuration;
     private readonly ILogger<StorageCircuitBreaker> _logger;
@@ -60,7 +61,7 @@ public class StorageCircuitBreaker
         ILogger<StorageCircuitBreaker> logger,
         ITelemetryProvider telemetryProvider)
     {
-        _stateStoreFactory = stateStoreFactory;
+        _circuitBreakerStore = stateStoreFactory.GetStore<CircuitBreakerState>(StateStoreDefinitions.SaveLoadPending);
         _messageBus = messageBus;
         _configuration = configuration;
         _logger = logger;
@@ -294,16 +295,14 @@ public class StorageCircuitBreaker
     private async Task<CircuitBreakerState> GetOrCreateStateAsync(CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "StorageCircuitBreaker.GetOrCreateStateAsync");
-        var store = _stateStoreFactory.GetStore<CircuitBreakerState>(StateStoreDefinitions.SaveLoadPending);
-        var state = await store.GetAsync(CircuitStateKey, cancellationToken);
+        var state = await _circuitBreakerStore.GetAsync(CircuitStateKey, cancellationToken);
         return state ?? new CircuitBreakerState();
     }
 
     private async Task SaveStateAsync(CircuitBreakerState state, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "StorageCircuitBreaker.SaveStateAsync");
-        var store = _stateStoreFactory.GetStore<CircuitBreakerState>(StateStoreDefinitions.SaveLoadPending);
-        await store.SaveAsync(CircuitStateKey, state, cancellationToken: cancellationToken);
+        await _circuitBreakerStore.SaveAsync(CircuitStateKey, state, cancellationToken: cancellationToken);
     }
 
     private static CircuitState ParseState(string state)

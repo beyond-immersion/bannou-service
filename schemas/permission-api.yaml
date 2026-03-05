@@ -506,8 +506,6 @@ components:
       required:
       - serviceId
       - serviceName
-      - version
-      - registeredAt
       - endpointCount
       properties:
         serviceId:
@@ -520,12 +518,13 @@ components:
           description: Human-readable service name
         version:
           type: string
-          minLength: 1
-          description: Service API version
+          nullable: true
+          description: Service API version, null if not provided during registration
         registeredAt:
           type: string
           format: date-time
-          description: When the service registered its permissions
+          nullable: true
+          description: When the service registered its permissions, null if registration data unavailable
         endpointCount:
           type: integer
           minimum: 0

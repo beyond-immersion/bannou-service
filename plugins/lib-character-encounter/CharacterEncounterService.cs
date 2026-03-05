@@ -30,13 +30,42 @@ namespace BeyondImmersion.BannouService.CharacterEncounter;
 public partial class CharacterEncounterService : ICharacterEncounterService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<CharacterEncounterService> _logger;
     private readonly CharacterEncounterServiceConfiguration _configuration;
     private readonly ICharacterClient _characterClient;
     private readonly IEncounterDataCache _encounterDataCache;
     private readonly IResourceClient _resourceClient;
     private readonly ITelemetryProvider _telemetryProvider;
+
+    /// <summary>Store for encounter type definitions (built-in and custom).</summary>
+    private readonly IStateStore<EncounterTypeData> _encounterTypeStore;
+
+    /// <summary>Store for encounter records.</summary>
+    private readonly IStateStore<EncounterData> _encounterStore;
+
+    /// <summary>Store for per-participant encounter perspectives.</summary>
+    private readonly IStateStore<PerspectiveData> _perspectiveStore;
+
+    /// <summary>Store for character-to-perspective index (maps character ID to their perspective IDs).</summary>
+    private readonly IStateStore<CharacterIndexData> _characterIndexStore;
+
+    /// <summary>Store for character pair-to-encounter index (maps pair key to shared encounter IDs).</summary>
+    private readonly IStateStore<PairIndexData> _pairIndexStore;
+
+    /// <summary>Store for location-to-encounter index (maps location ID to encounter IDs).</summary>
+    private readonly IStateStore<LocationIndexData> _locationIndexStore;
+
+    /// <summary>Store for global character index (tracks all characters with encounters).</summary>
+    private readonly IStateStore<GlobalCharacterIndexData> _globalCharacterIndexStore;
+
+    /// <summary>Store for custom encounter type index (tracks custom type codes).</summary>
+    private readonly IStateStore<CustomTypeIndexData> _customTypeIndexStore;
+
+    /// <summary>Store for type-to-encounter index (maps encounter type code to encounter IDs).</summary>
+    private readonly IStateStore<TypeEncounterIndexData> _typeEncounterIndexStore;
+
+    /// <summary>Store for encounter-to-perspective index (maps encounter ID to perspective IDs).</summary>
+    private readonly IStateStore<EncounterPerspectiveIndexData> _encounterPerspectiveIndexStore;
 
     // Key prefixes for different data types
     private const string ENCOUNTER_KEY_PREFIX = "enc-";
@@ -82,7 +111,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _characterClient = characterClient;
@@ -90,6 +118,18 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _resourceClient = resourceClient;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
+
+        // Constructor-cache all state store references per FOUNDATION TENETS
+        _encounterTypeStore = stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        _encounterStore = stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+        _perspectiveStore = stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+        _characterIndexStore = stateStoreFactory.GetStore<CharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        _pairIndexStore = stateStoreFactory.GetStore<PairIndexData>(StateStoreDefinitions.CharacterEncounter);
+        _locationIndexStore = stateStoreFactory.GetStore<LocationIndexData>(StateStoreDefinitions.CharacterEncounter);
+        _globalCharacterIndexStore = stateStoreFactory.GetStore<GlobalCharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        _customTypeIndexStore = stateStoreFactory.GetStore<CustomTypeIndexData>(StateStoreDefinitions.CharacterEncounter);
+        _typeEncounterIndexStore = stateStoreFactory.GetStore<TypeEncounterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        _encounterPerspectiveIndexStore = stateStoreFactory.GetStore<EncounterPerspectiveIndexData>(StateStoreDefinitions.CharacterEncounter);
     }
 
     // ============================================================================
@@ -110,7 +150,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return (StatusCodes.BadRequest, null);
         }
 
-        var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        var store = _encounterTypeStore;
         var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
 
         // Check if already exists
@@ -151,7 +191,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogDebug("Getting encounter type {Code}", body.Code);
 
-        var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        var store = _encounterTypeStore;
         var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
         var data = await store.GetAsync(key, cancellationToken);
 
@@ -184,7 +224,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         // Ensure built-in types are seeded
         await EnsureBuiltInTypesSeededAsync(cancellationToken);
 
-        var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        var store = _encounterTypeStore;
         var types = new List<EncounterTypeResponse>();
 
         // Query all types with TYPE_KEY_PREFIX
@@ -219,7 +259,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Updating encounter type {Code}", body.Code);
 
-        var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        var store = _encounterTypeStore;
         var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
         var data = await store.GetAsync(key, cancellationToken);
 
@@ -257,7 +297,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Deleting encounter type {Code}", body.Code);
 
-        var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        var store = _encounterTypeStore;
         var key = $"{TYPE_KEY_PREFIX}{body.Code.ToUpperInvariant()}";
         var data = await store.GetAsync(key, cancellationToken);
 
@@ -298,7 +338,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Seeding encounter types, forceReset={ForceReset}", body.ForceReset);
 
-        var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        var store = _encounterTypeStore;
         var created = 0;
         var updated = 0;
         var skipped = 0;
@@ -368,7 +408,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         }
 
         // Validate encounter type exists
-        var typeStore = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        var typeStore = _encounterTypeStore;
         var typeKey = $"{TYPE_KEY_PREFIX}{body.EncounterTypeCode.ToUpperInvariant()}";
         var typeData = await typeStore.GetAsync(typeKey, cancellationToken);
 
@@ -413,7 +453,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var now = DateTimeOffset.UtcNow;
 
         // Create encounter record
-        var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+        var encounterStore = _encounterStore;
         var encounterData = new EncounterData
         {
             EncounterId = encounterId,
@@ -434,7 +474,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         await AddToTypeEncounterIndexAsync(body.EncounterTypeCode.ToUpperInvariant(), encounterId, cancellationToken);
 
         // Create perspectives for each participant
-        var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+        var perspectiveStore = _perspectiveStore;
         var perspectives = new List<EncounterPerspectiveModel>();
 
         var providedPerspectives = body.Perspectives?.ToDictionary(p => p.CharacterId) ?? new Dictionary<Guid, PerspectiveInput>();
@@ -960,7 +1000,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         }
 
         // Apply lazy decay
-        var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+        var perspectiveStore = _perspectiveStore;
         perspective = await ApplyLazyDecayAsync(perspectiveStore, perspective, cancellationToken);
 
         return (StatusCodes.OK, new PerspectiveResponse
@@ -984,7 +1024,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         }
 
         // Re-load with ETag for concurrency safety
-        var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+        var perspectiveStore = _perspectiveStore;
         var perspectiveKey = $"{PERSPECTIVE_KEY_PREFIX}{found.PerspectiveId}";
         var (perspective, etag) = await perspectiveStore.GetWithETagAsync(perspectiveKey, cancellationToken);
         if (perspective == null)
@@ -1050,7 +1090,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         }
 
         // Re-load with ETag for concurrency safety
-        var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+        var perspectiveStore = _perspectiveStore;
         var perspectiveKey = $"{PERSPECTIVE_KEY_PREFIX}{found.PerspectiveId}";
         var (perspective, etag) = await perspectiveStore.GetWithETagAsync(perspectiveKey, cancellationToken);
         if (perspective == null)
@@ -1107,7 +1147,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         _logger.LogInformation("Deleting encounter {EncounterId}", body.EncounterId);
 
-        var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+        var encounterStore = _encounterStore;
         var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{body.EncounterId}", cancellationToken);
 
         if (encounter == null)
@@ -1181,7 +1221,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             var encountersDeleted = 0;
             var perspectivesDeleted = 0;
 
-            var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+            var perspectiveStore = _perspectiveStore;
             var processedEncounterIds = new HashSet<Guid>();
 
             foreach (var perspectiveId in perspectiveIds)
@@ -1201,7 +1241,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             }
 
             // Delete encounters that this character was part of
-            var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+            var encounterStore = _encounterStore;
             var affectedCharacterIds = new HashSet<Guid> { body.CharacterId };
             foreach (var encounterId in processedEncounterIds)
             {
@@ -1280,7 +1320,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             });
         }
 
-        var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+        var perspectiveStore = _perspectiveStore;
         var perspectivesProcessed = 0;
         var memoriesFaded = 0;
         var dryRun = body.DryRun;
@@ -1295,7 +1335,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         }
         else
         {
-            var globalIndexStore = _stateStoreFactory.GetStore<GlobalCharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
+            var globalIndexStore = _globalCharacterIndexStore;
             var globalIndex = await globalIndexStore.GetAsync(GLOBAL_CHAR_INDEX_KEY, cancellationToken);
             characterIds = globalIndex?.CharacterIds ?? [];
         }
@@ -1388,8 +1428,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 return (StatusCodes.NotFound, null);
             }
 
-            var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
-            var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+            var encounterStore = _encounterStore;
+            var perspectiveStore = _perspectiveStore;
             var encounters = new List<EncounterResponse>();
             var processedEncounterIds = new HashSet<Guid>();
 
@@ -1503,8 +1543,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         // Restore encounters and perspectives
         if (archiveData.HasEncounters && archiveData.Encounters.Count > 0)
         {
-            var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
-            var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+            var encounterStore = _encounterStore;
+            var perspectiveStore = _perspectiveStore;
 
             foreach (var encounterResponse in archiveData.Encounters)
             {
@@ -1641,7 +1681,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.EnsureBuiltInTypesSeededAsync");
         if (!_configuration.SeedBuiltInTypesOnStartup) return;
 
-        var store = _stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
+        var store = _encounterTypeStore;
         foreach (var builtIn in BuiltInTypes)
         {
             var key = $"{TYPE_KEY_PREFIX}{builtIn.Code}";
@@ -1665,7 +1705,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         }
 
         // Add custom type keys from the index
-        var customTypeIndexStore = _stateStoreFactory.GetStore<CustomTypeIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var customTypeIndexStore = _customTypeIndexStore;
         var customTypeIndex = await customTypeIndexStore.GetAsync(CUSTOM_TYPE_INDEX_KEY, cancellationToken);
 
         if (customTypeIndex != null)
@@ -1682,7 +1722,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task<List<Guid>> GetCharacterPerspectiveIdsAsync(Guid characterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.GetCharacterPerspectiveIdsAsync");
-        var indexStore = _stateStoreFactory.GetStore<CharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _characterIndexStore;
         var index = await indexStore.GetAsync($"{CHAR_INDEX_PREFIX}{characterId}", cancellationToken);
         return index?.PerspectiveIds.ToList() ?? new List<Guid>();
     }
@@ -1691,7 +1731,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.GetPairEncounterIdsAsync");
         var pairKey = GetPairKey(charA, charB);
-        var indexStore = _stateStoreFactory.GetStore<PairIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _pairIndexStore;
         var index = await indexStore.GetAsync($"{PAIR_INDEX_PREFIX}{pairKey}", cancellationToken);
         return index?.EncounterIds.ToList() ?? new List<Guid>();
     }
@@ -1699,7 +1739,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task<List<Guid>> GetLocationEncounterIdsAsync(Guid locationId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.GetLocationEncounterIdsAsync");
-        var indexStore = _stateStoreFactory.GetStore<LocationIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _locationIndexStore;
         var index = await indexStore.GetAsync($"{LOCATION_INDEX_PREFIX}{locationId}", cancellationToken);
         return index?.EncounterIds.ToList() ?? new List<Guid>();
     }
@@ -1716,7 +1756,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.IsDuplicateEncounterAsync");
         var toleranceMinutes = _configuration.DuplicateTimestampToleranceMinutes;
         var sortedParticipants = participantIds.OrderBy(id => id).ToList();
-        var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+        var encounterStore = _encounterStore;
 
         // Collect candidate encounter IDs from pair indexes (any pair will do for duplicate check)
         var candidateEncounterIds = new HashSet<Guid>();
@@ -1792,7 +1832,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task AddToCharacterIndexAsync(Guid characterId, Guid perspectiveId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.AddToCharacterIndexAsync");
-        var indexStore = _stateStoreFactory.GetStore<CharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _characterIndexStore;
         var key = $"{CHAR_INDEX_PREFIX}{characterId}";
 
         for (var attempt = 0; attempt < 3; attempt++)
@@ -1832,7 +1872,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task AddToGlobalCharacterIndexAsync(Guid characterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.AddToGlobalCharacterIndexAsync");
-        var globalIndexStore = _stateStoreFactory.GetStore<GlobalCharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var globalIndexStore = _globalCharacterIndexStore;
 
         for (var attempt = 0; attempt < 3; attempt++)
         {
@@ -1861,7 +1901,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task RemoveFromCharacterIndexAsync(Guid characterId, Guid perspectiveId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromCharacterIndexAsync");
-        var indexStore = _stateStoreFactory.GetStore<CharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _characterIndexStore;
         var key = $"{CHAR_INDEX_PREFIX}{characterId}";
 
         for (var attempt = 0; attempt < 3; attempt++)
@@ -1899,7 +1939,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task RemoveFromGlobalCharacterIndexAsync(Guid characterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromGlobalCharacterIndexAsync");
-        var globalIndexStore = _stateStoreFactory.GetStore<GlobalCharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var globalIndexStore = _globalCharacterIndexStore;
 
         for (var attempt = 0; attempt < 3; attempt++)
         {
@@ -1928,7 +1968,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task AddToCustomTypeIndexAsync(string typeCode, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.AddToCustomTypeIndexAsync");
-        var indexStore = _stateStoreFactory.GetStore<CustomTypeIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _customTypeIndexStore;
 
         for (var attempt = 0; attempt < 3; attempt++)
         {
@@ -1957,7 +1997,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task RemoveFromCustomTypeIndexAsync(string typeCode, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromCustomTypeIndexAsync");
-        var indexStore = _stateStoreFactory.GetStore<CustomTypeIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _customTypeIndexStore;
 
         for (var attempt = 0; attempt < 3; attempt++)
         {
@@ -1990,7 +2030,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task AddToTypeEncounterIndexAsync(string typeCode, Guid encounterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.AddToTypeEncounterIndexAsync");
-        var indexStore = _stateStoreFactory.GetStore<TypeEncounterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _typeEncounterIndexStore;
         var key = $"{TYPE_ENCOUNTER_INDEX_PREFIX}{typeCode}";
 
         for (var attempt = 0; attempt < 3; attempt++)
@@ -2026,7 +2066,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task RemoveFromTypeEncounterIndexAsync(string typeCode, Guid encounterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromTypeEncounterIndexAsync");
-        var indexStore = _stateStoreFactory.GetStore<TypeEncounterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _typeEncounterIndexStore;
         var key = $"{TYPE_ENCOUNTER_INDEX_PREFIX}{typeCode}";
 
         for (var attempt = 0; attempt < 3; attempt++)
@@ -2061,7 +2101,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task<int> GetTypeEncounterCountAsync(string typeCode, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.GetTypeEncounterCountAsync");
-        var indexStore = _stateStoreFactory.GetStore<TypeEncounterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _typeEncounterIndexStore;
         var key = $"{TYPE_ENCOUNTER_INDEX_PREFIX}{typeCode}";
         var index = await indexStore.GetAsync(key, cancellationToken);
         return index?.EncounterIds.Count ?? 0;
@@ -2080,8 +2120,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             return;
         }
 
-        var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
-        var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+        var perspectiveStore = _perspectiveStore;
+        var encounterStore = _encounterStore;
 
         // Load all perspectives with their encounter timestamps
         var perspectivesWithTimestamp = new List<(Guid perspectiveId, Guid encounterId, long timestamp)>();
@@ -2148,7 +2188,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task PrunePairEncountersIfNeededAsync(List<Guid> participantIds, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.PrunePairEncountersIfNeededAsync");
-        var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+        var encounterStore = _encounterStore;
 
         // Check each unique pair
         for (var i = 0; i < participantIds.Count; i++)
@@ -2220,7 +2260,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task UpdatePairIndexesAsync(List<Guid> participantIds, Guid encounterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.UpdatePairIndexesAsync");
-        var indexStore = _stateStoreFactory.GetStore<PairIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _pairIndexStore;
 
         // Create pair indexes for each unique pair
         for (var i = 0; i < participantIds.Count; i++)
@@ -2260,7 +2300,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task RemoveFromPairIndexesAsync(List<Guid> participantIds, Guid encounterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromPairIndexesAsync");
-        var indexStore = _stateStoreFactory.GetStore<PairIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _pairIndexStore;
 
         for (var i = 0; i < participantIds.Count; i++)
         {
@@ -2297,7 +2337,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task AddToLocationIndexAsync(Guid locationId, Guid encounterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.AddToLocationIndexAsync");
-        var indexStore = _stateStoreFactory.GetStore<LocationIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _locationIndexStore;
         var key = $"{LOCATION_INDEX_PREFIX}{locationId}";
 
         for (var attempt = 0; attempt < 3; attempt++)
@@ -2329,7 +2369,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task RemoveFromLocationIndexAsync(Guid locationId, Guid encounterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromLocationIndexAsync");
-        var indexStore = _stateStoreFactory.GetStore<LocationIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _locationIndexStore;
         var key = $"{LOCATION_INDEX_PREFIX}{locationId}";
 
         for (var attempt = 0; attempt < 3; attempt++)
@@ -2365,7 +2405,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task AddToEncounterPerspectiveIndexAsync(Guid encounterId, Guid perspectiveId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.AddToEncounterPerspectiveIndexAsync");
-        var indexStore = _stateStoreFactory.GetStore<EncounterPerspectiveIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _encounterPerspectiveIndexStore;
         var key = $"{ENCOUNTER_PERSPECTIVE_INDEX_PREFIX}{encounterId}";
 
         for (var attempt = 0; attempt < 3; attempt++)
@@ -2396,7 +2436,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task RemoveFromEncounterPerspectiveIndexAsync(Guid encounterId, Guid perspectiveId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.RemoveFromEncounterPerspectiveIndexAsync");
-        var indexStore = _stateStoreFactory.GetStore<EncounterPerspectiveIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _encounterPerspectiveIndexStore;
         var key = $"{ENCOUNTER_PERSPECTIVE_INDEX_PREFIX}{encounterId}";
 
         for (var attempt = 0; attempt < 3; attempt++)
@@ -2432,7 +2472,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task DeleteEncounterPerspectiveIndexAsync(Guid encounterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.DeleteEncounterPerspectiveIndexAsync");
-        var indexStore = _stateStoreFactory.GetStore<EncounterPerspectiveIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _encounterPerspectiveIndexStore;
         var key = $"{ENCOUNTER_PERSPECTIVE_INDEX_PREFIX}{encounterId}";
         await indexStore.DeleteAsync(key, cancellationToken);
     }
@@ -2440,7 +2480,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task<List<Guid>> GetEncounterPerspectiveIdsAsync(Guid encounterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.GetEncounterPerspectiveIdsAsync");
-        var indexStore = _stateStoreFactory.GetStore<EncounterPerspectiveIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var indexStore = _encounterPerspectiveIndexStore;
         var key = $"{ENCOUNTER_PERSPECTIVE_INDEX_PREFIX}{encounterId}";
         var index = await indexStore.GetAsync(key, cancellationToken);
         return index?.PerspectiveIds ?? new List<Guid>();
@@ -2461,7 +2501,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var idList = perspectiveIds.ToList();
         if (idList.Count == 0) return new List<PerspectiveData>();
 
-        var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+        var perspectiveStore = _perspectiveStore;
         var perspectiveKeys = idList.Select(id => $"{PERSPECTIVE_KEY_PREFIX}{id}").ToList();
 
         // Single bulk read
@@ -2512,7 +2552,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var idList = encounterIds.ToList();
         if (idList.Count == 0) return new Dictionary<Guid, EncounterData>();
 
-        var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+        var encounterStore = _encounterStore;
         var encounterKeys = idList.Select(id => $"{ENCOUNTER_KEY_PREFIX}{id}").ToList();
 
         var bulkResult = await encounterStore.GetBulkAsync(encounterKeys, cancellationToken);
@@ -2625,8 +2665,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         }
 
         // Fallback for pre-existing encounters without index (legacy data)
-        var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
-        var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+        var perspectiveStore = _perspectiveStore;
+        var encounterStore = _encounterStore;
         var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", cancellationToken);
         if (encounter == null) return new List<EncounterPerspectiveModel>();
 
@@ -2655,7 +2695,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.FindPerspectiveByEncounterAndCharacterAsync");
         // Get character's perspective IDs and find the one for this encounter
         var perspectiveIds = await GetCharacterPerspectiveIdsAsync(characterId, cancellationToken);
-        var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+        var perspectiveStore = _perspectiveStore;
 
         foreach (var perspectiveId in perspectiveIds)
         {
@@ -2671,7 +2711,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private async Task<int> DeleteEncounterPerspectivesAsync(Guid encounterId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "CharacterEncounterService.DeleteEncounterPerspectivesAsync");
-        var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+        var perspectiveStore = _perspectiveStore;
 
         // Try the new index first for O(1) lookup
         var perspectiveIds = await GetEncounterPerspectiveIdsAsync(encounterId, cancellationToken);
@@ -2698,7 +2738,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         }
 
         // Fallback for pre-existing encounters without index (legacy data)
-        var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+        var encounterStore = _encounterStore;
         var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", cancellationToken);
         if (encounter == null) return 0;
 

@@ -35,7 +35,9 @@ public sealed class InterNodeBroadcastManager : IDisposable
     private readonly string _registryMember;
     private readonly bool _isActive;
 
-    private readonly IStateStoreFactory _stateStoreFactory;
+    /// <summary>Cacheable state store for Redis sorted set operations (broadcast registry).</summary>
+    private readonly ICacheableStateStore<string> _cacheableStringStore;
+
     private readonly ConnectServiceConfiguration _configuration;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<InterNodeBroadcastManager> _logger;
@@ -67,7 +69,7 @@ public sealed class InterNodeBroadcastManager : IDisposable
         ITelemetryProvider telemetryProvider,
         ILogger<InterNodeBroadcastManager> logger)
     {
-        _stateStoreFactory = stateStoreFactory;
+        _cacheableStringStore = stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
         _configuration = configuration;
         _telemetryProvider = telemetryProvider;
         _logger = logger;
@@ -100,16 +102,15 @@ public sealed class InterNodeBroadcastManager : IDisposable
 
         if (!_isActive) return;
 
-        var store = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         // Register self in sorted set
-        await store.SortedSetAddAsync(BROADCAST_REGISTRY_KEY, _registryMember, now, cancellationToken: ct);
+        await _cacheableStringStore.SortedSetAddAsync(BROADCAST_REGISTRY_KEY, _registryMember, now, cancellationToken: ct);
         _logger.LogInformation("Registered in broadcast registry at score {Timestamp}", now);
 
         // Discover compatible peers
         var cutoff = now - _configuration.BroadcastStaleThresholdSeconds;
-        var entries = await store.SortedSetRangeByScoreAsync(
+        var entries = await _cacheableStringStore.SortedSetRangeByScoreAsync(
             BROADCAST_REGISTRY_KEY, cutoff, double.PositiveInfinity, cancellationToken: ct);
 
         var connectedCount = 0;
@@ -324,22 +325,21 @@ public sealed class InterNodeBroadcastManager : IDisposable
 
             try
             {
-                var store = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
                 var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
                 // Heartbeat: refresh own registration score
-                await store.SortedSetAddAsync(BROADCAST_REGISTRY_KEY, _registryMember, now);
+                await _cacheableStringStore.SortedSetAddAsync(BROADCAST_REGISTRY_KEY, _registryMember, now);
 
                 // Stale cleanup: find and remove entries older than threshold
                 var cutoff = now - _configuration.BroadcastStaleThresholdSeconds;
-                var staleEntries = await store.SortedSetRangeByScoreAsync(
+                var staleEntries = await _cacheableStringStore.SortedSetRangeByScoreAsync(
                     BROADCAST_REGISTRY_KEY,
                     double.NegativeInfinity,
                     cutoff);
 
                 foreach (var (member, score) in staleEntries)
                 {
-                    await store.SortedSetRemoveAsync(BROADCAST_REGISTRY_KEY, member);
+                    await _cacheableStringStore.SortedSetRemoveAsync(BROADCAST_REGISTRY_KEY, member);
                     _logger.LogInformation("Removed stale broadcast registry entry (score {Score}): {Member}",
                         score, member);
                 }
@@ -365,8 +365,7 @@ public sealed class InterNodeBroadcastManager : IDisposable
         {
             try
             {
-                var store = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
-                _ = store.SortedSetRemoveAsync(BROADCAST_REGISTRY_KEY, _registryMember)
+                _ = _cacheableStringStore.SortedSetRemoveAsync(BROADCAST_REGISTRY_KEY, _registryMember)
                     .ContinueWith(t =>
                     {
                         if (t.IsFaulted)

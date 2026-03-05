@@ -4,7 +4,6 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -48,7 +47,6 @@ namespace BeyondImmersion.BannouService.Divine;
 public partial class DivineService : IDivineService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IResourceClient _resourceClient;
     private readonly ILogger<DivineService> _logger;
     private readonly DivineServiceConfiguration _configuration;
@@ -62,7 +60,6 @@ public partial class DivineService : IDivineService
         DivineServiceConfiguration configuration)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _resourceClient = resourceClient;
         _logger = logger;
         _configuration = configuration;

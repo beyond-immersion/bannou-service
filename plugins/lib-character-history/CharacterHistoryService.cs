@@ -24,8 +24,9 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<CharacterHistoryService> _logger;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly CharacterHistoryServiceConfiguration _configuration;
+    /// <summary>JSON-queryable store for server-side participation queries with filtering and pagination.</summary>
+    private readonly IJsonQueryableStateStore<ParticipationData> _participationQueryStore;
     private readonly IDualIndexHelper<ParticipationData> _participationHelper;
     private readonly IBackstoryStorageHelper<BackstoryData, BackstoryElementData> _backstoryHelper;
     private readonly IResourceClient _resourceClient;
@@ -59,9 +60,10 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         _messageBus = messageBus;
         _logger = logger;
-        _stateStoreFactory = stateStoreFactory;
         _configuration = configuration;
         _resourceClient = resourceClient;
+        _participationQueryStore = stateStoreFactory.GetJsonQueryableStore<ParticipationData>(
+            StateStoreDefinitions.CharacterHistory);
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
 
@@ -203,9 +205,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         _logger.LogInformation("Getting participation for character {CharacterId}", body.CharacterId);
 
         {
-            var jsonStore = _stateStoreFactory.GetJsonQueryableStore<ParticipationData>(
-                StateStoreDefinitions.CharacterHistory);
-
             var conditions = BuildParticipationQueryConditions(
                 "$.CharacterId", body.CharacterId,
                 eventCategory: body.EventCategory,
@@ -215,7 +214,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             var sortSpec = new JsonSortSpec { Path = "$.EventDateUnix", Descending = true };
             var (skip, take) = PaginationHelper.CalculatePagination(body.Page, body.PageSize);
 
-            var result = await jsonStore.JsonQueryPagedAsync(
+            var result = await _participationQueryStore.JsonQueryPagedAsync(
                 conditions, skip, take, sortSpec, cancellationToken);
 
             var participations = result.Items
@@ -246,9 +245,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         _logger.LogInformation("Getting participants for event {EventId}", body.EventId);
 
         {
-            var jsonStore = _stateStoreFactory.GetJsonQueryableStore<ParticipationData>(
-                StateStoreDefinitions.CharacterHistory);
-
             var conditions = BuildParticipationQueryConditions(
                 "$.EventId", body.EventId,
                 eventCategory: null,
@@ -258,7 +254,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             var sortSpec = new JsonSortSpec { Path = "$.Significance", Descending = true };
             var (skip, take) = PaginationHelper.CalculatePagination(body.Page, body.PageSize);
 
-            var result = await jsonStore.JsonQueryPagedAsync(
+            var result = await _participationQueryStore.JsonQueryPagedAsync(
                 conditions, skip, take, sortSpec, cancellationToken);
 
             var participations = result.Items

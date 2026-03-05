@@ -26,7 +26,8 @@ namespace BeyondImmersion.BannouService.Gardener;
 /// </remarks>
 public class GardenerSeedEvolutionListener : ISeedEvolutionListener
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
+    /// <summary>Ephemeral store for garden instance records (Redis).</summary>
+    private readonly IStateStore<GardenInstanceModel> _gardenStore;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<GardenerSeedEvolutionListener> _logger;
 
@@ -43,7 +44,8 @@ public class GardenerSeedEvolutionListener : ISeedEvolutionListener
         ITelemetryProvider telemetryProvider,
         ILogger<GardenerSeedEvolutionListener> logger)
     {
-        _stateStoreFactory = stateStoreFactory;
+        _gardenStore = stateStoreFactory.GetStore<GardenInstanceModel>(
+            StateStoreDefinitions.GardenerGardenInstances);
         _telemetryProvider = telemetryProvider;
         _logger = logger;
         InterestedSeedTypes = new HashSet<string> { configuration.SeedTypeCode };
@@ -60,15 +62,13 @@ public class GardenerSeedEvolutionListener : ISeedEvolutionListener
     {
         using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerSeedEvolutionListener.OnGrowthRecordedAsync");
 
-        var gardenStore = _stateStoreFactory.GetStore<GardenInstanceModel>(
-            StateStoreDefinitions.GardenerGardenInstances);
         var gardenKey = $"garden:{notification.OwnerId}";
 
-        var garden = await gardenStore.GetAsync(gardenKey, ct);
+        var garden = await _gardenStore.GetAsync(gardenKey, ct);
         if (garden == null) return;
 
         garden.NeedsReEvaluation = true;
-        await gardenStore.SaveAsync(gardenKey, garden, cancellationToken: ct);
+        await _gardenStore.SaveAsync(gardenKey, garden, cancellationToken: ct);
 
         _logger.LogDebug(
             "Marked garden for re-evaluation after growth for seed {SeedId}, owner {OwnerId}",
@@ -83,16 +83,14 @@ public class GardenerSeedEvolutionListener : ISeedEvolutionListener
     {
         using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerSeedEvolutionListener.OnPhaseChangedAsync");
 
-        var gardenStore = _stateStoreFactory.GetStore<GardenInstanceModel>(
-            StateStoreDefinitions.GardenerGardenInstances);
         var gardenKey = $"garden:{notification.OwnerId}";
 
-        var garden = await gardenStore.GetAsync(gardenKey, ct);
+        var garden = await _gardenStore.GetAsync(gardenKey, ct);
         if (garden == null) return;
 
         garden.CachedGrowthPhase = notification.NewPhase;
         garden.NeedsReEvaluation = true;
-        await gardenStore.SaveAsync(gardenKey, garden, cancellationToken: ct);
+        await _gardenStore.SaveAsync(gardenKey, garden, cancellationToken: ct);
 
         _logger.LogInformation(
             "Updated cached growth phase to {NewPhase} for seed {SeedId}",

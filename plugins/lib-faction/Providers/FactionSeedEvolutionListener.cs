@@ -32,7 +32,8 @@ namespace BeyondImmersion.BannouService.Faction.Providers;
 /// </remarks>
 public class FactionSeedEvolutionListener : ISeedEvolutionListener
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
+    /// <summary>Durable store for faction entity records (MySQL).</summary>
+    private readonly IStateStore<FactionModel> _factionStore;
     private readonly IMessageBus _messageBus;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<FactionSeedEvolutionListener> _logger;
@@ -52,7 +53,7 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
         ITelemetryProvider telemetryProvider,
         ILogger<FactionSeedEvolutionListener> logger)
     {
-        _stateStoreFactory = stateStoreFactory;
+        _factionStore = stateStoreFactory.GetStore<FactionModel>(StateStoreDefinitions.Faction);
         _messageBus = messageBus;
         _telemetryProvider = telemetryProvider;
         _logger = logger;
@@ -96,11 +97,9 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
             return;
         }
 
-        var factionStore = _stateStoreFactory.GetStore<FactionModel>(
-            StateStoreDefinitions.Faction);
         var factionKey = $"fac:{notification.OwnerId}";
 
-        var faction = await factionStore.GetAsync(factionKey, ct);
+        var faction = await _factionStore.GetAsync(factionKey, ct);
         if (faction == null)
         {
             _logger.LogWarning(
@@ -111,8 +110,8 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
 
         faction.CurrentPhase = notification.NewPhase;
         faction.UpdatedAt = DateTimeOffset.UtcNow;
-        await factionStore.SaveAsync(factionKey, faction, cancellationToken: ct);
-        await factionStore.SaveAsync($"fac:{faction.GameServiceId}:{faction.Code}", faction, cancellationToken: ct);
+        await _factionStore.SaveAsync(factionKey, faction, cancellationToken: ct);
+        await _factionStore.SaveAsync($"fac:{faction.GameServiceId}:{faction.Code}", faction, cancellationToken: ct);
 
         _logger.LogInformation(
             "Updated faction {FactionId} phase from {OldPhase} to {NewPhase} for seed {SeedId}",

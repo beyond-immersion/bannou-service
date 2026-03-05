@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -19,7 +20,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// </summary>
 public class ReservationCleanupService : BackgroundService
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IMessageBus _messageBus;
     private readonly IClientEventPublisher _clientEventPublisher;
     private readonly IDistributedLockProvider _lockProvider;
@@ -34,7 +35,7 @@ public class ReservationCleanupService : BackgroundService
     /// <summary>
     /// Creates a new ReservationCleanupService instance.
     /// </summary>
-    /// <param name="stateStoreFactory">State store factory for session data access.</param>
+    /// <param name="serviceProvider">Service provider for creating scoped state store access (FOUNDATION TENETS).</param>
     /// <param name="messageBus">Message bus for publishing events.</param>
     /// <param name="clientEventPublisher">Client event publisher for WebSocket notifications.</param>
     /// <param name="lockProvider">Distributed lock provider for multi-instance coordination.</param>
@@ -42,7 +43,7 @@ public class ReservationCleanupService : BackgroundService
     /// <param name="logger">Logger for this service.</param>
     /// <param name="telemetryProvider">Telemetry provider for distributed tracing spans.</param>
     public ReservationCleanupService(
-        IStateStoreFactory stateStoreFactory,
+        IServiceProvider serviceProvider,
         IMessageBus messageBus,
         IClientEventPublisher clientEventPublisher,
         IDistributedLockProvider lockProvider,
@@ -50,7 +51,7 @@ public class ReservationCleanupService : BackgroundService
         ILogger<ReservationCleanupService> logger,
         ITelemetryProvider telemetryProvider)
     {
-        _stateStoreFactory = stateStoreFactory;
+        _serviceProvider = serviceProvider;
         _messageBus = messageBus;
         _clientEventPublisher = clientEventPublisher;
         _lockProvider = lockProvider;
@@ -109,23 +110,29 @@ public class ReservationCleanupService : BackgroundService
 
     /// <summary>
     /// Cleans up expired reservations from matchmade sessions.
+    /// Creates a DI scope to resolve state stores once per cleanup cycle (FOUNDATION TENETS).
     /// </summary>
     private async Task CleanupExpiredReservationsAsync(CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity(
             "bannou.game-session", "ReservationCleanupService.CleanupExpiredReservations");
 
+        // Create a scope to resolve scoped state stores (BackgroundService cannot constructor-inject them)
+        using var scope = _serviceProvider.CreateScope();
+        var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
+        var cleanupStore = stateStoreFactory.GetStore<CleanupSessionModel>(StateStoreDefinitions.GameSession);
+        var sessionListStore = stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
+        var fullSessionStore = stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
+
         // Get all session IDs
-        var store = _stateStoreFactory.GetStore<CleanupSessionModel>(StateStoreDefinitions.GameSession);
-        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
-        var sessionIds = await listStore.GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
+        var sessionIds = await sessionListStore.GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
 
         var now = DateTimeOffset.UtcNow;
         var expiredCount = 0;
 
         foreach (var sessionId in sessionIds)
         {
-            var session = await store.GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
+            var session = await cleanupStore.GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
             if (session == null)
             {
                 continue;
@@ -165,7 +172,7 @@ public class ReservationCleanupService : BackgroundService
                 }
 
                 // Re-check session state under lock — another instance may have already cancelled it
-                var sessionUnderLock = await store.GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
+                var sessionUnderLock = await cleanupStore.GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
                 if (sessionUnderLock == null)
                 {
                     _logger.LogDebug("Session {SessionId} already deleted by another instance", sessionId);
@@ -176,7 +183,7 @@ public class ReservationCleanupService : BackgroundService
                     "Cancelling matchmade session {SessionId}: only {Claimed}/{Total} reservations claimed before expiry",
                     sessionId, claimedCount, totalReservations);
 
-                await CancelExpiredSessionAsync(session, sessionId, cancellationToken);
+                await CancelExpiredSessionAsync(session, sessionId, cleanupStore, sessionListStore, fullSessionStore, cancellationToken);
                 expiredCount++;
             }
         }
@@ -189,8 +196,21 @@ public class ReservationCleanupService : BackgroundService
 
     /// <summary>
     /// Cancels an expired matchmade session and notifies players.
+    /// Receives pre-resolved state stores from the caller's scope (FOUNDATION TENETS).
     /// </summary>
-    private async Task CancelExpiredSessionAsync(CleanupSessionModel session, string sessionId, CancellationToken cancellationToken)
+    /// <param name="session">The cleanup session model for the expired session.</param>
+    /// <param name="sessionId">The session ID string.</param>
+    /// <param name="cleanupStore">Pre-resolved cleanup session store.</param>
+    /// <param name="sessionListStore">Pre-resolved session list store.</param>
+    /// <param name="fullSessionStore">Pre-resolved full session model store.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    private async Task CancelExpiredSessionAsync(
+        CleanupSessionModel session,
+        string sessionId,
+        IStateStore<CleanupSessionModel> cleanupStore,
+        IStateStore<List<string>> sessionListStore,
+        IStateStore<GameSessionModel> fullSessionStore,
+        CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity(
             "bannou.game-session", "ReservationCleanupService.CancelExpiredSession");
@@ -237,8 +257,7 @@ public class ReservationCleanupService : BackgroundService
                 cancellationToken);
 
             // Read full model for lifecycle event before deletion
-            var fullStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
-            var fullModel = await fullStore.GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
+            var fullModel = await fullSessionStore.GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
             if (fullModel != null)
             {
                 // Publish lifecycle deleted event using shared helper
@@ -249,8 +268,7 @@ public class ReservationCleanupService : BackgroundService
             }
 
             // Delete the session
-            var store = _stateStoreFactory.GetStore<CleanupSessionModel>(StateStoreDefinitions.GameSession);
-            await store.DeleteAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
+            await cleanupStore.DeleteAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
 
             // Remove from session list under distributed lock (read-modify-write)
             await using var listLock = await _lockProvider.LockAsync(
@@ -258,11 +276,10 @@ public class ReservationCleanupService : BackgroundService
                 _configuration.LockTimeoutSeconds, cancellationToken);
             if (listLock.Success)
             {
-                var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
-                var sessionIds = await listStore.GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
+                var sessionIds = await sessionListStore.GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
                 if (sessionIds.Remove(sessionId))
                 {
-                    await listStore.SaveAsync(SESSION_LIST_KEY, sessionIds, cancellationToken: cancellationToken);
+                    await sessionListStore.SaveAsync(SESSION_LIST_KEY, sessionIds, cancellationToken: cancellationToken);
                 }
             }
             else

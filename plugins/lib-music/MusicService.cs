@@ -28,7 +28,8 @@ namespace BeyondImmersion.BannouService.Music;
 public partial class MusicService : IMusicService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
+    /// <summary>Redis-backed cache for deterministic compositions keyed by request parameters.</summary>
+    private readonly IStateStore<GenerateCompositionResponse> _compositionCache;
     private readonly ILogger<MusicService> _logger;
     private readonly MusicServiceConfiguration _configuration;
     private readonly ITelemetryProvider _telemetryProvider;
@@ -44,7 +45,8 @@ public partial class MusicService : IMusicService
         ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
+        _compositionCache = stateStoreFactory.GetStore<GenerateCompositionResponse>(
+            StateStoreDefinitions.MusicCompositions);
         _logger = logger;
         _configuration = configuration;
         _telemetryProvider = telemetryProvider;
@@ -1058,7 +1060,6 @@ public partial class MusicService : IMusicService
 
     /// <summary>
     /// Attempts to retrieve a cached composition from Redis.
-    /// Uses StateStoreDefinitions.MusicCompositions directly per IMPLEMENTATION TENETS.
     /// </summary>
     private async Task<GenerateCompositionResponse?> TryGetCachedCompositionAsync(
         string cacheKey,
@@ -1067,9 +1068,7 @@ public partial class MusicService : IMusicService
         using var activity = _telemetryProvider.StartActivity("bannou.music", "MusicService.TryGetCachedCompositionAsync");
         try
         {
-            var cache = _stateStoreFactory.GetStore<GenerateCompositionResponse>(
-                StateStoreDefinitions.MusicCompositions);
-            return await cache.GetAsync(cacheKey, cancellationToken);
+            return await _compositionCache.GetAsync(cacheKey, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -1081,7 +1080,6 @@ public partial class MusicService : IMusicService
 
     /// <summary>
     /// Caches a generated composition for future requests with the same parameters.
-    /// Uses StateStoreDefinitions.MusicCompositions directly per IMPLEMENTATION TENETS.
     /// </summary>
     private async Task CacheCompositionAsync(
         string cacheKey,
@@ -1091,10 +1089,8 @@ public partial class MusicService : IMusicService
         using var activity = _telemetryProvider.StartActivity("bannou.music", "MusicService.CacheCompositionAsync");
         try
         {
-            var cache = _stateStoreFactory.GetStore<GenerateCompositionResponse>(
-                StateStoreDefinitions.MusicCompositions);
             // Compositions with explicit seed are deterministic - cache with configured TTL
-            await cache.SaveAsync(cacheKey, response,
+            await _compositionCache.SaveAsync(cacheKey, response,
                 new StateOptions { Ttl = _configuration.CompositionCacheTtlSeconds }, cancellationToken);
             _logger.LogDebug("Cached composition {CacheKey}", cacheKey);
         }

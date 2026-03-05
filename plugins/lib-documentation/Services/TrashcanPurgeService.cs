@@ -114,8 +114,13 @@ public class TrashcanPurgeService : BackgroundService
         using var scope = _serviceProvider.CreateScope();
         var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
 
+        // Resolve all needed stores once per scope per FOUNDATION TENETS
+        var stringSetStore = stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Documentation);
+        var guidListStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
+        var trashStore = stateStoreFactory.GetStore<DocumentationService.TrashedDocument>(StateStoreDefinitions.Documentation);
+
         // Discover all namespaces (union of global registry + repo bindings)
-        var namespaces = await DiscoverNamespacesAsync(stateStoreFactory, cancellationToken);
+        var namespaces = await DiscoverNamespacesAsync(stringSetStore, cancellationToken);
 
         if (namespaces.Count == 0)
         {
@@ -132,7 +137,7 @@ public class TrashcanPurgeService : BackgroundService
             try
             {
                 var purgedCount = await PurgeNamespaceTrashcanAsync(
-                    stateStoreFactory, namespaceId, cancellationToken);
+                    guidListStore, trashStore, namespaceId, cancellationToken);
                 totalPurged += purgedCount;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -161,15 +166,15 @@ public class TrashcanPurgeService : BackgroundService
     /// <summary>
     /// Discovers all known namespaces from global registry and repo bindings.
     /// </summary>
+    /// <param name="stringSetStore">Pre-resolved string set store for namespace lookups.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     private async Task<HashSet<string>> DiscoverNamespacesAsync(
-        IStateStoreFactory stateStoreFactory, CancellationToken cancellationToken)
+        IStateStore<HashSet<string>> stringSetStore, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity(
             "bannou.documentation", "TrashcanPurgeService.DiscoverNamespacesAsync");
 
         var allNamespaces = new HashSet<string>();
-
-        var stringSetStore = stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Documentation);
 
         var globalNamespaces = await stringSetStore.GetAsync(ALL_NAMESPACES_KEY, cancellationToken);
         if (globalNamespaces != null)
@@ -196,15 +201,18 @@ public class TrashcanPurgeService : BackgroundService
     /// Purges expired trashcan entries for a single namespace.
     /// Returns the number of entries purged.
     /// </summary>
+    /// <param name="guidListStore">Pre-resolved Guid list store for trashcan indexes.</param>
+    /// <param name="trashStore">Pre-resolved trashcan document store.</param>
+    /// <param name="namespaceId">Namespace to purge.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     private async Task<int> PurgeNamespaceTrashcanAsync(
-        IStateStoreFactory stateStoreFactory, string namespaceId,
+        IStateStore<List<Guid>> guidListStore,
+        IStateStore<DocumentationService.TrashedDocument> trashStore,
+        string namespaceId,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity(
             "bannou.documentation", "TrashcanPurgeService.PurgeNamespaceTrashcanAsync");
-
-        var guidListStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
-        var trashStore = stateStoreFactory.GetStore<DocumentationService.TrashedDocument>(StateStoreDefinitions.Documentation);
 
         var trashListKey = $"ns-trash:{namespaceId}";
         var (trashedDocIds, trashEtag) = await guidListStore.GetWithETagAsync(trashListKey, cancellationToken);

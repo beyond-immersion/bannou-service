@@ -6,6 +6,7 @@
 > **Layer**: GameFoundation
 > **State Store**: worldstate-realm-clock (Redis), worldstate-calendar (MySQL), worldstate-ratio-history (MySQL), worldstate-lock (Redis)
 > **Status**: Fully implemented.
+> **Implementation Map**: [docs/maps/WORLDSTATE.md](../maps/WORLDSTATE.md)
 
 ---
 

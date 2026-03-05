@@ -24,11 +24,16 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 {
     private readonly ILogger<CharacterPersonalityService> _logger;
     private readonly CharacterPersonalityServiceConfiguration _configuration;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly IPersonalityDataCache _personalityCache;
     private readonly IResourceClient _resourceClient;
     private readonly ITelemetryProvider _telemetryProvider;
+
+    /// <summary>State store for personality trait data, backed by MySQL.</summary>
+    private readonly IStateStore<PersonalityData> _personalityStore;
+
+    /// <summary>State store for combat preferences data, backed by MySQL.</summary>
+    private readonly IStateStore<CombatPreferencesData> _combatPreferencesStore;
 
     private const string PERSONALITY_KEY_PREFIX = "personality-";
     private const string COMBAT_KEY_PREFIX = "combat-";
@@ -59,12 +64,14 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     {
         _logger = logger;
         _configuration = configuration;
-        _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _personalityCache = personalityCache;
         _resourceClient = resourceClient;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
+
+        _personalityStore = stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
+        _combatPreferencesStore = stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
 
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
@@ -81,8 +88,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Getting personality for character {CharacterId}", body.CharacterId);
 
         {
-            var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
-            var data = await store.GetAsync($"{PERSONALITY_KEY_PREFIX}{body.CharacterId}", cancellationToken);
+            var data = await _personalityStore.GetAsync($"{PERSONALITY_KEY_PREFIX}{body.CharacterId}", cancellationToken);
 
             if (data == null)
             {
@@ -102,9 +108,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Setting personality for character {CharacterId}", body.CharacterId);
 
         {
-            var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
-            var existing = await store.GetAsync(key, cancellationToken);
+            var existing = await _personalityStore.GetAsync(key, cancellationToken);
             var isNew = existing == null;
 
             var data = new PersonalityData
@@ -117,7 +122,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             };
 
-            await store.SaveAsync(key, data, cancellationToken: cancellationToken);
+            await _personalityStore.SaveAsync(key, data, cancellationToken: cancellationToken);
 
             var response = MapToPersonalityResponse(data);
 
@@ -162,9 +167,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Recording experience for character {CharacterId}, type {ExperienceType}, intensity {Intensity}",
             body.CharacterId, body.ExperienceType, body.Intensity);
 
-        var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
         var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
-        var (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
+        var (data, etag) = await _personalityStore.GetWithETagAsync(key, cancellationToken);
 
         if (data == null)
         {
@@ -195,7 +199,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             {
                 if (attempt > 0)
                 {
-                    (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
+                    (data, etag) = await _personalityStore.GetWithETagAsync(key, cancellationToken);
                     if (data == null)
                     {
                         _logger.LogWarning("Personality for character {CharacterId} deleted during evolution retry", body.CharacterId);
@@ -226,7 +230,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
                 // GetWithETagAsync returns non-null etag for existing records;
                 // coalesce satisfies compiler's nullable analysis (will never execute)
-                var saveResult = await store.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
+                var saveResult = await _personalityStore.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
                 if (saveResult != null)
                 {
                     result.ChangedTraits = changedTraits;
@@ -281,13 +285,12 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var personalities = new List<PersonalityResponse>();
             var notFound = new List<Guid>();
 
             foreach (var characterId in body.CharacterIds)
             {
-                var data = await store.GetAsync($"{PERSONALITY_KEY_PREFIX}{characterId}", cancellationToken);
+                var data = await _personalityStore.GetAsync($"{PERSONALITY_KEY_PREFIX}{characterId}", cancellationToken);
                 if (data != null)
                 {
                     personalities.Add(MapToPersonalityResponse(data));
@@ -319,9 +322,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Deleting personality for character {CharacterId}", body.CharacterId);
 
         {
-            var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
-            var existing = await store.GetAsync(key, cancellationToken);
+            var existing = await _personalityStore.GetAsync(key, cancellationToken);
 
             if (existing == null)
             {
@@ -331,7 +333,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             // Unregister character reference before deletion per IMPLEMENTATION TENETS
             await UnregisterCharacterReferenceAsync(body.CharacterId.ToString(), body.CharacterId, cancellationToken);
 
-            await store.DeleteAsync(key, cancellationToken);
+            await _personalityStore.DeleteAsync(key, cancellationToken);
 
             // Publish deletion event using typed events per IMPLEMENTATION TENETS
             await _messageBus.TryPublishAsync(PERSONALITY_DELETED_TOPIC, new PersonalityDeletedEvent
@@ -358,8 +360,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Getting combat preferences for character {CharacterId}", body.CharacterId);
 
         {
-            var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
-            var data = await store.GetAsync($"{COMBAT_KEY_PREFIX}{body.CharacterId}", cancellationToken);
+            var data = await _combatPreferencesStore.GetAsync($"{COMBAT_KEY_PREFIX}{body.CharacterId}", cancellationToken);
 
             if (data == null)
             {
@@ -379,9 +380,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Setting combat preferences for character {CharacterId}", body.CharacterId);
 
         {
-            var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
-            var existing = await store.GetAsync(key, cancellationToken);
+            var existing = await _combatPreferencesStore.GetAsync(key, cancellationToken);
             var isNew = existing == null;
 
             var data = new CombatPreferencesData
@@ -398,7 +398,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             };
 
-            await store.SaveAsync(key, data, cancellationToken: cancellationToken);
+            await _combatPreferencesStore.SaveAsync(key, data, cancellationToken: cancellationToken);
 
             var response = MapToCombatPreferencesResponse(data);
 
@@ -442,9 +442,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Deleting combat preferences for character {CharacterId}", body.CharacterId);
 
         {
-            var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
-            var existing = await store.GetAsync(key, cancellationToken);
+            var existing = await _combatPreferencesStore.GetAsync(key, cancellationToken);
 
             if (existing == null)
             {
@@ -454,7 +453,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             // Unregister character reference before deletion per IMPLEMENTATION TENETS
             await UnregisterCharacterReferenceAsync($"combat-{body.CharacterId}", body.CharacterId, cancellationToken);
 
-            await store.DeleteAsync(key, cancellationToken);
+            await _combatPreferencesStore.DeleteAsync(key, cancellationToken);
 
             // Publish deletion event using typed events per IMPLEMENTATION TENETS
             await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_DELETED_TOPIC, new CombatPreferencesDeletedEvent
@@ -487,13 +486,12 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         var combatPreferencesDeleted = false;
 
         // Delete personality traits if they exist
-        var personalityStore = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
         var personalityKey = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
-        var existingPersonality = await personalityStore.GetAsync(personalityKey, cancellationToken);
+        var existingPersonality = await _personalityStore.GetAsync(personalityKey, cancellationToken);
 
         if (existingPersonality != null)
         {
-            await personalityStore.DeleteAsync(personalityKey, cancellationToken);
+            await _personalityStore.DeleteAsync(personalityKey, cancellationToken);
             personalityDeleted = true;
 
             // Publish deletion event
@@ -508,13 +506,12 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         }
 
         // Delete combat preferences if they exist
-        var combatStore = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
         var combatKey = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
-        var existingCombat = await combatStore.GetAsync(combatKey, cancellationToken);
+        var existingCombat = await _combatPreferencesStore.GetAsync(combatKey, cancellationToken);
 
         if (existingCombat != null)
         {
-            await combatStore.DeleteAsync(combatKey, cancellationToken);
+            await _combatPreferencesStore.DeleteAsync(combatKey, cancellationToken);
             combatPreferencesDeleted = true;
 
             // Publish deletion event
@@ -548,9 +545,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Recording combat experience for character {CharacterId}, type {ExperienceType}, intensity {Intensity}",
             body.CharacterId, body.ExperienceType, body.Intensity);
 
-        var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
         var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
-        var (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
+        var (data, etag) = await _combatPreferencesStore.GetWithETagAsync(key, cancellationToken);
 
         if (data == null)
         {
@@ -579,7 +575,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             {
                 if (attempt > 0)
                 {
-                    (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
+                    (data, etag) = await _combatPreferencesStore.GetWithETagAsync(key, cancellationToken);
                     if (data == null)
                     {
                         _logger.LogWarning("Combat preferences for character {CharacterId} deleted during evolution retry", body.CharacterId);
@@ -597,7 +593,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
                 // GetWithETagAsync returns non-null etag for existing records;
                 // coalesce satisfies compiler's nullable analysis (will never execute)
-                var saveResult = await store.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
+                var saveResult = await _combatPreferencesStore.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
                 if (saveResult != null)
                 {
                     result.NewPreferences = MapToCombatPreferences(data);
@@ -861,11 +857,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
 
         {
-            var personalityStore = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
-            var combatStore = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
-
-            var personalityData = await personalityStore.GetAsync($"{PERSONALITY_KEY_PREFIX}{body.CharacterId}", cancellationToken);
-            var combatData = await combatStore.GetAsync($"{COMBAT_KEY_PREFIX}{body.CharacterId}", cancellationToken);
+            var personalityData = await _personalityStore.GetAsync($"{PERSONALITY_KEY_PREFIX}{body.CharacterId}", cancellationToken);
+            var combatData = await _combatPreferencesStore.GetAsync($"{COMBAT_KEY_PREFIX}{body.CharacterId}", cancellationToken);
 
             // Return 404 only if BOTH are missing
             if (personalityData == null && combatData == null)
@@ -935,7 +928,6 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         // Restore personality traits if present in archive
         if (archiveData.HasPersonality && archiveData.Personality != null)
         {
-            var personalityStore = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var personalityKey = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
 
             var data = new PersonalityData
@@ -948,7 +940,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             };
 
-            await personalityStore.SaveAsync(personalityKey, data, cancellationToken: cancellationToken);
+            await _personalityStore.SaveAsync(personalityKey, data, cancellationToken: cancellationToken);
             personalityRestored = true;
 
             // Register character reference for restored personality
@@ -960,7 +952,6 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         // Restore combat preferences if present in archive
         if (archiveData.HasCombatPreferences && archiveData.CombatPreferences != null)
         {
-            var combatStore = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
             var combatKey = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
 
             var data = new CombatPreferencesData
@@ -977,7 +968,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             };
 
-            await combatStore.SaveAsync(combatKey, data, cancellationToken: cancellationToken);
+            await _combatPreferencesStore.SaveAsync(combatKey, data, cancellationToken: cancellationToken);
             combatPreferencesRestored = true;
 
             // Register character reference for restored combat preferences

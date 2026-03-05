@@ -41,7 +41,6 @@ namespace BeyondImmersion.BannouService.Resource;
 public partial class ResourceService : IResourceService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IServiceNavigator _navigator;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<ResourceService> _logger;
@@ -58,6 +57,16 @@ public partial class ResourceService : IResourceService
     private readonly IStateStore<ResourceSnapshotModel> _snapshotStore;
 
     /// <summary>
+    /// Cacheable store for cleanup callback index operations (set-based source type tracking).
+    /// </summary>
+    private readonly ICacheableStateStore<string> _cleanupCacheStore;
+
+    /// <summary>
+    /// Cacheable store for compression callback index operations (set-based source type tracking).
+    /// </summary>
+    private readonly ICacheableStateStore<string> _compressCacheStore;
+
+    /// <summary>
     /// Initializes a new instance of the ResourceService.
     /// </summary>
     public ResourceService(
@@ -72,7 +81,6 @@ public partial class ResourceService : IResourceService
         ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _navigator = navigator;
         _lockProvider = lockProvider;
         _logger = logger;
@@ -93,6 +101,10 @@ public partial class ResourceService : IResourceService
             StateStoreDefinitions.ResourceArchives);
         _snapshotStore = stateStoreFactory.GetStore<ResourceSnapshotModel>(
             StateStoreDefinitions.ResourceSnapshots);
+        _cleanupCacheStore = stateStoreFactory.GetCacheableStore<string>(
+            StateStoreDefinitions.ResourceCleanup);
+        _compressCacheStore = stateStoreFactory.GetCacheableStore<string>(
+            StateStoreDefinitions.ResourceCompress);
 
         // Register event handlers via partial class (ResourceServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -720,7 +732,6 @@ public partial class ResourceService : IResourceService
         CancellationToken cancellationToken = default)
     {
         var callbacks = new List<CleanupCallbackSummary>();
-        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCleanup);
 
         if (!string.IsNullOrEmpty(body.ResourceType))
         {
@@ -740,7 +751,7 @@ public partial class ResourceService : IResourceService
         else
         {
             // List all callbacks - use master resource type index
-            var resourceTypes = await cacheStore.GetSetAsync<string>(
+            var resourceTypes = await _cleanupCacheStore.GetSetAsync<string>(
                 MasterResourceTypeIndexKey, cancellationToken);
 
             foreach (var resourceType in resourceTypes)
@@ -787,15 +798,14 @@ public partial class ResourceService : IResourceService
 
         // Remove from source type index
         var indexKey = $"callback-index:{body.ResourceType}";
-        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCleanup);
-        await cacheStore.RemoveFromSetAsync(indexKey, body.SourceType, cancellationToken);
+        await _cleanupCacheStore.RemoveFromSetAsync(indexKey, body.SourceType, cancellationToken);
 
         // Check if resource type has any remaining callbacks
-        var remainingSourceTypes = await cacheStore.GetSetAsync<string>(indexKey, cancellationToken);
+        var remainingSourceTypes = await _cleanupCacheStore.GetSetAsync<string>(indexKey, cancellationToken);
         if (remainingSourceTypes.Count == 0)
         {
             // Remove from master resource type index
-            await cacheStore.RemoveFromSetAsync(
+            await _cleanupCacheStore.RemoveFromSetAsync(
                 MasterResourceTypeIndexKey, body.ResourceType, cancellationToken);
         }
 
@@ -1428,7 +1438,6 @@ public partial class ResourceService : IResourceService
         CancellationToken cancellationToken = default)
     {
         var callbacks = new List<CompressCallbackSummary>();
-        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCompress);
 
         if (!string.IsNullOrEmpty(body.ResourceType))
         {
@@ -1448,7 +1457,7 @@ public partial class ResourceService : IResourceService
         else
         {
             // List all callbacks - use master resource type index
-            var resourceTypes = await cacheStore.GetSetAsync<string>(
+            var resourceTypes = await _compressCacheStore.GetSetAsync<string>(
                 MasterCompressResourceTypeIndexKey, cancellationToken);
 
             foreach (var resourceType in resourceTypes)
@@ -1579,8 +1588,7 @@ public partial class ResourceService : IResourceService
 
         // Get the callback index for this resource type
         var indexKey = $"callback-index:{resourceType}";
-        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCleanup);
-        var sourceTypes = await cacheStore.GetSetAsync<string>(indexKey, cancellationToken);
+        var sourceTypes = await _cleanupCacheStore.GetSetAsync<string>(indexKey, cancellationToken);
 
         var callbacks = new List<CleanupCallbackDefinition>();
         foreach (var sourceType in sourceTypes)
@@ -1633,8 +1641,7 @@ public partial class ResourceService : IResourceService
             "bannou.resource", "ResourceService.GetCompressCallbacksAsync");
 
         var indexKey = BuildCompressIndexKey(resourceType);
-        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCompress);
-        var sourceTypes = await cacheStore.GetSetAsync<string>(indexKey, cancellationToken);
+        var sourceTypes = await _compressCacheStore.GetSetAsync<string>(indexKey, cancellationToken);
 
         var callbacks = new List<CompressCallbackDefinition>();
         foreach (var sourceType in sourceTypes)
@@ -1662,14 +1669,12 @@ public partial class ResourceService : IResourceService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.resource", "ResourceService.MaintainCallbackIndexAsync");
 
-        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCleanup);
-
         // Add to per-resource-type index
         var indexKey = $"callback-index:{resourceType}";
-        await cacheStore.AddToSetAsync(indexKey, sourceType, cancellationToken: cancellationToken);
+        await _cleanupCacheStore.AddToSetAsync(indexKey, sourceType, cancellationToken: cancellationToken);
 
         // Add to master resource type index (for listing all callbacks)
-        await cacheStore.AddToSetAsync(MasterResourceTypeIndexKey, resourceType, cancellationToken: cancellationToken);
+        await _cleanupCacheStore.AddToSetAsync(MasterResourceTypeIndexKey, resourceType, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -1683,14 +1688,12 @@ public partial class ResourceService : IResourceService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.resource", "ResourceService.MaintainCompressCallbackIndexAsync");
 
-        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCompress);
-
         // Add to per-resource-type index
         var indexKey = BuildCompressIndexKey(resourceType);
-        await cacheStore.AddToSetAsync(indexKey, sourceType, cancellationToken: cancellationToken);
+        await _compressCacheStore.AddToSetAsync(indexKey, sourceType, cancellationToken: cancellationToken);
 
         // Add to master resource type index
-        await cacheStore.AddToSetAsync(MasterCompressResourceTypeIndexKey, resourceType, cancellationToken: cancellationToken);
+        await _compressCacheStore.AddToSetAsync(MasterCompressResourceTypeIndexKey, resourceType, cancellationToken: cancellationToken);
     }
 
     /// <summary>

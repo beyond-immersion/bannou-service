@@ -42,7 +42,6 @@ namespace BeyondImmersion.BannouService.Analytics;
 public partial class AnalyticsService : IAnalyticsService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IGameServiceClient _gameServiceClient;
     private readonly IGameSessionClient _gameSessionClient;
     private readonly IRealmClient _realmClient;
@@ -51,6 +50,42 @@ public partial class AnalyticsService : IAnalyticsService
     private readonly ILogger<AnalyticsService> _logger;
     private readonly AnalyticsServiceConfiguration _configuration;
     private readonly ITelemetryProvider _telemetryProvider;
+
+    /// <summary>Entity summary data store (MySQL) for durable analytics summary persistence.</summary>
+    private readonly IStateStore<EntitySummaryData> _summaryDataStore;
+
+    /// <summary>JSON-queryable entity summary data store (MySQL) for server-side filtered queries.</summary>
+    private readonly IJsonQueryableStateStore<EntitySummaryData> _summaryDataQueryStore;
+
+    /// <summary>Skill rating store (Redis) for Glicko-2 rating data.</summary>
+    private readonly IStateStore<SkillRatingData> _ratingStore;
+
+    /// <summary>Controller history store (MySQL) for durable history records.</summary>
+    private readonly IStateStore<ControllerHistoryData> _historyDataStore;
+
+    /// <summary>JSON-queryable controller history store (MySQL) for server-side filtered queries.</summary>
+    private readonly IJsonQueryableStateStore<ControllerHistoryData> _historyDataQueryStore;
+
+    /// <summary>Game service resolution cache store (Redis) for stub-name-to-ID lookups.</summary>
+    private readonly IStateStore<GameServiceCacheEntry> _gameServiceCacheStore;
+
+    /// <summary>Game session mapping store (Redis) for session-to-gameService ID lookups.</summary>
+    private readonly IStateStore<GameSessionMappingData> _sessionMappingStore;
+
+    /// <summary>Realm-to-gameService resolution cache store (Redis).</summary>
+    private readonly IStateStore<RealmGameServiceCacheEntry> _realmGameServiceCacheStore;
+
+    /// <summary>Character-to-realm resolution cache store (Redis).</summary>
+    private readonly IStateStore<CharacterRealmCacheEntry> _characterRealmCacheStore;
+
+    /// <summary>Cacheable event buffer store (Redis) for buffered analytics event entries.</summary>
+    private readonly ICacheableStateStore<BufferedAnalyticsEvent> _eventBufferStore;
+
+    /// <summary>Cacheable event buffer index store (Redis) for sorted set buffer index.</summary>
+    private readonly ICacheableStateStore<object> _eventBufferIndexStore;
+
+    /// <summary>Whether the analytics summary store backend is Redis (required for buffered ingestion).</summary>
+    private readonly bool _summaryStoreIsRedis;
 
     // State store key prefixes (controller index prefix removed - MySQL handles queries natively)
     private const string EVENT_BUFFER_INDEX_KEY = "analytics-event-buffer-index";
@@ -84,7 +119,6 @@ public partial class AnalyticsService : IAnalyticsService
         ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _gameServiceClient = gameServiceClient;
         _gameSessionClient = gameSessionClient;
         _realmClient = realmClient;
@@ -94,6 +128,20 @@ public partial class AnalyticsService : IAnalyticsService
         _configuration = configuration;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
+
+        // Constructor-cache all state store references per FOUNDATION TENETS
+        _summaryDataStore = stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummaryData);
+        _summaryDataQueryStore = stateStoreFactory.GetJsonQueryableStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummaryData);
+        _ratingStore = stateStoreFactory.GetStore<SkillRatingData>(StateStoreDefinitions.AnalyticsRating);
+        _historyDataStore = stateStoreFactory.GetStore<ControllerHistoryData>(StateStoreDefinitions.AnalyticsHistoryData);
+        _historyDataQueryStore = stateStoreFactory.GetJsonQueryableStore<ControllerHistoryData>(StateStoreDefinitions.AnalyticsHistoryData);
+        _gameServiceCacheStore = stateStoreFactory.GetStore<GameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
+        _sessionMappingStore = stateStoreFactory.GetStore<GameSessionMappingData>(StateStoreDefinitions.AnalyticsSummary);
+        _realmGameServiceCacheStore = stateStoreFactory.GetStore<RealmGameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
+        _characterRealmCacheStore = stateStoreFactory.GetStore<CharacterRealmCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
+        _eventBufferStore = stateStoreFactory.GetCacheableStore<BufferedAnalyticsEvent>(StateStoreDefinitions.AnalyticsSummary);
+        _eventBufferIndexStore = stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.AnalyticsSummary);
+        _summaryStoreIsRedis = stateStoreFactory.GetBackendType(StateStoreDefinitions.AnalyticsSummary) == StateBackend.Redis;
 
         // Parse milestone thresholds from configuration
         _milestoneThresholds = ParseMilestoneThresholds(configuration.MilestoneThresholds);
@@ -246,10 +294,9 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Getting entity summary for {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
         {
-            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummaryData);
             var entityKey = GetEntityKey(body.GameServiceId, body.EntityType, body.EntityId);
 
-            var summary = await summaryStore.GetAsync(entityKey, cancellationToken);
+            var summary = await _summaryDataStore.GetAsync(entityKey, cancellationToken);
             if (summary == null)
             {
                 return (StatusCodes.NotFound, null);
@@ -308,9 +355,6 @@ public partial class AnalyticsService : IAnalyticsService
                 }
             }
 
-            var summaryDataStore = _stateStoreFactory.GetJsonQueryableStore<EntitySummaryData>(
-                StateStoreDefinitions.AnalyticsSummaryData);
-
             var conditions = new List<QueryCondition>
             {
                 new QueryCondition
@@ -368,7 +412,7 @@ public partial class AnalyticsService : IAnalyticsService
                 }
             }
 
-            var result = await summaryDataStore.JsonQueryPagedAsync(
+            var result = await _summaryDataQueryStore.JsonQueryPagedAsync(
                 conditions,
                 body.Offset,
                 body.Limit,
@@ -405,10 +449,9 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Getting skill rating for {EntityType}:{EntityId}, type {RatingType}",
             body.EntityType, body.EntityId, body.RatingType);
 
-        var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(StateStoreDefinitions.AnalyticsRating);
         var ratingKey = GetRatingKey(body.GameServiceId, body.RatingType, body.EntityType, body.EntityId);
 
-        var rating = await ratingStore.GetAsync(ratingKey, cancellationToken);
+        var rating = await _ratingStore.GetAsync(ratingKey, cancellationToken);
         if (rating == null)
         {
             var defaultRating = _configuration.Glicko2DefaultRating;
@@ -456,7 +499,6 @@ public partial class AnalyticsService : IAnalyticsService
             return (StatusCodes.BadRequest, null);
         }
 
-        var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(StateStoreDefinitions.AnalyticsRating);
         var now = DateTimeOffset.UtcNow;
 
         // Acquire distributed lock to serialize rating updates for this game+type combination
@@ -480,7 +522,7 @@ public partial class AnalyticsService : IAnalyticsService
         foreach (var result in body.Results)
         {
             var key = GetRatingKey(body.GameServiceId, body.RatingType, result.EntityType, result.EntityId);
-            var rating = await ratingStore.GetAsync(key, cancellationToken);
+            var rating = await _ratingStore.GetAsync(key, cancellationToken);
             currentRatings[key] = rating ?? new SkillRatingData
             {
                 EntityId = result.EntityId,
@@ -540,7 +582,7 @@ public partial class AnalyticsService : IAnalyticsService
             playerRating.MatchesPlayed++;
             playerRating.LastMatchAt = now;
 
-            await ratingStore.SaveAsync(key, playerRating, cancellationToken: cancellationToken);
+            await _ratingStore.SaveAsync(key, playerRating, cancellationToken: cancellationToken);
 
             var ratingChange = newRating - previousRating;
             updatedRatings.Add(new SkillRatingChange
@@ -590,7 +632,6 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Recording controller {Action} event: account {AccountId} -> {EntityType}:{EntityId}",
             body.Action, body.AccountId, body.TargetEntityType, body.TargetEntityId);
 
-        var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(StateStoreDefinitions.AnalyticsHistoryData);
         var eventId = Guid.NewGuid();
         var key = GetControllerKey(body.GameServiceId, body.AccountId, body.Timestamp);
 
@@ -606,7 +647,7 @@ public partial class AnalyticsService : IAnalyticsService
             SessionId = body.SessionId
         };
 
-        await controllerStore.SaveAsync(key, historyEvent, options: null, cancellationToken);
+        await _historyDataStore.SaveAsync(key, historyEvent, options: null, cancellationToken);
         return StatusCodes.OK;
     }
 
@@ -631,9 +672,6 @@ public partial class AnalyticsService : IAnalyticsService
                     body.StartTime, body.EndTime);
                 return (StatusCodes.BadRequest, null);
             }
-
-            var historyStore = _stateStoreFactory.GetJsonQueryableStore<ControllerHistoryData>(
-                StateStoreDefinitions.AnalyticsHistoryData);
 
             var conditions = new List<QueryCondition>
             {
@@ -697,7 +735,7 @@ public partial class AnalyticsService : IAnalyticsService
 
             var sortSpec = new JsonSortSpec { Path = "$.Timestamp", Descending = true };
 
-            var result = await historyStore.JsonQueryPagedAsync(
+            var result = await _historyDataQueryStore.JsonQueryPagedAsync(
                 conditions,
                 0,
                 body.Limit,
@@ -746,8 +784,6 @@ public partial class AnalyticsService : IAnalyticsService
         }
 
         var cutoffTime = DateTimeOffset.UtcNow.AddDays(-retentionDays);
-        var historyStore = _stateStoreFactory.GetJsonQueryableStore<ControllerHistoryData>(
-            StateStoreDefinitions.AnalyticsHistoryData);
 
         var conditions = new List<QueryCondition>
             {
@@ -771,7 +807,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         if (body.DryRun)
         {
-            var count = await historyStore.JsonCountAsync(conditions, cancellationToken);
+            var count = await _historyDataQueryStore.JsonCountAsync(conditions, cancellationToken);
             _logger.LogInformation("Controller history cleanup dry run: {Count} records would be deleted", count);
             return (StatusCodes.OK, new CleanupControllerHistoryResponse
             {
@@ -782,14 +818,12 @@ public partial class AnalyticsService : IAnalyticsService
 
         var batchSize = _configuration.ControllerHistoryCleanupBatchSize;
         var totalDeleted = 0L;
-        var regularStore = _stateStoreFactory.GetStore<ControllerHistoryData>(
-            StateStoreDefinitions.AnalyticsHistoryData);
 
         // Delete in batches to avoid overwhelming the database (per IMPLEMENTATION TENETS: use configuration)
         while (totalDeleted < batchSize)
         {
             var batchLimit = Math.Min(_configuration.ControllerHistoryCleanupSubBatchSize, (int)(batchSize - totalDeleted));
-            var batch = await historyStore.JsonQueryPagedAsync(
+            var batch = await _historyDataQueryStore.JsonQueryPagedAsync(
                 conditions, 0, batchLimit, null, cancellationToken);
 
             if (batch.Items.Count == 0)
@@ -799,7 +833,7 @@ public partial class AnalyticsService : IAnalyticsService
 
             foreach (var item in batch.Items)
             {
-                await regularStore.DeleteAsync(item.Key, cancellationToken);
+                await _historyDataStore.DeleteAsync(item.Key, cancellationToken);
                 totalDeleted++;
             }
         }
@@ -1007,47 +1041,27 @@ public partial class AnalyticsService : IAnalyticsService
     private async Task<bool> EnsureSummaryStoreRedisAsync(CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.EnsureSummaryStoreRedisAsync");
-        try
+        if (_summaryStoreIsRedis)
         {
-            var backend = _stateStoreFactory.GetBackendType(StateStoreDefinitions.AnalyticsSummary);
-            if (backend == StateBackend.Redis)
-            {
-                return true;
-            }
+            return true;
+        }
 
-            var message = "Analytics summary store must use Redis to support buffered ingestion";
-            _logger.LogError(
-                "{Message} (StoreName: {StoreName}, Backend: {Backend})",
-                message,
-                StateStoreDefinitions.AnalyticsSummary,
-                backend);
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "EnsureSummaryStoreRedis",
-                "analytics_summary_store_invalid",
-                message,
-                dependency: "state",
-                endpoint: "state:summary",
-                details: $"store:{StateStoreDefinitions.AnalyticsSummary};backend:{backend}",
-                stack: null,
-                cancellationToken: cancellationToken);
-            return false;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to determine analytics summary store backend");
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "EnsureSummaryStoreRedis",
-                "analytics_summary_store_lookup_failed",
-                ex.Message,
-                dependency: "state",
-                endpoint: "state:summary",
-                details: $"store:{StateStoreDefinitions.AnalyticsSummary}",
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return false;
-        }
+        var message = "Analytics summary store must use Redis to support buffered ingestion";
+        _logger.LogError(
+            "{Message} (StoreName: {StoreName})",
+            message,
+            StateStoreDefinitions.AnalyticsSummary);
+        await _messageBus.TryPublishErrorAsync(
+            "analytics",
+            "EnsureSummaryStoreRedis",
+            "analytics_summary_store_invalid",
+            message,
+            dependency: "state",
+            endpoint: "state:summary",
+            details: $"store:{StateStoreDefinitions.AnalyticsSummary}",
+            stack: null,
+            cancellationToken: cancellationToken);
+        return false;
     }
 
     private async Task<Guid?> ResolveGameServiceIdAsync(string gameType, CancellationToken cancellationToken)
@@ -1074,9 +1088,8 @@ public partial class AnalyticsService : IAnalyticsService
         var cacheOptions = BuildResolutionCacheOptions();
         if (cacheOptions != null)
         {
-            var cacheStore = _stateStoreFactory.GetStore<GameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
             var cacheKey = GetGameServiceCacheKey(stubName);
-            var cached = await cacheStore.GetAsync(cacheKey, cancellationToken);
+            var cached = await _gameServiceCacheStore.GetAsync(cacheKey, cancellationToken);
             if (cached != null)
             {
                 return cached.ServiceId;
@@ -1099,9 +1112,8 @@ public partial class AnalyticsService : IAnalyticsService
 
             if (cacheOptions != null)
             {
-                var cacheStore = _stateStoreFactory.GetStore<GameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
                 var cacheKey = GetGameServiceCacheKey(stubName);
-                await cacheStore.SaveAsync(cacheKey, new GameServiceCacheEntry
+                await _gameServiceCacheStore.SaveAsync(cacheKey, new GameServiceCacheEntry
                 {
                     ServiceId = response.ServiceId,
                     CachedAt = DateTimeOffset.UtcNow
@@ -1138,9 +1150,8 @@ public partial class AnalyticsService : IAnalyticsService
         using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.ResolveGameServiceIdForSessionAsync");
         try
         {
-            var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(StateStoreDefinitions.AnalyticsSummary);
             var mappingKey = GetSessionMappingKey(sessionId);
-            var mapping = await mappingStore.GetAsync(mappingKey, cancellationToken);
+            var mapping = await _sessionMappingStore.GetAsync(mappingKey, cancellationToken);
             if (mapping != null)
             {
                 return mapping.GameServiceId;
@@ -1224,10 +1235,9 @@ public partial class AnalyticsService : IAnalyticsService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.SaveGameSessionMappingAsync");
-        var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(StateStoreDefinitions.AnalyticsSummary);
         var mappingKey = GetSessionMappingKey(sessionId);
         var cacheOptions = BuildSessionMappingCacheOptions();
-        await mappingStore.SaveAsync(mappingKey, new GameSessionMappingData
+        await _sessionMappingStore.SaveAsync(mappingKey, new GameSessionMappingData
         {
             SessionId = sessionId,
             GameType = gameType,
@@ -1239,9 +1249,8 @@ public partial class AnalyticsService : IAnalyticsService
     private async Task RemoveGameSessionMappingAsync(Guid sessionId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.RemoveGameSessionMappingAsync");
-        var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(StateStoreDefinitions.AnalyticsSummary);
         var mappingKey = GetSessionMappingKey(sessionId);
-        await mappingStore.DeleteAsync(mappingKey, cancellationToken);
+        await _sessionMappingStore.DeleteAsync(mappingKey, cancellationToken);
     }
 
     /// <summary>
@@ -1254,9 +1263,8 @@ public partial class AnalyticsService : IAnalyticsService
         var cacheOptions = BuildResolutionCacheOptions();
         if (cacheOptions != null)
         {
-            var cacheStore = _stateStoreFactory.GetStore<RealmGameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
             var cacheKey = $"{REALM_GAME_SERVICE_CACHE_PREFIX}:{realmId}";
-            var cached = await cacheStore.GetAsync(cacheKey, cancellationToken);
+            var cached = await _realmGameServiceCacheStore.GetAsync(cacheKey, cancellationToken);
             if (cached != null)
             {
                 return cached.GameServiceId;
@@ -1279,9 +1287,8 @@ public partial class AnalyticsService : IAnalyticsService
 
             if (cacheOptions != null)
             {
-                var cacheStore = _stateStoreFactory.GetStore<RealmGameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
                 var cacheKey = $"{REALM_GAME_SERVICE_CACHE_PREFIX}:{realmId}";
-                await cacheStore.SaveAsync(cacheKey, new RealmGameServiceCacheEntry
+                await _realmGameServiceCacheStore.SaveAsync(cacheKey, new RealmGameServiceCacheEntry
                 {
                     GameServiceId = realm.GameServiceId,
                     CachedAt = DateTimeOffset.UtcNow
@@ -1324,9 +1331,8 @@ public partial class AnalyticsService : IAnalyticsService
         var cacheOptions = BuildResolutionCacheOptions();
         if (cacheOptions != null)
         {
-            var cacheStore = _stateStoreFactory.GetStore<CharacterRealmCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
             var cacheKey = $"{CHARACTER_REALM_CACHE_PREFIX}:{characterId}";
-            var cached = await cacheStore.GetAsync(cacheKey, cancellationToken);
+            var cached = await _characterRealmCacheStore.GetAsync(cacheKey, cancellationToken);
             if (cached != null)
             {
                 return await ResolveGameServiceIdForRealmAsync(cached.RealmId, cancellationToken);
@@ -1349,9 +1355,8 @@ public partial class AnalyticsService : IAnalyticsService
 
             if (cacheOptions != null)
             {
-                var cacheStore = _stateStoreFactory.GetStore<CharacterRealmCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
                 var cacheKey = $"{CHARACTER_REALM_CACHE_PREFIX}:{characterId}";
-                await cacheStore.SaveAsync(cacheKey, new CharacterRealmCacheEntry
+                await _characterRealmCacheStore.SaveAsync(cacheKey, new CharacterRealmCacheEntry
                 {
                     RealmId = character.RealmId,
                     CachedAt = DateTimeOffset.UtcNow
@@ -1399,18 +1404,14 @@ public partial class AnalyticsService : IAnalyticsService
             bufferedEvent.Metadata = null;
         }
 
-        ICacheableStateStore<BufferedAnalyticsEvent>? bufferStore = null;
-        ICacheableStateStore<object>? bufferIndexStore = null;
         string? eventKey = null;
 
         try
         {
-            bufferStore = _stateStoreFactory.GetCacheableStore<BufferedAnalyticsEvent>(StateStoreDefinitions.AnalyticsSummary);
-            bufferIndexStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.AnalyticsSummary);
             eventKey = GetEventBufferEntryKey(bufferedEvent.EventId);
 
-            await bufferStore.SaveAsync(eventKey, bufferedEvent, options: null, cancellationToken);
-            await bufferIndexStore.SortedSetAddAsync(
+            await _eventBufferStore.SaveAsync(eventKey, bufferedEvent, options: null, cancellationToken);
+            await _eventBufferIndexStore.SortedSetAddAsync(
                 EVENT_BUFFER_INDEX_KEY,
                 eventKey,
                 bufferedEvent.Timestamp.ToUnixTimeMilliseconds(),
@@ -1428,13 +1429,10 @@ public partial class AnalyticsService : IAnalyticsService
         {
             try
             {
-                if (bufferStore != null && eventKey != null)
+                if (eventKey != null)
                 {
-                    await bufferStore.DeleteAsync(eventKey, cancellationToken);
-                }
-                if (bufferIndexStore != null && eventKey != null)
-                {
-                    await bufferIndexStore.SortedSetRemoveAsync(EVENT_BUFFER_INDEX_KEY, eventKey, cancellationToken);
+                    await _eventBufferStore.DeleteAsync(eventKey, cancellationToken);
+                    await _eventBufferIndexStore.SortedSetRemoveAsync(EVENT_BUFFER_INDEX_KEY, eventKey, cancellationToken);
                 }
             }
             catch (Exception cleanupException)
@@ -1507,8 +1505,7 @@ public partial class AnalyticsService : IAnalyticsService
             return;
         }
 
-        var bufferIndexStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.AnalyticsSummary);
-        var bufferCount = await bufferIndexStore.SortedSetCountAsync(EVENT_BUFFER_INDEX_KEY, cancellationToken);
+        var bufferCount = await _eventBufferIndexStore.SortedSetCountAsync(EVENT_BUFFER_INDEX_KEY, cancellationToken);
         if (bufferCount == 0)
         {
             return;
@@ -1517,7 +1514,7 @@ public partial class AnalyticsService : IAnalyticsService
         var shouldFlush = bufferCount >= bufferSize;
         if (!shouldFlush && flushIntervalSeconds > 0)
         {
-            var oldest = await bufferIndexStore.SortedSetRangeByRankAsync(
+            var oldest = await _eventBufferIndexStore.SortedSetRangeByRankAsync(
                 EVENT_BUFFER_INDEX_KEY,
                 0,
                 0,
@@ -1550,7 +1547,7 @@ public partial class AnalyticsService : IAnalyticsService
             return;
         }
 
-        bufferCount = await bufferIndexStore.SortedSetCountAsync(EVENT_BUFFER_INDEX_KEY, cancellationToken);
+        bufferCount = await _eventBufferIndexStore.SortedSetCountAsync(EVENT_BUFFER_INDEX_KEY, cancellationToken);
         if (bufferCount == 0)
         {
             return;
@@ -1559,7 +1556,7 @@ public partial class AnalyticsService : IAnalyticsService
         shouldFlush = bufferCount >= bufferSize;
         if (!shouldFlush && flushIntervalSeconds > 0)
         {
-            var oldest = await bufferIndexStore.SortedSetRangeByRankAsync(
+            var oldest = await _eventBufferIndexStore.SortedSetRangeByRankAsync(
                 EVENT_BUFFER_INDEX_KEY,
                 0,
                 0,
@@ -1581,8 +1578,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var bufferStore = _stateStoreFactory.GetCacheableStore<BufferedAnalyticsEvent>(StateStoreDefinitions.AnalyticsSummary);
-            await FlushBufferedEventsBatchAsync(bufferIndexStore, bufferStore, cancellationToken);
+            await FlushBufferedEventsBatchAsync(cancellationToken);
         }
         catch (Exception ex)
         {
@@ -1600,18 +1596,14 @@ public partial class AnalyticsService : IAnalyticsService
         }
     }
 
-    private async Task FlushBufferedEventsBatchAsync(
-        ICacheableStateStore<object> bufferIndexStore,
-        IStateStore<BufferedAnalyticsEvent> bufferStore,
-        CancellationToken cancellationToken)
+    private async Task FlushBufferedEventsBatchAsync(CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.FlushBufferedEventsBatchAsync");
-        var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummaryData);
         var batchSize = Math.Max(1, _configuration.EventBufferSize);
 
         while (true)
         {
-            var entries = await bufferIndexStore.SortedSetRangeByRankAsync(
+            var entries = await _eventBufferIndexStore.SortedSetRangeByRankAsync(
                 EVENT_BUFFER_INDEX_KEY,
                 0,
                 batchSize - 1,
@@ -1624,7 +1616,7 @@ public partial class AnalyticsService : IAnalyticsService
             }
 
             var eventKeys = entries.Select(e => e.member).ToList();
-            var bufferedEvents = await bufferStore.GetBulkAsync(eventKeys, cancellationToken);
+            var bufferedEvents = await _eventBufferStore.GetBulkAsync(eventKeys, cancellationToken);
             var envelopes = new List<(string key, BufferedAnalyticsEvent evt)>();
 
             foreach (var key in eventKeys)
@@ -1635,7 +1627,7 @@ public partial class AnalyticsService : IAnalyticsService
                 }
                 else
                 {
-                    await bufferIndexStore.SortedSetRemoveAsync(EVENT_BUFFER_INDEX_KEY, key, cancellationToken);
+                    await _eventBufferIndexStore.SortedSetRemoveAsync(EVENT_BUFFER_INDEX_KEY, key, cancellationToken);
                 }
             }
 
@@ -1665,7 +1657,7 @@ public partial class AnalyticsService : IAnalyticsService
             {
                 var entityKey = kvp.Key;
                 var entityEvents = kvp.Value;
-                var (summary, summaryEtag) = await summaryStore.GetWithETagAsync(entityKey, cancellationToken);
+                var (summary, summaryEtag) = await _summaryDataStore.GetWithETagAsync(entityKey, cancellationToken);
 
                 if (summary == null)
                 {
@@ -1733,7 +1725,7 @@ public partial class AnalyticsService : IAnalyticsService
                 {
                     // GetWithETagAsync returns null ETag for new entities; TrySaveAsync expects
                     // empty string for create operations - coalesce satisfies compiler's nullable analysis
-                    var newSummaryEtag = await summaryStore.TrySaveAsync(entityKey, summary, summaryEtag ?? string.Empty, cancellationToken);
+                    var newSummaryEtag = await _summaryDataStore.TrySaveAsync(entityKey, summary, summaryEtag ?? string.Empty, cancellationToken);
                     if (newSummaryEtag == null)
                     {
                         _logger.LogWarning("Concurrent modification detected for analytics summary {EntityKey}, skipping batch", entityKey);
@@ -1783,8 +1775,8 @@ public partial class AnalyticsService : IAnalyticsService
 
                 foreach (var envelope in entityEvents)
                 {
-                    await bufferStore.DeleteAsync(envelope.key, cancellationToken);
-                    await bufferIndexStore.SortedSetRemoveAsync(EVENT_BUFFER_INDEX_KEY, envelope.key, cancellationToken);
+                    await _eventBufferStore.DeleteAsync(envelope.key, cancellationToken);
+                    await _eventBufferIndexStore.SortedSetRemoveAsync(EVENT_BUFFER_INDEX_KEY, envelope.key, cancellationToken);
                 }
             }
 

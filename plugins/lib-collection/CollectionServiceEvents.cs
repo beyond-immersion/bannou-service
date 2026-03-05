@@ -67,7 +67,7 @@ public partial class CollectionService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.collection", "CollectionService.CleanupCollectionsForOwner");
 
-        var collections = await CollectionStore.QueryAsync(
+        var collections = await _collectionStore.QueryAsync(
             c => c.OwnerId == ownerId && c.OwnerType == ownerType,
             cancellationToken: cancellationToken);
 
@@ -88,13 +88,13 @@ public partial class CollectionService
                     cancellationToken);
 
                 // Delete the cache entry
-                await CollectionCache.DeleteAsync(BuildCacheKey(collection.CollectionId), cancellationToken);
+                await _collectionCache.DeleteAsync(BuildCacheKey(collection.CollectionId), cancellationToken);
 
                 // Delete the collection instance
-                await CollectionStore.DeleteAsync(BuildCollectionKey(collection.CollectionId), cancellationToken);
+                await _collectionStore.DeleteAsync(BuildCollectionKey(collection.CollectionId), cancellationToken);
 
                 // Also delete the owner+type lookup key
-                await CollectionStore.DeleteAsync(
+                await _collectionStore.DeleteAsync(
                     BuildCollectionByOwnerKey(collection.OwnerId, collection.OwnerType, collection.GameServiceId, collection.CollectionType),
                     cancellationToken);
 

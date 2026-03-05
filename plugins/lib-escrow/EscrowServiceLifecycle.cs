@@ -53,7 +53,7 @@ public partial class EscrowService
         foreach (var partyInput in body.Parties)
         {
             var partyKey = GetPartyPendingKey(partyInput.PartyId, partyInput.PartyType);
-            var existingCount = await PartyPendingStore.GetAsync(partyKey, cancellationToken);
+            var existingCount = await _partyPendingStore.GetAsync(partyKey, cancellationToken);
             if (existingCount != null && existingCount.PendingCount >= _configuration.MaxPendingPerParty)
             {
                 _logger.LogWarning("Escrow creation rejected: party {PartyType}:{PartyId} has {Count} pending escrows, max is {Max}",
@@ -188,12 +188,12 @@ public partial class EscrowService
         };
 
         var agreementKey = GetAgreementKey(escrowId);
-        await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken: cancellationToken);
+        await _agreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken: cancellationToken);
 
         foreach (var tokenRecord in tokenRecordsToSave)
         {
             var tokenKey = GetTokenKey(tokenRecord.TokenHash);
-            await TokenStore.SaveAsync(tokenKey, tokenRecord, cancellationToken: cancellationToken);
+            await _tokenStore.SaveAsync(tokenKey, tokenRecord, cancellationToken: cancellationToken);
         }
 
         var statusIndexKey = $"{GetStatusIndexKey(EscrowStatus.PendingDeposits)}:{escrowId}";
@@ -204,7 +204,7 @@ public partial class EscrowService
             ExpiresAt = expiresAt,
             AddedAt = now
         };
-        await StatusIndexStore.SaveAsync(statusIndexKey, statusEntry, cancellationToken: cancellationToken);
+        await _statusIndexStore.SaveAsync(statusIndexKey, statusEntry, cancellationToken: cancellationToken);
 
         // Track incremented parties for rollback on failure
         var incrementedParties = new List<(Guid PartyId, EntityType PartyType)>();
@@ -269,7 +269,7 @@ public partial class EscrowService
         CancellationToken cancellationToken = default)
     {
         var agreementKey = GetAgreementKey(body.EscrowId);
-        var agreementModel = await AgreementStore.GetAsync(agreementKey, cancellationToken);
+        var agreementModel = await _agreementStore.GetAsync(agreementKey, cancellationToken);
 
         if (agreementModel == null)
         {
@@ -297,7 +297,7 @@ public partial class EscrowService
 
         if (body.PartyId != null)
         {
-            var allAgreements = await AgreementStore.QueryAsync(
+            var allAgreements = await _agreementStore.QueryAsync(
                 a => a.Parties != null && a.Parties.Any(p =>
                     p.PartyId == body.PartyId.Value &&
                     (body.PartyType == null || p.PartyType == body.PartyType)),
@@ -323,7 +323,7 @@ public partial class EscrowService
         else if (body.Status != null && body.Status.Count > 0)
         {
             var statusSet = body.Status.ToHashSet();
-            var allAgreements = await AgreementStore.QueryAsync(
+            var allAgreements = await _agreementStore.QueryAsync(
                 a => statusSet.Contains(a.Status),
                 cancellationToken);
 
@@ -337,7 +337,7 @@ public partial class EscrowService
         }
         else
         {
-            var allAgreements = await AgreementStore.QueryAsync(
+            var allAgreements = await _agreementStore.QueryAsync(
                 a => true,
                 cancellationToken);
 
@@ -365,7 +365,7 @@ public partial class EscrowService
         CancellationToken cancellationToken = default)
     {
         var agreementKey = GetAgreementKey(body.EscrowId);
-        var agreementModel = await AgreementStore.GetAsync(agreementKey, cancellationToken);
+        var agreementModel = await _agreementStore.GetAsync(agreementKey, cancellationToken);
 
         if (agreementModel == null)
         {

@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFoundation
 > **State Store**: realm-statestore (MySQL)
+> **Implementation Map**: [docs/maps/REALM.md](../maps/REALM.md)
 
 ---
 

@@ -25,8 +25,10 @@ public partial class RealmHistoryService : IRealmHistoryService
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<RealmHistoryService> _logger;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly RealmHistoryServiceConfiguration _configuration;
+
+    /// <summary>JSON-queryable store for realm participation data, used for server-side filtered queries.</summary>
+    private readonly IJsonQueryableStateStore<RealmParticipationData> _participationQueryStore;
     private readonly IDualIndexHelper<RealmParticipationData> _participationHelper;
     private readonly IBackstoryStorageHelper<RealmLoreData, RealmLoreElementData> _loreHelper;
     private readonly IResourceClient _resourceClient;
@@ -58,9 +60,10 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _messageBus = messageBus;
         _logger = logger;
-        _stateStoreFactory = stateStoreFactory;
         _configuration = configuration;
         _resourceClient = resourceClient;
+        _participationQueryStore = stateStoreFactory.GetJsonQueryableStore<RealmParticipationData>(
+            StateStoreDefinitions.RealmHistory);
 
         // Initialize participation helper using shared dual-index infrastructure
         _participationHelper = new DualIndexHelper<RealmParticipationData>(
@@ -188,9 +191,6 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Getting participation for realm {RealmId}", body.RealmId);
 
-        var jsonStore = _stateStoreFactory.GetJsonQueryableStore<RealmParticipationData>(
-            StateStoreDefinitions.RealmHistory);
-
         var conditions = BuildRealmParticipationQueryConditions(
             "$.RealmId", body.RealmId,
             eventCategory: body.EventCategory,
@@ -200,7 +200,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         var sortSpec = new JsonSortSpec { Path = "$.EventDateUnix", Descending = true };
         var (skip, take) = PaginationHelper.CalculatePagination(body.Page, body.PageSize);
 
-        var result = await jsonStore.JsonQueryPagedAsync(
+        var result = await _participationQueryStore.JsonQueryPagedAsync(
             conditions, skip, take, sortSpec, cancellationToken);
 
         var participations = result.Items
@@ -231,9 +231,6 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         _logger.LogDebug("Getting participants for event {EventId}", body.EventId);
 
-        var jsonStore = _stateStoreFactory.GetJsonQueryableStore<RealmParticipationData>(
-            StateStoreDefinitions.RealmHistory);
-
         var conditions = BuildRealmParticipationQueryConditions(
             "$.EventId", body.EventId,
             eventCategory: null,
@@ -243,7 +240,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         var sortSpec = new JsonSortSpec { Path = "$.Impact", Descending = true };
         var (skip, take) = PaginationHelper.CalculatePagination(body.Page, body.PageSize);
 
-        var result = await jsonStore.JsonQueryPagedAsync(
+        var result = await _participationQueryStore.JsonQueryPagedAsync(
             conditions, skip, take, sortSpec, cancellationToken);
 
         var participations = result.Items

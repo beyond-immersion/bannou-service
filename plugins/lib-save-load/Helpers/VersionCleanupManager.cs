@@ -16,7 +16,16 @@ namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
 /// </summary>
 public sealed class VersionCleanupManager : IVersionCleanupManager
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
+    /// <summary>Queryable store for version manifests (MySQL-backed for LINQ queries).</summary>
+    private readonly IQueryableStateStore<SaveVersionManifest> _versionQueryStore;
+    /// <summary>Store for version manifests (basic CRUD operations).</summary>
+    private readonly IStateStore<SaveVersionManifest> _versionStore;
+    /// <summary>Hot cache store for fast save data retrieval (Redis-backed with TTL).</summary>
+    private readonly IStateStore<HotSaveEntry> _hotCacheStore;
+    /// <summary>Cacheable store for pending upload entries (Redis-backed with set operations).</summary>
+    private readonly ICacheableStateStore<PendingUploadEntry> _pendingStore;
+    /// <summary>Store for save slot metadata (basic CRUD operations).</summary>
+    private readonly IStateStore<SaveSlotMetadata> _slotStore;
     private readonly SaveLoadServiceConfiguration _configuration;
     private readonly IAssetClient _assetClient;
     private readonly IMessageBus _messageBus;
@@ -36,7 +45,11 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         ILogger<VersionCleanupManager> logger,
         ITelemetryProvider telemetryProvider)
     {
-        _stateStoreFactory = stateStoreFactory;
+        _versionQueryStore = stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
+        _versionStore = stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
+        _hotCacheStore = stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
+        _pendingStore = stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
+        _slotStore = stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
         _configuration = configuration;
         _assetClient = assetClient;
         _messageBus = messageBus;
@@ -120,9 +133,8 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
             return;
         }
 
-        var versionQueryStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
         // SaveSlotMetadata.SlotId and SaveVersionManifest.SlotId are both Guid - compare directly
-        var versions = await versionQueryStore.QueryAsync(
+        var versions = await _versionQueryStore.QueryAsync(
             v => v.SlotId == slot.SlotId,
             cancellationToken);
 
@@ -141,8 +153,6 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
             return;
         }
 
-        var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
-        var hotStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
         long bytesFreed = 0;
 
         foreach (var version in versionsToDelete)
@@ -165,11 +175,11 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
 
                 // Delete version manifest
                 var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), version.VersionNumber);
-                await versionStore.DeleteAsync(versionKey, cancellationToken);
+                await _versionStore.DeleteAsync(versionKey, cancellationToken);
 
                 // Delete from hot cache
                 var hotCacheKey = HotSaveEntry.GetStateKey(slot.SlotId.ToString(), version.VersionNumber);
-                await hotStore.DeleteAsync(hotCacheKey, cancellationToken);
+                await _hotCacheStore.DeleteAsync(hotCacheKey, cancellationToken);
 
                 bytesFreed += version.CompressedSizeBytes ?? version.SizeBytes;
             }
@@ -181,11 +191,10 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         }
 
         // Update slot metadata
-        var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
         slot.VersionCount -= versionsToDelete.Count;
         slot.TotalSizeBytes -= bytesFreed;
         slot.UpdatedAt = DateTimeOffset.UtcNow;
-        await slotStore.SaveAsync(slot.GetStateKey(), slot, cancellationToken: cancellationToken);
+        await _slotStore.SaveAsync(slot.GetStateKey(), slot, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Rolling cleanup deleted {Count} versions from slot {SlotId}, freed {BytesFreed} bytes",
@@ -219,9 +228,6 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
             return 0;
         }
 
-        var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
-        var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
-        var pendingStore = _stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
         var slotIdString = slot.SlotId.ToString();
 
         var collapsedCount = 0;
@@ -232,7 +238,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
             try
             {
                 // Calculate chain length by walking back to base
-                var chainLength = await CalculateChainLengthAsync(slotIdString, deltaVersion, versionStore, cancellationToken);
+                var chainLength = await CalculateChainLengthAsync(slotIdString, deltaVersion, cancellationToken);
 
                 if (chainLength <= maxChainLength)
                 {
@@ -245,7 +251,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
 
                 // Reconstruct full data from delta chain
                 var reconstructedData = await _versionDataLoader.ReconstructFromDeltaChainAsync(
-                    slotIdString, deltaVersion, versionStore, cancellationToken);
+                    slotIdString, deltaVersion, _versionStore, cancellationToken);
 
                 if (reconstructedData == null)
                 {
@@ -257,7 +263,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
 
                 // Get the version with ETag for optimistic concurrency
                 var versionKey = SaveVersionManifest.GetStateKey(slotIdString, deltaVersion.VersionNumber);
-                var (currentVersion, versionEtag) = await versionStore.GetWithETagAsync(versionKey, cancellationToken);
+                var (currentVersion, versionEtag) = await _versionStore.GetWithETagAsync(versionKey, cancellationToken);
 
                 if (currentVersion == null || !currentVersion.IsDelta)
                 {
@@ -286,7 +292,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
                 currentVersion.UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.PENDING : UploadStatus.COMPLETE;
 
                 // Save updated manifest with optimistic concurrency
-                var newEtag = await versionStore.TrySaveAsync(versionKey, currentVersion, versionEtag ?? string.Empty, cancellationToken);
+                var newEtag = await _versionStore.TrySaveAsync(versionKey, currentVersion, versionEtag ?? string.Empty, cancellationToken);
                 if (newEtag == null)
                 {
                     _logger.LogDebug(
@@ -309,7 +315,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
                     IsDelta = false
                 };
                 var hotCacheTtl = (int)TimeSpan.FromMinutes(_configuration.HotCacheTtlMinutes).TotalSeconds;
-                await hotCacheStore.SaveAsync(
+                await _hotCacheStore.SaveAsync(
                     hotEntry.GetStateKey(),
                     hotEntry,
                     new StateOptions { Ttl = hotCacheTtl },
@@ -337,10 +343,10 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
                     };
                     var pendingKey = PendingUploadEntry.GetStateKey(uploadId.ToString());
                     var pendingTtl = (int)TimeSpan.FromMinutes(_configuration.PendingUploadTtlMinutes).TotalSeconds;
-                    await pendingStore.SaveAsync(pendingKey, pendingEntry, new StateOptions { Ttl = pendingTtl }, cancellationToken);
+                    await _pendingStore.SaveAsync(pendingKey, pendingEntry, new StateOptions { Ttl = pendingTtl }, cancellationToken);
 
                     // Add to tracking set for Redis-based queue processing
-                    await pendingStore.AddToSetAsync(SaveUploadWorker.PendingUploadIdsSetKey, uploadId.ToString(), cancellationToken: cancellationToken);
+                    await _pendingStore.AddToSetAsync(SaveUploadWorker.PendingUploadIdsSetKey, uploadId.ToString(), cancellationToken: cancellationToken);
                 }
 
                 collapsedCount++;
@@ -374,7 +380,6 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
     private async Task<int> CalculateChainLengthAsync(
         string slotId,
         SaveVersionManifest deltaVersion,
-        IStateStore<SaveVersionManifest> versionStore,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.save-load", "VersionCleanupManager.CalculateChainLengthAsync");
@@ -385,7 +390,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         {
             chainLength++;
             var baseKey = SaveVersionManifest.GetStateKey(slotId, current.BaseVersionNumber.Value);
-            current = await versionStore.GetAsync(baseKey, cancellationToken);
+            current = await _versionStore.GetAsync(baseKey, cancellationToken);
 
             if (current == null)
             {

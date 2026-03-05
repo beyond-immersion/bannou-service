@@ -22,7 +22,17 @@ namespace BeyondImmersion.BannouService.Faction.Providers;
 /// </remarks>
 public sealed class FactionProviderFactory : IVariableProviderFactory
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
+    /// <summary>Durable store for per-entity membership list aggregates (MySQL).</summary>
+    private readonly IStateStore<MembershipListModel> _memberListStore;
+
+    /// <summary>Durable store for faction entity records (MySQL).</summary>
+    private readonly IStateStore<FactionModel> _factionStore;
+
+    /// <summary>Durable store for per-faction norm list aggregates (MySQL).</summary>
+    private readonly IStateStore<NormListModel> _normListStore;
+
+    /// <summary>Durable store for individual norm definition records (MySQL).</summary>
+    private readonly IStateStore<NormDefinitionModel> _normStore;
     private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
@@ -32,7 +42,10 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
     /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public FactionProviderFactory(IStateStoreFactory stateStoreFactory, ITelemetryProvider telemetryProvider)
     {
-        _stateStoreFactory = stateStoreFactory;
+        _memberListStore = stateStoreFactory.GetStore<MembershipListModel>(StateStoreDefinitions.FactionMembership);
+        _factionStore = stateStoreFactory.GetStore<FactionModel>(StateStoreDefinitions.Faction);
+        _normListStore = stateStoreFactory.GetStore<NormListModel>(StateStoreDefinitions.FactionNorm);
+        _normStore = stateStoreFactory.GetStore<NormDefinitionModel>(StateStoreDefinitions.FactionNorm);
         _telemetryProvider = telemetryProvider;
     }
 
@@ -49,9 +62,7 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
         }
 
         // Load the character's faction memberships
-        var memberListStore = _stateStoreFactory.GetStore<MembershipListModel>(
-            StateStoreDefinitions.FactionMembership);
-        var membershipList = await memberListStore.GetAsync(
+        var membershipList = await _memberListStore.GetAsync(
             $"mem:char:{characterId.Value}", ct);
 
         if (membershipList == null || membershipList.Memberships.Count == 0)
@@ -60,19 +71,13 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
         }
 
         // Load faction details and norms for each membership
-        var factionStore = _stateStoreFactory.GetStore<FactionModel>(
-            StateStoreDefinitions.Faction);
-        var normListStore = _stateStoreFactory.GetStore<NormListModel>(
-            StateStoreDefinitions.FactionNorm);
-        var normStore = _stateStoreFactory.GetStore<NormDefinitionModel>(
-            StateStoreDefinitions.FactionNorm);
         var factions = new List<FactionProvider.FactionSnapshot>();
         var mergedNorms = new Dictionary<string, FactionProvider.NormSnapshot>(
             StringComparer.OrdinalIgnoreCase);
 
         foreach (var membership in membershipList.Memberships)
         {
-            var faction = await factionStore.GetAsync($"fac:{membership.FactionId}", ct);
+            var faction = await _factionStore.GetAsync($"fac:{membership.FactionId}", ct);
             if (faction == null) continue;
 
             // Filter to realm-relevant factions — skip factions in other realms
@@ -89,12 +94,12 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
                 membership.Role));
 
             // Load norms for this faction (membership-scoped norm resolution)
-            var normList = await normListStore.GetAsync($"nrm:fac:{membership.FactionId}", ct);
+            var normList = await _normListStore.GetAsync($"nrm:fac:{membership.FactionId}", ct);
             if (normList == null) continue;
 
             foreach (var normId in normList.NormIds)
             {
-                var norm = await normStore.GetAsync($"nrm:{normId}", ct);
+                var norm = await _normStore.GetAsync($"nrm:{normId}", ct);
                 if (norm == null) continue;
 
                 // Keep highest penalty per violation type across all membership factions

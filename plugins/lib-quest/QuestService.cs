@@ -56,7 +56,6 @@ public static class QuestTopics
 public partial class QuestService : IQuestService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<QuestService> _logger;
     private readonly QuestServiceConfiguration _configuration;
     private readonly IContractClient _contractClient;
@@ -70,34 +69,23 @@ public partial class QuestService : IQuestService
     private readonly IEnumerable<IPrerequisiteProviderFactory> _prerequisiteProviders;
     private readonly ITelemetryProvider _telemetryProvider;
 
-    #region State Store Accessors
+    /// <summary>Queryable state store for quest definitions (MySQL).</summary>
+    private readonly IQueryableStateStore<QuestDefinitionModel> _definitionStore;
 
-    // Lazy-initialized state stores per IMPLEMENTATION TENETS
-    private IQueryableStateStore<QuestDefinitionModel>? _definitionStore;
-    private IQueryableStateStore<QuestDefinitionModel> DefinitionStore =>
-        _definitionStore ??= _stateStoreFactory.GetQueryableStore<QuestDefinitionModel>(StateStoreDefinitions.QuestDefinition);
+    /// <summary>Queryable state store for quest instances (MySQL).</summary>
+    private readonly IQueryableStateStore<QuestInstanceModel> _instanceStore;
 
-    private IQueryableStateStore<QuestInstanceModel>? _instanceStore;
-    private IQueryableStateStore<QuestInstanceModel> InstanceStore =>
-        _instanceStore ??= _stateStoreFactory.GetQueryableStore<QuestInstanceModel>(StateStoreDefinitions.QuestInstance);
+    /// <summary>Cache state store for quest definitions (Redis).</summary>
+    private readonly IStateStore<QuestDefinitionModel> _definitionCache;
 
-    private IStateStore<QuestDefinitionModel>? _definitionCache;
-    private IStateStore<QuestDefinitionModel> DefinitionCache =>
-        _definitionCache ??= _stateStoreFactory.GetStore<QuestDefinitionModel>(StateStoreDefinitions.QuestDefinitionCache);
+    /// <summary>State store for objective progress tracking (Redis).</summary>
+    private readonly IStateStore<ObjectiveProgressModel> _progressStore;
 
-    private IStateStore<ObjectiveProgressModel>? _progressStore;
-    private IStateStore<ObjectiveProgressModel> ProgressStore =>
-        _progressStore ??= _stateStoreFactory.GetStore<ObjectiveProgressModel>(StateStoreDefinitions.QuestObjectiveProgress);
+    /// <summary>Cacheable state store for character quest indexes (Redis).</summary>
+    private readonly ICacheableStateStore<CharacterQuestIndex> _characterIndex;
 
-    private ICacheableStateStore<CharacterQuestIndex>? _characterIndex;
-    private ICacheableStateStore<CharacterQuestIndex> CharacterIndex =>
-        _characterIndex ??= _stateStoreFactory.GetCacheableStore<CharacterQuestIndex>(StateStoreDefinitions.QuestCharacterIndex);
-
-    private IStateStore<CooldownEntry>? _cooldownStore;
-    private IStateStore<CooldownEntry> CooldownStore =>
-        _cooldownStore ??= _stateStoreFactory.GetStore<CooldownEntry>(StateStoreDefinitions.QuestCooldown);
-
-    #endregion
+    /// <summary>State store for quest cooldown entries (Redis).</summary>
+    private readonly IStateStore<CooldownEntry> _cooldownStore;
 
     #region Key Building
 
@@ -147,7 +135,6 @@ public partial class QuestService : IQuestService
         ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _contractClient = contractClient;
@@ -160,6 +147,14 @@ public partial class QuestService : IQuestService
         _questDataCache = questDataCache;
         _prerequisiteProviders = prerequisiteProviders;
         _telemetryProvider = telemetryProvider;
+
+        // Eagerly resolve all state stores per FOUNDATION TENETS (constructor-cached, no lazy initialization)
+        _definitionStore = stateStoreFactory.GetQueryableStore<QuestDefinitionModel>(StateStoreDefinitions.QuestDefinition);
+        _instanceStore = stateStoreFactory.GetQueryableStore<QuestInstanceModel>(StateStoreDefinitions.QuestInstance);
+        _definitionCache = stateStoreFactory.GetStore<QuestDefinitionModel>(StateStoreDefinitions.QuestDefinitionCache);
+        _progressStore = stateStoreFactory.GetStore<ObjectiveProgressModel>(StateStoreDefinitions.QuestObjectiveProgress);
+        _characterIndex = stateStoreFactory.GetCacheableStore<CharacterQuestIndex>(StateStoreDefinitions.QuestCharacterIndex);
+        _cooldownStore = stateStoreFactory.GetStore<CooldownEntry>(StateStoreDefinitions.QuestCooldown);
 
         // Register event handlers via partial class (QuestServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -183,7 +178,7 @@ public partial class QuestService : IQuestService
         }
 
         // Check for duplicate code
-        var existingByCode = await DefinitionStore.QueryAsync(
+        var existingByCode = await _definitionStore.QueryAsync(
             d => d.Code == normalizedCode,
             cancellationToken: cancellationToken);
         if (existingByCode.Count > 0)
@@ -245,7 +240,7 @@ public partial class QuestService : IQuestService
 
         // Save to state store
         var definitionKey = BuildDefinitionKey(definitionId);
-        await DefinitionStore.SaveAsync(definitionKey, definition, cancellationToken: cancellationToken);
+        await _definitionStore.SaveAsync(definitionKey, definition, cancellationToken: cancellationToken);
 
         _logger.LogInformation("Quest definition created: {DefinitionId} with code {Code}",
             definitionId, normalizedCode);
@@ -265,12 +260,12 @@ public partial class QuestService : IQuestService
         if (body.DefinitionId.HasValue)
         {
             var cacheKey = BuildDefinitionKey(body.DefinitionId.Value);
-            definition = await DefinitionCache.GetAsync(cacheKey, cancellationToken);
+            definition = await _definitionCache.GetAsync(cacheKey, cancellationToken);
 
             if (definition == null)
             {
                 // Cache miss - query from MySQL
-                var results = await DefinitionStore.QueryAsync(
+                var results = await _definitionStore.QueryAsync(
                     d => d.DefinitionId == body.DefinitionId.Value,
                     cancellationToken: cancellationToken);
                 definition = results.FirstOrDefault();
@@ -278,7 +273,7 @@ public partial class QuestService : IQuestService
                 // Populate cache if found
                 if (definition != null)
                 {
-                    await DefinitionCache.SaveAsync(
+                    await _definitionCache.SaveAsync(
                         cacheKey,
                         definition,
                         new StateOptions { Ttl = _configuration.DefinitionCacheTtlSeconds },
@@ -289,7 +284,7 @@ public partial class QuestService : IQuestService
         else if (!string.IsNullOrWhiteSpace(body.Code))
         {
             var normalizedCode = body.Code.ToUpperInvariant();
-            var results = await DefinitionStore.QueryAsync(
+            var results = await _definitionStore.QueryAsync(
                 d => d.Code == normalizedCode,
                 cancellationToken: cancellationToken);
             definition = results.FirstOrDefault();
@@ -314,7 +309,7 @@ public partial class QuestService : IQuestService
         ListQuestDefinitionsRequest body,
         CancellationToken cancellationToken)
     {
-        var results = await DefinitionStore.QueryAsync(
+        var results = await _definitionStore.QueryAsync(
             d => (body.GameServiceId == null || d.GameServiceId == body.GameServiceId) &&
                 (body.Category == null || d.Category == body.Category) &&
                 (body.Difficulty == null || d.Difficulty == body.Difficulty) &&
@@ -351,7 +346,7 @@ public partial class QuestService : IQuestService
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var (definition, etag) = await DefinitionStore.GetWithETagAsync(
+            var (definition, etag) = await _definitionStore.GetWithETagAsync(
                 definitionKey,
                 cancellationToken);
 
@@ -374,7 +369,7 @@ public partial class QuestService : IQuestService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await DefinitionStore.TrySaveAsync(
+            var saveResult = await _definitionStore.TrySaveAsync(
                 definitionKey,
                 definition,
                 etag ?? string.Empty,
@@ -388,7 +383,7 @@ public partial class QuestService : IQuestService
             }
 
             // Invalidate cache
-            await DefinitionCache.DeleteAsync(definitionKey, cancellationToken);
+            await _definitionCache.DeleteAsync(definitionKey, cancellationToken);
 
             _logger.LogInformation("Quest definition updated: {DefinitionId}", body.DefinitionId);
             return (StatusCodes.OK, MapToDefinitionResponse(definition));
@@ -408,7 +403,7 @@ public partial class QuestService : IQuestService
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var (definition, etag) = await DefinitionStore.GetWithETagAsync(
+            var (definition, etag) = await _definitionStore.GetWithETagAsync(
                 definitionKey,
                 cancellationToken);
 
@@ -429,7 +424,7 @@ public partial class QuestService : IQuestService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await DefinitionStore.TrySaveAsync(
+            var saveResult = await _definitionStore.TrySaveAsync(
                 definitionKey,
                 definition,
                 etag ?? string.Empty,
@@ -443,7 +438,7 @@ public partial class QuestService : IQuestService
             }
 
             // Invalidate cache
-            await DefinitionCache.DeleteAsync(definitionKey, cancellationToken);
+            await _definitionCache.DeleteAsync(definitionKey, cancellationToken);
 
             _logger.LogInformation("Quest definition deprecated: {DefinitionId}", body.DefinitionId);
             return (StatusCodes.OK, MapToDefinitionResponse(definition));
@@ -474,7 +469,7 @@ public partial class QuestService : IQuestService
         else if (!string.IsNullOrWhiteSpace(body.Code))
         {
             var normalizedCode = body.Code.ToUpperInvariant();
-            var results = await DefinitionStore.QueryAsync(
+            var results = await _definitionStore.QueryAsync(
                 d => d.Code == normalizedCode,
                 cancellationToken: cancellationToken);
             definition = results.FirstOrDefault();
@@ -523,7 +518,7 @@ public partial class QuestService : IQuestService
 
         // Check max active quests
         var characterIndexKey = BuildCharacterIndexKey(body.QuestorCharacterId);
-        var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
+        var characterIndex = await _characterIndex.GetAsync(characterIndexKey, cancellationToken);
         var activeCount = characterIndex?.ActiveQuestIds?.Count ?? 0;
 
         if (activeCount >= _configuration.MaxActiveQuestsPerCharacter)
@@ -537,7 +532,7 @@ public partial class QuestService : IQuestService
         if (definition.Repeatable && definition.CooldownSeconds.HasValue)
         {
             var cooldownKey = BuildCooldownKey(body.QuestorCharacterId, definition.Code);
-            var cooldown = await CooldownStore.GetAsync(cooldownKey, cancellationToken);
+            var cooldown = await _cooldownStore.GetAsync(cooldownKey, cancellationToken);
             if (cooldown != null && cooldown.ExpiresAt > DateTimeOffset.UtcNow)
             {
                 _logger.LogWarning("Quest {Code} is on cooldown for character {CharacterId} until {ExpiresAt}",
@@ -551,7 +546,7 @@ public partial class QuestService : IQuestService
         {
             foreach (var activeQuestId in characterIndex.ActiveQuestIds)
             {
-                var activeInstance = await InstanceStore.QueryAsync(
+                var activeInstance = await _instanceStore.QueryAsync(
                     i => i.QuestInstanceId == activeQuestId && i.DefinitionId == definition.DefinitionId,
                     cancellationToken: cancellationToken);
                 if (activeInstance.Any())
@@ -708,7 +703,7 @@ public partial class QuestService : IQuestService
         };
 
         var instanceKey = BuildInstanceKey(questInstanceId);
-        await InstanceStore.SaveAsync(instanceKey, questInstance, cancellationToken: cancellationToken);
+        await _instanceStore.SaveAsync(instanceKey, questInstance, cancellationToken: cancellationToken);
 
         // Initialize objective progress
         if (definition.Objectives != null)
@@ -730,7 +725,7 @@ public partial class QuestService : IQuestService
                     RevealBehavior = objective.RevealBehavior,
                     Optional = objective.Optional
                 };
-                await ProgressStore.SaveAsync(
+                await _progressStore.SaveAsync(
                     progressKey,
                     progress,
                     new StateOptions { Ttl = _configuration.ProgressCacheTtlSeconds },
@@ -774,7 +769,7 @@ public partial class QuestService : IQuestService
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var (instance, etag) = await InstanceStore.GetWithETagAsync(instanceKey, cancellationToken);
+            var (instance, etag) = await _instanceStore.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (instance == null)
             {
@@ -801,7 +796,7 @@ public partial class QuestService : IQuestService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await InstanceStore.TrySaveAsync(instanceKey, instance, etag ?? string.Empty, cancellationToken: cancellationToken);
+            var saveResult = await _instanceStore.TrySaveAsync(instanceKey, instance, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult == null)
             {
                 _logger.LogDebug("Concurrent modification abandoning quest {QuestInstanceId}, retrying (attempt {Attempt})",
@@ -864,7 +859,7 @@ public partial class QuestService : IQuestService
         CancellationToken cancellationToken)
     {
         var instanceKey = BuildInstanceKey(body.QuestInstanceId);
-        var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+        var instance = await _instanceStore.GetAsync(instanceKey, cancellationToken);
 
         if (instance == null)
         {
@@ -881,7 +876,7 @@ public partial class QuestService : IQuestService
         ListQuestsRequest body,
         CancellationToken cancellationToken)
     {
-        var results = await InstanceStore.QueryAsync(
+        var results = await _instanceStore.QueryAsync(
             i => i.QuestorCharacterIds.Contains(body.CharacterId),
             cancellationToken: cancellationToken);
 
@@ -919,7 +914,7 @@ public partial class QuestService : IQuestService
         CancellationToken cancellationToken)
     {
         // Get all non-deprecated definitions
-        var definitions = await DefinitionStore.QueryAsync(
+        var definitions = await _definitionStore.QueryAsync(
             d => !d.IsDeprecated &&
                 (body.GameServiceId == null || d.GameServiceId == body.GameServiceId) &&
                 (body.QuestGiverCharacterId == null || d.QuestGiverCharacterId == body.QuestGiverCharacterId),
@@ -927,7 +922,7 @@ public partial class QuestService : IQuestService
 
         // Get character's quest state
         var characterIndexKey = BuildCharacterIndexKey(body.CharacterId);
-        var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
+        var characterIndex = await _characterIndex.GetAsync(characterIndexKey, cancellationToken);
         var activeQuestIds = characterIndex?.ActiveQuestIds ?? new List<Guid>();
         var completedCodes = characterIndex?.CompletedQuestCodes ?? new List<string>();
 
@@ -936,7 +931,7 @@ public partial class QuestService : IQuestService
         foreach (var activeQuestId in activeQuestIds)
         {
             var instanceKey = BuildInstanceKey(activeQuestId);
-            var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+            var instance = await _instanceStore.GetAsync(instanceKey, cancellationToken);
             if (instance != null)
             {
                 activeDefinitionIds.Add(instance.DefinitionId);
@@ -958,7 +953,7 @@ public partial class QuestService : IQuestService
             if (definition.Repeatable && definition.CooldownSeconds.HasValue)
             {
                 var cooldownKey = BuildCooldownKey(body.CharacterId, definition.Code);
-                var cooldown = await CooldownStore.GetAsync(cooldownKey, cancellationToken);
+                var cooldown = await _cooldownStore.GetAsync(cooldownKey, cancellationToken);
                 if (cooldown != null && cooldown.ExpiresAt > DateTimeOffset.UtcNow)
                     continue;
             }
@@ -985,7 +980,7 @@ public partial class QuestService : IQuestService
         CancellationToken cancellationToken)
     {
         var characterIndexKey = BuildCharacterIndexKey(body.CharacterId);
-        var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
+        var characterIndex = await _characterIndex.GetAsync(characterIndexKey, cancellationToken);
 
         var activeQuests = new List<QuestLogEntry>();
         var completedCount = characterIndex?.CompletedQuestCodes?.Count ?? 0;
@@ -996,7 +991,7 @@ public partial class QuestService : IQuestService
             foreach (var questId in characterIndex.ActiveQuestIds)
             {
                 var instanceKey = BuildInstanceKey(questId);
-                var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+                var instance = await _instanceStore.GetAsync(instanceKey, cancellationToken);
                 if (instance == null) continue;
 
                 var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
@@ -1015,7 +1010,7 @@ public partial class QuestService : IQuestService
                     foreach (var objDef in definition.Objectives)
                     {
                         var progressKey = BuildProgressKey(questId, objDef.Code);
-                        var progress = await ProgressStore.GetAsync(progressKey, cancellationToken);
+                        var progress = await _progressStore.GetAsync(progressKey, cancellationToken);
                         if (progress != null)
                         {
                             internalProgressList.Add(progress);
@@ -1058,7 +1053,7 @@ public partial class QuestService : IQuestService
         }
 
         // Count failed quests
-        var allInstances = await InstanceStore.QueryAsync(
+        var allInstances = await _instanceStore.QueryAsync(
             i => i.QuestorCharacterIds.Contains(body.CharacterId) && i.Status == QuestStatus.Failed,
             cancellationToken: cancellationToken);
         failedCount = allInstances.Count;
@@ -1083,7 +1078,7 @@ public partial class QuestService : IQuestService
         CancellationToken cancellationToken)
     {
         var instanceKey = BuildInstanceKey(body.QuestInstanceId);
-        var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+        var instance = await _instanceStore.GetAsync(instanceKey, cancellationToken);
 
         if (instance == null)
         {
@@ -1101,7 +1096,7 @@ public partial class QuestService : IQuestService
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var (progress, etag) = await ProgressStore.GetWithETagAsync(progressKey, cancellationToken);
+            var (progress, etag) = await _progressStore.GetWithETagAsync(progressKey, cancellationToken);
 
             if (progress == null)
             {
@@ -1152,7 +1147,7 @@ public partial class QuestService : IQuestService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await ProgressStore.TrySaveAsync(
+            var saveResult = await _progressStore.TrySaveAsync(
                 progressKey,
                 progress,
                 etag ?? string.Empty,
@@ -1223,7 +1218,7 @@ public partial class QuestService : IQuestService
         CancellationToken cancellationToken)
     {
         var instanceKey = BuildInstanceKey(body.QuestInstanceId);
-        var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+        var instance = await _instanceStore.GetAsync(instanceKey, cancellationToken);
 
         if (instance == null)
         {
@@ -1234,7 +1229,7 @@ public partial class QuestService : IQuestService
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var (progress, etag) = await ProgressStore.GetWithETagAsync(progressKey, cancellationToken);
+            var (progress, etag) = await _progressStore.GetWithETagAsync(progressKey, cancellationToken);
 
             if (progress == null)
             {
@@ -1256,7 +1251,7 @@ public partial class QuestService : IQuestService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await ProgressStore.TrySaveAsync(
+            var saveResult = await _progressStore.TrySaveAsync(
                 progressKey,
                 progress,
                 etag ?? string.Empty,
@@ -1309,7 +1304,7 @@ public partial class QuestService : IQuestService
         CancellationToken cancellationToken)
     {
         var instanceKey = BuildInstanceKey(body.QuestInstanceId);
-        var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+        var instance = await _instanceStore.GetAsync(instanceKey, cancellationToken);
 
         if (instance == null)
         {
@@ -1317,7 +1312,7 @@ public partial class QuestService : IQuestService
         }
 
         var progressKey = BuildProgressKey(body.QuestInstanceId, body.ObjectiveCode);
-        var progress = await ProgressStore.GetAsync(progressKey, cancellationToken);
+        var progress = await _progressStore.GetAsync(progressKey, cancellationToken);
 
         if (progress == null)
         {
@@ -1342,7 +1337,7 @@ public partial class QuestService : IQuestService
         CancellationToken cancellationToken)
     {
         // Find quest instance by contract ID
-        var instances = await InstanceStore.QueryAsync(
+        var instances = await _instanceStore.QueryAsync(
             i => i.ContractInstanceId == body.ContractInstanceId,
             cancellationToken: cancellationToken);
 
@@ -1368,7 +1363,7 @@ public partial class QuestService : IQuestService
         CancellationToken cancellationToken)
     {
         // Find quest instance by contract ID
-        var instances = await InstanceStore.QueryAsync(
+        var instances = await _instanceStore.QueryAsync(
             i => i.ContractInstanceId == body.ContractInstanceId,
             cancellationToken: cancellationToken);
 
@@ -1392,17 +1387,17 @@ public partial class QuestService : IQuestService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.GetDefinitionModelAsync");
         var cacheKey = BuildDefinitionKey(definitionId);
-        var definition = await DefinitionCache.GetAsync(cacheKey, cancellationToken);
+        var definition = await _definitionCache.GetAsync(cacheKey, cancellationToken);
         if (definition != null) return definition;
 
-        var results = await DefinitionStore.QueryAsync(
+        var results = await _definitionStore.QueryAsync(
             d => d.DefinitionId == definitionId,
             cancellationToken: cancellationToken);
         definition = results.FirstOrDefault();
 
         if (definition != null)
         {
-            await DefinitionCache.SaveAsync(
+            await _definitionCache.SaveAsync(
                 cacheKey,
                 definition,
                 new StateOptions { Ttl = _configuration.DefinitionCacheTtlSeconds },
@@ -1833,7 +1828,7 @@ public partial class QuestService : IQuestService
         foreach (var objDef in definition.Objectives)
         {
             var progressKey = BuildProgressKey(questInstanceId, objDef.Code);
-            var progress = await ProgressStore.GetAsync(progressKey, cancellationToken);
+            var progress = await _progressStore.GetAsync(progressKey, cancellationToken);
             if (progress != null)
             {
                 objectives.Add(MapToObjectiveProgress(progress));
@@ -1850,7 +1845,7 @@ public partial class QuestService : IQuestService
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var (current, etag) = await InstanceStore.GetWithETagAsync(instanceKey, cancellationToken);
+            var (current, etag) = await _instanceStore.GetWithETagAsync(instanceKey, cancellationToken);
             if (current == null || current.Status != QuestStatus.Active) return;
 
             var now = DateTimeOffset.UtcNow;
@@ -1859,7 +1854,7 @@ public partial class QuestService : IQuestService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await InstanceStore.TrySaveAsync(instanceKey, current, etag ?? string.Empty, cancellationToken: cancellationToken);
+            var saveResult = await _instanceStore.TrySaveAsync(instanceKey, current, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult == null) continue;
 
             // Update character indexes
@@ -1887,7 +1882,7 @@ public partial class QuestService : IQuestService
                         QuestCode = current.Code,
                         ExpiresAt = now.AddSeconds(definition.CooldownSeconds.Value)
                     };
-                    await CooldownStore.SaveAsync(
+                    await _cooldownStore.SaveAsync(
                         cooldownKey,
                         cooldown,
                         new StateOptions { Ttl = definition.CooldownSeconds.Value },
@@ -2334,7 +2329,7 @@ public partial class QuestService : IQuestService
         {
             // Get character quest index for fast lookup
             var indexKey = BuildCharacterIndexKey(body.CharacterId);
-            var characterIndex = await CharacterIndex.GetAsync(indexKey, cancellationToken);
+            var characterIndex = await _characterIndex.GetAsync(indexKey, cancellationToken);
 
             var activeQuestSummaries = new List<ActiveQuestSummary>();
             var categoryBreakdown = new Dictionary<string, int>();
@@ -2347,7 +2342,7 @@ public partial class QuestService : IQuestService
                 {
                     foreach (var questId in characterIndex.ActiveQuestIds)
                     {
-                        var instances = await InstanceStore.QueryAsync(
+                        var instances = await _instanceStore.QueryAsync(
                             i => i.QuestInstanceId == questId,
                             cancellationToken: cancellationToken);
                         var questInstance = instances.FirstOrDefault();
@@ -2363,7 +2358,7 @@ public partial class QuestService : IQuestService
                             foreach (var obj in definition.Objectives)
                             {
                                 var progressKey = BuildProgressKey(questId, obj.Code);
-                                var progress = await ProgressStore.GetAsync(progressKey, cancellationToken);
+                                var progress = await _progressStore.GetAsync(progressKey, cancellationToken);
                                 if (progress?.IsComplete == true) completedObjectives++;
                             }
                         }
@@ -2388,7 +2383,7 @@ public partial class QuestService : IQuestService
 
                     foreach (var code in characterIndex.CompletedQuestCodes)
                     {
-                        var defs = await DefinitionStore.QueryAsync(
+                        var defs = await _definitionStore.QueryAsync(
                             d => d.Code == code.ToUpperInvariant(),
                             cancellationToken: cancellationToken);
                         var def = defs.FirstOrDefault();
@@ -2443,7 +2438,7 @@ public partial class QuestService : IQuestService
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var (current, etag) = await CharacterIndex.GetWithETagAsync(key, cancellationToken);
+            var (current, etag) = await _characterIndex.GetWithETagAsync(key, cancellationToken);
             current ??= new CharacterQuestIndex
             {
                 CharacterId = characterId,
@@ -2456,7 +2451,7 @@ public partial class QuestService : IQuestService
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute for existing records,
             // and for new records empty string signals a create)
-            var saveResult = await CharacterIndex.TrySaveAsync(key, current, etag ?? string.Empty, cancellationToken: cancellationToken);
+            var saveResult = await _characterIndex.TrySaveAsync(key, current, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult != null)
                 return;
 

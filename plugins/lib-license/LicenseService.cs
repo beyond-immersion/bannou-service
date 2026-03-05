@@ -51,7 +51,6 @@ public static class LicenseTopics
 public partial class LicenseService : ILicenseService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<LicenseService> _logger;
     private readonly LicenseServiceConfiguration _configuration;
     private readonly IContractClient _contractClient;
@@ -64,25 +63,17 @@ public partial class LicenseService : ILicenseService
     private readonly IResourceClient _resourceClient;
     private readonly ITelemetryProvider _telemetryProvider;
 
-    #region State Store Accessors
+    /// <summary>Queryable state store for board template definitions.</summary>
+    private readonly IQueryableStateStore<BoardTemplateModel> _boardTemplateStore;
 
-    private IQueryableStateStore<BoardTemplateModel>? _boardTemplateStore;
-    private IQueryableStateStore<BoardTemplateModel> BoardTemplateStore =>
-        _boardTemplateStore ??= _stateStoreFactory.GetQueryableStore<BoardTemplateModel>(StateStoreDefinitions.LicenseBoardTemplates);
+    /// <summary>Queryable state store for license definitions within board templates.</summary>
+    private readonly IQueryableStateStore<LicenseDefinitionModel> _definitionStore;
 
-    private IQueryableStateStore<LicenseDefinitionModel>? _definitionStore;
-    private IQueryableStateStore<LicenseDefinitionModel> DefinitionStore =>
-        _definitionStore ??= _stateStoreFactory.GetQueryableStore<LicenseDefinitionModel>(StateStoreDefinitions.LicenseDefinitions);
+    /// <summary>Queryable state store for board instances owned by entities.</summary>
+    private readonly IQueryableStateStore<BoardInstanceModel> _boardStore;
 
-    private IQueryableStateStore<BoardInstanceModel>? _boardStore;
-    private IQueryableStateStore<BoardInstanceModel> BoardStore =>
-        _boardStore ??= _stateStoreFactory.GetQueryableStore<BoardInstanceModel>(StateStoreDefinitions.LicenseBoards);
-
-    private IStateStore<BoardCacheModel>? _boardCache;
-    private IStateStore<BoardCacheModel> BoardCache =>
-        _boardCache ??= _stateStoreFactory.GetStore<BoardCacheModel>(StateStoreDefinitions.LicenseBoardCache);
-
-    #endregion
+    /// <summary>Cache state store for board unlock state (Redis-backed with TTL).</summary>
+    private readonly IStateStore<BoardCacheModel> _boardCache;
 
     #region Key Building
 
@@ -129,7 +120,7 @@ public partial class LicenseService : ILicenseService
     /// Initializes a new instance of the <see cref="LicenseService"/> class.
     /// </summary>
     /// <param name="messageBus">Message bus for event publishing.</param>
-    /// <param name="stateStoreFactory">State store factory for persistence.</param>
+    /// <param name="stateStoreFactory">State store factory for persistence (used in constructor only).</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Service configuration.</param>
     /// <param name="contractClient">Contract client for unlock execution (L1 hard dependency).</param>
@@ -157,7 +148,6 @@ public partial class LicenseService : ILicenseService
         ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _contractClient = contractClient;
@@ -169,6 +159,12 @@ public partial class LicenseService : ILicenseService
         _lockProvider = lockProvider;
         _resourceClient = resourceClient;
         _telemetryProvider = telemetryProvider;
+
+        // FOUNDATION TENETS - Eagerly resolve all state stores in constructor
+        _boardTemplateStore = stateStoreFactory.GetQueryableStore<BoardTemplateModel>(StateStoreDefinitions.LicenseBoardTemplates);
+        _definitionStore = stateStoreFactory.GetQueryableStore<LicenseDefinitionModel>(StateStoreDefinitions.LicenseDefinitions);
+        _boardStore = stateStoreFactory.GetQueryableStore<BoardInstanceModel>(StateStoreDefinitions.LicenseBoards);
+        _boardCache = stateStoreFactory.GetStore<BoardCacheModel>(StateStoreDefinitions.LicenseBoardCache);
     }
 
     #region Adjacency Helper
@@ -262,7 +258,7 @@ public partial class LicenseService : ILicenseService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.license", "LicenseService.LoadOrRebuildBoardCacheAsync");
         // Try cache first
-        var cache = await BoardCache.GetAsync(BuildBoardCacheKey(board.BoardId), cancellationToken);
+        var cache = await _boardCache.GetAsync(BuildBoardCacheKey(board.BoardId), cancellationToken);
         if (cache != null)
         {
             return cache;
@@ -312,7 +308,7 @@ public partial class LicenseService : ILicenseService
         };
 
         // Persist rebuilt cache
-        await BoardCache.SaveAsync(
+        await _boardCache.SaveAsync(
             BuildBoardCacheKey(board.BoardId),
             cache,
             new StateOptions { Ttl = _configuration.BoardCacheTtlSeconds },
@@ -398,7 +394,7 @@ public partial class LicenseService : ILicenseService
             CreatedAt = now
         };
 
-        await BoardTemplateStore.SaveAsync(
+        await _boardTemplateStore.SaveAsync(
             BuildTemplateKey(template.BoardTemplateId),
             template,
             cancellationToken: cancellationToken);
@@ -430,7 +426,7 @@ public partial class LicenseService : ILicenseService
         GetBoardTemplateRequest body,
         CancellationToken cancellationToken)
     {
-        var template = await BoardTemplateStore.GetAsync(
+        var template = await _boardTemplateStore.GetAsync(
             BuildTemplateKey(body.BoardTemplateId),
             cancellationToken);
 
@@ -449,7 +445,7 @@ public partial class LicenseService : ILicenseService
     {
         var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
 
-        var results = await BoardTemplateStore.QueryAsync(
+        var results = await _boardTemplateStore.QueryAsync(
             t => t.GameServiceId == body.GameServiceId,
             cancellationToken: cancellationToken);
 
@@ -490,7 +486,7 @@ public partial class LicenseService : ILicenseService
             return (StatusCodes.Conflict, null);
         }
 
-        var template = await BoardTemplateStore.GetAsync(
+        var template = await _boardTemplateStore.GetAsync(
             BuildTemplateKey(body.BoardTemplateId),
             cancellationToken);
 
@@ -520,7 +516,7 @@ public partial class LicenseService : ILicenseService
         }
         template.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await BoardTemplateStore.SaveAsync(
+        await _boardTemplateStore.SaveAsync(
             BuildTemplateKey(template.BoardTemplateId),
             template,
             cancellationToken: cancellationToken);
@@ -566,7 +562,7 @@ public partial class LicenseService : ILicenseService
             return (StatusCodes.Conflict, null);
         }
 
-        var template = await BoardTemplateStore.GetAsync(
+        var template = await _boardTemplateStore.GetAsync(
             BuildTemplateKey(body.BoardTemplateId),
             cancellationToken);
 
@@ -576,7 +572,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // Check for active board instances
-        var activeBoards = await BoardStore.QueryAsync(
+        var activeBoards = await _boardStore.QueryAsync(
             b => b.BoardTemplateId == body.BoardTemplateId,
             cancellationToken: cancellationToken);
 
@@ -588,7 +584,7 @@ public partial class LicenseService : ILicenseService
             return (StatusCodes.Conflict, null);
         }
 
-        await BoardTemplateStore.DeleteAsync(
+        await _boardTemplateStore.DeleteAsync(
             BuildTemplateKey(body.BoardTemplateId),
             cancellationToken);
 
@@ -641,7 +637,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // Validate board template exists
-        var template = await BoardTemplateStore.GetAsync(
+        var template = await _boardTemplateStore.GetAsync(
             BuildTemplateKey(body.BoardTemplateId),
             cancellationToken);
 
@@ -661,7 +657,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // Check max definitions per board
-        var existingDefs = await DefinitionStore.QueryAsync(
+        var existingDefs = await _definitionStore.QueryAsync(
             d => d.BoardTemplateId == body.BoardTemplateId,
             cancellationToken: cancellationToken);
 
@@ -722,7 +718,7 @@ public partial class LicenseService : ILicenseService
             CreatedAt = now
         };
 
-        await DefinitionStore.SaveAsync(
+        await _definitionStore.SaveAsync(
             BuildDefinitionKey(body.BoardTemplateId, body.Code),
             definition,
             cancellationToken: cancellationToken);
@@ -738,7 +734,7 @@ public partial class LicenseService : ILicenseService
         GetLicenseDefinitionRequest body,
         CancellationToken cancellationToken)
     {
-        var definition = await DefinitionStore.GetAsync(
+        var definition = await _definitionStore.GetAsync(
             BuildDefinitionKey(body.BoardTemplateId, body.Code),
             cancellationToken);
 
@@ -755,7 +751,7 @@ public partial class LicenseService : ILicenseService
         ListLicenseDefinitionsRequest body,
         CancellationToken cancellationToken)
     {
-        var definitions = await DefinitionStore.QueryAsync(
+        var definitions = await _definitionStore.QueryAsync(
             d => d.BoardTemplateId == body.BoardTemplateId,
             cancellationToken: cancellationToken);
 
@@ -784,7 +780,7 @@ public partial class LicenseService : ILicenseService
             return (StatusCodes.Conflict, null);
         }
 
-        var definition = await DefinitionStore.GetAsync(
+        var definition = await _definitionStore.GetAsync(
             BuildDefinitionKey(body.BoardTemplateId, body.Code),
             cancellationToken);
 
@@ -799,7 +795,7 @@ public partial class LicenseService : ILicenseService
         if (body.Description != null) definition.Description = body.Description;
         if (body.Metadata != null) definition.Metadata = MetadataHelper.ConvertToDictionary(body.Metadata);
 
-        await DefinitionStore.SaveAsync(
+        await _definitionStore.SaveAsync(
             BuildDefinitionKey(body.BoardTemplateId, body.Code),
             definition,
             cancellationToken: cancellationToken);
@@ -829,7 +825,7 @@ public partial class LicenseService : ILicenseService
             return (StatusCodes.Conflict, null);
         }
 
-        var definition = await DefinitionStore.GetAsync(
+        var definition = await _definitionStore.GetAsync(
             BuildDefinitionKey(body.BoardTemplateId, body.Code),
             cancellationToken);
 
@@ -839,12 +835,12 @@ public partial class LicenseService : ILicenseService
         }
 
         // Check if any board instances have this license unlocked
-        var boardInstances = await BoardStore.QueryAsync(
+        var boardInstances = await _boardStore.QueryAsync(
             b => b.BoardTemplateId == body.BoardTemplateId,
             cancellationToken: cancellationToken);
 
         // Load all definitions for cache rebuild support (authoritative inventory fallback)
-        var allDefinitions = await DefinitionStore.QueryAsync(
+        var allDefinitions = await _definitionStore.QueryAsync(
             d => d.BoardTemplateId == body.BoardTemplateId,
             cancellationToken: cancellationToken);
 
@@ -861,7 +857,7 @@ public partial class LicenseService : ILicenseService
             }
         }
 
-        await DefinitionStore.DeleteAsync(
+        await _definitionStore.DeleteAsync(
             BuildDefinitionKey(body.BoardTemplateId, body.Code),
             cancellationToken);
 
@@ -885,7 +881,7 @@ public partial class LicenseService : ILicenseService
             body.OwnerType, body.OwnerId, body.BoardTemplateId);
 
         // Validate board template exists and is active
-        var template = await BoardTemplateStore.GetAsync(
+        var template = await _boardTemplateStore.GetAsync(
             BuildTemplateKey(body.BoardTemplateId),
             cancellationToken);
 
@@ -954,7 +950,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // Enforce one board per template per owner
-        var existingBoard = await BoardStore.GetAsync(
+        var existingBoard = await _boardStore.GetAsync(
             BuildBoardByOwnerKey(body.OwnerType, body.OwnerId, body.BoardTemplateId),
             cancellationToken);
 
@@ -967,7 +963,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // Enforce MaxBoardsPerOwner
-        var ownerBoards = await BoardStore.QueryAsync(
+        var ownerBoards = await _boardStore.QueryAsync(
             b => b.OwnerType == body.OwnerType && b.OwnerId == body.OwnerId,
             cancellationToken: cancellationToken);
 
@@ -1005,16 +1001,16 @@ public partial class LicenseService : ILicenseService
         };
 
         // Save board instance
-        await BoardStore.SaveAsync(BuildBoardKey(board.BoardId), board, cancellationToken: cancellationToken);
+        await _boardStore.SaveAsync(BuildBoardKey(board.BoardId), board, cancellationToken: cancellationToken);
 
         // Save uniqueness key (owner + template)
-        await BoardStore.SaveAsync(
+        await _boardStore.SaveAsync(
             BuildBoardByOwnerKey(board.OwnerType, board.OwnerId, board.BoardTemplateId),
             board,
             cancellationToken: cancellationToken);
 
         // Initialize empty board cache
-        await BoardCache.SaveAsync(
+        await _boardCache.SaveAsync(
             BuildBoardCacheKey(board.BoardId),
             new BoardCacheModel
             {
@@ -1062,7 +1058,7 @@ public partial class LicenseService : ILicenseService
         GetBoardRequest body,
         CancellationToken cancellationToken)
     {
-        var board = await BoardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
+        var board = await _boardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
 
         if (board == null)
         {
@@ -1081,13 +1077,13 @@ public partial class LicenseService : ILicenseService
 
         if (body.GameServiceId.HasValue)
         {
-            boards = await BoardStore.QueryAsync(
+            boards = await _boardStore.QueryAsync(
                 b => b.OwnerType == body.OwnerType && b.OwnerId == body.OwnerId && b.GameServiceId == body.GameServiceId.Value,
                 cancellationToken: cancellationToken);
         }
         else
         {
-            boards = await BoardStore.QueryAsync(
+            boards = await _boardStore.QueryAsync(
                 b => b.OwnerType == body.OwnerType && b.OwnerId == body.OwnerId,
                 cancellationToken: cancellationToken);
         }
@@ -1116,7 +1112,7 @@ public partial class LicenseService : ILicenseService
             return (StatusCodes.Conflict, null);
         }
 
-        var board = await BoardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
+        var board = await _boardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
 
         if (board == null)
         {
@@ -1145,13 +1141,13 @@ public partial class LicenseService : ILicenseService
         }
 
         // Delete board records
-        await BoardStore.DeleteAsync(BuildBoardKey(board.BoardId), cancellationToken);
-        await BoardStore.DeleteAsync(
+        await _boardStore.DeleteAsync(BuildBoardKey(board.BoardId), cancellationToken);
+        await _boardStore.DeleteAsync(
             BuildBoardByOwnerKey(board.OwnerType, board.OwnerId, board.BoardTemplateId),
             cancellationToken);
 
         // Invalidate cache
-        await BoardCache.DeleteAsync(BuildBoardCacheKey(board.BoardId), cancellationToken);
+        await _boardCache.DeleteAsync(BuildBoardCacheKey(board.BoardId), cancellationToken);
 
         _logger.LogInformation("Deleted board {BoardId} for owner {OwnerType}:{OwnerId}",
             board.BoardId, board.OwnerType, board.OwnerId);
@@ -1198,7 +1194,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // 2. Load board instance
-        var board = await BoardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
+        var board = await _boardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
         if (board == null)
         {
             _logger.LogWarning("Board {BoardId} not found for unlock attempt", body.BoardId);
@@ -1206,7 +1202,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // 3. Load board template
-        var template = await BoardTemplateStore.GetAsync(
+        var template = await _boardTemplateStore.GetAsync(
             BuildTemplateKey(board.BoardTemplateId), cancellationToken);
         if (template == null)
         {
@@ -1216,7 +1212,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // 4. Load license definition
-        var definition = await DefinitionStore.GetAsync(
+        var definition = await _definitionStore.GetAsync(
             BuildDefinitionKey(board.BoardTemplateId, body.LicenseCode), cancellationToken);
         if (definition == null)
         {
@@ -1226,7 +1222,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // 5. Load all definitions for adjacency/prerequisite checks and cache rebuild
-        var allDefinitions = await DefinitionStore.QueryAsync(
+        var allDefinitions = await _definitionStore.QueryAsync(
             d => d.BoardTemplateId == board.BoardTemplateId,
             cancellationToken: cancellationToken);
 
@@ -1439,7 +1435,7 @@ public partial class LicenseService : ILicenseService
         var cacheKey = BuildBoardCacheKey(body.BoardId);
         for (var attempt = 0; attempt <= _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var (currentCache, etag) = await BoardCache.GetWithETagAsync(cacheKey, cancellationToken);
+            var (currentCache, etag) = await _boardCache.GetWithETagAsync(cacheKey, cancellationToken);
             currentCache ??= new BoardCacheModel { BoardId = body.BoardId, UnlockedPositions = new List<UnlockedLicenseEntry>() };
 
             currentCache.UnlockedPositions.Add(new UnlockedLicenseEntry
@@ -1455,13 +1451,13 @@ public partial class LicenseService : ILicenseService
             if (etag == null)
             {
                 // No existing cache entry - create new with TTL
-                await BoardCache.SaveAsync(cacheKey, currentCache,
+                await _boardCache.SaveAsync(cacheKey, currentCache,
                     new StateOptions { Ttl = _configuration.BoardCacheTtlSeconds },
                     cancellationToken);
                 break;
             }
 
-            var newEtag = await BoardCache.TrySaveAsync(cacheKey, currentCache, etag, cancellationToken);
+            var newEtag = await _boardCache.TrySaveAsync(cacheKey, currentCache, etag, cancellationToken);
             if (newEtag != null)
             {
                 break;
@@ -1573,14 +1569,14 @@ public partial class LicenseService : ILicenseService
         CancellationToken cancellationToken)
     {
         // Load board instance
-        var board = await BoardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
+        var board = await _boardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
         if (board == null)
         {
             return (StatusCodes.NotFound, null);
         }
 
         // Load template
-        var template = await BoardTemplateStore.GetAsync(
+        var template = await _boardTemplateStore.GetAsync(
             BuildTemplateKey(board.BoardTemplateId), cancellationToken);
         if (template == null)
         {
@@ -1588,7 +1584,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // Load definition
-        var definition = await DefinitionStore.GetAsync(
+        var definition = await _definitionStore.GetAsync(
             BuildDefinitionKey(board.BoardTemplateId, body.LicenseCode), cancellationToken);
         if (definition == null)
         {
@@ -1596,7 +1592,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // Load all definitions for cache rebuild if needed
-        var allDefinitions = await DefinitionStore.QueryAsync(
+        var allDefinitions = await _definitionStore.QueryAsync(
             d => d.BoardTemplateId == board.BoardTemplateId,
             cancellationToken: cancellationToken);
 
@@ -1666,14 +1662,14 @@ public partial class LicenseService : ILicenseService
         CancellationToken cancellationToken)
     {
         // Load board instance
-        var board = await BoardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
+        var board = await _boardStore.GetAsync(BuildBoardKey(body.BoardId), cancellationToken);
         if (board == null)
         {
             return (StatusCodes.NotFound, null);
         }
 
         // Load template
-        var template = await BoardTemplateStore.GetAsync(
+        var template = await _boardTemplateStore.GetAsync(
             BuildTemplateKey(board.BoardTemplateId), cancellationToken);
         if (template == null)
         {
@@ -1681,7 +1677,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // Load all definitions for this template
-        var definitions = await DefinitionStore.QueryAsync(
+        var definitions = await _definitionStore.QueryAsync(
             d => d.BoardTemplateId == board.BoardTemplateId,
             cancellationToken: cancellationToken);
 
@@ -1763,7 +1759,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // Validate board template exists
-        var template = await BoardTemplateStore.GetAsync(
+        var template = await _boardTemplateStore.GetAsync(
             BuildTemplateKey(body.BoardTemplateId), cancellationToken);
         if (template == null)
         {
@@ -1771,7 +1767,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // Load existing definitions for duplicate and limit checks
-        var existingDefs = await DefinitionStore.QueryAsync(
+        var existingDefs = await _definitionStore.QueryAsync(
             d => d.BoardTemplateId == body.BoardTemplateId,
             cancellationToken: cancellationToken);
 
@@ -1858,7 +1854,7 @@ public partial class LicenseService : ILicenseService
                 CreatedAt = now
             };
 
-            await DefinitionStore.SaveAsync(
+            await _definitionStore.SaveAsync(
                 BuildDefinitionKey(body.BoardTemplateId, defRequest.Code),
                 definition,
                 cancellationToken: cancellationToken);
@@ -1912,7 +1908,7 @@ public partial class LicenseService : ILicenseService
             body.SourceBoardId, body.TargetOwnerType, body.TargetOwnerId);
 
         // 1. Load source board
-        var sourceBoard = await BoardStore.GetAsync(
+        var sourceBoard = await _boardStore.GetAsync(
             BuildBoardKey(body.SourceBoardId),
             cancellationToken);
 
@@ -1923,7 +1919,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // 2. Load board template
-        var template = await BoardTemplateStore.GetAsync(
+        var template = await _boardTemplateStore.GetAsync(
             BuildTemplateKey(sourceBoard.BoardTemplateId),
             cancellationToken);
 
@@ -1983,7 +1979,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // 7. Enforce one board per template per owner
-        var existingBoard = await BoardStore.GetAsync(
+        var existingBoard = await _boardStore.GetAsync(
             BuildBoardByOwnerKey(body.TargetOwnerType, body.TargetOwnerId, sourceBoard.BoardTemplateId),
             cancellationToken);
 
@@ -1996,7 +1992,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // 8. Enforce MaxBoardsPerOwner
-        var ownerBoards = await BoardStore.QueryAsync(
+        var ownerBoards = await _boardStore.QueryAsync(
             b => b.OwnerType == body.TargetOwnerType && b.OwnerId == body.TargetOwnerId,
             cancellationToken: cancellationToken);
 
@@ -2009,7 +2005,7 @@ public partial class LicenseService : ILicenseService
         }
 
         // 9. Load source board's unlock state
-        var allDefinitions = await DefinitionStore.QueryAsync(
+        var allDefinitions = await _definitionStore.QueryAsync(
             d => d.BoardTemplateId == sourceBoard.BoardTemplateId,
             cancellationToken: cancellationToken);
 
@@ -2144,16 +2140,16 @@ public partial class LicenseService : ILicenseService
             CreatedAt = now
         };
 
-        await BoardStore.SaveAsync(BuildBoardKey(newBoard.BoardId), newBoard, cancellationToken: cancellationToken);
+        await _boardStore.SaveAsync(BuildBoardKey(newBoard.BoardId), newBoard, cancellationToken: cancellationToken);
 
         // 13. Save uniqueness key
-        await BoardStore.SaveAsync(
+        await _boardStore.SaveAsync(
             BuildBoardByOwnerKey(newBoard.OwnerType, newBoard.OwnerId, newBoard.BoardTemplateId),
             newBoard,
             cancellationToken: cancellationToken);
 
         // 14. Initialize board cache with cloned unlock state
-        await BoardCache.SaveAsync(
+        await _boardCache.SaveAsync(
             BuildBoardCacheKey(newBoard.BoardId),
             new BoardCacheModel
             {
@@ -2235,7 +2231,7 @@ public partial class LicenseService : ILicenseService
 
         var boardsDeleted = 0;
 
-        var boards = await BoardStore.QueryAsync(
+        var boards = await _boardStore.QueryAsync(
             b => b.OwnerType == body.OwnerType && b.OwnerId == body.OwnerId,
             cancellationToken: cancellationToken);
 
@@ -2270,17 +2266,17 @@ public partial class LicenseService : ILicenseService
             }
 
             // Delete the board instance record
-            await BoardStore.DeleteAsync(
+            await _boardStore.DeleteAsync(
                 BuildBoardKey(board.BoardId),
                 cancellationToken);
 
             // Delete the owner-template uniqueness key
-            await BoardStore.DeleteAsync(
+            await _boardStore.DeleteAsync(
                 BuildBoardByOwnerKey(board.OwnerType, board.OwnerId, board.BoardTemplateId),
                 cancellationToken);
 
             // Invalidate board cache
-            await BoardCache.DeleteAsync(
+            await _boardCache.DeleteAsync(
                 BuildBoardCacheKey(board.BoardId),
                 cancellationToken);
 

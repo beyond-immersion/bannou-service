@@ -47,9 +47,9 @@ internal class ServiceRegistrationInfo
     public string ServiceId { get; set; } = string.Empty;
 
     /// <summary>
-    /// Service API version at registration time.
+    /// Service API version at registration time, null if not provided.
     /// </summary>
-    public string Version { get; set; } = string.Empty;
+    public string? Version { get; set; }
 
     /// <summary>
     /// When the service registered its permissions.

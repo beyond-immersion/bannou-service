@@ -12,11 +12,16 @@ namespace BeyondImmersion.BannouService.Documentation.Services;
 /// </summary>
 public class RedisSearchIndexService : ISearchIndexService
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<RedisSearchIndexService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
     private readonly ITelemetryProvider _telemetryProvider;
+
+    /// <summary>Whether the documentation store supports Redis Search (cached at construction).</summary>
+    private readonly bool _supportsSearch;
+
+    /// <summary>Searchable store for Redis Search queries (null when search is not supported).</summary>
+    private readonly ISearchableStateStore<DocumentIndexData>? _searchStore;
 
     private const string INDEX_PREFIX = "doc-idx:";
 
@@ -61,11 +66,16 @@ public class RedisSearchIndexService : ISearchIndexService
         ArgumentNullException.ThrowIfNull(messageBus, nameof(messageBus));
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
 
-        _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _messageBus = messageBus;
         _telemetryProvider = telemetryProvider;
+
+        // Constructor-cache search support check and searchable store per FOUNDATION TENETS
+        _supportsSearch = stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation);
+        _searchStore = _supportsSearch
+            ? stateStoreFactory.GetSearchableStore<DocumentIndexData>(StateStoreDefinitions.Documentation)
+            : null;
     }
 
     /// <inheritdoc />
@@ -82,22 +92,20 @@ public class RedisSearchIndexService : ISearchIndexService
 
         try
         {
-            if (!_stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation))
+            if (!_supportsSearch || _searchStore == null)
             {
                 _logger.LogWarning("Store '{Store}' does not support search - falling back to in-memory indexing", StateStoreDefinitions.Documentation);
                 return;
             }
 
-            var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(StateStoreDefinitions.Documentation);
-
             // Check if index exists
-            var indexInfo = await searchStore.GetIndexInfoAsync(indexName, cancellationToken);
+            var indexInfo = await _searchStore.GetIndexInfoAsync(indexName, cancellationToken);
             if (indexInfo == null)
             {
                 _logger.LogInformation("Creating Redis Search index '{Index}' for namespace '{Namespace}'",
                     indexName, namespaceId);
 
-                await searchStore.CreateIndexAsync(
+                await _searchStore.CreateIndexAsync(
                     indexName,
                     DocumentSchema,
                     new SearchIndexOptions
@@ -147,16 +155,14 @@ public class RedisSearchIndexService : ISearchIndexService
         {
             var indexName = GetIndexName(namespaceId);
 
-            if (!_stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation))
+            if (!_supportsSearch || _searchStore == null)
             {
                 _logger.LogWarning("Store '{Store}' does not support search", StateStoreDefinitions.Documentation);
                 return 0;
             }
 
-            var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(StateStoreDefinitions.Documentation);
-
             // Drop existing index if it exists
-            await searchStore.DropIndexAsync(indexName, deleteDocuments: false, cancellationToken);
+            await _searchStore.DropIndexAsync(indexName, deleteDocuments: false, cancellationToken);
 
             // Remove from initialized cache so next operation recreates it (thread-safe)
             _initializedNamespaces.TryRemove(namespaceId, out _);
@@ -165,7 +171,7 @@ public class RedisSearchIndexService : ISearchIndexService
             await EnsureIndexExistsAsync(namespaceId, cancellationToken);
 
             // Get current document count from the new index
-            var indexInfo = await searchStore.GetIndexInfoAsync(indexName, cancellationToken);
+            var indexInfo = await _searchStore.GetIndexInfoAsync(indexName, cancellationToken);
             var documentCount = (int)(indexInfo?.DocumentCount ?? 0);
 
             _logger.LogInformation("Rebuilt Redis Search index for namespace '{Namespace}': {DocumentCount} documents indexed",
@@ -227,13 +233,12 @@ public class RedisSearchIndexService : ISearchIndexService
         {
             await EnsureIndexExistsAsync(namespaceId, cancellationToken);
 
-            if (!_stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation))
+            if (!_supportsSearch || _searchStore == null)
             {
                 _logger.LogWarning("Search not supported, returning empty results");
                 return Array.Empty<SearchResult>();
             }
 
-            var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(StateStoreDefinitions.Documentation);
             var indexName = GetIndexName(namespaceId);
 
             // Build Redis Search query
@@ -257,7 +262,7 @@ public class RedisSearchIndexService : ISearchIndexService
 
             var query = string.Join(" ", queryParts);
 
-            var result = await searchStore.SearchAsync(
+            var result = await _searchStore.SearchAsync(
                 indexName,
                 query,
                 new SearchQueryOptions
@@ -313,7 +318,7 @@ public class RedisSearchIndexService : ISearchIndexService
         {
             await EnsureIndexExistsAsync(namespaceId, cancellationToken);
 
-            if (!_stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation))
+            if (!_supportsSearch || _searchStore == null)
             {
                 return Array.Empty<Guid>();
             }
@@ -338,12 +343,11 @@ public class RedisSearchIndexService : ISearchIndexService
         {
             await EnsureIndexExistsAsync(namespaceId, cancellationToken);
 
-            if (!_stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation))
+            if (!_supportsSearch || _searchStore == null)
             {
                 return Array.Empty<Guid>();
             }
 
-            var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(StateStoreDefinitions.Documentation);
             var indexName = GetIndexName(namespaceId);
 
             // The search index is already scoped by namespace prefix (doc:{namespaceId}:),
@@ -362,7 +366,7 @@ public class RedisSearchIndexService : ISearchIndexService
                 query = "*";
             }
 
-            var result = await searchStore.SearchAsync(
+            var result = await _searchStore.SearchAsync(
                 indexName,
                 query,
                 new SearchQueryOptions
@@ -390,15 +394,14 @@ public class RedisSearchIndexService : ISearchIndexService
         {
             await EnsureIndexExistsAsync(namespaceId, cancellationToken);
 
-            if (!_stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation))
+            if (!_supportsSearch || _searchStore == null)
             {
                 return new NamespaceStats(0, new Dictionary<DocumentCategory, int>(), 0);
             }
 
-            var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(StateStoreDefinitions.Documentation);
             var indexName = GetIndexName(namespaceId);
 
-            var indexInfo = await searchStore.GetIndexInfoAsync(indexName, cancellationToken);
+            var indexInfo = await _searchStore.GetIndexInfoAsync(indexName, cancellationToken);
             if (indexInfo == null)
             {
                 return new NamespaceStats(0, new Dictionary<DocumentCategory, int>(), 0);

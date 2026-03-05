@@ -45,9 +45,8 @@ public partial class AssetService
             evt.JobId, evt.MetabundleId, evt.AssetCount);
 
         // Load job from state store
-        var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(StateStoreDefinitions.Asset);
         var jobKey = $"{_configuration.MetabundleJobKeyPrefix}{evt.JobId}";
-        var job = await jobStore.GetAsync(jobKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var job = await _metabundleJobStore.GetAsync(jobKey, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         if (job == null)
         {
@@ -67,7 +66,7 @@ public partial class AssetService
             job.CompletedAt = DateTimeOffset.UtcNow;
             job.ErrorCode = MetabundleErrorCode.Timeout;
             job.ErrorMessage = "Job timed out before processing could start";
-            await jobStore.SaveAsync(jobKey, job,
+            await _metabundleJobStore.SaveAsync(jobKey, job,
             new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
             cancellationToken).ConfigureAwait(false);
 
@@ -78,7 +77,7 @@ public partial class AssetService
         // Update status to Processing
         job.Status = BundleStatus.Processing;
         job.UpdatedAt = DateTimeOffset.UtcNow;
-        await jobStore.SaveAsync(jobKey, job,
+        await _metabundleJobStore.SaveAsync(jobKey, job,
             new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
             cancellationToken).ConfigureAwait(false);
 
@@ -95,7 +94,7 @@ public partial class AssetService
             job.CompletedAt = DateTimeOffset.UtcNow;
             job.ProcessingTimeMs = stopwatch.ElapsedMilliseconds;
             job.Result = result;
-            await jobStore.SaveAsync(jobKey, job,
+            await _metabundleJobStore.SaveAsync(jobKey, job,
             new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
             cancellationToken).ConfigureAwait(false);
 
@@ -117,7 +116,7 @@ public partial class AssetService
             job.ProcessingTimeMs = stopwatch.ElapsedMilliseconds;
             job.ErrorCode = MetabundleErrorCode.InternalError;
             job.ErrorMessage = ex.Message;
-            await jobStore.SaveAsync(jobKey, job,
+            await _metabundleJobStore.SaveAsync(jobKey, job,
             new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
             cancellationToken).ConfigureAwait(false);
         }
@@ -140,8 +139,6 @@ public partial class AssetService
 
         var request = job.Request;
         var bucket = _configuration.StorageBucket;
-        var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(StateStoreDefinitions.Asset);
-        var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(StateStoreDefinitions.Asset);
         var jobKey = $"{_configuration.MetabundleJobKeyPrefix}{job.JobId}";
 
         // Load streaming options from configuration
@@ -152,7 +149,7 @@ public partial class AssetService
         foreach (var sourceBundleId in request.SourceBundleIds ?? Enumerable.Empty<string>())
         {
             var bundleKey = $"{_configuration.BundleKeyPrefix}{sourceBundleId}";
-            var sourceBundle = await bundleStore.GetAsync(bundleKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var sourceBundle = await _bundleMetadataStore.GetAsync(bundleKey, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (sourceBundle != null && sourceBundle.LifecycleStatus == BundleLifecycleStatus.Active)
             {
                 sourceBundles.Add(sourceBundle);
@@ -160,12 +157,11 @@ public partial class AssetService
         }
 
         // Load standalone assets if specified
-        var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(StateStoreDefinitions.Asset);
         var standaloneAssets = new List<InternalAssetRecord>();
         foreach (var assetId in request.StandaloneAssetIds ?? Enumerable.Empty<string>())
         {
             var assetKey = $"{_configuration.AssetKeyPrefix}{assetId}";
-            var asset = await assetStore.GetAsync(assetKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var asset = await _internalAssetRecordStore.GetAsync(assetKey, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (asset != null && asset.ProcessingStatus == ProcessingStatus.Complete)
             {
                 standaloneAssets.Add(asset);
@@ -267,7 +263,7 @@ public partial class AssetService
                     if (processedCount % streamingOptions.ProgressUpdateIntervalAssets == 0)
                     {
                         var progress = 10 + (int)(80.0 * processedCount / totalAssetCount);
-                        await UpdateJobProgressAsync(jobStore, jobKey, job, progress, cancellationToken)
+                        await UpdateJobProgressAsync(_metabundleJobStore, jobKey, job, progress, cancellationToken)
                             .ConfigureAwait(false);
                     }
                 }
@@ -304,13 +300,13 @@ public partial class AssetService
                 if (processedCount % streamingOptions.ProgressUpdateIntervalAssets == 0)
                 {
                     var progress = 10 + (int)(80.0 * processedCount / totalAssetCount);
-                    await UpdateJobProgressAsync(jobStore, jobKey, job, progress, cancellationToken)
+                    await UpdateJobProgressAsync(_metabundleJobStore, jobKey, job, progress, cancellationToken)
                         .ConfigureAwait(false);
                 }
             }
 
             // Update progress to finalizing phase
-            await UpdateJobProgressAsync(jobStore, jobKey, job, 90, cancellationToken).ConfigureAwait(false);
+            await UpdateJobProgressAsync(_metabundleJobStore, jobKey, job, 90, cancellationToken).ConfigureAwait(false);
 
             // Finalize the streaming bundle
             bundleSize = await writer.FinalizeAsync(
@@ -364,7 +360,7 @@ public partial class AssetService
         };
 
         var bundleCacheTtlSeconds = _configuration.DefaultBundleCacheTtlHours * 3600;
-        await bundleStore.SaveAsync(metabundleKey, metabundleMetadata,
+        await _bundleMetadataStore.SaveAsync(metabundleKey, metabundleMetadata,
             new StateOptions { Ttl = bundleCacheTtlSeconds },
             cancellationToken).ConfigureAwait(false);
 

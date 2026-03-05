@@ -31,7 +31,14 @@ namespace BeyondImmersion.BannouService.GameSession;
 [BannouService("game-session", typeof(IGameSessionService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class GameSessionService : IGameSessionService
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
+    /// <summary>Ephemeral store for individual game session records (Redis).</summary>
+    private readonly IStateStore<GameSessionModel> _sessionStore;
+
+    /// <summary>Ephemeral store for per-game session ID lists (Redis).</summary>
+    private readonly IStateStore<List<string>> _sessionListStore;
+
+    /// <summary>Ephemeral store for per-subscriber active session mappings (Redis).</summary>
+    private readonly IStateStore<SubscriberSessionsModel> _subscriberSessionStore;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<GameSessionService> _logger;
     private readonly GameSessionServiceConfiguration _configuration;
@@ -125,7 +132,7 @@ public partial class GameSessionService : IGameSessionService
     /// <summary>
     /// Creates a new GameSessionService instance.
     /// </summary>
-    /// <param name="stateStoreFactory">State store factory for state operations.</param>
+    /// <param name="stateStoreFactory">State store factory for resolving state stores (FOUNDATION TENETS).</param>
     /// <param name="messageBus">Message bus for pub/sub operations.</param>
     /// <param name="logger">Logger for this service.</param>
     /// <param name="configuration">Service configuration.</param>
@@ -150,7 +157,9 @@ public partial class GameSessionService : IGameSessionService
         IGameServiceClient gameServiceClient,
         ITelemetryProvider telemetryProvider)
     {
-        _stateStoreFactory = stateStoreFactory;
+        _sessionStore = stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
+        _sessionListStore = stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
+        _subscriberSessionStore = stateStoreFactory.GetStore<SubscriberSessionsModel>(StateStoreDefinitions.GameSession);
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
@@ -185,7 +194,7 @@ public partial class GameSessionService : IGameSessionService
             body.GameType, body.Status);
 
         // Get all session IDs
-        var sessionIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession)
+        var sessionIds = await _sessionListStore
             .GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
 
         var sessions = new List<GameSessionResponse>();
@@ -281,7 +290,7 @@ public partial class GameSessionService : IGameSessionService
         }
 
         // Save to state store
-        await _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession)
+        await _sessionStore
             .SaveAsync(SESSION_KEY_PREFIX + session.SessionId, session, SessionTtlOptions, cancellationToken);
 
         // Add to session list under distributed lock (read-modify-write)
@@ -293,12 +302,11 @@ public partial class GameSessionService : IGameSessionService
             return (StatusCodes.Conflict, null);
         }
 
-        var sessionListStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
-        var sessionIds = await sessionListStore.GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
+        var sessionIds = await _sessionListStore.GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
 
         sessionIds.Add(session.SessionId.ToString());
 
-        await sessionListStore.SaveAsync(SESSION_LIST_KEY, sessionIds, cancellationToken: cancellationToken);
+        await _sessionListStore.SaveAsync(SESSION_LIST_KEY, sessionIds, cancellationToken: cancellationToken);
 
         // Publish event with full model data
         await _messageBus.TryPublishAsync(
@@ -391,8 +399,8 @@ public partial class GameSessionService : IGameSessionService
             return (StatusCodes.Conflict, null);
         }
 
-        var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
-        var model = await sessionStore.GetAsync(sessionKey, cancellationToken);
+
+        var model = await _sessionStore.GetAsync(sessionKey, cancellationToken);
 
         if (model == null)
         {
@@ -475,7 +483,7 @@ public partial class GameSessionService : IGameSessionService
         }
 
         // Save updated session
-        await sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
+        await _sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
 
         // Publish domain event (SessionId in event = lobby ID for game session identification)
         await _messageBus.TryPublishAsync(
@@ -567,7 +575,7 @@ public partial class GameSessionService : IGameSessionService
             return (StatusCodes.NotFound, null);
         }
 
-        var model = await _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession)
+        var model = await _sessionStore
             .GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), cancellationToken);
 
         if (model == null)
@@ -648,8 +656,8 @@ public partial class GameSessionService : IGameSessionService
             return StatusCodes.Conflict;
         }
 
-        var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
-        var model = await sessionStore.GetAsync(sessionKey, cancellationToken);
+
+        var model = await _sessionStore.GetAsync(sessionKey, cancellationToken);
 
         if (model == null)
         {
@@ -726,7 +734,7 @@ public partial class GameSessionService : IGameSessionService
         }
 
         // Save updated session
-        await sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
+        await _sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
 
         // Publish domain event
         await _messageBus.TryPublishAsync(
@@ -802,8 +810,8 @@ public partial class GameSessionService : IGameSessionService
             return (StatusCodes.Conflict, null);
         }
 
-        var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
-        var model = await sessionStore.GetAsync(sessionKey, cancellationToken);
+
+        var model = await _sessionStore.GetAsync(sessionKey, cancellationToken);
 
         if (model == null)
         {
@@ -946,7 +954,7 @@ public partial class GameSessionService : IGameSessionService
         }
 
         // Save updated session
-        await sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
+        await _sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
 
         // Publish domain event
         await _messageBus.TryPublishAsync(
@@ -1038,8 +1046,8 @@ public partial class GameSessionService : IGameSessionService
             return StatusCodes.Conflict;
         }
 
-        var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
-        var model = await sessionStore.GetAsync(sessionKey, cancellationToken);
+
+        var model = await _sessionStore.GetAsync(sessionKey, cancellationToken);
 
         if (model == null)
         {
@@ -1115,7 +1123,7 @@ public partial class GameSessionService : IGameSessionService
         }
 
         // Save updated session
-        await sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
+        await _sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
 
         // Publish domain event
         await _messageBus.TryPublishAsync(
@@ -1181,8 +1189,8 @@ public partial class GameSessionService : IGameSessionService
             gameSessionId, targetSessionId);
 
         // Verify the game session exists
-        var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
-        var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + gameSessionId, cancellationToken);
+
+        var model = await _sessionStore.GetAsync(SESSION_KEY_PREFIX + gameSessionId, cancellationToken);
 
         if (model == null)
         {
@@ -1283,8 +1291,8 @@ public partial class GameSessionService : IGameSessionService
             return StatusCodes.Conflict;
         }
 
-        var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
-        var model = await sessionStore.GetAsync(sessionKey, cancellationToken);
+
+        var model = await _sessionStore.GetAsync(sessionKey, cancellationToken);
 
         if (model == null)
         {
@@ -1357,7 +1365,7 @@ public partial class GameSessionService : IGameSessionService
         }
 
         // Save updated session
-        await sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
+        await _sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
 
         // Publish domain event
         await _messageBus.TryPublishAsync(
@@ -1428,7 +1436,7 @@ public partial class GameSessionService : IGameSessionService
             return StatusCodes.NotFound;
         }
 
-        var model = await _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession)
+        var model = await _sessionStore
             .GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), cancellationToken);
 
         if (model == null)
@@ -1815,19 +1823,18 @@ public partial class GameSessionService : IGameSessionService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(StateStoreDefinitions.GameSession);
             var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
 
             for (var attempt = 0; attempt < _configuration.SubscriberSessionRetryMaxAttempts; attempt++)
             {
-                var (existing, etag) = await store.GetWithETagAsync(key);
+                var (existing, etag) = await _subscriberSessionStore.GetWithETagAsync(key);
                 var model = existing ?? new SubscriberSessionsModel { AccountId = accountId };
                 model.SessionIds.Add(sessionId);
                 model.UpdatedAt = DateTimeOffset.UtcNow;
 
                 // Empty string ETag signals a new record to TrySaveAsync when
                 // GetWithETagAsync returns null etag for non-existent keys
-                var result = await store.TrySaveAsync(key, model, etag ?? string.Empty);
+                var result = await _subscriberSessionStore.TrySaveAsync(key, model, etag ?? string.Empty);
                 if (result != null)
                 {
                     _logger.LogDebug("Stored subscriber session {SessionId} for account {AccountId}", sessionId, accountId);
@@ -1857,12 +1864,11 @@ public partial class GameSessionService : IGameSessionService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(StateStoreDefinitions.GameSession);
             var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
 
             for (var attempt = 0; attempt < _configuration.SubscriberSessionRetryMaxAttempts; attempt++)
             {
-                var (existing, etag) = await store.GetWithETagAsync(key);
+                var (existing, etag) = await _subscriberSessionStore.GetWithETagAsync(key);
                 if (existing == null)
                 {
                     _logger.LogDebug("No subscriber sessions found for account {AccountId}, nothing to remove", accountId);
@@ -1874,14 +1880,14 @@ public partial class GameSessionService : IGameSessionService
 
                 if (existing.SessionIds.Count == 0)
                 {
-                    await store.DeleteAsync(key);
+                    await _subscriberSessionStore.DeleteAsync(key);
                     _logger.LogDebug("Removed last subscriber session {SessionId} for account {AccountId}", sessionId, accountId);
                     return;
                 }
 
                 // Empty string ETag signals a new record to TrySaveAsync when
                 // GetWithETagAsync returns null etag for non-existent keys
-                var result = await store.TrySaveAsync(key, existing, etag ?? string.Empty);
+                var result = await _subscriberSessionStore.TrySaveAsync(key, existing, etag ?? string.Empty);
                 if (result != null)
                 {
                     _logger.LogDebug("Removed subscriber session {SessionId} for account {AccountId}", sessionId, accountId);
@@ -1910,10 +1916,9 @@ public partial class GameSessionService : IGameSessionService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(StateStoreDefinitions.GameSession);
             var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
 
-            var existing = await store.GetAsync(key);
+            var existing = await _subscriberSessionStore.GetAsync(key);
             return existing?.SessionIds.ToList() ?? new List<Guid>();
         }
         catch (Exception ex)
@@ -1934,10 +1939,9 @@ public partial class GameSessionService : IGameSessionService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(StateStoreDefinitions.GameSession);
             var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
 
-            var existing = await store.GetAsync(key);
+            var existing = await _subscriberSessionStore.GetAsync(key);
             return existing?.SessionIds.Contains(sessionId) == true;
         }
         catch (Exception ex)
@@ -2087,10 +2091,10 @@ public partial class GameSessionService : IGameSessionService
 
         try
         {
-            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
+    
 
             // Check for existing lobby (fast path without lock)
-            var existingLobby = await sessionStore.GetAsync(lobbyKey);
+            var existingLobby = await _sessionStore.GetAsync(lobbyKey);
             if (existingLobby != null && existingLobby.Status != SessionStatus.Finished)
             {
                 _logger.LogDebug("Found existing lobby {LobbyId} for {StubName}", existingLobby.SessionId, stubName);
@@ -2104,12 +2108,12 @@ public partial class GameSessionService : IGameSessionService
             {
                 _logger.LogWarning("Could not acquire lobby lock for {StubName}, retrying read", stubName);
                 // Another instance may have created the lobby while we waited
-                existingLobby = await sessionStore.GetAsync(lobbyKey);
+                existingLobby = await _sessionStore.GetAsync(lobbyKey);
                 return existingLobby?.SessionId;
             }
 
             // Re-check under lock (another instance may have created it)
-            existingLobby = await sessionStore.GetAsync(lobbyKey);
+            existingLobby = await _sessionStore.GetAsync(lobbyKey);
             if (existingLobby != null && existingLobby.Status != SessionStatus.Finished)
             {
                 _logger.LogDebug("Found existing lobby {LobbyId} for {StubName} (created by another instance)", existingLobby.SessionId, stubName);
@@ -2134,18 +2138,17 @@ public partial class GameSessionService : IGameSessionService
             };
 
             // Save the lobby
-            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + lobbyId, lobby, SessionTtlOptions);
-            await sessionStore.SaveAsync(lobbyKey, lobby, SessionTtlOptions);
+            await _sessionStore.SaveAsync(SESSION_KEY_PREFIX + lobbyId, lobby, SessionTtlOptions);
+            await _sessionStore.SaveAsync(lobbyKey, lobby, SessionTtlOptions);
 
             // Add to session list under distributed lock (read-modify-write)
             await using var listLock = await _lockProvider.LockAsync(
                 StateStoreDefinitions.GameSessionLock, SESSION_LIST_KEY, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds);
             if (listLock.Success)
             {
-                var sessionListStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
-                var sessionIds = await sessionListStore.GetAsync(SESSION_LIST_KEY) ?? new List<string>();
+                var sessionIds = await _sessionListStore.GetAsync(SESSION_LIST_KEY) ?? new List<string>();
                 sessionIds.Add(lobbyId.ToString());
-                await sessionListStore.SaveAsync(SESSION_LIST_KEY, sessionIds);
+                await _sessionListStore.SaveAsync(SESSION_LIST_KEY, sessionIds);
             }
             else
             {
@@ -2175,8 +2178,8 @@ public partial class GameSessionService : IGameSessionService
 
         try
         {
-            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
-            var existingLobby = await sessionStore.GetAsync(lobbyKey);
+    
+            var existingLobby = await _sessionStore.GetAsync(lobbyKey);
 
             if (existingLobby != null)
             {
@@ -2249,7 +2252,7 @@ public partial class GameSessionService : IGameSessionService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.game-session", "GameSessionService.LoadSession");
 
-        var model = await _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession)
+        var model = await _sessionStore
             .GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
 
         return model != null ? MapModelToResponse(model) : null;

@@ -338,7 +338,7 @@ public class ParticipantEvictionWorker : BackgroundService
         IMessageBus messageBus,
         IClientEventPublisher clientEventPublisher,
         IStateStore<VoiceRoomData> roomStore,
-        IStateStoreFactory stateStoreFactory,
+        IStateStore<string> stringStore,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.voice", "ParticipantEvictionWorker.DeleteEmptyRoomAsync");
@@ -361,7 +361,6 @@ public class ParticipantEvictionWorker : BackgroundService
         await roomStore.DeleteAsync($"voice:room:{roomId}", cancellationToken);
 
         // Delete session -> room mapping
-        var stringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.Voice);
         await stringStore.DeleteAsync($"voice:session-room:{roomData.SessionId}", cancellationToken);
 
         // Publish room deleted service event with Empty reason

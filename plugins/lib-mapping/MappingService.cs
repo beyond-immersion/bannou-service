@@ -43,13 +43,39 @@ public partial class MappingService : IMappingService
 {
     private readonly IMessageBus _messageBus;
     private readonly IMessageSubscriber _messageSubscriber;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<MappingService> _logger;
     private readonly MappingServiceConfiguration _configuration;
     private readonly IAssetClient _assetClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IAffordanceScorer _affordanceScorer;
     private readonly ITelemetryProvider _telemetryProvider;
+
+    /// <summary>State store for channel records (authority management, channel metadata).</summary>
+    private readonly IStateStore<ChannelRecord> _channelStore;
+
+    /// <summary>State store for authority records (authority tokens, expiry tracking).</summary>
+    private readonly IStateStore<AuthorityRecord> _authorityStore;
+
+    /// <summary>State store for map objects (spatial entities with position/bounds).</summary>
+    private readonly IStateStore<MapObject> _objectStore;
+
+    /// <summary>State store for GUID list indexes (spatial, type, and region indexes).</summary>
+    private readonly IStateStore<List<Guid>> _guidListStore;
+
+    /// <summary>State store for version counters (channel version tracking).</summary>
+    private readonly IStateStore<LongWrapper> _versionStore;
+
+    /// <summary>State store for checkout records (authoring lock management).</summary>
+    private readonly IStateStore<CheckoutRecord> _checkoutStore;
+
+    /// <summary>State store for definition index entries (definition ID tracking).</summary>
+    private readonly IStateStore<DefinitionIndexEntry> _definitionIndexStore;
+
+    /// <summary>State store for definition records (map definition CRUD).</summary>
+    private readonly IStateStore<DefinitionRecord> _definitionStore;
+
+    /// <summary>State store for cached affordance query results.</summary>
+    private readonly IStateStore<CachedAffordanceResult> _affordanceCacheStore;
 
     // Track active ingest subscriptions per channel
     private static readonly ConcurrentDictionary<Guid, IAsyncDisposable> IngestSubscriptions = new();
@@ -101,13 +127,23 @@ public partial class MappingService : IMappingService
     {
         _messageBus = messageBus;
         _messageSubscriber = messageSubscriber;
-        _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _assetClient = assetClient;
         _httpClientFactory = httpClientFactory;
         _affordanceScorer = affordanceScorer;
         _telemetryProvider = telemetryProvider;
+
+        // Constructor-cache all state store references per FOUNDATION TENETS
+        _channelStore = stateStoreFactory.GetStore<ChannelRecord>(StateStoreDefinitions.Mapping);
+        _authorityStore = stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping);
+        _objectStore = stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping);
+        _guidListStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping);
+        _versionStore = stateStoreFactory.GetStore<LongWrapper>(StateStoreDefinitions.Mapping);
+        _checkoutStore = stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping);
+        _definitionIndexStore = stateStoreFactory.GetStore<DefinitionIndexEntry>(StateStoreDefinitions.Mapping);
+        _definitionStore = stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping);
+        _affordanceCacheStore = stateStoreFactory.GetStore<CachedAffordanceResult>(StateStoreDefinitions.Mapping);
 
         // Register event handlers via partial class (MappingServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -264,7 +300,7 @@ public partial class MappingService : IMappingService
             var channelKey = BuildChannelKey(channelId);
 
             // Check if channel already exists
-            var existingChannel = await _stateStoreFactory.GetStore<ChannelRecord>(StateStoreDefinitions.Mapping)
+            var existingChannel = await _channelStore
                 .GetAsync(channelKey, cancellationToken);
 
             // Determine takeover mode (default to preserve_and_diff)
@@ -274,7 +310,7 @@ public partial class MappingService : IMappingService
             {
                 // Channel exists - check if authority is available
                 var authorityKey = BuildAuthorityKey(channelId);
-                var existingAuthority = await _stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping)
+                var existingAuthority = await _authorityStore
                     .GetAsync(authorityKey, cancellationToken);
 
                 if (existingAuthority != null && existingAuthority.ExpiresAt > DateTimeOffset.UtcNow)
@@ -314,7 +350,7 @@ public partial class MappingService : IMappingService
                 UpdatedAt = now
             };
 
-            await _stateStoreFactory.GetStore<ChannelRecord>(StateStoreDefinitions.Mapping)
+            await _channelStore
                 .SaveAsync(channelKey, channel, cancellationToken: cancellationToken);
 
             // Create authority record with require_consume flag if needed
@@ -330,12 +366,12 @@ public partial class MappingService : IMappingService
             };
 
             var authorityRecordKey = BuildAuthorityKey(channelId);
-            await _stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping)
+            await _authorityStore
                 .SaveAsync(authorityRecordKey, authority, cancellationToken: cancellationToken);
 
             // Initialize version counter
             var versionKey = BuildVersionKey(channelId);
-            await _stateStoreFactory.GetStore<LongWrapper>(StateStoreDefinitions.Mapping)
+            await _versionStore
                 .SaveAsync(versionKey, new LongWrapper { Value = 1L }, cancellationToken: cancellationToken);
 
             // Process initial snapshot if provided
@@ -392,7 +428,7 @@ public partial class MappingService : IMappingService
             }
 
             var authorityKey = BuildAuthorityKey(body.ChannelId);
-            var authority = await _stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping)
+            var authority = await _authorityStore
                 .GetAsync(authorityKey, cancellationToken);
 
             if (authority == null || authority.AuthorityToken != body.AuthorityToken)
@@ -402,7 +438,7 @@ public partial class MappingService : IMappingService
             }
 
             // Delete authority record
-            await _stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping)
+            await _authorityStore
                 .DeleteAsync(authorityKey, cancellationToken);
 
             // Unsubscribe from ingest topic
@@ -413,7 +449,7 @@ public partial class MappingService : IMappingService
 
             // Publish authority released event
             var channelKey = BuildChannelKey(body.ChannelId);
-            var channel = await _stateStoreFactory.GetStore<ChannelRecord>(StateStoreDefinitions.Mapping)
+            var channel = await _channelStore
                 .GetAsync(channelKey, cancellationToken);
             await _messageBus.TryPublishAsync(AUTHORITY_RELEASED_TOPIC, new MappingAuthorityReleasedEvent
             {
@@ -444,7 +480,7 @@ public partial class MappingService : IMappingService
             }
 
             var authorityKey = BuildAuthorityKey(body.ChannelId);
-            var authority = await _stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping)
+            var authority = await _authorityStore
                 .GetAsync(authorityKey, cancellationToken);
 
             if (authority == null || authority.AuthorityToken != body.AuthorityToken)
@@ -472,7 +508,7 @@ public partial class MappingService : IMappingService
             var newExpiresAt = DateTimeOffset.UtcNow.AddSeconds(_configuration.AuthorityTimeoutSeconds);
             authority.ExpiresAt = newExpiresAt;
 
-            await _stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping)
+            await _authorityStore
                 .SaveAsync(authorityKey, authority, cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, new AuthorityHeartbeatResponse
@@ -707,7 +743,7 @@ public partial class MappingService : IMappingService
             {
                 var channelId = GenerateChannelId(body.RegionId, kind);
                 var versionKey = BuildVersionKey(channelId);
-                var versionWrapper = await _stateStoreFactory.GetStore<LongWrapper>(StateStoreDefinitions.Mapping).GetAsync(versionKey, cancellationToken);
+                var versionWrapper = await _versionStore.GetAsync(versionKey, cancellationToken);
                 var version = versionWrapper?.Value ?? 0;
                 if (version > maxVersion)
                 {
@@ -875,7 +911,7 @@ public partial class MappingService : IMappingService
         _logger.LogDebug("Querying objects of type {ObjectType} in region {RegionId}", body.ObjectType, body.RegionId);
 
         var typeIndexKey = BuildTypeIndexKey(body.RegionId, body.ObjectType);
-        var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+        var objectIds = await _guidListStore
             .GetAsync(typeIndexKey, cancellationToken) ?? new List<Guid>();
 
         var objects = new List<MapObject>();
@@ -890,7 +926,7 @@ public partial class MappingService : IMappingService
             }
 
             var objectKey = BuildObjectKey(body.RegionId, objectId);
-            var obj = await _stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping)
+            var obj = await _objectStore
                 .GetAsync(objectKey, cancellationToken);
 
             if (obj != null)
@@ -1045,7 +1081,7 @@ public partial class MappingService : IMappingService
             body.RegionId, body.Kind, body.EditorId);
 
         var checkoutKey = BuildCheckoutKey(body.RegionId, body.Kind);
-        var existingCheckout = await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
+        var existingCheckout = await _checkoutStore
             .GetAsync(checkoutKey, cancellationToken);
 
         // Check if already locked
@@ -1076,7 +1112,7 @@ public partial class MappingService : IMappingService
             CreatedAt = now
         };
 
-        await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
+        await _checkoutStore
             .SaveAsync(checkoutKey, checkout, cancellationToken: cancellationToken);
 
         _logger.LogInformation("Checkout acquired for region {RegionId}, kind {Kind} by editor {EditorId}",
@@ -1097,7 +1133,7 @@ public partial class MappingService : IMappingService
         _logger.LogDebug("Committing authoring changes - region {RegionId}, kind {Kind}", body.RegionId, body.Kind);
 
         var checkoutKey = BuildCheckoutKey(body.RegionId, body.Kind);
-        var checkout = await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
+        var checkout = await _checkoutStore
             .GetAsync(checkoutKey, cancellationToken);
 
         if (checkout == null || checkout.AuthorityToken != body.AuthorityToken)
@@ -1111,7 +1147,7 @@ public partial class MappingService : IMappingService
         var version = await IncrementVersionAsync(channelId, cancellationToken);
 
         // Release the checkout
-        await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
+        await _checkoutStore
             .DeleteAsync(checkoutKey, cancellationToken);
 
         _logger.LogInformation("Committed authoring changes for region {RegionId}, kind {Kind}, version {Version}",
@@ -1129,7 +1165,7 @@ public partial class MappingService : IMappingService
         _logger.LogDebug("Releasing authoring checkout - region {RegionId}, kind {Kind}", body.RegionId, body.Kind);
 
         var checkoutKey = BuildCheckoutKey(body.RegionId, body.Kind);
-        var checkout = await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
+        var checkout = await _checkoutStore
             .GetAsync(checkoutKey, cancellationToken);
 
         if (checkout == null || checkout.AuthorityToken != body.AuthorityToken)
@@ -1138,7 +1174,7 @@ public partial class MappingService : IMappingService
             return (StatusCodes.Unauthorized, null);
         }
 
-        await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
+        await _checkoutStore
             .DeleteAsync(checkoutKey, cancellationToken);
 
         _logger.LogInformation("Released authoring checkout for region {RegionId}, kind {Kind}",
@@ -1157,15 +1193,13 @@ public partial class MappingService : IMappingService
         _logger.LogDebug("Creating map definition: {Name}", body.Name);
 
         // Check for duplicate name by scanning existing definitions
-        var indexStore = _stateStoreFactory.GetStore<DefinitionIndexEntry>(StateStoreDefinitions.Mapping);
-        var existingIndex = await indexStore.GetAsync(DEFINITION_INDEX_KEY, cancellationToken);
+        var existingIndex = await _definitionIndexStore.GetAsync(DEFINITION_INDEX_KEY, cancellationToken);
 
         if (existingIndex != null && existingIndex.DefinitionIds.Any())
         {
-            var definitionStore = _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping);
             foreach (var id in existingIndex.DefinitionIds)
             {
-                var existing = await definitionStore.GetAsync(BuildDefinitionKey(id), cancellationToken);
+                var existing = await _definitionStore.GetAsync(BuildDefinitionKey(id), cancellationToken);
                 if (existing != null && existing.Name.Equals(body.Name, StringComparison.OrdinalIgnoreCase))
                 {
                     _logger.LogWarning("Definition with name {Name} already exists", body.Name);
@@ -1190,13 +1224,13 @@ public partial class MappingService : IMappingService
         };
 
         var key = BuildDefinitionKey(definitionId);
-        await _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping)
+        await _definitionStore
             .SaveAsync(key, record, cancellationToken: cancellationToken);
 
         // Update index
         var newIndex = existingIndex ?? new DefinitionIndexEntry { DefinitionIds = new List<Guid>() };
         newIndex.DefinitionIds.Add(definitionId);
-        await indexStore.SaveAsync(DEFINITION_INDEX_KEY, newIndex, cancellationToken: cancellationToken);
+        await _definitionIndexStore.SaveAsync(DEFINITION_INDEX_KEY, newIndex, cancellationToken: cancellationToken);
 
         _logger.LogInformation("Created map definition {DefinitionId} ({Name})", definitionId, body.Name);
 
@@ -1209,7 +1243,7 @@ public partial class MappingService : IMappingService
         _logger.LogDebug("Getting map definition: {DefinitionId}", body.DefinitionId);
 
         var key = BuildDefinitionKey(body.DefinitionId);
-        var record = await _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping)
+        var record = await _definitionStore
             .GetAsync(key, cancellationToken);
 
         if (record == null)
@@ -1225,20 +1259,18 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Listing map definitions with filter: {Filter}", body.NameFilter);
 
-        var indexStore = _stateStoreFactory.GetStore<DefinitionIndexEntry>(StateStoreDefinitions.Mapping);
-        var index = await indexStore.GetAsync(DEFINITION_INDEX_KEY, cancellationToken);
+        var index = await _definitionIndexStore.GetAsync(DEFINITION_INDEX_KEY, cancellationToken);
 
         var definitions = new List<MapDefinition>();
         var total = 0;
 
         if (index != null && index.DefinitionIds.Any())
         {
-            var definitionStore = _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping);
             var allRecords = new List<DefinitionRecord>();
 
             foreach (var id in index.DefinitionIds)
             {
-                var record = await definitionStore.GetAsync(BuildDefinitionKey(id), cancellationToken);
+                var record = await _definitionStore.GetAsync(BuildDefinitionKey(id), cancellationToken);
                 if (record != null)
                 {
                     // Apply name filter
@@ -1278,7 +1310,7 @@ public partial class MappingService : IMappingService
         _logger.LogDebug("Updating map definition: {DefinitionId}", body.DefinitionId);
 
         var key = BuildDefinitionKey(body.DefinitionId);
-        var record = await _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping)
+        var record = await _definitionStore
             .GetAsync(key, cancellationToken);
 
         if (record == null)
@@ -1309,7 +1341,7 @@ public partial class MappingService : IMappingService
         }
         record.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping)
+        await _definitionStore
             .SaveAsync(key, record, cancellationToken: cancellationToken);
 
         _logger.LogInformation("Updated map definition {DefinitionId}", body.DefinitionId);
@@ -1323,8 +1355,7 @@ public partial class MappingService : IMappingService
         _logger.LogDebug("Deleting map definition: {DefinitionId}", body.DefinitionId);
 
         var key = BuildDefinitionKey(body.DefinitionId);
-        var definitionStore = _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping);
-        var record = await definitionStore.GetAsync(key, cancellationToken);
+        var record = await _definitionStore.GetAsync(key, cancellationToken);
 
         if (record == null)
         {
@@ -1333,15 +1364,14 @@ public partial class MappingService : IMappingService
         }
 
         // Delete the definition
-        await definitionStore.DeleteAsync(key, cancellationToken);
+        await _definitionStore.DeleteAsync(key, cancellationToken);
 
         // Update index
-        var indexStore = _stateStoreFactory.GetStore<DefinitionIndexEntry>(StateStoreDefinitions.Mapping);
-        var index = await indexStore.GetAsync(DEFINITION_INDEX_KEY, cancellationToken);
+        var index = await _definitionIndexStore.GetAsync(DEFINITION_INDEX_KEY, cancellationToken);
         if (index != null)
         {
             index.DefinitionIds.Remove(body.DefinitionId);
-            await indexStore.SaveAsync(DEFINITION_INDEX_KEY, index, cancellationToken: cancellationToken);
+            await _definitionIndexStore.SaveAsync(DEFINITION_INDEX_KEY, index, cancellationToken: cancellationToken);
         }
 
         _logger.LogInformation("Deleted map definition {DefinitionId}", body.DefinitionId);
@@ -1383,7 +1413,7 @@ public partial class MappingService : IMappingService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.ValidateAuthorityAsync");
         var channelKey = BuildChannelKey(channelId);
-        var channel = await _stateStoreFactory.GetStore<ChannelRecord>(StateStoreDefinitions.Mapping)
+        var channel = await _channelStore
             .GetAsync(channelKey, cancellationToken);
 
         if (channel == null)
@@ -1400,7 +1430,7 @@ public partial class MappingService : IMappingService
         }
 
         var authorityKey = BuildAuthorityKey(channelId);
-        var authority = await _stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping)
+        var authority = await _authorityStore
             .GetAsync(authorityKey, cancellationToken);
 
         if (authority == null || authority.AuthorityToken != authorityToken)
@@ -1498,7 +1528,7 @@ public partial class MappingService : IMappingService
             // Save object with TTL based on kind
             var objectKey = BuildObjectKey(regionId, objectId);
             var stateOptions = GetStateOptionsForKind(kind);
-            await _stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping)
+            await _objectStore
                 .SaveAsync(objectKey, mapObject, stateOptions, cancellationToken);
 
             // Update spatial index
@@ -1551,7 +1581,7 @@ public partial class MappingService : IMappingService
                     UpdatedAt = DateTimeOffset.UtcNow
                 };
                 var createStateOptions = GetStateOptionsForKind(kind);
-                await _stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping)
+                await _objectStore
                     .SaveAsync(objectKey, newObject, createStateOptions, cancellationToken);
 
                 // Add to region index for snapshot queries without bounds
@@ -1572,7 +1602,7 @@ public partial class MappingService : IMappingService
                 return true;
 
             case ObjectAction.Updated:
-                var existing = await _stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping)
+                var existing = await _objectStore
                     .GetAsync(objectKey, cancellationToken);
                 if (existing == null)
                 {
@@ -1614,7 +1644,7 @@ public partial class MappingService : IMappingService
                 // CreatedAt is preserved (not modified)
 
                 var updateStateOptions = GetStateOptionsForKind(kind);
-                await _stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping)
+                await _objectStore
                     .SaveAsync(objectKey, existing, updateStateOptions, cancellationToken);
 
                 // Add to new spatial indexes
@@ -1635,7 +1665,7 @@ public partial class MappingService : IMappingService
                 return true;
 
             case ObjectAction.Deleted:
-                var toDelete = await _stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping)
+                var toDelete = await _objectStore
                     .GetAsync(objectKey, cancellationToken);
 
                 if (toDelete != null)
@@ -1657,7 +1687,7 @@ public partial class MappingService : IMappingService
                     }
                 }
 
-                await _stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping)
+                await _objectStore
                     .DeleteAsync(objectKey, cancellationToken);
                 return true;
 
@@ -1671,13 +1701,13 @@ public partial class MappingService : IMappingService
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.UpdateSpatialIndexAsync");
         var cell = GetCellCoordinates(position);
         var indexKey = BuildSpatialIndexKey(regionId, kind, cell.cellX, cell.cellY, cell.cellZ);
-        var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+        var objectIds = await _guidListStore
             .GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
 
         if (!objectIds.Contains(objectId))
         {
             objectIds.Add(objectId);
-            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+            await _guidListStore
                 .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
         }
     }
@@ -1689,13 +1719,13 @@ public partial class MappingService : IMappingService
         foreach (var cell in cells)
         {
             var indexKey = BuildSpatialIndexKey(regionId, kind, cell.cellX, cell.cellY, cell.cellZ);
-            var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+            var objectIds = await _guidListStore
                 .GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
 
             if (!objectIds.Contains(objectId))
             {
                 objectIds.Add(objectId);
-                await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+                await _guidListStore
                     .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
             }
         }
@@ -1705,13 +1735,13 @@ public partial class MappingService : IMappingService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.UpdateTypeIndexAsync");
         var indexKey = BuildTypeIndexKey(regionId, objectType);
-        var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+        var objectIds = await _guidListStore
             .GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
 
         if (!objectIds.Contains(objectId))
         {
             objectIds.Add(objectId);
-            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+            await _guidListStore
                 .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
         }
     }
@@ -1722,13 +1752,13 @@ public partial class MappingService : IMappingService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.AddToRegionIndexAsync");
         var indexKey = BuildRegionIndexKey(regionId, kind);
-        var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+        var objectIds = await _guidListStore
             .GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
 
         if (!objectIds.Contains(objectId))
         {
             objectIds.Add(objectId);
-            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+            await _guidListStore
                 .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
         }
     }
@@ -1737,13 +1767,13 @@ public partial class MappingService : IMappingService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.RemoveFromRegionIndexAsync");
         var indexKey = BuildRegionIndexKey(regionId, kind);
-        var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+        var objectIds = await _guidListStore
             .GetAsync(indexKey, cancellationToken);
 
         if (objectIds != null && objectIds.Contains(objectId))
         {
             objectIds.Remove(objectId);
-            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+            await _guidListStore
                 .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
         }
     }
@@ -1753,13 +1783,13 @@ public partial class MappingService : IMappingService
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.RemoveFromSpatialIndexAsync");
         var cell = GetCellCoordinates(position);
         var indexKey = BuildSpatialIndexKey(regionId, kind, cell.cellX, cell.cellY, cell.cellZ);
-        var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+        var objectIds = await _guidListStore
             .GetAsync(indexKey, cancellationToken);
 
         if (objectIds != null && objectIds.Contains(objectId))
         {
             objectIds.Remove(objectId);
-            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+            await _guidListStore
                 .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
         }
     }
@@ -1771,13 +1801,13 @@ public partial class MappingService : IMappingService
         foreach (var cell in cells)
         {
             var indexKey = BuildSpatialIndexKey(regionId, kind, cell.cellX, cell.cellY, cell.cellZ);
-            var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+            var objectIds = await _guidListStore
                 .GetAsync(indexKey, cancellationToken);
 
             if (objectIds != null && objectIds.Contains(objectId))
             {
                 objectIds.Remove(objectId);
-                await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+                await _guidListStore
                     .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
             }
         }
@@ -1787,13 +1817,13 @@ public partial class MappingService : IMappingService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.RemoveFromTypeIndexAsync");
         var indexKey = BuildTypeIndexKey(regionId, objectType);
-        var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+        var objectIds = await _guidListStore
             .GetAsync(indexKey, cancellationToken);
 
         if (objectIds != null && objectIds.Contains(objectId))
         {
             objectIds.Remove(objectId);
-            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+            await _guidListStore
                 .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
         }
     }
@@ -1864,13 +1894,13 @@ public partial class MappingService : IMappingService
         {
             var channelId = GenerateChannelId(regionId, kind);
             var authorityKey = BuildAuthorityKey(channelId);
-            var authority = await _stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping)
+            var authority = await _authorityStore
                 .GetAsync(authorityKey, cancellationToken);
 
             if (authority != null && authority.AuthorityToken == authorityToken && authority.RequiresConsumeBeforePublish)
             {
                 authority.RequiresConsumeBeforePublish = false;
-                await _stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping)
+                await _authorityStore
                     .SaveAsync(authorityKey, authority, cancellationToken: cancellationToken);
                 _logger.LogDebug("Cleared RequiresConsumeBeforePublish flag for channel {ChannelId}", channelId);
             }
@@ -1882,17 +1912,16 @@ public partial class MappingService : IMappingService
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.ClearChannelDataAsync");
         // Get the region index to find all objects
         var regionIndexKey = BuildRegionIndexKey(regionId, kind);
-        var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+        var objectIds = await _guidListStore
             .GetAsync(regionIndexKey, cancellationToken) ?? new List<Guid>();
 
         _logger.LogDebug("Clearing {Count} objects from channel {ChannelId}", objectIds.Count, channelId);
 
         // Delete all objects and their index entries
-        var objectStore = _stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping);
         foreach (var objectId in objectIds)
         {
             var objectKey = BuildObjectKey(regionId, objectId);
-            var obj = await objectStore.GetAsync(objectKey, cancellationToken);
+            var obj = await _objectStore.GetAsync(objectKey, cancellationToken);
 
             if (obj != null)
             {
@@ -1913,16 +1942,16 @@ public partial class MappingService : IMappingService
                 }
             }
 
-            await objectStore.DeleteAsync(objectKey, cancellationToken);
+            await _objectStore.DeleteAsync(objectKey, cancellationToken);
         }
 
         // Clear region index
-        await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+        await _guidListStore
             .DeleteAsync(regionIndexKey, cancellationToken);
 
         // Reset version counter
         var versionKey = BuildVersionKey(channelId);
-        await _stateStoreFactory.GetStore<LongWrapper>(StateStoreDefinitions.Mapping)
+        await _versionStore
             .SaveAsync(versionKey, new LongWrapper { Value = 0L }, cancellationToken: cancellationToken);
     }
 
@@ -1930,11 +1959,11 @@ public partial class MappingService : IMappingService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.mapping", "MappingService.IncrementVersionAsync");
         var versionKey = BuildVersionKey(channelId);
-        var versionWrapper = await _stateStoreFactory.GetStore<LongWrapper>(StateStoreDefinitions.Mapping)
+        var versionWrapper = await _versionStore
             .GetAsync(versionKey, cancellationToken);
         var currentVersion = versionWrapper?.Value ?? 0;
         var newVersion = currentVersion + 1;
-        await _stateStoreFactory.GetStore<LongWrapper>(StateStoreDefinitions.Mapping)
+        await _versionStore
             .SaveAsync(versionKey, new LongWrapper { Value = newVersion }, cancellationToken: cancellationToken);
         return newVersion;
     }
@@ -1949,14 +1978,14 @@ public partial class MappingService : IMappingService
 
         // Full region query - use region index that tracks all objects in a region+kind
         var regionIndexKey = BuildRegionIndexKey(regionId, kind);
-        var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+        var objectIds = await _guidListStore
             .GetAsync(regionIndexKey, cancellationToken) ?? new List<Guid>();
 
         var objects = new List<MapObject>();
         foreach (var objectId in objectIds.Take(maxObjects))
         {
             var objectKey = BuildObjectKey(regionId, objectId);
-            var obj = await _stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping)
+            var obj = await _objectStore
                 .GetAsync(objectKey, cancellationToken);
             if (obj != null)
             {
@@ -1982,7 +2011,7 @@ public partial class MappingService : IMappingService
             }
 
             var indexKey = BuildSpatialIndexKey(regionId, kind, cell.cellX, cell.cellY, cell.cellZ);
-            var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+            var objectIds = await _guidListStore
                 .GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
 
             foreach (var objectId in objectIds)
@@ -1999,7 +2028,7 @@ public partial class MappingService : IMappingService
                 seenObjectIds.Add(objectId);
 
                 var objectKey = BuildObjectKey(regionId, objectId);
-                var obj = await _stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping)
+                var obj = await _objectStore
                     .GetAsync(objectKey, cancellationToken);
 
                 if (obj != null)
@@ -2061,7 +2090,7 @@ public partial class MappingService : IMappingService
             : "all";
         var cacheKey = BuildAffordanceCacheKey(body.RegionId, body.AffordanceType, boundsHash);
 
-        var cached = await _stateStoreFactory.GetStore<CachedAffordanceResult>(StateStoreDefinitions.Mapping)
+        var cached = await _affordanceCacheStore
             .GetAsync(cacheKey, cancellationToken);
 
         if (cached == null)
@@ -2092,7 +2121,7 @@ public partial class MappingService : IMappingService
             CachedAt = DateTimeOffset.UtcNow
         };
 
-        await _stateStoreFactory.GetStore<CachedAffordanceResult>(StateStoreDefinitions.Mapping)
+        await _affordanceCacheStore
             .SaveAsync(cacheKey, cached, cancellationToken: cancellationToken);
     }
 
@@ -2170,7 +2199,7 @@ public partial class MappingService : IMappingService
                 {
                     // Retrieve channel record for publishing (may have been updated)
                     var channelKey = BuildChannelKey(channelId);
-                    var currentChannel = await _stateStoreFactory.GetStore<ChannelRecord>(StateStoreDefinitions.Mapping)
+                    var currentChannel = await _channelStore
                         .GetAsync(channelKey, ct);
 
                     if (currentChannel != null)
@@ -2270,7 +2299,7 @@ public partial class MappingService : IMappingService
         {
             // Get channel info first (needed for NonAuthorityHandling check)
             var channelKey = BuildChannelKey(channelId);
-            var channel = await _stateStoreFactory.GetStore<ChannelRecord>(StateStoreDefinitions.Mapping)
+            var channel = await _channelStore
                 .GetAsync(channelKey, cancellationToken);
 
             if (channel == null)
@@ -2281,7 +2310,7 @@ public partial class MappingService : IMappingService
 
             // Validate authority token
             var authorityKey = BuildAuthorityKey(channelId);
-            var authority = await _stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping)
+            var authority = await _authorityStore
                 .GetAsync(authorityKey, cancellationToken);
 
             var isValidAuthority = authority != null &&

@@ -18,13 +18,15 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 /// </summary>
 public class TokenService : ITokenService
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ISessionService _sessionService;
     private readonly AuthServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
     private readonly IMessageBus _messageBus;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<TokenService> _logger;
+
+    /// <summary>Redis-backed store for refresh tokens and string-keyed auth data.</summary>
+    private readonly IStateStore<string> _stringStore;
 
     /// <summary>
     /// Initializes a new instance of TokenService.
@@ -38,13 +40,15 @@ public class TokenService : ITokenService
         ITelemetryProvider telemetryProvider,
         ILogger<TokenService> logger)
     {
-        _stateStoreFactory = stateStoreFactory;
         _sessionService = sessionService;
         _configuration = configuration;
         _appConfiguration = appConfiguration;
         _messageBus = messageBus;
         _telemetryProvider = telemetryProvider;
         _logger = logger;
+
+        // Constructor-cache state stores per FOUNDATION TENETS
+        _stringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
     }
 
     /// <inheritdoc/>
@@ -138,9 +142,8 @@ public class TokenService : ITokenService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "TokenService.StoreRefreshToken");
         var redisKey = $"refresh_token:{refreshToken}";
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
         // Storage boundary: state store requires string value type (Guid is a value type)
-        await stringStore.SaveAsync(
+        await _stringStore.SaveAsync(
             redisKey,
             accountId.ToString(),
             new StateOptions { Ttl = (int)TimeSpan.FromDays(_configuration.SessionTokenTtlDays).TotalSeconds },
@@ -154,8 +157,7 @@ public class TokenService : ITokenService
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
-            var storedAccountId = await stringStore.GetAsync(redisKey, cancellationToken);
+            var storedAccountId = await _stringStore.GetAsync(redisKey, cancellationToken);
             // Storage boundary: parse once at read boundary
             if (string.IsNullOrEmpty(storedAccountId) || !Guid.TryParse(storedAccountId, out var accountId))
             {
@@ -186,8 +188,7 @@ public class TokenService : ITokenService
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
-            await stringStore.DeleteAsync(redisKey, cancellationToken);
+            await _stringStore.DeleteAsync(redisKey, cancellationToken);
         }
         catch (Exception ex)
         {

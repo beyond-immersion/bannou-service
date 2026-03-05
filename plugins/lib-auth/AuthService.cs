@@ -24,11 +24,19 @@ namespace BeyondImmersion.BannouService.Auth;
 public partial class AuthService : IAuthService
 {
     private readonly IAccountClient _accountClient;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<AuthService> _logger;
     private readonly AuthServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
+
+    /// <summary>Redis-backed cacheable store for session data (rate limiting counters).</summary>
+    private readonly ICacheableStateStore<SessionDataModel> _authCacheStore;
+
+    /// <summary>Redis-backed store for session data (CRUD operations).</summary>
+    private readonly IStateStore<SessionDataModel> _sessionStore;
+
+    /// <summary>Redis-backed store for password reset tokens.</summary>
+    private readonly IStateStore<PasswordResetData> _resetStore;
 
     // Entity session registry for publishing client events to account WebSocket sessions
     private readonly IEntitySessionRegistry _entitySessionRegistry;
@@ -60,7 +68,6 @@ public partial class AuthService : IAuthService
         IEventConsumer eventConsumer)
     {
         _accountClient = accountClient;
-        _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _configuration = configuration;
         _appConfiguration = appConfiguration;
@@ -73,6 +80,11 @@ public partial class AuthService : IAuthService
         _edgeRevocationService = edgeRevocationService;
         _emailService = emailService;
         _mfaService = mfaService;
+
+        // Constructor-cache state stores per FOUNDATION TENETS
+        _authCacheStore = stateStoreFactory.GetCacheableStore<SessionDataModel>(StateStoreDefinitions.Auth);
+        _sessionStore = stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
+        _resetStore = stateStoreFactory.GetStore<PasswordResetData>(StateStoreDefinitions.Auth);
 
         // Register event handlers via partial class (AuthServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -116,8 +128,7 @@ public partial class AuthService : IAuthService
         // Rate limiting: check failed login attempts before any expensive operations
         var normalizedEmail = body.Email.Trim().ToLowerInvariant();
         var rateLimitKey = $"login-attempts:{normalizedEmail}";
-        var authCacheStore = await _stateStoreFactory.GetCacheableStoreAsync<SessionDataModel>(StateStoreDefinitions.Auth, cancellationToken);
-        var currentAttempts = await authCacheStore.GetCounterAsync(rateLimitKey, cancellationToken);
+        var currentAttempts = await _authCacheStore.GetCounterAsync(rateLimitKey, cancellationToken);
 
         if (currentAttempts.HasValue && currentAttempts.Value >= _configuration.MaxLoginAttempts)
         {
@@ -149,7 +160,7 @@ public partial class AuthService : IAuthService
             _logger.LogWarning("Account not found for provided email");
             await PublishLoginFailedEventAsync(UNKNOWN_DISPLAY_NAME, AuthLoginFailedReason.AccountNotFound);
             // Increment rate limit counter even for non-existent accounts to prevent enumeration
-            await IncrementLoginAttemptCounterAsync(authCacheStore, rateLimitKey, cancellationToken);
+            await IncrementLoginAttemptCounterAsync(_authCacheStore, rateLimitKey, cancellationToken);
             return (StatusCodes.Unauthorized, null);
         }
         catch (Exception ex)
@@ -171,13 +182,13 @@ public partial class AuthService : IAuthService
         if (!passwordValid)
         {
             _logger.LogWarning("Password verification failed for account {AccountId}", account.AccountId);
-            await IncrementLoginAttemptCounterAsync(authCacheStore, rateLimitKey, cancellationToken);
+            await IncrementLoginAttemptCounterAsync(_authCacheStore, rateLimitKey, cancellationToken);
             await PublishLoginFailedEventAsync(account.DisplayName ?? UNKNOWN_DISPLAY_NAME, AuthLoginFailedReason.InvalidCredentials, account.AccountId, attemptCount: (int?)((currentAttempts ?? 0) + 1));
             return (StatusCodes.Unauthorized, null);
         }
 
         // Login successful - clear rate limit counter
-        await authCacheStore.DeleteCounterAsync(rateLimitKey, cancellationToken);
+        await _authCacheStore.DeleteCounterAsync(rateLimitKey, cancellationToken);
         _logger.LogDebug("Password verification successful for account {AccountId}", account.AccountId);
 
         // Check if MFA is enabled for this account
@@ -570,12 +581,10 @@ public partial class AuthService : IAuthService
 
             if (sessionKeys.Count > 0)
             {
-                var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
-
                 // Load session data to get SessionIds for reverse index cleanup and JTIs for edge revocation, then delete
                 foreach (var key in sessionKeys)
                 {
-                    var sessionData = await sessionStore.GetAsync($"session:{key}", cancellationToken);
+                    var sessionData = await _sessionStore.GetAsync($"session:{key}", cancellationToken);
 
                     // Collect JTI before deletion for edge revocation
                     if (sessionData?.Jti != null)
@@ -587,7 +596,7 @@ public partial class AuthService : IAuthService
                         }
                     }
 
-                    await sessionStore.DeleteAsync($"session:{key}", cancellationToken);
+                    await _sessionStore.DeleteAsync($"session:{key}", cancellationToken);
 
                     // Clean up reverse index if session data was still available
                     // Defensive: guard against corrupt Redis data (SessionId should always be populated)
@@ -613,8 +622,7 @@ public partial class AuthService : IAuthService
         else
         {
             // Logout current session only - load session data before deletion to get JTI
-            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
-            var sessionData = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
+            var sessionData = await _sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
 
             // Collect JTI before deletion for edge revocation
             if (sessionData?.Jti != null)
@@ -626,7 +634,7 @@ public partial class AuthService : IAuthService
                 }
             }
 
-            await sessionStore.DeleteAsync($"session:{sessionKey}", cancellationToken);
+            await _sessionStore.DeleteAsync($"session:{sessionKey}", cancellationToken);
 
             // Remove session from account index
             await _sessionService.RemoveSessionFromAccountIndexAsync(validateResponse.AccountId, sessionKey, cancellationToken);
@@ -712,11 +720,10 @@ public partial class AuthService : IAuthService
         }
 
         // Get session data to find account ID for index cleanup
-        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
-        var sessionData = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
+        var sessionData = await _sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
 
         // Remove the session data from Redis
-        await sessionStore.DeleteAsync($"session:{sessionKey}", cancellationToken);
+        await _sessionStore.DeleteAsync($"session:{sessionKey}", cancellationToken);
 
         // Remove session from account index if we found the session data
         if (sessionData != null)
@@ -821,8 +828,7 @@ public partial class AuthService : IAuthService
             };
 
             // Store reset token in Redis with TTL
-            var resetStore = _stateStoreFactory.GetStore<PasswordResetData>(StateStoreDefinitions.Auth);
-            await resetStore.SaveAsync(
+            await _resetStore.SaveAsync(
                 $"password-reset:{resetToken}",
                 resetData,
                 new StateOptions { Ttl = resetTokenTtlMinutes * 60 },
@@ -885,8 +891,7 @@ public partial class AuthService : IAuthService
         }
 
         // Look up the reset token in Redis
-        var resetStore = _stateStoreFactory.GetStore<PasswordResetData>(StateStoreDefinitions.Auth);
-        var resetData = await resetStore.GetAsync($"password-reset:{body.Token}", cancellationToken);
+        var resetData = await _resetStore.GetAsync($"password-reset:{body.Token}", cancellationToken);
 
         if (resetData == null)
         {
@@ -899,7 +904,7 @@ public partial class AuthService : IAuthService
         {
             _logger.LogWarning("Password reset token has expired");
             // Clean up expired token
-            await resetStore.DeleteAsync($"password-reset:{body.Token}", cancellationToken);
+            await _resetStore.DeleteAsync($"password-reset:{body.Token}", cancellationToken);
             return StatusCodes.BadRequest;
         }
 
@@ -914,7 +919,7 @@ public partial class AuthService : IAuthService
         }, cancellationToken);
 
         // Remove the used token
-        await resetStore.DeleteAsync($"password-reset:{body.Token}", cancellationToken);
+        await _resetStore.DeleteAsync($"password-reset:{body.Token}", cancellationToken);
 
         _logger.LogInformation("Password reset successful for account {AccountId}", resetData.AccountId);
 
@@ -1534,7 +1539,6 @@ public partial class AuthService : IAuthService
             accountId, string.Join(", ", newRoles));
 
         var sessionKeys = await _sessionService.GetSessionKeysForAccountAsync(accountId, cancellationToken);
-        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
 
         if (sessionKeys.Count == 0)
         {
@@ -1546,7 +1550,7 @@ public partial class AuthService : IAuthService
         {
             try
             {
-                var session = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
+                var session = await _sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
 
                 if (session != null)
                 {
@@ -1560,7 +1564,7 @@ public partial class AuthService : IAuthService
                         continue;
                     }
 
-                    await sessionStore.SaveAsync($"session:{sessionKey}", session,
+                    await _sessionStore.SaveAsync($"session:{sessionKey}", session,
                         new StateOptions { Ttl = remainingSeconds }, cancellationToken);
 
                     // Publish session.updated event for Permission service
@@ -1598,7 +1602,6 @@ public partial class AuthService : IAuthService
         _logger.LogInformation("Propagating email change for account {AccountId}", accountId);
 
         var sessionKeys = await _sessionService.GetSessionKeysForAccountAsync(accountId, cancellationToken);
-        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
 
         if (sessionKeys.Count == 0)
         {
@@ -1611,7 +1614,7 @@ public partial class AuthService : IAuthService
         {
             try
             {
-                var session = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
+                var session = await _sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
 
                 if (session != null)
                 {
@@ -1624,7 +1627,7 @@ public partial class AuthService : IAuthService
                     }
 
                     session.Email = newEmail;
-                    await sessionStore.SaveAsync($"session:{sessionKey}", session,
+                    await _sessionStore.SaveAsync($"session:{sessionKey}", session,
                         new StateOptions { Ttl = remainingSeconds }, cancellationToken);
 
                     updatedCount++;

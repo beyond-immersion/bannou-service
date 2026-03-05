@@ -16,13 +16,21 @@ namespace BeyondImmersion.BannouService.GameService;
 [BannouService("game-service", typeof(IGameServiceService), lifetime: ServiceLifetime.Singleton, layer: ServiceLayer.GameFoundation)]
 public partial class GameServiceService : IGameServiceService
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<GameServiceService> _logger;
     private readonly GameServiceServiceConfiguration _configuration;
     private readonly IResourceClient _resourceClient;
     private readonly ITelemetryProvider _telemetryProvider;
+
+    /// <summary>State store for game service registry models (CRUD operations).</summary>
+    private readonly IStateStore<GameServiceRegistryModel> _registryStore;
+
+    /// <summary>State store for string values (stub name to service ID index lookups).</summary>
+    private readonly IStateStore<string> _stringStore;
+
+    /// <summary>State store for the master service ID list (service enumeration).</summary>
+    private readonly IStateStore<List<Guid>> _listStore;
 
     // Key patterns for state store
     private const string SERVICE_KEY_PREFIX = "game-service:";
@@ -39,7 +47,6 @@ public partial class GameServiceService : IGameServiceService
         IResourceClient resourceClient,
         ITelemetryProvider telemetryProvider)
     {
-        _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _lockProvider = lockProvider;
         _logger = logger;
@@ -47,11 +54,13 @@ public partial class GameServiceService : IGameServiceService
         _resourceClient = resourceClient;
         _telemetryProvider = telemetryProvider;
 
+        _registryStore = stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreDefinitions.GameService);
+        _stringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.GameService);
+        _listStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.GameService);
+
         // No event subscriptions (x-event-subscriptions: [])
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
-
-    private static string StateStoreName => StateStoreDefinitions.GameService;
 
     /// <summary>
     /// List all registered game services, optionally filtered by active status with pagination.
@@ -67,17 +76,15 @@ public partial class GameServiceService : IGameServiceService
             body.ActiveOnly, body.Skip, body.Take);
 
         // Get all service IDs from the index
-        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
-        var serviceIds = await listStore.GetAsync(SERVICE_LIST_KEY, cancellationToken);
+        var serviceIds = await _listStore.GetAsync(SERVICE_LIST_KEY, cancellationToken);
 
         var allMatchingServices = new List<ServiceInfo>();
-        var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
 
         if (serviceIds != null)
         {
             foreach (var serviceId in serviceIds)
             {
-                var serviceModel = await modelStore.GetAsync($"{SERVICE_KEY_PREFIX}{serviceId}", cancellationToken);
+                var serviceModel = await _registryStore.GetAsync($"{SERVICE_KEY_PREFIX}{serviceId}", cancellationToken);
 
                 if (serviceModel != null)
                 {
@@ -121,23 +128,21 @@ public partial class GameServiceService : IGameServiceService
             body.ServiceId, body.StubName);
 
         GameServiceRegistryModel? serviceModel = null;
-        var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
 
         // Try by service ID first
         if (body.ServiceId.HasValue)
         {
-            serviceModel = await modelStore.GetAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId.Value}", cancellationToken);
+            serviceModel = await _registryStore.GetAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId.Value}", cancellationToken);
         }
         // Try by stub name if not found
         else if (!string.IsNullOrWhiteSpace(body.StubName))
         {
             // Get service ID from stub name index
-            var serviceId = await stringStore.GetAsync($"{SERVICE_STUB_INDEX_PREFIX}{body.StubName.ToLowerInvariant()}", cancellationToken);
+            var serviceId = await _stringStore.GetAsync($"{SERVICE_STUB_INDEX_PREFIX}{body.StubName.ToLowerInvariant()}", cancellationToken);
 
             if (!string.IsNullOrEmpty(serviceId))
             {
-                serviceModel = await modelStore.GetAsync($"{SERVICE_KEY_PREFIX}{serviceId}", cancellationToken);
+                serviceModel = await _registryStore.GetAsync($"{SERVICE_KEY_PREFIX}{serviceId}", cancellationToken);
             }
         }
 
@@ -166,8 +171,6 @@ public partial class GameServiceService : IGameServiceService
             body.StubName, body.DisplayName);
 
         var normalizedStubName = body.StubName.ToLowerInvariant();
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
-        var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
 
         // Distributed lock on stub name to prevent concurrent creates with same name
         // per IMPLEMENTATION TENETS (Multi-Instance Safety)
@@ -186,7 +189,7 @@ public partial class GameServiceService : IGameServiceService
         }
 
         // Check if stub name already exists (under lock)
-        var existingServiceId = await stringStore.GetAsync($"{SERVICE_STUB_INDEX_PREFIX}{normalizedStubName}", cancellationToken);
+        var existingServiceId = await _stringStore.GetAsync($"{SERVICE_STUB_INDEX_PREFIX}{normalizedStubName}", cancellationToken);
 
         if (!string.IsNullOrEmpty(existingServiceId))
         {
@@ -211,10 +214,10 @@ public partial class GameServiceService : IGameServiceService
         };
 
         // Save service data
-        await modelStore.SaveAsync($"{SERVICE_KEY_PREFIX}{serviceId}", serviceModel, cancellationToken: cancellationToken);
+        await _registryStore.SaveAsync($"{SERVICE_KEY_PREFIX}{serviceId}", serviceModel, cancellationToken: cancellationToken);
 
         // Create stub name index (stored as string for lookup)
-        await stringStore.SaveAsync($"{SERVICE_STUB_INDEX_PREFIX}{normalizedStubName}", serviceId.ToString(), cancellationToken: cancellationToken);
+        await _stringStore.SaveAsync($"{SERVICE_STUB_INDEX_PREFIX}{normalizedStubName}", serviceId.ToString(), cancellationToken: cancellationToken);
 
         // Add to service list
         await AddToServiceListAsync(serviceId, cancellationToken);
@@ -241,10 +244,8 @@ public partial class GameServiceService : IGameServiceService
     {
         _logger.LogDebug("Updating service {ServiceId}", body.ServiceId);
 
-        var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
-
         // Get existing service
-        var serviceModel = await modelStore.GetAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", cancellationToken);
+        var serviceModel = await _registryStore.GetAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", cancellationToken);
 
         if (serviceModel == null)
         {
@@ -290,7 +291,7 @@ public partial class GameServiceService : IGameServiceService
         serviceModel.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         // Save updated service
-        await modelStore.SaveAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", serviceModel, cancellationToken: cancellationToken);
+        await _registryStore.SaveAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", serviceModel, cancellationToken: cancellationToken);
 
         _logger.LogInformation("Updated service {ServiceId} (changed: {ChangedFields})", body.ServiceId, string.Join(", ", changedFields));
 
@@ -315,11 +316,8 @@ public partial class GameServiceService : IGameServiceService
     {
         _logger.LogDebug("Deleting service {ServiceId}", body.ServiceId);
 
-        var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
-
         // Get existing service to get stub name for index cleanup
-        var serviceModel = await modelStore.GetAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", cancellationToken);
+        var serviceModel = await _registryStore.GetAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", cancellationToken);
 
         if (serviceModel == null)
         {
@@ -369,12 +367,12 @@ public partial class GameServiceService : IGameServiceService
         }
 
         // Delete service data
-        await modelStore.DeleteAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", cancellationToken);
+        await _registryStore.DeleteAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", cancellationToken);
 
         // Delete stub name index
         if (!string.IsNullOrEmpty(serviceModel.StubName))
         {
-            await stringStore.DeleteAsync($"{SERVICE_STUB_INDEX_PREFIX}{serviceModel.StubName}", cancellationToken);
+            await _stringStore.DeleteAsync($"{SERVICE_STUB_INDEX_PREFIX}{serviceModel.StubName}", cancellationToken);
         }
 
         // Remove from service list
@@ -401,11 +399,9 @@ public partial class GameServiceService : IGameServiceService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.game-service", "GameServiceService.AddToServiceList");
 
-        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
-
         for (var attempt = 0; attempt < _configuration.ServiceListRetryAttempts; attempt++)
         {
-            var (serviceIds, etag) = await listStore.GetWithETagAsync(SERVICE_LIST_KEY, cancellationToken);
+            var (serviceIds, etag) = await _listStore.GetWithETagAsync(SERVICE_LIST_KEY, cancellationToken);
             serviceIds ??= new List<Guid>();
 
             if (serviceIds.Contains(serviceId))
@@ -417,7 +413,7 @@ public partial class GameServiceService : IGameServiceService
 
             // etag is null when the list key doesn't exist yet; empty string signals
             // "new entry" to TrySaveAsync (will never conflict on new entries)
-            var result = await listStore.TrySaveAsync(SERVICE_LIST_KEY, serviceIds, etag ?? string.Empty, cancellationToken);
+            var result = await _listStore.TrySaveAsync(SERVICE_LIST_KEY, serviceIds, etag ?? string.Empty, cancellationToken);
             if (result != null)
             {
                 return;
@@ -441,11 +437,9 @@ public partial class GameServiceService : IGameServiceService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.game-service", "GameServiceService.RemoveFromServiceList");
 
-        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
-
         for (var attempt = 0; attempt < _configuration.ServiceListRetryAttempts; attempt++)
         {
-            var (serviceIds, etag) = await listStore.GetWithETagAsync(SERVICE_LIST_KEY, cancellationToken);
+            var (serviceIds, etag) = await _listStore.GetWithETagAsync(SERVICE_LIST_KEY, cancellationToken);
             if (serviceIds == null || !serviceIds.Remove(serviceId))
             {
                 return; // Not in list or already removed
@@ -453,7 +447,7 @@ public partial class GameServiceService : IGameServiceService
 
             // etag is null when the list key doesn't exist yet; empty string signals
             // "new entry" to TrySaveAsync (will never conflict on new entries)
-            var result = await listStore.TrySaveAsync(SERVICE_LIST_KEY, serviceIds, etag ?? string.Empty, cancellationToken);
+            var result = await _listStore.TrySaveAsync(SERVICE_LIST_KEY, serviceIds, etag ?? string.Empty, cancellationToken);
             if (result != null)
             {
                 return;

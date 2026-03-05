@@ -36,7 +36,7 @@ public partial class EscrowService
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.HandleContractFulfilledAsync");
         try
         {
-            var escrows = await AgreementStore.QueryAsync(
+            var escrows = await _agreementStore.QueryAsync(
                 m => m.BoundContractId == evt.ContractId);
 
             if (escrows.Count == 0)
@@ -67,7 +67,7 @@ public partial class EscrowService
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.HandleContractTerminatedAsync");
         try
         {
-            var escrows = await AgreementStore.QueryAsync(
+            var escrows = await _agreementStore.QueryAsync(
                 m => m.BoundContractId == evt.ContractId);
 
             if (escrows.Count == 0)
@@ -99,7 +99,7 @@ public partial class EscrowService
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey);
+            var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey);
 
             if (agreementModel == null)
             {
@@ -131,7 +131,7 @@ public partial class EscrowService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty);
+            var saveResult = await _agreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty);
             if (saveResult == null)
             {
                 _logger.LogDebug("Concurrent modification during contract.fulfilled handling for escrow {EscrowId}, retrying (attempt {Attempt})",
@@ -141,7 +141,7 @@ public partial class EscrowService
 
             // Update status index
             var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{escrowId}";
-            await StatusIndexStore.DeleteAsync(oldStatusKey);
+            await _statusIndexStore.DeleteAsync(oldStatusKey);
 
             var newStatusKey = $"{GetStatusIndexKey(EscrowStatus.Finalizing)}:{escrowId}";
             var statusEntry = new StatusIndexEntry
@@ -151,16 +151,16 @@ public partial class EscrowService
                 ExpiresAt = agreementModel.ExpiresAt,
                 AddedAt = now
             };
-            await StatusIndexStore.SaveAsync(newStatusKey, statusEntry);
+            await _statusIndexStore.SaveAsync(newStatusKey, statusEntry);
 
             // Reset validation tracking
             var validationKey = GetValidationKey(escrowId);
-            var validationTracking = await ValidationStore.GetAsync(validationKey);
+            var validationTracking = await _validationStore.GetAsync(validationKey);
             if (validationTracking != null)
             {
                 validationTracking.FailedValidationCount = 0;
                 validationTracking.LastValidatedAt = now;
-                await ValidationStore.SaveAsync(validationKey, validationTracking);
+                await _validationStore.SaveAsync(validationKey, validationTracking);
             }
 
             // Publish finalizing event
@@ -196,7 +196,7 @@ public partial class EscrowService
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey);
+            var (agreementModel, etag) = await _agreementStore.GetWithETagAsync(agreementKey);
 
             if (agreementModel == null)
             {
@@ -238,7 +238,7 @@ public partial class EscrowService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty);
+            var saveResult = await _agreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty);
             if (saveResult == null)
             {
                 _logger.LogDebug("Concurrent modification during contract.terminated handling for escrow {EscrowId}, retrying (attempt {Attempt})",
@@ -248,7 +248,7 @@ public partial class EscrowService
 
             // Update status index
             var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{escrowId}";
-            await StatusIndexStore.DeleteAsync(oldStatusKey);
+            await _statusIndexStore.DeleteAsync(oldStatusKey);
 
             var newStatusKey = $"{GetStatusIndexKey(EscrowStatus.Refunded)}:{escrowId}";
             var statusEntry = new StatusIndexEntry
@@ -258,7 +258,7 @@ public partial class EscrowService
                 ExpiresAt = agreementModel.ExpiresAt,
                 AddedAt = now
             };
-            await StatusIndexStore.SaveAsync(newStatusKey, statusEntry);
+            await _statusIndexStore.SaveAsync(newStatusKey, statusEntry);
 
             // Decrement pending counts
             foreach (var party in agreementModel.Parties ?? new List<EscrowPartyModel>())

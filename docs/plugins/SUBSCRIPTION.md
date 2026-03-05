@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFoundation
 > **State Stores**: subscription-statestore (MySQL), subscription-lock (Redis)
+> **Implementation Map**: [docs/maps/SUBSCRIPTION.md](../maps/SUBSCRIPTION.md)
 
 ---
 

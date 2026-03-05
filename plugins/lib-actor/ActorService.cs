@@ -43,7 +43,6 @@ namespace BeyondImmersion.BannouService.Actor;
 public partial class ActorService : IActorService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<ActorService> _logger;
     private readonly ActorServiceConfiguration _configuration;
     private readonly IActorRegistry _actorRegistry;
@@ -55,6 +54,12 @@ public partial class ActorService : IActorService
     private readonly IResourceClient _resourceClient;
     private readonly ICharacterClient _characterClient;
     private readonly ITelemetryProvider _telemetryProvider;
+
+    /// <summary>State store for actor template definitions, keyed by template ID and category.</summary>
+    private readonly IStateStore<ActorTemplateData> _templateStore;
+
+    /// <summary>State store for template index (list of all template IDs), using the same backing store as templates.</summary>
+    private readonly IStateStore<List<string>> _templateIndexStore;
 
     // State store names use StateStoreDefinitions constants per IMPLEMENTATION TENETS
     private const string ALL_TEMPLATES_KEY = "_all_template_ids";
@@ -72,7 +77,7 @@ public partial class ActorService : IActorService
     /// Creates a new instance of the ActorService.
     /// </summary>
     /// <param name="messageBus">Message bus for event publishing.</param>
-    /// <param name="stateStoreFactory">Factory for creating state stores.</param>
+    /// <param name="stateStoreFactory">Factory for resolving state stores (used in constructor only, not stored).</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Service configuration.</param>
     /// <param name="actorRegistry">Registry for tracking active actors.</param>
@@ -100,7 +105,6 @@ public partial class ActorService : IActorService
         ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _actorRegistry = actorRegistry;
@@ -112,6 +116,10 @@ public partial class ActorService : IActorService
         _resourceClient = resourceClient;
         _characterClient = characterClient;
         _telemetryProvider = telemetryProvider;
+
+        // Resolve state stores in constructor per FOUNDATION TENETS (constructor-cache pattern)
+        _templateStore = stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+        _templateIndexStore = stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
 
         // Register event handlers via partial class (ActorServiceEvents.cs)
         RegisterEventConsumers(_eventConsumer);
@@ -139,7 +147,7 @@ public partial class ActorService : IActorService
             return (StatusCodes.BadRequest, null);
         }
 
-        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+        var templateStore = _templateStore;
         var templateId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
 
@@ -214,7 +222,7 @@ public partial class ActorService : IActorService
         _logger.LogDebug("Getting actor template (templateId: {TemplateId}, category: {Category})",
             body.TemplateId, body.Category);
 
-        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+        var templateStore = _templateStore;
         ActorTemplateData? template = null;
 
         if (body.TemplateId.HasValue)
@@ -247,8 +255,8 @@ public partial class ActorService : IActorService
     {
         _logger.LogDebug("Listing actor templates (limit: {Limit}, offset: {Offset})", body.Limit, body.Offset);
 
-        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
+        var templateStore = _templateStore;
+        var indexStore = _templateIndexStore;
 
         // Get all template IDs from index
         var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
@@ -287,7 +295,7 @@ public partial class ActorService : IActorService
     {
         _logger.LogInformation("Updating actor template {TemplateId}", body.TemplateId);
 
-        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+        var templateStore = _templateStore;
         var (existing, etag) = await templateStore.GetWithETagAsync(body.TemplateId.ToString(), cancellationToken);
 
         if (existing == null)
@@ -383,7 +391,7 @@ public partial class ActorService : IActorService
         _logger.LogInformation("Deleting actor template {TemplateId} (forceStop: {ForceStop})",
             body.TemplateId, body.ForceStopActors);
 
-        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+        var templateStore = _templateStore;
         var existing = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
 
         if (existing == null)
@@ -463,7 +471,7 @@ public partial class ActorService : IActorService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorService.UpdateTemplateIndex");
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
+        var indexStore = _templateIndexStore;
 
         for (int attempt = 1; attempt <= TemplateIndexMaxRetries; attempt++)
         {
@@ -512,7 +520,7 @@ public partial class ActorService : IActorService
         _logger.LogInformation("Spawning actor from template {TemplateId}", body.TemplateId);
 
         // Get template
-        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+        var templateStore = _templateStore;
         var template = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
 
         if (template == null)
@@ -805,8 +813,8 @@ public partial class ActorService : IActorService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorService.FindAutoSpawnTemplate");
-        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
+        var templateStore = _templateStore;
+        var indexStore = _templateIndexStore;
 
         // Get all template IDs
         var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken);

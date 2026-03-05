@@ -23,7 +23,6 @@ public partial class InventoryService : IInventoryService
 {
     private readonly IMessageBus _messageBus;
     private readonly IItemClient _itemClient;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<InventoryService> _logger;
     private readonly InventoryServiceConfiguration _configuration;
@@ -31,6 +30,21 @@ public partial class InventoryService : IInventoryService
     private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly IInventoryDataCache _inventoryCache;
     private readonly WeightContribution _defaultWeightContribution;
+
+    /// <summary>
+    /// MySQL-backed container store for durable container persistence.
+    /// </summary>
+    private readonly IStateStore<ContainerModel> _containerStore;
+
+    /// <summary>
+    /// String-typed view of the container store for JSON-serialized index lists.
+    /// </summary>
+    private readonly IStateStore<string> _containerStringStore;
+
+    /// <summary>
+    /// Redis-backed container cache for read-through caching of container data.
+    /// </summary>
+    private readonly IStateStore<ContainerModel> _containerCache;
 
     /// <summary>
     /// Suppresses client event publishing during composite operations (e.g., cross-container
@@ -62,13 +76,17 @@ public partial class InventoryService : IInventoryService
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _itemClient = itemClient ?? throw new ArgumentNullException(nameof(itemClient));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _telemetryProvider = telemetryProvider ?? throw new ArgumentNullException(nameof(telemetryProvider));
         _entitySessionRegistry = entitySessionRegistry ?? throw new ArgumentNullException(nameof(entitySessionRegistry));
         _inventoryCache = inventoryCache ?? throw new ArgumentNullException(nameof(inventoryCache));
+
+        var factory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _containerStore = factory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
+        _containerStringStore = factory.GetStore<string>(StateStoreDefinitions.InventoryContainerStore);
+        _containerCache = factory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerCache);
 
         // Configuration already provides typed enum (T25 compliant)
         _defaultWeightContribution = _configuration.DefaultWeightContribution;
@@ -113,8 +131,6 @@ public partial class InventoryService : IInventoryService
             return (StatusCodes.BadRequest, null);
         }
 
-        var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-
         var containerId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
 
@@ -122,7 +138,7 @@ public partial class InventoryService : IInventoryService
         var nestingDepth = 0;
         if (body.ParentContainerId.HasValue)
         {
-            var parent = await containerStore.GetAsync($"{CONT_PREFIX}{body.ParentContainerId}", cancellationToken);
+            var parent = await _containerStore.GetAsync($"{CONT_PREFIX}{body.ParentContainerId}", cancellationToken);
             if (parent is null)
             {
                 _logger.LogDebug("Parent container not found: {ParentId}", body.ParentContainerId);
@@ -181,15 +197,15 @@ public partial class InventoryService : IInventoryService
             CreatedAt = now
         };
 
-        await containerStore.SaveAsync($"{CONT_PREFIX}{containerId}", model, cancellationToken: cancellationToken);
+        await _containerStore.SaveAsync($"{CONT_PREFIX}{containerId}", model, cancellationToken: cancellationToken);
 
         // Update Redis cache after MySQL write
         await UpdateContainerCacheAsync($"{CONT_PREFIX}{containerId}", model, cancellationToken);
 
         var ownerIndexKey = BuildOwnerIndexKey(body.OwnerType, body.OwnerId);
-        await AddToListAsync(StateStoreDefinitions.InventoryContainerStore,
+        await AddToListAsync(_containerStringStore,
             ownerIndexKey, containerId.ToString(), cancellationToken);
-        await AddToListAsync(StateStoreDefinitions.InventoryContainerStore,
+        await AddToListAsync(_containerStringStore,
             $"{CONT_TYPE_INDEX}{body.ContainerType}", containerId.ToString(), cancellationToken);
 
         await _messageBus.TryPublishAsync("inventory.container.created", new InventoryContainerCreatedEvent
@@ -289,19 +305,16 @@ public partial class InventoryService : IInventoryService
             return (StatusCodes.BadRequest, null);
         }
 
-        var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.InventoryContainerStore);
-
         // Look for existing container by owner + type
         var ownerKey = BuildOwnerIndexKey(body.OwnerType, body.OwnerId);
-        var idsJson = await stringStore.GetAsync(ownerKey, cancellationToken);
+        var idsJson = await _containerStringStore.GetAsync(ownerKey, cancellationToken);
         var ids = string.IsNullOrEmpty(idsJson)
             ? new List<string>()
             : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
 
         foreach (var id in ids)
         {
-            var existing = await containerStore.GetAsync($"{CONT_PREFIX}{id}", cancellationToken);
+            var existing = await _containerStore.GetAsync($"{CONT_PREFIX}{id}", cancellationToken);
             if (existing is not null && existing.ContainerType == body.ContainerType)
             {
                 return (StatusCodes.OK, MapContainerToResponse(existing));
@@ -328,11 +341,8 @@ public partial class InventoryService : IInventoryService
         ListContainersRequest body,
         CancellationToken cancellationToken = default)
     {
-        var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.InventoryContainerStore);
-
         var ownerKey = BuildOwnerIndexKey(body.OwnerType, body.OwnerId);
-        var idsJson = await stringStore.GetAsync(ownerKey, cancellationToken);
+        var idsJson = await _containerStringStore.GetAsync(ownerKey, cancellationToken);
         var ids = string.IsNullOrEmpty(idsJson)
             ? new List<string>()
             : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
@@ -340,7 +350,7 @@ public partial class InventoryService : IInventoryService
         var containers = new List<ContainerResponse>();
         foreach (var id in ids)
         {
-            var model = await containerStore.GetAsync($"{CONT_PREFIX}{id}", cancellationToken);
+            var model = await _containerStore.GetAsync($"{CONT_PREFIX}{id}", cancellationToken);
             if (model is null) continue;
 
             // Apply filters
@@ -557,13 +567,12 @@ public partial class InventoryService : IInventoryService
 
         // Remove from indexes
         var ownerIndexKey = BuildOwnerIndexKey(model.OwnerType, model.OwnerId);
-        await RemoveFromListAsync(StateStoreDefinitions.InventoryContainerStore,
+        await RemoveFromListAsync(_containerStringStore,
             ownerIndexKey, body.ContainerId.ToString(), cancellationToken);
-        await RemoveFromListAsync(StateStoreDefinitions.InventoryContainerStore,
+        await RemoveFromListAsync(_containerStringStore,
             $"{CONT_TYPE_INDEX}{model.ContainerType}", body.ContainerId.ToString(), cancellationToken);
 
-        var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-        await containerStore.DeleteAsync($"{CONT_PREFIX}{body.ContainerId}", cancellationToken);
+        await _containerStore.DeleteAsync($"{CONT_PREFIX}{body.ContainerId}", cancellationToken);
 
         // Invalidate cache after MySQL delete
         await InvalidateContainerCacheAsync($"{CONT_PREFIX}{body.ContainerId}", cancellationToken);
@@ -1182,9 +1191,8 @@ public partial class InventoryService : IInventoryService
         }
 
         // Get source and target containers
-        var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-        var sourceContainer = await containerStore.GetAsync($"{CONT_PREFIX}{sourceContainerId}", cancellationToken);
-        var targetContainer = await containerStore.GetAsync($"{CONT_PREFIX}{body.TargetContainerId}", cancellationToken);
+        var sourceContainer = await _containerStore.GetAsync($"{CONT_PREFIX}{sourceContainerId}", cancellationToken);
+        var targetContainer = await _containerStore.GetAsync($"{CONT_PREFIX}{body.TargetContainerId}", cancellationToken);
 
         if (sourceContainer is null || targetContainer is null)
         {
@@ -2198,19 +2206,18 @@ public partial class InventoryService : IInventoryService
     /// <summary>
     /// Adds a value to a JSON-serialized list in the state store.
     /// </summary>
-    private async Task AddToListAsync(string storeName, string key, string value, CancellationToken ct)
+    private async Task AddToListAsync(IStateStore<string> store, string key, string value, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.inventory", "InventoryService.AddToListAsync");
         await using var lockResponse = await _lockProvider.LockAsync(
-            storeName, key, Guid.NewGuid().ToString(), _configuration.ListLockTimeoutSeconds, ct);
+            StateStoreDefinitions.InventoryContainerStore, key, Guid.NewGuid().ToString(), _configuration.ListLockTimeoutSeconds, ct);
         if (!lockResponse.Success)
         {
-            _logger.LogWarning("Could not acquire list lock for {StoreName}:{Key}", storeName, key);
+            _logger.LogWarning("Could not acquire list lock for {Key}", key);
             return;
         }
 
-        var stringStore = _stateStoreFactory.GetStore<string>(storeName);
-        var json = await stringStore.GetAsync(key, ct);
+        var json = await store.GetAsync(key, ct);
         var list = string.IsNullOrEmpty(json)
             ? new List<string>()
             : BannouJson.Deserialize<List<string>>(json) ?? new List<string>();
@@ -2218,32 +2225,31 @@ public partial class InventoryService : IInventoryService
         if (!list.Contains(value))
         {
             list.Add(value);
-            await stringStore.SaveAsync(key, BannouJson.Serialize(list), cancellationToken: ct);
+            await store.SaveAsync(key, BannouJson.Serialize(list), cancellationToken: ct);
         }
     }
 
     /// <summary>
     /// Removes a value from a JSON-serialized list in the state store.
     /// </summary>
-    private async Task RemoveFromListAsync(string storeName, string key, string value, CancellationToken ct)
+    private async Task RemoveFromListAsync(IStateStore<string> store, string key, string value, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.inventory", "InventoryService.RemoveFromListAsync");
         await using var lockResponse = await _lockProvider.LockAsync(
-            storeName, key, Guid.NewGuid().ToString(), _configuration.ListLockTimeoutSeconds, ct);
+            StateStoreDefinitions.InventoryContainerStore, key, Guid.NewGuid().ToString(), _configuration.ListLockTimeoutSeconds, ct);
         if (!lockResponse.Success)
         {
-            _logger.LogWarning("Could not acquire list lock for {StoreName}:{Key}", storeName, key);
+            _logger.LogWarning("Could not acquire list lock for {Key}", key);
             return;
         }
 
-        var stringStore = _stateStoreFactory.GetStore<string>(storeName);
-        var json = await stringStore.GetAsync(key, ct);
+        var json = await store.GetAsync(key, ct);
         if (string.IsNullOrEmpty(json)) return;
 
         var list = BannouJson.Deserialize<List<string>>(json) ?? new List<string>();
         if (list.Remove(value))
         {
-            await stringStore.SaveAsync(key, BannouJson.Serialize(list), cancellationToken: ct);
+            await store.SaveAsync(key, BannouJson.Serialize(list), cancellationToken: ct);
         }
     }
 
@@ -2297,15 +2303,13 @@ public partial class InventoryService : IInventoryService
 
     /// <summary>
     /// Attempts to retrieve a container from the Redis cache.
-    /// Uses StateStoreDefinitions.InventoryContainerCache directly per IMPLEMENTATION TENETS.
     /// </summary>
     private async Task<ContainerModel?> TryGetContainerFromCacheAsync(string key, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.inventory", "InventoryService.TryGetContainerFromCacheAsync");
         try
         {
-            var cache = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerCache);
-            return await cache.GetAsync(key, ct);
+            return await _containerCache.GetAsync(key, ct);
         }
         catch (Exception ex)
         {
@@ -2317,15 +2321,13 @@ public partial class InventoryService : IInventoryService
 
     /// <summary>
     /// Updates the container cache after a read or write.
-    /// Uses StateStoreDefinitions.InventoryContainerCache directly per IMPLEMENTATION TENETS.
     /// </summary>
     private async Task UpdateContainerCacheAsync(string key, ContainerModel container, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.inventory", "InventoryService.UpdateContainerCacheAsync");
         try
         {
-            var cache = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerCache);
-            await cache.SaveAsync(key, container, new StateOptions { Ttl = _configuration.ContainerCacheTtlSeconds }, ct);
+            await _containerCache.SaveAsync(key, container, new StateOptions { Ttl = _configuration.ContainerCacheTtlSeconds }, ct);
         }
         catch (Exception ex)
         {
@@ -2342,8 +2344,7 @@ public partial class InventoryService : IInventoryService
         using var activity = _telemetryProvider.StartActivity("bannou.inventory", "InventoryService.InvalidateContainerCacheAsync");
         try
         {
-            var cache = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerCache);
-            await cache.DeleteAsync(key, ct);
+            await _containerCache.DeleteAsync(key, ct);
         }
         catch (Exception ex)
         {
@@ -2367,8 +2368,7 @@ public partial class InventoryService : IInventoryService
             return cached;
 
         // Cache miss - read from MySQL
-        var store = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-        var container = await store.GetAsync(key, ct);
+        var container = await _containerStore.GetAsync(key, ct);
 
         if (container != null)
         {
@@ -2386,8 +2386,7 @@ public partial class InventoryService : IInventoryService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.inventory", "InventoryService.SaveContainerWithCacheAsync");
         var key = $"{CONT_PREFIX}{container.ContainerId}";
-        var store = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-        await store.SaveAsync(key, container, cancellationToken: ct);
+        await _containerStore.SaveAsync(key, container, cancellationToken: ct);
 
         // Update Redis cache after MySQL write
         await UpdateContainerCacheAsync(key, container, ct);
