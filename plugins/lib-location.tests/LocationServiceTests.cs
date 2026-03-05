@@ -36,10 +36,14 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IResourceClient> _mockResourceClient;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IStateStore<EntityPresenceModel>> _mockEntityPresenceStore;
+    private readonly Mock<ICacheableStateStore<string>> _mockEntitySetStore;
     private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
 
     private const string STATE_STORE = "location-statestore";
     private const string CACHE_STORE = "location-cache";
+    private const string PRESENCE_STORE = "location-entity-presence";
+    private const string ENTITY_SET_STORE = "location-entity-set";
     private const string PUBSUB_NAME = "bannou-pubsub";
     private const string LOCATION_KEY_PREFIX = "location:";
     private const string CODE_INDEX_PREFIX = "code-index:";
@@ -60,6 +64,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockResourceClient = new Mock<IResourceClient>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockEntityPresenceStore = new Mock<IStateStore<EntityPresenceModel>>();
+        _mockEntitySetStore = new Mock<ICacheableStateStore<string>>();
         _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
 
         // Default lock provider behavior - always succeed with proper disposable
@@ -83,6 +89,12 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         _mockStateStoreFactory
             .Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
             .Returns(_mockListStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<EntityPresenceModel>(PRESENCE_STORE))
+            .Returns(_mockEntityPresenceStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetCacheableStore<string>(ENTITY_SET_STORE))
+            .Returns(_mockEntitySetStore.Object);
 
         // Default bulk operation behaviors for location store
         _mockLocationStore
@@ -2199,7 +2211,6 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     public async Task ReportEntityPositionAsync_WhenFirstReport_ShouldSetPresenceAndPublishArrival()
     {
         // Arrange
-        var service = CreateService();
         var realmId = Guid.NewGuid();
         var locationId = Guid.NewGuid();
         var entityId = Guid.NewGuid();
@@ -2213,19 +2224,12 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(locationModel);
 
-        var mockPresenceStore = new Mock<IStateStore<EntityPresenceModel>>();
-        mockPresenceStore
+        _mockEntityPresenceStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((EntityPresenceModel?)null); // No existing presence
-
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<EntityPresenceModel>("location-entity-presence"))
-            .Returns(mockPresenceStore.Object);
-
-        var mockEntitySetStore = new Mock<ICacheableStateStore<string>>();
-        _mockStateStoreFactory
-            .Setup(f => f.GetCacheableStore<string>("location-entity-set"))
-            .Returns(mockEntitySetStore.Object);
+        _mockEntityPresenceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<EntityPresenceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
 
         // Capture events
         var capturedTopics = new List<string>();
@@ -2238,6 +2242,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
                 capturedEvents.Add(evt);
             })
             .ReturnsAsync(true);
+
+        var service = CreateService();
 
         var request = new ReportEntityPositionRequest
         {
@@ -2256,7 +2262,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         Assert.Null(response.DepartedFrom);
 
         // Verify presence was saved
-        mockPresenceStore.Verify(s => s.SaveAsync(
+        _mockEntityPresenceStore.Verify(s => s.SaveAsync(
             It.Is<string>(k => k.Contains("character") && k.Contains(entityId.ToString())),
             It.IsAny<EntityPresenceModel>(),
             It.IsAny<StateOptions?>(),
@@ -2270,7 +2276,6 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     public async Task ReportEntityPositionAsync_WhenLocationChanged_ShouldPublishDepartureAndArrival()
     {
         // Arrange
-        var service = CreateService();
         var realmId = Guid.NewGuid();
         var oldLocationId = Guid.NewGuid();
         var newLocationId = Guid.NewGuid();
@@ -2284,21 +2289,17 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{newLocationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(locationModel);
 
-        var mockPresenceStore = new Mock<IStateStore<EntityPresenceModel>>();
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<EntityPresenceModel>("location-entity-presence"))
-            .Returns(mockPresenceStore.Object);
-
-        var mockEntitySetStore = new Mock<ICacheableStateStore<string>>();
-        _mockStateStoreFactory
-            .Setup(f => f.GetCacheableStore<string>("location-entity-set"))
-            .Returns(mockEntitySetStore.Object);
+        _mockEntityPresenceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<EntityPresenceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
 
         var capturedTopics = new List<string>();
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .Callback<string, object, CancellationToken>((topic, _, _2) => capturedTopics.Add(topic))
             .ReturnsAsync(true);
+
+        var service = CreateService();
 
         var request = new ReportEntityPositionRequest
         {
@@ -2353,14 +2354,12 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     public async Task GetEntityLocationAsync_WhenPresenceExists_ShouldReturnLocation()
     {
         // Arrange
-        var service = CreateService();
         var entityId = Guid.NewGuid();
         var locationId = Guid.NewGuid();
         var realmId = Guid.NewGuid();
         var reportedAt = DateTimeOffset.UtcNow;
 
-        var mockPresenceStore = new Mock<IStateStore<EntityPresenceModel>>();
-        mockPresenceStore
+        _mockEntityPresenceStore
             .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("character") && k.Contains(entityId.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new EntityPresenceModel
             {
@@ -2372,9 +2371,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
                 ReportedBy = "game-server"
             });
 
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<EntityPresenceModel>("location-entity-presence"))
-            .Returns(mockPresenceStore.Object);
+        var service = CreateService();
 
         // Act
         var (status, response) = await service.GetEntityLocationAsync(
@@ -2392,17 +2389,13 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     public async Task GetEntityLocationAsync_WhenNoPresence_ShouldReturnEmptyResponse()
     {
         // Arrange
-        var service = CreateService();
         var entityId = Guid.NewGuid();
 
-        var mockPresenceStore = new Mock<IStateStore<EntityPresenceModel>>();
-        mockPresenceStore
+        _mockEntityPresenceStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((EntityPresenceModel?)null);
 
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<EntityPresenceModel>("location-entity-presence"))
-            .Returns(mockPresenceStore.Object);
+        var service = CreateService();
 
         // Act
         var (status, response) = await service.GetEntityLocationAsync(
@@ -2419,13 +2412,11 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     public async Task ListEntitiesAtLocationAsync_ShouldReturnEntitiesInSet()
     {
         // Arrange
-        var service = CreateService();
         var locationId = Guid.NewGuid();
         var entity1Id = Guid.NewGuid();
         var entity2Id = Guid.NewGuid();
 
-        var mockEntitySetStore = new Mock<ICacheableStateStore<string>>();
-        mockEntitySetStore
+        _mockEntitySetStore
             .Setup(s => s.GetSetAsync<string>(It.Is<string>(k => k.Contains(locationId.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>
             {
@@ -2433,18 +2424,11 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
                 $"npc:{entity2Id}"
             });
 
-        _mockStateStoreFactory
-            .Setup(f => f.GetCacheableStore<string>("location-entity-set"))
-            .Returns(mockEntitySetStore.Object);
-
-        var mockPresenceStore = new Mock<IStateStore<EntityPresenceModel>>();
-        mockPresenceStore
+        _mockEntityPresenceStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((EntityPresenceModel?)null);
 
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<EntityPresenceModel>("location-entity-presence"))
-            .Returns(mockPresenceStore.Object);
+        var service = CreateService();
 
         // Act
         var (status, response) = await service.ListEntitiesAtLocationAsync(
@@ -2462,13 +2446,11 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     public async Task ListEntitiesAtLocationAsync_WithEntityTypeFilter_ShouldFilterResults()
     {
         // Arrange
-        var service = CreateService();
         var locationId = Guid.NewGuid();
         var entity1Id = Guid.NewGuid();
         var entity2Id = Guid.NewGuid();
 
-        var mockEntitySetStore = new Mock<ICacheableStateStore<string>>();
-        mockEntitySetStore
+        _mockEntitySetStore
             .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>
             {
@@ -2476,18 +2458,11 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
                 $"npc:{entity2Id}"
             });
 
-        _mockStateStoreFactory
-            .Setup(f => f.GetCacheableStore<string>("location-entity-set"))
-            .Returns(mockEntitySetStore.Object);
-
-        var mockPresenceStore = new Mock<IStateStore<EntityPresenceModel>>();
-        mockPresenceStore
+        _mockEntityPresenceStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((EntityPresenceModel?)null);
 
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<EntityPresenceModel>("location-entity-presence"))
-            .Returns(mockPresenceStore.Object);
+        var service = CreateService();
 
         // Act
         var (status, response) = await service.ListEntitiesAtLocationAsync(
@@ -2505,13 +2480,11 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     public async Task ClearEntityPositionAsync_WhenPresenceExists_ShouldClearAndPublishDeparture()
     {
         // Arrange
-        var service = CreateService();
         var entityId = Guid.NewGuid();
         var locationId = Guid.NewGuid();
         var realmId = Guid.NewGuid();
 
-        var mockPresenceStore = new Mock<IStateStore<EntityPresenceModel>>();
-        mockPresenceStore
+        _mockEntityPresenceStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new EntityPresenceModel
             {
@@ -2522,20 +2495,13 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
                 ReportedAt = DateTimeOffset.UtcNow
             });
 
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<EntityPresenceModel>("location-entity-presence"))
-            .Returns(mockPresenceStore.Object);
-
-        var mockEntitySetStore = new Mock<ICacheableStateStore<string>>();
-        _mockStateStoreFactory
-            .Setup(f => f.GetCacheableStore<string>("location-entity-set"))
-            .Returns(mockEntitySetStore.Object);
-
         string? capturedTopic = null;
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .Callback<string, object, CancellationToken>((topic, _, _2) => capturedTopic = topic)
             .ReturnsAsync(true);
+
+        var service = CreateService();
 
         // Act
         var (status, response) = await service.ClearEntityPositionAsync(
@@ -2550,7 +2516,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         Assert.Equal("location.entity-departed", capturedTopic);
 
         // Verify presence was deleted
-        mockPresenceStore.Verify(s => s.DeleteAsync(
+        _mockEntityPresenceStore.Verify(s => s.DeleteAsync(
             It.Is<string>(k => k.Contains("character") && k.Contains(entityId.ToString())),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -2559,17 +2525,13 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     public async Task ClearEntityPositionAsync_WhenNoPresence_ShouldReturnOkWithNullPrevious()
     {
         // Arrange
-        var service = CreateService();
         var entityId = Guid.NewGuid();
 
-        var mockPresenceStore = new Mock<IStateStore<EntityPresenceModel>>();
-        mockPresenceStore
+        _mockEntityPresenceStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((EntityPresenceModel?)null);
 
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<EntityPresenceModel>("location-entity-presence"))
-            .Returns(mockPresenceStore.Object);
+        var service = CreateService();
 
         // Act
         var (status, response) = await service.ClearEntityPositionAsync(
@@ -2744,6 +2706,8 @@ public class LocationCompressionTests : ServiceTestBase<LocationServiceConfigura
     private readonly Mock<IRealmClient> _mockRealmClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<IStateStore<EntityPresenceModel>> _mockEntityPresenceStore;
+    private readonly Mock<ICacheableStateStore<string>> _mockEntitySetStore;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
 
@@ -2765,6 +2729,8 @@ public class LocationCompressionTests : ServiceTestBase<LocationServiceConfigura
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockResourceClient = new Mock<IResourceClient>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockEntityPresenceStore = new Mock<IStateStore<EntityPresenceModel>>();
+        _mockEntitySetStore = new Mock<ICacheableStateStore<string>>();
         _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
 
         _mockStateStoreFactory
@@ -2779,6 +2745,12 @@ public class LocationCompressionTests : ServiceTestBase<LocationServiceConfigura
         _mockStateStoreFactory
             .Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
             .Returns(_mockListStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<EntityPresenceModel>("location-entity-presence"))
+            .Returns(_mockEntityPresenceStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetCacheableStore<string>("location-entity-set"))
+            .Returns(_mockEntitySetStore.Object);
     }
 
     private LocationService CreateService()

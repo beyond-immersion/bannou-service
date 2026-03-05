@@ -31,6 +31,9 @@ public class AssetServiceTests
     private readonly Mock<IStateStore<UploadSession>> _mockUploadSessionStore = new();
     private readonly Mock<IStateStore<BundleUploadSession>> _mockBundleUploadSessionStore = new();
     private readonly Mock<IStateStore<MetabundleJob>> _mockJobStore = new();
+    private readonly Mock<IStateStore<BundleCreationJob>> _mockBundleCreationJobStore = new();
+    private readonly Mock<IStateStore<BundleDownloadToken>> _mockBundleDownloadTokenStore = new();
+    private readonly Mock<IStateStore<AssetMetadata>> _mockAssetMetadataStore = new();
     private readonly Mock<ICacheableStateStore<StoredBundleVersionRecord>> _mockVersionStore = new();
     private readonly Mock<ICacheableStateStore<BundleMetadata>> _mockCacheableBundleStore = new();
     private readonly Mock<IMessageBus> _mockMessageBus = new();
@@ -54,9 +57,22 @@ public class AssetServiceTests
         _mockStateStoreFactory.Setup(f => f.GetStore<UploadSession>(STATE_STORE)).Returns(_mockUploadSessionStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<BundleUploadSession>(STATE_STORE)).Returns(_mockBundleUploadSessionStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<MetabundleJob>(STATE_STORE)).Returns(_mockJobStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<BundleCreationJob>(STATE_STORE)).Returns(_mockBundleCreationJobStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<BundleDownloadToken>(STATE_STORE)).Returns(_mockBundleDownloadTokenStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<AssetMetadata>(STATE_STORE)).Returns(_mockAssetMetadataStore.Object);
         _mockStateStoreFactory.Setup(f => f.SupportsSearch(STATE_STORE)).Returns(false);
         _mockStateStoreFactory.Setup(f => f.GetCacheableStore<StoredBundleVersionRecord>(STATE_STORE)).Returns(_mockVersionStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetCacheableStore<BundleMetadata>(STATE_STORE)).Returns(_mockCacheableBundleStore.Object);
+
+        // Default SaveAsync returns for stores used in async job paths
+        _mockBundleCreationJobStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<BundleCreationJob>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockJobStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MetabundleJob>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Default TryPublishAsync for message bus (5-param overload)
+        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
     }
 
     #region Constructor Tests
@@ -3821,15 +3837,9 @@ public class AssetServiceTests
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(largeAsset);
 
-        // Mock the BundleCreationJob store needed for async queueing path
-        var mockJobStore = new Mock<IStateStore<BundleCreationJob>>();
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<BundleCreationJob>(STATE_STORE))
-            .Returns(mockJobStore.Object);
-
         // Capture the saved job to verify queueing behavior
         BundleCreationJob? capturedJob = null;
-        mockJobStore
+        _mockBundleCreationJobStore
             .Setup(s => s.SaveAsync(
                 It.IsAny<string>(), It.IsAny<BundleCreationJob>(),
                 It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -3919,14 +3929,8 @@ public class AssetServiceTests
             .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("source-1")), It.IsAny<CancellationToken>()))
             .ReturnsAsync(sourceBundle);
 
-        // Mock MetabundleJob store for async queueing
-        var mockJobStore = new Mock<IStateStore<MetabundleJob>>();
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<MetabundleJob>(STATE_STORE))
-            .Returns(mockJobStore.Object);
-
         MetabundleJob? capturedJob = null;
-        mockJobStore
+        _mockJobStore
             .Setup(s => s.SaveAsync(
                 It.IsAny<string>(), It.IsAny<MetabundleJob>(),
                 It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))

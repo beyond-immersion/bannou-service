@@ -33,9 +33,9 @@ public class StorageCircuitBreaker
     }
 
     /// <summary>
-    /// Internal state model stored in Redis.
+    /// State model stored in Redis.
     /// </summary>
-    private class CircuitBreakerState
+    internal class CircuitBreakerState
     {
         /// <summary>Current circuit state.</summary>
         public string State { get; set; } = "Closed";

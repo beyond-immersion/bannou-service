@@ -183,8 +183,8 @@ public class PermissionSessionActivityListenerTests
         // Act
         await listener.OnHeartbeatAsync(sessionId, CancellationToken.None);
 
-        // Assert — no Redis operations should be attempted
-        _mockStateStoreFactory.Verify(f => f.GetRedisOperations(), Times.Never());
+        // Assert — no Redis EXPIRE operations should be attempted (GetRedisOperations is
+        // called during constructor, which is expected — the test verifies runtime behavior)
         _mockRedisOps.Verify(r => r.ExpireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Never());
     }
 

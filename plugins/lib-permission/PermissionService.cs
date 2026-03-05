@@ -691,102 +691,117 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
 
         var compiledPermissions = new Dictionary<string, HashSet<string>>();
 
-
-
-        var registeredServices = await _cacheStore.GetSetAsync<string>(REGISTERED_SERVICES_KEY, cancellationToken);
-
-        _logger.LogDebug("Found {Count} registered services: {Services}",
-            registeredServices.Count, string.Join(", ", registeredServices));
-
-        foreach (var serviceId in registeredServices)
+        try
         {
-            var relevantStates = new List<string> { "default" };
-            foreach (var serviceState in sessionStates.Where(s => s.Key != SESSION_ROLE_KEY))
-            {
-                var stateServiceId = serviceState.Key;
-                var stateValue = serviceState.Value;
-                if (stateValue == "default") continue;
-                relevantStates.Add(stateServiceId == serviceId ? stateValue : $"{stateServiceId}:{stateValue}");
-            }
+            var registeredServices = await _cacheStore.GetSetAsync<string>(REGISTERED_SERVICES_KEY, cancellationToken);
 
-            foreach (var stateKey in relevantStates)
-            {
-                var maxRoleByEndpoint = new Dictionary<string, int>();
+            _logger.LogDebug("Found {Count} registered services: {Services}",
+                registeredServices.Count, string.Join(", ", registeredServices));
 
-                foreach (var roleName in _configuration.RoleHierarchy)
+            foreach (var serviceId in registeredServices)
+            {
+                var relevantStates = new List<string> { "default" };
+                foreach (var serviceState in sessionStates.Where(s => s.Key != SESSION_ROLE_KEY))
                 {
-                    var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, stateKey, roleName);
-                    var endpoints = await _hashSetStore.GetAsync(matrixKey, cancellationToken);
-
-                    _logger.LogDebug("State-based lookup: service={ServiceId}, stateKey={StateKey}, role={Role}, key={Key}, found={Count}",
-                        serviceId, stateKey, roleName, matrixKey, endpoints?.Count ?? 0);
-
-                    if (endpoints == null) continue;
-
-                    foreach (var endpoint in endpoints)
-                    {
-                        var priority = Array.IndexOf(_configuration.RoleHierarchy, roleName);
-                        maxRoleByEndpoint[endpoint] = maxRoleByEndpoint.TryGetValue(endpoint, out var existing)
-                            ? Math.Max(existing, priority)
-                            : priority;
-                    }
+                    var stateServiceId = serviceState.Key;
+                    var stateValue = serviceState.Value;
+                    if (stateValue == "default") continue;
+                    relevantStates.Add(stateServiceId == serviceId ? stateValue : $"{stateServiceId}:{stateValue}");
                 }
 
-                var sessionPriority = Array.IndexOf(_configuration.RoleHierarchy, role);
-                foreach (var kvp in maxRoleByEndpoint)
+                foreach (var stateKey in relevantStates)
                 {
-                    if (sessionPriority < kvp.Value)
+                    var maxRoleByEndpoint = new Dictionary<string, int>();
+
+                    foreach (var roleName in _configuration.RoleHierarchy)
                     {
-                        continue;
+                        var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, stateKey, roleName);
+                        var endpoints = await _hashSetStore.GetAsync(matrixKey, cancellationToken);
+
+                        _logger.LogDebug("State-based lookup: service={ServiceId}, stateKey={StateKey}, role={Role}, key={Key}, found={Count}",
+                            serviceId, stateKey, roleName, matrixKey, endpoints?.Count ?? 0);
+
+                        if (endpoints == null) continue;
+
+                        foreach (var endpoint in endpoints)
+                        {
+                            var priority = Array.IndexOf(_configuration.RoleHierarchy, roleName);
+                            maxRoleByEndpoint[endpoint] = maxRoleByEndpoint.TryGetValue(endpoint, out var existing)
+                                ? Math.Max(existing, priority)
+                                : priority;
+                        }
                     }
 
-                    if (!compiledPermissions.ContainsKey(serviceId))
+                    var sessionPriority = Array.IndexOf(_configuration.RoleHierarchy, role);
+                    foreach (var kvp in maxRoleByEndpoint)
                     {
-                        compiledPermissions[serviceId] = new HashSet<string>();
-                    }
+                        if (sessionPriority < kvp.Value)
+                        {
+                            continue;
+                        }
 
-                    compiledPermissions[serviceId].Add(kvp.Key);
+                        if (!compiledPermissions.ContainsKey(serviceId))
+                        {
+                            compiledPermissions[serviceId] = new HashSet<string>();
+                        }
+
+                        compiledPermissions[serviceId].Add(kvp.Key);
+                    }
                 }
             }
+
+            // Store compiled permissions with version increment
+            var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+            var existingPermissions = await _permissionsStore.GetAsync(permissionsKey, cancellationToken) ?? new Dictionary<string, object>();
+
+            var currentVersion = 0;
+            if (existingPermissions.ContainsKey("version"))
+            {
+                int.TryParse(existingPermissions["version"]?.ToString(), out currentVersion);
+            }
+
+            var newVersion = currentVersion + 1;
+            var newPermissionData = new Dictionary<string, object>();
+            foreach (var kvp in compiledPermissions)
+            {
+                newPermissionData[kvp.Key] = kvp.Value.ToList();
+            }
+            newPermissionData["version"] = newVersion;
+            newPermissionData["generated_at"] = DateTimeOffset.UtcNow.ToString("o");
+
+            await _permissionsStore.SaveAsync(permissionsKey, newPermissionData, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
+
+            await PublishCapabilityUpdateAsync(
+                sessionId,
+                compiledPermissions.ToDictionary(k => k.Key, v => (IEnumerable<string>)v.Value.ToList()),
+                newVersion,
+                reason,
+                skipActiveConnectionsCheck,
+                cancellationToken);
+
+            _logger.LogInformation("Recompiled permissions for session {SessionId}: {ServiceCount} services, version {Version}",
+                sessionId, compiledPermissions.Count, newVersion);
+
+            var resultPermissions = compiledPermissions.ToDictionary(
+                k => k.Key,
+                v => (ICollection<string>)v.Value.ToList());
+
+            return (true, resultPermissions);
         }
-
-        // Store compiled permissions with version increment
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-        var existingPermissions = await _permissionsStore.GetAsync(permissionsKey, cancellationToken) ?? new Dictionary<string, object>();
-
-        var currentVersion = 0;
-        if (existingPermissions.ContainsKey("version"))
+        catch (Exception ex)
         {
-            int.TryParse(existingPermissions["version"]?.ToString(), out currentVersion);
+            _logger.LogError(ex, "Failed to recompile permissions for session {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "permission",
+                "RecompileSessionPermissions",
+                ex.GetType().Name,
+                ex.Message,
+                "state",
+                sessionId,
+                ServiceErrorEventSeverity.Error,
+                cancellationToken: cancellationToken);
+            return (false, null);
         }
-
-        var newVersion = currentVersion + 1;
-        var newPermissionData = new Dictionary<string, object>();
-        foreach (var kvp in compiledPermissions)
-        {
-            newPermissionData[kvp.Key] = kvp.Value.ToList();
-        }
-        newPermissionData["version"] = newVersion;
-        newPermissionData["generated_at"] = DateTimeOffset.UtcNow.ToString("o");
-
-        await _permissionsStore.SaveAsync(permissionsKey, newPermissionData, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
-
-        await PublishCapabilityUpdateAsync(
-            sessionId,
-            compiledPermissions.ToDictionary(k => k.Key, v => (IEnumerable<string>)v.Value.ToList()),
-            newVersion,
-            reason,
-            skipActiveConnectionsCheck,
-            cancellationToken);
-
-        _logger.LogInformation("Recompiled permissions for session {SessionId}: {ServiceCount} services, version {Version}",
-            sessionId, compiledPermissions.Count, newVersion);
-
-        var resultPermissions = compiledPermissions.ToDictionary(
-            k => k.Key,
-            v => (ICollection<string>)v.Value.ToList());
-
-        return (true, resultPermissions);
     }
 
     /// <summary>
@@ -847,16 +862,32 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
             Reason = reason
         };
 
-        var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, capabilitiesEvent, cancellationToken);
+        try
+        {
+            var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, capabilitiesEvent, cancellationToken);
 
-        if (published)
-        {
-            _logger.LogDebug("Published capabilities to session {SessionId} ({ServiceCount} services, reason: {Reason})",
-                sessionId, permissions.Count, reason);
+            if (published)
+            {
+                _logger.LogDebug("Published capabilities to session {SessionId} ({ServiceCount} services, reason: {Reason})",
+                    sessionId, permissions.Count, reason);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to publish capabilities to session {SessionId}", sessionId);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            _logger.LogWarning("Failed to publish capabilities to session {SessionId}", sessionId);
+            _logger.LogError(ex, "Exception publishing capabilities to session {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "permission",
+                "PublishCapabilities",
+                ex.GetType().Name,
+                ex.Message,
+                "messaging",
+                sessionId,
+                ServiceErrorEventSeverity.Error,
+                cancellationToken: cancellationToken);
         }
     }
 
@@ -913,7 +944,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
             {
                 ServiceId = serviceId,
                 ServiceName = serviceId,
-                Version = registrationData?.Version,
+                Version = registrationData?.Version ?? "unknown",
                 RegisteredAt = registrationData?.RegisteredAt,
                 EndpointCount = uniqueEndpoints.Count
             });
