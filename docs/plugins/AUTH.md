@@ -5,6 +5,7 @@
 > **Version**: 4.0.0
 > **Layer**: AppFoundation
 > **State Store**: auth-statestore (Redis)
+> **Implementation Map**: [docs/maps/AUTH.md](../maps/AUTH.md)
 
 ## Overview
 

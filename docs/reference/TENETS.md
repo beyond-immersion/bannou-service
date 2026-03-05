@@ -276,6 +276,10 @@ Tenets are organized into categories based on when they're needed:
 | Anonymous event objects | T5 | Define typed event in schema |
 | Manually defining lifecycle events | T5 | Use `x-lifecycle` in events schema |
 | Service class missing `partial` | T6 | Add `partial` keyword |
+| Inline `GetStore<T>()` calls in service method bodies | T4, T6 | Constructor-cache all store references as `readonly` fields |
+| Storing `IStateStoreFactory` as a field when only used in constructor | T4, T6 | Use constructor parameter directly; do not store as field |
+| BackgroundService passing `IStateStoreFactory` to sub-methods | T6 | Resolve stores once per scope, pass `IStateStore<T>` references |
+| BackgroundService calling `GetStore<T>()` per sub-method | T6 | Acquire all stores once at scope creation, pass as parameters |
 | Missing x-permissions on endpoint | T13 | Add to schema (even if empty array) |
 | GPL library in NuGet package | T18 | Use MIT/BSD alternative |
 | Missing event consumer registration | T3 | Add RegisterEventConsumers call |

@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFoundation
 > **State Store**: character-statestore (MySQL)
+> **Implementation Map**: [docs/maps/CHARACTER.md](../maps/CHARACTER.md)
 
 ---
 

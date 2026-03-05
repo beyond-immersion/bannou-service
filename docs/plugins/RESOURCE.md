@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: AppFoundation
 > **State Stores**: resource-refcounts (Redis), resource-cleanup (Redis), resource-grace (Redis), resource-compress (Redis), resource-archives (MySQL), resource-snapshots (Redis)
+> **Implementation Map**: [docs/maps/RESOURCE.md](../maps/RESOURCE.md)
 
 ---
 

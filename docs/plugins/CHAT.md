@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: AppFoundation
 > **State Store**: chat-rooms (MySQL), chat-rooms-cache (Redis), chat-messages (MySQL), chat-messages-ephemeral (Redis), chat-participants (Redis), chat-room-types (MySQL), chat-bans (MySQL)
+> **Implementation Map**: [docs/maps/CHAT.md](../maps/CHAT.md)
 
 ---
 
@@ -206,7 +207,7 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 
 | Service | Role |
 |---------|------|
-| `IMessageBus` | Service event publishing (16 event types) and error event publishing |
+| `IMessageBus` | Service event publishing (17 event types) and error event publishing |
 | `IClientEventPublisher` | WebSocket client event publishing (16 event types) and session shortcut publish/revoke |
 | `IEntitySessionRegistry` | Room-level entity session management and typing event fan-out |
 | `IDistributedLockProvider` | Distributed locks for room type, room, and participant mutations |

@@ -307,6 +307,48 @@ For complex services, decompose into helper services in `Services/` subdirectory
 
 **Lifetime rule**: Helper service lifetime MUST be equal to or longer than the main service lifetime. A Singleton main service CANNOT inject a Scoped helper (captive dependency).
 
+### Background Service Store Access (MANDATORY)
+
+Singleton `BackgroundService` classes cannot constructor-inject scoped dependencies like `IStateStoreFactory`. This creates a structural constraint where the T4/T6 constructor-caching pattern (`_stateStore = stateStoreFactory.GetStore<T>(...)`) cannot be physically followed. The correct pattern is to acquire stores **once per DI scope** and pass them as parameters to sub-methods — never re-acquire per method call.
+
+```csharp
+// CORRECT: Acquire stores once at scope creation, pass through as parameters
+private async Task ProcessCycleAsync(CancellationToken ct)
+{
+    using var scope = _serviceProvider.CreateScope();
+    var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
+
+    // Acquire all needed stores once per scope (equivalent to constructor-caching)
+    var entityStore = stateStoreFactory.GetStore<EntityModel>(StateStoreDefinitions.MyEntity);
+    var indexStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.MyEntity);
+
+    // Pass store references to sub-methods — do NOT re-resolve the factory
+    await ProcessBatchAsync(entityStore, indexStore, ct);
+}
+
+private async Task ProcessBatchAsync(
+    IStateStore<EntityModel> entityStore,
+    IStateStore<string> indexStore,
+    CancellationToken ct)
+{
+    // Use passed store references directly
+    var entity = await entityStore.GetAsync(key, ct);
+}
+
+// FORBIDDEN: Re-acquiring factory or stores per sub-method
+private async Task ProcessBatchAsync(IStateStoreFactory factory, CancellationToken ct)
+{
+    var store = factory.GetStore<EntityModel>(StateStoreDefinitions.MyEntity);  // WRONG
+}
+```
+
+**Rules**:
+1. Resolve `IStateStoreFactory` from the DI scope exactly once per cycle
+2. Call `GetStore<T>()` for each needed store immediately after resolving the factory
+3. Pass the store references as method parameters to all sub-methods within that scope
+4. Never pass `IStateStoreFactory` itself to sub-methods — pass the resolved stores
+5. Never store `IStateStoreFactory` as a field on the background service class
+
 ---
 
 ## Tenet 13: X-Permissions Usage (DOCUMENTED)

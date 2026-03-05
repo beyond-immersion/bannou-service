@@ -5,6 +5,7 @@
 > **Version**: 2.0.0
 > **Layer**: GameFoundation
 > **State Store**: game-session-statestore (MySQL)
+> **Implementation Map**: [docs/maps/GAME-SESSION.md](../maps/GAME-SESSION.md)
 
 ---
 

@@ -518,12 +518,16 @@ These are templates/definitions where instances persist independently. The templ
 
 **Current Category B entities**: Item Template, Quest Definition, Chat Room Type, Gardener Scenario Template, Storyline Scenario Definition.
 
-**Lifecycle**: `Active` → `Deprecated` (terminal — no delete endpoint)
+**Lifecycle**: `Active` → `Deprecated` (terminal — no delete endpoint today)
 
 **Required endpoints**:
 - `POST /{entity}/deprecate` — marks deprecated, publishes `*.updated` event
 - NO undeprecate endpoint (the "no new instances" guarantee is part of the system's contract)
-- NO delete endpoint (template persists forever)
+- NO delete endpoint (template persists forever — see Future: Safe Deletion below)
+
+**Unused lifecycle events**: Because `x-lifecycle` auto-generates `*.created`, `*.updated`, and `*.deleted` event types for the entity, Category B entities will have a `*.deleted` event type defined in the generated schema that is never published. This is expected and correct — the event type exists as infrastructure for the future safe deletion pattern described below. Do not remove these event types from the schema; do not treat their existence as an error or count them as "published events."
+
+**Future: Safe Deletion**: Category B entities will eventually support a guarded permanent deletion endpoint that requires ALL instances referencing the template to have been removed first. The template must already be deprecated, and the service must verify zero live references before allowing deletion — only then is the `*.deleted` event published. Until this pattern is implemented, Category B entities have no delete path and the `*.deleted` lifecycle event remains unused.
 
 **Required storage**: Either the triple-field model (matching Category A) OR a status enum when the entity has additional lifecycle states beyond active/deprecated:
 

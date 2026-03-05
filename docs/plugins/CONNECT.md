@@ -5,6 +5,7 @@
 > **Version**: 2.0.0
 > **Layer**: AppFoundation
 > **State Store**: connect-statestore (Redis)
+> **Implementation Map**: [docs/maps/CONNECT.md](../maps/CONNECT.md)
 
 ---
 

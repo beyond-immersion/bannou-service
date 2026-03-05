@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFoundation
 > **State Stores**: currency-definitions (MySQL), currency-wallets (MySQL), currency-balances (MySQL), currency-transactions (MySQL), currency-holds (MySQL), currency-balance-cache (Redis), currency-holds-cache (Redis), currency-idempotency (Redis)
+> **Implementation Map**: [docs/maps/CURRENCY.md](../maps/CURRENCY.md)
 
 ---
 
@@ -165,14 +166,15 @@ Client events are published via `IEntitySessionRegistry.PublishToEntitySessionsA
 |---------|----------|------|
 | `ILogger<CurrencyService>` | Scoped | Structured logging |
 | `CurrencyServiceConfiguration` | Singleton | All 17 config properties (see Configuration section) |
-| `IStateStoreFactory` | Singleton | Access to all 8 state stores |
+| `IStateStoreFactory` | Singleton | Constructor-cached into 13 typed store fields (5 typed model stores + 6 string index stores + 1 idempotency store + 1 balance cache + 1 hold cache) per T4/T6 |
 | `IDistributedLockProvider` | Singleton | Balance locks (`currency-balance`), hold locks (`currency-hold`), wallet locks (`currency-wallet`), index locks (`currency-index`), autogain locks (`currency-autogain`) |
 | `ITelemetryProvider` | Singleton | Telemetry span instrumentation for all async helper methods |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEntitySessionRegistry` | Singleton | Client event publishing to wallet owner WebSocket sessions |
+| `ICurrencyDataCache` | Singleton | In-memory cache for ABML variable provider |
 | `CurrencyAutogainTaskService` | Hosted (Singleton) | Background worker for proactive autogain |
 
-Service lifetime is **Scoped** (per-request). Background service is a hosted singleton.
+Service lifetime is **Scoped** (per-request). All state store references are constructor-cached per T4/T6 (factory is used in constructor only, not stored as a field). Background service is a hosted singleton.
 
 ---
 

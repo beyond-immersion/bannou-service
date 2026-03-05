@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: Infrastructure
 > **State Store**: None (stateless service)
+> **Implementation Map**: [docs/maps/TELEMETRY.md](../maps/TELEMETRY.md)
 
 ---
 

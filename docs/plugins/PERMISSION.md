@@ -5,6 +5,7 @@
 > **Version**: 3.0.0
 > **Layer**: AppFoundation
 > **State Store**: permission-statestore (Redis)
+> **Implementation Map**: [docs/maps/PERMISSION.md](../maps/PERMISSION.md)
 
 ---
 
@@ -75,11 +76,12 @@ Redis-backed RBAC permission system (L1 AppFoundation) for WebSocket services. M
 
 ### Published Events
 
-| Target | Mechanism | Trigger |
-|--------|-----------|---------|
-| Session-specific channel | `IClientEventPublisher.PublishToSessionAsync` | `SessionCapabilitiesEvent` pushed to connected clients on recompilation |
+| Topic/Target | Type | Mechanism | Trigger |
+|--------------|------|-----------|---------|
+| `permission.capability-update` | Service event | `IMessageBus.TryPublishAsync` | `PermissionCapabilityUpdate` broadcast on every session permission recompilation |
+| Session-specific channel | Client event | `IClientEventPublisher.PublishToSessionAsync` | `SessionCapabilitiesEvent` pushed to connected clients on recompilation |
 
-No traditional topic-based event publications. Capability updates go directly to session channels.
+The service event publishes unconditionally (regardless of connection state). The client event is gated by `active_connections` membership.
 
 ### Consumed Events
 

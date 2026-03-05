@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFoundation
 > **State Store**: game-service-statestore (MySQL), game-service-lock (Redis)
+> **Implementation Map**: [docs/maps/GAME-SERVICE.md](../maps/GAME-SERVICE.md)
 
 ---
 
