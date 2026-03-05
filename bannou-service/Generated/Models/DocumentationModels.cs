@@ -280,6 +280,23 @@ public enum ConflictResolution
 #pragma warning restore CS1591
 
 /// <summary>
+/// Type of documentation resource owner
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DocumentationOwnerType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Session")]
+    Session = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Service")]
+    Service = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Request to search documentation using natural language queries
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -2015,15 +2032,24 @@ public partial class BindRepositoryRequest
 {
 
     /// <summary>
-    /// Owner of this binding. NOT a session ID.
-    /// <br/>For user-initiated bindings: the accountId (UUID format).
-    /// <br/>For service-initiated bindings: the service name (e.g., "orchestrator").
-    /// <br/>
+    /// Type of owner for this binding
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Owner { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DocumentationOwnerType OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Owner identifier.
+    /// <br/>For Session type: the WebSocket session ID (UUID format).
+    /// <br/>For Service type: the service name (e.g., "orchestrator").
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Documentation namespace to bind
@@ -2409,15 +2435,24 @@ public partial class RepositoryBindingInfo
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Owner of this binding. NOT a session ID.
-    /// <br/>Contains either an accountId (UUID format) for user-initiated bindings
-    /// <br/>or a service name for service-initiated bindings.
-    /// <br/>
+    /// Type of owner for this binding
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Owner { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DocumentationOwnerType OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Owner identifier.
+    /// <br/>For Session type: the WebSocket session ID (UUID format).
+    /// <br/>For Service type: the service name (e.g., "orchestrator").
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerId { get; set; } = default!;
 
 }
 
@@ -2621,15 +2656,24 @@ public partial class CreateArchiveRequest
 {
 
     /// <summary>
-    /// Owner of this archive. NOT a session ID.
-    /// <br/>For user-initiated archives: the accountId (UUID format).
-    /// <br/>For service-initiated archives: the service name (e.g., "orchestrator").
-    /// <br/>
+    /// Type of owner for this archive
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Owner { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DocumentationOwnerType OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Owner identifier.
+    /// <br/>For Session type: the WebSocket session ID (UUID format).
+    /// <br/>For Service type: the service name (e.g., "orchestrator").
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Documentation namespace to archive
@@ -2823,13 +2867,20 @@ public partial class ArchiveInfo
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Owner of this archive. NOT a session ID (null if owner unknown).
-    /// <br/>Contains either an accountId (UUID format) for user-initiated archives
-    /// <br/>or a service name for service-initiated archives.
+    /// Type of owner for this archive (null if owner unknown)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DocumentationOwnerType? OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Owner identifier (null if owner unknown).
+    /// <br/>For Session type: the WebSocket session ID (UUID format).
+    /// <br/>For Service type: the service name (e.g., "orchestrator").
     /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("owner")]
-    public string? Owner { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    public string? OwnerId { get; set; } = default!;
 
 }
 

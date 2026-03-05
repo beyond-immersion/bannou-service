@@ -1239,8 +1239,8 @@ Production-hardened achievement system. Core CRUD, progress tracking, event-driv
 
 | # | Bug | Description | Issue |
 |---|-----|-------------|-------|
-| 1 | **T16: `achievement.unlocked` topic uses Pattern A** | Multi-entity service should use Pattern C (`achievement.unlock.granted` or similar) to match `achievement.definition.created`, `achievement.progress.updated`. Requires cross-service coordination. | No issue |
-| 2 | *(No further bugs)* | | |
+| 1 | *(No known bugs)* | | |
+| 2 | | | |
 | 3 | | | |
 
 ### Top 3 Enhancements

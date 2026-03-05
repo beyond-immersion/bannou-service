@@ -962,36 +962,32 @@ components:
     EnterGardenRequest:
       type: object
       description: Request to enter the garden
-      required: [accountId, sessionId]
+      required: [sessionId]
       properties:
-        accountId:
-          type: string
-          format: uuid
-          description: Account entering the garden
         sessionId:
           type: string
           format: uuid
-          description: Current WebSocket session ID
+          description: WebSocket session ID of the player entering the garden
 
     GetGardenStateRequest:
       type: object
       description: Request to get current garden state
-      required: [accountId]
+      required: [sessionId]
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account whose garden state to retrieve
+          description: WebSocket session ID of the player
 
     UpdatePositionRequest:
       type: object
       description: Request to update player position in the garden
-      required: [accountId, position, velocity]
+      required: [sessionId, position, velocity]
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account whose position to update
+          description: WebSocket session ID of the player
         position:
           $ref: '#/components/schemas/Vec3'
           description: New position in garden space
@@ -1002,32 +998,32 @@ components:
     LeaveGardenRequest:
       type: object
       description: Request to leave the garden
-      required: [accountId]
+      required: [sessionId]
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account leaving the garden
+          description: WebSocket session ID of the player leaving the garden
 
     ListPoisRequest:
       type: object
       description: Request to list active POIs
-      required: [accountId]
+      required: [sessionId]
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account whose POIs to list
+          description: WebSocket session ID of the player
 
     InteractWithPoiRequest:
       type: object
       description: Request to interact with a POI
-      required: [accountId, poiId]
+      required: [sessionId, poiId]
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account interacting with the POI
+          description: WebSocket session ID of the player
         poiId:
           type: string
           format: uuid
@@ -1036,12 +1032,12 @@ components:
     DeclinePoiRequest:
       type: object
       description: Request to decline a POI
-      required: [accountId, poiId]
+      required: [sessionId, poiId]
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account declining the POI
+          description: WebSocket session ID of the player
         poiId:
           type: string
           format: uuid
@@ -1050,12 +1046,12 @@ components:
     EnterScenarioRequest:
       type: object
       description: Request to enter a scenario
-      required: [accountId, scenarioTemplateId]
+      required: [sessionId, scenarioTemplateId]
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account entering the scenario
+          description: WebSocket session ID of the player
         scenarioTemplateId:
           type: string
           format: uuid
@@ -1073,22 +1069,22 @@ components:
     GetScenarioStateRequest:
       type: object
       description: Request to get current scenario state
-      required: [accountId]
+      required: [sessionId]
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account whose scenario state to retrieve
+          description: WebSocket session ID of the player
 
     CompleteScenarioRequest:
       type: object
       description: Request to complete a scenario
-      required: [accountId, scenarioInstanceId]
+      required: [sessionId, scenarioInstanceId]
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account completing the scenario
+          description: WebSocket session ID of the player
         scenarioInstanceId:
           type: string
           format: uuid
@@ -1097,12 +1093,12 @@ components:
     AbandonScenarioRequest:
       type: object
       description: Request to abandon a scenario
-      required: [accountId, scenarioInstanceId]
+      required: [sessionId, scenarioInstanceId]
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account abandoning the scenario
+          description: WebSocket session ID of the player
         scenarioInstanceId:
           type: string
           format: uuid
@@ -1111,12 +1107,12 @@ components:
     ChainScenarioRequest:
       type: object
       description: Request to chain from one scenario to another
-      required: [accountId, currentScenarioInstanceId, targetTemplateId]
+      required: [sessionId, currentScenarioInstanceId, targetTemplateId]
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account chaining scenarios
+          description: WebSocket session ID of the player
         currentScenarioInstanceId:
           type: string
           format: uuid

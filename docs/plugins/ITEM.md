@@ -125,17 +125,6 @@ This architecture enables:
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | MySQL persistence + Redis caching for templates and instances |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for container changes and UseItemStep operations |
-| lib-messaging (`IMessageBus`) | Publishing item lifecycle events; error event publishing |
-| lib-contract (`IContractClient`) | Execute item use behaviors via contract prebound APIs |
-
----
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -198,54 +187,6 @@ DestroyItemInstanceAsync
 
 ---
 
-## State Storage
-
-**Stores**: 5 state stores (2 persistent MySQL + 2 cache Redis + 1 lock Redis)
-
-| Store | Backend | Purpose | TTL |
-|-------|---------|---------|-----|
-| `item-template-store` | MySQL | Template definitions (queryable) | N/A |
-| `item-template-cache` | Redis | Template hot cache (read-through) | 3600s (configurable) |
-| `item-instance-store` | MySQL | Instance data (realm-partitioned) | N/A |
-| `item-instance-cache` | Redis | Instance hot cache (active gameplay) | 900s (configurable) |
-| `item-lock` | Redis | Distributed locks for item modifications | N/A (lock timeout 30s) |
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `tpl:{templateId}` | `ItemTemplateModel` | Template definition |
-| `tpl-code:{gameId}:{code}` | `string` | Code+game → template ID index |
-| `tpl-game:{gameId}` | `List<string>` | All template IDs for a game |
-| `all-templates` | `List<string>` | Global index of all template IDs |
-| `inst:{instanceId}` | `ItemInstanceModel` | Instance data |
-| `inst-container:{containerId}` | `List<string>` | Instance IDs in container |
-| `inst-template:{templateId}` | `List<string>` | Instance IDs of a template |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `item.template.created` | `ItemTemplateCreatedEvent` | Template created |
-| `item.template.updated` | `ItemTemplateUpdatedEvent` | Template fields changed (including deprecation — `changedFields` contains deprecation fields) |
-| `item.instance.created` | `ItemInstanceCreatedEvent` | Instance created from template |
-| `item.instance.modified` | `ItemInstanceModifiedEvent` | Instance durability/stats/name changed |
-| `item.instance.destroyed` | `ItemInstanceDestroyedEvent` | Instance permanently deleted |
-| `item.instance.bound` | `ItemInstanceBoundEvent` | Instance bound to character |
-| `item.instance.unbound` | `ItemInstanceUnboundEvent` | Instance binding removed |
-| `item.used` | `ItemUsedEvent` | Batched item use successes (deduped by templateId+userId) |
-| `item.use-failed` | `ItemUseFailedEvent` | Batched item use failures (deduped by templateId+userId) |
-| `item.use-step-completed` | `ItemUseStepCompletedEvent` | Multi-step use milestone completed |
-| `item.use-step-failed` | `ItemUseStepFailedEvent` | Multi-step use milestone failed |
-
-### Consumed Events
-
-This plugin does not consume external events.
-
----
-
 ## Configuration
 
 | Property | Env Var | Default | Purpose |
@@ -267,117 +208,6 @@ This plugin does not consume external events.
 | `CanUseMilestoneCode` | `ITEM_CAN_USE_MILESTONE_CODE` | `validate` | Milestone code for CanUse validation contracts |
 | `OnUseFailedMilestoneCode` | `ITEM_ON_USE_FAILED_MILESTONE_CODE` | `handle_failure` | Milestone code for OnUseFailed handler contracts |
 | `UseStepLockTimeoutSeconds` | `ITEM_USE_STEP_LOCK_TIMEOUT_SECONDS` | `30` | Distributed lock timeout for UseItemStep operations |
-
----
-
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `ILogger<ItemService>` | Scoped | Structured logging |
-| `ItemServiceConfiguration` | Singleton | All 17 config properties |
-| `IStateStoreFactory` | Singleton | Access to 5 state stores (4 data + 1 lock) |
-| `IMessageBus` | Scoped | Event publishing and error events |
-| `IDistributedLockProvider` | Scoped | Distributed locks for container change operations |
-| `ITelemetryProvider` | Singleton | Distributed tracing spans for all async helper methods |
-| `IContractClient` | Scoped | Contract service for item use behavior execution (L1 hard dependency) |
-
-Service lifetime is **Scoped** (per-request). No background services.
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Template Operations (5 endpoints)
-
-- **CreateItemTemplate** (`/item/template/create`): Validates code uniqueness per game via code index. Applies config defaults for rarity, weight precision, and soulbound type when not specified in request. Immutable fields set at creation: code, gameId, quantityModel, scope. Populates template cache after save. Updates game index and code index (optimistic concurrency with retries). Publishes `item.template.created`.
-- **GetItemTemplate** (`/item/template/get`): Dual lookup via `ResolveTemplateAsync`: by templateId (direct) or by code+gameId (index lookup). Uses `GetTemplateWithCacheAsync` (cache → persistent store → populate cache).
-- **ListItemTemplates** (`/item/template/list`): Loads game index, fetches each template. Filters: category, subcategory, tags, rarity, scope, realm, active status, search (name/description). Pagination via offset/limit.
-- **UpdateItemTemplate** (`/item/template/update`): Updates mutable fields only. Invalidates template cache after save. Publishes `item.template.updated`.
-- **DeprecateItemTemplate** (`/item/template/deprecate`): Marks template deprecated with triple-field model (IsDeprecated, DeprecatedAt, DeprecationReason). Optional `migrationTargetId` for upgrade paths. Existing instances remain valid. Invalidates cache. Publishes `item.template.updated` with deprecation changedFields.
-
-### Instance Operations (8 endpoints)
-
-- **CreateItemInstance** (`/item/instance/create`): Validates template exists, is active, and is not deprecated (Category B instance creation guard). Quantity enforcement: Unique→1, Discrete→floor(value) capped at MaxStackSize, Continuous→as-is. Populates instance cache. Updates container index and template index (optimistic concurrency). Publishes `item.instance.created`.
-- **GetItemInstance** (`/item/instance/get`): Cache read-through pattern. Returns instance with template reference.
-- **ModifyItemInstance** (`/item/instance/modify`): Updates durability (delta), quantityDelta, customStats, customName, instanceMetadata, container/slot position. Container changes use distributed lock via `item-lock` store to prevent race conditions on index updates. Non-container changes skip locking. Invalidates instance cache. Publishes `item.instance.modified`.
-- **BindItemInstance** (`/item/instance/bind`): Binds instance to character ID. Checks `BindingAllowAdminOverride` for rebinding. Enriches event with template code (fallback: `missing:{templateId}` if template not found). Publishes `item.instance.bound`.
-- **UnbindItemInstance** (`/item/instance/unbind`): Admin-only. Clears `BoundToId` and `BoundAt`. Returns BadRequest if item is not bound. Publishes `item.instance.unbound` with reason and previous character ID.
-- **DestroyItemInstance** (`/item/instance/destroy`): Validates template's `Destroyable` flag unless reason="admin". Removes from container and template indexes. Invalidates cache. Publishes `item.instance.destroyed`. **Planned**: Will dispatch to registered `IItemInstanceDestructionListener` implementations for L4 per-item data cleanup (see DI Listener Dispatch section above).
-- **UseItem** (`/item/use`): Executes item behavior via Contract service delegation. See detailed flow below.
-- **UseItemStep** (`/item/use-step`): Multi-step item use via session contract bindings. Creates or continues a contract session: first call creates contract instance and stores `contractInstanceId` on the item; subsequent calls complete individual milestones. Uses distributed lock (`UseStepLockTimeoutSeconds`). Supports CanUse pre-validation and OnUseFailed handlers. Consumes item when all milestones complete (based on `ItemUseBehavior`). Publishes `item.use-step-completed` or `item.use-step-failed`.
-
-### UseItem Execution Flow (Detailed)
-
-The `/item/use` endpoint implements the **ephemeral contract pattern**:
-
-```
-UseItemAsync(instanceId, userId, userType, targetId?, targetType?, context?)
-    │
-    ├── 1. Load instance from cache/store
-    │       └── 404 if not found
-    │
-    ├── 2. Load template from cache/store
-    │       └── 500 if template missing (data inconsistency)
-    │
-    ├── 3. Validate template.useBehaviorContractTemplateId
-    │       └── 400 if null (item not usable)
-    │
-    ├── 4. Compute system party ID
-    │       ├── If ITEM_SYSTEM_PARTY_ID configured → use it
-    │       └── Else → SHA256(game ID) → deterministic UUID v5
-    │
-    ├── 5. Create contract instance
-    │       ├── Two parties: user (from request) + system (computed)
-    │       ├── gameMetadata populated with:
-    │       │   ├── itemInstanceId, itemTemplateId
-    │       │   ├── userId, userType
-    │       │   ├── targetId, targetType (if provided)
-    │       │   └── merged context dict (for template value substitution)
-    │       └── 400 if contract creation fails
-    │
-    ├── 6. Complete "use" milestone (code from ITEM_USE_MILESTONE_CODE)
-    │       ├── Contract service executes onComplete prebound APIs
-    │       │   ├── Template values substituted: {{contract.party.user.entityId}}, etc.
-    │       │   └── APIs execute in batches (default 10 concurrent per batch)
-    │       └── 400 if milestone fails
-    │
-    ├── 7. Consume item (on success only)
-    │       ├── Quantity > 1 → Decrement by 1, publish item.instance.modified
-    │       └── Quantity ≤ 1 → Destroy instance, publish item.instance.destroyed
-    │
-    ├── 8. Record for batched event publishing
-    │       ├── Key: {templateId}:{userId}
-    │       ├── Window: ITEM_USE_EVENT_DEDUPLICATION_WINDOW_SECONDS (60s)
-    │       └── Batch size: ITEM_USE_EVENT_BATCH_MAX_SIZE (100)
-    │
-    └── 9. Return UseItemResponse
-            ├── contractInstanceId: the ephemeral contract
-            ├── consumed: whether item was consumed
-            ├── remainingQuantity: null if destroyed, else new quantity
-            └── failureReason: if use failed
-```
-
-**Key Design Points**:
-
-1. **Deterministic system party**: The system party ID is derived from the game ID via SHA-256, ensuring the same game always gets the same system party across all instances. This enables contract templates to reference `{{contract.party.system.entityId}}` consistently.
-
-2. **Ephemeral contract**: The contract instance is created and completed in a single request. The `contractInstanceId` in the response is informational - the contract is already complete.
-
-3. **Batched events**: High-frequency item use (e.g., rapid potion drinking) doesn't flood the event bus. Events are deduplicated by user+template and published in batches.
-
-4. **Context passthrough**: The `context` dict in the request is merged into `gameMetadata`, allowing callers to pass arbitrary data for template value substitution (e.g., `{{contract.gameMetadata.instanceData.targetLocation}}`).
-
-**Related Configuration**:
-- `ITEM_USE_MILESTONE_CODE`: Milestone to complete (default: "use")
-- `ITEM_SYSTEM_PARTY_ID`: Override deterministic system party (default: computed)
-- `ITEM_SYSTEM_PARTY_TYPE`: Entity type for system party (default: "system")
-
-### Query Operations (3 endpoints)
-
-- **ListItemsByContainer** (`/item/instance/list-by-container`): Loads container index, fetches each instance. Enforces `MaxInstancesPerQuery` as hard limit. Response includes `totalCount` (actual item count) and `wasTruncated` (true if capped).
-- **ListItemsByTemplate** (`/item/instance/list-by-template`): Queries MySQL directly via `IQueryableStateStore.QueryAsync()` with TemplateId + optional RealmId predicate. Pagination via offset/limit applied in memory on filtered results.
-- **BatchGetItemInstances** (`/item/instance/batch-get`): Bulk retrieval by instance IDs. Returns found items and `notFound` ID list separately.
 
 ---
 
@@ -570,27 +400,19 @@ Contract Binding Patterns
 
 6. **Bind doesn't enforce SoulboundType**: `BindItemInstanceAsync` binds any item regardless of its template's `SoulboundType`. The soulbound type is metadata for game logic, not enforced by the service.
 
-7. ~~**Deprecate is idempotent (no conflict)**~~: **NORMALIZED** (2026-02-26) — All deprecation is now idempotent per IMPLEMENTATION TENETS deprecation lifecycle. This is standard behavior, not a quirk.
+7. **No template deletion**: Templates can only be deprecated, never deleted. This is standard Category B behavior per IMPLEMENTATION TENETS deprecation lifecycle — templates whose instances outlive them are terminal-deprecation-only. Preserves instance referential integrity; use deprecation with `migrationTargetId` for upgrade paths.
 
-8. ~~**CreateInstance validates IsActive but not IsDeprecated**~~: **FIXED** (2026-02-26) — `CreateItemInstanceAsync` now checks `template.IsDeprecated` and returns BadRequest for deprecated templates, per IMPLEMENTATION TENETS deprecation lifecycle (Category B instance creation guard).
+8. **JSON-stored complex fields are opaque pass-through**: Stats, effects, requirements, display, and metadata on templates (plus customStats and instanceMetadata on instances) are stored as serialized JSON strings with no schema validation. This is intentional T29 compliance — all schema descriptions explicitly state "Opaque to Bannou; no plugin reads keys by convention." These are client-side display data and game-specific implementation data per T29's two legitimate uses.
 
-9. **No template deletion**: Templates can only be deprecated, never deleted. This is standard Category B behavior per IMPLEMENTATION TENETS deprecation lifecycle — templates whose instances outlive them are terminal-deprecation-only. Preserves instance referential integrity; use deprecation with `migrationTargetId` for upgrade paths.
+9. **Container index not validated**: The item service trusts the `containerId` provided during creation without validating that the container exists in the inventory service. This is intentional: Item is a storage primitive and callers (Inventory, Collection, Status, License) are responsible for validating container references before calling Item's API. Adding `IInventoryClient` validation would create a circular L2 dependency (Inventory→Item and Item→Inventory). Related: [#164](https://github.com/beyond-immersion/bannou-service/issues/164) discusses making items temporarily "containerless" during drop operations.
 
-10. **JSON-stored complex fields are opaque pass-through**: Stats, effects, requirements, display, and metadata on templates (plus customStats and instanceMetadata on instances) are stored as serialized JSON strings with no schema validation. This is intentional T29 compliance — all schema descriptions explicitly state "Opaque to Bannou; no plugin reads keys by convention." These are client-side display data and game-specific implementation data per T29's two legitimate uses.
+10. **No event consumption**: The item service is purely a publisher (`x-event-subscriptions: []`). It doesn't react to external events (e.g., container deletion). Same-layer services (Inventory, Collection, Status, License) call Item's API directly per FOUNDATION TENETS (T27 — same-layer direct API calls, not events). Cleanup coordination goes through lib-resource per FOUNDATION TENETS (T28). Related: [#164](https://github.com/beyond-immersion/bannou-service/issues/164) explores event-driven drop handling as one design option.
 
-11. **Container index not validated**: The item service trusts the `containerId` provided during creation without validating that the container exists in the inventory service. This is intentional: Item is a storage primitive and callers (Inventory, Collection, Status, License) are responsible for validating container references before calling Item's API. Adding `IInventoryClient` validation would create a circular L2 dependency (Inventory→Item and Item→Inventory). Related: [#164](https://github.com/beyond-immersion/bannou-service/issues/164) discusses making items temporarily "containerless" during drop operations.
-
-12. **No event consumption**: The item service is purely a publisher (`x-event-subscriptions: []`). It doesn't react to external events (e.g., container deletion). Same-layer services (Inventory, Collection, Status, License) call Item's API directly per FOUNDATION TENETS (T27 — same-layer direct API calls, not events). Cleanup coordination goes through lib-resource per FOUNDATION TENETS (T28). Related: [#164](https://github.com/beyond-immersion/bannou-service/issues/164) explores event-driven drop handling as one design option.
-
-13. **Admin override for indestructible items**: `DestroyItemInstanceAsync` bypasses the template's `Destroyable` flag when `body.Reason == DestroyReason.Admin`. This is an intentional admin safety valve — `DestroyReason.Admin` is a schema-defined enum value. Admins need the ability to remove any item regardless of template constraints (e.g., bugged indestructible items, account cleanup, data migration).
+11. **Admin override for indestructible items**: `DestroyItemInstanceAsync` bypasses the template's `Destroyable` flag when `body.Reason == DestroyReason.Admin`. This is an intentional admin safety valve — `DestroyReason.Admin` is a schema-defined enum value. Admins need the ability to remove any item regardless of template constraints (e.g., bugged indestructible items, account cleanup, data migration).
 
 ### Design Considerations
 
-1. ~~**Empty container/template index not cleaned up**~~: **FIXED** (2026-02-26) - `RemoveFromListAsync` now deletes the key when the list becomes empty instead of saving `[]`. All readers already handle missing keys identically to empty lists via `string.IsNullOrEmpty` check.
-
-2. ~~**ListItemsByTemplate filters AFTER fetching all instances**~~: **FIXED** (2026-02-26) - `ListItemsByTemplateAsync` now uses `IQueryableStateStore<ItemInstanceModel>.QueryAsync()` with a LINQ predicate to push TemplateId + RealmId filtering to MySQL instead of loading all instances into memory. Pagination (offset/limit) still applied in memory on the filtered result set.
-
-3. **T29 Warning: `instanceMetadata` is opaque pass-through** ([#308](https://github.com/beyond-immersion/bannou-service/issues/308)): The `instanceMetadata` field on item instances uses `additionalProperties: true` and is opaque to Bannou. No plugin reads specific keys from this field by convention — verified by code audit (2026-02-26). lib-affix stores modifier data in its own state store per T29 (see AFFIX.md). The systemic `additionalProperties: true` pattern is tracked in #308 for potential migration to typed schemas. New code MUST NOT introduce convention-based metadata key reading.
+1. **T29 Warning: `instanceMetadata` is opaque pass-through** ([#308](https://github.com/beyond-immersion/bannou-service/issues/308)): The `instanceMetadata` field on item instances uses `additionalProperties: true` and is opaque to Bannou. No plugin reads specific keys from this field by convention — verified by code audit (2026-02-26). lib-affix stores modifier data in its own state store per T29 (see AFFIX.md). The systemic `additionalProperties: true` pattern is tracked in #308 for potential migration to typed schemas. New code MUST NOT introduce convention-based metadata key reading.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/308 -->
 
 ---
@@ -598,18 +420,6 @@ Contract Binding Patterns
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
-
-### Completed
-
-- **No template deletion**: Moved from Design Considerations to Intentional Quirks #9 (2026-02-25). Deliberate design — preserves instance referential integrity, consistent with deprecation-only pattern across Bannou.
-- **JSON-stored complex fields**: Moved from Design Considerations to Intentional Quirks #10 (2026-02-25). Intentional T29-compliant opaque pass-through — schema descriptions explicitly state "Opaque to Bannou; no plugin reads keys by convention."
-- **Container index not validated**: Moved from Design Considerations to Intentional Quirks #11 (2026-02-25). Intentional design — Item is a storage primitive; callers validate container references. Adding `IInventoryClient` would create a circular L2 dependency.
-- **No event consumption**: Moved from Design Considerations to Intentional Quirks #12 (2026-02-25). Deliberate tenet-compliant design — `x-event-subscriptions: []` explicitly empty. Same-layer services call Item's API directly (T27); cleanup goes through lib-resource (T28).
-- **Admin override for indestructible items**: Moved from Design Considerations to Intentional Quirks #13 (2026-02-26). Intentional admin safety valve — `DestroyReason.Admin` is a schema-defined enum value; admin override for `Destroyable` flag is standard across Bannou.
-- **Empty container/template index cleanup**: Fixed (2026-02-26). `RemoveFromListAsync` now deletes keys when lists become empty instead of persisting empty `[]` arrays.
-- **ListItemsByTemplate in-memory filtering**: Fixed (2026-02-26). `ListItemsByTemplateAsync` now uses `IQueryableStateStore.QueryAsync()` with LINQ predicate to push TemplateId+RealmId filtering to MySQL instead of loading all instances into memory.
-- **T29 `instanceMetadata` documentation cleanup**: Audited (2026-02-26). Code audit confirmed zero T29 violations — no plugin reads `instanceMetadata` keys by convention. Removed inaccurate claim about `instanceMetadata.affixes` violations (lib-affix stores data in its own state store per T29). Added AUDIT marker pointing to systemic #308.
-- **T31 deprecation lifecycle compliance** (2026-02-26): Three changes: (1) Deprecated event replaced with `item.template.updated` + `changedFields`, (2) `DeprecationReason` field added to schema and model, (3) `CreateItemInstanceAsync` now guards against deprecated templates. Quirks #7 and #8 resolved; quirk #9 reworded as standard Category B behavior.
 
 ### Active
 - **MaxDurability ceiling bug** (2026-03-04): Identified via [#491](https://github.com/beyond-immersion/bannou-service/issues/491). `ModifyItemInstanceAsync` doesn't cap positive durability deltas against `MaxDurability`. Added to Bugs section.
@@ -619,8 +429,8 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Related (Cross-Service)
 - **[#153](https://github.com/beyond-immersion/bannou-service/issues/153)**: Escrow Asset Transfer Integration Broken - Affects lib-escrow's ability to use `IItemClient` for item-backed exchanges.
-- **[#164](https://github.com/beyond-immersion/bannou-service/issues/164)**: Item Removal/Drop Behavior - Owned by lib-inventory, but affects lib-item's container index and event patterns. See Intentional Quirks #11 and #12.
-- **[#308](https://github.com/beyond-immersion/bannou-service/issues/308)**: Replace `additionalProperties:true` metadata pattern with typed schemas - Affects `instanceMetadata` field. See Design Considerations #3.
+- **[#164](https://github.com/beyond-immersion/bannou-service/issues/164)**: Item Removal/Drop Behavior - Owned by lib-inventory, but affects lib-item's container index and event patterns. See Intentional Quirks #9 and #10.
+- **[#308](https://github.com/beyond-immersion/bannou-service/issues/308)**: Replace `additionalProperties:true` metadata pattern with typed schemas - Affects `instanceMetadata` field. See Design Considerations #1.
 - **[#407](https://github.com/beyond-immersion/bannou-service/issues/407)**: Item Decay/Expiration System - Time-based item lifecycle. Dependency for lib-status ([#417](https://github.com/beyond-immersion/bannou-service/issues/417)). See Potential Extensions #4.
 - **[#430](https://github.com/beyond-immersion/bannou-service/issues/430)**: lib-socket - Item socket, linking, and gem placement system. See Potential Extensions #5.
 - **[#486](https://github.com/beyond-immersion/bannou-service/issues/486)**: Deprecation cascade behavior - Design question for what happens to instances. See Stubs #1.

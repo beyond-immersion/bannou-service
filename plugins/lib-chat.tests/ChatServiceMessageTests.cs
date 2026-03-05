@@ -579,6 +579,11 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ChatMessageModel>(),
                 It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Exactly(2));
+
+        // Service event published per message
+        MockMessageBus.Verify(
+            m => m.TryPublishAsync("chat.message.sent", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
     }
 
     [Fact]

@@ -71,12 +71,12 @@ public partial class MatchmakingTicketCreatedEvent
     public string QueueId { get; set; } = default!;
 
     /// <summary>
-    /// Account that created the ticket
+    /// WebSocket session that created the ticket
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid WebSocketSessionId { get; set; } = default!;
 
     /// <summary>
     /// Party ID if this is a party ticket
@@ -201,12 +201,12 @@ public partial class MatchmakingTicketCancelledEvent
     public string QueueId { get; set; } = default!;
 
     /// <summary>
-    /// Account that owned the ticket
+    /// WebSocket session that owned the ticket
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid WebSocketSessionId { get; set; } = default!;
 
     /// <summary>
     /// Party ID if this was a party ticket
@@ -516,24 +516,18 @@ public partial class MatchedTicketInfo
     public System.Guid TicketId { get; set; } = default!;
 
     /// <summary>
-    /// Account that owns the ticket
+    /// WebSocket session that owns the ticket
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid WebSocketSessionId { get; set; } = default!;
 
     /// <summary>
     /// Party ID if this is a party ticket
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyId")]
     public System.Guid? PartyId { get; set; } = default!;
-
-    /// <summary>
-    /// WebSocket session for event delivery
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
-    public System.Guid WebSocketSessionId { get; set; } = default!;
 
     /// <summary>
     /// Player's skill rating

@@ -4,7 +4,7 @@
 > **Schema**: schemas/actor-api.yaml
 > **Version**: 1.0.0
 > **Layer**: GameFoundation
-> **State Stores**: actor-templates (Redis/MySQL), actor-state (Redis), actor-pool-nodes (Redis), actor-assignments (Redis)
+> **State Stores**: actor-templates (Redis), actor-state (Redis), actor-pool-nodes (Redis), actor-assignments (Redis)
 > **Implementation Map**: [docs/maps/ACTOR.md](../maps/ACTOR.md)
 
 ---
@@ -47,19 +47,9 @@ The `evaluate_consequences` cognition stage (opt-in via `conscience: true` ABML 
 
 ---
 
-## Dependencies (What This Plugin Relies On)
+## Architectural Patterns
 
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis persistence for actor state, templates, pool nodes, assignments |
-| lib-messaging (`IMessageBus`) | Publishing lifecycle events, state updates, pool commands; error publishing |
-| lib-messaging (`IEventConsumer`) | Behavior/personality cache invalidation, pool node management events |
-| lib-mesh (`IMeshInvocationClient`) | Forwarding requests to remote pool nodes in distributed mode |
-| lib-resource (`IResourceClient`) | Character reference cleanup via x-references pattern |
-| lib-character (`ICharacterClient`) | Realm lookup on actor spawn (L2 same-layer dependency) |
-| `IEnumerable<IVariableProviderFactory>` | DI-discovered providers from L3/L4 services (see below) |
-| `IEnumerable<IBehaviorDocumentProvider>` | DI-discovered behavior document providers (see below) |
-| `ICognitionBuilder` | Builds cognition pipelines from templates with override composition |
+> **Note**: Dependencies, state storage, events, DI services, and API endpoint details are in the [Implementation Map](../maps/ACTOR.md).
 
 **Behavior Document Loading (Provider Chain)**
 
@@ -99,6 +89,9 @@ Actor is L2 (GameFoundation) but needs data from L3/L4 services (personality, en
 | `LocationContextProviderFactory` | `location` | lib-location | L2 |
 | `TransitVariableProviderFactory` | `transit` | lib-transit | L2 |
 | `WorldProviderFactory` | `world` | lib-worldstate | L2 |
+| `CurrencyProviderFactory` | `currency` | lib-currency | L2 |
+| `InventoryProviderFactory` | `inventory` | lib-inventory | L2 |
+| `RelationshipProviderFactory` | `relationship` | lib-relationship | L2 |
 
 **Character Brain vs Event Brain Data Access**
 
@@ -146,7 +139,7 @@ Is consistency critical (currency balance, item ownership)?
     NO  → Variable Provider Factory with appropriate cache TTL
 ```
 
-Current providers: personality, combat, backstory, encounters, obligations, faction, quest, seed, location, transit, world (see Registered Provider Factories table above). Planned future providers ([#147](https://github.com/beyond-immersion/bannou-service/issues/147)): currency (30s TTL), inventory (1m TTL), relationships (5m TTL).
+Current providers: personality, combat, backstory, encounters, obligations, faction, quest, seed, location, transit, world, currency, inventory, relationship (see Registered Provider Factories table above).
 
 **Anti-patterns**: Never access another plugin's state store directly. Never poll APIs in tight loops (use Variable Providers with cache). Never cache mutation-critical data beyond short TTLs.
 
@@ -178,244 +171,6 @@ ActorRunner executes a two-phase tick model: template-driven cognition first, th
 |-----------|-------------|
 | lib-puppetmaster | Calls `IActorClient.InjectPerceptionAsync` to inject perceptions into running actors; calls `IActorClient.ListActorsAsync` to enumerate actors for behavior cache invalidation after asset updates |
 | lib-director *(planned)* | Observes actor state via tap mechanism (perception streams, variable snapshots, GOAP plans); steers actors via `InjectPerception` and GOAP cost overrides via `IVariableProviderFactory`; drives actors by pausing ABML execution and issuing commands through the `IActionHandler` pipeline. See [DIRECTOR.md](DIRECTOR.md) |
-
----
-
-### Type Field Classification
-
-| Field | Category | Type | Rationale |
-|-------|----------|------|-----------|
-| `ActorDeploymentMode` | C (System State) | Service-specific enum (`bannou`, `pool-per-type`, `shared-pool`, `auto-scale`) | Finite set of system-owned deployment topologies controlling how actors are distributed across nodes |
-| `ActorStatus` | C (System State) | Service-specific enum (`pending`, `starting`, `running`, `paused`, `stopping`, `stopped`, `error`) | Finite actor lifecycle state machine; system-owned transitions |
-| `ActorExitReason` | C (System State) | Service-specific enum (`behavior_complete`, `error`, `timeout`, `external_stop`) | Finite set of system-owned reasons an actor stopped executing |
-| `PerceptionSourceType` | C (System State) | Service-specific enum (`character`, `npc`, `object`, `environment`, `coordinator`, `scheduled`, `message`, `service`) | Finite set of perception source categories; system-owned, determines processing priority |
-| `OptionsQueryType` | C (System State) | Service-specific enum (`combat`, `dialogue`, `exploration`, `social`, `custom`) | Finite set of well-known option categories for actor query interface |
-| `category` | B (Content Code) | Opaque string | Actor template category identifier (e.g., "npc-brain", "world-admin", "event-brain", "cron-cleanup"). Game-configurable, extensible without schema changes |
-| `encounterType` | B (Content Code) | Opaque string | Type of encounter managed by Event Brain actors (e.g., "combat", "conversation", "choreography"). Game-configurable, extensible without schema changes |
-| `poolType` | B (Content Code) | Opaque string | Pool node type identifier (e.g., "shared", "npc-brain", "event-coordinator", or custom category). Registered at runtime, extensible |
-
----
-
-## State Storage
-
-**Stores**: 4 Redis state stores
-
-| Store | Purpose |
-|-------|---------|
-| `actor-templates` | Actor template definitions and category index |
-| `actor-state` | Runtime actor state snapshots (feelings, goals, memories) |
-| `actor-pool-nodes` | Pool node registration and health status |
-| `actor-assignments` | Actor-to-node assignment tracking |
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `{templateId}` | `ActorTemplateData` | Template definition |
-| `category:{categoryName}` | `ActorTemplateData` | Category-based template lookup |
-| `_all_template_ids` | `List<string>` | Global template index |
-| `{actorId}` | `ActorStateSnapshot` | Runtime state (feelings, goals, memories, encounter) |
-| `{nodeId}` | `PoolNodeState` | Pool node health and capacity |
-| `_node_index` | `List<string>` | All registered pool node IDs |
-| `{actorId}` | `ActorAssignment` | Actor-to-node mapping |
-| `_actor_index` | `ActorIndex` | Node-to-actor-set mapping for pool queries |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `actor.template.created` | `ActorTemplateCreatedEvent` | Template created |
-| `actor.template.updated` | `ActorTemplateUpdatedEvent` | Template modified |
-| `actor.template.deleted` | `ActorTemplateDeletedEvent` | Template deleted |
-| `actor.instance.created` | `ActorInstanceCreatedEvent` | Actor spawned |
-| `actor.instance.started` | `ActorInstanceStartedEvent` | ActorRunner started behavior loop |
-| `actor.instance.deleted` | `ActorInstanceDeletedEvent` | Actor stopped |
-| `actor.instance.state-persisted` | `ActorStatePersistedEvent` | Periodic state save |
-| `actor.encounter.started` | `ActorEncounterStartedEvent` | Encounter begun |
-| `actor.encounter.phase-changed` | `ActorEncounterPhaseChangedEvent` | Encounter phase transition |
-| `actor.encounter.ended` | `ActorEncounterEndedEvent` | Encounter finished |
-| `character.state-update` | `CharacterStateUpdateEvent` | Actor publishes feelings/goals to character |
-| `actor.pool-node.registered` | `PoolNodeRegisteredEvent` | Pool node came online |
-| `actor.pool-node.heartbeat` | `PoolNodeHeartbeatEvent` | Pool node health update |
-| `actor.pool-node.draining` | `PoolNodeDrainingEvent` | Pool node shutting down |
-| `actor.pool-node.unhealthy` | `PoolNodeUnhealthyEvent` | PoolHealthMonitor detected heartbeat timeout; node removed from pool |
-| `actor.instance.character-bound` | `ActorCharacterBoundEvent` | Actor bound to a character (via BindActorCharacter API or on startup when spawned with a characterId) |
-| `actor.instance.status-changed` | `ActorStatusChangedEvent` | Actor status transition |
-| `actor.instance.completed` | `ActorCompletedEvent` | Actor finished execution |
-
-### Consumed Events
-
-| Topic | Event Type | Handler |
-|-------|-----------|---------|
-| `session.disconnected` | `SessionDisconnectedEvent` | Stubbed handler for future session-bound actors |
-| `actor.pool-node.registered` | `PoolNodeRegisteredEvent` | Register node, track capacity (control plane only) |
-| `actor.pool-node.heartbeat` | `PoolNodeHeartbeatEvent` | Update load, mark healthy (control plane only) |
-| `actor.pool-node.draining` | `PoolNodeDrainingEvent` | Mark draining, track remaining (control plane only) |
-| `actor.instance.status-changed` | `ActorStatusChangedEvent` | Update assignment status (control plane only) |
-| `actor.instance.completed` | `ActorCompletedEvent` | Remove assignment (control plane only) |
-| `actor.template.updated` | `ActorTemplateUpdatedEvent` | Invalidate behavior cache and signal running actors when BehaviorRef changes |
-
-**Note**: `behavior.updated` handling was moved to lib-puppetmaster (L4) per issue #380. Puppetmaster owns the dynamic behavior cache and notifies running actors via `IActorClient`. Actor (L2) no longer subscribes to any L4 events.
-
----
-
-## Configuration
-
-### Deployment Mode
-
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `DeploymentMode` | `ACTOR_DEPLOYMENT_MODE` | `bannou` | Runtime mode: bannou/pool-per-type/shared-pool/auto-scale |
-
-### Pool Node Identity
-
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `PoolNodeId` | `ACTOR_POOL_NODE_ID` | `null` | This node's unique ID (null = not a pool node) |
-| `PoolNodeAppId` | `ACTOR_POOL_NODE_APP_ID` | `null` | Mesh routing app ID for this node |
-| `PoolNodeType` | `ACTOR_POOL_NODE_TYPE` | `shared` | Pool specialization (shared/npc-brain/custom) |
-| `PoolNodeCapacity` | `ACTOR_POOL_NODE_CAPACITY` | `100` | Max actors this node can run |
-
-### Pool Management (Control Plane)
-
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `PoolNodeImage` | `ACTOR_POOL_NODE_IMAGE` | `bannou-actor-pool:latest` | Container image for pool nodes |
-| `MinPoolNodes` | `ACTOR_MIN_POOL_NODES` | `1` | Minimum pool size |
-| `MaxPoolNodes` | `ACTOR_MAX_POOL_NODES` | `10` | Maximum pool size |
-| `DefaultActorsPerNode` | `ACTOR_DEFAULT_ACTORS_PER_NODE` | `100` | Default capacity per node |
-
-### Local Mode
-
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `LocalModeNodeId` | `ACTOR_LOCAL_MODE_NODE_ID` | `bannou-local` | Node ID for local/bannou deployment mode |
-| `LocalModeAppId` | `ACTOR_LOCAL_MODE_APP_ID` | `bannou` | App ID for local/bannou deployment mode |
-
-### Behavior Loop
-
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `DefaultTickIntervalMs` | `ACTOR_DEFAULT_TICK_INTERVAL_MS` | `100` | Behavior loop tick frequency |
-| `DefaultAutoSaveIntervalSeconds` | `ACTOR_DEFAULT_AUTOSAVE_INTERVAL_SECONDS` | `60` | State persistence interval |
-| `PerceptionQueueSize` | `ACTOR_PERCEPTION_QUEUE_SIZE` | `100` | Bounded perception channel capacity |
-| `ErrorRetryDelayMs` | `ACTOR_ERROR_RETRY_DELAY_MS` | `1000` | Delay before retry after behavior loop error |
-
-### GOAP Planning
-
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `GoapReplanThreshold` | `ACTOR_GOAP_REPLAN_THRESHOLD` | `0.3` | World state delta triggering replan |
-| `GoapMaxPlanDepth` | `ACTOR_GOAP_MAX_PLAN_DEPTH` | `10` | Maximum action chain length |
-| `GoapPlanTimeoutMs` | `ACTOR_GOAP_PLAN_TIMEOUT_MS` | `50` | Planning time budget |
-
-### Perception & Memory
-
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `PerceptionFilterThreshold` | `ACTOR_PERCEPTION_FILTER_THRESHOLD` | `0.1` | Minimum urgency to process |
-| `PerceptionMemoryThreshold` | `ACTOR_PERCEPTION_MEMORY_THRESHOLD` | `0.7` | Minimum urgency to store as memory |
-| `ShortTermMemoryMinutes` | `ACTOR_SHORT_TERM_MEMORY_MINUTES` | `5` | High-urgency memory TTL |
-| `DefaultMemoryExpirationMinutes` | `ACTOR_DEFAULT_MEMORY_EXPIRATION_MINUTES` | `60` | General memory TTL |
-| `MemoryStoreMaxRetries` | `ACTOR_MEMORY_STORE_MAX_RETRIES` | `3` | Max retries for memory store operations |
-
-### Pool Health Monitoring
-
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `HeartbeatIntervalSeconds` | `ACTOR_HEARTBEAT_INTERVAL_SECONDS` | `10` | Pool node heartbeat frequency |
-| `HeartbeatTimeoutSeconds` | `ACTOR_HEARTBEAT_TIMEOUT_SECONDS` | `30` | Mark unhealthy after silence |
-| `PoolHealthMonitorStartupDelaySeconds` | `ACTOR_POOL_HEALTH_MONITOR_STARTUP_DELAY_SECONDS` | `5` | Delay before monitoring starts |
-| `PoolHealthCheckIntervalSeconds` | `ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS` | `15` | Health check cycle interval |
-
-### Timeouts & Retries
-
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `ActorOperationTimeoutSeconds` | `ACTOR_OPERATION_TIMEOUT_SECONDS` | `5` | Timeout for individual actor operations |
-| `ActorStopTimeoutSeconds` | `ACTOR_STOP_TIMEOUT_SECONDS` | `5` | Timeout for graceful actor stop |
-| `StatePersistenceRetryDelayMs` | `ACTOR_STATE_PERSISTENCE_RETRY_DELAY_MS` | `50` | Base delay between state persistence retries (multiplied by attempt) |
-
-### Scheduled Events
-
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `ScheduledEventCheckIntervalMilliseconds` | `ACTOR_SCHEDULED_EVENT_CHECK_INTERVAL_MS` | `100` | Interval for checking scheduled events |
-| `ScheduledEventDefaultUrgency` | `ACTOR_SCHEDULED_EVENT_DEFAULT_URGENCY` | `0.7` | Default urgency for scheduled event perceptions |
-| `EventBrainDefaultUrgency` | `ACTOR_EVENT_BRAIN_DEFAULT_URGENCY` | `0.8` | Default urgency for Event Brain instruction perceptions |
-
-### Caching
-
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `QueryOptionsDefaultMaxAgeMs` | `ACTOR_QUERY_OPTIONS_DEFAULT_MAX_AGE_MS` | `5000` | Max age for cached query options |
-
----
-
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `ILogger<ActorService>` | Scoped | Structured logging |
-| `ActorServiceConfiguration` | Singleton | 30+ config properties |
-| `IStateStoreFactory` | Singleton | 4 state store access |
-| `IMessageBus` | Scoped | Event publishing, pool commands |
-| `IEventConsumer` | Scoped | Cache invalidation, pool events |
-| `IMeshInvocationClient` | Scoped | Forwarding requests to remote pool nodes in distributed mode |
-| `IResourceClient` | Scoped | Character reference cleanup via x-references pattern |
-| `ICharacterClient` | Scoped | Realm lookup on actor spawn (L2 same-layer) |
-| `ITelemetryProvider` | Singleton | Span instrumentation for async methods |
-| `ActorRunnerFactory` | Singleton | Creates ActorRunner instances |
-| `ActorRegistry` | Singleton | Local actor instance tracking |
-| `ICognitionBuilder` | Singleton | Builds cognition pipelines from templates + overrides |
-| `IBehaviorDocumentLoader` | Singleton | Loads behavior documents via provider chain |
-| `SeededBehaviorProvider` | Singleton | Loads static behaviors from filesystem (Priority 50) |
-| `FallbackBehaviorProvider` | Singleton | Returns null for missing behaviors after logging warning (Priority 0) |
-| `IDocumentExecutorFactory` | Singleton | Creates document executors for ABML behavior execution |
-| `IScheduledEventManager` | Singleton | Per-node delayed event timer management |
-| `ActorPoolManager` | Singleton | Pool node management (control plane) |
-| `ActorPoolNodeWorker` | Hosted (BackgroundService) | Pool node command listener |
-| `HeartbeatEmitter` | Singleton | Pool node heartbeat publisher (started/stopped by ActorPoolNodeWorker) |
-| `PoolHealthMonitor` | Hosted (BackgroundService) | Pool node health checking |
-
-Service lifetime is **Scoped** for ActorService. Multiple BackgroundServices for pool operations.
-
-**Behavior Document Provider Chain**: `IBehaviorDocumentLoader` aggregates all registered `IBehaviorDocumentProvider` implementations, sorted by priority (descending). When loading a behavior ref, it queries providers in order until one returns a document. This enables lib-puppetmaster to inject dynamic scene-specific behaviors (Priority 100) without Actor having a compile-time dependency.
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Template Management (5 endpoints)
-
-- **CreateActorTemplate** (`/actor/template/create`): Creates template with category, behaviorRef, autoSpawn config, tick interval, auto-save interval. Updates template index (optimistic concurrency). Publishes `actor.template.created`.
-- **GetActorTemplate** (`/actor/template/get`): Lookup by template ID or category. Category lookup enables convention-based actor spawning.
-- **ListActorTemplates** (`/actor/template/list`): Loads all template IDs from index, fetches each. Optional category filter.
-- **UpdateActorTemplate** (`/actor/template/update`): Partial update with `changedFields` tracking. Publishes `actor.template.updated`.
-- **DeleteActorTemplate** (`/actor/template/delete`): Removes from index. Publishes `actor.template.deleted`.
-
-### Actor Lifecycle (6 endpoints)
-
-- **SpawnActor** (`/actor/spawn`): In bannou mode: creates ActorRunner locally, registers in ActorRegistry, starts behavior loop. In pool mode: acquires least-loaded node via ActorPoolManager, publishes SpawnActorCommand to node's command topic. Publishes `actor.instance.created`.
-- **StopActor** (`/actor/stop`): In bannou mode: stops local runner, removes from registry. In pool mode: publishes StopActorCommand to assigned node. Publishes `actor.instance.deleted`.
-- **GetActor** (`/actor/get`): Returns actor state snapshot. If actor not running but matches an auto-spawn template (regex pattern), automatically spawns it (instantiate-on-access pattern).
-- **BindActorCharacter** (`/actor/bind-character`): Binds a running actor to a character, enabling character brain variable providers without relaunching. In bannou mode: calls `BindCharacterAsync` on the local ActorRunner directly. In pool mode: updates the actor assignment record with the new characterId, then publishes `BindActorCharacterCommand` to the assigned node's command topic. The ActorRunner sets the `CharacterId`, establishes a per-character RabbitMQ perception subscription, and publishes `ActorCharacterBoundEvent`. Returns `Conflict` if the actor is already bound to a character. Returns `NotFound` if the actor is not running. Also emits the bound event on `StartAsync` when spawned with an initial characterId.
-- **CleanupByCharacter** (`/actor/cleanup-by-character`): Called by lib-resource cleanup coordination when a character is deleted. Stops and removes all actors referencing the specified characterId. Returns count of actors cleaned up. Part of x-references cascade pattern.
-- **InjectPerception** (`/actor/inject-perception`): Enqueues perception data into actor's bounded channel. Returns current queue depth. Developer-only for testing.
-
-### Encounter Management (4 endpoints)
-
-- **StartEncounter** (`/actor/encounter/start`): Starts encounter on actor with participants, phase, and initial data. Supports remote forwarding via mesh for distributed actors. Publishes `actor.encounter.started`.
-- **UpdateEncounterPhase** (`/actor/encounter/update-phase`): Transitions encounter phase (string-based, no validation). Publishes `actor.encounter.phase-changed`.
-- **EndEncounter** (`/actor/encounter/end`): Cleans up encounter state. Publishes `actor.encounter.ended`.
-- **GetEncounter** (`/actor/encounter/get`): Returns current encounter state for an actor.
-
-### Query Operations (2 endpoints)
-
-- **ListActors** (`/actor/list`): Lists actors from registry (bannou mode) or assignments (pool mode). Optional category/status filters.
-- **QueryOptions** (`/actor/query-options`): Retrieves evaluated ABML options from actor state. Three freshness levels: `Cached` (immediate from memory), `Fresh` (inject perception + wait one tick), `Stale` (any value regardless of age). Returns combat/dialogue/custom options with preference scores.
 
 ---
 
@@ -666,38 +421,42 @@ Actor State Model
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/191 -->
 2. **Memory decay**: Gradual relevance decay for memories over time (not just TTL expiry).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/387 -->
-3. ~~**Cross-node encounters**~~: **RESOLVED** (2026-03-03) — Existing architecture handles cross-node encounters correctly via mesh forwarding + RabbitMQ perception delivery. Event Brain uses `emit_perception:` → RabbitMQ character-specific topics → character actors on any node receive perceptions via dynamic subscriptions. All encounter endpoints forward to remote nodes via `FindActorAsync()` + `IMeshInvocationClient`. Issue [#390](https://github.com/beyond-immersion/bannou-service/issues/390) closed.
-4. **Behavior versioning**: Deploy behavior updates with version tracking, enabling rollback without service restart.
+3. **Behavior versioning**: Deploy behavior updates with version tracking, enabling rollback without service restart.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/391 -->
-5. **Actor migration**: Move running actors between pool nodes for load balancing without state loss.
+4. **Actor migration**: Move running actors between pool nodes for load balancing without state loss.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/393 -->
-6. **Additional variable providers (currency, inventory, relationships)**: Extend the Variable Provider Factory pattern with providers for currency balance (30s TTL), inventory contents (1m TTL), and relationship data (5m TTL).
+5. **Variable provider completeness audit**: Currency, inventory, and relationship providers are now implemented. Issue [#147](https://github.com/beyond-immersion/bannou-service/issues/147) may be closeable — verify cache TTL tuning and ABML expression coverage are complete.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-23:https://github.com/beyond-immersion/bannou-service/issues/147 -->
-7. ~~**Worldstate variable provider**~~: **FIXED** (2026-03-02) — lib-worldstate now implements `WorldProviderFactory` providing 14 `${world.*}` variables (time, calendar, season, derived). See [WORLDSTATE.md](WORLDSTATE.md) Variable Provider section.
-
-8. **Director tap mechanism**: Actor publishes per-tick state snapshots (perceptions, variable provider outputs, GOAP plans, behavior position) to a `director.tap.{actorId}` RabbitMQ topic when a tap is active. Tap registration uses special perception types (`director_tap_start`/`director_tap_stop`) injected via `InjectPerception` that Actor recognizes as side-channel control signals (no-op for cognition, activate/deactivate tap publishing). Enables real-time developer observation without modifying the behavior loop. See [DIRECTOR.md](DIRECTOR.md) Tier 1.
-
-9. **ABML execution pause/resume for drive sessions**: The existing `paused` `ActorStatus` value (currently unused) would be activated by Director's drive mechanism. When a developer binds to an actor, the behavior loop pauses at the current checkpoint; the developer issues commands through the same `IActionHandler` pipeline that ABML bytecode uses. On release, the behavior loop resumes from `on_tick` with all developer-made state changes (feelings, goals, memories) preserved. Requires new endpoints or command types for pause/resume control. See [DIRECTOR.md](DIRECTOR.md) Tier 3.
-
-10. **External action handler pipeline access**: Expose the actor's `IActionHandler` pipeline to external callers (not just ABML bytecode execution) for developer-driven command execution during drive sessions. The developer issues the same action YAML syntax that ABML documents use (`call:`, `load_snapshot:`, `watch:`, `emit_perception:`, etc.) routed through the same handlers, producing identical results. This makes drive sessions simultaneously a production orchestration tool and an integration test for the entire actor action system. See [DIRECTOR.md](DIRECTOR.md) Tier 3.
-
-11. **`emit_impulse` ABML action**: New ABML action handler in lib-actor for immediate behavior-to-game-engine signaling. Enables actors to send impulse commands (animations, VFX, audio cues) to game engines without waiting for the next state publish cycle.
+6. **Director tap mechanism**: Actor publishes per-tick state snapshots (perceptions, variable provider outputs, GOAP plans, behavior position) to a `director.tap.{actorId}` RabbitMQ topic when a tap is active. Tap registration uses special perception types (`director_tap_start`/`director_tap_stop`) injected via `InjectPerception` that Actor recognizes as side-channel control signals (no-op for cognition, activate/deactivate tap publishing). Enables real-time developer observation without modifying the behavior loop. See [DIRECTOR.md](DIRECTOR.md) Tier 1.
+7. **ABML execution pause/resume for drive sessions**: The existing `paused` `ActorStatus` value (currently unused) would be activated by Director's drive mechanism. When a developer binds to an actor, the behavior loop pauses at the current checkpoint; the developer issues commands through the same `IActionHandler` pipeline that ABML bytecode uses. On release, the behavior loop resumes from `on_tick` with all developer-made state changes (feelings, goals, memories) preserved. Requires new endpoints or command types for pause/resume control. See [DIRECTOR.md](DIRECTOR.md) Tier 3.
+8. **External action handler pipeline access**: Expose the actor's `IActionHandler` pipeline to external callers (not just ABML bytecode execution) for developer-driven command execution during drive sessions. The developer issues the same action YAML syntax that ABML documents use (`call:`, `load_snapshot:`, `watch:`, `emit_perception:`, etc.) routed through the same handlers, producing identical results. This makes drive sessions simultaneously a production orchestration tool and an integration test for the entire actor action system. See [DIRECTOR.md](DIRECTOR.md) Tier 3.
+9. **`emit_impulse` ABML action**: New ABML action handler in lib-actor for immediate behavior-to-game-engine signaling. Enables actors to send impulse commands (animations, VFX, audio cues) to game engines without waiting for the next state publish cycle.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/408 -->
-
-12. **Game Engine WebSocket transport via Connect Internal mode**: Changes how Actor communicates state updates to game engines, using Connect's internal WebSocket mode instead of direct HTTP polling for real-time actor state delivery.
+10. **Game Engine WebSocket transport via Connect Internal mode**: Changes how Actor communicates state updates to game engines, using Connect's internal WebSocket mode instead of direct HTTP polling for real-time actor state delivery.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/409 -->
-
-13. **ABML economic action handlers**: New action handlers enabling NPCs to buy, sell, and trade via ABML behavior expressions. Composes Currency, Item, Inventory, and Escrow APIs into ABML-accessible actions for NPC economic decision-making.
+11. **ABML economic action handlers**: New action handlers enabling NPCs to buy, sell, and trade via ABML behavior expressions. Composes Currency, Item, Inventory, and Escrow APIs into ABML-accessible actions for NPC economic decision-making.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/428 -->
-
-14. **Bytecode version contract**: Cross-cutting risk management for compiler/interpreter version mismatch. Ensures compiled ABML bytecode produced by lib-behavior is compatible with the `BehaviorModelInterpreter` in lib-actor, especially in distributed deployments where versions may differ.
+12. **Bytecode version contract**: Cross-cutting risk management for compiler/interpreter version mismatch. Ensures compiled ABML bytecode produced by lib-behavior is compatible with the `BehaviorModelInterpreter` in lib-actor, especially in distributed deployments where versions may differ.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/158 -->
-
-15. **GOAP WorldState extension**: Enhance `BuildWorldStateFromActorState()` to incorporate variable provider data into GOAP world state, enabling richer planning that considers personality, location, obligations, and other provider-sourced context.
+13. **GOAP WorldState extension**: Enhance `BuildWorldStateFromActorState()` to incorporate variable provider data into GOAP world state, enabling richer planning that considers personality, location, obligations, and other provider-sourced context.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/148 -->
-
-16. **Event Brain choreography typed models**: Wire up existing typed choreography schema models to ABML handler, replacing generic object data with the generated `ChoreographyPosition`/`ChoreographyEvent` types for type-safe choreography execution.
+14. **Event Brain choreography typed models**: Wire up existing typed choreography schema models to ABML handler, replacing generic object data with the generated `ChoreographyPosition`/`ChoreographyEvent` types for type-safe choreography execution.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/115 -->
+
+---
+
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `ActorDeploymentMode` | C (System State) | Service-specific enum (`bannou`, `pool-per-type`, `shared-pool`, `auto-scale`) | Finite set of system-owned deployment topologies controlling how actors are distributed across nodes |
+| `ActorStatus` | C (System State) | Service-specific enum (`pending`, `starting`, `running`, `paused`, `stopping`, `stopped`, `error`) | Finite actor lifecycle state machine; system-owned transitions |
+| `ActorExitReason` | C (System State) | Service-specific enum (`behavior_complete`, `error`, `timeout`, `external_stop`) | Finite set of system-owned reasons an actor stopped executing |
+| `PerceptionSourceType` | C (System State) | Service-specific enum (`character`, `npc`, `object`, `environment`, `coordinator`, `scheduled`, `message`, `service`) | Finite set of perception source categories; system-owned, determines processing priority |
+| `OptionsQueryType` | C (System State) | Service-specific enum (`combat`, `dialogue`, `exploration`, `social`, `custom`) | Finite set of well-known option categories for actor query interface |
+| `category` | B (Content Code) | Opaque string | Actor template category identifier (e.g., "npc-brain", "world-admin", "event-brain", "cron-cleanup"). Game-configurable, extensible without schema changes |
+| `encounterType` | B (Content Code) | Opaque string | Type of encounter managed by Event Brain actors (e.g., "combat", "conversation", "choreography"). Game-configurable, extensible without schema changes |
+| `poolType` | B (Content Code) | Opaque string | Pool node type identifier (e.g., "shared", "npc-brain", "event-coordinator", or custom category). Registered at runtime, extensible |
 
 ---
 
@@ -741,6 +500,8 @@ Actor State Model
 
 14. **Auto-spawn failure returns NotFound to caller**: When `GetActor` triggers auto-spawn and `SpawnActorAsync` fails (Conflict, ServiceUnavailable, etc.), `GetActorAsync` returns `NotFound` — not the real failure status. This is intentional: auto-spawn is an implementation detail invisible to the caller. From the caller's perspective, they asked "get actor X" and the answer is "it doesn't exist." Returning `Conflict` or `ServiceUnavailable` would leak the auto-spawn mechanism. The real failure status and reason are logged at Warning level server-side for debugging. **Edge case**: If `SpawnActorAsync` returns `Conflict` because a concurrent `GetActor` call just auto-spawned the same actor, the caller gets `NotFound` even though the actor now exists. A retry by the caller would succeed. If this becomes a problem at scale (high-contention auto-spawn for the same actor ID), a retry-on-conflict loop could be added inside `GetActorAsync`.
 
+15. **Actor does not subscribe to `behavior.updated` events**: Behavior cache invalidation from asset updates is handled by lib-puppetmaster (L4), which owns the dynamic behavior cache and notifies running actors via `IActorClient`. Actor (L2) subscribes only to `actor.template.updated` for its own template-level behavior ref changes. This separation avoids Actor depending on L4 events (hierarchy compliance).
+
 ### Design Considerations (Requires Planning)
 
 1. **Pool node capacity is self-reported**: No external validation of claimed capacity.
@@ -749,16 +510,6 @@ Actor State Model
 ---
 
 ## Work Tracking
-
-### Completed
-
-- **2026-02-13**: Wired CognitionBuilder into ActorRunner ([#422](https://github.com/beyond-immersion/bannou-service/issues/422)). Two-phase tick execution (cognition pipeline then ABML behavior). Template resolution: actor config → ABML metadata → category defaults. Three-layer override composition (template + instance). TOCTOU-safe pipeline capture. Perception loss prevention on pipeline failure.
-
-- **2026-02-16**: Dynamic character binding. Added `POST /actor/bind-character` endpoint with `BindActorCharacterRequest`/`BindActorCharacterResponse`, `ActorCharacterBoundEvent`, and `BindActorCharacterCommand` pool command. Enables progressive entity awakening.
-
-- **2026-02-23**: L3-hardening audit (19 items). Schema fixes: removed T8 filler booleans from responses, consolidated duplicate `Position3D`/`ChoreographyPosition` types, fixed NRT compliance across API and events schemas, consolidated inline enums to shared types (`ActorExitReason`, `ActorDeploymentMode`, `ActorPoolNodeType`), added `x-event-publications` declarations, added validation keywords to all configuration properties, added `minLength: 1` to required request string fields, added `StartEncounterResponse` body, fixed `cognitionOverrides` metadata bag descriptions. Code fixes: fixed dangling scoped service reference in `ActorServicePlugin.OnStartAsync`, replaced `Guid.Empty` sentinels with nullable `Guid?` in event fields, added ETag retry loops for non-atomic index operations in `ActorPoolManager`, fixed T23 `Task.FromResult`/`ValueTask.FromResult` patterns to use async/await, replaced hardcoded `"bannou"` fallbacks with configuration property references (T21), changed generic `Exception` catch to `ApiException` in `ResolveRealmIdAsync` (T7), made `LoopIterations` nullable for remote actors (T8), fixed `IAsyncDisposable` and timer disposal patterns (T24), added missing `CancellationToken` to draining event publish. Telemetry: added T30 `ITelemetryProvider.StartActivity` spans to ~80 async methods across 22 files (ActorRunner, ActorPoolManager, ActorPoolNodeWorker, HeartbeatEmitter, PoolHealthMonitor, ActorService, ActorServiceEvents, BehaviorDocumentLoader, SeededBehaviorProvider, FallbackBehaviorProvider, ActorRunnerFactory pass-through, ActorServicePlugin lifecycle, and all 9 ABML action handlers + ScheduledEventManager).
-
-- **2026-02-23**: Variable provider documentation audit. Updated Registered Provider Factories table: added 4 missing providers (seed, obligations, location, faction), fixed `combat_preferences` → `combat` provider name, added layer column. Updated planned future providers paragraph: removed spatial context (now implemented as `LocationContextProviderFactory`), noted `world` provider defined but not implemented. Added Potential Extensions #6 (currency/inventory/relationships, #147) and #7 (worldstate provider).
 
 ### Implementation Gaps
 

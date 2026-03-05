@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Seed;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Gardener;
 
@@ -21,12 +22,26 @@ namespace BeyondImmersion.BannouService.Gardener;
 public partial class GardenerService
 {
     /// <summary>
+    /// Maps WebSocket session IDs to account IDs, populated from session.connected events.
+    /// Used to resolve account identity server-side per FOUNDATION TENETS (Account Identity Boundary).
+    /// </summary>
+    private readonly ConcurrentDictionary<Guid, Guid> _sessionAccountMap = new();
+
+    /// <summary>
     /// Registers event consumers for pub/sub events this service handles.
     /// Called from the main service constructor.
     /// </summary>
     /// <param name="eventConsumer">The event consumer for registering handlers.</param>
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
+        eventConsumer.RegisterHandler<IGardenerService, SessionConnectedEvent>(
+            "session.connected",
+            async (svc, evt) => await ((GardenerService)svc).HandleSessionConnectedAsync(evt));
+
+        eventConsumer.RegisterHandler<IGardenerService, SessionDisconnectedEvent>(
+            "session.disconnected",
+            async (svc, evt) => await ((GardenerService)svc).HandleSessionDisconnectedAsync(evt));
+
         eventConsumer.RegisterHandler<IGardenerService, SeedBondFormedEvent>(
             "seed.bond.formed",
             async (svc, evt) => await ((GardenerService)svc).HandleSeedBondFormedAsync(evt));
@@ -50,6 +65,41 @@ public partial class GardenerService
     }
 
     #region Event Handlers
+
+    /// <summary>
+    /// Handles session.connected events.
+    /// Stores session-to-account mapping for server-side account resolution per FOUNDATION TENETS
+    /// (Account Identity Boundary). Player-facing endpoints resolve accountId from this map
+    /// rather than accepting it from the client.
+    /// </summary>
+    /// <param name="evt">The event data.</param>
+    public async Task HandleSessionConnectedAsync(SessionConnectedEvent evt)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.gardener", "GardenerService.HandleSessionConnected");
+
+        _sessionAccountMap[evt.SessionId] = evt.AccountId;
+        _logger.LogDebug("Session {SessionId} connected, account {AccountId} mapped",
+            evt.SessionId, evt.AccountId);
+        await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Handles session.disconnected events.
+    /// Removes session-to-account mapping and cleans up any active garden instance
+    /// for the disconnected session.
+    /// </summary>
+    /// <param name="evt">The event data.</param>
+    public async Task HandleSessionDisconnectedAsync(SessionDisconnectedEvent evt)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.gardener", "GardenerService.HandleSessionDisconnected");
+
+        _sessionAccountMap.TryRemove(evt.SessionId, out _);
+        _logger.LogDebug("Session {SessionId} disconnected, account mapping removed",
+            evt.SessionId);
+        await Task.CompletedTask;
+    }
 
     /// <summary>
     /// Handles seed.bond.formed events.

@@ -3160,12 +3160,18 @@ public partial class DocumentationController
             "required": [
                 "namespace",
                 "repositoryUrl",
-                "owner"
+                "ownerType",
+                "ownerId"
             ],
             "properties": {
-                "owner": {
+                "ownerType": {
+                    "$ref": "#/$defs/DocumentationOwnerType",
+                    "description": "Type of owner for this binding"
+                },
+                "ownerId": {
                     "type": "string",
-                    "description": "Owner of this binding. NOT a session ID.\nFor user-initiated bindings: the accountId (UUID format).\nFor service-initiated bindings: the service name (e.g., \"orchestrator\").\n"
+                    "minLength": 1,
+                    "description": "Owner identifier.\nFor Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"orchestrator\").\n"
                 },
                 "namespace": {
                     "type": "string",
@@ -3236,6 +3242,14 @@ public partial class DocumentationController
                     "description": "Create archive after each sync"
                 }
             }
+        },
+        "DocumentationOwnerType": {
+            "type": "string",
+            "description": "Type of documentation resource owner",
+            "enum": [
+                "Session",
+                "Service"
+            ]
         },
         "DocumentCategory": {
             "type": "string",
@@ -3700,7 +3714,8 @@ public partial class DocumentationController
                 "branch",
                 "status",
                 "createdAt",
-                "owner"
+                "ownerType",
+                "ownerId"
             ],
             "properties": {
                 "bindingId": {
@@ -3741,9 +3756,13 @@ public partial class DocumentationController
                     "format": "date-time",
                     "description": "Timestamp when the binding was created"
                 },
-                "owner": {
+                "ownerType": {
+                    "$ref": "#/$defs/DocumentationOwnerType",
+                    "description": "Type of owner for this binding"
+                },
+                "ownerId": {
                     "type": "string",
-                    "description": "Owner of this binding. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated bindings\nor a service name for service-initiated bindings.\n"
+                    "description": "Owner identifier.\ nFor Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"orchestrator\").\n"
                 }
             }
         },
@@ -3757,6 +3776,14 @@ public partial class DocumentationController
                 "Disabled"
             ],
             "description": "Status of a repository binding"
+        },
+        "DocumentationOwnerType": {
+            "type": "string",
+            "description": "Type of documentation resource owner",
+            "enum": [
+                "Session",
+                "Service"
+            ]
         },
         "SyncInfo": {
             "description": "Information about a repository sync operation",
@@ -3961,7 +3988,8 @@ public partial class DocumentationController
                 "branch",
                 "status",
                 "createdAt",
-                "owner"
+                "ownerType",
+                "ownerId"
             ],
             "properties": {
                 "bindingId": {
@@ -4002,9 +4030,13 @@ public partial class DocumentationController
                     "format": "date-time",
                     "description": "Timestamp when the binding was created"
                 },
-                "owner": {
+                "ownerType": {
+                    "$ref": "#/$defs/DocumentationOwnerType",
+                    "description": "Type of owner for this binding"
+                },
+                "ownerId": {
                     "type": "string",
-                    "description": "Owner of this binding. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated bindings\nor a service name for service-initiated bindings.\n"
+                    "description": "Owner identifier.\nFor Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"orchestrator\").\n"
                 }
             }
         },
@@ -4018,6 +4050,14 @@ public partial class DocumentationController
                 "Disabled"
             ],
             "description": "Status of a repository binding"
+        },
+        "DocumentationOwnerType": {
+            "type": "string",
+            "description": "Type of documentation resource owner",
+            "enum": [
+                "Session",
+                "Service"
+            ]
         }
     }
 }
@@ -4197,7 +4237,8 @@ public partial class DocumentationController
                 "branch",
                 "status",
                 "createdAt",
-                "owner"
+                "ownerType",
+                "ownerId"
             ],
             "properties": {
                 "bindingId": {
@@ -4238,9 +4279,13 @@ public partial class DocumentationController
                     "format": "date-time",
                     "description": "Timestamp when the binding was created"
                 },
-                "owner": {
+                "ownerType": {
+                    "$ref": "#/$defs/DocumentationOwnerType",
+                    "description": "Type of owner for this binding"
+                },
+                "ownerId": {
                     "type": "string",
-                    "description": "Owner of this binding. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated bindings\nor a service name for service-initiated bindings.\n"
+                    "description": "Owner identifier.\nFor Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"orchestrator\").\n"
                 }
             }
         },
@@ -4254,6 +4299,14 @@ public partial class DocumentationController
                 "Disabled"
             ],
             "description": "Status of a repository binding"
+        },
+        "DocumentationOwnerType": {
+            "type": "string",
+            "description": "Type of documentation resource owner",
+            "enum": [
+                "Session",
+                "Service"
+            ]
         }
     }
 }
@@ -4326,12 +4379,18 @@ public partial class DocumentationController
             "additionalProperties": false,
             "required": [
                 "namespace",
-                "owner"
+                "ownerType",
+                "ownerId"
             ],
             "properties": {
-                "owner": {
+                "ownerType": {
+                    "$ref": "#/$defs/DocumentationOwnerType",
+                    "description": "Type of owner for this archive"
+                },
+                "ownerId": {
                     "type": "string",
-                    "description": "Owner of this archive. NOT a session ID.\nFor user-initiated archives: the accountId (UUID format).\nFor service-initiated archives: the service name (e.g., \"orchestrator\").\n"
+                    "minLength": 1,
+                    "description": "Owner identifier.\nFor Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"orchestrator\").\n"
                 },
                 "namespace": {
                     "type": "string",
@@ -4345,6 +4404,14 @@ public partial class DocumentationController
                     "description": "Optional description for the archive"
                 }
             }
+        },
+        "DocumentationOwnerType": {
+            "type": "string",
+            "description": "Type of documentation resource owner",
+            "enum": [
+                "Session",
+                "Service"
+            ]
         }
     }
 }
@@ -4572,12 +4639,25 @@ public partial class DocumentationController
                     "format": "date-time",
                     "description": "Timestamp when the archive was created"
                 },
-                "owner": {
+                "ownerType": {
+                    "$ref": "#/$defs/DocumentationOwnerType",
+                    "nullable": true,
+                    "description": "Type of owner for this archive (null if owner unknown)"
+                },
+                "ownerId": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Owner of this archive. NOT a session ID (null if owner unknown).\nContains either an accountId (UUID format) for user-initiated archives\nor a service name for service-initiated archives.\n"
+                    "description": "Owner identifier (null if owner unknown).\nFor Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"orchestrator\").\n"
                 }
             }
+        },
+        "DocumentationOwnerType": {
+            "type": "string",
+            "description": "Type of documentation resource owner",
+            "enum": [
+                "Session",
+                "Service"
+            ]
         }
     }
 }

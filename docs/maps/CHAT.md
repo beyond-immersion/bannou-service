@@ -111,7 +111,7 @@
 | `chat.participant.muted` | `ChatParticipantMutedEvent` | MuteParticipant |
 | `chat.participant.unmuted` | `ChatParticipantUnmutedEvent` | UnmuteParticipant, SendMessage (lazy auto-unmute) |
 | `chat.participant.role-changed` | `ChatParticipantRoleChangedEvent` | ChangeParticipantRole, LeaveRoom (owner auto-promotion) |
-| `chat.message.sent` | `ChatMessageSentEvent` | SendMessage (metadata only — no text content for privacy) |
+| `chat.message.sent` | `ChatMessageSentEvent` | SendMessage, SendMessageBatch (metadata only — no text content for privacy) |
 | `chat.message.deleted` | `ChatMessageDeletedEvent` | DeleteMessage |
 
 ---
@@ -177,7 +177,7 @@ All handlers paginate with `ContractRoomQueryBatchSize` and cap at `MaxContractR
 | UnmuteParticipant | POST /chat/room/participant/unmute | user, state:in_room | participants | chat.participant.unmuted |
 | ChangeParticipantRole | POST /chat/room/participant/change-role | user, state:in_room | participants | chat.participant.role-changed |
 | SendMessage | POST /chat/message/send | user, state:in_room | messages/buffer, participants, room, cache, typing | chat.message.sent (+unmuted) |
-| SendMessageBatch | POST /chat/message/send-batch | developer | messages/buffer, room, cache | - |
+| SendMessageBatch | POST /chat/message/send-batch | developer | messages/buffer, room, cache | chat.message.sent (per message) |
 | GetMessageHistory | POST /chat/message/history | user, state:in_room | - | - |
 | DeleteMessage | POST /chat/message/delete | user, state:in_room | messages | chat.message.deleted |
 | PinMessage | POST /chat/message/pin | user, state:in_room | messages | - |
@@ -245,7 +245,7 @@ LOCK chat-lock:type:{code}                                      -> 409 if fails
   IF already deprecated
     RETURN (200, RoomTypeResponse)                               // idempotent
   WRITE room-type:type:{scope}:{code} <- Status=Deprecated, UpdatedAt=now
-  PUBLISH chat.room-type.updated { ..., changedFields: ["Status"] }
+  PUBLISH chat.room-type.updated { ..., changedFields: ["status"] }
 RETURN (200, RoomTypeResponse)
 ```
 
@@ -574,8 +574,8 @@ FOREACH message in batch
     WRITE messages:{roomId}:{messageId} <- ChatMessageModel
   ELSE
     WRITE buffer:{roomId}:{messageId} <- ChatMessageModel (TTL)
+  PUBLISH chat.message.sent { roomId, messageId, messageFormat, ... }  // metadata only, no text/custom
   PUSH ChatMessageReceivedClientEvent to all participant sessions
-  // No service event published for batch messages
 
 WRITE room:room:{roomId} <- LastActivityAt=now
 WRITE cache:room:{roomId} <- same

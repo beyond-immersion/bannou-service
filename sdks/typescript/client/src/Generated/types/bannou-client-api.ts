@@ -12940,9 +12940,9 @@ export interface components {
     AbandonScenarioRequest: {
       /**
        * Format: uuid
-       * @description Account abandoning the scenario
+       * @description WebSocket session ID of the player
        */
-      accountId: string;
+      sessionId: string;
       /**
        * Format: uuid
        * @description Scenario instance to abandon
@@ -13806,12 +13806,14 @@ export interface components {
        * @description Timestamp when the archive was created
        */
       createdAt: string;
+      /** @description Type of owner for this archive (null if owner unknown) */
+      ownerType?: components['schemas']['DocumentationOwnerType'];
       /**
-       * @description Owner of this archive. NOT a session ID (null if owner unknown).
-       *     Contains either an accountId (UUID format) for user-initiated archives
-       *     or a service name for service-initiated archives.
+       * @description Owner identifier (null if owner unknown).
+       *     For Session type: the WebSocket session ID (UUID format).
+       *     For Service type: the service name (e.g., "orchestrator").
        */
-      owner?: string | null;
+      ownerId?: string | null;
     };
     /** @description Request to archive a room (makes it read-only) */
     ArchiveRoomRequest: {
@@ -13930,6 +13932,13 @@ export interface components {
       /** @description Searchable tags for the asset (null to omit) */
       tags?: string[] | null;
     };
+    /**
+     * @description Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).
+     *     Session: user-initiated operation identified by WebSocket session ID (UUID).
+     *     Service: service-initiated operation identified by service name.
+     * @enum {string}
+     */
+    AssetOwnerType: 'Session' | 'Service';
     /** @description Reference to an asset in lib-asset */
     AssetReference: {
       /**
@@ -14666,12 +14675,14 @@ export interface components {
     };
     /** @description Request to bind a Git repository for automatic documentation sync */
     BindRepositoryRequest: {
+      /** @description Type of owner for this binding */
+      ownerType: components['schemas']['DocumentationOwnerType'];
       /**
-       * @description Owner of this binding. NOT a session ID.
-       *     For user-initiated bindings: the accountId (UUID format).
-       *     For service-initiated bindings: the service name (e.g., "orchestrator").
+       * @description Owner identifier.
+       *     For Session type: the WebSocket session ID (UUID format).
+       *     For Service type: the service name (e.g., "orchestrator").
        */
-      owner: string;
+      ownerId: string;
       /** @description Documentation namespace to bind */
       namespace: string;
       /** @description Git clone URL (HTTPS for public repos) */
@@ -15332,8 +15343,10 @@ export interface components {
       name?: string | null;
       /** @description Bundle description */
       description?: string | null;
-      /** @description Owner account ID or service name (null for system-owned bundles) */
-      owner?: string | null;
+      /** @description Type of owner (null for system-owned bundles) */
+      ownerType?: components['schemas']['AssetOwnerType'] | null;
+      /** @description Owner identifier - session ID or service name (null for system-owned bundles) */
+      ownerId?: string | null;
       /** @description Game realm this bundle belongs to. Null for cross-realm bundles. */
       realm?: components['schemas']['GameRealm'] | null;
       /** @description Key-value tags for categorization and filtering */
@@ -15429,12 +15442,13 @@ export interface components {
     BundleType: 'Source' | 'Metabundle';
     /** @description Request to upload a pre-built asset bundle file */
     BundleUploadRequest: {
+      /** @description Type of owner uploading this bundle */
+      ownerType: components['schemas']['AssetOwnerType'];
       /**
-       * @description Owner of this bundle upload. NOT a session ID.
-       *     For user-initiated uploads: the accountId (UUID format).
-       *     For service-initiated uploads: the service name (e.g., "orchestrator").
+       * @description Owner identifier. For Session type: the WebSocket session ID (UUID format).
+       *     For Service type: the service name (e.g., "behavior", "orchestrator").
        */
-      owner: string;
+      ownerId: string;
       /** @description Must end with .bannou or .zip */
       filename: string;
       /**
@@ -15454,7 +15468,7 @@ export interface components {
        * @description When this version was created
        */
       createdAt: string;
-      /** @description Account ID that made the change */
+      /** @description Session ID or service name that made the change */
       createdBy: string;
       /** @description List of changes in this version */
       changes: string[];
@@ -15667,13 +15681,18 @@ export interface components {
       /** @description Refund results for any deposits */
       refunds: components['schemas']['RefundResult'][];
     };
-    /** @description Request to cancel a subscription */
+    /** @description Request to cancel a subscription. Requires accountId for ownership verification when called by non-admin users. */
     CancelSubscriptionRequest: {
       /**
        * Format: uuid
        * @description ID of the subscription to cancel
        */
       subscriptionId: string;
+      /**
+       * Format: uuid
+       * @description Account ID of the caller for ownership verification
+       */
+      accountId: string;
       /** @description Optional reason for cancellation */
       reason?: string | null;
     };
@@ -15777,9 +15796,9 @@ export interface components {
     ChainScenarioRequest: {
       /**
        * Format: uuid
-       * @description Account chaining scenarios
+       * @description WebSocket session ID of the player
        */
-      accountId: string;
+      sessionId: string;
       /**
        * Format: uuid
        * @description Currently active scenario instance
@@ -16129,17 +16148,7 @@ export interface components {
     CharacterStatus: 'Alive' | 'Dead' | 'Dormant';
     /** @description Request to send a chat message to players in a game session */
     ChatMessageRequest: {
-      /**
-       * Format: uuid
-       * @description WebSocket session ID of the sender. Provided by shortcut system.
-       */
-      sessionId: string;
-      /**
-       * Format: uuid
-       * @description Account ID of the sender. Provided by shortcut system.
-       */
-      accountId: string;
-      /** @description Game type for the chat. Determines which lobby's players receive the message. Provided by shortcut system. */
+      /** @description Game type for the chat. Determines which lobby's players receive the message. */
       gameType: components['schemas']['GameType'];
       /** @description Content of the chat message */
       message: string;
@@ -16412,7 +16421,13 @@ export interface components {
        * @description Scene to checkout
        */
       sceneId: string;
-      /** @description Optional editor identifier (defaults to caller identity) */
+      /** @description Type of editor. Defaults to Session if not specified. */
+      editorType?: components['schemas']['SceneEditorType'];
+      /**
+       * @description Editor identifier. For Session type: the WebSocket session ID (UUID format).
+       *     For Service type: the app-id or service name.
+       *     Defaults to caller identity if not specified.
+       */
       editorId?: string | null;
       /** @description Custom lock TTL (uses default if not specified) */
       ttlMinutes?: number | null;
@@ -17126,9 +17141,9 @@ export interface components {
     CompleteScenarioRequest: {
       /**
        * Format: uuid
-       * @description Account completing the scenario
+       * @description WebSocket session ID of the player
        */
-      accountId: string;
+      sessionId: string;
       /**
        * Format: uuid
        * @description Scenario instance to complete
@@ -18238,12 +18253,14 @@ export interface components {
     };
     /** @description Request to create a point-in-time snapshot of namespace documentation */
     CreateArchiveRequest: {
+      /** @description Type of owner for this archive */
+      ownerType: components['schemas']['DocumentationOwnerType'];
       /**
-       * @description Owner of this archive. NOT a session ID.
-       *     For user-initiated archives: the accountId (UUID format).
-       *     For service-initiated archives: the service name (e.g., "orchestrator").
+       * @description Owner identifier.
+       *     For Session type: the WebSocket session ID (UUID format).
+       *     For Service type: the service name (e.g., "orchestrator").
        */
-      owner: string;
+      ownerId: string;
       /** @description Documentation namespace to archive */
       namespace: string;
       /** @description Optional description for the archive */
@@ -18329,12 +18346,13 @@ export interface components {
     };
     /** @description Request to create a new asset bundle from multiple assets */
     CreateBundleRequest: {
+      /** @description Type of owner creating this bundle */
+      ownerType: components['schemas']['AssetOwnerType'];
       /**
-       * @description Owner of this bundle. NOT a session ID.
-       *     For user-initiated bundles: the accountId (UUID format).
-       *     For service-initiated bundles: the service name (e.g., "orchestrator").
+       * @description Owner identifier. For Session type: the WebSocket session ID (UUID format).
+       *     For Service type: the service name (e.g., "behavior", "orchestrator").
        */
-      owner: string;
+      ownerId: string;
       /** @description Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1") */
       bundleId: string;
       /**
@@ -19045,12 +19063,13 @@ export interface components {
        * @default 1.0.0
        */
       version: string;
+      /** @description Type of owner creating this metabundle */
+      ownerType: components['schemas']['AssetOwnerType'];
       /**
-       * @description Owner of this metabundle. NOT a session ID.
-       *     For user-initiated: the accountId (UUID format).
-       *     For service-initiated: the service name.
+       * @description Owner identifier. For Session type: the WebSocket session ID (UUID format).
+       *     For Service type: the service name (e.g., "behavior", "orchestrator").
        */
-      owner: string;
+      ownerId: string;
       /** @description Game realm for this metabundle */
       realm: components['schemas']['GameRealm'];
       /** @description Human-readable description */
@@ -19830,9 +19849,9 @@ export interface components {
     DeclinePoiRequest: {
       /**
        * Format: uuid
-       * @description Account declining the POI
+       * @description WebSocket session ID of the player
        */
-      accountId: string;
+      sessionId: string;
       /**
        * Format: uuid
        * @description POI to decline
@@ -20656,6 +20675,11 @@ export interface components {
       /** @description Tags associated with the document (null if no tags) */
       tags?: string[] | null;
     };
+    /**
+     * @description Type of documentation resource owner
+     * @enum {string}
+     */
+    DocumentationOwnerType: 'Session' | 'Service';
     /** @description A deity's influence in a specific domain with a weight representing strength */
     DomainInfluence: {
       /** @description Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum. */
@@ -21044,12 +21068,7 @@ export interface components {
     EnterGardenRequest: {
       /**
        * Format: uuid
-       * @description Account entering the garden
-       */
-      accountId: string;
-      /**
-       * Format: uuid
-       * @description Current WebSocket session ID
+       * @description WebSocket session ID of the player entering the garden
        */
       sessionId: string;
     };
@@ -21057,9 +21076,9 @@ export interface components {
     EnterScenarioRequest: {
       /**
        * Format: uuid
-       * @description Account entering the scenario
+       * @description WebSocket session ID of the player
        */
-      accountId: string;
+      sessionId: string;
       /**
        * Format: uuid
        * @description Template to instantiate
@@ -22403,17 +22422,7 @@ export interface components {
     };
     /** @description Request to perform a game action such as movement or combat */
     GameActionRequest: {
-      /**
-       * Format: uuid
-       * @description WebSocket session ID of the client. Provided by shortcut system.
-       */
-      sessionId: string;
-      /**
-       * Format: uuid
-       * @description Account ID of the player. Provided by shortcut system.
-       */
-      accountId: string;
-      /** @description Game type for the action. Determines which lobby to apply the action. Provided by shortcut system. */
+      /** @description Game type for the action. Determines which lobby to apply the action. */
       gameType: components['schemas']['GameType'];
       /** @description Type of game action to perform */
       actionType: components['schemas']['GameActionType'];
@@ -23552,9 +23561,9 @@ export interface components {
     GetGardenStateRequest: {
       /**
        * Format: uuid
-       * @description Account whose garden state to retrieve
+       * @description WebSocket session ID of the player
        */
-      accountId: string;
+      sessionId: string;
     };
     /** @description Request to get global supply stats */
     GetGlobalSupplyRequest: {
@@ -24253,9 +24262,9 @@ export interface components {
     GetScenarioStateRequest: {
       /**
        * Format: uuid
-       * @description Account whose scenario state to retrieve
+       * @description WebSocket session ID of the player
        */
-      accountId: string;
+      sessionId: string;
     };
     /** @description Request to retrieve a scene */
     GetSceneRequest: {
@@ -25320,9 +25329,9 @@ export interface components {
     InteractWithPoiRequest: {
       /**
        * Format: uuid
-       * @description Account interacting with the POI
+       * @description WebSocket session ID of the player
        */
-      accountId: string;
+      sessionId: string;
       /**
        * Format: uuid
        * @description POI to interact with
@@ -25655,11 +25664,6 @@ export interface components {
        * @description WebSocket session ID for event delivery
        */
       webSocketSessionId: string;
-      /**
-       * Format: uuid
-       * @description Account ID of the player joining
-       */
-      accountId: string;
       /** @description ID of the queue to join */
       queueId: string;
       /**
@@ -25945,9 +25949,9 @@ export interface components {
     LeaveGardenRequest: {
       /**
        * Format: uuid
-       * @description Account leaving the garden
+       * @description WebSocket session ID of the player leaving the garden
        */
-      accountId: string;
+      sessionId: string;
     };
     /** @description Response after leaving the garden */
     LeaveGardenResponse: {
@@ -27081,9 +27085,9 @@ export interface components {
     ListPoisRequest: {
       /**
        * Format: uuid
-       * @description Account whose POIs to list
+       * @description WebSocket session ID of the player
        */
-      accountId: string;
+      sessionId: string;
     };
     /** @description List of active POIs in a garden instance */
     ListPoisResponse: {
@@ -29413,11 +29417,6 @@ export interface components {
     PartyMemberInfo: {
       /**
        * Format: uuid
-       * @description Account ID of the party member
-       */
-      accountId: string;
-      /**
-       * Format: uuid
        * @description WebSocket session ID for event delivery
        */
       webSocketSessionId: string;
@@ -30164,8 +30163,10 @@ export interface components {
       createdBefore?: string | null;
       /** @description Filter bundles with name containing this string (case-insensitive) */
       nameContains?: string | null;
-      /** @description Filter by bundle owner account ID */
-      owner?: string | null;
+      /** @description Filter by owner type (null for any type) */
+      ownerType?: components['schemas']['AssetOwnerType'] | null;
+      /** @description Filter by owner identifier (session ID or service name) */
+      ownerId?: string | null;
       /** @description Filter by realm */
       realm?: components['schemas']['GameRealm'] | null;
       /** @description Filter by bundle type (source or metabundle) */
@@ -32164,12 +32165,14 @@ export interface components {
        * @description Timestamp when the binding was created
        */
       createdAt: string;
+      /** @description Type of owner for this binding */
+      ownerType: components['schemas']['DocumentationOwnerType'];
       /**
-       * @description Owner of this binding. NOT a session ID.
-       *     Contains either an accountId (UUID format) for user-initiated bindings
-       *     or a service name for service-initiated bindings.
+       * @description Owner identifier.
+       *     For Session type: the WebSocket session ID (UUID format).
+       *     For Service type: the service name (e.g., "orchestrator").
        */
-      owner: string;
+      ownerId: string;
     };
     /** @description Request to get current repository binding and sync status */
     RepositoryStatusRequest: {
@@ -33221,6 +33224,13 @@ export interface components {
        */
       updatedAt?: string;
     };
+    /**
+     * @description Type of scene editor for polymorphic identification per FOUNDATION TENETS.
+     *     Session identifies a WebSocket session (user editing via client).
+     *     Service identifies a service or tool editing programmatically.
+     * @enum {string}
+     */
+    SceneEditorType: 'Session' | 'Service';
     /**
      * @description A node in the scene hierarchy. Nodes can contain children to form
      *     a tree structure. Each node has a local transform relative to its parent.
@@ -36720,9 +36730,9 @@ export interface components {
     UpdatePositionRequest: {
       /**
        * Format: uuid
-       * @description Account whose position to update
+       * @description WebSocket session ID of the player
        */
-      accountId: string;
+      sessionId: string;
       /** @description New position in garden space */
       position: components['schemas']['Vec3'];
       /** @description Current velocity vector */
@@ -37000,12 +37010,13 @@ export interface components {
     };
     /** @description Request to initiate an asset upload and receive a pre-signed URL */
     UploadRequest: {
+      /** @description Type of owner initiating this upload */
+      ownerType: components['schemas']['AssetOwnerType'];
       /**
-       * @description Owner of this asset operation. NOT a session ID.
-       *     For user-initiated uploads: the accountId (UUID format).
-       *     For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
+       * @description Owner identifier. For Session type: the WebSocket session ID (UUID format).
+       *     For Service type: the service name (e.g., "behavior", "orchestrator").
        */
-      owner: string;
+      ownerId: string;
       /** @description Original filename with extension */
       filename: string;
       /**

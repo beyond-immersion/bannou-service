@@ -141,6 +141,26 @@ public enum VolumeShape
 #pragma warning restore CS1591
 
 /// <summary>
+/// Type of scene editor for polymorphic identification per FOUNDATION TENETS.
+/// <br/>Session identifies a WebSocket session (user editing via client).
+/// <br/>Service identifies a service or tool editing programmatically.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SceneEditorType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Session")]
+    Session = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Service")]
+    Service = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Types of affordances describing what an object can do or how it can be interacted with.
 /// <br/>Used by AI navigation, character controllers, and procedural content systems.
 /// <br/>
@@ -1848,7 +1868,17 @@ public partial class CheckoutRequest
     public System.Guid SceneId { get; set; } = default!;
 
     /// <summary>
-    /// Optional editor identifier (defaults to caller identity)
+    /// Type of editor. Defaults to Session if not specified.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("editorType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SceneEditorType? EditorType { get; set; } = default!;
+
+    /// <summary>
+    /// Editor identifier. For Session type: the WebSocket session ID (UUID format).
+    /// <br/>For Service type: the app-id or service name.
+    /// <br/>Defaults to caller identity if not specified.
+    /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("editorId")]
     public string? EditorId { get; set; } = default!;

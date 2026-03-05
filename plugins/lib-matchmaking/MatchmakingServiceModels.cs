@@ -100,7 +100,6 @@ internal class TicketModel
 
 internal class PartyMemberModel
 {
-    public Guid AccountId { get; set; }
     public Guid WebSocketSessionId { get; set; }
     public double? SkillRating { get; set; }
 }

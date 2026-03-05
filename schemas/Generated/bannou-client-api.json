@@ -11028,10 +11028,8 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {
-              "game-session": "in_game"
-            }
+            "role": "developer",
+            "states": {}
           }
         ],
         "requestBody": {
@@ -11070,10 +11068,8 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {
-              "game-session": "in_game"
-            }
+            "role": "developer",
+            "states": {}
           }
         ],
         "requestBody": {
@@ -11194,10 +11190,8 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {
-              "game-session": "in_game"
-            }
+            "role": "developer",
+            "states": {}
           }
         ],
         "requestBody": {
@@ -24832,14 +24826,14 @@
         "type": "object",
         "description": "Request to abandon a scenario",
         "required": [
-          "accountId",
+          "sessionId",
           "scenarioInstanceId"
         ],
         "properties": {
-          "accountId": {
+          "sessionId": {
             "type": "string",
             "format": "uuid",
-            "description": "Account abandoning the scenario"
+            "description": "WebSocket session ID of the player"
           },
           "scenarioInstanceId": {
             "type": "string",
@@ -26531,10 +26525,15 @@
             "format": "date-time",
             "description": "Timestamp when the archive was created"
           },
-          "owner": {
+          "ownerType": {
+            "$ref": "#/components/schemas/DocumentationOwnerType",
+            "nullable": true,
+            "description": "Type of owner for this archive (null if owner unknown)"
+          },
+          "ownerId": {
             "type": "string",
             "nullable": true,
-            "description": "Owner of this archive. NOT a session ID (null if owner unknown).\nContains either an accountId (UUID format) for user-initiated archives\nor a service name for service-initiated archives.\n"
+            "description": "Owner identifier (null if owner unknown).\nFor Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"orchestrator\").\n"
           }
         }
       },
@@ -26785,6 +26784,14 @@
             "description": "Searchable tags for the asset (null to omit)"
           }
         }
+      },
+      "AssetOwnerType": {
+        "type": "string",
+        "enum": [
+          "Session",
+          "Service"
+        ],
+        "description": "Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).\nSession: user-initiated operation identified by WebSocket session ID (UUID).\nService: service-initiated operation identified by service name.\n"
       },
       "AssetReference": {
         "type": "object",
@@ -28253,12 +28260,18 @@
         "required": [
           "namespace",
           "repositoryUrl",
-          "owner"
+          "ownerType",
+          "ownerId"
         ],
         "properties": {
-          "owner": {
+          "ownerType": {
+            "$ref": "#/components/schemas/DocumentationOwnerType",
+            "description": "Type of owner for this binding"
+          },
+          "ownerId": {
             "type": "string",
-            "description": "Owner of this binding. NOT a session ID.\nFor user-initiated bindings: the accountId (UUID format).\nFor service-initiated bindings: the service name (e.g., \"orchestrator\").\n"
+            "minLength": 1,
+            "description": "Owner identifier.\nFor Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"orchestrator\").\n"
           },
           "namespace": {
             "type": "string",
@@ -29479,10 +29492,19 @@
             "nullable": true,
             "description": "Bundle description"
           },
-          "owner": {
+          "ownerType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetOwnerType"
+              }
+            ],
+            "nullable": true,
+            "description": "Type of owner (null for system-owned bundles)"
+          },
+          "ownerId": {
             "type": "string",
             "nullable": true,
-            "description": "Owner account ID or service name (null for system-owned bundles)"
+            "description": "Owner identifier - session ID or service name (null for system-owned bundles)"
           },
           "realm": {
             "allOf": [
@@ -29653,12 +29675,17 @@
         "required": [
           "filename",
           "size",
-          "owner"
+          "ownerType",
+          "ownerId"
         ],
         "properties": {
-          "owner": {
+          "ownerType": {
+            "$ref": "#/components/schemas/AssetOwnerType",
+            "description": "Type of owner uploading this bundle"
+          },
+          "ownerId": {
             "type": "string",
-            "description": "Owner of this bundle upload. NOT a session ID.\nFor user-initiated uploads: the accountId (UUID format).\nFor service-initiated uploads: the service name (e.g., \"orchestrator\").\n"
+            "description": "Owner identifier. For Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"behavior\", \"orchestrator\").\n"
           },
           "filename": {
             "type": "string",
@@ -29702,7 +29729,7 @@
           },
           "createdBy": {
             "type": "string",
-            "description": "Account ID that made the change"
+            "description": "Session ID or service name that made the change"
           },
           "changes": {
             "type": "array",
@@ -30152,15 +30179,21 @@
       "CancelSubscriptionRequest": {
         "type": "object",
         "additionalProperties": false,
-        "description": "Request to cancel a subscription",
+        "description": "Request to cancel a subscription. Requires accountId for ownership verification when called by non-admin users.",
         "required": [
-          "subscriptionId"
+          "subscriptionId",
+          "accountId"
         ],
         "properties": {
           "subscriptionId": {
             "type": "string",
             "format": "uuid",
             "description": "ID of the subscription to cancel"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Account ID of the caller for ownership verification"
           },
           "reason": {
             "type": "string",
@@ -30378,15 +30411,15 @@
         "type": "object",
         "description": "Request to chain from one scenario to another",
         "required": [
-          "accountId",
+          "sessionId",
           "currentScenarioInstanceId",
           "targetTemplateId"
         ],
         "properties": {
-          "accountId": {
+          "sessionId": {
             "type": "string",
             "format": "uuid",
-            "description": "Account chaining scenarios"
+            "description": "WebSocket session ID of the player"
           },
           "currentScenarioInstanceId": {
             "type": "string",
@@ -30976,25 +31009,13 @@
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "sessionId",
-          "accountId",
           "gameType",
           "message"
         ],
         "properties": {
-          "sessionId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "WebSocket session ID of the sender. Provided by shortcut system."
-          },
-          "accountId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Account ID of the sender. Provided by shortcut system."
-          },
           "gameType": {
             "$ref": "#/components/schemas/GameType",
-            "description": "Game type for the chat. Determines which lobby's players receive the message. Provided by shortcut system."
+            "description": "Game type for the chat. Determines which lobby's players receive the message."
           },
           "message": {
             "type": "string",
@@ -31548,10 +31569,15 @@
             "format": "uuid",
             "description": "Scene to checkout"
           },
+          "editorType": {
+            "$ref": "#/components/schemas/SceneEditorType",
+            "nullable": true,
+            "description": "Type of editor. Defaults to Session if not specified."
+          },
           "editorId": {
             "type": "string",
             "nullable": true,
-            "description": "Optional editor identifier (defaults to caller identity)"
+            "description": "Editor identifier. For Session type: the WebSocket session ID (UUID format).\nFor Service type: the app-id or service name.\nDefaults to caller identity if not specified.\n"
           },
           "ttlMinutes": {
             "type": "integer",
@@ -32904,14 +32930,14 @@
         "type": "object",
         "description": "Request to complete a scenario",
         "required": [
-          "accountId",
+          "sessionId",
           "scenarioInstanceId"
         ],
         "properties": {
-          "accountId": {
+          "sessionId": {
             "type": "string",
             "format": "uuid",
-            "description": "Account completing the scenario"
+            "description": "WebSocket session ID of the player"
           },
           "scenarioInstanceId": {
             "type": "string",
@@ -35159,12 +35185,18 @@
         "additionalProperties": false,
         "required": [
           "namespace",
-          "owner"
+          "ownerType",
+          "ownerId"
         ],
         "properties": {
-          "owner": {
+          "ownerType": {
+            "$ref": "#/components/schemas/DocumentationOwnerType",
+            "description": "Type of owner for this archive"
+          },
+          "ownerId": {
             "type": "string",
-            "description": "Owner of this archive. NOT a session ID.\nFor user-initiated archives: the accountId (UUID format).\nFor service-initiated archives: the service name (e.g., \"orchestrator\").\n"
+            "minLength": 1,
+            "description": "Owner identifier.\nFor Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"orchestrator\").\n"
           },
           "namespace": {
             "type": "string",
@@ -35340,12 +35372,17 @@
         "required": [
           "bundleId",
           "assetIds",
-          "owner"
+          "ownerType",
+          "ownerId"
         ],
         "properties": {
-          "owner": {
+          "ownerType": {
+            "$ref": "#/components/schemas/AssetOwnerType",
+            "description": "Type of owner creating this bundle"
+          },
+          "ownerId": {
             "type": "string",
-            "description": "Owner of this bundle. NOT a session ID.\nFor user-initiated bundles: the accountId (UUID format).\nFor service-initiated bundles: the service name (e.g., \"orchestrator\").\n"
+            "description": "Owner identifier. For Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"behavior\", \"orchestrator\").\n"
           },
           "bundleId": {
             "type": "string",
@@ -36687,7 +36724,8 @@
         "description": "Request to create a metabundle from source bundles and/or standalone assets.\nAt least one of sourceBundleIds or standaloneAssetIds must be provided.\nThis enables packaging behaviors/scripts with 3D assets as a complete unit.\n",
         "required": [
           "metabundleId",
-          "owner",
+          "ownerType",
+          "ownerId",
           "realm"
         ],
         "properties": {
@@ -36716,9 +36754,13 @@
             "default": "1.0.0",
             "description": "Metabundle version string"
           },
-          "owner": {
+          "ownerType": {
+            "$ref": "#/components/schemas/AssetOwnerType",
+            "description": "Type of owner creating this metabundle"
+          },
+          "ownerId": {
             "type": "string",
-            "description": "Owner of this metabundle. NOT a session ID.\nFor user-initiated: the accountId (UUID format).\nFor service-initiated: the service name.\n"
+            "description": "Owner identifier. For Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"behavior\", \"orchestrator\").\n"
           },
           "realm": {
             "$ref": "#/components/schemas/GameRealm",
@@ -38206,14 +38248,14 @@
         "type": "object",
         "description": "Request to decline a POI",
         "required": [
-          "accountId",
+          "sessionId",
           "poiId"
         ],
         "properties": {
-          "accountId": {
+          "sessionId": {
             "type": "string",
             "format": "uuid",
-            "description": "Account declining the POI"
+            "description": "WebSocket session ID of the player"
           },
           "poiId": {
             "type": "string",
@@ -39851,6 +39893,14 @@
           }
         }
       },
+      "DocumentationOwnerType": {
+        "type": "string",
+        "description": "Type of documentation resource owner",
+        "enum": [
+          "Session",
+          "Service"
+        ]
+      },
       "DomainInfluence": {
         "type": "object",
         "additionalProperties": false,
@@ -40600,19 +40650,13 @@
         "type": "object",
         "description": "Request to enter the garden",
         "required": [
-          "accountId",
           "sessionId"
         ],
         "properties": {
-          "accountId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Account entering the garden"
-          },
           "sessionId": {
             "type": "string",
             "format": "uuid",
-            "description": "Current WebSocket session ID"
+            "description": "WebSocket session ID of the player entering the garden"
           }
         }
       },
@@ -40620,14 +40664,14 @@
         "type": "object",
         "description": "Request to enter a scenario",
         "required": [
-          "accountId",
+          "sessionId",
           "scenarioTemplateId"
         ],
         "properties": {
-          "accountId": {
+          "sessionId": {
             "type": "string",
             "format": "uuid",
-            "description": "Account entering the scenario"
+            "description": "WebSocket session ID of the player"
           },
           "scenarioTemplateId": {
             "type": "string",
@@ -43019,25 +43063,13 @@
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "sessionId",
-          "accountId",
           "gameType",
           "actionType"
         ],
         "properties": {
-          "sessionId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "WebSocket session ID of the client. Provided by shortcut system."
-          },
-          "accountId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Account ID of the player. Provided by shortcut system."
-          },
           "gameType": {
             "$ref": "#/components/schemas/GameType",
-            "description": "Game type for the action. Determines which lobby to apply the action. Provided by shortcut system."
+            "description": "Game type for the action. Determines which lobby to apply the action."
           },
           "actionType": {
             "$ref": "#/components/schemas/GameActionType",
@@ -45203,13 +45235,13 @@
         "type": "object",
         "description": "Request to get current garden state",
         "required": [
-          "accountId"
+          "sessionId"
         ],
         "properties": {
-          "accountId": {
+          "sessionId": {
             "type": "string",
             "format": "uuid",
-            "description": "Account whose garden state to retrieve"
+            "description": "WebSocket session ID of the player"
           }
         }
       },
@@ -46511,13 +46543,13 @@
         "type": "object",
         "description": "Request to get current scenario state",
         "required": [
-          "accountId"
+          "sessionId"
         ],
         "properties": {
-          "accountId": {
+          "sessionId": {
             "type": "string",
             "format": "uuid",
-            "description": "Account whose scenario state to retrieve"
+            "description": "WebSocket session ID of the player"
           }
         }
       },
@@ -48525,14 +48557,14 @@
         "type": "object",
         "description": "Request to interact with a POI",
         "required": [
-          "accountId",
+          "sessionId",
           "poiId"
         ],
         "properties": {
-          "accountId": {
+          "sessionId": {
             "type": "string",
             "format": "uuid",
-            "description": "Account interacting with the POI"
+            "description": "WebSocket session ID of the player"
           },
           "poiId": {
             "type": "string",
@@ -49111,7 +49143,6 @@
         "additionalProperties": false,
         "required": [
           "webSocketSessionId",
-          "accountId",
           "queueId"
         ],
         "properties": {
@@ -49119,11 +49150,6 @@
             "type": "string",
             "format": "uuid",
             "description": "WebSocket session ID for event delivery"
-          },
-          "accountId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Account ID of the player joining"
           },
           "queueId": {
             "type": "string",
@@ -49671,13 +49697,13 @@
         "type": "object",
         "description": "Request to leave the garden",
         "required": [
-          "accountId"
+          "sessionId"
         ],
         "properties": {
-          "accountId": {
+          "sessionId": {
             "type": "string",
             "format": "uuid",
-            "description": "Account leaving the garden"
+            "description": "WebSocket session ID of the player leaving the garden"
           }
         }
       },
@@ -51973,13 +51999,13 @@
         "type": "object",
         "description": "Request to list active POIs",
         "required": [
-          "accountId"
+          "sessionId"
         ],
         "properties": {
-          "accountId": {
+          "sessionId": {
             "type": "string",
             "format": "uuid",
-            "description": "Account whose POIs to list"
+            "description": "WebSocket session ID of the player"
           }
         }
       },
@@ -56639,15 +56665,9 @@
         "description": "Information about a party member for matchmaking",
         "additionalProperties": false,
         "required": [
-          "accountId",
           "webSocketSessionId"
         ],
         "properties": {
-          "accountId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Account ID of the party member"
-          },
           "webSocketSessionId": {
             "type": "string",
             "format": "uuid",
@@ -58128,10 +58148,19 @@
             "nullable": true,
             "description": "Filter bundles with name containing this string (case-insensitive)"
           },
-          "owner": {
+          "ownerType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetOwnerType"
+              }
+            ],
+            "nullable": true,
+            "description": "Filter by owner type (null for any type)"
+          },
+          "ownerId": {
             "type": "string",
             "nullable": true,
-            "description": "Filter by bundle owner account ID"
+            "description": "Filter by owner identifier (session ID or service name)"
           },
           "realm": {
             "allOf": [
@@ -62025,7 +62054,8 @@
           "branch",
           "status",
           "createdAt",
-          "owner"
+          "ownerType",
+          "ownerId"
         ],
         "properties": {
           "bindingId": {
@@ -62066,9 +62096,13 @@
             "format": "date-time",
             "description": "Timestamp when the binding was created"
           },
-          "owner": {
+          "ownerType": {
+            "$ref": "#/components/schemas/DocumentationOwnerType",
+            "description": "Type of owner for this binding"
+          },
+          "ownerId": {
             "type": "string",
-            "description": "Owner of this binding. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated bindings\nor a service name for service-initiated bindings.\n"
+            "description": "Owner identifier.\nFor Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"orchestrator\").\n"
           }
         }
       },
@@ -64106,6 +64140,14 @@
             "description": "When the scene was last modified"
           }
         }
+      },
+      "SceneEditorType": {
+        "type": "string",
+        "description": "Type of scene editor for polymorphic identification per FOUNDATION TENETS.\nSession identifies a WebSocket session (user editing via client).\nService identifies a service or tool editing programmatically.\n",
+        "enum": [
+          "Session",
+          "Service"
+        ]
       },
       "SceneNode": {
         "type": "object",
@@ -71118,15 +71160,15 @@
         "type": "object",
         "description": "Request to update player position in the garden",
         "required": [
-          "accountId",
+          "sessionId",
           "position",
           "velocity"
         ],
         "properties": {
-          "accountId": {
+          "sessionId": {
             "type": "string",
             "format": "uuid",
-            "description": "Account whose position to update"
+            "description": "WebSocket session ID of the player"
           },
           "position": {
             "$ref": "#/components/schemas/Vec3",
@@ -71799,13 +71841,18 @@
           "filename",
           "size",
           "contentType",
-          "owner"
+          "ownerType",
+          "ownerId"
         ],
         "properties": {
-          "owner": {
+          "ownerType": {
+            "$ref": "#/components/schemas/AssetOwnerType",
+            "description": "Type of owner initiating this upload"
+          },
+          "ownerId": {
             "type": "string",
             "minLength": 1,
-            "description": "Owner of this asset operation. NOT a session ID.\nFor user-initiated uploads: the accountId (UUID format).\nFor service-initiated uploads: the service name (e.g., \"behavior\", \"orchestrator\").\n"
+            "description": "Owner identifier. For Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"behavior\", \"orchestrator\").\n"
           },
           "filename": {
             "type": "string",

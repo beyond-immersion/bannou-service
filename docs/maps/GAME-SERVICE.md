@@ -75,7 +75,7 @@ This plugin does not consume external events.
 |---------|------|
 | `ILogger<GameServiceService>` | Structured logging |
 | `GameServiceServiceConfiguration` | Typed configuration (ServiceListRetryAttempts) |
-| `IStateStoreFactory` | State store access (stores acquired inline per method, not cached) |
+| `IStateStoreFactory` | State store access (three stores constructor-cached as readonly fields: `_registryStore`, `_stringStore`, `_listStore`) |
 | `IMessageBus` | Event publishing |
 | `IEventConsumer` | Event registration (no handlers) |
 | `IDistributedLockProvider` | Distributed locks for stub name uniqueness |
@@ -156,10 +156,10 @@ POST /game-service/services/update | Roles: [admin]
 READ model-store:"game-service:{body.ServiceId}" -> model
 IF model is null                                     -> 404
 // track changed fields
-IF body.DisplayName provided AND different -> update model, add "DisplayName" to changedFields
-IF body.Description provided AND different -> update model, add "Description" to changedFields
-IF body.IsActive provided AND different -> update model, add "IsActive" to changedFields
-IF body.AutoLobbyEnabled provided AND different -> update model, add "AutoLobbyEnabled" to changedFields
+IF body.DisplayName provided AND different -> update model, add "displayName" to changedFields
+IF body.Description provided AND different -> update model, add "description" to changedFields
+IF body.IsActive provided AND different -> update model, add "isActive" to changedFields
+IF body.AutoLobbyEnabled provided AND different -> update model, add "autoLobbyEnabled" to changedFields
 IF changedFields is empty
   RETURN (200, ServiceInfo from model)               // no write, no event
 WRITE model-store:"game-service:{body.ServiceId}" <- updated model

@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Protocol;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Subscription;
@@ -557,15 +558,17 @@ public partial class GameSessionService : IGameSessionService
         GameActionRequest body,
         CancellationToken cancellationToken = default)
     {
-        // body.SessionId is the WebSocket session ID
-        // body.AccountId is the player performing the action
-        // body.GameType determines which lobby
-        var clientSessionId = body.SessionId;
-        var accountId = body.AccountId;
-        var gameType = body.GameType;
+        // Identify the caller from the X-Bannou-Session-Id header (set by Connect)
+        var callerSessionIdStr = ServiceRequestContext.SessionId;
+        if (string.IsNullOrEmpty(callerSessionIdStr) || !Guid.TryParse(callerSessionIdStr, out var callerSessionId))
+        {
+            _logger.LogWarning("Game action rejected: no valid session context");
+            return (StatusCodes.Forbidden, null);
+        }
 
-        _logger.LogDebug("Performing game action {ActionType} in game {GameType} by {AccountId}",
-            body.ActionType, gameType, accountId);
+        var gameType = body.GameType;
+        _logger.LogDebug("Performing game action {ActionType} in game {GameType} by session {SessionId}",
+            body.ActionType, gameType, callerSessionId);
 
         // Get the lobby for this game type (don't auto-create for action)
         var lobbyId = await GetLobbySessionAsync(gameType);
@@ -590,10 +593,11 @@ public partial class GameSessionService : IGameSessionService
             return (StatusCodes.BadRequest, null);
         }
 
-        // Validate that the player is actually in this session
-        if (!model.Players.Any(p => p.AccountId == accountId))
+        // Validate that the caller is actually in this session (by WebSocket session ID, not client input)
+        var callerPlayer = model.Players.FirstOrDefault(p => p.SessionId == callerSessionId);
+        if (callerPlayer == null)
         {
-            _logger.LogWarning("Player {AccountId} is not a member of lobby {LobbyId}", accountId, lobbyId);
+            _logger.LogWarning("Session {CallerSessionId} is not a member of lobby {LobbyId}", callerSessionId, lobbyId);
             return (StatusCodes.Forbidden, null);
         }
 
@@ -608,7 +612,7 @@ public partial class GameSessionService : IGameSessionService
             EventId = Guid.NewGuid(),
             Timestamp = actionTimestamp,
             SessionId = lobbyId.Value,
-            AccountId = accountId,
+            WebSocketSessionId = callerSessionId,
             ActionId = actionId,
             ActionType = body.ActionType,
             TargetId = body.TargetId
@@ -1358,8 +1362,12 @@ public partial class GameSessionService : IGameSessionService
                 stack: ex.StackTrace);
         }
 
-        // Update status
-        if (model.Status == SessionStatus.Full)
+        // Update status (same logic as Leave — check empty first, then full)
+        if (model.CurrentPlayers == 0)
+        {
+            model.Status = SessionStatus.Finished;
+        }
+        else if (model.Status == SessionStatus.Full)
         {
             model.Status = SessionStatus.Active;
         }
@@ -1419,13 +1427,15 @@ public partial class GameSessionService : IGameSessionService
         ChatMessageRequest body,
         CancellationToken cancellationToken = default)
     {
-        // body.SessionId is the WebSocket session ID
-        // body.AccountId is the sender's account
-        // body.GameType determines which lobby
-        var clientSessionId = body.SessionId;
-        var senderId = body.AccountId;
-        var gameType = body.GameType;
+        // Identify the caller from the X-Bannou-Session-Id header (set by Connect)
+        var callerSessionIdStr = ServiceRequestContext.SessionId;
+        if (string.IsNullOrEmpty(callerSessionIdStr) || !Guid.TryParse(callerSessionIdStr, out var callerSessionId))
+        {
+            _logger.LogWarning("Chat message rejected: no valid session context");
+            return StatusCodes.Forbidden;
+        }
 
+        var gameType = body.GameType;
         _logger.LogDebug("Chat message in game {GameType}: {MessageType}", gameType, body.MessageType);
 
         // Get the lobby for this game type (don't auto-create for chat)
@@ -1445,8 +1455,13 @@ public partial class GameSessionService : IGameSessionService
             return StatusCodes.NotFound;
         }
 
-        // Find the sender player
-        var senderPlayer = model.Players.FirstOrDefault(p => p.AccountId == senderId);
+        // Find the sender by their WebSocket session ID (from the header, not client input)
+        var senderPlayer = model.Players.FirstOrDefault(p => p.SessionId == callerSessionId);
+        if (senderPlayer == null)
+        {
+            _logger.LogWarning("Session {CallerSessionId} is not a member of lobby {LobbyId}", callerSessionId, lobbyId);
+            return StatusCodes.Forbidden;
+        }
 
         // Build typed client event (SessionId = lobby ID for game context)
         var chatEvent = new SessionChatReceivedClientEvent
@@ -1455,8 +1470,8 @@ public partial class GameSessionService : IGameSessionService
             Timestamp = DateTimeOffset.UtcNow,
             SessionId = lobbyId.Value,
             MessageId = Guid.NewGuid(),
-            SenderId = senderId,
-            SenderName = senderPlayer?.DisplayName,
+            SenderId = senderPlayer.AccountId,
+            SenderName = senderPlayer.DisplayName,
             Message = body.Message,
             MessageType = body.MessageType,
             IsWhisperToMe = false // Will be set per-recipient for whispers

@@ -318,7 +318,7 @@ public sealed class StreamingBundleWriter : IAsyncDisposable
     /// <param name="bundleId">Unique bundle identifier.</param>
     /// <param name="name">Bundle name.</param>
     /// <param name="version">Bundle version.</param>
-    /// <param name="createdBy">Account ID of creator.</param>
+    /// <param name="createdBy">Owner identifier per FOUNDATION TENETS (Account Identity Boundary). Session ID (UUID) for user-initiated or service name for service-initiated.</param>
     /// <param name="description">Optional description.</param>
     /// <param name="tags">Optional metadata tags.</param>
     /// <param name="cancellationToken">Cancellation token.</param>

@@ -1340,7 +1340,6 @@ public partial class MatchmakingController
             "additionalProperties": false,
             "required": [
                 "webSocketSessionId",
-                "accountId",
                 "queueId"
             ],
             "properties": {
@@ -1348,11 +1347,6 @@ public partial class MatchmakingController
                     "type": "string",
                     "format": "uuid",
                     "description": "WebSocket session ID for event delivery"
-                },
-                "accountId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Account ID of the player joining"
                 },
                 "queueId": {
                     "type": "string",
@@ -1407,15 +1401,9 @@ public partial class MatchmakingController
             "description": "Information about a party member for matchmaking",
             "additionalProperties": false,
             "required": [
-                "accountId",
                 "webSocketSessionId"
             ],
             "properties": {
-                "accountId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Account ID of the party member"
-                },
                 "webSocketSessionId": {
                     "type": "string",
                     "format": "uuid",

@@ -175,7 +175,7 @@ components:
         - eventId
         - timestamp
         - sessionId
-        - accountId
+        - webSocketSessionId
         - actionId
         - actionType
       properties:
@@ -191,10 +191,10 @@ components:
           type: string
           format: uuid
           description: ID of the game session
-        accountId:
+        webSocketSessionId:
           type: string
           format: uuid
-          description: Account ID of the player who performed the action
+          description: WebSocket session ID of the player who performed the action
         actionId:
           type: string
           format: uuid

@@ -4,7 +4,7 @@
 > **Schema**: schemas/realm-api.yaml
 > **Version**: 1.0.0
 > **Layer**: GameFoundation
-> **State Store**: realm-statestore (MySQL)
+> **State Store**: realm-statestore (MySQL), realm-lock (Redis)
 > **Implementation Map**: [docs/maps/REALM.md](../maps/REALM.md)
 
 ---
@@ -12,22 +12,6 @@
 ## Overview
 
 The Realm service (L2 GameFoundation) manages top-level persistent worlds in the Arcadia game system. Realms are peer worlds (e.g., Omega, Arcadia, Fantasia) with no hierarchical relationships between them. Each realm operates as an independent world with distinct species populations and cultural contexts. Provides CRUD with deprecation lifecycle and seed-from-configuration support. Internal-only.
-
----
-
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Persistence for realm definitions and indexes (3 typed stores resolved in constructor) |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for realm merge operations |
-| lib-messaging (`IMessageBus`) | Publishing lifecycle events and error events |
-| lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
-| lib-telemetry (`ITelemetryProvider`) | Distributed tracing spans on all async helper methods |
-| lib-resource (`IResourceClient`) | Reference checking before deletion to verify no external dependencies; compression callback registration providing realm context (name, code, description) for location archives |
-| lib-species (`ISpeciesClient`) | Species migration during realm merge (add to target, remove from source) |
-| lib-location (`ILocationClient`) | Location tree migration during realm merge (transfer + re-parent) |
-| lib-character (`ICharacterClient`) | Character migration during realm merge (transfer to target realm) |
 
 ---
 
@@ -39,46 +23,9 @@ The Realm service (L2 GameFoundation) manages top-level persistent worlds in the
 | lib-species | Calls `RealmExistsAsync` via `IRealmClient` to validate realm before species operations |
 | lib-character | Calls `RealmExistsAsync` via `IRealmClient` to validate realm before character creation |
 | lib-faction | Calls `RealmExistsAsync` via `IRealmClient` to validate realm before faction operations |
-| lib-analytics | Subscribes to `realm.updated` event for cache invalidation (realm-to-gameService resolution cache) |
+| lib-analytics | Calls realm endpoints via `IRealmClient` for realm data lookups; subscribes to `realm.updated` event for cache invalidation (realm-to-gameService resolution cache) |
 | lib-worldstate | Calls `RealmExistsAsync` via `IRealmClient` to validate realm before clock initialization |
 | lib-puppetmaster | Subscribes to `realm.created`, `realm.updated`, and `realm.deleted` events for regional watcher lifecycle management |
-
----
-
-## State Storage
-
-**Store**: `realm-statestore` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `realm:{realmId}` | `RealmModel` | Full realm definition (name, code, game service, deprecation state) |
-| `code-index:{CODE}` | `string` | Code → realm ID lookup (uppercase normalized) |
-| `all-realms` | `List<Guid>` | Master list of all realm IDs |
-
-**Store**: `realm-lock` (Backend: Redis)
-
-| Key Pattern | Purpose |
-|-------------|---------|
-| `merge:{smallerId}:{largerId}` | Distributed lock for realm merge operations (deterministic key ordering prevents deadlocks) |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `realm.created` | `RealmCreatedEvent` | New realm created |
-| `realm.updated` | `RealmUpdatedEvent` | Realm metadata modified, deprecated, or undeprecated (includes `changedFields`) |
-| `realm.deleted` | `RealmDeletedEvent` | Realm permanently deleted |
-| `realm.merged` | `RealmMergedEvent` | Deprecated realm merged into target realm (includes migration counts) |
-
-Events are auto-generated from `x-lifecycle` in `realm-events.yaml`.
-
-### Consumed Events
-
-This plugin does not consume external events.
 
 ---
 
@@ -89,67 +36,8 @@ This plugin does not consume external events.
 | `MergePageSize` | `REALM_MERGE_PAGE_SIZE` | `50` | Page size for paginated entity migration during realm merge (1-100) |
 | `OptimisticRetryAttempts` | `REALM_OPTIMISTIC_RETRY_ATTEMPTS` | `3` | Retry count for ETag-based optimistic concurrency operations (1-10) |
 | `MergeLockTimeoutSeconds` | `REALM_MERGE_LOCK_TIMEOUT_SECONDS` | `120` | Timeout for distributed lock during realm merge (10-600) |
-
----
-
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `ILogger<RealmService>` | Scoped | Structured logging |
-| `RealmServiceConfiguration` | Singleton | Service config (MergePageSize, OptimisticRetryAttempts, MergeLockTimeoutSeconds) |
-| `IStateStoreFactory` | Singleton | State store access (3 typed stores resolved in constructor) |
-| `IDistributedLockProvider` | Singleton | Distributed locks for merge operations |
-| `ITelemetryProvider` | Singleton | Distributed tracing spans |
-| `IMessageBus` | Scoped | Event publishing |
-| `IEventConsumer` | Scoped | Event registration (no handlers) |
-| `IResourceClient` | Scoped | Reference checking before deletion |
-| `ISpeciesClient` | Scoped | Species realm association for merge |
-| `ILocationClient` | Scoped | Location transfer for merge |
-| `ICharacterClient` | Scoped | Character transfer for merge |
-
-Service lifetime is **Scoped** (per-request).
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Read Operations (5 endpoints)
-
-Standard read operations with two lookup strategies. **GetByCode** uses a two-step lookup: code index → realm ID → realm data. **Exists** returns an `exists` + `isActive` pair (always returns 200, never 404) for fast validation by dependent services. **ExistsBatch** validates multiple realm IDs in a single call using `GetBulkAsync`, returning per-realm results plus convenience flags (`allExist`, `allActive`) and lists of invalid/deprecated IDs. **List** supports filtering by category, active status, and deprecation, with pagination.
-
-### Write Operations (3 endpoints)
-
-- **Create**: Codes normalized to uppercase (`ToUpperInvariant()`). Validates code uniqueness via index. Stores realm data, code index, and appends to master list. Publishes `realm.created`.
-- **Update**: Smart field tracking — only modifies fields where the new value differs from current. Tracks changed field names. Does not publish event if nothing changed. `GameServiceId` is mutable (can be updated). Uses ETag-based optimistic concurrency with configurable retry count (`OptimisticRetryAttempts`).
-- **Delete**: Three-step safety — realm MUST be deprecated first (returns 400 BadRequest otherwise, per IMPLEMENTATION TENETS deprecation lifecycle), then checks external references via `IResourceClient` (returns 409 Conflict if active references with RESTRICT policy exist), executes cleanup callbacks for CASCADE/DETACH sources, and only then removes all three keys (data, code index, list entry). Publishes `realm.deleted`. Fails closed if lib-resource is unavailable (returns 503 ServiceUnavailable).
-
-### Deprecation Operations (2 endpoints)
-
-- **Deprecate**: Sets `isDeprecated = true`, records timestamp and mandatory reason. Idempotent — returns OK with current state if already deprecated. Publishes `realm.updated` with deprecation fields in `changedFields`. Uses ETag-based optimistic concurrency with configurable retry count.
-- **Undeprecate**: Clears deprecation state. Idempotent — returns OK with current state if not deprecated. Uses ETag-based optimistic concurrency with configurable retry count.
-
-### Merge Operation (1 endpoint)
-
-- **MergeRealms** (`/realm/merge`): Consolidates a deprecated source realm into a target realm by migrating all associated entities. Three-phase migration in strict order:
-  1. **Species**: Paginated via `ListSpeciesByRealm`. For each species: `AddSpeciesToRealm` (target, idempotent) then `RemoveSpeciesFromRealm` (source).
-  2. **Locations**: Root-first tree moves. Collects descendants before transferring root (preserves parent index). Transfers root via `TransferLocationToRealm`, then descendants sorted by depth (shallowest first) with `SetLocationParent` to restore hierarchy.
-  3. **Characters**: Paginated via `GetCharactersByRealm`. Each character transferred via `TransferCharacterToRealm`.
-
-  **Validation**: Source must be deprecated, source != target, source must not be a system realm (`isSystemType`). Target must exist.
-  **Concurrency**: Entire merge is protected by a distributed lock via `IDistributedLockProvider` with deterministic key ordering (`merge:{smallerId}:{largerId}`) to prevent deadlocks. Lock timeout is configurable via `MergeLockTimeoutSeconds`.
-  **Failure policy**: Continue on individual failures. Failed entity IDs are tracked to prevent infinite retry loops. Returns per-entity-type migrated/failed counts.
-  **Optional deletion**: If `deleteAfterMerge=true` and zero total failures, calls `DeleteRealmAsync` on source realm. Skipped if any failures occurred.
-  **Pagination**: All paginated queries use `MergePageSize` from configuration (default 50). Always re-queries page 1 since successful migrations remove entities from source.
-  **Events**: Publishes `realm.merged` with migration statistics after all phases complete.
-
-### Seed Operation (1 endpoint)
-
-Idempotent bulk creation with optional `updateExisting` flag. Processes each realm independently with per-item error handling (failures don't stop the batch). Returns counts of created, updated, skipped, and error messages. When `updateExisting=true`, seed updates now publish `realm.updated` events with proper `changedFields` tracking (same as regular Update).
-
-### Compression Context (1 endpoint)
-
-- **GetLocationCompressContext** (`/realm/get-location-compress-context`): Compression callback providing realm context for location archives. Takes a `locationId`, resolves the location's `realmId` via `ILocationClient`, loads the realm, and returns `RealmLocationArchiveContext` with realm name, code, and description. Follows the multi-callback pattern (like Character-Personality providing context for Character archives). Developer role only.
+| `AutoInitializeWorldstateClock` | `REALM_AUTO_INITIALIZE_WORLDSTATE_CLOCK` | `false` | When true, auto-initializes a worldstate realm clock after creating a new realm. Failure does not block realm creation |
+| `DefaultCalendarTemplateCode` | `REALM_DEFAULT_CALENDAR_TEMPLATE_CODE` | `null` | Calendar template code for worldstate clock auto-initialization. Required when `AutoInitializeWorldstateClock` is true |
 
 ---
 
@@ -221,7 +109,7 @@ None identified.
 
 ## Potential Extensions
 
-None identified. Realm merge has been implemented (see [#167](https://github.com/beyond-immersion/bannou-service/issues/167)).
+None identified.
 
 ---
 
@@ -229,7 +117,7 @@ None identified. Realm merge has been implemented (see [#167](https://github.com
 
 ### Bugs
 
-1. ~~**Seed creation omits `IsSystemType`**~~: **FIXED** (2026-02-28) - Added `IsSystemType = seedRealm.IsSystemType` to the `CreateRealmRequest` initializer in `SeedRealmsAsync`. System realms seeded on first run now correctly propagate their `IsSystemType` flag.
+None identified.
 
 ### Intentional Quirks
 
@@ -283,7 +171,6 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-02-08**: Realm merge feature implemented. Three-phase migration (species → locations root-first → characters) with continue-on-individual-failure policy, configurable page size, and optional post-merge deletion. See [#167](https://github.com/beyond-immersion/bannou-service/issues/167) (closed). Also added `/location/transfer-realm` endpoint as prerequisite.
 - **2026-02-26**: T31 deprecation lifecycle compliance — Deprecate and Undeprecate are now idempotent per IMPLEMENTATION TENETS.
 - **2026-02-28**: Production hardening audit — comprehensive tenet compliance pass (schema, T6, T7, T8, T9, T21, T30) and post-audit code review fixes (ETag concurrency for seed update, ApiException handling in migration helpers).
-- **2026-02-28**: Fixed `SeedRealmsAsync` creation path omitting `IsSystemType` — system realms now correctly seeded on first run.
 - **2026-03-04**: Added `GetLocationCompressContext` endpoint and compression callback registration providing realm context (name, code, description) for location archives. Fixed `x-resource-lifecycle` placement (was at YAML root level instead of inside `info:` block, causing generators to silently skip it). Also registered `RealmContextTemplate` as `IResourceTemplate` for ABML path validation.
 
 ### Ready for Implementation

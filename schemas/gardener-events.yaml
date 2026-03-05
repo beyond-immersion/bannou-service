@@ -8,6 +8,9 @@ info:
     scenario lifecycle, bond scenarios, and deployment phase changes.
 
     **Cross-Service Integration**:
+    - Subscribes to session.connected and session.disconnected for session-to-account
+      mapping per FOUNDATION TENETS (T32 Account Identity Boundary). Player-facing
+      endpoints resolve accountId server-side from this mapping.
     - Implements ISeedEvolutionListener DI provider pattern for growth/phase/capability
       notifications (in-process, guaranteed delivery). This replaces broadcast event
       subscriptions for seed.growth.updated and seed.phase.changed.
@@ -27,6 +30,13 @@ info:
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions:
+    # Session lifecycle events for session-to-account mapping (T32 Account Identity Boundary)
+    - topic: session.connected
+      event: SessionConnectedEvent
+      handler: HandleSessionConnected
+    - topic: session.disconnected
+      event: SessionDisconnectedEvent
+      handler: HandleSessionDisconnected
     # Bond events from Seed service (no DI listener pattern for these)
     - topic: seed.bond.formed
       event: SeedBondFormedEvent
@@ -132,14 +142,14 @@ components:
       additionalProperties: false
       description: Published when a player enters the garden
       required:
-        - accountId
+        - webSocketSessionId
         - seedId
         - gardenInstanceId
       properties:
-        accountId:
+        webSocketSessionId:
           type: string
           format: uuid
-          description: Account that entered the garden
+          description: WebSocket session ID of the player that entered the garden
         seedId:
           type: string
           format: uuid
@@ -156,14 +166,14 @@ components:
       additionalProperties: false
       description: Published when a player leaves the garden
       required:
-        - accountId
+        - webSocketSessionId
         - gardenInstanceId
         - sessionDurationSeconds
       properties:
-        accountId:
+        webSocketSessionId:
           type: string
           format: uuid
-          description: Account that left the garden
+          description: WebSocket session ID of the player that left the garden
         gardenInstanceId:
           type: string
           format: uuid
@@ -208,14 +218,14 @@ components:
       additionalProperties: false
       description: Published when a player enters a POI or triggers a scenario from it
       required:
-        - accountId
+        - webSocketSessionId
         - poiId
         - scenarioTemplateId
       properties:
-        accountId:
+        webSocketSessionId:
           type: string
           format: uuid
-          description: Account that entered the POI
+          description: WebSocket session ID of the player that entered the POI
         poiId:
           type: string
           format: uuid
@@ -232,14 +242,14 @@ components:
       additionalProperties: false
       description: Published when a player declines a POI
       required:
-        - accountId
+        - webSocketSessionId
         - poiId
         - scenarioTemplateId
       properties:
-        accountId:
+        webSocketSessionId:
           type: string
           format: uuid
-          description: Account that declined the POI
+          description: WebSocket session ID of the player that declined the POI
         poiId:
           type: string
           format: uuid
@@ -278,7 +288,7 @@ components:
         - scenarioInstanceId
         - scenarioTemplateId
         - gameSessionId
-        - accountId
+        - webSocketSessionId
         - seedId
       properties:
         scenarioInstanceId:
@@ -293,10 +303,10 @@ components:
           type: string
           format: uuid
           description: Backing game session ID
-        accountId:
+        webSocketSessionId:
           type: string
           format: uuid
-          description: Account that entered the scenario
+          description: WebSocket session ID of the player that entered the scenario
         seedId:
           type: string
           format: uuid
@@ -311,7 +321,7 @@ components:
       required:
         - scenarioInstanceId
         - scenarioTemplateId
-        - accountId
+        - webSocketSessionId
         - growthAwarded
       properties:
         scenarioInstanceId:
@@ -322,10 +332,10 @@ components:
           type: string
           format: uuid
           description: Template the instance was created from
-        accountId:
+        webSocketSessionId:
           type: string
           format: uuid
-          description: Account that completed the scenario
+          description: WebSocket session ID of the player that completed the scenario
         growthAwarded:
           type: object
           additionalProperties:
@@ -341,16 +351,16 @@ components:
       description: Published when a scenario is abandoned
       required:
         - scenarioInstanceId
-        - accountId
+        - webSocketSessionId
       properties:
         scenarioInstanceId:
           type: string
           format: uuid
           description: Abandoned scenario instance ID
-        accountId:
+        webSocketSessionId:
           type: string
           format: uuid
-          description: Account that abandoned the scenario
+          description: WebSocket session ID of the player that abandoned the scenario
 
     GardenerScenarioChainedEvent:
       allOf:
@@ -361,7 +371,7 @@ components:
       required:
         - previousScenarioInstanceId
         - newScenarioInstanceId
-        - accountId
+        - webSocketSessionId
         - chainDepth
       properties:
         previousScenarioInstanceId:
@@ -372,10 +382,10 @@ components:
           type: string
           format: uuid
           description: New scenario instance that was created
-        accountId:
+        webSocketSessionId:
           type: string
           format: uuid
-          description: Account chaining scenarios
+          description: WebSocket session ID of the player chaining scenarios
         chainDepth:
           type: integer
           description: Current chain depth after chaining
@@ -390,7 +400,7 @@ components:
         - bondId
         - scenarioInstanceId
         - scenarioTemplateId
-        - participants
+        - participantSessionIds
       properties:
         bondId:
           type: string
@@ -404,12 +414,12 @@ components:
           type: string
           format: uuid
           description: Template the instance was created from
-        participants:
+        participantSessionIds:
           type: array
           items:
             type: string
             format: uuid
-          description: Account IDs of bond participants entering together
+          description: WebSocket session IDs of bond participants entering together
 
     GardenerPhaseChangedEvent:
       allOf:

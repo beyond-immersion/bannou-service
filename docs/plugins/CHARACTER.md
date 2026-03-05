@@ -27,26 +27,6 @@ The Character service (L2 GameFoundation) manages game world characters for Arca
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | MySQL persistence for character data, archives, indexes, and refcount tracking |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for character update and compression operations |
-| lib-messaging (`IMessageBus`) | Publishing lifecycle and compression events |
-| lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
-| lib-realm (`IRealmClient`) | Validates realm exists and is active before character creation |
-| lib-species (`ISpeciesClient`) | Validates species exists and belongs to the specified realm |
-| lib-relationship (`IRelationshipClient`) | Queries relationships for family tree and cleanup reference counting; maps type IDs to codes for family tree categorization |
-| lib-contract (`IContractClient`) | Queries contracts where character is a party (L1 - allowed) |
-| lib-resource (`IResourceClient`) | Queries L4 references (Actor, Encounter) via event-driven pattern (L1 - allowed) |
-| lib-resource (`IResourceTemplateRegistry`) | Registers `CharacterBaseTemplate` for ABML compile-time path validation (e.g., `${candidate.character.name}`) |
-| `IEntitySessionRegistry` | Publishes client events to connected WebSocket sessions observing a character (L1 - allowed) |
-
-> **Refactoring Consideration**: This plugin has 13 constructor parameters (6 service clients: IRealmClient, ISpeciesClient, IRelationshipClient, IContractClient, IResourceClient, IEntitySessionRegistry; plus 7 infrastructure: IStateStoreFactory, IDistributedLockProvider, IMessageBus, IEventConsumer, ILogger, configuration, ITelemetryProvider). Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
-
----
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -61,55 +41,7 @@ The Character service (L2 GameFoundation) manages game world characters for Arca
 | lib-quest | Calls `ICharacterClient` to validate character existence when accepting quests |
 | lib-obligation | Calls `ICharacterClient` for character data retrieval during obligation tracking |
 | lib-license | Calls `ICharacterClient` for character owner validation on license board operations |
-| lib-character-lifecycle | Calls `ICharacterClient` to create child characters during procreation, validate character existence, and query character realm/species |
-| lib-divine | Calls `ICharacterClient` to validate character existence for follower registration |
-| lib-disposition | Calls `ICharacterClient` to validate character existence and query character location/status |
-
----
-
-## State Storage
-
-**Store**: `character-statestore` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `character:{realmId}:{characterId}` | `CharacterModel` | Full character data (realm-partitioned) |
-| `realm-index:{realmId}` | `List<string>` | Character IDs in a realm (for list queries) |
-| `character-global-index:{characterId}` | `string` | Character ID to realm ID mapping (for ID-only lookups) |
-| `archive:{characterId}` | `CharacterArchiveModel` | Compressed character text summaries |
-| `refcount:{characterId}` | `RefCountData` | Cleanup eligibility tracking (zero-ref timestamp) |
-
-**Lock Store**: `character-lock` (Backend: Redis)
-
-Used by `IDistributedLockProvider` to ensure multi-instance safety for character modifications.
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `character.created` | `CharacterCreatedEvent` | New character created |
-| `character.updated` | `CharacterUpdatedEvent` | Character metadata modified (includes `ChangedFields` list) |
-| `character.deleted` | `CharacterDeletedEvent` | Character permanently deleted |
-| `character.realm.joined` | `CharacterRealmJoinedEvent` | Character created in or transferred to a realm (includes `PreviousRealmId` for transfers) |
-| `character.realm.left` | `CharacterRealmLeftEvent` | Character deleted from or transferred out of a realm (includes `Reason`: "deletion" or "transfer") |
-| `character.compressed` | `CharacterCompressedEvent` | Dead character archived (includes `DeletedSourceData` flag) |
-
-### Consumed Events
-
-This plugin does not consume external events.
-
-### Client Events (WebSocket Push)
-
-Published to connected WebSocket sessions via `IEntitySessionRegistry` using the `("character", characterId)` entity mapping. Sessions are registered by Gardener when a player's character enters gameplay.
-
-| Event Name | Event Type | Trigger |
-|------------|-----------|---------|
-| `character.updated` | `CharacterUpdatedClientEvent` | Character state changes (death, name change, status transitions). Includes `changedFields` list and only the changed field values (`name?`, `status?`, `deathDate?`) so the client can re-render without a full model fetch. |
-| `character.realm_transferred` | `CharacterRealmTransferredClientEvent` | Character transferred to a different realm. Distinct from the updated event because realm transfer requires a full UI context switch (loading screen, realm assets, UI reconfiguration). Only published for transfers, not initial realm joins. |
+| lib-transit | Calls `ICharacterClient` for character validation during journey operations |
 
 ---
 
@@ -123,116 +55,6 @@ Published to connected WebSocket sessions via `IEntitySessionRegistry` using the
 | `RefCountUpdateMaxRetries` | `CHARACTER_REF_COUNT_UPDATE_MAX_RETRIES` | `3` | Optimistic concurrency retry limit for refcount tracking |
 | `LockTimeoutSeconds` | `CHARACTER_LOCK_TIMEOUT_SECONDS` | `30` | Timeout in seconds for distributed lock acquisition |
 | `CleanupGracePeriodDays` | `CHARACTER_CLEANUP_GRACE_PERIOD_DAYS` | `30` | Days at zero references before cleanup eligible |
-
----
-
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `ILogger<CharacterService>` | Scoped | Structured logging |
-| `CharacterServiceConfiguration` | Singleton | Pagination and cleanup config |
-| `IStateStoreFactory` | Singleton | State store access |
-| `IDistributedLockProvider` | Singleton | Distributed locking for multi-instance safety |
-| `IMessageBus` | Scoped | Event publishing |
-| `IRealmClient` | Scoped | Realm validation |
-| `ISpeciesClient` | Scoped | Species validation |
-| `IRelationshipClient` | Scoped | Family tree, reference counting, and type code lookup |
-| `IContractClient` | Scoped | Contract reference counting (L1 - allowed) |
-| `IResourceClient` | Scoped | L4 reference counting via event-driven pattern |
-| `IEntitySessionRegistry` | Scoped | Client event publishing to WebSocket sessions observing a character |
-| `ITelemetryProvider` | Singleton | Telemetry span instrumentation for async helpers |
-| `IEventConsumer` | Scoped | Event registration (no handlers defined) |
-
-Service lifetime is **Scoped** (per-request).
-
-**Plugin Startup** (`CharacterServicePlugin.OnRunningAsync`):
-1. Registers `CharacterBaseTemplate` with `IResourceTemplateRegistry` for ABML compile-time path validation
-2. Registers compression callback with lib-resource via generated `CharacterCompressionCallbacks.RegisterAsync`
-
----
-
-## API Endpoints (Implementation Notes)
-
-### CRUD Operations (7 endpoints)
-
-- **Create**: Validates realm (must exist AND be active) and species (must exist AND be in specified realm). Fails CLOSED on service unavailability (throws `InvalidOperationException`). Generates new GUID. Stores with realm-partitioned key. Maintains both realm index and global index with optimistic concurrency retries.
-- **Get**: Two-step lookup via global index (characterId -> realmId) then data fetch.
-- **Update**: Smart field tracking with `ChangedFields` list. `DeathDate` and `Status=Dead` are bidirectionally linked: setting `DeathDate` auto-sets `Status` to `Dead`, and setting `Status` to `Dead` auto-sets `DeathDate` to now (if not already set). `SpeciesId` is mutable (supports species merge migrations).
-- **Delete**: Checks for L4 references via lib-resource, executes cleanup callbacks (CASCADE) to delete dependent data in CharacterPersonality/CharacterHistory/etc., then removes from all three storage locations (data, realm index, global index) with optimistic concurrency on index updates. Returns Conflict if cleanup is blocked by RESTRICT policy.
-- **List/ByRealm**: Server-side filtering and pagination via `IJsonQueryableStateStore` MySQL JSON queries. Builds query conditions for realm, status, and species filters, delegates to `JsonQueryPagedAsync` for O(log N + P) performance. Results are sorted by `$.Name` ascending. Clamps page size to `MaxPageSize`.
-- **TransferRealm**: Moves a character to a different realm. Validates target realm is active, acquires distributed lock, deletes from old realm-partitioned key, saves to new realm-partitioned key, updates indexes, and publishes `character.realm.left` (reason: "transfer"), `character.realm.joined` (with previousRealmId), and `character.updated` events.
-
-### Enriched Character (`/character/get-enriched`)
-
-Per SERVICE_HIERARCHY, Character (L2) can only enrich with data from L2 or lower services. The only enrichment flag is:
-
-| Flag | Source Service | Status |
-|------|---------------|--------|
-| `includeFamilyTree` | Relationship (L2) | ✅ Included |
-
-For L4 data (personality, backstory, combat preferences), callers should query CharacterPersonality and CharacterHistory directly.
-
-**Family tree categorization** uses string-based type code matching:
-- Parents: PARENT, MOTHER, FATHER, STEP_PARENT
-- Children: CHILD, SON, DAUGHTER, STEP_CHILD
-- Siblings: SIBLING, BROTHER, SISTER, HALF_SIBLING
-- Spouses: SPOUSE, HUSBAND, WIFE (array - supports multiple spousal relationships)
-- Reincarnation: INCARNATION (tracks past lives)
-
-### Compression (Centralized via Resource Service)
-
-**IMPORTANT**: Character compression is now centralized through the Resource service (L1). Character (L2) provides a compression callback endpoint; actual compression orchestration happens via `/resource/compress/execute`. Character archives are the primary input to the content flywheel -- god-actors perceive compressed archives and compose them into new storylines, quests, and NPC encounters (see VISION.md and ORCHESTRATION-PATTERNS.md).
-
-#### Compression Callback (`/character/get-compress-data`)
-
-Preconditions: Must be `Status=Dead` with `DeathDate` set. Returns `BadRequest` for alive characters.
-
-Called by Resource service during `ExecuteCompressAsync`. Returns character base data for archival:
-- Core character fields (name, realm, species, birth/death dates, status)
-- Family summary text: "married to Elena and Marcus, parent of 3, orphaned" (from Relationship service, L2)
-
-Returns `NotFound` if character doesn't exist, `BadRequest` if character is alive.
-
-#### Triggering Compression
-
-To compress a character with all its L4 data:
-
-```csharp
-// Caller invokes Resource service, NOT Character service directly
-var result = await _resourceClient.ExecuteCompressAsync(
-    new ExecuteCompressRequest
-    {
-        ResourceType = "character",
-        ResourceId = characterId,
-        DeleteSourceData = true,  // Clean up after archival
-        CompressionPolicy = CompressionPolicy.ALL_REQUIRED
-    }, ct);
-```
-
-Resource service will:
-1. Call `/character/get-compress-data` (priority 0)
-2. Call `/character-personality/get-compress-data` (priority 10)
-3. Call `/character-history/get-compress-data` (priority 20)
-4. Call `/character-encounter/get-compress-data` (priority 30)
-5. Bundle all responses into a unified archive stored in MySQL
-6. If `deleteSourceData=true`, invoke cleanup callbacks to delete source data
-
-**Legacy**: The old `/character/compress` endpoint still exists but only archives L2 data (family summary). Use Resource service for full hierarchical compression including L4 data.
-
-### Archive Retrieval (`/character/get-archive`)
-
-Simple lookup of compressed archive data by character ID.
-
-### Reference Checking (`/character/check-references`)
-
-Determines cleanup eligibility for compressed characters:
-1. Character must exist
-2. Check if compressed (archive exists)
-3. Reference count must be 0 (checks relationships, encounters, contracts, and actors)
-4. Must maintain 0 references for grace period (default 30 days)
-
-Tracks `ZeroRefSinceUnix` timestamp in state store with optimistic concurrency for multi-instance safety.
 
 ---
 
@@ -318,12 +140,4 @@ No active work items.
 
 ### Historical
 
-See git history for full changelog. Key milestones:
-- **2026-03-01**: Issue #498 — Added client events for real-time character state updates (`CharacterUpdatedClientEvent`, `CharacterRealmTransferredClientEvent`) via Entity Session Registry. Added `IEntitySessionRegistry` dependency. Updated T16 naming convention to codify `*ClientEvent` suffix.
-- **2026-02-23**: L3 hardening pass — schema NRT compliance (3 critical, 7 major fixes), event types moved to events schema with proper uuid format and enum reason, telemetry spans on async helpers, config validation keywords, RefCountUpdateMaxRetries config property, misleading comments fixed. Post-review fixes: missing fields in CharacterCreatedEvent, CompressCharacterAsync null vs empty list, referenceTypes description corrected. Removed L4-owned snapshot types from L2 schema (PersonalitySnapshot, BackstorySnapshot, CombatPreferencesSnapshot) per T29/T2
-- **2026-02-09**: Fixed ApiException wrapping in validation helpers (T7 compliance)
-- **2026-02-07**: Server-side MySQL JSON queries, plural `spouses`, removed dead config, schema extensions
-- **2026-02-03**: Centralized compression via Resource service (L1), delete flow with `ExecuteCleanupAsync`
-- **2026-02-02**: Parallel family tree lookups, quirk categorization audit, dead config removal
-- **2026-02-01**: Realm transfer feature
-- **2026-01-31**: Expanded reference counting, distributed locking
+See git history for full changelog.

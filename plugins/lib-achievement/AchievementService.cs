@@ -1165,7 +1165,7 @@ public partial class AchievementService : IAchievementService
             IsRare = isRare,
             Rarity = rarityPercent
         };
-        await _messageBus.TryPublishAsync("achievement.unlocked", unlockEvent, cancellationToken: cancellationToken);
+        await _messageBus.TryPublishAsync("achievement.progress.unlocked", unlockEvent, cancellationToken: cancellationToken);
 
         // Push client event to unlocking entity's WebSocket sessions
         await _entitySessionRegistry.PublishToEntitySessionsAsync(

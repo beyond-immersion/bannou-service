@@ -781,6 +781,16 @@ components:
       - Desc
       description: Sort direction for query results
 
+    AssetOwnerType:
+      type: string
+      enum:
+      - Session
+      - Service
+      description: |
+        Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).
+        Session: user-initiated operation identified by WebSocket session ID (UUID).
+        Service: service-initiated operation identified by service name.
+
     StorageProvider:
       type: string
       enum:
@@ -906,15 +916,18 @@ components:
       - filename
       - size
       - contentType
-      - owner
+      - ownerType
+      - ownerId
       properties:
-        owner:
+        ownerType:
+          $ref: '#/components/schemas/AssetOwnerType'
+          description: Type of owner initiating this upload
+        ownerId:
           type: string
           minLength: 1
           description: |
-            Owner of this asset operation. NOT a session ID.
-            For user-initiated uploads: the accountId (UUID format).
-            For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
+            Owner identifier. For Session type: the WebSocket session ID (UUID format).
+            For Service type: the service name (e.g., "behavior", "orchestrator").
         filename:
           type: string
           minLength: 1
@@ -1390,14 +1403,17 @@ components:
       required:
       - bundleId
       - assetIds
-      - owner
+      - ownerType
+      - ownerId
       properties:
-        owner:
+        ownerType:
+          $ref: '#/components/schemas/AssetOwnerType'
+          description: Type of owner creating this bundle
+        ownerId:
           type: string
           description: |
-            Owner of this bundle. NOT a session ID.
-            For user-initiated bundles: the accountId (UUID format).
-            For service-initiated bundles: the service name (e.g., "orchestrator").
+            Owner identifier. For Session type: the WebSocket session ID (UUID format).
+            For Service type: the service name (e.g., "behavior", "orchestrator").
         bundleId:
           type: string
           minLength: 1
@@ -1516,14 +1532,17 @@ components:
       required:
       - filename
       - size
-      - owner
+      - ownerType
+      - ownerId
       properties:
-        owner:
+        ownerType:
+          $ref: '#/components/schemas/AssetOwnerType'
+          description: Type of owner uploading this bundle
+        ownerId:
           type: string
           description: |
-            Owner of this bundle upload. NOT a session ID.
-            For user-initiated uploads: the accountId (UUID format).
-            For service-initiated uploads: the service name (e.g., "orchestrator").
+            Owner identifier. For Session type: the WebSocket session ID (UUID format).
+            For Service type: the service name (e.g., "behavior", "orchestrator").
         filename:
           type: string
           description: Must end with .bannou or .zip
@@ -1627,7 +1646,8 @@ components:
         This enables packaging behaviors/scripts with 3D assets as a complete unit.
       required:
       - metabundleId
-      - owner
+      - ownerType
+      - ownerId
       - realm
       properties:
         metabundleId:
@@ -1654,12 +1674,14 @@ components:
           type: string
           default: "1.0.0"
           description: Metabundle version string
-        owner:
+        ownerType:
+          $ref: '#/components/schemas/AssetOwnerType'
+          description: Type of owner creating this metabundle
+        ownerId:
           type: string
           description: |
-            Owner of this metabundle. NOT a session ID.
-            For user-initiated: the accountId (UUID format).
-            For service-initiated: the service name.
+            Owner identifier. For Session type: the WebSocket session ID (UUID format).
+            For Service type: the service name (e.g., "behavior", "orchestrator").
         realm:
           $ref: '#/components/schemas/GameRealm'
           description: Game realm for this metabundle
@@ -2232,10 +2254,15 @@ components:
           type: string
           nullable: true
           description: Bundle description
-        owner:
+        ownerType:
+          allOf:
+            - $ref: '#/components/schemas/AssetOwnerType'
+          nullable: true
+          description: Type of owner (null for system-owned bundles)
+        ownerId:
           type: string
           nullable: true
-          description: Owner account ID or service name (null for system-owned bundles)
+          description: Owner identifier - session ID or service name (null for system-owned bundles)
         realm:
           allOf:
             - $ref: '#/components/schemas/GameRealm'
@@ -2457,10 +2484,15 @@ components:
           type: string
           nullable: true
           description: Filter bundles with name containing this string (case-insensitive)
-        owner:
+        ownerType:
+          allOf:
+          - $ref: '#/components/schemas/AssetOwnerType'
+          nullable: true
+          description: Filter by owner type (null for any type)
+        ownerId:
           type: string
           nullable: true
-          description: Filter by bundle owner account ID
+          description: Filter by owner identifier (session ID or service name)
         realm:
           allOf:
           - $ref: '#/components/schemas/GameRealm'
@@ -2586,7 +2618,7 @@ components:
           description: When this version was created
         createdBy:
           type: string
-          description: Account ID that made the change
+          description: Session ID or service name that made the change
         changes:
           type: array
           items:

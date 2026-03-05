@@ -39,12 +39,12 @@ public partial class GardenerGardenEnteredEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Account that entered the garden
+    /// WebSocket session ID of the player that entered the garden
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid WebSocketSessionId { get; set; } = default!;
 
     /// <summary>
     /// Active seed for this garden session
@@ -72,12 +72,12 @@ public partial class GardenerGardenLeftEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Account that left the garden
+    /// WebSocket session ID of the player that left the garden
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid WebSocketSessionId { get; set; } = default!;
 
     /// <summary>
     /// Garden instance that was destroyed
@@ -145,12 +145,12 @@ public partial class GardenerPoiEnteredEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Account that entered the POI
+    /// WebSocket session ID of the player that entered the POI
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid WebSocketSessionId { get; set; } = default!;
 
     /// <summary>
     /// POI that was entered
@@ -178,12 +178,12 @@ public partial class GardenerPoiDeclinedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Account that declined the POI
+    /// WebSocket session ID of the player that declined the POI
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid WebSocketSessionId { get; set; } = default!;
 
     /// <summary>
     /// POI that was declined
@@ -260,12 +260,12 @@ public partial class GardenerScenarioStartedEvent : BaseServiceEvent
     public System.Guid GameSessionId { get; set; } = default!;
 
     /// <summary>
-    /// Account that entered the scenario
+    /// WebSocket session ID of the player that entered the scenario
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid WebSocketSessionId { get; set; } = default!;
 
     /// <summary>
     /// Active seed for the entering player
@@ -301,12 +301,12 @@ public partial class GardenerScenarioCompletedEvent : BaseServiceEvent
     public System.Guid ScenarioTemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Account that completed the scenario
+    /// WebSocket session ID of the player that completed the scenario
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid WebSocketSessionId { get; set; } = default!;
 
     /// <summary>
     /// Growth awarded per domain
@@ -334,12 +334,12 @@ public partial class GardenerScenarioAbandonedEvent : BaseServiceEvent
     public System.Guid ScenarioInstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Account that abandoned the scenario
+    /// WebSocket session ID of the player that abandoned the scenario
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid WebSocketSessionId { get; set; } = default!;
 
 }
 
@@ -367,12 +367,12 @@ public partial class GardenerScenarioChainedEvent : BaseServiceEvent
     public System.Guid NewScenarioInstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Account chaining scenarios
+    /// WebSocket session ID of the player chaining scenarios
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid WebSocketSessionId { get; set; } = default!;
 
     /// <summary>
     /// Current chain depth after chaining
@@ -414,12 +414,12 @@ public partial class GardenerBondEnteredTogetherEvent : BaseServiceEvent
     public System.Guid ScenarioTemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Account IDs of bond participants entering together
+    /// WebSocket session IDs of bond participants entering together
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("participants")]
+    [System.Text.Json.Serialization.JsonPropertyName("participantSessionIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<System.Guid> Participants { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+    public System.Collections.Generic.ICollection<System.Guid> ParticipantSessionIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
 }
 

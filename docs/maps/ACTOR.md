@@ -76,7 +76,7 @@
 
 **Notes:**
 - Actor uses ETag-based optimistic concurrency for template index updates (not `IDistributedLockProvider`)
-- State store references are acquired inline per method call, not cached in constructor
+- State store references are constructor-cached as readonly fields (`_templateStore`, `_templateIndexStore`)
 - `IEnumerable<IVariableProviderFactory>` resolves to empty collection if no L4 plugins are enabled (graceful degradation without null checks)
 - `character.state-update` is published via IMessageBus, not IClientEventPublisher
 
@@ -137,7 +137,7 @@ All pool-node event handlers skip processing when `DeploymentMode == Bannou`.
 |---------|------|
 | `ILogger<ActorService>` | Structured logging |
 | `ActorServiceConfiguration` | 35 config properties (deployment, pool, behavior loop, GOAP, perception, timeouts) |
-| `IStateStoreFactory` | State store access (acquired inline per call, not cached) |
+| `IStateStoreFactory` | State store access (constructor-cached as `_templateStore`, `_templateIndexStore`) |
 | `IMessageBus` | Event publishing, pool commands |
 | `IEventConsumer` | Event handler registration |
 | `IMeshInvocationClient` | Remote pool node forwarding |

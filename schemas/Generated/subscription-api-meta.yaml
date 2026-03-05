@@ -424,13 +424,16 @@ paths:
           description: Not authorized to cancel this subscription
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CancelSubscriptionRequest\"\
         ,\n    \"$defs\": {\n        \"CancelSubscriptionRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Request to cancel a subscription\",\n            \"required\": [\n      \
-        \          \"subscriptionId\"\n            ],\n            \"properties\": {\n                \"subscriptionId\":
-        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the subscription to cancel\"\n                },\n                \"reason\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 500,\n          \
-        \          \"description\": \"Optional reason for cancellation\"\n                }\n            }\n        }\n  \
-        \  }\n}"
+        : false,\n            \"description\": \"Request to cancel a subscription. Requires accountId for ownership verification
+        when called by non-admin users.\",\n            \"required\": [\n                \"subscriptionId\",\n           \
+        \     \"accountId\"\n            ],\n            \"properties\": {\n                \"subscriptionId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the subscription to cancel\"\n                },\n                \"accountId\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account
+        ID of the caller for ownership verification\"\n                },\n                \"reason\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 500,\n  \
+        \                  \"description\": \"Optional reason for cancellation\"\n                }\n            }\n     \
+        \   }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SubscriptionInfo\"\
         ,\n    \"$defs\": {\n        \"SubscriptionInfo\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Information about a subscription\",\n            \"required\": [\n      \
@@ -642,14 +645,20 @@ components:
     CancelSubscriptionRequest:
       type: object
       additionalProperties: false
-      description: Request to cancel a subscription
+      description: Request to cancel a subscription. Requires accountId for ownership verification when called by 
+        non-admin users.
       required:
       - subscriptionId
+      - accountId
       properties:
         subscriptionId:
           type: string
           format: uuid
           description: ID of the subscription to cancel
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID of the caller for ownership verification
         reason:
           type: string
           nullable: true

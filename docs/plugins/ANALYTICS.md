@@ -4,7 +4,8 @@
 > **Schema**: schemas/analytics-api.yaml
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
-> **State Stores**: analytics-summary (Redis), analytics-summary-data (MySQL), analytics-rating (Redis), analytics-history-data (MySQL)
+> **State Store**: analytics-summary (Redis), analytics-summary-data (MySQL), analytics-rating (Redis), analytics-history-data (MySQL)
+> **Implementation Map**: [docs/maps/ANALYTICS.md](../maps/ANALYTICS.md)
 
 ## Overview
 
@@ -32,6 +33,7 @@ The Analytics plugin (L4 GameFeatures) is the central event aggregation point fo
 | lib-achievement | Subscribes to `analytics.milestone.reached` to trigger milestone-based achievements |
 | lib-leaderboard | Subscribes to `analytics.score.updated` to update leaderboard entries |
 | lib-leaderboard | Subscribes to `analytics.rating.updated` to update skill rating leaderboards |
+| lib-divine | Subscribes to `analytics.score.updated` for divine intervention triggers (stub) |
 
 ## State Storage
 
@@ -130,6 +132,7 @@ All history event handlers follow the fail-fast pattern: if game service resolut
 | `IGameSessionClient` | Session ID to game type resolution (fallback) |
 | `IRealmClient` | Realm ID to game service ID resolution (for history events) |
 | `ICharacterClient` | Character ID to realm ID resolution (for history events) |
+| `ITelemetryProvider` | Distributed tracing spans on async operations |
 | `IEventConsumer` | Registers handlers for 11 consumed event types |
 
 ## API Endpoints (Implementation Notes)
@@ -215,7 +218,7 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Unused state store definition `analytics-history`**~~: **FIXED** (2026-02-01) - Removed the unused `analytics-history` Redis store definition from `schemas/state-stores.yaml`. The store was defined but never referenced in code. Updated regression tests accordingly.
+None currently identified.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -236,10 +239,3 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above.
-
-### Recently Completed
-
-1. **Removed unused `analytics-history` state store** (2026-02-01)
-   - Removed from `schemas/state-stores.yaml`
-   - Regenerated `StateStoreDefinitions.cs` via `generate-state-stores.py`
-   - Updated regression test to verify `analytics-history-data` instead

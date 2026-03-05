@@ -25,19 +25,7 @@ Relationship's polymorphic entity support makes it a key primitive for system re
 | Marriage bonds | `SPOUSE` | Character ↔ Character | lib-character-lifecycle (planned) |
 | Living weapon wielder | `WEAPON_WIELDER` | Character ↔ Weapon (SENTIENT_ARMS) | Zero-plugin pattern (planned) |
 
-The `${relationship.*}` ABML variable namespace ([#147](https://github.com/beyond-immersion/bannou-service/issues/147)) will expose this data to the Actor behavior system, enabling NPCs to make social decisions based on relationship type, existence, and hierarchy.
-
----
-
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Persistence for relationship records, type definitions, and all indexes (two separate state stores) |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for composite uniqueness enforcement and index read-modify-write operations |
-| lib-messaging (`IMessageBus`) | Publishing lifecycle events and error events |
-| lib-messaging (`IEventConsumer`) | Event registration infrastructure (no current handlers) |
-| lib-resource (`IResourceClient`) | Cleanup callback registration for character, realm, and location reference tracking (via `x-references`). Organization and Faction coverage planned ([#564](https://github.com/beyond-immersion/bannou-service/issues/564)) |
+The `${relationship.*}` ABML variable namespace is implemented via `RelationshipProviderFactory` (registered as `IVariableProviderFactory`), exposing relationship data to the Actor behavior system. NPCs make social decisions based on relationship type, existence, and hierarchy through variables like `${relationship.has.*}`, `${relationship.count.*}`, and `${relationship.total}`.
 
 ---
 
@@ -56,66 +44,7 @@ The `${relationship.*}` ABML variable namespace ([#147](https://github.com/beyon
 | lib-character-lifecycle | Marriage/spouse bonds, parent-child bonds during procreation |
 | lib-asset | Tag hierarchy integration for smart bundling ([#117](https://github.com/beyond-immersion/bannou-service/issues/117)) |
 
-No services subscribe to relationship events.
-
----
-
-### Type Field Classification
-
-| Field | Category | Type | Rationale |
-|-------|----------|------|-----------|
-| `entity1Type` / `entity2Type` | A (Entity Reference) | `EntityType` enum (via `$ref` to `common-api.yaml`) | Identifies which first-class Bannou entity participates in the relationship. All valid values are Bannou entities (character, account, realm, etc.) |
-| `sourceEntityType` / `targetEntityType` | A (Entity Reference) | `EntityType` enum (via `$ref` to `common-api.yaml`) | Same as above, used in query/filter contexts to find relationships involving a specific entity type |
-| `relationshipTypeCode` | B (Content Code) | Opaque string | Game-configurable taxonomy codes (PARENT, FRIEND, RIVAL, WEAPON_WIELDER, etc.). Registered via API, not hardcoded. Uppercase-normalized. New codes added without schema changes |
-| `category` | B (Content Code) | Opaque string | Grouping label for relationship types (e.g., "FAMILY", "SOCIAL", "POLITICAL"). Game-configurable, used for filtering |
-
----
-
-## State Storage
-
-### Relationship Store
-
-**Store**: `relationship-statestore` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `rel:{relationshipId}` | `RelationshipModel` | Full relationship record |
-| `entity-idx:{entityType}:{entityId}` | `List<Guid>` | Relationship IDs involving this entity |
-| `type-idx:{relationshipTypeId}` | `List<Guid>` | Relationship IDs of this type |
-| `composite:{entity1}:{entity2}:{typeId}` | `string` | Uniqueness constraint (normalized bidirectional key -> relationship ID) |
-
-### Relationship Type Store
-
-**Store**: `relationship-type-statestore` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `type:{typeId}` | `RelationshipTypeModel` | Individual type definition |
-| `code-index:{CODE}` | `string` | Code to type ID reverse lookup (uppercase normalized) |
-| `parent-index:{parentId}` | `List<Guid>` | Child type IDs for a parent |
-| `all-types` | `List<Guid>` | Global index of all type IDs |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `relationship.created` | `RelationshipCreatedEvent` | New relationship established |
-| `relationship.updated` | `RelationshipUpdatedEvent` | Metadata or relationship type changed (includes `changedFields`) |
-| `relationship.deleted` | `RelationshipDeletedEvent` | Relationship ended (soft-delete) |
-| `relationship.type.created` | `RelationshipTypeCreatedEvent` | New type created |
-| `relationship.type.updated` | `RelationshipTypeUpdatedEvent` | Type fields changed (includes `ChangedFields`) |
-| `relationship.type.deleted` | `RelationshipTypeDeletedEvent` | Type hard-deleted |
-| `relationship.type.merged` | `RelationshipTypeMergedEvent` | Merge operation completed (summary event replacing N individual updates) |
-
-Lifecycle events are auto-generated from `x-lifecycle` in `relationship-events.yaml`. The `RelationshipTypeMergedEvent` is manually defined in the same schema's `components/schemas` section.
-
-### Consumed Events
-
-This plugin does not consume external events.
+No external services subscribe to relationship events. The service self-subscribes to its own lifecycle events for cache invalidation (see Quirk #6).
 
 ---
 
@@ -126,64 +55,8 @@ This plugin does not consume external events.
 | `MaxHierarchyDepth` | `RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH` | `20` | Maximum depth for hierarchy traversal to prevent infinite loops |
 | `MaxMigrationErrorsToTrack` | `RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK` | `100` | Maximum number of individual migration error details to track |
 | `LockTimeoutSeconds` | `RELATIONSHIP_LOCK_TIMEOUT_SECONDS` | `30` | Timeout in seconds for distributed lock acquisition on index and uniqueness operations |
-
----
-
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `ILogger<RelationshipService>` | Scoped | Structured logging |
-| `RelationshipServiceConfiguration` | Singleton | All 4 config properties |
-| `IStateStoreFactory` | Singleton | State store access (both stores) |
-| `IDistributedLockProvider` | Singleton | Distributed locks for concurrency protection |
-| `IMessageBus` | Scoped | Event publishing and error events |
-| `IEventConsumer` | Scoped | Event handler registration |
-
-Service lifetime is **Scoped** (per-request). No background services.
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Relationship Endpoints (8 endpoints)
-
-- **Create** (`/relationship/create`): Validates entities are not the same (prevents self-relationships). Normalizes composite key bidirectionally (`A->B` and `B->A` produce the same key via string sort). Stores four keys: relationship data, two entity indexes, type index, and composite uniqueness key. Publishes `relationship.created`.
-
-- **Get** (`/relationship/get`): Simple key lookup by relationship ID.
-
-- **ListByEntity** (`/relationship/list-by-entity`): Loads all relationship IDs from entity index, bulk-fetches models, filters in-memory (active/ended, type, etc.), then applies pagination. Returns full `RelationshipListResponse` with pagination metadata.
-
-- **GetBetween** (`/relationship/get-between`): Fetches entity1's full relationship list, filters in-memory for those involving entity2. Supports pagination via `page` and `pageSize` parameters (defaults: 1 and 20).
-
-- **ListByType** (`/relationship/list-by-type`): Loads from type index, bulk-fetches, applies in-memory filtering and pagination.
-
-- **Update** (`/relationship/update`): Can modify metadata and relationship type. When type changes, updates type indexes (adds to new first, then removes from old - crash-safe ordering). Immutable fields: entity1, entity2 (cannot change participants). Ended relationships cannot be updated (returns Conflict). Publishes `relationship.updated` with `changedFields`. Protected by distributed lock on relationship ID.
-
-- **End** (`/relationship/end`): Soft-deletes by setting `EndedAt` timestamp. Returns Conflict if already ended. Deletes the composite uniqueness key (allowing the same relationship to be recreated later). Does NOT remove from entity or type indexes (keeping history queryable). Publishes `relationship.deleted` with optional reason from the request (defaults to "Relationship ended" when null).
-
-- **CleanupByEntity** (`/relationship/cleanup-by-entity`): Called by lib-resource during cascading entity deletion. Loads the entity index for the deleted entity, bulk-fetches all relationships, and soft-deletes (ends) each active relationship. Skips already-ended relationships. Clears composite uniqueness keys for ended relationships to allow future recreation. Publishes `relationship.deleted` events for each ended relationship with reason "Entity deleted (cascade cleanup)". Returns counts of ended and already-ended relationships. Requires `developer` role (internal service-to-service only). Registered via `x-references` for character, realm, and location targets.
-
-### Relationship Type Endpoints (13 endpoints)
-
-#### Read Operations (6 endpoints)
-
-- **GetRelationshipType** (`/relationship-type/get`): Direct lookup by type ID. Returns full definition with parent/inverse references.
-- **GetRelationshipTypeByCode** (`/relationship-type/get-by-code`): Code index lookup (uppercase-normalized). Returns NotFound if code index missing or model missing.
-- **ListRelationshipTypes** (`/relationship-type/list`): Loads all IDs from `all-types`, bulk-loads types. Filters by `category`, `rootsOnly`, `includeDeprecated`. In-memory filtering (no pagination support).
-- **GetChildRelationshipTypes** (`/relationship-type/get-children`): Verifies parent exists, loads child IDs from parent index. Supports `recursive` flag for full subtree traversal with depth limit.
-- **MatchesHierarchy** (`/relationship-type/matches-hierarchy`): Checks if a type matches or descends from an ancestor type. Walks parent chain iteratively. Returns `{ Matches: bool, Depth: int }` where depth is 0 for same type, -1 for no match.
-- **GetAncestors** (`/relationship-type/get-ancestors`): Returns full ancestry chain from type up to root. Walks parent pointers iteratively with `MaxHierarchyDepth` limit.
-
-#### Write Operations (7 endpoints)
-
-- **CreateRelationshipType** (`/relationship-type/create`): Normalizes code to uppercase. Validates parent exists (if specified). Resolves inverse type ID by code. Calculates depth from parent. Updates all indexes (code, parent, all-types). Publishes `relationship.type.created`.
-- **UpdateRelationshipType** (`/relationship-type/update`): Partial update with `changedFields` tracking. Code is immutable. Parent reassignment validates no cycle via `WouldCreateCycleAsync`, updates parent indexes, and recalculates depth. Publishes update event only if changes detected.
-- **DeleteRelationshipType** (`/relationship-type/delete`): Requires deprecation (Conflict if not deprecated). Checks for existing relationships via internal type index lookup (Conflict if any, including ended). Checks no child types exist (Conflict if any). Removes from all indexes (code, parent, all-types). Publishes `relationship.type.deleted`.
-- **DeprecateRelationshipType** (`/relationship-type/deprecate`): Sets `IsDeprecated=true` with timestamp and optional reason. Idempotent — returns OK with current state if already deprecated.
-- **UndeprecateRelationshipType** (`/relationship-type/undeprecate`): Clears `IsDeprecated`, `DeprecatedAt`, and `DeprecationReason`. Idempotent — returns OK with current state if not deprecated.
-- **MergeRelationshipType** (`/relationship-type/merge`): Source must be deprecated (BadRequest otherwise). Target must not be deprecated (Conflict otherwise). Acquires distributed locks on both source and target type indexes (source first for deterministic ordering). Reads both type indexes directly from state store, bulk-loads all source relationships via `GetBulkAsync`. Per-relationship migration under individual lock: deletes old composite key, checks for target composite key collision (ends relationship as duplicate if collision detected), creates new composite key for active relationships. Batch-updates both type indexes after all migrations. Partial failures tracked (max `MaxMigrationErrorsToTrack` error details). Publishes error event via `TryPublishErrorAsync` if any failures. Publishes single `RelationshipTypeMergedEvent` summary event. Optional `deleteAfterMerge` deletes source if all migrations succeed.
-- **SeedRelationshipTypes** (`/relationship-type/seed`): Dependency-ordered bulk creation. Multi-pass algorithm: in each pass, processes types whose parents are already created or have no parent. Max iterations = `pending.Count * 2`. Resolves parent/inverse types by code. Supports `updateExisting` flag. Returns created/updated/skipped/error counts.
+| `ProviderQueryPageSize` | `RELATIONSHIP_PROVIDER_QUERY_PAGE_SIZE` | `100` | Number of relationships to fetch per page when loading provider cache data (range: 10-500) |
+| `ProviderCacheTtlSeconds` | `RELATIONSHIP_PROVIDER_CACHE_TTL_SECONDS` | `300` | TTL in seconds for relationship variable provider in-memory cache entries (range: 5-600) |
 
 ---
 
@@ -353,6 +226,17 @@ State Store Layout
 
 ---
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `entity1Type` / `entity2Type` | A (Entity Reference) | `EntityType` enum (via `$ref` to `common-api.yaml`) | Identifies which first-class Bannou entity participates in the relationship. All valid values are Bannou entities (character, account, realm, etc.) |
+| `sourceEntityType` / `targetEntityType` | A (Entity Reference) | `EntityType` enum (via `$ref` to `common-api.yaml`) | Same as above, used in query/filter contexts to find relationships involving a specific entity type |
+| `relationshipTypeCode` | B (Content Code) | Opaque string | Game-configurable taxonomy codes (PARENT, FRIEND, RIVAL, WEAPON_WIELDER, etc.). Registered via API, not hardcoded. Uppercase-normalized. New codes added without schema changes |
+| `category` | B (Content Code) | Opaque string | Grouping label for relationship types (e.g., "FAMILY", "SOCIAL", "POLITICAL"). Game-configurable, used for filtering |
+
+---
+
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
@@ -371,7 +255,7 @@ State Store Layout
 
 5. **Update rejects ended relationships**: Attempting to update a relationship that has `EndedAt` set returns `StatusCodes.Conflict`. This prevents modifications to historical records.
 
-6. **No event consumption by design**: The schema explicitly declares `x-event-subscriptions: []`. Event consumer registration is called in the constructor but uses the default no-op implementation. Type usage checks (e.g., during delete) are performed on-demand via internal state store lookups rather than maintaining cached counts via event subscriptions. This avoids complexity without sacrificing functionality.
+6. **Self-subscription for cache invalidation only**: The service subscribes to its own three lifecycle events (`relationship.created`, `relationship.updated`, `relationship.deleted`) solely to invalidate the `IRelationshipDataCache` used by the ABML variable provider. Only Character-type entity caches are invalidated. Type usage checks (e.g., during delete) are still performed on-demand via internal state store lookups rather than maintaining cached counts.
 
 7. **Type depth auto-calculated but not updated**: Depth is `parent.Depth + 1` at creation time. If a parent's depth later changes (e.g., its own parent is reassigned), children are NOT automatically updated. Depth recalculation would require traversing all descendants.
 
@@ -399,8 +283,6 @@ State Store Layout
 2. **No index cleanup**: Entity and type indexes accumulate relationship IDs indefinitely (both active and ended). Over time, indexes grow large with ended relationships that must be filtered on every query.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/510 -->
 
-3. ~~**Delete-after-merge skipped on partial failure**~~: **FIXED** (2026-02-28) - Moved to Intentional Quirks #15. Behavior is correct and intentional — doubly-safe (merge skips delete on failure AND DeleteRelationshipTypeAsync independently rejects deletion when relationships still exist). Recovery path: retry merge, manually end remaining relationships, then delete source type.
-
 ---
 
 ## Work Tracking
@@ -409,7 +291,7 @@ State Store Layout
 
 ### Pending Issues
 
-- [#147](https://github.com/beyond-immersion/bannou-service/issues/147): Implement RelationshipProviderFactory (`IVariableProviderFactory`) for ABML `${relationship.*}` variable namespace — cache, factory, and provider classes
+- [#147](https://github.com/beyond-immersion/bannou-service/issues/147): RelationshipProviderFactory (`IVariableProviderFactory`) — core provider implemented (`RelationshipProviderFactory`, `RelationshipProvider`, `RelationshipDataCache`). Issue remains open for any remaining integration or variable expansion work
 - [#338](https://github.com/beyond-immersion/bannou-service/issues/338): Type constraints — define which entity types can participate in each relationship type (Potential Extension #3)
 - [#504](https://github.com/beyond-immersion/bannou-service/issues/504): Relationship strength/weight field design — field naming, data type/range, interaction with extensions #2 and #4 (Potential Extension #1)
 - [#505](https://github.com/beyond-immersion/bannou-service/issues/505): Bidirectional asymmetric metadata design — per-entity metadata perspectives, replace vs augment unified field, migration (Potential Extension #2)
@@ -421,4 +303,4 @@ State Store Layout
 
 ### Completed
 
-- **2026-03-04**: Added Location to `x-references` cleanup alongside Character and Realm. `CreateRelationshipAsync`, `EndRelationshipAsync`, and `CleanupByEntityAsync` now register/unregister lib-resource references for `EntityType.Location` entities.
+*No completed items.*

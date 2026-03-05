@@ -92,6 +92,16 @@ Each connected session gets a dedicated RabbitMQ queue (`CONNECT_SESSION_{sessio
 
 All other events are normalized (NSwag name fix) and forwarded as binary WebSocket frames to the client.
 
+### Custom HTTP Event Endpoints
+
+Three manually-registered `MapPost` endpoints (in `OnStartAsync`) receive events via direct HTTP calls, not RabbitMQ subscriptions. These are same-instance only — the caller must target the Connect instance where the session is connected.
+
+| Route | Event Type | Handler | Action |
+|-------|-----------|---------|--------|
+| `POST /events/auth-events` | `AuthEvent` | `ProcessAuthEventAsync` | Login: no-op (Permission recompiles). Logout: no-op (optional disconnect commented out). TokenRefresh: validates session, disconnects if invalid. |
+| `POST /events/client-messages` | `ClientMessageEvent` | `ProcessClientMessageEventAsync` | Constructs binary message from event fields (channel, serviceGuid, messageId, payload, flags), sends to target client WebSocket. Silently drops if client not connected to this instance. |
+| `POST /events/client-rpc` | `ClientRPCEvent` | `ProcessClientRPCEventAsync` | Sends binary RPC message to client, registers `PendingRPCInfo` in `_pendingRPCs` for response forwarding. Timeout from event or `DefaultRpcTimeoutSeconds` config. Response arrives as binary Response-flagged message, forwarded via `ForwardRPCResponseAsync` to `{rpc.ResponseChannel}` topic. |
+
 ---
 
 ## DI Services

@@ -286,9 +286,8 @@ paths:
       tags:
       - Game Sessions
       x-permissions:
-      - role: user
-        states:
-          game-session: in_game
+      - role: developer
+        states: {}
       requestBody:
         required: true
         content:
@@ -463,9 +462,8 @@ paths:
       tags:
       - Game Sessions
       x-permissions:
-      - role: user
-        states:
-          game-session: in_game
+      - role: developer
+        states: {}
       requestBody:
         required: true
         content:
@@ -558,27 +556,22 @@ paths:
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ChatMessageRequest\"\
         ,\n    \"$defs\": {\n        \"ChatMessageRequest\": {\n            \"description\": \"Request to send a chat message
         to players in a game session\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"sessionId\",\n                \"accountId\",\n                \"gameType\"\
-        ,\n                \"message\"\n            ],\n            \"properties\": {\n                \"sessionId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"WebSocket session ID of the sender. Provided by shortcut system.\"\n                },\n                \"accountId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Account ID of the sender. Provided by shortcut system.\"\n                },\n                \"\
-        gameType\": {\n                    \"$ref\": \"#/$defs/GameType\",\n                    \"description\": \"Game type
-        for the chat. Determines which lobby's players receive the message. Provided by shortcut system.\"\n             \
-        \   },\n                \"message\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
-        : 500,\n                    \"description\": \"Content of the chat message\"\n                },\n               \
-        \ \"messageType\": {\n                    \"allOf\": [\n                        {\n                            \"\
-        $ref\": \"#/$defs/ChatMessageType\"\n                        }\n                    ],\n                    \"default\"\
-        : \"public\",\n                    \"description\": \"Type of message (public to all, whisper to one player, or system
-        announcement)\"\n                },\n                \"targetPlayerId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"For whisper messages\"\n                }\n            }\n        },\n        \"GameType\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Game service stub name for this session. Use the game service's
-        stubName property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific sessions.\"\n        },\n   \
-        \     \"ChatMessageType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of chat message\"\
-        ,\n            \"enum\": [\n                \"Public\",\n                \"Whisper\",\n                \"System\"\n\
-        \            ]\n        }\n    }\n}"
+        \            \"required\": [\n                \"gameType\",\n                \"message\"\n            ],\n       \
+        \     \"properties\": {\n                \"gameType\": {\n                    \"$ref\": \"#/$defs/GameType\",\n  \
+        \                  \"description\": \"Game type for the chat. Determines which lobby's players receive the message.\"\
+        \n                },\n                \"message\": {\n                    \"type\": \"string\",\n                \
+        \    \"maxLength\": 500,\n                    \"description\": \"Content of the chat message\"\n                },\n\
+        \                \"messageType\": {\n                    \"allOf\": [\n                        {\n               \
+        \             \"$ref\": \"#/$defs/ChatMessageType\"\n                        }\n                    ],\n         \
+        \           \"default\": \"public\",\n                    \"description\": \"Type of message (public to all, whisper
+        to one player, or system announcement)\"\n                },\n                \"targetPlayerId\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"For whisper messages\"\n                }\n            }\n        },\n   \
+        \     \"GameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game service stub name for
+        this session. Use the game service's stubName property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific
+        sessions.\"\n        },\n        \"ChatMessageType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of chat message\",\n            \"enum\": [\n                \"Public\",\n                \"Whisper\",\n\
+        \                \"System\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Send chat message to game session\",\n    \"description\": \"\",\n    \"\
         tags\": [\n        \"Game Chat\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"sendChatMessage\"\n}"
@@ -615,27 +608,22 @@ paths:
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GameActionRequest\"\
         ,\n    \"$defs\": {\n        \"GameActionRequest\": {\n            \"description\": \"Request to perform a game action
         such as movement or combat\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n \
-        \           \"required\": [\n                \"sessionId\",\n                \"accountId\",\n                \"gameType\"\
-        ,\n                \"actionType\"\n            ],\n            \"properties\": {\n                \"sessionId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"WebSocket session ID of the client. Provided by shortcut system.\"\n                },\n                \"accountId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Account ID of the player. Provided by shortcut system.\"\n                },\n                \"\
-        gameType\": {\n                    \"$ref\": \"#/$defs/GameType\",\n                    \"description\": \"Game type
-        for the action. Determines which lobby to apply the action. Provided by shortcut system.\"\n                },\n \
-        \               \"actionType\": {\n                    \"$ref\": \"#/$defs/GameActionType\",\n                   \
-        \ \"description\": \"Type of game action to perform\"\n                },\n                \"actionData\": {\n   \
-        \                 \"type\": \"object\",\n                    \"additionalProperties\": true,\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Game-specific action data. No Bannou plugin reads specific
-        keys from this field by convention.\"\n                },\n                \"targetId\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Target of the action (if applicable)\"\n                }\n            }\n       \
-        \ },\n        \"GameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game service stub
-        name for this session. Use the game service's stubName property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific
-        sessions.\"\n        },\n        \"GameActionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Opaque string code identifying the type of game action. Action types are game-defined and extensible without schema
-        changes. Common conventions include move, interact, attack, cast_spell, use_item, but any string code is valid.\"\n\
-        \        }\n    }\n}"
+        \           \"required\": [\n                \"gameType\",\n                \"actionType\"\n            ],\n     \
+        \       \"properties\": {\n                \"gameType\": {\n                    \"$ref\": \"#/$defs/GameType\",\n\
+        \                    \"description\": \"Game type for the action. Determines which lobby to apply the action.\"\n\
+        \                },\n                \"actionType\": {\n                    \"$ref\": \"#/$defs/GameActionType\",\n\
+        \                    \"description\": \"Type of game action to perform\"\n                },\n                \"actionData\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Game-specific action data. No Bannou plugin reads
+        specific keys from this field by convention.\"\n                },\n                \"targetId\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Target of the action (if applicable)\"\n                }\n            }\n\
+        \        },\n        \"GameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game service
+        stub name for this session. Use the game service's stubName property (e.g., \\\"my-game\\\"). Use \\\"generic\\\"\
+        \ for non-game-specific sessions.\"\n        },\n        \"GameActionType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Opaque string code identifying the type of game action. Action types are game-defined
+        and extensible without schema changes. Common conventions include move, interact, attack, cast_spell, use_item, but
+        any string code is valid.\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GameActionResponse\"\
         ,\n    \"$defs\": {\n        \"GameActionResponse\": {\n            \"description\": \"Confirms the action was accepted
         and provides the action ID for async result correlation. Game-specific results are delivered asynchronously via client
@@ -730,9 +718,8 @@ paths:
       tags:
       - Game Sessions
       x-permissions:
-      - role: user
-        states:
-          game-session: in_game
+      - role: developer
+        states: {}
       requestBody:
         required: true
         content:
@@ -1125,23 +1112,12 @@ components:
       type: object
       additionalProperties: false
       required:
-      - sessionId
-      - accountId
       - gameType
       - message
       properties:
-        sessionId:
-          type: string
-          format: uuid
-          description: WebSocket session ID of the sender. Provided by shortcut system.
-        accountId:
-          type: string
-          format: uuid
-          description: Account ID of the sender. Provided by shortcut system.
         gameType:
           $ref: '#/components/schemas/GameType'
-          description: Game type for the chat. Determines which lobby's players receive the message. Provided by 
-            shortcut system.
+          description: Game type for the chat. Determines which lobby's players receive the message.
         message:
           type: string
           maxLength: 500
@@ -1161,23 +1137,12 @@ components:
       type: object
       additionalProperties: false
       required:
-      - sessionId
-      - accountId
       - gameType
       - actionType
       properties:
-        sessionId:
-          type: string
-          format: uuid
-          description: WebSocket session ID of the client. Provided by shortcut system.
-        accountId:
-          type: string
-          format: uuid
-          description: Account ID of the player. Provided by shortcut system.
         gameType:
           $ref: '#/components/schemas/GameType'
-          description: Game type for the action. Determines which lobby to apply the action. Provided by shortcut 
-            system.
+          description: Game type for the action. Determines which lobby to apply the action.
         actionType:
           $ref: '#/components/schemas/GameActionType'
           description: Type of game action to perform

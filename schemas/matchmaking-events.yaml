@@ -89,7 +89,7 @@ components:
         - timestamp
         - ticketId
         - queueId
-        - accountId
+        - webSocketSessionId
       properties:
         eventId:
           type: string
@@ -106,10 +106,10 @@ components:
         queueId:
           type: string
           description: Queue the ticket was submitted to
-        accountId:
+        webSocketSessionId:
           type: string
           format: uuid
-          description: Account that created the ticket
+          description: WebSocket session that created the ticket
         partyId:
           type: string
           format: uuid
@@ -171,7 +171,7 @@ components:
         - timestamp
         - ticketId
         - queueId
-        - accountId
+        - webSocketSessionId
         - reason
       properties:
         eventId:
@@ -189,10 +189,10 @@ components:
         queueId:
           type: string
           description: Queue the ticket was in
-        accountId:
+        webSocketSessionId:
           type: string
           format: uuid
-          description: Account that owned the ticket
+          description: WebSocket session that owned the ticket
         partyId:
           type: string
           format: uuid
@@ -404,25 +404,21 @@ components:
       description: Information about a ticket that was matched
       required:
         - ticketId
-        - accountId
+        - webSocketSessionId
       properties:
         ticketId:
           type: string
           format: uuid
           description: Ticket identifier
-        accountId:
+        webSocketSessionId:
           type: string
           format: uuid
-          description: Account that owns the ticket
+          description: WebSocket session that owns the ticket
         partyId:
           type: string
           format: uuid
           nullable: true
           description: Party ID if this is a party ticket
-        webSocketSessionId:
-          type: string
-          format: uuid
-          description: WebSocket session for event delivery
         skillRating:
           type: number
           nullable: true

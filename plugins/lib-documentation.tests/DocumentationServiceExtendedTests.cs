@@ -1321,7 +1321,8 @@ public class DocumentationServiceExtendedTests
         var request = new CreateArchiveRequest
         {
             Namespace = "",
-            Owner = "test-owner"
+            OwnerType = DocumentationOwnerType.Session,
+            OwnerId = "test-owner"
         };
 
         // Act
@@ -1339,7 +1340,8 @@ public class DocumentationServiceExtendedTests
         var request = new CreateArchiveRequest
         {
             Namespace = TEST_NAMESPACE,
-            Owner = "test-owner",
+            OwnerType = DocumentationOwnerType.Session,
+            OwnerId = "test-owner",
             Description = "Test archive"
         };
 
@@ -1367,7 +1369,8 @@ public class DocumentationServiceExtendedTests
         var request = new CreateArchiveRequest
         {
             Namespace = TEST_NAMESPACE,
-            Owner = "test-owner",
+            OwnerType = DocumentationOwnerType.Session,
+            OwnerId = "test-owner",
             Description = "Snapshot before migration"
         };
 
@@ -1463,7 +1466,8 @@ public class DocumentationServiceExtendedTests
                 DocumentCount = 5,
                 SizeBytes = 1024,
                 CreatedAt = DateTimeOffset.UtcNow.AddHours(-2),
-                Owner = "owner1"
+                OwnerType = OwnerTypeInternal.Session,
+                OwnerId = "owner1"
             });
 
         _mockArchiveStore.Setup(s => s.GetAsync(
@@ -1476,7 +1480,8 @@ public class DocumentationServiceExtendedTests
                 DocumentCount = 3,
                 SizeBytes = 512,
                 CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
-                Owner = "owner2"
+                OwnerType = OwnerTypeInternal.Service,
+                OwnerId = "owner2"
             });
 
         // Act

@@ -1,9 +1,11 @@
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Telemetry.Instrumentation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -31,6 +33,7 @@ public class TelemetryServicePlugin : BaseBannouPlugin
 
     private ITelemetryService? _service;
     private IServiceProvider? _serviceProvider;
+    private HealthTrackingExporter? _healthTrackingExporter;
 
     /// <summary>
     /// Configure services for dependency injection.
@@ -128,14 +131,8 @@ public class TelemetryServicePlugin : BaseBannouPlugin
                     .AddSource(TelemetryComponents.Messaging)
                     .AddSource(TelemetryComponents.Mesh)
                     .AddSource(TelemetryComponents.Telemetry)
-                    // Configure OTLP exporter for trace export
-                    .AddOtlpExporter(options =>
-                    {
-                        options.Endpoint = new Uri(config.OtlpEndpoint);
-                        options.Protocol = config.OtlpProtocol == OtlpProtocol.Grpc
-                            ? OtlpExportProtocol.Grpc
-                            : OtlpExportProtocol.HttpProtobuf;
-                    });
+                    // Configure OTLP exporter wrapped in HealthTrackingExporter for passive health monitoring
+                    .AddProcessor(CreateHealthTrackingProcessor(config, services));
 
                 Logger?.LogInformation(
                     "Tracing enabled: endpoint={Endpoint}, protocol={Protocol}, samplingRatio={SamplingRatio}",
@@ -174,6 +171,31 @@ public class TelemetryServicePlugin : BaseBannouPlugin
         }
 
         Logger?.LogInformation("OpenTelemetry SDK configuration applied");
+    }
+
+    /// <summary>
+    /// Creates a BatchExportProcessor with a HealthTrackingExporter wrapping the OtlpTraceExporter.
+    /// Registers the HealthTrackingExporter as a singleton for health state queries.
+    /// </summary>
+    private BaseProcessor<System.Diagnostics.Activity> CreateHealthTrackingProcessor(
+        TelemetryServiceConfiguration config,
+        IServiceCollection services)
+    {
+        var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions
+        {
+            Endpoint = new Uri(config.OtlpEndpoint),
+            Protocol = config.OtlpProtocol == OtlpProtocol.Grpc
+                ? OtlpExportProtocol.Grpc
+                : OtlpExportProtocol.HttpProtobuf
+        });
+
+        // Ownership: BatchActivityExportProcessor owns (and disposes) the HealthTrackingExporter,
+        // which in turn owns (and disposes) the OtlpTraceExporter.
+        // DI singleton registration is for read-only health state access, not lifecycle.
+        _healthTrackingExporter = new HealthTrackingExporter(otlpExporter);
+        services.AddSingleton(_healthTrackingExporter);
+
+        return new BatchActivityExportProcessor(_healthTrackingExporter);
     }
 
     /// <summary>

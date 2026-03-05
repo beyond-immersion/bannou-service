@@ -343,6 +343,8 @@ The Puppetmaster service (L4 GameFeatures) orchestrates dynamic behaviors, regio
 
 The Quest service (L2 GameFoundation) provides objective-based gameplay progression as a thin orchestration layer over lib-contract. Translates game-flavored quest semantics (objectives, rewards, quest givers) into Contract infrastructure (milestones, prebound APIs, parties), leveraging Contract's state machine and cleanup orchestration while presenting a player-friendly API. Agnostic to prerequisite sources: L4 services (skills, magic, achievements) implement `IPrerequisiteProviderFactory` for validation without Quest depending on them. Exposes quest data to the Actor service via the Variable Provider Factory pattern for ABML behavior expressions.
 
+**Deprecation Lifecycle (T31 Category B)**: Quest definitions are Category B entities — instances persist independently, so definitions must remain readable forever. Deprecation is one-way (no undeprecate), there is no delete endpoint, and acceptance of deprecated definitions is rejected. Contract templates are structurally immutable once created (trust guarantee); only quest metadata (name, description, category, difficulty, tags) can be updated.
+
 ## Realm {#realm}
 
 **Version**: 1.0.0 | **Schema**: `schemas/realm-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/REALM.md](plugins/REALM.md)
@@ -373,13 +375,13 @@ Relationship's polymorphic entity support makes it a key primitive for system re
 | Marriage bonds | `SPOUSE` | Character ↔ Character | lib-character-lifecycle (planned) |
 | Living weapon wielder | `WEAPON_WIELDER` | Character ↔ Weapon (SENTIENT_ARMS) | Zero-plugin pattern (planned) |
 
-The `${relationship.*}` ABML variable namespace ([#147](https://github.com/beyond-immersion/bannou-service/issues/147)) will expose this data to the Actor behavior system, enabling NPCs to make social decisions based on relationship type, existence, and hierarchy.
+The `${relationship.*}` ABML variable namespace is implemented via `RelationshipProviderFactory` (registered as `IVariableProviderFactory`), exposing relationship data to the Actor behavior system. NPCs make social decisions based on relationship type, existence, and hierarchy through variables like `${relationship.has.*}`, `${relationship.count.*}`, and `${relationship.total}`.
 
 ## Resource {#resource}
 
 **Version**: 1.0.0 | **Schema**: `schemas/resource-api.yaml` | **Endpoints**: 17 | **Deep Dive**: [docs/plugins/RESOURCE.md](plugins/RESOURCE.md)
 
-Resource reference tracking, lifecycle management, and hierarchical compression service (L1 AppFoundation) for foundational resources. Enables safe deletion of L2 resources by tracking references from higher-layer consumers (L3/L4) without hierarchy violations, coordinates cleanup callbacks with CASCADE/RESTRICT/DETACH policies, and centralizes compression of resources and their dependents into unified MySQL-backed archives. Placed at L1 so all layers can use it; uses opaque string identifiers for resource/source types to avoid coupling to higher layers. Currently integrated by lib-character (L2) for deletion checks, and by lib-actor, lib-character-encounter, lib-character-history, and lib-character-personality (L4) as reference publishers.
+Resource reference tracking, lifecycle management, and hierarchical compression service (L1 AppFoundation) for foundational resources. Enables safe deletion of L2 resources by tracking references from higher-layer consumers (L2/L3/L4) without hierarchy violations, coordinates cleanup callbacks with CASCADE/RESTRICT/DETACH policies, and centralizes compression of resources and their dependents into unified MySQL-backed archives. Placed at L1 so all layers can use it; uses opaque string identifiers for resource/source types to avoid coupling to higher layers. Widely integrated: 13 services use generated reference tracking, 11 services register compression callbacks, and 20 services total inject `IResourceClient`.
 
 ## Save Load {#save-load}
 
@@ -434,6 +436,8 @@ The Storyline service (L4 GameFeatures) wraps the `storyline-theory` and `storyl
 **Version**: 1.0.0 | **Schema**: `schemas/subscription-api.yaml` | **Endpoints**: 7 | **Deep Dive**: [docs/plugins/SUBSCRIPTION.md](plugins/SUBSCRIPTION.md)
 
 The Subscription service (L2 GameFoundation) manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. Publishes `subscription.updated` events consumed by GameSession for real-time shortcut publishing, and pushes `subscription.status_changed` client events to connected players via WebSocket account-session routing. Includes a background expiration worker that periodically deactivates expired subscriptions. Internal-only, serves as the canonical source for subscription state.
+
+Client events are routed via `IEntitySessionRegistry.PublishToEntitySessionsAsync("account", accountId, ...)` to all WebSocket sessions for the affected account. This is especially important for background expiration (the player didn't initiate the state change) and admin renewals.
 
 ## Telemetry {#telemetry}
 

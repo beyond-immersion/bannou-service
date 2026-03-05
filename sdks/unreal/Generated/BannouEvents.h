@@ -22,7 +22,7 @@ namespace Bannou
         constexpr const TCHAR* AchievementProgressMilestoneReached = TEXT("achievement.progress.milestone-reached");
 
         /** Sent to the unlocking entity's WebSocket sessions when an achievement is unlocked. */
-        constexpr const TCHAR* AchievementUnlocked = TEXT("achievement.unlocked");
+        constexpr const TCHAR* AchievementProgressUnlocked = TEXT("achievement.progress.unlocked");
 
         /** Sent when bundle creation from asset_ids completes. */
         constexpr const TCHAR* AssetBundleCreationComplete = TEXT("asset.bundle.creation.complete");

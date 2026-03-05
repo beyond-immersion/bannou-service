@@ -11,106 +11,58 @@
 
 ## Overview
 
-Resource reference tracking, lifecycle management, and hierarchical compression service (L1 AppFoundation) for foundational resources. Enables safe deletion of L2 resources by tracking references from higher-layer consumers (L3/L4) without hierarchy violations, coordinates cleanup callbacks with CASCADE/RESTRICT/DETACH policies, and centralizes compression of resources and their dependents into unified MySQL-backed archives. Placed at L1 so all layers can use it; uses opaque string identifiers for resource/source types to avoid coupling to higher layers. Currently integrated by lib-character (L2) for deletion checks, and by lib-actor, lib-character-encounter, lib-character-history, and lib-character-personality (L4) as reference publishers.
-
----
-
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Get Redis state stores for reference sets, cleanup callbacks, and grace periods |
-| lib-state (`ICacheableStateStore<T>`) | Set operations (`AddToSetAsync`, `RemoveFromSetAsync`, `GetSetAsync`, `SetCountAsync`, `DeleteSetAsync`) for atomic reference tracking |
-| lib-state (`IDistributedLockProvider`) | Distributed locks during cleanup execution to prevent concurrent cleanup |
-| lib-messaging (`IMessageBus`) | Publishing `resource.grace-period.started` and `resource.cleanup.callback-failed` events |
-| lib-mesh (`IServiceNavigator`) | Executing cleanup callbacks via `ExecutePreboundApiBatchAsync` |
+Resource reference tracking, lifecycle management, and hierarchical compression service (L1 AppFoundation) for foundational resources. Enables safe deletion of L2 resources by tracking references from higher-layer consumers (L2/L3/L4) without hierarchy violations, coordinates cleanup callbacks with CASCADE/RESTRICT/DETACH policies, and centralizes compression of resources and their dependents into unified MySQL-backed archives. Placed at L1 so all layers can use it; uses opaque string identifiers for resource/source types to avoid coupling to higher layers. Widely integrated: 13 services use generated reference tracking, 11 services register compression callbacks, and 20 services total inject `IResourceClient`.
 
 ---
 
 ## Dependents (What Relies On This Plugin)
 
-| Dependent | Relationship |
-|-----------|-------------|
-| lib-character | Queries `/resource/check` for L4 references in `CheckCharacterReferencesAsync` |
-| lib-actor | Calls `IResourceClient.RegisterReferenceAsync`/`UnregisterReferenceAsync` in SpawnActorAsync/StopActorAsync; cleanup via `/actor/cleanup-by-character` |
-| lib-character-encounter | Calls `IResourceClient` API in RecordEncounterAsync/DeleteEncounterAsync; cleanup via `/character-encounter/delete-by-character` |
-| lib-character-history | Calls `IResourceClient` API for participations and backstory; cleanup via `/character-history/delete-all` |
-| lib-character-personality | Calls `IResourceClient` API for personality/combat prefs; cleanup via `/character-personality/cleanup-by-character` |
-| *lib-scene (not yet integrated)* | *Planned: would call `IResourceClient` API for scene-to-character references; would register cleanup callback* |
+### Reference Tracking (`x-references` schema extension)
 
----
+| Dependent | Layer | Cleanup Endpoint |
+|-----------|-------|------------------|
+| lib-actor | L2 | `/actor/cleanup-by-character` |
+| lib-character-encounter | L4 | `/character-encounter/delete-by-character` |
+| lib-character-history | L4 | `/character-history/delete-all` |
+| lib-character-personality | L4 | `/character-personality/cleanup-by-character` |
+| lib-collection | L2 | via generated `CollectionReferenceTracking` |
+| lib-divine | L4 | via generated `DivineReferenceTracking` |
+| lib-faction | L4 | via generated `FactionReferenceTracking` |
+| lib-license | L4 | via generated `LicenseReferenceTracking` |
+| lib-obligation | L4 | via generated `ObligationReferenceTracking` |
+| lib-realm-history | L4 | via generated `RealmHistoryReferenceTracking` |
+| lib-relationship | L2 | via generated `RelationshipReferenceTracking` |
+| lib-transit | L2 | via generated `TransitReferenceTracking` |
+| lib-worldstate | L2 | via generated `WorldstateReferenceTracking` |
 
-### Type Field Classification
+### Compression Callbacks (`x-compression-callback` schema extension)
 
-| Field | Category | Type | Rationale |
-|-------|----------|------|-----------|
-| `resourceType` (on all reference, cleanup, compression, snapshot, and archive models) | B (Content Code) | Opaque string | L1 service cannot enumerate L2+ entity types; values like `"character"`, `"realm"` are defined by higher-layer consumers at registration time. Explicitly documented in schema as intentionally not an enum per hierarchy isolation. |
-| `sourceType` (on reference, cleanup, and compression models) | B (Content Code) | Opaque string | Same L1 hierarchy isolation rationale as `resourceType`; values like `"actor"`, `"character-personality"`, `"character-history"` are defined by higher-layer services registering callbacks. |
-| `snapshotType` (on snapshot execute request and snapshot response) | B (Content Code) | Opaque string | Labels snapshot purpose (e.g., `"storyline_seed"`, `"analytics"`); caller-defined, extensible without schema changes. |
-| `OnDeleteAction` | C (System State) | Service-specific enum | Finite cleanup behavior modes (`CASCADE`, `RESTRICT`, `DETACH`) -- system-owned policies for resource deletion behavior. |
-| `CleanupPolicy` | C (System State) | Service-specific enum | Finite cleanup execution policies (`BEST_EFFORT`, `ALL_REQUIRED`) -- system-owned failure handling modes. |
-| `CompressionPolicy` | C (System State) | Service-specific enum | Finite compression execution policies (`BEST_EFFORT`, `ALL_REQUIRED`) -- system-owned failure handling modes. |
+| Dependent | Layer | Resource Type | Priority |
+|-----------|-------|---------------|----------|
+| lib-character | L2 | character | 0 |
+| lib-character-personality | L4 | character | 10 |
+| lib-character-history | L4 | character | 20 |
+| lib-character-encounter | L4 | character | 30 |
+| lib-quest | L2 | character | 50 |
+| lib-storyline | L4 | character | 60 |
+| lib-realm-history | L4 | realm | 0 |
+| lib-realm | L2 | realm | (via generated `RealmCompressionCallbacks`) |
+| lib-location | L2 | location | (via generated `LocationCompressionCallbacks`) |
+| lib-faction | L4 | faction | (via generated `FactionCompressionCallbacks`) |
+| lib-obligation | L4 | obligation | (via generated `ObligationCompressionCallbacks`) |
 
----
+### Other Consumers
 
-## State Storage
-
-**Stores**: 6 state stores (5 Redis-backed, 1 MySQL-backed)
-
-| Store | Backend | Schema Prefix | Purpose |
-|-------|---------|---------------|---------|
-| `resource-refcounts` | Redis | `resource:ref` | Reference tracking via sets |
-| `resource-cleanup` | Redis | `resource:cleanup` | Cleanup callback definitions |
-| `resource-grace` | Redis | `resource:grace` | Grace period timestamps |
-| `resource-compress` | Redis | `resource:compress` | Compression callback definitions and indexes |
-| `resource-archives` | MySQL | N/A | Compressed archive bundles (durable storage) |
-| `resource-snapshots` | Redis | `resource:snapshot` | Ephemeral snapshots of living resources (TTL-based auto-expiry) |
-
-**Note**: The "Schema Prefix" column shows the prefix defined in `state-stores.yaml`. The actual Redis key is `{prefix}:{key}` where key patterns are shown below.
-
-**Reference & Cleanup Key Patterns** (resource-refcounts, resource-cleanup, resource-grace stores):
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `{resourceType}:{resourceId}:sources` | Set of `ResourceReferenceEntry` | All entities referencing this resource |
-| `{resourceType}:{resourceId}:grace` | `GracePeriodRecord` | When refcount became zero |
-| `callback:{resourceType}:{sourceType}` | `CleanupCallbackDefinition` | Cleanup endpoint for a source type |
-| `callback-index:{resourceType}` | Set of `string` | Source types with registered callbacks (for enumeration without KEYS/SCAN) |
-| `callback-resource-types` | Set of `string` | Master index of all resource types with callbacks (for listing all without KEYS scan) |
-
-**Compression Key Patterns** (resource-compress, resource-archives stores):
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `compress-callback:{resourceType}:{sourceType}` | `CompressCallbackDefinition` | Compression endpoint for a source type |
-| `compress-callback-index:{resourceType}` | Set of `string` | Source types with registered compression callbacks |
-| `compress-callback-resource-types` | Set of `string` | Master index of resource types with compression callbacks |
-| `archive:{resourceType}:{resourceId}` | `ResourceArchiveModel` (MySQL) | Bundled compressed archive data (single archive per resource, version tracked within model) |
-
-**Snapshot Key Patterns** (resource-snapshots store):
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `snap:{snapshotId}` | `ResourceSnapshotModel` | Ephemeral snapshot with TTL (auto-expired by Redis) |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `resource.grace-period.started` | `ResourceGracePeriodStartedEvent` | Resource refcount reaches zero via `UnregisterReferenceAsync` |
-| `resource.cleanup.callback-failed` | `ResourceCleanupCallbackFailedEvent` | Cleanup callback returns non-2xx during `ExecuteCleanupAsync` |
-| `resource.compressed` | `ResourceCompressedEvent` | Compression completes successfully via `ExecuteCompressAsync` |
-| `resource.compress.callback-failed` | `ResourceCompressCallbackFailedEvent` | Compression callback fails during `ExecuteCompressAsync` |
-| `resource.decompressed` | `ResourceDecompressedEvent` | Decompression completes successfully via `ExecuteDecompressAsync` |
-| `resource.snapshot.created` | `ResourceSnapshotCreatedEvent` | Ephemeral snapshot created via `ExecuteSnapshotAsync` |
-
-### Consumed Events
-
-*None* - Reference registration/unregistration is handled via direct API calls (`RegisterReferenceAsync`/`UnregisterReferenceAsync`), not events.
+| Dependent | Layer | Relationship |
+|-----------|-------|-------------|
+| lib-character | L2 | Queries `/resource/check` in `CheckCharacterReferencesAsync`; invokes `/resource/compress/execute` for character archival |
+| lib-chat | L1 | Constructor-injected `IResourceClient` for room resource tracking |
+| lib-game-service | L2 | Constructor-injected `IResourceClient` for game service resource tracking |
+| lib-species | L2 | Constructor-injected `IResourceClient` for species resource tracking |
+| lib-realm | L2 | Constructor-injected `IResourceClient` for realm resource tracking and compression |
+| lib-location | L2 | Constructor-injected `IResourceClient` for location resource tracking and compression |
+| lib-puppetmaster | L4 | Uses `ResourceSnapshotCache` for caching resource snapshots (indirect via `IResourceClient`) |
+| *lib-scene (not yet integrated)* | *L4* | *Planned: scene-to-character references; cleanup callback* |
 
 ---
 
@@ -142,198 +94,6 @@ Resource reference tracking, lifecycle management, and hierarchical compression 
 | `SnapshotMaxTtlSeconds` | `RESOURCE_SNAPSHOT_MAX_TTL_SECONDS` | 86400 (24 hours) | Maximum allowed TTL (clamped) |
 
 All configuration properties are verified as used in `ResourceService.cs`.
-
----
-
-## DI Services & Helpers
-
-| Service | Role |
-|---------|------|
-| `ILogger<ResourceService>` | Structured logging |
-| `ResourceServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access for all six stores |
-| `IDistributedLockProvider` | Acquiring cleanup locks |
-| `IMessageBus` | Publishing events |
-| `IServiceNavigator` | Executing cleanup callbacks |
-| `IEnumerable<ISeededResourceProvider>` | Discovered seeded resource providers from DI |
-
-**Shared Provider Interfaces** (defined in `bannou-service/Providers/`):
-| Type | Role |
-|------|------|
-| `ISeededResourceProvider` | Interface for plugins to provide seeded resources |
-| `SeededResource` | Record type for seeded resource with identifier, content, metadata |
-| `EmbeddedResourceProvider` | Base class for loading from assembly embedded resources |
-
-**Internal Types** (defined in ResourceServiceModels.cs):
-| Type | Role |
-|------|------|
-| `ResourceReferenceEntry` | Set member for reference tracking; equality based on `SourceType` + `SourceId` |
-| `GracePeriodRecord` | Records when refcount became zero |
-| `CleanupCallbackDefinition` | Stores cleanup callback registration (service, endpoint, template, onDeleteAction) |
-| `CompressCallbackDefinition` | Stores compression callback registration (compress/decompress endpoints, priority) |
-| `ResourceArchiveModel` | Archive bundle stored in MySQL (version tracked, entries list) |
-| `ArchiveEntryModel` | Single entry in archive bundle (sourceType, compressed data, checksum) |
-| `ResourceSnapshotModel` | Ephemeral snapshot with TTL (stored in Redis, mirrors archive structure) |
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Reference Management
-
-| Endpoint | Notes |
-|----------|-------|
-| `POST /resource/register` | Uses `AddToSetAsync` for atomic add; clears grace period if new reference added |
-| `POST /resource/unregister` | Uses `RemoveFromSetAsync`; publishes `grace-period.started` event when refcount reaches zero |
-| `POST /resource/check` | Derives refcount from `SetCountAsync`; computes `isCleanupEligible` from grace period timestamp |
-| `POST /resource/list` | Returns all set members; supports `filterSourceType` and `limit` |
-
-### Cleanup Management
-
-| Endpoint | Notes |
-|----------|-------|
-| `POST /resource/cleanup/define` | Upserts callback definition with `onDeleteAction`; maintains `callback-index:{resourceType}` set and `callback-resource-types` master index; `serviceName` defaults to `sourceType` if not specified |
-| `POST /resource/cleanup/execute` | Full cleanup flow: RESTRICT check → pre-check → lock → re-validate → execute CASCADE/DETACH callbacks → clear state. Supports `dryRun` flag to preview without executing. |
-| `POST /resource/cleanup/list` | Lists registered cleanup callbacks; filter by `resourceType` and/or `sourceType`; uses master index to avoid KEYS scan |
-| `POST /resource/cleanup/remove` | Removes a cleanup callback registration; idempotent (returns `wasRegistered: false` if not found); cleans up indexes |
-
-**OnDeleteAction Behavior** (per-callback, configured via `/resource/cleanup/define`):
-
-| Action | Behavior |
-|--------|----------|
-| `CASCADE` (default) | Execute cleanup callback to delete dependent entities |
-| `RESTRICT` | Block resource deletion if references of this sourceType exist |
-| `DETACH` | Execute cleanup callback (consumer implements null-out/detach logic) |
-
-**Cleanup Execution Flow**:
-1. Get all callbacks and identify RESTRICT vs CASCADE/DETACH callbacks
-2. **DryRun check**: If `dryRun: true`, return preview of what callbacks would execute without acquiring lock or executing. Returns `Success = false` if any RESTRICT callbacks exist.
-3. **RESTRICT check**: If any active references have RESTRICT callbacks, return failure immediately with `"Blocked by RESTRICT policy from: {sourceTypes}"`
-4. Pre-check refcount and grace period (without lock)
-5. If blocked by non-RESTRICT reasons (unhandled refs, grace period), return early with reason
-6. Acquire distributed lock on `cleanup:{resourceType}:{resourceId}`
-7. Re-validate refcount under lock (race protection)
-8. Execute only CASCADE and DETACH callbacks via `IServiceNavigator.ExecutePreboundApiBatchAsync` in parallel with configured timeout (`CleanupCallbackTimeoutSeconds`)
-9. Per cleanup policy: abort or continue on failures
-10. Delete grace period record and reference set
-11. Release lock
-
-### Compression Management
-
-| Endpoint | Notes |
-|----------|-------|
-| `POST /resource/compress/define` | Registers compression callback for a resource type; maintains indexes for enumeration |
-| `POST /resource/compress/execute` | Orchestrates compression: gather data from callbacks → bundle into archive → store in MySQL → optionally delete source data |
-| `POST /resource/decompress/execute` | Restores data from archive by invoking decompression callbacks |
-| `POST /resource/compress/list` | Lists registered compression callbacks with filtering |
-| `POST /resource/archive/get` | Retrieves compressed archive by resourceId or specific version |
-
-**CompressionPolicy** (per-request or default from config):
-
-| Policy | Behavior |
-|--------|----------|
-| `ALL_REQUIRED` (default) | Abort compression if any callback fails |
-| `BEST_EFFORT` | Create archive even if some callbacks fail |
-
-**Compression Execution Flow**:
-1. Get all compression callbacks for resourceType, sorted by priority (lower = earlier)
-2. If no callbacks registered, return `Success = false` with reason "No callbacks registered"
-3. **DryRun check**: If `dryRun: true`, return preview of what would execute without acquiring lock
-4. Acquire distributed lock on `compress:{resourceType}:{resourceId}`
-5. For each callback (in priority order):
-   a. Build PreboundApiDefinition from callback registration
-   b. Execute via `IServiceNavigator.ExecutePreboundApiAsync` with configured timeout
-   c. On success: GZip compress response, add to archive entries
-   d. On failure: if `ALL_REQUIRED`, abort immediately; else continue and log
-   e. Publish `resource.compress.callback-failed` event on failure
-6. Create `ResourceArchiveModel` with all collected entries
-7. Compute new version from existing archive (if any): `(existingArchive?.Version ?? 0) + 1`
-8. Save archive to MySQL store with key `archive:{resourceType}:{resourceId}` (overwrites previous version)
-9. If `deleteSourceData: true`, execute cleanup callbacks via `ExecuteCleanupAsync`
-10. Publish `resource.compressed` event
-11. Release lock, return result
-
-**Decompression Execution Flow**:
-1. Retrieve archive from MySQL (by version or latest)
-2. If archive not found, return `Success = false`
-3. For each archive entry, invoke the registered decompression callback
-4. Publish `resource.decompressed` event on success
-
-### Snapshot Management (Living Entity Snapshots)
-
-| Endpoint | Notes |
-|----------|-------|
-| `POST /resource/snapshot/execute` | Creates ephemeral snapshot using compression callbacks, stores in Redis with TTL. Supports `filterSourceTypes` to limit which callbacks are executed. |
-| `POST /resource/snapshot/get` | Retrieves snapshot by ID; returns 404 if expired or not found. Supports `filterSourceTypes` to filter returned entries. |
-
-**Key Differences from Compression**:
-- Stores in Redis (ephemeral) with TTL, not MySQL (permanent)
-- Never deletes source data (non-destructive)
-- Publishes `resource.snapshot.created` event (not `resource.compressed`)
-- Snapshot auto-expires after TTL (default 1 hour, max 24 hours)
-
-**Server-Side Filtering** (`filterSourceTypes` parameter):
-- **ExecuteSnapshotRequest**: Only callbacks matching the filter are executed (reduces processing)
-- **GetSnapshotRequest**: Only entries matching the filter are returned (reduces network bandwidth)
-- If omitted or empty, all callbacks/entries are included (backwards compatible)
-
-**Use Cases**:
-- Storyline Composer needs compressed data from living entities to seed emergent narratives
-- Actor behaviors can capture character state via ABML `service_call`
-- Analytics can capture living entity snapshots for point-in-time analysis
-- Event Brain actors can request only personality data without triggering history/encounter callbacks
-
-**Snapshot Execution Flow**:
-1. Get all compression callbacks for resourceType
-2. Filter callbacks by `filterSourceTypes` if specified (server-side optimization)
-3. If `dryRun: true`, return preview without executing
-4. Execute each callback to gather data (same as compression)
-5. Bundle responses into snapshot model
-6. Store in Redis with TTL via `SaveAsync` with `StateOptions { Ttl = ttlSeconds }`
-7. Publish `resource.snapshot.created` event
-8. Return snapshotId for later retrieval
-
-### Seeded Resource Management
-
-| Endpoint | Notes |
-|----------|-------|
-| `POST /resource/seeded/list` | Lists all available seeded resources; optionally filter by `resourceType` |
-| `POST /resource/seeded/get` | Retrieves seeded resource content by type and identifier; returns base64-encoded content |
-
-**Purpose**: Provides a consistent pattern for plugins to load embedded/static resources (ABML behaviors, templates, configuration data) without each plugin reinventing the wheel.
-
-**Key Design**:
-- Uses `ISeededResourceProvider` interface (defined in `bannou-service/Providers/`)
-- Providers discovered via DI collection (`IEnumerable<ISeededResourceProvider>`)
-- Content returned as base64-encoded bytes with MIME type metadata
-- Seeded resources are **read-only factory defaults** - consumers may copy to state stores for runtime modification
-
-**Integration Pattern for Higher-Layer Plugins**:
-
-1. **Implement provider** (use `EmbeddedResourceProvider` base class for assembly-embedded resources):
-   ```csharp
-   public class BehaviorSeededProvider : EmbeddedResourceProvider
-   {
-       public override string ResourceType => "behavior";
-       public override string ContentType => "application/yaml";
-       protected override Assembly ResourceAssembly => typeof(BehaviorSeededProvider).Assembly;
-       protected override string ResourcePrefix => "BeyondImmersion.LibActor.Behaviors.";
-   }
-   ```
-
-2. **Register in plugin DI** (in `ConfigureServices`):
-   ```csharp
-   services.AddSingleton<ISeededResourceProvider, BehaviorSeededProvider>();
-   ```
-
-3. **Query via API** (from any service or ABML behavior):
-   ```
-   POST /resource/seeded/list
-   { "resourceType": "behavior" }
-
-   POST /resource/seeded/get
-   { "resourceType": "behavior", "identifier": "idle" }
-   ```
 
 ---
 
@@ -669,11 +429,9 @@ None.
 
 2. **Set-based reference counting**: Reference count is derived from set cardinality (`SetCountAsync`), not a separate counter. This avoids Lua scripts for atomic increment/decrement. The small race window between operations is acceptable because cleanup always re-validates under distributed lock.
 
-3. **Event handlers delegate to API methods**: `HandleReferenceRegisteredAsync` and `HandleReferenceUnregisteredAsync` simply construct requests and call the API methods. This ensures consistent logic but means event processing pays the full API path cost.
+3. **Cleanup lock uses refcount store name**: The distributed lock is acquired with `storeName: StateStoreDefinitions.ResourceRefcounts` even though it's a logical lock, not a data lock. This is intentional - the lock protects the refcount state.
 
-4. **Cleanup lock uses refcount store name**: The distributed lock is acquired with `storeName: StateStoreDefinitions.ResourceRefcounts` even though it's a logical lock, not a data lock. This is intentional - the lock protects the refcount state.
-
-5. **Cleanup callbacks registered in OnRunningAsync**: Consumer plugins MUST register their cleanup callbacks in `OnRunningAsync`, not `OnStartAsync`. This is because `OnRunningAsync` runs after ALL plugins have completed their `StartAsync` phase, guaranteeing lib-resource is available. Plugin load order is not guaranteed beyond infrastructure plugins (L0), so registering during `OnStartAsync` could fail if lib-resource hasn't started yet. See ActorServicePlugin for the reference implementation.
+4. **Cleanup callbacks registered in OnRunningAsync**: Consumer plugins MUST register their cleanup callbacks in `OnRunningAsync`, not `OnStartAsync`. This is because `OnRunningAsync` runs after ALL plugins have completed their `StartAsync` phase, guaranteeing lib-resource is available. Plugin load order is not guaranteed beyond infrastructure plugins (L0), so registering during `OnStartAsync` could fail if lib-resource hasn't started yet. See ActorServicePlugin for the reference implementation.
 
 ### Design Considerations (Requires Planning)
 
@@ -695,78 +453,13 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 *No active work items.*
 
-### Completed (Historical)
+### Completed
 
-- **2026-02-06**: Added `filterSourceTypes` parameter to snapshot endpoints (Issue #290):
-  - `ExecuteSnapshotRequest.filterSourceTypes` filters which callbacks are executed
-  - `GetSnapshotRequest.filterSourceTypes` filters which entries are returned
-  - Enables server-side filtering to reduce processing and bandwidth
-  - Backwards compatible: null/empty filter includes all (existing behavior)
-
-- **2026-02-06**: Added seeded resource loading capability (Issue #289):
-  - 2 new endpoints (`/resource/seeded/list`, `/resource/seeded/get`)
-  - `ISeededResourceProvider` interface in `bannou-service/Providers/`
-  - `SeededResource` record type for resource content and metadata
-  - `EmbeddedResourceProvider` base class for loading from assembly embedded resources
-  - Provider discovery via DI collection (`IEnumerable<ISeededResourceProvider>`)
-  - 11 unit tests covering provider discovery, listing, retrieval, and record type
-  - Enables plugins to provide factory default resources (ABML behaviors, templates, etc.)
-
-- **2026-02-03**: Added ephemeral snapshot system for living entities:
-  - 2 new endpoints (`/resource/snapshot/execute`, `/resource/snapshot/get`)
-  - 1 new state store (`resource-snapshots` for Redis TTL-based storage)
-  - 1 new event (`resource.snapshot.created`)
-  - 3 configuration properties (`SnapshotDefaultTtlSeconds`, `SnapshotMinTtlSeconds`, `SnapshotMaxTtlSeconds`)
-  - Uses compression callbacks (same as permanent archival) but stores ephemerally
-  - Intended for Storyline Composer and Actor behaviors needing living entity data
-
-- **2026-02-03**: Added centralized compression system:
-  - 5 new compression endpoints (`/compress/define`, `/compress/execute`, `/decompress/execute`, `/compress/list`, `/archive/get`)
-  - 2 new state stores (`resource-compress` for callbacks, `resource-archives` for MySQL durable storage)
-  - 3 new events (`resource.compressed`, `resource.compress.callback-failed`, `resource.decompressed`)
-  - 3 configuration properties (`DefaultCompressionPolicy`, `CompressionCallbackTimeoutSeconds`, `CompressionLockExpirySeconds`)
-  - Unit tests for compression functionality (48 total tests in lib-resource.tests)
-  - Compression callbacks registered by L4 services: character-personality, character-history, character-encounter, character (base data)
-  - Supports hierarchical archival with priority ordering and decompression for data recovery
-  - Archives stored in MySQL for durability with version tracking (version derived from existing archive)
-
-- **2026-02-03**: Added cleanup management enhancements:
-  - `dryRun` flag on `/resource/cleanup/execute` for previewing what would happen without executing
-  - `/resource/cleanup/list` endpoint to view all registered callbacks with filtering
-  - `/resource/cleanup/remove` endpoint to delete orphaned callbacks (idempotent)
-  - Added `callback-resource-types` master index for efficient listing without KEYS scan
-
-The lib-resource service is feature-complete for the current integration requirements:
-- Schema files (api, events, configuration)
-- State store definitions (resource-refcounts, resource-cleanup, resource-grace, resource-compress, resource-archives, resource-snapshots)
-- Service implementation with ICacheableStateStore for atomic set operations
-- Event handlers for reference tracking wired up via IEventConsumer
-- Unit tests covering reference counting, grace periods, cleanup policies, compression, and snapshots
-- OnDeleteAction enum (CASCADE/RESTRICT/DETACH) for per-callback deletion behavior
-- CompressionPolicy enum (ALL_REQUIRED/BEST_EFFORT) for compression callback failure handling
-- Ephemeral snapshot system for living entity data capture
-
-**Integrated Consumers** (Reference Tracking & Cleanup):
-- lib-actor: `x-references` schema, `/actor/cleanup-by-character` endpoint
-- lib-character-encounter: `x-references` schema, `/character-encounter/delete-by-character` endpoint
-- lib-character-history: `x-references` schema, `/character-history/delete-all` cleanup
-- lib-character-personality: `x-references` schema, `/character-personality/cleanup-by-character` endpoint
-
-**Integrated Consumers** (Compression - all using `x-compression-callback` schema extension):
-- lib-character: `/character/get-compress-data` (priority 0, resourceType: character)
-- lib-character-personality: `/character-personality/get-compress-data`, `/character-personality/restore-from-archive` (priority 10)
-- lib-character-history: `/character-history/get-compress-data`, `/character-history/restore-from-archive` (priority 20)
-- lib-character-encounter: `/character-encounter/get-compress-data`, `/character-encounter/restore-from-archive` (priority 30)
-- lib-quest: `/quest/get-compress-data` (priority 50)
-- lib-storyline: `/storyline/get-compress-data` (priority 60)
-- lib-realm-history: `/realm-history/get-compress-data`, `/realm-history/restore-from-archive` (priority 0, resourceType: realm)
-
-**Foundation Consumer**:
-- lib-character: Queries `/resource/check` in `CheckCharacterReferencesAsync`, invokes `/resource/compress/execute` for character archival
+*Historical entries cleared — see git history for past work tracking.*
 
 ### Pending Integrations
 
-1. **lib-scene**: Not yet integrated with lib-resource. When scene references to characters are added, will need `x-references` schema extension, cleanup endpoint, and optionally compression callbacks.
+1. **lib-scene**: Not yet integrated with lib-resource (no `IResourceClient` usage, no generated reference tracking or compression files). When scene references to characters are added, will need `x-references` schema extension, cleanup endpoint, and optionally compression callbacks.
 
 2. **lib-seed**: Seed archival currently retains growth data, capability cache, and bond data indefinitely ([#366](https://github.com/beyond-immersion/bannou-service/issues/366)). Phase 2 of the seed cleanup strategy calls for lib-resource compression integration to archive growth/bond data before deletion, requiring `x-compression-callback` schema extension and compress/decompress endpoints in lib-seed.
 
@@ -777,4 +470,3 @@ The lib-resource service is feature-complete for the current integration require
 - [SERVICE-HIERARCHY.md](../reference/SERVICE-HIERARCHY.md) - Layer placement rationale
 - [TENETS.md](../reference/TENETS.md) - Compliance requirements
 - [SCHEMA-RULES.md](../reference/SCHEMA-RULES.md) - `x-references`, `x-resource-lifecycle`, and `x-compression-callback` schema extensions
-- [Planning Document](~/.claude/plans/typed-crunching-muffin.md) - Full implementation plan with phases

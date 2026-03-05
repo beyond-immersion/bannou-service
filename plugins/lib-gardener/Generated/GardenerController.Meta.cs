@@ -26,19 +26,13 @@ public partial class GardenerController
             "type": "object",
             "description": "Request to enter the garden",
             "required": [
-                "accountId",
                 "sessionId"
             ],
             "properties": {
-                "accountId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Account entering the garden"
-                },
                 "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Current WebSocket session ID"
+                    "description": "WebSocket session ID of the player entering the garden"
                 }
             }
         }
@@ -294,13 +288,13 @@ public partial class GardenerController
             "type": "object",
             "description": "Request to get current garden state",
             "required": [
-                "accountId"
+                "sessionId"
             ],
             "properties": {
-                "accountId": {
+                "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account whose garden state to retrieve"
+                    "description": "WebSocket session ID of the player"
                 }
             }
         }
@@ -556,15 +550,15 @@ public partial class GardenerController
             "type": "object",
             "description": "Request to update player position in the garden",
             "required": [
-                "accountId",
+                "sessionId",
                 "position",
                 "velocity"
             ],
             "properties": {
-                "accountId": {
+                "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account whose position to update"
+                    "description": "WebSocket session ID of the player"
                 },
                 "position": {
                     "$ref": "#/$defs/Vec3",
@@ -836,13 +830,13 @@ public partial class GardenerController
             "type": "object",
             "description": "Request to leave the garden",
             "required": [
-                "accountId"
+                "sessionId"
             ],
             "properties": {
-                "accountId": {
+                "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account leaving the garden"
+                    "description": "WebSocket session ID of the player leaving the garden"
                 }
             }
         }
@@ -944,13 +938,13 @@ public partial class GardenerController
             "type": "object",
             "description": "Request to list active POIs",
             "required": [
-                "accountId"
+                "sessionId"
             ],
             "properties": {
-                "accountId": {
+                "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account whose POIs to list"
+                    "description": "WebSocket session ID of the player"
                 }
             }
         }
@@ -1189,14 +1183,14 @@ public partial class GardenerController
             "type": "object",
             "description": "Request to interact with a POI",
             "required": [
-                "accountId",
+                "sessionId",
                 "poiId"
             ],
             "properties": {
-                "accountId": {
+                "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account interacting with the POI"
+                    "description": "WebSocket session ID of the player"
                 },
                 "poiId": {
                     "type": "string",
@@ -1331,14 +1325,14 @@ public partial class GardenerController
             "type": "object",
             "description": "Request to decline a POI",
             "required": [
-                "accountId",
+                "sessionId",
                 "poiId"
             ],
             "properties": {
-                "accountId": {
+                "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account declining the POI"
+                    "description": "WebSocket session ID of the player"
                 },
                 "poiId": {
                     "type": "string",
@@ -1444,14 +1438,14 @@ public partial class GardenerController
             "type": "object",
             "description": "Request to enter a scenario",
             "required": [
-                "accountId",
+                "sessionId",
                 "scenarioTemplateId"
             ],
             "properties": {
-                "accountId": {
+                "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account entering the scenario"
+                    "description": "WebSocket session ID of the player"
                 },
                 "scenarioTemplateId": {
                     "type": "string",
@@ -1623,13 +1617,13 @@ public partial class GardenerController
             "type": "object",
             "description": "Request to get current scenario state",
             "required": [
-                "accountId"
+                "sessionId"
             ],
             "properties": {
-                "accountId": {
+                "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account whose scenario state to retrieve"
+                    "description": "WebSocket session ID of the player"
                 }
             }
         }
@@ -1785,14 +1779,14 @@ public partial class GardenerController
             "type": "object",
             "description": "Request to complete a scenario",
             "required": [
-                "accountId",
+                "sessionId",
                 "scenarioInstanceId"
             ],
             "properties": {
-                "accountId": {
+                "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account completing the scenario"
+                    "description": "WebSocket session ID of the player"
                 },
                 "scenarioInstanceId": {
                     "type": "string",
@@ -1907,14 +1901,14 @@ public partial class GardenerController
             "type": "object",
             "description": "Request to abandon a scenario",
             "required": [
-                "accountId",
+                "sessionId",
                 "scenarioInstanceId"
             ],
             "properties": {
-                "accountId": {
+                "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account abandoning the scenario"
+                    "description": "WebSocket session ID of the player"
                 },
                 "scenarioInstanceId": {
                     "type": "string",
@@ -2024,15 +2018,15 @@ public partial class GardenerController
             "type": "object",
             "description": "Request to chain from one scenario to another",
             "required": [
-                "accountId",
+                "sessionId",
                 "currentScenarioInstanceId",
                 "targetTemplateId"
             ],
             "properties": {
-                "accountId": {
+                "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account chaining scenarios"
+                    "description": "WebSocket session ID of the player"
                 },
                 "currentScenarioInstanceId": {
                     "type": "string",

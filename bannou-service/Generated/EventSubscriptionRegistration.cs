@@ -83,6 +83,8 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<SubscriptionUpdatedEvent>("subscription.updated");
 
         // From gardener-events.yaml
+        EventSubscriptionRegistry.Register<SessionConnectedEvent>("session.connected");
+        EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
         EventSubscriptionRegistry.Register<SeedBondFormedEvent>("seed.bond.formed");
         EventSubscriptionRegistry.Register<SeedActivatedEvent>("seed.activated");
         EventSubscriptionRegistry.Register<GameSessionDeletedEvent>("game-session.deleted");

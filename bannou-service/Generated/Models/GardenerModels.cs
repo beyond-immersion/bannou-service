@@ -659,15 +659,7 @@ public partial class EnterGardenRequest
 {
 
     /// <summary>
-    /// Account entering the garden
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
-
-    /// <summary>
-    /// Current WebSocket session ID
+    /// WebSocket session ID of the player entering the garden
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -696,12 +688,12 @@ public partial class GetGardenStateRequest
 {
 
     /// <summary>
-    /// Account whose garden state to retrieve
+    /// WebSocket session ID of the player
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -725,12 +717,12 @@ public partial class UpdatePositionRequest
 {
 
     /// <summary>
-    /// Account whose position to update
+    /// WebSocket session ID of the player
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// New position in garden space
@@ -770,12 +762,12 @@ public partial class LeaveGardenRequest
 {
 
     /// <summary>
-    /// Account leaving the garden
+    /// WebSocket session ID of the player leaving the garden
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -799,12 +791,12 @@ public partial class ListPoisRequest
 {
 
     /// <summary>
-    /// Account whose POIs to list
+    /// WebSocket session ID of the player
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -828,12 +820,12 @@ public partial class InteractWithPoiRequest
 {
 
     /// <summary>
-    /// Account interacting with the POI
+    /// WebSocket session ID of the player
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// POI to interact with
@@ -865,12 +857,12 @@ public partial class DeclinePoiRequest
 {
 
     /// <summary>
-    /// Account declining the POI
+    /// WebSocket session ID of the player
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// POI to decline
@@ -902,12 +894,12 @@ public partial class EnterScenarioRequest
 {
 
     /// <summary>
-    /// Account entering the scenario
+    /// WebSocket session ID of the player
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Template to instantiate
@@ -951,12 +943,12 @@ public partial class GetScenarioStateRequest
 {
 
     /// <summary>
-    /// Account whose scenario state to retrieve
+    /// WebSocket session ID of the player
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -980,12 +972,12 @@ public partial class CompleteScenarioRequest
 {
 
     /// <summary>
-    /// Account completing the scenario
+    /// WebSocket session ID of the player
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Scenario instance to complete
@@ -1017,12 +1009,12 @@ public partial class AbandonScenarioRequest
 {
 
     /// <summary>
-    /// Account abandoning the scenario
+    /// WebSocket session ID of the player
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Scenario instance to abandon
@@ -1054,12 +1046,12 @@ public partial class ChainScenarioRequest
 {
 
     /// <summary>
-    /// Account chaining scenarios
+    /// WebSocket session ID of the player
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Currently active scenario instance

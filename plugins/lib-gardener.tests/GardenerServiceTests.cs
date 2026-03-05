@@ -287,6 +287,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     {
         // Arrange
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         SetupSeedsForAccount(CreateTestSeedResponse());
         SetupPhaseConfig();
 
@@ -300,7 +305,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         // Act
         var (status, response) = await service.EnterGardenAsync(
-            new EnterGardenRequest { AccountId = _testAccountId, SessionId = _testSessionId },
+            new EnterGardenRequest { SessionId = _testSessionId },
             CancellationToken.None);
 
         // Assert - Response
@@ -325,7 +330,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "gardener.garden.entered",
             It.Is<GardenerGardenEnteredEvent>(e =>
-                e.AccountId == _testAccountId && e.SeedId == _testSeedId),
+                e.WebSocketSessionId == _testSessionId && e.SeedId == _testSeedId),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -333,12 +338,17 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task EnterGardenAsync_AlreadyActive_ReturnsConflict()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         _mockGardenStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestGarden());
 
         var (status, response) = await service.EnterGardenAsync(
-            new EnterGardenRequest { AccountId = _testAccountId, SessionId = _testSessionId },
+            new EnterGardenRequest { SessionId = _testSessionId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.Conflict, status);
@@ -349,11 +359,16 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task EnterGardenAsync_NoActiveSeed_ReturnsNotFound()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         SetupSeedsForAccount(CreateTestSeedResponse(status: SeedStatus.Dormant));
         SetupPhaseConfig();
 
         var (status, response) = await service.EnterGardenAsync(
-            new EnterGardenRequest { AccountId = _testAccountId, SessionId = _testSessionId },
+            new EnterGardenRequest { SessionId = _testSessionId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.NotFound, status);
@@ -368,13 +383,18 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task GetGardenStateAsync_ExistingGarden_ReturnsState()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         var garden = CreateTestGarden();
         _mockGardenStore
             .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(garden);
 
         var (status, response) = await service.GetGardenStateAsync(
-            new GetGardenStateRequest { AccountId = _testAccountId },
+            new GetGardenStateRequest { SessionId = _testSessionId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.OK, status);
@@ -386,9 +406,14 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task GetGardenStateAsync_NoGarden_ReturnsNotFound()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
 
         var (status, response) = await service.GetGardenStateAsync(
-            new GetGardenStateRequest { AccountId = _testAccountId },
+            new GetGardenStateRequest { SessionId = _testSessionId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.NotFound, status);
@@ -403,6 +428,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task LeaveGardenAsync_ValidRequest_CleansUpAndPublishesEvent()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         var garden = CreateTestGarden();
         var poiId = Guid.NewGuid();
         garden.ActivePoiIds.Add(poiId);
@@ -412,7 +442,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             .ReturnsAsync(garden);
 
         var (status, response) = await service.LeaveGardenAsync(
-            new LeaveGardenRequest { AccountId = _testAccountId },
+            new LeaveGardenRequest { SessionId = _testSessionId },
             CancellationToken.None);
 
         // Assert - Response
@@ -437,7 +467,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         // Assert - Event published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "gardener.garden.left",
-            It.Is<GardenerGardenLeftEvent>(e => e.AccountId == _testAccountId),
+            It.Is<GardenerGardenLeftEvent>(e => e.WebSocketSessionId == _testSessionId),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -445,9 +475,14 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task LeaveGardenAsync_NoGarden_ReturnsNotFound()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
 
         var (status, response) = await service.LeaveGardenAsync(
-            new LeaveGardenRequest { AccountId = _testAccountId },
+            new LeaveGardenRequest { SessionId = _testSessionId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.NotFound, status);
@@ -458,6 +493,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task LeaveGardenAsync_LockFailed_ReturnsConflict()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         var failedLock = new Mock<ILockResponse>();
         failedLock.Setup(r => r.Success).Returns(false);
         _mockLockProvider
@@ -467,7 +507,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             .ReturnsAsync(failedLock.Object);
 
         var (status, response) = await service.LeaveGardenAsync(
-            new LeaveGardenRequest { AccountId = _testAccountId },
+            new LeaveGardenRequest { SessionId = _testSessionId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.Conflict, status);
@@ -482,6 +522,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task UpdatePositionAsync_ValidRequest_UpdatesPositionAndDriftMetrics()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         var garden = CreateTestGarden();
         garden.Position = new Vec3Model { X = 0, Y = 0, Z = 0 };
 
@@ -500,7 +545,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var (status, response) = await service.UpdatePositionAsync(
             new UpdatePositionRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 Position = new Vec3 { X = 10, Y = 0, Z = 10 }
             },
             CancellationToken.None);
@@ -520,6 +565,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task UpdatePositionAsync_ProximityTrigger_TriggersPoiAndPublishesEvent()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         var garden = CreateTestGarden();
         var poiId = Guid.NewGuid();
         garden.ActivePoiIds.Add(poiId);
@@ -551,7 +601,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var (status, response) = await service.UpdatePositionAsync(
             new UpdatePositionRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 Position = new Vec3 { X = 10, Y = 0, Z = 10 }
             },
             CancellationToken.None);
@@ -577,11 +627,16 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task UpdatePositionAsync_NoGarden_ReturnsNotFound()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
 
         var (status, _) = await service.UpdatePositionAsync(
             new UpdatePositionRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 Position = new Vec3 { X = 1, Y = 0, Z = 1 }
             },
             CancellationToken.None);
@@ -597,6 +652,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task InteractWithPoiAsync_PromptedMode_ReturnsPrompt()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         var garden = CreateTestGarden();
         var poiId = Guid.NewGuid();
 
@@ -618,7 +678,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             .ReturnsAsync(template);
 
         var (status, response) = await service.InteractWithPoiAsync(
-            new InteractWithPoiRequest { AccountId = _testAccountId, PoiId = poiId },
+            new InteractWithPoiRequest { SessionId = _testSessionId, PoiId = poiId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.OK, status);
@@ -632,6 +692,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task InteractWithPoiAsync_InteractionMode_ReturnsScenarioEnter()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         var garden = CreateTestGarden();
         var poiId = Guid.NewGuid();
 
@@ -652,7 +717,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             .ReturnsAsync(CreateTestTemplate());
 
         var (status, response) = await service.InteractWithPoiAsync(
-            new InteractWithPoiRequest { AccountId = _testAccountId, PoiId = poiId },
+            new InteractWithPoiRequest { SessionId = _testSessionId, PoiId = poiId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.OK, status);
@@ -664,6 +729,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task InteractWithPoiAsync_NonActivePoi_ReturnsBadRequest()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         var garden = CreateTestGarden();
         var poiId = Guid.NewGuid();
 
@@ -678,7 +748,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             .ReturnsAsync(poi);
 
         var (status, _) = await service.InteractWithPoiAsync(
-            new InteractWithPoiRequest { AccountId = _testAccountId, PoiId = poiId },
+            new InteractWithPoiRequest { SessionId = _testSessionId, PoiId = poiId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -692,6 +762,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task DeclinePoiAsync_ActivePoi_DeclinesAndUpdatesHistory()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         var garden = CreateTestGarden();
         var poiId = Guid.NewGuid();
 
@@ -722,7 +797,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             .ReturnsAsync("etag");
 
         var (status, response) = await service.DeclinePoiAsync(
-            new DeclinePoiRequest { AccountId = _testAccountId, PoiId = poiId },
+            new DeclinePoiRequest { SessionId = _testSessionId, PoiId = poiId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.OK, status);
@@ -753,6 +828,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task EnterScenarioAsync_ValidRequest_CreatesScenarioWithGameSession()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         var garden = CreateTestGarden();
         _mockGardenStore
             .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
@@ -776,7 +856,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var (status, response) = await service.EnterScenarioAsync(
             new EnterScenarioRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 ScenarioTemplateId = _testTemplateId
             },
             CancellationToken.None);
@@ -810,7 +890,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "gardener.scenario.started",
             It.Is<GardenerScenarioStartedEvent>(e =>
-                e.AccountId == _testAccountId &&
+                e.WebSocketSessionId == _testSessionId &&
                 e.ScenarioTemplateId == _testTemplateId),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -819,11 +899,16 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task EnterScenarioAsync_NoGarden_ReturnsBadRequest()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
 
         var (status, _) = await service.EnterScenarioAsync(
             new EnterScenarioRequest
             {
-                AccountId = _testAccountId,
+                SessionId = _testSessionId,
                 ScenarioTemplateId = _testTemplateId
             },
             CancellationToken.None);
@@ -835,6 +920,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task EnterScenarioAsync_ActiveScenarioExists_ReturnsConflict()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         _mockGardenStore
             .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestGarden());

@@ -232,7 +232,8 @@ public partial class AssetService : IAssetService
                 Size = body.Size,
                 ContentType = body.ContentType,
                 Metadata = body.Metadata,
-                Owner = body.Owner,
+                OwnerType = body.OwnerType,
+                OwnerId = body.OwnerId,
                 StorageKey = storageKey,
                 IsMultipart = true,
                 PartCount = partCount,
@@ -279,7 +280,8 @@ public partial class AssetService : IAssetService
                 Size = body.Size,
                 ContentType = body.ContentType,
                 Metadata = body.Metadata,
-                Owner = body.Owner,
+                OwnerType = body.OwnerType,
+                OwnerId = body.OwnerId,
                 StorageKey = storageKey,
                 IsMultipart = false,
                 PartCount = 0,
@@ -301,7 +303,8 @@ public partial class AssetService : IAssetService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 UploadId = uploadId,
-                Owner = body.Owner,
+                OwnerType = body.OwnerType,
+                OwnerId = body.OwnerId,
                 Filename = body.Filename,
                 Size = body.Size,
                 ContentType = body.ContentType,
@@ -336,7 +339,8 @@ public partial class AssetService : IAssetService
                     Filename = bundleSession.Filename,
                     Size = bundleSession.SizeBytes,
                     ContentType = bundleSession.ContentType,
-                    Owner = bundleSession.Owner,
+                    OwnerType = bundleSession.OwnerType,
+                    OwnerId = bundleSession.OwnerId,
                     StorageKey = bundleSession.StorageKey,
                     IsMultipart = false,
                     PartCount = 0,
@@ -471,8 +475,8 @@ public partial class AssetService : IAssetService
                 Timestamp = now,
                 AssetId = assetId,
                 UploadId = body.UploadId,
-                Owner = session.Owner,
-                AccountId = null,
+                OwnerType = session.OwnerType,
+                OwnerId = session.OwnerId,
                 Bucket = _configuration.StorageBucket,
                 Key = finalKey,
                 Size = assetRef.Size,
@@ -963,7 +967,7 @@ public partial class AssetService : IAssetService
             body.BundleId,
             body.BundleId.ToString(),
             body.Version ?? "1.0.0",
-            body.Owner,
+            body.OwnerId,
             description: null,
             MetadataHelper.ConvertToStringDictionary(body.Metadata));
 
@@ -1000,7 +1004,8 @@ public partial class AssetService : IAssetService
             SizeBytes = bundleStream.Length,
             CreatedAt = DateTimeOffset.UtcNow,
             Status = BundleStatus.Ready,
-            Owner = body.Owner
+            OwnerType = body.OwnerType,
+            OwnerId = body.OwnerId
         };
 
         var bundleCacheTtlSeconds = _configuration.DefaultBundleCacheTtlHours * 3600;
@@ -1031,7 +1036,8 @@ public partial class AssetService : IAssetService
                 Size = bundleStream.Length,
                 AssetCount = body.AssetIds.Count,
                 Compression = CompressionType.Lz4,
-                Owner = body.Owner
+                OwnerType = body.OwnerType,
+                OwnerId = body.OwnerId
             }).ConfigureAwait(false);
 
         return (StatusCodes.OK, new CreateBundleResponse
@@ -1264,7 +1270,8 @@ public partial class AssetService : IAssetService
             SizeBytes = body.Size,
             StorageKey = storageKey,
             ManifestPreview = body.ManifestPreview,
-            Owner = body.Owner,
+            OwnerType = body.OwnerType,
+            OwnerId = body.OwnerId,
             CreatedAt = DateTimeOffset.UtcNow,
             ExpiresAt = DateTimeOffset.UtcNow.Add(tokenTtl)
         };
@@ -1603,7 +1610,7 @@ public partial class AssetService : IAssetService
             body.MetabundleId,
             body.MetabundleId.ToString(),
             body.Version ?? "1.0.0",
-            body.Owner,
+            body.OwnerId,
             body.Description,
             body.Metadata != null ? MetadataHelper.ConvertToStringDictionary(body.Metadata) : null);
 
@@ -1659,7 +1666,8 @@ public partial class AssetService : IAssetService
             SizeBytes = bundleStream.Length,
             CreatedAt = DateTimeOffset.UtcNow,
             Status = BundleStatus.Ready,
-            Owner = body.Owner,
+            OwnerType = body.OwnerType,
+            OwnerId = body.OwnerId,
             SourceBundles = sourceBundleRefs,
             StandaloneAssetIds = standaloneAssetIds.Count > 0 ? standaloneAssetIds : null,
             Metadata = body.Metadata != null ? MetadataHelper.ConvertToDictionary(body.Metadata) : null
@@ -1694,7 +1702,8 @@ public partial class AssetService : IAssetService
                 Bucket = bucket,
                 Key = metabundlePath,
                 SizeBytes = bundleStream.Length,
-                Owner = body.Owner
+                OwnerType = body.OwnerType,
+                OwnerId = body.OwnerId
             }).ConfigureAwait(false);
 
         return (StatusCodes.OK, new CreateMetabundleResponse
@@ -2778,7 +2787,7 @@ public partial class AssetService : IAssetService
             BundleId = body.BundleId,
             Version = bundle.MetadataVersion,
             CreatedAt = bundle.UpdatedAt.Value,
-            CreatedBy = bundle.Owner ?? "system",
+            CreatedBy = bundle.OwnerId ?? "system",
             Changes = changes,
             Reason = body.Reason
         };
@@ -2810,7 +2819,7 @@ public partial class AssetService : IAssetService
             PreviousVersion = previousVersion,
             Changes = changes,
             Reason = body.Reason,
-            UpdatedBy = bundle.Owner ?? "system",
+            UpdatedBy = bundle.OwnerId ?? "system",
             Realm = bundle.Realm
         });
 
@@ -2895,7 +2904,7 @@ public partial class AssetService : IAssetService
                 BundleId = body.BundleId,
                 Version = bundle.MetadataVersion,
                 CreatedAt = deletedAt,
-                CreatedBy = bundle.Owner ?? "system",
+                CreatedBy = bundle.OwnerId ?? "system",
                 Changes = new List<string> { "bundle deleted" },
                 Reason = body.Reason,
                 Snapshot = bundle // Save snapshot for potential restore
@@ -2936,7 +2945,7 @@ public partial class AssetService : IAssetService
             Permanent = body.Permanent == true,
             RetentionUntil = retentionUntil,
             Reason = body.Reason,
-            DeletedBy = bundle.Owner ?? "system",
+            DeletedBy = bundle.OwnerId ?? "system",
             Realm = bundle.Realm
         });
 
@@ -2994,7 +3003,7 @@ public partial class AssetService : IAssetService
             BundleId = body.BundleId,
             Version = bundle.MetadataVersion,
             CreatedAt = restoredAt,
-            CreatedBy = bundle.Owner ?? "system",
+            CreatedBy = bundle.OwnerId ?? "system",
             Changes = new List<string> { "bundle restored" },
             Reason = body.Reason
         };
@@ -3028,7 +3037,7 @@ public partial class AssetService : IAssetService
             BundleId = body.BundleId,
             RestoredFromVersion = restoredFromVersion,
             Reason = body.Reason,
-            RestoredBy = bundle.Owner ?? "system",
+            RestoredBy = bundle.OwnerId ?? "system",
             Realm = bundle.Realm
         });
 
@@ -3049,14 +3058,14 @@ public partial class AssetService : IAssetService
     /// </summary>
     public async Task<(StatusCodes, QueryBundlesResponse?)> QueryBundlesAsync(QueryBundlesRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("QueryBundles: owner={Owner}, tags={TagCount}, nameContains={NameContains}",
-            body.Owner, body.Tags?.Count ?? 0, body.NameContains);
+        _logger.LogInformation("QueryBundles: ownerId={OwnerId}, tags={TagCount}, nameContains={NameContains}",
+            body.OwnerId, body.Tags?.Count ?? 0, body.NameContains);
 
         // For now, require owner filter for efficient querying
         // A full bundle registry would be needed for arbitrary queries
-        if (string.IsNullOrWhiteSpace(body.Owner))
+        if (string.IsNullOrWhiteSpace(body.OwnerId))
         {
-            _logger.LogWarning("QueryBundles: Owner filter required for bundle queries");
+            _logger.LogWarning("QueryBundles: OwnerId filter required for bundle queries");
             return (StatusCodes.OK, new QueryBundlesResponse
             {
                 Bundles = new List<BundleInfo>(),
@@ -3067,7 +3076,7 @@ public partial class AssetService : IAssetService
         }
 
         // Get bundle IDs from owner index
-        var ownerIndexKey = $"bundle-owner-index:{body.Owner}";
+        var ownerIndexKey = $"bundle-owner-index:{body.OwnerId}";
         var bundleIds = await _bundleMetadataCacheStore.GetSetAsync<string>(ownerIndexKey, cancellationToken);
 
         if (bundleIds.Count == 0)
@@ -3182,8 +3191,8 @@ public partial class AssetService : IAssetService
             .Select(b => b.ToApiMetadata())
             .ToList();
 
-        _logger.LogInformation("QueryBundles: Found {TotalCount} bundles for owner {Owner}, returning {Count}",
-            totalCount, body.Owner, pagedBundles.Count);
+        _logger.LogInformation("QueryBundles: Found {TotalCount} bundles for owner {OwnerId}, returning {Count}",
+            totalCount, body.OwnerId, pagedBundles.Count);
 
         return (StatusCodes.OK, new QueryBundlesResponse
         {

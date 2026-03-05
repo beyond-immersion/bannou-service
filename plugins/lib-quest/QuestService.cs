@@ -48,7 +48,6 @@ public static class QuestTopics
 /// <list type="bullet">
 ///   <item>Hard dependencies (constructor injection): IContractClient (L1), ICharacterClient (L2), ICurrencyClient (L2), IInventoryClient (L2), IItemClient (L2), IDistributedLockProvider (L0)</item>
 ///   <item>Dynamic dependencies (DI collection): IEnumerable&lt;IPrerequisiteProviderFactory&gt; for L4 prerequisite providers</item>
-///   <item>Soft dependencies (runtime resolution): IAnalyticsClient, IAchievementClient (L4)</item>
 /// </list>
 /// </para>
 /// </remarks>
@@ -64,7 +63,6 @@ public partial class QuestService : IQuestService
     private readonly IInventoryClient _inventoryClient;
     private readonly IItemClient _itemClient;
     private readonly IDistributedLockProvider _lockProvider;
-    private readonly IServiceProvider _serviceProvider;
     private readonly IQuestDataCache _questDataCache;
     private readonly IEnumerable<IPrerequisiteProviderFactory> _prerequisiteProviders;
     private readonly ITelemetryProvider _telemetryProvider;
@@ -113,7 +111,6 @@ public partial class QuestService : IQuestService
     /// <param name="itemClient">Item client for template lookups (L2 hard dependency).</param>
     /// <param name="lockProvider">Distributed lock provider (L0 hard dependency).</param>
     /// <param name="eventConsumer">Event consumer for subscription registration.</param>
-    /// <param name="serviceProvider">Service provider for L4 soft dependencies.</param>
     /// <param name="questDataCache">Quest data cache for actor variable provider.</param>
     /// <param name="prerequisiteProviders">Prerequisite provider factories for L4 dynamic prerequisites.</param>
     /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
@@ -129,7 +126,6 @@ public partial class QuestService : IQuestService
         IItemClient itemClient,
         IDistributedLockProvider lockProvider,
         IEventConsumer eventConsumer,
-        IServiceProvider serviceProvider,
         IQuestDataCache questDataCache,
         IEnumerable<IPrerequisiteProviderFactory> prerequisiteProviders,
         ITelemetryProvider telemetryProvider)
@@ -143,7 +139,6 @@ public partial class QuestService : IQuestService
         _inventoryClient = inventoryClient;
         _itemClient = itemClient;
         _lockProvider = lockProvider;
-        _serviceProvider = serviceProvider;
         _questDataCache = questDataCache;
         _prerequisiteProviders = prerequisiteProviders;
         _telemetryProvider = telemetryProvider;

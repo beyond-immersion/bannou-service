@@ -13,23 +13,7 @@
 
 The Quest service (L2 GameFoundation) provides objective-based gameplay progression as a thin orchestration layer over lib-contract. Translates game-flavored quest semantics (objectives, rewards, quest givers) into Contract infrastructure (milestones, prebound APIs, parties), leveraging Contract's state machine and cleanup orchestration while presenting a player-friendly API. Agnostic to prerequisite sources: L4 services (skills, magic, achievements) implement `IPrerequisiteProviderFactory` for validation without Quest depending on them. Exposes quest data to the Actor service via the Variable Provider Factory pattern for ABML behavior expressions.
 
----
-
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (IStateStoreFactory) | Quest definitions (MySQL), instances (MySQL), progress (Redis), cooldowns (Redis), indexes (Redis), idempotency (Redis) |
-| lib-messaging (IMessageBus) | Publishing quest lifecycle events (accepted, progressed, completed, failed, abandoned) |
-| lib-contract (IContractClient) | Creating contract templates/instances, managing milestones, setting template values, terminating contracts |
-| lib-character (ICharacterClient) | Validating character existence for quest acceptance |
-| lib-currency (ICurrencyClient) | CURRENCY_AMOUNT prerequisite validation, resolving wallet IDs for reward template values |
-| lib-inventory (IInventoryClient) | ITEM_OWNED prerequisite validation, resolving container IDs for reward template values |
-| lib-item (IItemClient) | Resolving item template IDs from codes for prerequisite validation |
-| lib-resource (IResourceClient) | Registering compression callback for character archival. **Gap ([#561](https://github.com/beyond-immersion/bannou-service/issues/561))**: Does not yet implement `ISeededResourceProvider` cleanup for character deletion — quest instances, character indexes, and cooldowns referencing deleted characters are not cleaned up. |
-| IEventConsumer | Subscribing to contract lifecycle events for state synchronization |
-| IEventTemplateRegistry | Registering event templates for ABML `emit_event:` action |
-| IEnumerable\<IPrerequisiteProviderFactory\> | DI collection injection for dynamic prerequisite providers (L4 services register implementations) |
+**Deprecation Lifecycle (T31 Category B)**: Quest definitions are Category B entities — instances persist independently, so definitions must remain readable forever. Deprecation is one-way (no undeprecate), there is no delete endpoint, and acceptance of deprecated definitions is rejected. Contract templates are structurally immutable once created (trust guarantee); only quest metadata (name, description, category, difficulty, tags) can be updated.
 
 ---
 
@@ -40,76 +24,6 @@ The Quest service (L2 GameFoundation) provides objective-based gameplay progress
 | lib-actor | Consumes `IVariableProviderFactory` implementation (QuestProviderFactory) to provide `${quest.*}` variables for ABML behavior expressions |
 | lib-analytics | Subscribes to `quest.completed`, `quest.failed` events for statistics aggregation |
 | lib-achievement | Subscribes to `quest.completed` events for achievement unlock triggers |
-
----
-
-## State Storage
-
-### MySQL Stores (Durable)
-
-**Store**: `quest-definition-statestore`
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `quest:def:{definitionId}` | `QuestDefinitionModel` | Quest definition with objectives, prerequisites, rewards |
-
-**Store**: `quest-instance-statestore`
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `quest:inst:{questInstanceId}` | `QuestInstanceModel` | Active/completed quest instance with status, party, deadlines |
-
-### Redis Stores (Ephemeral/Cache)
-
-**Store**: `quest-objective-progress`
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `quest:prog:{questInstanceId}:{objectiveCode}` | `ObjectiveProgressModel` | Real-time objective progress tracking with entity deduplication |
-
-**Store**: `quest-definition-cache`
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `quest:def:{definitionId}` | `QuestDefinitionModel` | Read-through cache for frequently accessed definitions (TTL: 1 hour) |
-
-**Store**: `quest-character-index`
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `quest:char:{characterId}` | `CharacterQuestIndex` | Active quest IDs and completed quest codes per character |
-
-**Store**: `quest-cooldown`
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `quest:cd:{characterId}:{questCode}` | `CooldownEntry` | Per-character quest cooldown tracking for repeatable quests (TTL: 24 hours) |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `quest.accepted` | `QuestAcceptedEvent` | Character accepts a quest via AcceptQuestAsync |
-| `quest.objective.progressed` | `QuestObjectiveProgressedEvent` | Objective progress updated via ReportObjectiveProgressAsync or contract milestone events |
-| `quest.completed` | `QuestCompletedEvent` | All required objectives complete, quest status → COMPLETED |
-| `quest.failed` | `QuestFailedEvent` | Quest fails due to deadline, breach, or contract termination |
-| `quest.abandoned` | `QuestAbandonedEvent` | Player voluntarily abandons quest via AbandonQuestAsync |
-
-### Consumed Events
-
-| Topic | Handler | Action |
-|-------|---------|--------|
-| `contract.milestone.completed` | `HandleContractMilestoneCompletedAsync` | Updates objective progress when Contract confirms milestone completion |
-| `contract.fulfilled` | `HandleContractFulfilledAsync` | Marks quest as COMPLETED when all required milestones done |
-| `contract.terminated` | `HandleContractTerminatedAsync` | Marks quest as FAILED or ABANDONED based on termination reason |
-| `quest.accepted` | `HandleQuestAcceptedForCacheAsync` | Self-subscribe: invalidates quest data cache for affected characters |
-| `quest.completed` | `HandleQuestCompletedForCacheAsync` | Self-subscribe: invalidates quest data cache for affected characters |
-| `quest.failed` | `HandleQuestFailedForCacheAsync` | Self-subscribe: invalidates quest data cache for affected characters |
-| `quest.abandoned` | `HandleQuestAbandonedForCacheAsync` | Self-subscribe: invalidates quest data cache for affected character |
 
 ---
 
@@ -125,72 +39,6 @@ The Quest service (L2 GameFoundation) provides objective-based gameplay progress
 | `LockExpirySeconds` | `QUEST_LOCK_EXPIRY_SECONDS` | 30 | Distributed lock expiry for quest mutations |
 | `MaxConcurrencyRetries` | `QUEST_MAX_CONCURRENCY_RETRIES` | 5 | ETag concurrency retry attempts |
 | `PrerequisiteValidationMode` | `QUEST_PREREQUISITE_VALIDATION_MODE` | CheckAll | Controls prerequisite validation behavior (FailFast stops on first failure, CheckAll evaluates all) |
-
----
-
-## DI Services & Helpers
-
-| Service | Role |
-|---------|------|
-| `ILogger<QuestService>` | Structured logging |
-| `QuestServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access for all quest stores |
-| `IMessageBus` | Event publishing |
-| `IEventConsumer` | Event subscription registration |
-| `IContractClient` | Contract service integration for template/instance management |
-| `ICharacterClient` | Character validation during quest acceptance |
-| `ICurrencyClient` | Currency balance checks for CURRENCY_AMOUNT prerequisites and reward wallet resolution |
-| `IInventoryClient` | Item ownership checks for ITEM_OWNED prerequisites and reward container resolution |
-| `IItemClient` | Item template lookups for prerequisite validation |
-| `IDistributedLockProvider` | Distributed locks for quest mutation operations |
-| `IServiceProvider` | Runtime resolution of L4 soft dependencies |
-| `IEnumerable<IPrerequisiteProviderFactory>` | DI collection for dynamic L4 prerequisite providers |
-| `IQuestDataCache` | In-memory TTL cache for actor behavior expressions |
-| `ITelemetryProvider` | Distributed tracing span instrumentation |
-| `QuestProviderFactory` | IVariableProviderFactory implementation for Actor integration |
-| `QuestProvider` | IVariableProvider exposing `${quest.*}` variables |
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Definition Endpoints (developer role)
-
-Standard CRUD operations on quest definitions with contract template creation. `CreateQuestDefinitionAsync` validates objectives and prerequisites, then creates a contract template via `IContractClient` before storing the definition. Contract templates are structurally immutable once created (this is a trust guarantee — see #503 comment); only quest metadata (name, description, category, difficulty, tags) can be updated via `UpdateQuestDefinitionAsync`.
-
-**Deprecation Lifecycle (T31 Category B)**: Quest Definition is a Category B entity — instances (quest acceptances) persist independently, so definitions must remain readable forever. `DeprecateQuestDefinitionAsync` marks a definition as deprecated; `AcceptQuestAsync` rejects acceptance of deprecated definitions with `BadRequest`. No undeprecate endpoint (Category B deprecation is one-way). No delete endpoint (definitions persist forever). `ListQuestDefinitionsAsync` and `ListAvailableQuestsAsync` support `includeDeprecated` parameter (default: `false`).
-
-### Instance Endpoints (user role)
-
-**AcceptQuestAsync**: The core acceptance flow:
-1. Validates character exists via `ICharacterClient`
-2. Checks prerequisites (completed quests, level, reputation, items, currency)
-3. Verifies not on cooldown for repeatable quests
-4. Checks active quest count against `MaxActiveQuestsPerCharacter`
-5. Creates contract instance via `IContractClient` with auto-consent for questor
-6. Initializes objective progress records
-7. Updates character index with new active quest
-8. Publishes `quest.accepted` event
-
-**AbandonQuestAsync**: Terminates underlying contract, updates status to ABANDONED, removes from character index.
-
-**ListQuestsAsync/ListAvailableQuestsAsync**: Filter by status, character, quest giver, game service. Available quests check prerequisites and cooldowns.
-
-**GetQuestLogAsync**: Player-facing UI endpoint returning progress summaries with hidden objective filtering based on reveal behavior.
-
-### Objective Endpoints
-
-**ReportObjectiveProgressAsync**: Increments progress, supports entity deduplication via `TrackedEntityIds` HashSet, triggers milestone completion in Contract when objective completes. Uses ETag-based optimistic concurrency with configurable retries.
-
-**ForceCompleteObjectiveAsync** (admin role): Debug endpoint that immediately completes an objective regardless of current progress.
-
-### Internal Endpoints (service-to-service)
-
-**HandleMilestoneCompletedAsync/HandleQuestCompletedAsync**: Prebound API callbacks from Contract service (empty x-permissions - internal only).
-
-### Compression Endpoint (developer role)
-
-**GetCompressDataAsync**: Returns `QuestArchive` with active quests, completed count, and category breakdown for character archival via lib-resource.
 
 ---
 
@@ -340,18 +188,6 @@ None currently identified.
 ---
 
 ## Work Tracking
-
-### Completed
-- **2026-02-26**: Production hardening audit - Schema, code, and test fixes across 17 items:
-  - **Schema (T1)**: Consolidated inline RewardType enum to `$ref`; removed dead types AcceptQuestErrorResponse, AcceptQuestErrorCode, FailedPrerequisite; fixed NRT violations in event schemas; added validation keywords to API and config integer properties; fixed non-required/non-nullable fields on CreateQuestDefinitionRequest
-  - **Config (T21/T25)**: Changed PrerequisiteValidationMode from string to `$ref` enum; added DefaultRewardContainerMaxSlots (default: 100); added minimum/maximum bounds to all 12 integer config properties
-  - **Code (T9)**: Added ETag-based optimistic concurrency to all CharacterIndex mutation sites via new `UpdateCharacterIndexAsync` helper with retry loop
-  - **Code (T25)**: Fixed PrerequisiteValidationMode string comparison to enum equality
-  - **Code (T26)**: Replaced Guid.Empty sentinel for QuestGiverCharacterId with nullable Guid chain
-  - **Code (T30)**: Added ITelemetryProvider + StartActivity spans to all 15 private async methods across QuestService.cs and QuestServiceEvents.cs
-  - **Code (T21)**: Replaced hardcoded `MaxSlots = 100` with `_configuration.DefaultRewardContainerMaxSlots`
-  - **Code (T2)**: Fixed incorrect L4 layer comments to L2 in QuestServicePlugin and QuestProvider
-  - **Tests**: Updated constructor for ITelemetryProvider, updated CharacterIndex mocks for ETag concurrency, added 5 new event handler tests (46 total, all passing)
 
 ### Open Issues
 - [#496](https://github.com/beyond-immersion/bannou-service/issues/496): Client events for real-time objective tracking (unblocked — #426 implemented)

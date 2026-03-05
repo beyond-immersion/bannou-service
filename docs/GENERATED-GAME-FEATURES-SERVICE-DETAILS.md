@@ -11,18 +11,6 @@ Services in the **Game Features (L4)** layer.
 
 The Achievement plugin (L4 GameFeatures) provides a multi-entity achievement and trophy system with progressive/binary unlock types, prerequisite chains, rarity calculations, and platform synchronization (Steam, Xbox, PlayStation). Achievements are scoped to game services, support event-driven auto-unlock from Analytics and Leaderboard events, and include a background service for periodic rarity recalculation.
 
-## Affix {#affix}
-
-**Deep Dive**: [docs/plugins/AFFIX.md](plugins/AFFIX.md)
-
-Item modifier definition, instance management, and stat computation service (L4 GameFeatures). Owns two layers of data: **definitions** (modifier templates with tiers, mod groups, spawn weights, stat grants) and **instances** (per-item applied modifier state stored in Affix's own state store). Any system that needs to answer "what modifiers does this item have?" or "what is this item worth?" queries lib-affix's typed API. Game-agnostic (PoE-style prefix/suffix tiers, Diablo-style legendary affixes, or simple "quality stars" are all valid configurations). Internal-only, never internet-facing.
-
-## Agency {#agency}
-
-**Deep Dive**: [docs/plugins/AGENCY.md](plugins/AGENCY.md)
-
-The Agency service (L4 GameFeatures) manages the guardian spirit's progressive agency system -- the bridge between Seed's abstract capability data and the client's concrete UX module rendering. It answers the question: "Given this guardian spirit's accumulated experience, what can the player perceive and do?" Game-agnostic: domain codes, modules, and influence types are registered per game service, not hardcoded. Internal-only, never internet-facing.
-
 ## Analytics {#analytics}
 
 **Version**: 1.0.0 | **Schema**: `schemas/analytics-api.yaml` | **Endpoints**: 9 | **Deep Dive**: [docs/plugins/ANALYTICS.md](plugins/ANALYTICS.md)
@@ -263,7 +251,7 @@ Time-based automated production service (L4 GameFeatures) for continuous backgro
 
 ## Summary
 
-- **Services in layer**: 42
+- **Services in layer**: 40
 - **Endpoints in layer**: 344
 
 ---

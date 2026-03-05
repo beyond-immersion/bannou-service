@@ -33,7 +33,7 @@
 
 **Lock store**: `GameSessionLock` used for all distributed lock acquisitions.
 
-**Note**: State stores are NOT cached in the constructor. Each method calls `_stateStoreFactory.GetStore<T>(StateStoreDefinitions.GameSession)` inline.
+**Note**: State stores are constructor-cached as readonly fields (`_sessionStore`, `_sessionListStore`, `_subscriberSessionStore`).
 
 ---
 

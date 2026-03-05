@@ -76,6 +76,7 @@ struct FArriveJourneyRequest;
 struct FAssetConflict;
 struct FAssetMetadata;
 struct FAssetMetadataInput;
+struct FAssetOwnerType;
 struct FAssetReference;
 struct FAssetRequirementInfo;
 struct FAssetSearchRequest;
@@ -454,6 +455,7 @@ struct FDocument;
 struct FDocumentCategory;
 struct FDocumentResult;
 struct FDocumentSummary;
+struct FDocumentationOwnerType;
 struct FDomainInfluence;
 struct FDomainWeight;
 struct FDownloadInfo;
@@ -1222,6 +1224,7 @@ struct FScenarioStateResponse;
 struct FScenarioStatus;
 struct FScenarioTemplateResponse;
 struct FScene;
+struct FSceneEditorType;
 struct FSceneNode;
 struct FSceneResponse;
 struct FSceneSummary;
@@ -1529,9 +1532,9 @@ struct FAbandonScenarioRequest
 {
     GENERATED_BODY()
 
-    /** Account abandoning the scenario */
+    /** WebSocket session ID of the player */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
+    FGuid SessionId;
 
     /** Scenario instance to abandon */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -2899,9 +2902,13 @@ struct FArchiveInfo
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FDateTime CreatedAt;
 
-    /** Owner of this archive. NOT a session ID (null if owner unknown). */
+    /** Type of owner for this archive (null if owner unknown) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Owner;
+    TOptional<FDocumentationOwnerType> OwnerType;
+
+    /** Owner identifier (null if owner unknown). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString OwnerId;
 
 };
 
@@ -3092,6 +3099,16 @@ struct FAssetMetadataInput
     /** Searchable tags for the asset (null to omit) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FString> Tags;
+
+};
+
+/**
+ * Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).
+ */
+USTRUCT(BlueprintType)
+struct FAssetOwnerType
+{
+    GENERATED_BODY()
 
 };
 
@@ -4301,9 +4318,13 @@ struct FBindRepositoryRequest
 {
     GENERATED_BODY()
 
-    /** Owner of this binding. NOT a session ID. */
+    /** Type of owner for this binding */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Owner;
+    FDocumentationOwnerType OwnerType;
+
+    /** Owner identifier. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString OwnerId;
 
     /** Documentation namespace to bind */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -5255,9 +5276,13 @@ struct FBundleInfo
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Description;
 
-    /** Owner account ID or service name (null for system-owned bundles) */
+    /** Type of owner (null for system-owned bundles) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Owner;
+    TMap<FString, FString> OwnerType;
+
+    /** Owner identifier - session ID or service name (null for system-owned bundles) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString OwnerId;
 
     /** Game realm this bundle belongs to. Null for cross-realm bundles. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -5401,9 +5426,13 @@ struct FBundleUploadRequest
 {
     GENERATED_BODY()
 
-    /** Owner of this bundle upload. NOT a session ID. */
+    /** Type of owner uploading this bundle */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Owner;
+    FAssetOwnerType OwnerType;
+
+    /** Owner identifier. For Session type: the WebSocket session ID (UUID format). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString OwnerId;
 
     /** Must end with .bannou or .zip */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -5435,7 +5464,7 @@ struct FBundleVersionRecord
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FDateTime CreatedAt;
 
-    /** Account ID that made the change */
+    /** Session ID or service name that made the change */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString CreatedBy;
 
@@ -5784,7 +5813,7 @@ struct FCancelResponse
 };
 
 /**
- * Request to cancel a subscription
+ * Request to cancel a subscription. Requires accountId for ownership verification when called by non-admin users.
  */
 USTRUCT(BlueprintType)
 struct FCancelSubscriptionRequest
@@ -5794,6 +5823,10 @@ struct FCancelSubscriptionRequest
     /** ID of the subscription to cancel */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid SubscriptionId;
+
+    /** Account ID of the caller for ownership verification */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid AccountId;
 
     /** Optional reason for cancellation */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -5971,9 +6004,9 @@ struct FChainScenarioRequest
 {
     GENERATED_BODY()
 
-    /** Account chaining scenarios */
+    /** WebSocket session ID of the player */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
+    FGuid SessionId;
 
     /** Currently active scenario instance */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -6401,15 +6434,7 @@ struct FChatMessageRequest
 {
     GENERATED_BODY()
 
-    /** WebSocket session ID of the sender. Provided by shortcut system. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid SessionId;
-
-    /** Account ID of the sender. Provided by shortcut system. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
-
-    /** Game type for the chat. Determines which lobby's players receive the message. Provided by shortcut system. */
+    /** Game type for the chat. Determines which lobby's players receive the message. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGameType GameType;
 
@@ -6869,7 +6894,11 @@ struct FCheckoutRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid SceneId;
 
-    /** Optional editor identifier (defaults to caller identity) */
+    /** Type of editor. Defaults to Session if not specified. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FSceneEditorType> EditorType;
+
+    /** Editor identifier. For Session type: the WebSocket session ID (UUID format). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString EditorId;
 
@@ -8007,9 +8036,9 @@ struct FCompleteScenarioRequest
 {
     GENERATED_BODY()
 
-    /** Account completing the scenario */
+    /** WebSocket session ID of the player */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
+    FGuid SessionId;
 
     /** Scenario instance to complete */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -9807,9 +9836,13 @@ struct FCreateArchiveRequest
 {
     GENERATED_BODY()
 
-    /** Owner of this archive. NOT a session ID. */
+    /** Type of owner for this archive */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Owner;
+    FDocumentationOwnerType OwnerType;
+
+    /** Owner identifier. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString OwnerId;
 
     /** Documentation namespace to archive */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -9943,9 +9976,13 @@ struct FCreateBundleRequest
 {
     GENERATED_BODY()
 
-    /** Owner of this bundle. NOT a session ID. */
+    /** Type of owner creating this bundle */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Owner;
+    FAssetOwnerType OwnerType;
+
+    /** Owner identifier. For Session type: the WebSocket session ID (UUID format). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString OwnerId;
 
     /** Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1") */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -10931,9 +10968,13 @@ struct FCreateMetabundleRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Version;
 
-    /** Owner of this metabundle. NOT a session ID. */
+    /** Type of owner creating this metabundle */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Owner;
+    FAssetOwnerType OwnerType;
+
+    /** Owner identifier. For Session type: the WebSocket session ID (UUID format). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString OwnerId;
 
     /** Game realm for this metabundle */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -12041,9 +12082,9 @@ struct FDeclinePoiRequest
 {
     GENERATED_BODY()
 
-    /** Account declining the POI */
+    /** WebSocket session ID of the player */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
+    FGuid SessionId;
 
     /** POI to decline */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -13460,6 +13501,16 @@ struct FDocumentSummary
 };
 
 /**
+ * Type of documentation resource owner
+ */
+USTRUCT(BlueprintType)
+struct FDocumentationOwnerType
+{
+    GENERATED_BODY()
+
+};
+
+/**
  * A deity's influence in a specific domain with a weight representing strength
  */
 USTRUCT(BlueprintType)
@@ -14057,11 +14108,7 @@ struct FEnterGardenRequest
 {
     GENERATED_BODY()
 
-    /** Account entering the garden */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
-
-    /** Current WebSocket session ID */
+    /** WebSocket session ID of the player entering the garden */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid SessionId;
 
@@ -14075,9 +14122,9 @@ struct FEnterScenarioRequest
 {
     GENERATED_BODY()
 
-    /** Account entering the scenario */
+    /** WebSocket session ID of the player */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
+    FGuid SessionId;
 
     /** Template to instantiate */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -15957,15 +16004,7 @@ struct FGameActionRequest
 {
     GENERATED_BODY()
 
-    /** WebSocket session ID of the client. Provided by shortcut system. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid SessionId;
-
-    /** Account ID of the player. Provided by shortcut system. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
-
-    /** Game type for the action. Determines which lobby to apply the action. Provided by shortcut system. */
+    /** Game type for the action. Determines which lobby to apply the action. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGameType GameType;
 
@@ -17783,9 +17822,9 @@ struct FGetGardenStateRequest
 {
     GENERATED_BODY()
 
-    /** Account whose garden state to retrieve */
+    /** WebSocket session ID of the player */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
+    FGuid SessionId;
 
 };
 
@@ -18893,9 +18932,9 @@ struct FGetScenarioStateRequest
 {
     GENERATED_BODY()
 
-    /** Account whose scenario state to retrieve */
+    /** WebSocket session ID of the player */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
+    FGuid SessionId;
 
 };
 
@@ -20551,9 +20590,9 @@ struct FInteractWithPoiRequest
 {
     GENERATED_BODY()
 
-    /** Account interacting with the POI */
+    /** WebSocket session ID of the player */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
+    FGuid SessionId;
 
     /** POI to interact with */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -21011,10 +21050,6 @@ struct FJoinMatchmakingRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid WebSocketSessionId;
 
-    /** Account ID of the player joining */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
-
     /** ID of the queue to join */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString QueueId;
@@ -21445,9 +21480,9 @@ struct FLeaveGardenRequest
 {
     GENERATED_BODY()
 
-    /** Account leaving the garden */
+    /** WebSocket session ID of the player leaving the garden */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
+    FGuid SessionId;
 
 };
 
@@ -23329,9 +23364,9 @@ struct FListPoisRequest
 {
     GENERATED_BODY()
 
-    /** Account whose POIs to list */
+    /** WebSocket session ID of the player */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
+    FGuid SessionId;
 
 };
 
@@ -27015,10 +27050,6 @@ struct FPartyMemberInfo
 {
     GENERATED_BODY()
 
-    /** Account ID of the party member */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
-
     /** WebSocket session ID for event delivery */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid WebSocketSessionId;
@@ -28235,9 +28266,13 @@ struct FQueryBundlesRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString NameContains;
 
-    /** Filter by bundle owner account ID */
+    /** Filter by owner type (null for any type) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Owner;
+    TMap<FString, FString> OwnerType;
+
+    /** Filter by owner identifier (session ID or service name) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString OwnerId;
 
     /** Filter by realm */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -31269,9 +31304,13 @@ struct FRepositoryBindingInfo
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FDateTime CreatedAt;
 
-    /** Owner of this binding. NOT a session ID. */
+    /** Type of owner for this binding */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Owner;
+    FDocumentationOwnerType OwnerType;
+
+    /** Owner identifier. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString OwnerId;
 
 };
 
@@ -32888,6 +32927,16 @@ struct FScene
     /** When the scene was last modified */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FDateTime> UpdatedAt;
+
+};
+
+/**
+ * Type of scene editor for polymorphic identification per FOUNDATION TENETS.
+ */
+USTRUCT(BlueprintType)
+struct FSceneEditorType
+{
+    GENERATED_BODY()
 
 };
 
@@ -38371,9 +38420,9 @@ struct FUpdatePositionRequest
 {
     GENERATED_BODY()
 
-    /** Account whose position to update */
+    /** WebSocket session ID of the player */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid AccountId;
+    FGuid SessionId;
 
     /** New position in garden space */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -38881,9 +38930,13 @@ struct FUploadRequest
 {
     GENERATED_BODY()
 
-    /** Owner of this asset operation. NOT a session ID. */
+    /** Type of owner initiating this upload */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Owner;
+    FAssetOwnerType OwnerType;
+
+    /** Owner identifier. For Session type: the WebSocket session ID (UUID format). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString OwnerId;
 
     /** Original filename with extension */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")

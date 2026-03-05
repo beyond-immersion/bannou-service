@@ -656,14 +656,6 @@ public partial class JoinMatchmakingRequest
     public System.Guid WebSocketSessionId { get; set; } = default!;
 
     /// <summary>
-    /// Account ID of the player joining
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
-
-    /// <summary>
     /// ID of the queue to join
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("queueId")]
@@ -716,14 +708,6 @@ public partial class JoinMatchmakingRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PartyMemberInfo
 {
-
-    /// <summary>
-    /// Account ID of the party member
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
     /// WebSocket session ID for event delivery

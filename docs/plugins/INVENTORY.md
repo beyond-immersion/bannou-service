@@ -4,7 +4,7 @@
 > **Schema**: schemas/inventory-api.yaml
 > **Version**: 1.0.0
 > **Layer**: GameFoundation
-> **State Stores**: inventory-container-store (MySQL), inventory-container-cache (Redis), inventory-lock (Redis)
+> **State Store**: inventory-container-store (MySQL), inventory-container-cache (Redis), inventory-lock (Redis)
 > **Implementation Map**: [docs/maps/INVENTORY.md](../maps/INVENTORY.md)
 
 ---
@@ -12,18 +12,6 @@
 ## Overview
 
 Container and item placement management (L2 GameFoundation) for games. Handles container lifecycle (CRUD), item movement between containers, stacking operations (split/merge), and inventory queries. Does NOT handle item definitions or instances directly -- delegates to lib-item for all item-level operations. Supports multiple constraint models (slot-only, weight-only, grid, volumetric, unlimited), category restrictions, and nesting depth limits. Designed as the placement layer that orchestrates lib-item.
-
----
-
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | MySQL+Redis persistence for containers, cache, and indexes |
-| lib-state (`IDistributedLockProvider`) | Container-level locks for concurrent modification safety |
-| lib-messaging (`IMessageBus`) | Publishing inventory lifecycle events; error event publishing |
-| lib-item (`IItemClient`) | Item template lookups, instance CRUD, container contents listing |
-| lib-connect (`IEntitySessionRegistry`) | Publishing client events to sessions observing container owners |
 
 ---
 
@@ -61,46 +49,7 @@ Container and item placement management (L2 GameFoundation) for games. Handles c
 
 ---
 
-## State Storage
-
-**Stores**: 3 state stores
-
-| Store | Backend | Purpose |
-|-------|---------|---------|
-| `inventory-container-store` | MySQL | Container definitions (persistent) |
-| `inventory-container-cache` | Redis | Container read-through cache (TTL: 300s) |
-| `inventory-lock` | Redis | Distributed locks for concurrent modifications |
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `cont:{containerId}` | `ContainerModel` | Container definition and state |
-| `cont-owner:{ownerType}:{ownerId}` | `List<string>` (JSON) | Container IDs for an owner |
-| `cont-type:{containerType}` | `List<string>` (JSON) | Container IDs of a type |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `inventory.container.created` | `InventoryContainerCreatedEvent` | Container created |
-| `inventory.container.updated` | `InventoryContainerUpdatedEvent` | Container properties changed |
-| `inventory.container.deleted` | `InventoryContainerDeletedEvent` | Container deleted |
-| `inventory.container.full` | `InventoryContainerFullEvent` | Container reached capacity |
-| `inventory.item.placed` | `InventoryItemPlacedEvent` | Item added to container |
-| `inventory.item.removed` | `InventoryItemRemovedEvent` | Item removed from container |
-| `inventory.item.moved` | `InventoryItemMovedEvent` | Item moved between containers/slots |
-| `inventory.item.transferred` | `InventoryItemTransferredEvent` | Item transferred between owners |
-| `inventory.item.split` | `InventoryItemSplitEvent` | Stack split into two |
-| `inventory.item.stacked` | `InventoryItemStackedEvent` | Stacks merged together |
-
-### Consumed Events
-
-This plugin does not consume external events.
-
-### Client Events (WebSocket Push)
+## Client Events (WebSocket Push)
 
 Client events are pushed via `IEntitySessionRegistry.PublishToEntitySessionsAsync` using entity type `"inventory"` with the container owner's ID as the entity ID. Higher-layer services (e.g., Gardener) register `inventory → session` bindings so that connected clients receive real-time updates.
 
@@ -121,6 +70,7 @@ Client events are pushed via `IEntitySessionRegistry.PublishToEntitySessionsAsyn
 | `DefaultMaxNestingDepth` | `INVENTORY_DEFAULT_MAX_NESTING_DEPTH` | `3` | Maximum container nesting depth |
 | `DefaultWeightContribution` | `INVENTORY_DEFAULT_WEIGHT_CONTRIBUTION` | `self_plus_contents` | How weight propagates to parent |
 | `ContainerCacheTtlSeconds` | `INVENTORY_CONTAINER_CACHE_TTL_SECONDS` | `300` | Redis cache TTL (5 min) |
+| `ProviderCacheTtlSeconds` | `INVENTORY_PROVIDER_CACHE_TTL_SECONDS` | `60` | In-memory variable provider cache TTL for actor behavior |
 | `LockTimeoutSeconds` | `INVENTORY_LOCK_TIMEOUT_SECONDS` | `30` | Container-level distributed lock expiry |
 | `DeleteLockTimeoutSeconds` | `INVENTORY_DELETE_LOCK_TIMEOUT_SECONDS` | `120` | Container deletion lock expiry (longer for serial item handling) |
 | `ListLockTimeoutSeconds` | `INVENTORY_LIST_LOCK_TIMEOUT_SECONDS` | `15` | Owner/type index list lock expiry |
@@ -129,64 +79,6 @@ Client events are pushed via `IEntitySessionRegistry.PublishToEntitySessionsAsyn
 | `DefaultMaxWeight` | `INVENTORY_DEFAULT_MAX_WEIGHT` | `100.0` | Default weight capacity |
 | `MaxCountQueryLimit` | `INVENTORY_MAX_COUNT_QUERY_LIMIT` | `10000` | Max items to scan during count |
 | `QueryPageSize` | `INVENTORY_QUERY_PAGE_SIZE` | `200` | Items per page for queries |
-
----
-
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `ILogger<InventoryService>` | Scoped | Structured logging |
-| `InventoryServiceConfiguration` | Singleton | All 11 config properties |
-| `IStateStoreFactory` | Singleton | MySQL+Redis state store access |
-| `IDistributedLockProvider` | Singleton | Container-level distributed locks |
-| `IMessageBus` | Scoped | Event publishing and error events |
-| `IItemClient` | Scoped | Item service client for template/instance operations |
-| `ITelemetryProvider` | Singleton | Distributed tracing spans for async helper methods |
-
-Service lifetime is **Scoped** (per-request). No background services. No helper classes - all logic is in the main service.
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Container Operations (6 endpoints)
-
-- **CreateContainer** (`/inventory/container/create`): Validates capacity parameters per constraint model (rejects <= 0 for slots, weight, volume, grid dimensions). Checks nesting depth against parent's `MaxNestingDepth` (if specified). Resolves weight contribution from config default when `WeightContribution.None`. Saves to MySQL, updates Redis cache. Updates owner and type indexes with separate list locks. Publishes `inventory.container.created`.
-
-- **GetContainer** (`/inventory/container/get`): Cache read-through pattern (Redis -> MySQL -> populate cache). If `includeContents=true`, calls `IItemClient.ListItemsByContainerAsync()`.
-
-- **GetOrCreateContainer** (`/inventory/container/get-or-create`): Requires `EnableLazyContainerCreation=true`. Searches owner's containers by iterating the owner index list. Creates via `CreateContainerAsync` if not found. Idempotent acquisition pattern.
-
-- **ListContainers** (`/inventory/container/list`): Lists containers from owner index. Filters by container type, realm, equipment slot status. No pagination support.
-
-- **UpdateContainer** (`/inventory/container/update`): Acquires distributed lock before modification. Updates: maxSlots, maxWeight, gridDimensions, maxVolume, categories, tags, metadata. Publishes `inventory.container.updated`.
-
-- **DeleteContainer** (`/inventory/container/delete`): Returns `ServiceUnavailable` if item service unreachable (prevents orphaning items). Three strategies for item handling: `destroy` (calls DestroyItemInstance per item), `transfer` (moves items to target container), `error` (returns 400 if not empty). Cleans up indexes and cache. Publishes `inventory.container.deleted`.
-
-### Inventory Operations (6 endpoints)
-
-- **AddItemToContainer** (`/inventory/add`): Acquires lock. Gets item instance and template from lib-item. Validates category constraints (allowed/forbidden lists, case-insensitive). Checks capacity per constraint model. Increments UsedSlots, ContentsWeight, CurrentVolume. Updates item's ContainerId via lib-item. Publishes `inventory.item.placed`. Emits `inventory.container.full` if capacity reached.
-
-- **RemoveItemFromContainer** (`/inventory/remove`): Gets item's current container via lib-item. Acquires lock. Decrements counters. Weight/volume decrement fails gracefully if template lookup fails (warning logged). Clears item's ContainerId in lib-item via `ModifyItemInstance(NewContainerId = null)` — failure is non-fatal (warning logged). Publishes `inventory.item.removed`.
-
-- **MoveItem** (`/inventory/move`): Same-container: acquires distributed lock, calls `ModifyItemInstanceAsync` to persist slot position (NewSlotIndex/NewSlotX/NewSlotY), publishes `inventory.item.moved` with previous and new slot data (no container counter changes needed). Different-container: validates destination constraints, internally calls RemoveItemFromContainer + AddItemToContainer. Publishes `inventory.item.moved`.
-
-- **TransferItem** (`/inventory/transfer`): Checks item is tradeable (`template.Tradeable`) and not bound (`item.BoundToId`). Acquires lock on source container. Calls MoveItem internally. Publishes `inventory.item.transferred` with source/target owner info.
-
-- **SplitStack** (`/inventory/split`): Validates quantity < original (not <=). Validates not `QuantityModel.Unique`. Acquires container lock. Updates original quantity via `QuantityDelta = -body.Quantity`. Creates new instance via lib-item. Increments container UsedSlots. Publishes `inventory.item.split`. On failure to create new item, attempts to restore original quantity.
-
-- **MergeStacks** (`/inventory/merge`): Validates templates match. Gets template for MaxStackSize. Calculates overflow (source keeps excess). Acquires lock on source container only. Updates target quantity first, then destroys or reduces source. Decrements container UsedSlots on full merge. Publishes `inventory.item.stacked`.
-
-### Query Operations (4 endpoints)
-
-- **QueryItems** (`/inventory/query`): Lists all owner's containers via ListContainersAsync, fetches items from each via lib-item. Client-side filtering by template/category/tags after fetch. Pagination via offset/limit applied after all items collected.
-
-- **CountItems** (`/inventory/count`): Paginates through QueryItems results up to `MaxCountQueryLimit`. Returns total quantity (sum) and stack count.
-
-- **HasItems** (`/inventory/has`): Takes array of template+quantity requirements. Calls CountItems for each. Returns per-item satisfaction boolean and overall `hasAll`.
-
-- **FindSpace** (`/inventory/find-space`): Gets template for constraint checks. Filters containers by category constraints. Checks capacity via constraint model. If `preferStackable`, seeks existing stacks with room (quantity < MaxStackSize). Returns candidate containers with fit quantities.
 
 ---
 
@@ -302,7 +194,6 @@ Stack Operations
 4. **No configurable drop behavior**: RemoveItem clears the item's ContainerId (setting it to null via lib-item), but there is no configurable "drop" system — removed items simply become uncontained. No per-container drop configuration, no `/inventory/drop` endpoint, and no location-owned ground containers exist. See [#164](https://github.com/beyond-immersion/bannou-service/issues/164) for the design discussion.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/164 -->
 
-
 ---
 
 ## Potential Extensions
@@ -327,8 +218,6 @@ Stack Operations
 
 7. **Mail as remote inventory**: Implement a mailbox system using inventory containers with COD (cash-on-delivery) escrow integration. See [#283](https://github.com/beyond-immersion/bannou-service/issues/283).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/283 -->
-8. ~~**Client events for real-time container updates**~~: **IMPLEMENTED** (2026-02-27) - Three client events (`inventory.item_changed`, `inventory.container_full`, `inventory.item_transferred`) pushed via `IEntitySessionRegistry.PublishToEntitySessionsAsync` with composite operation suppression. See [#495](https://github.com/beyond-immersion/bannou-service/issues/495).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/495 -->
 
 ---
 
@@ -336,7 +225,7 @@ Stack Operations
 
 ### Bugs (Fix Immediately)
 
-1. ~~**MoveItem same-container shortcut doesn't update item slot position**~~: **FIXED** (2026-02-25) - Same-container MoveItem now acquires a distributed lock, calls `ModifyItemInstanceAsync` to persist slot position (NewSlotIndex/NewSlotX/NewSlotY), and publishes `inventory.item.moved` event with previous and new slot positions. The event includes PreviousSlotIndex/PreviousSlotX/PreviousSlotY for consumers that need to track slot changes.
+(None currently identified.)
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -380,22 +269,20 @@ Stack Operations
 4. **No event consumption**: Inventory doesn't listen for item events (destroy, bind, modify). If an item is destroyed directly via lib-item (bypassing inventory), the container's UsedSlots/ContentsWeight counters become stale.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/484 -->
 
-5. ~~**Lock timeout not configurable per-operation**~~: **FIXED** (2026-02-25) - Added `DeleteLockTimeoutSeconds` config property (default 120s) for container deletion operations. Standard operations still use `LockTimeoutSeconds` (30s). This prevents lock expiry during serial item destruction/transfer in containers with many items.
-
-6. **QueryItems pagination is inefficient**: All items are fetched from all containers, then offset/limit is applied in memory. For owners with many containers and items, this is O(n) memory even for the first page.
+5. **QueryItems pagination is inefficient**: All items are fetched from all containers, then offset/limit is applied in memory. For owners with many containers and items, this is O(n) memory even for the first page.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/485 -->
 
-7. **No escrow integration**: lib-escrow has a placeholder comment mentioning inventory but no actual integration. Asset custody for items in escrow is not implemented. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
+6. **No escrow integration**: lib-escrow has a placeholder comment mentioning inventory but no actual integration. Asset custody for items in escrow is not implemented. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/153 -->
 
-8. **Container orphan cleanup on owner deletion**: When an owner entity is deleted, its inventory containers are not automatically cleaned up. For L2 owners (Character, Location), the owning service can call `IInventoryClient.DeleteContainer()` directly (L2→L2, hierarchy-permitted). For **Account-owned containers** (L1→L2), there is a hierarchy problem: Account (L1) cannot depend on Inventory (L2), and T28's Account privacy exception prevents lib-resource registration for Account. No established mechanism exists for cleaning up account-owned containers on account deletion. This is a cross-cutting concern shared with other L2 services that have account-scoped data (Subscription, GameSession, Character). See [#156](https://github.com/beyond-immersion/bannou-service/issues/156) (Storage Garbage Collection Framework) for potential cross-cutting solution.
+7. **Container orphan cleanup on owner deletion**: When an owner entity is deleted, its inventory containers are not automatically cleaned up. For L2 owners (Character, Location), the owning service can call `IInventoryClient.DeleteContainer()` directly (L2→L2, hierarchy-permitted). For **Account-owned containers** (L1→L2), there is a hierarchy problem: Account (L1) cannot depend on Inventory (L2), and T28's Account privacy exception prevents lib-resource registration for Account. No established mechanism exists for cleaning up account-owned containers on account deletion. This is a cross-cutting concern shared with other L2 services that have account-scoped data (Subscription, GameSession, Character). See [#156](https://github.com/beyond-immersion/bannou-service/issues/156) (Storage Garbage Collection Framework) for potential cross-cutting solution.
 
 ---
 
 ## Work Tracking
 
 ### Active
-- **[#147](https://github.com/beyond-immersion/bannou-service/issues/147)**: Variable Provider Factory for `${inventory.*}` ABML variables (Phase 2 variable providers)
+- **[#147](https://github.com/beyond-immersion/bannou-service/issues/147)**: Phase 2 variable providers (inventory portion implemented — `InventoryProviderFactory` + `IInventoryDataCache` registered; issue remains open for Currency and Relationship providers)
 - **[#153](https://github.com/beyond-immersion/bannou-service/issues/153)**: Cross-cutting escrow asset transfer integration (inventory deposit/release)
 - **[#164](https://github.com/beyond-immersion/bannou-service/issues/164)**: Item Removal/Drop Behavior - configurable drop behavior for removed items
 - **[#196](https://github.com/beyond-immersion/bannou-service/issues/196)**: True grid collision detection for grid-based containers
@@ -409,10 +296,7 @@ Stack Operations
 - **[#485](https://github.com/beyond-immersion/bannou-service/issues/485)**: N+1 query pattern — batch item listing across containers
 
 ### Completed
-- **2026-02-27**: Issue #495 - Added 3 client events (`inventory.item_changed`, `inventory.container_full`, `inventory.item_transferred`) via `IEntitySessionRegistry.PublishToEntitySessionsAsync` with composite operation suppression for cross-container moves and transfers
-- **2026-02-25**: Added `DeleteLockTimeoutSeconds` config property (default 120s) for container deletion; fixed DestroyReason string-to-enum for T25 compliance
 - **2026-02-25**: Reclassified "Category constraints are client-side only" from Design Considerations to Intentional Quirks (#13) — intentional architectural boundary (Inventory is placement layer, Item is data layer, no circular dependency)
-- **2026-02-25**: Fixed MoveItem same-container bug — now persists slot position via ModifyItemInstanceAsync, acquires distributed lock, and publishes inventory.item.moved event with previous/new slot data
 - **2026-02-24**: L3 hardening pass - NRT fix, T8 filler removal from 7 responses, T29 metadata disclaimers, event schema additionalProperties, x-lifecycle model completion, validation keywords, T26 sentinel fix, T30 telemetry spans, 24 new tests (93 total)
 - **2026-02-24**: Closed #310 (silent failure patterns) - IItemClient now constructor-injected (hard dependency)
 - **2026-02-24**: Closed #317 (quest ITEM_OWNED prerequisite) - QuestService calls HasItemsAsync()

@@ -680,6 +680,7 @@ public partial class SceneService : ISceneService
         {
             SceneId = body.SceneId,
             Token = checkoutToken,
+            EditorType = body.EditorType ?? SceneEditorType.Session,
             EditorId = body.EditorId ?? "unknown",
             ExpiresAt = expiresAt,
             ExtensionCount = 0
@@ -694,7 +695,8 @@ public partial class SceneService : ISceneService
 
         // Update index with optimistic concurrency
         indexEntry.IsCheckedOut = true;
-        indexEntry.CheckedOutBy = checkoutState.EditorId;
+        indexEntry.CheckedOutByType = checkoutState.EditorType;
+        indexEntry.CheckedOutById = checkoutState.EditorId;
         var newIndexEtag = await _indexStore.TrySaveAsync(indexKey, indexEntry, indexEtag ?? string.Empty, cancellationToken);
         if (newIndexEtag == null)
         {
@@ -711,7 +713,8 @@ public partial class SceneService : ISceneService
             SceneId = body.SceneId,
             SceneName = indexEntry.Name,
             GameId = indexEntry.GameId,
-            CheckedOutBy = checkoutState.EditorId,
+            CheckedOutByType = checkoutState.EditorType,
+            CheckedOutById = checkoutState.EditorId,
             ExpiresAt = expiresAt
         };
         await _messageBus.TryPublishAsync(SCENE_CHECKED_OUT_TOPIC, eventModel, cancellationToken: cancellationToken);
@@ -771,7 +774,8 @@ public partial class SceneService : ISceneService
         // Release checkout
         await _checkoutStore.DeleteAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
         indexEntry.IsCheckedOut = false;
-        indexEntry.CheckedOutBy = null;
+        indexEntry.CheckedOutByType = null;
+        indexEntry.CheckedOutById = null;
         var newIndexEtag = await _indexStore.TrySaveAsync(indexKey, indexEntry, indexEtag ?? string.Empty, cancellationToken);
         if (newIndexEtag == null)
         {
@@ -789,7 +793,8 @@ public partial class SceneService : ISceneService
             GameId = indexEntry.GameId,
             Version = updateResponse.Scene.Version,
             PreviousVersion = body.Scene.Version,
-            CommittedBy = checkout.EditorId,
+            CommittedByType = checkout.EditorType,
+            CommittedById = checkout.EditorId,
             ChangesSummary = body.ChangesSummary,
             NodeCount = CountNodes(body.Scene.Root)
         };
@@ -830,7 +835,8 @@ public partial class SceneService : ISceneService
         if (indexEntry != null)
         {
             indexEntry.IsCheckedOut = false;
-            indexEntry.CheckedOutBy = null;
+            indexEntry.CheckedOutByType = null;
+            indexEntry.CheckedOutById = null;
             var newIndexEtag = await _indexStore.TrySaveAsync(indexKey, indexEntry, indexEtag ?? string.Empty, cancellationToken);
             if (newIndexEtag == null)
             {
@@ -847,7 +853,8 @@ public partial class SceneService : ISceneService
             SceneId = body.SceneId,
             SceneName = indexEntry?.Name,
             GameId = indexEntry?.GameId,
-            DiscardedBy = checkout.EditorId
+            DiscardedByType = checkout.EditorType,
+            DiscardedById = checkout.EditorId
         };
         await _messageBus.TryPublishAsync(SCENE_CHECKOUT_DISCARDED_TOPIC, eventModel, cancellationToken: cancellationToken);
 

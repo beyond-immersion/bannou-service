@@ -2,7 +2,7 @@
 
 > **Category**: Architecture & Design
 > **When to Reference**: Before starting any new service, feature, or significant code change
-> **Tenets**: T4, T5, T6, T13, T15, T18, T27, T28, T29
+> **Tenets**: T4, T5, T6, T13, T15, T18, T27, T28, T29, T32
 
 These tenets define the architectural foundation of Bannou. Understanding them is prerequisite to any development work.
 
@@ -772,6 +772,119 @@ When Service B needs data associated with Service A's entities, Service B MUST o
 
 ---
 
+## Tenet 32: Account Identity Boundary (INVIOLABLE)
+
+**Rule**: `accountId` is a privileged identifier restricted to the **identity, session, and access boundary**. Services outside this boundary MUST NOT accept `accountId` from clients and SHOULD NOT propagate it in events. The Connect gateway resolves session-to-account mapping; downstream services identify callers by `webSocketSessionId` or domain-specific identifiers.
+
+### Why This Exists
+
+A client sending `accountId` in a request body can substitute any account's ID. The permission system validates roles and states, not that `request.accountId == session.accountId`. Accepting client-provided `accountId` creates an impersonation surface that only works by coincidence (clients typically send their own ID) rather than by enforcement.
+
+Beyond security, `accountId` propagation creates invisible coupling. When a game feature service emits `accountId` in events, every consumer implicitly depends on the account identity concept. Using `sessionId` instead means consumers couple to the session layer (Connect, L1, always available) rather than the account domain.
+
+### The Identity Boundary (Exhaustive)
+
+Services on this list have justified `accountId` usage. **No other service may use `accountId` in client-facing contracts.**
+
+| Service | Layer | Why accountId is justified | Pattern |
+|---------|-------|--------------------------|---------|
+| **Account** | L1 | IS the account entity (CRUD) | Internal-only, admin role |
+| **Auth** | L1 | Authenticates accounts, issues JWTs | Derives from credentials; NEVER accepts in request body |
+| **Connect** | L1 | Session-to-account mapping | Derives from JWT; maps sessions to accounts |
+| **Permission** | L1 | Receives accountId via session events | Zero accountId in API -- uses sessionId exclusively |
+| **Subscription** | L2 | Account-to-game access mapping | Internal service-to-service queries (called by Auth, GameSession) |
+| **Game-Session** | L2 | Multiplayer container tracking account membership | Server-injected via shortcut system; client never provides accountId |
+| **Analytics** | L4 | Controller history audit trail | Account-level aggregation for statistics, audit, anti-cheat |
+| **Gardener** | L4 | Player experience orchestration | All endpoints called by divine actors (internal service callers) via Actor action handlers, not by players directly |
+
+### The Five Rules
+
+**Rule 1: Client-facing endpoints MUST NOT accept accountId in request bodies.**
+
+Any endpoint with `x-permissions: [role: user]` that is directly accessible via WebSocket (not shortcut-gated) MUST NOT include `accountId` as a request field. The Connect gateway authenticated the session via JWT. Downstream services identify the caller by `webSocketSessionId`.
+
+```yaml
+# FORBIDDEN: Client provides accountId
+JoinMatchmakingRequest:
+  required: [webSocketSessionId, accountId, queueId]  # accountId from untrusted client!
+
+# CORRECT: Service uses webSocketSessionId only
+JoinMatchmakingRequest:
+  required: [webSocketSessionId, queueId]  # session identity sufficient
+```
+
+**Rule 2: Server-injected accountId via shortcuts is the correct pattern.**
+
+For endpoints that need accountId but are triggered by client action, the service constructs the request body (including accountId resolved from session context) and publishes a shortcut. The client triggers the shortcut by GUID. This is how Game-Session's join/leave and Matchmaking's leave/accept/decline work.
+
+```csharp
+// CORRECT: Server constructs prebound request with accountId
+var preboundRequest = new LeaveMatchmakingRequest
+{
+    WebSocketSessionId = sessionId,
+    AccountId = accountId,  // Server-resolved, not client-provided
+    TicketId = ticketId
+};
+await PublishShortcutAsync(sessionId, "matchmaking/leave", preboundRequest, ct);
+```
+
+**Rule 3: Internal service-to-service endpoints MAY accept accountId.**
+
+When the caller is a trusted service (role: admin, role: developer, or mesh-routed service call), accepting accountId is fine. Account, Subscription, and Gardener (divine actor caller) fall into this category. The key distinction: the accountId comes from an authenticated service, not from an untrusted WebSocket client.
+
+**Rule 4: Events SHOULD use sessionId rather than accountId.**
+
+Services outside the identity boundary should use `sessionId` or domain-specific identifiers (ticketId, matchId, entityId) in event payloads. Consumers needing account-level correlation can query Connect or Analytics.
+
+Exceptions: Identity-boundary services (Auth, Connect, Subscription, Game-Session) where accountId IS the domain concept being communicated. These services exist specifically to manage account-level state.
+
+```yaml
+# FORBIDDEN: Game feature service emitting accountId in events
+MatchmakingTicketCreatedEvent:
+  required: [eventId, timestamp, ticketId, queueId, accountId]  # Why is accountId here?
+
+# CORRECT: Use domain identifiers; consumers correlate via Connect if needed
+MatchmakingTicketCreatedEvent:
+  required: [eventId, timestamp, ticketId, queueId, webSocketSessionId]
+```
+
+**Rule 5: Polymorphic owner fields mixing accountId with service names are forbidden.**
+
+A single string field described as "accountId (UUID) for users, service name (string) for services" violates both this tenet and T14 (Polymorphic Associations). Use proper polymorphic typing:
+
+```yaml
+# FORBIDDEN: Overloaded string field
+owner:
+  type: string
+  description: "accountId (UUID) for users, service name for services"
+
+# CORRECT: Proper polymorphic typing per T14
+ownerType:
+  type: string
+  enum: [Account, Service]
+ownerId:
+  type: string
+  description: Account session ID (UUID) or service name depending on ownerType
+```
+
+### Reference Implementation
+
+**Voice (L3)** uses `sessionId` exclusively with zero `accountId` references. Its code documents the design decision explicitly: "Using sessionId instead of accountId to support multiple sessions per account." This is the reference pattern for services outside the identity boundary.
+
+**Permission (L1)** demonstrates that even within the identity boundary, a service can operate entirely on `sessionId`. Permission compiles capability manifests per session, not per account. It receives accountId from session events for internal mapping but never exposes it in its API.
+
+### Detection Rules
+
+| Signal | Verdict |
+|--------|---------|
+| `accountId` in request model + endpoint has `x-permissions: [role: user]` without shortcut gating | **Violation of Rule 1** |
+| `accountId` in event model for service not in identity boundary table | **Violation of Rule 4** |
+| String field described as "accountId or service name" | **Violation of Rule 5 + T14** |
+| Service outside boundary accepting accountId with `role: admin` or `role: developer` | **Review needed** -- may be legitimate internal API |
+| Service in boundary using server-injected accountId via shortcuts | **Correct pattern** |
+
+---
+
 | Violation | Tenet | Fix |
 |-----------|-------|-----|
 | Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
@@ -800,9 +913,14 @@ When Service B needs data associated with Service A's entities, Service B MUST o
 | Storing higher-layer domain data in lower-layer metadata bags | T29 | Higher-layer service owns binding table, references lower-layer entity by ID |
 | `JsonElement` navigation on another service's metadata field | T29 | Define data in owning service's schema, use generated types |
 | Documentation specifying "put X in service Y's metadata" | T29 | X belongs in the schema of the service that owns concept X |
+| Client-facing endpoint accepting accountId in request body | T32 | Remove accountId; use webSocketSessionId; resolve account server-side if needed |
+| Non-boundary service emitting accountId in events | T32 | Use sessionId or domain-specific identifiers (ticketId, matchId) |
+| Polymorphic string field "accountId or service name" | T32, T14 | Use ownerType enum + ownerId; use sessionId for user-initiated operations |
+| Service outside identity boundary accepting accountId with role: user | T32 | Use shortcut system for server-injected accountId, or remove entirely |
+| New service added to identity boundary table without approval | T32 | Discuss with team; justify why accountId is required at the domain level |
 
 > **Schema-related violations** (editing Generated/ files, wrong env var format, missing description, etc.) are covered in [SCHEMA-RULES.md](../SCHEMA-RULES.md).
 
 ---
 
-*This document covers tenets T4, T5, T6, T13, T15, T18, T27, T28, T29. See [TENETS.md](../TENETS.md) for the complete index and Tenet 1 (Schema-First Development).*
+*This document covers tenets T4, T5, T6, T13, T15, T18, T27, T28, T29, T32. See [TENETS.md](../TENETS.md) for the complete index and Tenet 1 (Schema-First Development).*

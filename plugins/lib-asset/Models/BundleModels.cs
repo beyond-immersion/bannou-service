@@ -98,11 +98,18 @@ public sealed class BundleMetadata
     public required BundleStatus Status { get; init; }
 
     /// <summary>
-    /// Owner of this bundle. NOT a session ID.
-    /// For user-initiated: the accountId (UUID format).
-    /// For service-initiated: the service name.
+    /// Type of owner for this bundle per FOUNDATION TENETS (Account Identity Boundary).
+    /// Session for user-initiated bundles, Service for service-initiated bundles.
+    /// Null for system-owned bundles.
     /// </summary>
-    public string? Owner { get; init; }
+    public AssetOwnerType? OwnerType { get; init; }
+
+    /// <summary>
+    /// Owner identifier. For Session type: the WebSocket session ID (UUID format).
+    /// For Service type: the service name (e.g., "orchestrator").
+    /// Null for system-owned bundles.
+    /// </summary>
+    public string? OwnerId { get; init; }
 
     /// <summary>
     /// Provenance data for metabundles - tracks which source bundles were composed.
@@ -151,7 +158,8 @@ public sealed class BundleMetadata
             MetadataVersion = MetadataVersion,
             Name = Name,
             Description = Description,
-            Owner = Owner,
+            OwnerType = OwnerType,
+            OwnerId = OwnerId,
             Realm = Realm,
             Tags = Tags,
             Status = LifecycleStatus switch
@@ -400,11 +408,16 @@ public sealed class BundleUploadSession
     public BundleManifestPreview? ManifestPreview { get; init; }
 
     /// <summary>
-    /// Owner of this bundle upload session. NOT a session ID.
-    /// For user-initiated uploads: the accountId (UUID format).
-    /// For service-initiated uploads: the service name (e.g., "orchestrator").
+    /// Type of owner for this upload session per FOUNDATION TENETS (Account Identity Boundary).
+    /// Session for user-initiated uploads, Service for service-initiated uploads.
     /// </summary>
-    public required string Owner { get; init; }
+    public required AssetOwnerType OwnerType { get; init; }
+
+    /// <summary>
+    /// Owner identifier. For Session type: the WebSocket session ID (UUID format).
+    /// For Service type: the service name (e.g., "orchestrator").
+    /// </summary>
+    public required string OwnerId { get; init; }
 
     /// <summary>
     /// When the session was created.
@@ -438,7 +451,7 @@ public sealed class StoredBundleVersionRecord
     public required DateTimeOffset CreatedAt { get; init; }
 
     /// <summary>
-    /// Account ID or service name that made the change.
+    /// Session ID or service name that made the change.
     /// </summary>
     public required string CreatedBy { get; init; }
 

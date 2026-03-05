@@ -188,12 +188,23 @@ public partial class SceneCheckedOutEvent : BaseServiceEvent
     public string? GameId { get; set; } = default!;
 
     /// <summary>
-    /// Identifier of the editor (accountId or app-id)
+    /// Type of editor that checked out the scene
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("checkedOutBy")]
+    [System.Text.Json.Serialization.JsonPropertyName("checkedOutByType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string CheckedOutBy { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SceneEditorType CheckedOutByType { get; set; } = default!;
+
+    /// <summary>
+    /// Editor identifier. For Session type: the WebSocket session ID (UUID format).
+    /// <br/>For Service type: the app-id or service name.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("checkedOutById")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CheckedOutById { get; set; } = default!;
 
     /// <summary>
     /// When the checkout lock expires
@@ -247,12 +258,23 @@ public partial class SceneCommittedEvent : BaseServiceEvent
     public string? PreviousVersion { get; set; } = default!;
 
     /// <summary>
-    /// Identifier of the committer
+    /// Type of editor that committed the scene
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("committedBy")]
+    [System.Text.Json.Serialization.JsonPropertyName("committedByType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string CommittedBy { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SceneEditorType CommittedByType { get; set; } = default!;
+
+    /// <summary>
+    /// Editor identifier. For Session type: the WebSocket session ID (UUID format).
+    /// <br/>For Service type: the app-id or service name.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("committedById")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CommittedById { get; set; } = default!;
 
     /// <summary>
     /// Optional summary of changes
@@ -296,12 +318,23 @@ public partial class SceneCheckoutDiscardedEvent : BaseServiceEvent
     public string? GameId { get; set; } = default!;
 
     /// <summary>
-    /// Identifier of who discarded
+    /// Type of editor that discarded the checkout
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("discardedBy")]
+    [System.Text.Json.Serialization.JsonPropertyName("discardedByType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string DiscardedBy { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SceneEditorType DiscardedByType { get; set; } = default!;
+
+    /// <summary>
+    /// Editor identifier. For Session type: the WebSocket session ID (UUID format).
+    /// <br/>For Service type: the app-id or service name.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("discardedById")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DiscardedById { get; set; } = default!;
 
 }
 
@@ -341,10 +374,20 @@ public partial class SceneCheckoutExpiredEvent : BaseServiceEvent
     public System.DateTimeOffset ExpiredAt { get; set; } = default!;
 
     /// <summary>
-    /// Who originally checked out the scene
+    /// Type of editor that originally checked out the scene
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("originalCheckoutBy")]
-    public string? OriginalCheckoutBy { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("originalCheckoutByType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SceneEditorType? OriginalCheckoutByType { get; set; } = default!;
+
+    /// <summary>
+    /// Editor identifier of who originally checked out the scene.
+    /// <br/>For Session type: the WebSocket session ID (UUID format).
+    /// <br/>For Service type: the app-id or service name.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("originalCheckoutById")]
+    public string? OriginalCheckoutById { get; set; } = default!;
 
 }
 

@@ -1316,25 +1316,13 @@ public partial class GameSessionController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "sessionId",
-                "accountId",
                 "gameType",
                 "message"
             ],
             "properties": {
-                "sessionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "WebSocket session ID of the sender. Provided by shortcut system."
-                },
-                "accountId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Account ID of the sender. Provided by shortcut system."
-                },
                 "gameType": {
                     "$ref": "#/$defs/GameType",
-                    "description": "Game type for the chat. Determines which lobby's players receive the message. Provided by shortcut system."
+                    "description": "Game type for the chat. Determines which lobby's players receive the message."
                 },
                 "message": {
                     "type": "string",
@@ -1445,25 +1433,13 @@ public partial class GameSessionController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "sessionId",
-                "accountId",
                 "gameType",
                 "actionType"
             ],
             "properties": {
-                "sessionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "WebSocket session ID of the client. Provided by shortcut system."
-                },
-                "accountId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Account ID of the player. Provided by shortcut system."
-                },
                 "gameType": {
                     "$ref": "#/$defs/GameType",
-                    "description": "Game type for the action. Determines which lobby to apply the action. Provided by shortcut system."
+                    "description": "Game type for the action. Determines which lobby to apply the action."
                 },
                 "actionType": {
                     "$ref": "#/$defs/GameActionType",

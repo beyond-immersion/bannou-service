@@ -4,31 +4,12 @@
 > **Schema**: schemas/auth-api.yaml
 > **Version**: 4.0.0
 > **Layer**: AppFoundation
-> **State Store**: auth-statestore (Redis)
+> **State Store**: auth-statestore (Redis), edge-revocation-statestore (Redis)
 > **Implementation Map**: [docs/maps/AUTH.md](../maps/AUTH.md)
 
 ## Overview
 
 The Auth plugin is the internet-facing authentication and session management service (L1 AppFoundation). Handles email/password login, OAuth provider integration (Discord, Google, Twitch), Steam session ticket verification, JWT token generation/validation, password reset flows, TOTP-based MFA, and session lifecycle management. It is the primary gateway between external users and the internal service mesh -- after authenticating, clients receive a JWT and a WebSocket connect URL to establish persistent connections via lib-connect.
-
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (IStateStoreFactory) | All session data, refresh tokens, OAuth links, password reset tokens, and edge revocation entries in Redis |
-| lib-messaging (IMessageBus) | Publishing session lifecycle events and audit events |
-| IEntitySessionRegistry | Publishing client events to account WebSocket sessions via Entity Session Registry |
-| lib-account (IAccountClient) | Account CRUD: lookup by email, create, get by ID, update password, add auth methods |
-| AppConfiguration (DI singleton) | JWT secret, issuer, audience, and ServiceDomain via constructor-injected config |
-| IHttpClientFactory | HTTP calls to OAuth providers (Discord, Google, Twitch, Steam) and CloudFlare KV API |
-
-**External NuGet dependencies:**
-- `Microsoft.IdentityModel.Tokens` (8.15.0) - JWT creation and validation
-- `BCrypt.Net-Next` (4.0.3) - Password hashing
-- `AWSSDK.SimpleEmailV2` (4.x, Apache-2.0) - AWS SES v2 email delivery (via bannou-service)
-- `SendGrid` (9.x, MIT) - SendGrid API email delivery (via bannou-service)
-- `MailKit` (4.x, MIT) - SMTP email delivery (via bannou-service)
-- `Otp.NET` (1.4.1, MIT) - TOTP generation and validation (RFC 6238)
 
 ## Dependents (What Relies On This Plugin)
 
@@ -37,86 +18,6 @@ The Auth plugin is the internet-facing authentication and session management ser
 | lib-connect | Calls `/auth/validate` via IAuthClient to validate JWTs on WebSocket connection establishment |
 | lib-connect | Subscribes to `session.invalidated` to disconnect WebSocket clients when sessions are terminated |
 | lib-permission | Subscribes to `session.updated` to recompile capability manifests when roles/authorizations change |
-
-## State Storage
-
-**Store**: `auth-statestore` (Backend: Redis)
-
-All keys use the `auth` prefix and have explicit TTLs since the data is ephemeral.
-
-| Key Pattern | Data Type | TTL | Purpose |
-|-------------|-----------|-----|---------|
-| `session:{sessionKey}` | `SessionDataModel` | JwtExpirationMinutes * 60 | Active session data (accountId, email, roles, authorizations, expiry, jti) |
-| `account-sessions:{accountId}` | `Set<string>` (Redis Set) | JwtExpirationMinutes * 60 + 300 | Index of session keys for an account (atomic SADD/SREM via `ICacheableStateStore`, lazy-cleaned on read) |
-| `session-id-index:{sessionId}` | `string` (sessionKey) | JwtExpirationMinutes * 60 | Reverse lookup: human-facing session ID to internal session key |
-| `refresh_token:{token}` | `string` (accountId) | SessionTokenTtlDays in seconds | Maps refresh token to account ID |
-| `oauth-link:{provider}:{providerId}` | `string` (accountId) | **None** | Maps OAuth provider identity to account (cleaned up on account deletion) |
-| `account-oauth-links:{accountId}` | `List<string>` | **None** | Reverse index of OAuth link keys for account (for cleanup on deletion) |
-| `login-attempts:{normalizedEmail}` | counter (Redis `INCR`) | LoginLockoutMinutes * 60 | Failed login attempt counter for rate limiting (via `ICacheableStateStore.IncrementAsync`) |
-| `password-reset:{token}` | `PasswordResetData` | PasswordResetTokenTtlMinutes * 60 | Pending password reset (accountId, email, expiry) |
-| `mfa-challenge-{token}` | `MfaChallengeData` | MfaChallengeTtlMinutes * 60 | MFA challenge token linking to accountId (created after password verification, consumed on MFA verify) |
-| `mfa-setup-{token}` | `MfaSetupData` | MfaChallengeTtlMinutes * 60 | Pending MFA setup (encrypted secret, hashed recovery codes, consumed on MFA enable) |
-
-**Store**: `edge-revocation` (Backend: Redis) - Used when EdgeRevocationEnabled=true
-
-| Key Pattern | Data Type | TTL | Purpose |
-|-------------|-----------|-----|---------|
-| `token:{jti}` | `TokenRevocationEntry` | Remaining token TTL | Revoked token entry with accountId, reason, expiry |
-| `token-index` | `List<string>` | **None** | Index of all revoked token JTIs |
-| `account:{accountId}` | `AccountRevocationEntry` | JwtExpirationMinutes * 60 + 300 | Account-level revocation (all tokens issued before a timestamp) |
-| `account-index` | `List<string>` | **None** | Index of all revoked account IDs |
-| `failed:{providerId}:token:{jti}` | `FailedEdgePushEntry` | **None** | Failed edge push awaiting retry |
-| `failed:{providerId}:account:{accountId}` | `FailedEdgePushEntry` | **None** | Failed account revocation push awaiting retry |
-| `failed-push-index` | `List<string>` | **None** | Index of all failed push keys |
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `session.invalidated` | `SessionInvalidatedEvent` | Logout, account deletion, admin action, security revocation |
-| `session.updated` | `SessionUpdatedEvent` | Role changes propagated to sessions |
-| `auth.login.successful` | `AuthLoginSuccessfulEvent` | Successful email/password login |
-| `auth.login.failed` | `AuthLoginFailedEvent` | Failed login attempt (brute force detection) |
-| `auth.registration.successful` | `AuthRegistrationSuccessfulEvent` | New account registered |
-| `auth.oauth.successful` | `AuthOAuthLoginSuccessfulEvent` | Successful OAuth provider login |
-| `auth.steam.successful` | `AuthSteamLoginSuccessfulEvent` | Successful Steam ticket verification |
-| `auth.password-reset.successful` | `AuthPasswordResetSuccessfulEvent` | Password reset completed |
-| `auth.mfa.enabled` | `AuthMfaEnabledEvent` | MFA successfully enabled for an account |
-| `auth.mfa.disabled` | `AuthMfaDisabledEvent` | MFA disabled (by user or admin, includes reason) |
-| `auth.mfa.verified` | `AuthMfaVerifiedEvent` | Successful MFA verification (TOTP or recovery code) |
-| `auth.mfa.failed` | `AuthMfaFailedEvent` | Failed MFA attempt (invalid code, expired challenge, no recovery codes) |
-
-### Consumed Events
-
-| Topic | Handler | Action |
-|-------|---------|--------|
-| `account.deleted` | `HandleAccountDeletedAsync` | Invalidates all sessions, cleans up OAuth links via reverse index, pushes edge revocations if enabled, and publishes `session.invalidated` |
-| `account.updated` | `HandleAccountUpdatedAsync` | If `changedFields` contains "roles", propagates new roles to all active sessions and publishes `session.updated` per session. If `changedFields` contains "email", propagates new email to all active sessions (no `session.updated` event since email doesn't affect permissions). |
-
-### Client Events (Multi-Device Security Notifications)
-
-Real-time security notifications pushed to all of a player's connected WebSocket sessions via `IEntitySessionRegistry.PublishToEntitySessionsAsync("account", accountId, event)`. Published inline in existing event helper methods alongside service events.
-
-**Schema**: `schemas/auth-client-events.yaml`
-
-| Event Name | Event Type | Trigger | Payload |
-|-----------|-----------|---------|---------|
-| `auth.device_login` | `AuthDeviceLoginClientEvent` | Successful login (email/password, OAuth, Steam) | loginSessionId, ipAddress?, userAgent? |
-| `auth.password_changed` | `AuthPasswordChangedClientEvent` | Password reset completed | (timestamp only) |
-| `auth.mfa_enabled` | `AuthMfaEnabledClientEvent` | MFA successfully enabled | (timestamp only) |
-| `auth.mfa_disabled` | `AuthMfaDisabledClientEvent` | MFA disabled (self or admin) | disabledBy (enum) |
-| `auth.suspicious_login` | `AuthSuspiciousLoginClientEvent` | Failed login with known accountId | ipAddress?, userAgent?, attemptCount? |
-| `auth.external_account_linked` | `AuthExternalAccountLinkedClientEvent` | New OAuth provider linked (new account creation) | provider (enum) |
-| `auth.session_terminated` | `AuthSessionTerminatedClientEvent` | Session remotely terminated or bulk logout | terminatedSessionId?, reason (enum) |
-
-**Notes:**
-- `auth.device_login` targets EXISTING sessions (the new session hasn't connected to WebSocket yet).
-- `auth.suspicious_login` only fires when `accountId` is known (non-null) to avoid leaking account existence.
-- `auth.external_account_linked` fires when `isNewAccount` is true during OAuth/Steam login (new provider linked).
-- `auth.session_terminated` uses `terminatedSessionId = null` for bulk invalidation (all-sessions logout).
-- `ipAddress` and `userAgent` are nullable placeholders pending DeviceInfo capture (#449).
 
 ## Configuration
 
@@ -171,81 +72,6 @@ Real-time security notifications pushed to all of a player's connected WebSocket
 | `MfaChallengeTtlMinutes` | `AUTH_MFA_CHALLENGE_TTL_MINUTES` | 5 | TTL for MFA challenge and setup tokens in Redis (1-30 minutes) |
 
 **Note:** JWT core settings (`JwtSecret`, `JwtIssuer`, `JwtAudience`) are NOT in AuthServiceConfiguration. They live in the app-wide `AppConfiguration` singleton, which is constructor-injected into `TokenService`, `AuthService`, and `OAuthProviderService`. This is because JWT is cross-cutting platform infrastructure (`BANNOU_JWT_*`), not auth-specific config - nodes without the auth plugin still need JWT settings to validate tokens on authenticated endpoints.
-
-## DI Services & Helpers
-
-| Service | Role |
-|---------|------|
-| `ILogger<AuthService>` | Structured logging |
-| `AuthServiceConfiguration` | Typed access to auth-specific config (OAuth, mock, TTLs) |
-| `AppConfiguration` | App-wide config: JWT secret/issuer/audience, ServiceDomain, EffectiveAppId |
-| `IAccountClient` | Service mesh client for account CRUD operations |
-| `IStateStoreFactory` | Redis state store access (sessions, password resets, account-session indexes, edge revocations) |
-| `IMessageBus` | Audit event publishing |
-| `IEntitySessionRegistry` | Publishing client events to all account WebSocket sessions (multi-device security notifications) |
-| `ITokenService` | JWT generation, refresh token management, token validation |
-| `ISessionService` | Session CRUD, account-session indexing, invalidation, session lifecycle event publishing, edge revocation coordination |
-| `IOAuthProviderService` | OAuth URL construction, code exchange, user info retrieval, account linking, Steam ticket validation |
-| `IEdgeRevocationService` | Coordinates token revocation across edge providers (CloudFlare, OpenResty) |
-| `IEdgeRevocationProvider` (collection) | CloudflareEdgeProvider and OpenrestyEdgeProvider, injected into EdgeRevocationService via `IEnumerable<IEdgeRevocationProvider>` |
-| `IEmailService` | Email sending abstraction. Provider selected by `AUTH_EMAIL_PROVIDER`: `ConsoleEmailService` (none/default), `SendGridEmailService` (sendgrid), `SmtpEmailService` (smtp), or `SesEmailService` (ses). Registered as singleton via factory in AuthServicePlugin. |
-| `IHttpClientFactory` | Used by OAuthProviderService for OAuth API calls and CloudflareEdgeProvider for KV writes |
-| `IMfaService` | TOTP secret generation/encryption, code validation, recovery code management, challenge/setup token lifecycle |
-| `IEventConsumer` | Registers handlers for account.deleted, account.updated |
-
-## API Endpoints (Implementation Notes)
-
-### Authentication (login, register)
-
-Login enforces per-email rate limiting via Redis counters before attempting authentication. If `MaxLoginAttempts` (default 5) is exceeded, the endpoint returns 401 for `LoginLockoutMinutes` (default 15 minutes) with no information leakage about whether the lockout is active or the account doesn't exist. On successful login, the counter is cleared. Login verifies password with `BCrypt.Verify` against the hash stored in Account service. If the account has MFA enabled, login returns a `LoginResponse` with `RequiresMfa = true` and a challenge token (no JWT issued yet); the client must call `/auth/mfa/verify` with the challenge token and a TOTP code to complete authentication. If MFA is not enabled, login returns tokens directly. Registration hashes with `BCrypt.HashPassword(workFactor: _configuration.BcryptWorkFactor)` (default 12) and creates the account. Both non-MFA login and registration generate a JWT + refresh token via `ITokenService` and return a `ConnectUrl` for WebSocket connection. Failed logins increment the rate limit counter and publish audit events.
-
-### OAuth (init, callback)
-
-`InitOAuth` delegates to `OAuthProviderService.GetAuthorizationUrl` which builds the provider-specific authorization URL with appropriate client ID, redirect URI (with ServiceDomain fallback), and state parameter. `CompleteOAuth` exchanges the authorization code for user info via the provider's API through `IOAuthProviderService`, then finds-or-creates an account linked to that OAuth identity. The `oauth-link:{provider}:{providerId}` Redis key is the link between external identity and internal account.
-
-### Steam
-
-Uses the Steam Web API `ISteamUserAuth/AuthenticateUserTicket` endpoint via `IOAuthProviderService.ValidateSteamTicketAsync`. Validates the ticket, checks VAC/publisher bans, then finds-or-creates an account. Steam doesn't provide an email, so accounts are created with `Email = null`.
-
-### Tokens (validate, refresh)
-
-`ValidateToken` delegates to `TokenService.ValidateTokenAsync` which verifies the JWT signature, extracts the `session_key` claim, loads session data from Redis via `ISessionService`, validates data integrity (null checks on roles/authorizations), checks expiry, and returns the session's roles and authorizations. `RefreshToken` validates the refresh token against Redis, loads the account fresh from Account service, generates a new access token + new refresh token, and rotates the old refresh token out.
-
-### Password (reset, confirm)
-
-`RequestPasswordReset` always returns 200 regardless of whether the account exists (prevents email enumeration). If the account exists, it generates a cryptographically secure token via `GenerateSecureToken()`, stores it in Redis with TTL, and sends an email via `IEmailService` (fire-and-forget: failures are logged and error events published but never affect the response). `ConfirmPasswordReset` validates the token, hashes the new password, and updates it via Account service.
-
-### Multi-Factor Authentication (setup, enable, disable, admin-disable, verify)
-
-MFA uses TOTP (RFC 6238) with a two-step login flow. When MFA is enabled, `LoginAsync` returns `LoginResponse { RequiresMfa = true, MfaChallengeToken = ... }` instead of tokens. The client then calls `VerifyMfaAsync` with the challenge token and a 6-digit TOTP code (or recovery code) to complete authentication.
-
-**Setup flow**: `SetupMfaAsync` generates a TOTP secret via `IMfaService`, encrypts it with AES-256-GCM (key from `MfaEncryptionKey` config, derived via SHA-256), generates 10 recovery codes, stores encrypted secret + BCrypt-hashed codes in a Redis setup token, and returns the plain secret, otpauth URI, and plain recovery codes to the client for QR scanning. `EnableMfaAsync` consumes the setup token, validates a TOTP code to confirm the user has configured their authenticator, and persists MFA settings to Account via `UpdateMfaAsync`.
-
-**Disable flow**: `DisableMfaAsync` requires the current TOTP code or a valid recovery code. `AdminDisableMfaAsync` bypasses verification and accepts an optional reason string. Both clear MFA fields in Account.
-
-**Verify flow**: `VerifyMfaAsync` consumes the MFA challenge token (single-use, Redis-backed), validates either a TOTP code or recovery code. Recovery code verification uses optimistic concurrency with up to 3 retry attempts on 409 Conflict (re-fetch account, re-verify, retry). On success, generates full JWT tokens and publishes login events.
-
-**Recovery codes**: 10 codes in `xxxx-xxxx` format (lowercase alphanumeric), BCrypt-hashed for storage. Each code is single-use (removed from the list after verification). When all codes are consumed, a warning is logged but MFA remains active.
-
-### Sessions (list, terminate)
-
-`GetSessions` validates the caller's JWT then returns all active sessions for their account. Expired sessions are lazily cleaned during this read. `TerminateSession` uses the session-id reverse index to find the session key, deletes it, and publishes `session.invalidated` via `ISessionService` for WebSocket disconnection.
-
-### Logout
-
-`LogoutAsync` validates the JWT via `ValidateTokenAsync` and uses the session key from the response directly. Supports single-session logout (deletes the current session) or all-sessions logout (fetches the account-sessions index and deletes all). Publishes `session.invalidated` via `ISessionService` after cleanup.
-
-### Providers (list-providers)
-
-`ListProvidersAsync` returns the list of available authentication providers based on which OAuth clients are configured. Checks for non-empty `DiscordClientId`, `GoogleClientId`, `TwitchClientId`, and `SteamApiKey` in configuration. Returns provider name, display name, auth type (oauth vs ticket), and init URL. Steam has `AuthUrl = null` because it uses session tickets from the game client, not browser redirects.
-
-### InitOAuth (manual controller GET endpoint)
-
-`InitOAuth` is implemented in the manual `AuthController.cs` partial class as an `[HttpGet]` endpoint, not via the generated interface. It receives `provider`, `redirectUri`, and optional `state` as query/route parameters, delegates to `AuthService.InitOAuthAsync`, and returns a 302 redirect to the OAuth provider's authorization URL. This is the only GET endpoint in Auth (browser-facing OAuth redirect flow exception to POST-only pattern).
-
-### Revocation List (Edge Synchronization)
-
-`GetRevocationListAsync` returns the current token revocation list for edge provider synchronization or admin monitoring. Delegates to `IEdgeRevocationService.GetRevocationListAsync`. Returns token-level revocations (by JTI) and account-level revocations (all tokens issued before a timestamp). Used by edge providers (CloudFlare Workers, OpenResty Lua scripts) to maintain their local blocklists.
 
 ## Visual Aid
 
@@ -342,12 +168,4 @@ No bugs identified.
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
-
-### Evaluated & Closed
-
-- **Email propagation to sessions** (#444, closed 2026-03-03): Already implemented during Auth hardening pass. `HandleAccountUpdatedAsync` checks for "email" in `changedFields` and calls `PropagateEmailChangeAsync` to update all active sessions. Deep dive already documented this correctly. Closed as already implemented.
-- **Auth client events** (#492, closed 2026-02-27): All 7 multi-device security client events implemented via `IEntitySessionRegistry`. See Client Events section above.
-- **Token revocation list evaluation** (#143, closed 2026-02-08): The edge revocation system (`IEdgeRevocationProvider` with CloudFlare KV and OpenResty providers) was fully implemented since this ticket was filed. All design questions answered by the implementation. Ticket closed as superseded.
-- **OAuth token persistence** (#150, closed 2026-02-08): Evaluated across all 45 services - no service requires ongoing OAuth provider API access. Discord Rich Presence is client-side. Storing OAuth refresh tokens adds attack surface for zero benefit. Closed as YAGNI.
-- **Fastly/Lambda@Edge providers** (#160, closed 2026-02-08): Premature optimization with no deployment target. `IEdgeRevocationProvider` is already extensible. Closed - revisit when production edge infrastructure is chosen.
 

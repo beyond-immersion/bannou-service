@@ -891,6 +891,13 @@ components:
       default: Skip
       description: How to handle documents with existing slugs during import
 
+    DocumentationOwnerType:
+      type: string
+      description: Type of documentation resource owner
+      enum:
+      - Session
+      - Service
+
     # ===== Query Endpoint =====
     QueryDocumentationRequest:
       description: Request to search documentation using natural language queries
@@ -2093,14 +2100,19 @@ components:
       required:
       - namespace
       - repositoryUrl
-      - owner
+      - ownerType
+      - ownerId
       properties:
-        owner:
+        ownerType:
+          $ref: '#/components/schemas/DocumentationOwnerType'
+          description: Type of owner for this binding
+        ownerId:
           type: string
+          minLength: 1
           description: |
-            Owner of this binding. NOT a session ID.
-            For user-initiated bindings: the accountId (UUID format).
-            For service-initiated bindings: the service name (e.g., "orchestrator").
+            Owner identifier.
+            For Session type: the WebSocket session ID (UUID format).
+            For Service type: the service name (e.g., "orchestrator").
         namespace:
           type: string
           pattern: '^[a-z0-9-]+$'
@@ -2310,7 +2322,8 @@ components:
       - branch
       - status
       - createdAt
-      - owner
+      - ownerType
+      - ownerId
       properties:
         bindingId:
           type: string
@@ -2341,12 +2354,15 @@ components:
           type: string
           format: date-time
           description: Timestamp when the binding was created
-        owner:
+        ownerType:
+          $ref: '#/components/schemas/DocumentationOwnerType'
+          description: Type of owner for this binding
+        ownerId:
           type: string
           description: |
-            Owner of this binding. NOT a session ID.
-            Contains either an accountId (UUID format) for user-initiated bindings
-            or a service name for service-initiated bindings.
+            Owner identifier.
+            For Session type: the WebSocket session ID (UUID format).
+            For Service type: the service name (e.g., "orchestrator").
 
     SyncInfo:
       description: Information about a repository sync operation
@@ -2488,14 +2504,19 @@ components:
       additionalProperties: false
       required:
       - namespace
-      - owner
+      - ownerType
+      - ownerId
       properties:
-        owner:
+        ownerType:
+          $ref: '#/components/schemas/DocumentationOwnerType'
+          description: Type of owner for this archive
+        ownerId:
           type: string
+          minLength: 1
           description: |
-            Owner of this archive. NOT a session ID.
-            For user-initiated archives: the accountId (UUID format).
-            For service-initiated archives: the service name (e.g., "orchestrator").
+            Owner identifier.
+            For Session type: the WebSocket session ID (UUID format).
+            For Service type: the service name (e.g., "orchestrator").
         namespace:
           type: string
           pattern: '^[a-z0-9-]+$'
@@ -2621,13 +2642,17 @@ components:
           type: string
           format: date-time
           description: Timestamp when the archive was created
-        owner:
+        ownerType:
+          $ref: '#/components/schemas/DocumentationOwnerType'
+          nullable: true
+          description: Type of owner for this archive (null if owner unknown)
+        ownerId:
           type: string
           nullable: true
           description: |
-            Owner of this archive. NOT a session ID (null if owner unknown).
-            Contains either an accountId (UUID format) for user-initiated archives
-            or a service name for service-initiated archives.
+            Owner identifier (null if owner unknown).
+            For Session type: the WebSocket session ID (UUID format).
+            For Service type: the service name (e.g., "orchestrator").
 
     RestoreArchiveRequest:
       description: Request to restore documents from an archive

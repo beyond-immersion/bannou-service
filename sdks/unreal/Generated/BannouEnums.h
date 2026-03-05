@@ -105,6 +105,17 @@ enum class EArcType : uint8
     Oedipus UMETA(DisplayName = "Oedipus"),
 };
 
+/** Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).
+Session: user-initiated operation identified by WebSocket session ID (UUID).
+Service: service-initiated operation identified by service name.
+ */
+UENUM(BlueprintType)
+enum class EAssetOwnerType : uint8
+{
+    Session UMETA(DisplayName = "Session"),
+    Service UMETA(DisplayName = "Service"),
+};
+
 /** Type classification for assets */
 UENUM(BlueprintType)
 enum class EAssetType : uint8
@@ -644,6 +655,14 @@ enum class EDocumentCategory : uint8
     WorldLore UMETA(DisplayName = "WorldLore"),
     NpcAi UMETA(DisplayName = "NpcAi"),
     Other UMETA(DisplayName = "Other"),
+};
+
+/** Type of documentation resource owner */
+UENUM(BlueprintType)
+enum class EDocumentationOwnerType : uint8
+{
+    Session UMETA(DisplayName = "Session"),
+    Service UMETA(DisplayName = "Service"),
 };
 
 /** How to handle clock gaps after service downtime */
@@ -1685,6 +1704,17 @@ enum class EScenarioStatus : uint8
     Completing UMETA(DisplayName = "Completing"),
     Completed UMETA(DisplayName = "Completed"),
     Abandoned UMETA(DisplayName = "Abandoned"),
+};
+
+/** Type of scene editor for polymorphic identification per FOUNDATION TENETS.
+Session identifies a WebSocket session (user editing via client).
+Service identifies a service or tool editing programmatically.
+ */
+UENUM(BlueprintType)
+enum class ESceneEditorType : uint8
+{
+    Session UMETA(DisplayName = "Session"),
+    Service UMETA(DisplayName = "Service"),
 };
 
 /** Scene classification for querying and validation rule lookup.

@@ -60,7 +60,8 @@ public class AudioProcessorTests
             SizeBytes = sizeBytes,
             StorageKey = storageKey,
             Filename = filename,
-            Owner = owner,
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = owner,
             ProcessingOptions = processingOptions
         };
     }

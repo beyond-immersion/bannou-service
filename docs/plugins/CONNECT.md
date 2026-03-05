@@ -15,78 +15,17 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis persistence for session state, mappings, heartbeats, reconnection tokens, account indexes |
-| lib-messaging (`IMessageBus`) | Publishing session lifecycle events, error events, permission recompile triggers, RPC response forwarding |
-| lib-messaging (`IMessageSubscriber`) | Per-session dynamic RabbitMQ subscriptions for client event delivery |
-| lib-mesh (`IMeshInvocationClient`) | Service invocation for routing WebSocket messages to backend services via ServiceNavigator |
-| lib-auth (`IAuthClient`) | Token validation for WebSocket connection authentication |
-| Permission service (via events) | Receives `SessionCapabilitiesEvent` containing permissions; no direct API call |
-| Auth service (via events) | Receives `session.invalidated` events to force-disconnect sessions |
-| `IServiceAppMappingResolver` | Dynamic app-id resolution for distributed service routing |
-| `IServiceScopeFactory` | Creates scoped DI containers for per-request ServiceNavigator resolution |
-| `ICapabilityManifestBuilder` | Builds capability manifest JSON from service mappings for client delivery |
-| `IEntitySessionRegistry` | Entity-to-session mapping for client event push routing; cleaned up on disconnect |
-| `InterNodeBroadcastManager` | WebSocket mesh for relaying broadcasts to peer Connect instances; uses Redis sorted set for instance discovery |
-| `IMeshInstanceIdentifier` | Process-stable instance identity for broadcast registry entries and peer identification |
-
----
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-auth | Publishes `session.invalidated` events consumed by Connect to disconnect clients |
-| lib-permission | Subscribes to `session.connected`/`session.disconnected`; pushes `SessionCapabilitiesEvent` via per-session RabbitMQ queue to update client capabilities |
+| lib-permission | Implements `ISessionActivityListener` for heartbeat-driven TTL refresh; pushes `SessionCapabilitiesEvent` via per-session RabbitMQ queue to update client capabilities |
 | lib-game-session | Publishes session shortcuts and subscribes to `session.connected`/`session.disconnected`/`session.reconnected` |
 | lib-actor | Subscribes to `session.disconnected` events for actor lifecycle |
 | lib-matchmaking | Subscribes to `session.connected`/`session.disconnected`/`session.reconnected` events for queue management |
+| lib-voice | Subscribes to `session.disconnected`/`session.reconnected` events for voice room participant cleanup |
 | All services (via IClientEventPublisher) | Send server-to-client events through per-session RabbitMQ queues consumed by Connect |
-
----
-
-## State Storage
-
-**Stores**: 1 state store (connect-statestore, Redis, prefix: `connect`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `ws-session:{sessionId}` | `ConnectionStateData` | Full connection state (account, timestamps, reconnection info, roles, authorizations) |
-| `heartbeat:{sessionId}` | `SessionHeartbeat` | Connection liveness tracking (instance ID, last seen, connection count) |
-| `reconnect:{token}` | `string` (sessionId) | Reconnection token to session ID mapping (TTL = reconnection window) |
-| `account-sessions:{accountId:N}` | Redis Set of `string` | All active session IDs for an account (atomic SADD/SREM via `ICacheableStateStore<string>`) |
-| `entity-sessions:{entityType}:{entityId:N}` | Redis Set of `string` | Forward index: all session IDs interested in an entity (atomic SADD/SREM via `ICacheableStateStore<string>`) |
-| `session-entities:{sessionId}` | Redis Set of `string` | Reverse index: all entity bindings for a session, values are `"{entityType}:{entityId:N}"` (enables O(n) cleanup on disconnect) |
-| `broadcast-registry` | Redis Sorted Set of JSON `BroadcastRegistryEntry` | Inter-node broadcast mesh registry; members are JSON `{instanceId, internalUrl, broadcastMode}`, scores are Unix timestamps for heartbeat-based stale detection |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `session.connected` | `SessionConnectedEvent` | WebSocket client successfully connects and authenticates |
-| `session.disconnected` | `SessionDisconnectedEvent` | WebSocket client disconnects (graceful or unexpected) |
-| `session.reconnected` | `SessionReconnectedEvent` | Client reconnects within grace period using reconnection token |
-| `connect.session-events` | `SessionEvent` | Internal session lifecycle events for cross-instance communication |
-| `service.error` | (via `TryPublishErrorAsync`) | Published on internal failures (state access, routing, WebSocket errors) |
-| `{pendingRPC.ResponseChannel}` | `ClientRPCResponseEvent` | Forwards client RPC responses back to originating service |
-
-### Consumed Events
-
-| Topic | Event Type | Handler |
-|-------|-----------|---------|
-| `session.invalidated` | `SessionInvalidatedEvent` | `HandleSessionInvalidatedAsync` - Disconnects affected WebSocket clients when Auth invalidates sessions |
-| `service.error` | `ServiceErrorEvent` | `HandleServiceErrorAsync` - Forwards error events to connected admin WebSocket clients as binary messages |
-| Per-session queue (`CONNECT_SESSION_{sessionId}`) | Raw bytes | `HandleClientEventAsync` - Routes client events from RabbitMQ to WebSocket; handles internal events (capabilities, shortcuts) |
-| `/events/auth-events` (HTTP) | `AuthEvent` | `ProcessAuthEventAsync` - Handles login/logout/token refresh from Auth service |
-| `/events/client-messages` (HTTP) | `ClientMessageEvent` | `ProcessClientMessageEventAsync` - Server-to-client push messaging |
-| `/events/client-rpc` (HTTP) | `ClientRPCEvent` | `ProcessClientRPCEventAsync` - Bidirectional RPC (service calls client, expects response) |
 
 ---
 
@@ -123,61 +62,6 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `BroadcastInternalUrl` | `CONNECT_BROADCAST_INTERNAL_URL` | `null` | Internal WebSocket URL for peer connections (e.g., `ws://localhost:5012/connect/broadcast`). Null disables broadcast mesh regardless of mode |
 | `BroadcastHeartbeatIntervalSeconds` | `CONNECT_BROADCAST_HEARTBEAT_INTERVAL_SECONDS` | `30` | Interval between heartbeat refreshes and stale peer cleanup in the broadcast registry |
 | `BroadcastStaleThresholdSeconds` | `CONNECT_BROADCAST_STALE_THRESHOLD_SECONDS` | `90` | Time after which a peer's registry entry is considered stale and removed (should be > heartbeat interval) |
-
----
-
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `IAuthClient` | Scoped | Token validation for WebSocket connection auth |
-| `IMeshInvocationClient` | Singleton | HTTP request creation and service invocation |
-| `IMessageBus` | Scoped | Event publishing (session lifecycle, error, permission recompile) |
-| `IMessageSubscriber` | Singleton | Per-session dynamic RabbitMQ subscription management |
-| `IServiceAppMappingResolver` | Singleton | Dynamic app-id resolution for distributed routing |
-| `IServiceScopeFactory` | Singleton | Creates scoped DI containers for ServiceNavigator |
-| `ConnectServiceConfiguration` | Singleton | All configuration properties (29 total) |
-| `ITelemetryProvider` | Singleton | Distributed tracing span instrumentation for all async helper methods |
-| `ILogger<ConnectService>` | Singleton | Structured logging |
-| `ILoggerFactory` | Singleton | Logger creation for child components |
-| `IEventConsumer` | Singleton | Event consumer registration for pub/sub handlers |
-| `ISessionManager` (`BannouSessionManager`) | Singleton | Distributed session state management (Redis-backed) |
-| `ICapabilityManifestBuilder` (`CapabilityManifestBuilder`) | Singleton | Builds API lists and shortcut lists for capability manifests |
-| `IEntitySessionRegistry` (`EntitySessionRegistry`) | Singleton | Redis-backed dual-index entity-to-session mapping for client event push routing |
-| `InterNodeBroadcastManager` | Singleton | WebSocket mesh for relaying broadcasts to/from peer Connect instances; Redis sorted set for discovery, heartbeat timer for liveness |
-| `IMeshInstanceIdentifier` | Singleton | Process-stable instance identity for session heartbeats and broadcast registry |
-| `WebSocketConnectionManager` | Owned (internal) | In-memory WebSocket connection tracking, send operations, peer GUID registry |
-
-Service lifetime is **Singleton** (unique among Bannou services). This is required because the service maintains in-memory WebSocket connection state (`ConcurrentDictionary` of active connections, session mappings, pending RPCs) that must persist across HTTP requests.
-
----
-
-## API Endpoints (Implementation Notes)
-
-### WebSocket Connection (2 endpoints)
-
-- **ConnectWebSocket** (`GET /connect`): Accepts WebSocket upgrade. Validates token via `IAuthClient` (in controller). Generates session ID. Creates `ConnectionState` with peer GUID. Stores `ConnectionStateData` in Redis. Creates per-session RabbitMQ subscription (`CONNECT_SESSION_{sessionId}` on `bannou-client-events` exchange) with deterministic queue name (`session.events.{sessionId}`) and TTL matching reconnection window. Publishes `session.connected` event with roles/authorizations AFTER RabbitMQ subscription (prevents race condition). Adds session to account index. Does NOT send initial capability manifest - capabilities arrive asynchronously via `SessionCapabilitiesEvent` from Permission. Enters message receive loop. On disconnect: publishes `session.disconnected`, removes from account index, cancels RabbitMQ consumer (queue persists to buffer messages), then either initiates reconnection window (non-forced) or removes session from Redis (forced).
-- **ConnectWebSocketPost** (`POST /connect`): POST variant of the WebSocket endpoint for clients that cannot use GET for WebSocket upgrade. Identical implementation to GET variant.
-
-### Client Capabilities (1 endpoint)
-
-- **ClientCapabilities** (`POST /client-capabilities`): HTTP endpoint that returns the capability manifest for a session. Uses `ICapabilityManifestBuilder.BuildApiList()` to extract POST-only, non-template endpoints from session service mappings. Includes session shortcuts as pseudo-API entries.
-
-### Session Management (1 endpoint)
-
-- **GetAccountSessions** (`POST /connect/get-account-sessions`): Admin-only endpoint. Queries the `account-sessions:{accountId}` Redis key via `ISessionManager.GetSessionsForAccountAsync()`. Returns set of active session IDs for the specified account.
-
-### Internal Proxy (1 endpoint)
-
-- **ProxyInternalRequest** (`POST /internal/proxy`): Stateless HTTP proxy for internal service-to-service calls through Connect. Validates session has access via connection state capability mappings (`ConnectionState.ServiceMappings`, populated by Permission service). Returns `NotFound` if session not connected, `Forbidden` if endpoint not in capability manifest. Resolves app-id via `IServiceAppMappingResolver`. Builds HTTP request with path/query parameters. Routes through `IMeshInvocationClient`. Supports GET/POST/PUT/DELETE/PATCH. Returns raw response body and status code.
-
-### Inter-Node Broadcast (1 endpoint)
-
-- **BroadcastWebSocket** (`GET /connect/broadcast`): Internal WebSocket endpoint for the multi-node broadcast mesh. Other Connect instances connect here to relay broadcast messages. Requires `instanceId` query parameter and service-token authentication (same as Internal connection mode). Not client-facing — used exclusively for inter-node communication. `x-controller-only: true`.
-
-### Meta Proxy (1 endpoint)
-
-- **GetEndpointMeta** (`POST /connect/get-endpoint-meta`): Permission-gated proxy for endpoint metadata. Accepts a full meta endpoint path (e.g., `/account/get/meta/info`), validates the caller's JWT, looks up their active WebSocket session via the JWT's sessionKey, checks the session's capability mappings for the underlying endpoint, and proxies the internal meta GET request if authorized. Returns the meta endpoint response directly.
 
 ---
 
@@ -472,12 +356,10 @@ No outstanding stubs. All previously-tracked items (encrypted flag, compressed f
 
 ## Known Quirks & Caveats
 
-### Bugs (Design-Tracked)
+### Bugs (Fix Immediately)
 
 1. **Orphaned configuration: `CompanionRoomMode`**: Defined in `connect-configuration.yaml` and generated into `ConnectServiceConfiguration`, but `_configuration.CompanionRoomMode` is never referenced anywhere in service code. T21 violation — resolution requires implementing the companion room integration feature ([Issue #382](https://github.com/beyond-immersion/bannou-service/issues/382)) or removing the dead config. See Potential Extensions above for the design approach.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/382 -->
-
-2. ~~**Orphaned configuration: `MaxChannelNumber`**~~: **FIXED** (2026-02-22) - Wired `_configuration.MaxChannelNumber` into `MessageRouter.AnalyzeMessage()` call, replacing the hardcoded `1000` default.
 
 ### Intentional Quirks
 
@@ -520,9 +402,6 @@ No outstanding stubs. All previously-tracked items (encrypted flag, compressed f
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
-
-### Completed
-- **2026-02-22**: L3 hardening audit — Schema: consolidated connect-shortcuts.yaml into standard files, extracted ConnectionMode/InternalAuthMode/BroadcastMode/CompanionRoomMode enums to connect-api.yaml, added format:uuid to all UUID fields, added validation constraints to all config integers, extracted inline HTTP method enum, fixed additionalProperties:true T29 descriptions. Code: fixed T9 thread safety (ConcurrentDictionary/ConcurrentQueue in ConnectionState), fixed T26 Guid.Empty sentinels, fixed T5 anonymous objects (typed event/protocol payloads), wired MaxChannelNumber config (T21), fixed T7 bare catch blocks in NetworkByteOrder, fixed T23 .Wait() in WebSocketConnectionManager.Dispose, fixed T24 IDisposable/IAsyncDisposable + ClientWebSocket leak, deduplicated capability manifest construction (removed dead code), added T30 telemetry spans to ConnectService/BannouSessionManager/EntitySessionRegistry/ConnectServiceEvents, added XML docs to MessageRouteInfo/WebSocketConnection properties.
 
 ### Pending Design Review
 - **Companion room integration** - [Issue #382](https://github.com/beyond-immersion/bannou-service/issues/382) - DI Provider pattern (`ICompanionRoomProvider`) for Chat (L1) and Voice (L3) companion rooms during session lifecycle; dead `CompanionRoomMode` config requires this or removal (2026-02-08)

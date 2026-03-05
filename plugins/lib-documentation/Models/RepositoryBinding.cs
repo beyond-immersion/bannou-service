@@ -57,12 +57,15 @@ internal sealed class RepositoryBinding
     /// <summary>Gets or sets when the binding was created.</summary>
     public DateTimeOffset CreatedAt { get; set; }
 
+    /// <summary>Gets or sets the type of owner for this binding.</summary>
+    public OwnerTypeInternal OwnerType { get; set; }
+
     /// <summary>
-    /// Gets or sets the owner of this binding. NOT a session ID.
-    /// Contains either an accountId (UUID format) for user-initiated bindings
-    /// or a service name for service-initiated bindings.
+    /// Gets or sets the owner identifier.
+    /// For Session type: the WebSocket session ID (UUID format).
+    /// For Service type: the service name (e.g., "orchestrator").
     /// </summary>
-    public string Owner { get; set; } = string.Empty;
+    public string OwnerId { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the last sync error message.</summary>
     public string? LastSyncError { get; set; }
@@ -90,6 +93,18 @@ internal enum BindingStatusInternal
 
     /// <summary>Binding is disabled.</summary>
     Disabled
+}
+
+/// <summary>
+/// Internal owner type enum to avoid dependency on generated types.
+/// </summary>
+internal enum OwnerTypeInternal
+{
+    /// <summary>Owner is a WebSocket session (identified by session ID).</summary>
+    Session,
+
+    /// <summary>Owner is a service (identified by service name).</summary>
+    Service
 }
 
 /// <summary>
@@ -251,10 +266,13 @@ internal sealed class DocumentationArchive
     /// <summary>Gets or sets the description of the archive.</summary>
     public string? Description { get; set; }
 
+    /// <summary>Gets or sets the type of owner for this archive.</summary>
+    public OwnerTypeInternal OwnerType { get; set; }
+
     /// <summary>
-    /// Gets or sets the owner of this archive. NOT a session ID.
-    /// Contains either an accountId (UUID format) for user-initiated archives
-    /// or a service name for service-initiated archives.
+    /// Gets or sets the owner identifier.
+    /// For Session type: the WebSocket session ID (UUID format).
+    /// For Service type: the service name (e.g., "orchestrator").
     /// </summary>
-    public string Owner { get; set; } = string.Empty;
+    public string OwnerId { get; set; } = string.Empty;
 }

@@ -767,17 +767,12 @@ components:
       additionalProperties: false
       required:
       - webSocketSessionId
-      - accountId
       - queueId
       properties:
         webSocketSessionId:
           type: string
           format: uuid
           description: WebSocket session ID for event delivery
-        accountId:
-          type: string
-          format: uuid
-          description: Account ID of the player joining
         queueId:
           type: string
           description: ID of the queue to join
@@ -820,13 +815,8 @@ components:
       description: Information about a party member for matchmaking
       additionalProperties: false
       required:
-      - accountId
       - webSocketSessionId
       properties:
-        accountId:
-          type: string
-          format: uuid
-          description: Account ID of the party member
         webSocketSessionId:
           type: string
           format: uuid

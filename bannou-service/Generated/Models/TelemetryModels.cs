@@ -64,6 +64,24 @@ public partial class TelemetryHealthResponse
     [System.Text.Json.Serialization.JsonPropertyName("otlpEndpoint")]
     public string? OtlpEndpoint { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the most recent OTLP trace export batch succeeded. Always false when tracing is disabled.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("otlpExportHealthy")]
+    public bool OtlpExportHealthy { get; set; } = default!;
+
+    /// <summary>
+    /// Number of consecutive OTLP export failures since the last success. Zero when healthy or tracing disabled.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consecutiveExportFailures")]
+    public int ConsecutiveExportFailures { get; set; } = default!;
+
+    /// <summary>
+    /// UTC timestamp of the last successful OTLP trace export. Null if no export has succeeded yet or tracing is disabled.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("lastSuccessfulExportAt")]
+    public System.DateTimeOffset? LastSuccessfulExportAt { get; set; } = default!;
+
 }
 
 /// <summary>

@@ -15,9 +15,9 @@
 | Layer | L4 GameFeatures |
 | Endpoints | 11 |
 | State Stores | achievement-definition (Redis), achievement-progress (Redis), achievement-lock (Redis) |
-| Events Published | 5 (achievement.definition.created, achievement.definition.updated, achievement.unlocked, achievement.progress.updated, achievement.platform.synced) |
+| Events Published | 5 (achievement.definition.created, achievement.definition.updated, achievement.progress.unlocked, achievement.progress.updated, achievement.platform.synced) |
 | Events Consumed | 3 (analytics.score.updated, analytics.milestone.reached, leaderboard.rank.changed) |
-| Client Events | 2 (achievement.unlocked, achievement.progress.milestone-reached) |
+| Client Events | 2 (achievement.progress.unlocked, achievement.progress.milestone-reached) |
 | Background Services | 1 (RarityCalculationService) |
 
 ---
@@ -72,7 +72,7 @@
 |-------|-----------|---------|
 | `achievement.definition.created` | `AchievementDefinitionCreatedEvent` | CreateAchievementDefinition — full definition snapshot |
 | `achievement.definition.updated` | `AchievementDefinitionUpdatedEvent` | UpdateAchievementDefinition, DeprecateAchievementDefinition — includes `changedFields` array |
-| `achievement.unlocked` | `AchievementUnlockedEvent` | UpdateAchievementProgress (on auto-unlock at target), UnlockAchievement — includes isRare, rarity% |
+| `achievement.progress.unlocked` | `AchievementUnlockedEvent` | UpdateAchievementProgress (on auto-unlock at target), UnlockAchievement — includes isRare, rarity% |
 | `achievement.progress.updated` | `AchievementProgressUpdatedEvent` | UpdateAchievementProgress — includes previous/new/target progress, percent complete |
 | `achievement.platform.synced` | `AchievementPlatformSyncedEvent` | UnlockAchievement (auto-sync), SyncPlatformAchievements — includes platform, success, errorMessage |
 
@@ -115,8 +115,8 @@
 | UpdateAchievementDefinition | POST /achievement/definition/update | [developer] | definition | achievement.definition.updated |
 | DeprecateAchievementDefinition | POST /achievement/definition/deprecate | [developer] | definition | achievement.definition.updated |
 | GetAchievementProgress | POST /achievement/progress/get | [user] | - | - |
-| UpdateAchievementProgress | POST /achievement/progress/update | [] | progress, definition (earned count) | achievement.progress.updated, achievement.unlocked |
-| UnlockAchievement | POST /achievement/unlock | [] | progress, definition (earned count) | achievement.unlocked, achievement.platform.synced |
+| UpdateAchievementProgress | POST /achievement/progress/update | [] | progress, definition (earned count) | achievement.progress.updated, achievement.progress.unlocked |
+| UnlockAchievement | POST /achievement/unlock | [] | progress, definition (earned count) | achievement.progress.unlocked, achievement.platform.synced |
 | ListUnlockedAchievements | POST /achievement/list-unlocked | [user] | - | - |
 | SyncPlatformAchievements | POST /achievement/platform/sync | [admin] | - | achievement.platform.synced |
 | GetPlatformSyncStatus | POST /achievement/platform/status | [] | - | - |
@@ -231,8 +231,8 @@ LOCK achievement-lock:{gameServiceId}:{entityType}:{entityId}  -> 409 if fails
     // IncrementEarnedCountAsync: ETag-retry loop (config.EarnedCountRetryAttempts)
     READ _definitionStore:{gameServiceId}:{achievementId} [with ETag]
     ETAG-WRITE _definitionStore:{gameServiceId}:{achievementId}  // EarnedCount++
-    PUBLISH achievement.unlocked { gameServiceId, achievementId, entityId, entityType, points, totalPoints, isRare, rarity }
-    PUSH achievement.unlocked -> entity sessions
+    PUBLISH achievement.progress.unlocked { gameServiceId, achievementId, entityId, entityType, points, totalPoints, isRare, rarity }
+    PUSH achievement.progress.unlocked -> entity sessions
   ELSE
     WRITE _progressStore:{gameServiceId}:{entityType}:{entityId} <- updated progress [with TTL if configured]
   PUBLISH achievement.progress.updated { previousProgress, newProgress, targetProgress, percentComplete }
@@ -264,8 +264,8 @@ LOCK achievement-lock:{gameServiceId}:{entityType}:{entityId}  -> 409 if fails
   // IncrementEarnedCountAsync: ETag-retry loop
   READ _definitionStore:{gameServiceId}:{achievementId} [with ETag]
   ETAG-WRITE _definitionStore:{gameServiceId}:{achievementId}  // EarnedCount++
-  PUBLISH achievement.unlocked { gameServiceId, achievementId, entityId, entityType, points, totalPoints, isRare, rarity }
-  PUSH achievement.unlocked -> entity sessions
+  PUBLISH achievement.progress.unlocked { gameServiceId, achievementId, entityId, entityType, points, totalPoints, isRare, rarity }
+  PUSH achievement.progress.unlocked -> entity sessions
   // Platform sync (if AutoSyncOnUnlock AND !body.SkipPlatformSync)
   IF config.AutoSyncOnUnlock AND !body.SkipPlatformSync
     FOREACH platform in definition.Platforms (excluding Internal)

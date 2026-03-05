@@ -4,9 +4,8 @@
 > **Schema**: `schemas/broadcast-api.yaml` (not yet created)
 > **Version**: N/A (Pre-Implementation)
 > **State Store**: broadcast-platforms (MySQL), broadcast-sessions (Redis), broadcast-sentiment-buffer (Redis), broadcast-outputs (Redis), broadcast-cameras (Redis), broadcast-lock (Redis) — all planned
-> **Layer**: AppFeatures
+> **Layer**: L3 AppFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
-> **Planning**: N/A
 > **Implementation Map**: [docs/maps/BROADCAST.md](../maps/BROADCAST.md)
 
 ## Overview
@@ -123,27 +122,6 @@ lib-broadcast delivers value independently. It can broadcast game content to Twi
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-### Hard Dependencies (constructor injection -- crash if missing)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Platform link records (MySQL), active session tracking (Redis), sentiment buffer (Redis), broadcast state (Redis), camera sources (Redis), distributed locks (Redis), tracking ID mapping (Redis) |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for platform linking, session management, broadcast mutations, token refresh |
-| lib-messaging (`IMessageBus`) | Publishing sentiment pulses, platform lifecycle events, broadcast lifecycle events |
-| lib-messaging (`IEventConsumer`) | Registering handlers for voice broadcast consent events, voice mute events, session disconnect events |
-| lib-account (`IAccountClient`) | Validate account existence for platform linking (L1) |
-| lib-auth (`IAuthClient`) | OAuth token validation for platform callbacks (L1) |
-
-### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
-
-| Dependency | Usage | Behavior When Missing |
-|------------|-------|-----------------------|
-| lib-voice (`IVoiceClient`) | Query voice room RTP audio endpoint for broadcast source | Voice room broadcasting unavailable; camera/game audio broadcasting still works |
-
----
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -151,111 +129,6 @@ lib-broadcast delivers value independently. It can broadcast game content to Twi
 | lib-showtime (L4) | Subscribes to `broadcast.audience.pulse` for real audience blending with simulated audiences |
 | lib-showtime (L4) | Subscribes to `x-lifecycle` platform-session and broadcast-output events for session/broadcast awareness |
 | lib-director *(planned)* | During directed events, Director coordinates broadcast output: signaling priority levels for camera/source selection, associating platform sessions with directed events for metrics capture, and timing broadcast start/stop around event lifecycle phases. See [DIRECTOR.md](DIRECTOR.md) Broadcast & Showtime Integration |
-
----
-
-## State Storage
-
-### Platform Link Store
-**Store**: `broadcast-platforms` (Backend: MySQL, Table: `broadcast_platforms`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `platform:{linkId}` | `PlatformLinkModel` | Primary lookup by link ID. Stores account reference, platform type, encrypted OAuth tokens (access + refresh), platform display name, linked timestamp. |
-| `platform-account:{accountId}:{platform}` | `PlatformLinkModel` | Uniqueness lookup per account+platform combination |
-
-### Session Store
-**Store**: `broadcast-sessions` (Backend: Redis, prefix: `broadcast:sess`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `sess:{platformSessionId}` | `PlatformSessionModel` | Active platform session tracking. Stores link reference, platform stream ID, start time, viewer count, associated in-game session ID (nullable), session state. |
-| `sess-account:{accountId}` | `PlatformSessionModel` | Active session lookup by account |
-| `sess-tracking:{platformSessionId}:{hashedPlatformUserId}` | `TrackingIdEntry` | Tracked viewer mapping (hashed platform user ID → opaque tracking GUID). Session-scoped TTL. Privacy-safe: hashed input is non-reversible, TTL ensures cleanup. Per IMPLEMENTATION TENETS (multi-instance safety). |
-
-### Sentiment Buffer Store
-**Store**: `broadcast-sentiment-buffer` (Backend: Redis, prefix: `broadcast:sent`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `sent:{platformSessionId}:{sequence}` | `BufferedSentimentEntry` | Individual sentiment entries awaiting batch publication. TTL-based cleanup (2x pulse interval). |
-
-### Broadcast Store
-**Store**: `broadcast-outputs` (Backend: Redis, prefix: `broadcast:out`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `out:{broadcastId}` | `BroadcastModel` | Authoritative broadcast state. Stores source type, encrypted RTMP URL, owning instance ID (from `IMeshInstanceIdentifier`), FFmpeg PID, current video source, health status, start time, fallback configuration. This is the source of truth for broadcast existence -- `IBroadcastCoordinator`'s in-memory process handle map is a non-authoritative local cache. |
-
-### Camera Source Store
-**Store**: `broadcast-cameras` (Backend: Redis, prefix: `broadcast:cam`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `cam:{cameraId}` | `CameraSourceModel` | Camera sources registered via the `/broadcast/camera/announce` API endpoint. TTL-based (cameras must re-announce periodically). Stores RTMP input URL, resolution, codec, heartbeat timestamp. |
-
-### Distributed Locks
-**Store**: `broadcast-lock` (Backend: Redis, prefix: `"broadcast:lock"`)
-
-| Key Pattern | Purpose |
-|-------------|---------|
-| `broadcast:lock:link:{accountId}:{platform}` | Platform linking operation lock (prevent duplicate OAuth flows) |
-| `broadcast:lock:session:{platformSessionId}` | Session mutation lock |
-| `broadcast:lock:broadcast:{broadcastId}` | Broadcast mutation lock (start/stop/update) |
-| `broadcast:lock:sentiment-publisher` | Sentiment batch publisher singleton lock |
-| `broadcast:lock:token-refresh:{linkId}` | Per-link token refresh lock (prevents concurrent refresh across instances per IMPLEMENTATION TENETS) |
-| `broadcast:lock:webhook-manager` | Webhook subscription manager singleton lock (TTL: `WebhookManagerLockTimeoutSeconds`) |
-
----
-
-## Events
-
-### Published Events (via `x-lifecycle`)
-
-Platform links, platform sessions, and broadcast outputs use `x-lifecycle` for CRUD lifecycle events (per FOUNDATION TENETS -- lifecycle events must never be manually defined). The `topic_prefix: broadcast` is required because this is a multi-entity service.
-
-| Entity | Generated Events | Topic Pattern |
-|--------|-----------------|---------------|
-| `PlatformLink` | `PlatformLinkCreatedEvent`, `PlatformLinkUpdatedEvent`, `PlatformLinkDeletedEvent` | `broadcast.platform-link.created`, `broadcast.platform-link.updated`, `broadcast.platform-link.deleted` |
-| `PlatformSession` | `PlatformSessionCreatedEvent`, `PlatformSessionUpdatedEvent`, `PlatformSessionDeletedEvent` | `broadcast.platform-session.created`, `broadcast.platform-session.updated`, `broadcast.platform-session.deleted` |
-| `BroadcastOutput` | `BroadcastOutputCreatedEvent`, `BroadcastOutputUpdatedEvent`, `BroadcastOutputDeletedEvent` | `broadcast.broadcast-output.created`, `broadcast.broadcast-output.updated`, `broadcast.broadcast-output.deleted` |
-
-**Note**: Fallback source changes publish via `BroadcastOutputUpdatedEvent` with `changedFields: ["videoSource"]` (per IMPLEMENTATION TENETS -- use `*.updated` with changedFields, not a separate event).
-
-### Published Events (custom -- not lifecycle)
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `broadcast.audience.pulse` | `BroadcastAudiencePulseEvent` | Batched sentiment data from real audience (privacy-safe, no PII). Custom event because pulse publication is not CRUD lifecycle. |
-
-### Consumed Events
-
-| Topic | Handler | Action |
-|-------|---------|--------|
-| `voice.room.broadcast.approved` | `HandleVoiceBroadcastApprovedAsync` | Start RTMP output for a voice room after all participants consented. Connects to the room's RTP audio endpoint. (Soft -- no-op if lib-voice absent). Event model redefined inline in `broadcast-events.yaml` (per FOUNDATION TENETS -- events schemas cannot `$ref` other service event files). |
-| `voice.room.broadcast.stopped` | `HandleVoiceBroadcastStoppedAsync` | Stop RTMP output for a voice room. Consent revoked or room closed. (Soft -- no-op if lib-voice absent). Event model redefined inline. |
-| `voice.participant.muted` | `HandleVoiceParticipantMutedAsync` | Exclude/include muted participant's audio from RTMP output mixing. (Soft -- no-op if lib-voice absent). Event model redefined inline. |
-| `session.disconnected` | `HandleSessionDisconnectedAsync` | Cleanup platform session when user drops WebSocket connection. Stops event ingestion, publishes session ended event. Prevents orphaned platform sessions. |
-
-### Resource Cleanup (per FOUNDATION TENETS)
-
-| Target Resource | Source Type | On Delete | Cleanup Endpoint |
-|----------------|-------------|-----------|-----------------|
-| account | broadcast | CASCADE | `/broadcast/cleanup-by-account` |
-
-**Schema requirement**: `broadcast-api.yaml` must declare `x-references` in the `info:` section:
-
-```yaml
-info:
-  x-references:
-    - target: account
-      sourceType: broadcast
-      field: accountId
-      onDelete: cascade
-      cleanup:
-        endpoint: /broadcast/cleanup-by-account
-        payloadTemplate: '{"accountId": "{{resourceId}}"}'
-```
 
 ---
 
@@ -298,115 +171,6 @@ info:
 | `WebhookRenewalIntervalSeconds` | `BROADCAST_WEBHOOK_RENEWAL_INTERVAL_SECONDS` | int | `3600` | `minimum: 60` | How often to verify/renew platform webhook subscriptions |
 | `SessionCleanupIntervalSeconds` | `BROADCAST_SESSION_CLEANUP_INTERVAL_SECONDS` | int | `3600` | `minimum: 60` | How often to purge expired session records |
 | `WebhookManagerLockTimeoutSeconds` | `BROADCAST_WEBHOOK_MANAGER_LOCK_TIMEOUT_SECONDS` | int | `300` | `minimum: 10`, `maximum: 1800` | TTL for the webhook manager singleton lock. Must be less than the webhook renewal deadline to prevent subscription expiration during a crash. |
-
----
-
-## DI Services & Helpers
-
-| Service | Role |
-|---------|------|
-| `ILogger<BroadcastService>` | Structured logging |
-| `BroadcastServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access (creates 7 stores) |
-| `IMessageBus` | Event publishing |
-| `IDistributedLockProvider` | Distributed lock acquisition (L0) |
-| `IAccountClient` | Account existence validation (L1 hard) |
-| `IAuthClient` | OAuth token validation (L1 hard) |
-| `IServiceProvider` | Runtime resolution of soft L3 dependencies |
-| `IBroadcastCoordinator` | FFmpeg process supervision (internal singleton). Per-instance process handle cache -- NOT authoritative state. The authoritative broadcast record lives in the `broadcast-outputs` Redis store. On startup, the coordinator reads Redis and reconciles: stale broadcasts owned by crashed instances are marked failed, local process handles are rebuilt for broadcasts owned by this instance. |
-| `ISentimentProcessor` | Raw platform events → sentiment values (internal) |
-| `IPlatformWebhookHandler` | Platform-specific webhook processing (internal) |
-| `ITelemetryProvider` | Span instrumentation for all async methods (per QUALITY TENETS) |
-
-### Background Workers
-
-| Worker | Purpose | Interval Config | Lock Key |
-|--------|---------|-----------------|----------|
-| `TokenRefreshWorker` | Periodically refreshes OAuth tokens for linked platforms before they expire. Acquires `broadcast:lock:token-refresh:{linkId}` per-link before refreshing (per IMPLEMENTATION TENETS -- prevents concurrent refresh across instances). | `TokenRefreshIntervalTwitchSeconds` (14400), `TokenRefreshIntervalYouTubeSeconds` (3600) | `broadcast:lock:token-refresh:{linkId}` (per-link) |
-| `WebhookSubscriptionManager` | Ensures webhook subscriptions are active for all linked platforms (Twitch EventSub requires periodic renewal) | `WebhookRenewalIntervalSeconds` (3600) | `broadcast:lock:webhook-manager` (TTL: `WebhookManagerLockTimeoutSeconds`) |
-| `SentimentBatchPublisher` | Drains the sentiment buffer at the configured pulse interval and publishes `broadcast.audience.pulse` events | `SentimentPulseIntervalSeconds` (15s) | `broadcast:lock:sentiment-publisher` |
-| `SessionCleanupWorker` | Purges ended session records older than the configured retention period | `SessionCleanupIntervalSeconds` (3600) | None (idempotent) |
-| `BroadcastHealthMonitor` | Monitors FFmpeg process health via stderr parsing, auto-restarts on crash, detects stale Redis broadcast records from crashed instances and marks them failed. Publishes health events. | `OutputHealthCheckIntervalSeconds` (10s) | None (local process monitoring + stale record detection) |
-| `AutoBroadcastStarter` | On startup, checks `AutoBroadcastCameraId` and `AutoBroadcastRtmpUrl` config; if both non-null, starts a broadcast automatically | Once (startup) | None |
-
----
-
-## API Endpoints (Implementation Notes)
-
-**Current status**: Pre-implementation. All endpoints described below are architectural targets.
-
-### Platform Account Management (4 endpoints)
-
-All endpoints require `x-permissions: [user]`.
-
-- **Link** (`/broadcast/platform/link`): Initiates OAuth flow for Twitch, YouTube, or custom RTMP. Validates account exists. Checks no duplicate link for this account+platform. Generates OAuth state token, stores pending link with TTL. Returns OAuth redirect URL for the platform.
-- **Callback** (`/broadcast/platform/callback`): Handles OAuth redirect callback. Validates state token, exchanges authorization code for tokens, encrypts tokens with `TokenEncryptionKey`, stores `PlatformLinkModel` in MySQL. `x-lifecycle` publishes `PlatformLinkCreatedEvent`. For custom RTMP: no OAuth; stores provided RTMP URL directly.
-- **Unlink** (`/broadcast/platform/unlink`): Lock. Revokes OAuth tokens on the platform side. Stops any active session for this link. Deletes link record (session records referencing this link are cascade-deleted from Redis). `x-lifecycle` publishes `PlatformLinkDeletedEvent`.
-- **List** (`/broadcast/platform/list`): Returns all linked platforms for an account. Token fields are masked in response.
-
-### Platform Session Management (5 endpoints)
-
-All endpoints require `x-permissions: [user]`.
-
-- **Start** (`/broadcast/session/start`): Validates platform link exists and account is currently live on the platform (queries platform API). Creates `PlatformSessionModel` in Redis. Starts ingesting platform events (chat, subs, raids) via the platform's real-time API (Twitch IRC/EventSub, YouTube Live Chat API). `x-lifecycle` publishes `PlatformSessionCreatedEvent`.
-- **Stop** (`/broadcast/session/stop`): Stops event ingestion. Records duration and peak viewer count. Deletes tracking ID mappings from Redis. `x-lifecycle` publishes `PlatformSessionDeletedEvent`.
-- **Associate** (`/broadcast/session/associate`): Links a platform session to an in-game streaming session (lib-showtime L4). Updates the `streamSessionId` field on sentiment pulses so lib-showtime knows which in-game session the real audience belongs to. **Important**: `streamSessionId` is stored as an opaque GUID with NO validation against lib-showtime -- Broadcast (L3) cannot call lib-showtime (L4) per the service hierarchy. lib-showtime validates the ID against its own state when it receives `broadcast.audience.pulse` events containing this ID.
-- **Status** (`/broadcast/session/status`): Returns current session state including viewer count, sentiment category distribution, and linked in-game session ID.
-- **List** (`/broadcast/session/list`): Returns active and recent sessions for an account, paginated.
-
-### Camera Management (2 endpoints)
-
-Camera sources are registered via API endpoints (not events) because game engines are external systems that call Broadcast's HTTP API directly. This avoids creating orphaned event topics with no Bannou publisher (per FOUNDATION TENETS -- events require a publishing service).
-
-All endpoints require `x-permissions: [admin]`.
-
-- **Announce** (`/broadcast/camera/announce`): Registers or heartbeats a game engine camera as an available video source. Stores `CameraSourceModel` in Redis with TTL (cameras must re-announce periodically). Replaces the previously-designed `camera.stream.started` event subscription.
-- **Retire** (`/broadcast/camera/retire`): Removes a camera from available sources. Replaces the previously-designed `camera.stream.ended` event subscription.
-
-### Output Management (5 endpoints)
-
-All endpoints require `x-permissions: [admin]` (RTMP output management is an admin operation).
-
-- **Start** (`/broadcast/output/start`): Validates source availability (camera exists, game audio reachable, or voice room consent granted). Validates RTMP URL connectivity via FFprobe. Starts FFmpeg process via `IBroadcastCoordinator`. Stores `BroadcastModel` in Redis (authoritative state). `x-lifecycle` publishes `BroadcastOutputCreatedEvent`. For `VoiceRoom` source type: this is called internally in response to `voice.room.broadcast.approved`, not directly by clients.
-- **Stop** (`/broadcast/output/stop`): Kills FFmpeg process. `x-lifecycle` publishes `BroadcastOutputDeletedEvent`.
-- **Update** (`/broadcast/output/update`): Changes RTMP URL or fallback configuration. Causes ~2-3s interruption (FFmpeg restart). Validates new URL via FFprobe before committing.
-- **Status** (`/broadcast/output/status`): Returns broadcast health, current video source (primary/fallback/black), duration, and source type.
-- **List** (`/broadcast/output/list`): Returns all active broadcasts with optional filter for active-only.
-
-### Webhook Endpoints (3 endpoints)
-
-Internet-facing via NGINX (justified T15 exception -- platform callbacks, not browser-facing). Authentication is provided by platform-specific HMAC signature validation (Twitch) and verification token validation (YouTube), not Bannou JWT. All three endpoints declare `x-permissions: []` (empty -- not exposed to WebSocket clients) and `x-controller-only: true` (webhook validation requires raw `HttpContext` access for HMAC computation before model binding).
-
-- **Twitch** (`/broadcast/webhook/twitch`): Validates Twitch HMAC signature. Handles EventSub notification types: stream.online, stream.offline, channel.subscribe, channel.raid, channel.chat.message. Routes to `ISentimentProcessor` for chat messages.
-- **YouTube** (`/broadcast/webhook/youtube`): Validates YouTube verification token. Handles push notifications for live chat messages, super chats, new subscribers, and membership events.
-- **Custom** (`/broadcast/webhook/custom`): Validates configurable HMAC signature. Generic webhook format for custom RTMP platforms. Routes to `ISentimentProcessor`.
-
-### Admin / Debug (2 endpoints)
-
-All endpoints require `x-permissions: [developer]`.
-
-- **Latest Pulse** (`/broadcast/admin/pulse/latest`): Returns the most recent sentiment pulse for a platform session. Debug tool for validating sentiment processing.
-- **Test Sentiment** (`/broadcast/admin/sentiment/test`): Accepts a raw text input and returns the sentiment processing result (category + intensity). Testing tool for sentiment algorithm tuning.
-
-### Cleanup Endpoints (1 endpoint)
-
-Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
-
-- **CleanupByAccount** (`/broadcast/cleanup-by-account`): Unlinks all platforms for the account, stops all active sessions, stops all broadcasts initiated by the account.
-
----
-
-## Client Events
-
-Broadcast pushes real-time status updates to connected WebSocket clients via `IClientEventPublisher` (per IMPLEMENTATION TENETS -- never `IMessageBus` for client events). All client events use Pattern C naming for multi-entity services: `broadcast.{entity}.{action}`.
-
-| Event Name | Model | Target | Trigger |
-|------------|-------|--------|---------|
-| `broadcast.output.started` | `BroadcastOutputStartedClientEvent` | Account session (admin) | RTMP broadcast started |
-| `broadcast.output.stopped` | `BroadcastOutputStoppedClientEvent` | Account session (admin) | RTMP broadcast stopped |
-| `broadcast.output.source-changed` | `BroadcastOutputSourceChangedClientEvent` | Account session (admin) | Fallback cascade triggered |
-| `broadcast.session.started` | `BroadcastSessionStartedClientEvent` | Account session (user) | Platform session monitoring started |
-| `broadcast.session.ended` | `BroadcastSessionEndedClientEvent` | Account session (user) | Platform session monitoring ended |
 
 ---
 
@@ -492,7 +256,7 @@ Broadcast pushes real-time status updates to connected WebSocket clients via `IC
 - Declare `x-references` block for lib-resource account cleanup
 - Create broadcast-events.yaml schema using `x-lifecycle` with `topic_prefix: broadcast` for PlatformLink, PlatformSession, and BroadcastOutput entities; plus 1 custom event (`broadcast.audience.pulse`)
 - Define consumed event models inline in `broadcast-events.yaml` (voice events, session events -- cannot `$ref` other service event files per FOUNDATION TENETS)
-- Create broadcast-configuration.yaml schema (38 configuration properties with validation ranges)
+- Create broadcast-configuration.yaml schema (35 configuration properties with validation ranges)
 - Create broadcast-client-events.yaml (5 client events: output started/stopped/source-changed, session started/ended)
 - Define `AudioCodec` and `VideoCodec` enums in configuration schema (LGPL-compliant codecs only per T18)
 - Generate service code
@@ -598,6 +362,8 @@ Broadcast pushes real-time status updates to connected WebSocket clients via `IC
 3. **Twitch EventSub subscription management**: Twitch requires active management of webhook subscriptions (creation, renewal, callback verification). The subscription lifecycle is complex and failure-prone. The `WebhookSubscriptionManager` background worker needs robust error handling for common failure modes (expired subscriptions, rate limits, temporary API outages).
 
 4. **Rate limiting for webhook endpoints**: Platform webhooks can deliver bursts of events (e.g., during a raid or sub train). The webhook handlers need rate limiting or backpressure to prevent overwhelming the sentiment buffer. Redis-backed rate limiting per platform session is the likely approach.
+
+5. **T32 Account Identity Boundary compliance**: Platform management and session management endpoints (link, unlink, list, start, stop, associate, status, list sessions) are declared with `x-permissions: [user]`, meaning they are exposed to WebSocket clients. Per T32, client-facing endpoints must NOT accept `accountId` in request bodies — the account should be resolved server-side from the WebSocket session. The schema and implementation map pseudo-code currently pass `accountId` explicitly. When creating the schema, these endpoints should use session-resolved identity instead.
 
 ---
 

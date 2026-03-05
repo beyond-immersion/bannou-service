@@ -59,12 +59,10 @@ paths:
           description: Player already has an active garden instance
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EnterGardenRequest\"\
         ,\n    \"$defs\": {\n        \"EnterGardenRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to enter the garden\",\n            \"required\": [\n                \"accountId\",\n                \"\
-        sessionId\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n                   \
-        \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account
-        entering the garden\"\n                },\n                \"sessionId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Current WebSocket session ID\"\
-        \n                }\n            }\n        }\n    }\n}"
+        : \"Request to enter the garden\",\n            \"required\": [\n                \"sessionId\"\n            ],\n \
+        \           \"properties\": {\n                \"sessionId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID of the player entering
+        the garden\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GardenStateResponse\"\
         ,\n    \"$defs\": {\n        \"GardenStateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Current garden instance state for a player\",\n            \"required\": [\n                \"gardenInstanceId\"\
@@ -155,10 +153,10 @@ paths:
           description: Player is not in the garden
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetGardenStateRequest\"\
         ,\n    \"$defs\": {\n        \"GetGardenStateRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to get current garden state\",\n            \"required\": [\n                \"accountId\"\n         \
-        \   ],\n            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Account whose garden state to
-        retrieve\"\n                }\n            }\n        }\n    }\n}"
+        : \"Request to get current garden state\",\n            \"required\": [\n                \"sessionId\"\n         \
+        \   ],\n            \"properties\": {\n                \"sessionId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID of the player\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GardenStateResponse\"\
         ,\n    \"$defs\": {\n        \"GardenStateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Current garden instance state for a player\",\n            \"required\": [\n                \"gardenInstanceId\"\
@@ -250,11 +248,11 @@ paths:
           description: Player is not in the garden
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdatePositionRequest\"\
         ,\n    \"$defs\": {\n        \"UpdatePositionRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to update player position in the garden\",\n            \"required\": [\n                \"accountId\"\
+        : \"Request to update player position in the garden\",\n            \"required\": [\n                \"sessionId\"\
         ,\n                \"position\",\n                \"velocity\"\n            ],\n            \"properties\": {\n  \
-        \              \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Account whose position to update\"\n                },\n               \
-        \ \"position\": {\n                    \"$ref\": \"#/$defs/Vec3\",\n                    \"description\": \"New position
+        \              \"sessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"WebSocket session ID of the player\"\n                },\n             \
+        \   \"position\": {\n                    \"$ref\": \"#/$defs/Vec3\",\n                    \"description\": \"New position
         in garden space\"\n                },\n                \"velocity\": {\n                    \"$ref\": \"#/$defs/Vec3\"\
         ,\n                    \"description\": \"Current velocity vector\"\n                }\n            }\n        },\n\
         \        \"Vec3\": {\n            \"type\": \"object\",\n            \"description\": \"Three-dimensional spatial
@@ -351,10 +349,10 @@ paths:
           description: Player is not in the garden
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaveGardenRequest\"\
         ,\n    \"$defs\": {\n        \"LeaveGardenRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to leave the garden\",\n            \"required\": [\n                \"accountId\"\n            ],\n \
-        \           \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"uuid\",\n                    \"description\": \"Account leaving the garden\"\n     \
-        \           }\n            }\n        }\n    }\n}"
+        : \"Request to leave the garden\",\n            \"required\": [\n                \"sessionId\"\n            ],\n \
+        \           \"properties\": {\n                \"sessionId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID of the player leaving
+        the garden\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaveGardenResponse\"\
         ,\n    \"$defs\": {\n        \"LeaveGardenResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after leaving the garden\",\n            \"required\": [\n                \"accountId\",\n          \
@@ -393,10 +391,10 @@ paths:
           description: Player is not in the garden
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListPoisRequest\"\
         ,\n    \"$defs\": {\n        \"ListPoisRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to list active POIs\",\n            \"required\": [\n                \"accountId\"\n            ],\n \
-        \           \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"uuid\",\n                    \"description\": \"Account whose POIs to list\"\n     \
-        \           }\n            }\n        }\n    }\n}"
+        : \"Request to list active POIs\",\n            \"required\": [\n                \"sessionId\"\n            ],\n \
+        \           \"properties\": {\n                \"sessionId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID of the player\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListPoisResponse\"\
         ,\n    \"$defs\": {\n        \"ListPoisResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"List of active POIs in a garden instance\",\n            \"required\": [\n                \"gardenInstanceId\"\
@@ -484,10 +482,10 @@ paths:
           description: POI not found
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/InteractWithPoiRequest\"\
         ,\n    \"$defs\": {\n        \"InteractWithPoiRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to interact with a POI\",\n            \"required\": [\n                \"accountId\",\n             \
-        \   \"poiId\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account
-        interacting with the POI\"\n                },\n                \"poiId\": {\n                    \"type\": \"string\"\
+        : \"Request to interact with a POI\",\n            \"required\": [\n                \"sessionId\",\n             \
+        \   \"poiId\"\n            ],\n            \"properties\": {\n                \"sessionId\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"WebSocket
+        session ID of the player\"\n                },\n                \"poiId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"POI to interact with\"\n    \
         \            }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PoiInteractionResponse\"\
@@ -543,12 +541,12 @@ paths:
           description: POI not found
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeclinePoiRequest\"\
         ,\n    \"$defs\": {\n        \"DeclinePoiRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to decline a POI\",\n            \"required\": [\n                \"accountId\",\n                \"poiId\"\
-        \n            ],\n            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account declining the
-        POI\"\n                },\n                \"poiId\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"uuid\",\n                    \"description\": \"POI to decline\"\n                }\n      \
-        \      }\n        }\n    }\n}"
+        : \"Request to decline a POI\",\n            \"required\": [\n                \"sessionId\",\n                \"poiId\"\
+        \n            ],\n            \"properties\": {\n                \"sessionId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID
+        of the player\"\n                },\n                \"poiId\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"uuid\",\n                    \"description\": \"POI to decline\"\n               \
+        \ }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeclinePoiResponse\"\
         ,\n    \"$defs\": {\n        \"DeclinePoiResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after declining a POI\",\n            \"required\": [\n                \"poiId\",\n                \"\
@@ -592,13 +590,13 @@ paths:
           description: Global scenario capacity reached
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EnterScenarioRequest\"\
         ,\n    \"$defs\": {\n        \"EnterScenarioRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to enter a scenario\",\n            \"required\": [\n                \"accountId\",\n                \"\
-        scenarioTemplateId\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n          \
+        : \"Request to enter a scenario\",\n            \"required\": [\n                \"sessionId\",\n                \"\
+        scenarioTemplateId\"\n            ],\n            \"properties\": {\n                \"sessionId\": {\n          \
         \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\":
-        \"Account entering the scenario\"\n                },\n                \"scenarioTemplateId\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Template
-        to instantiate\"\n                },\n                \"poiId\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        \"WebSocket session ID of the player\"\n                },\n                \"scenarioTemplateId\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\":
+        \"Template to instantiate\"\n                },\n                \"poiId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"POI that triggered this scenario entry, if any\"\n                },\n                \"promptChoice\": {\n  \
         \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Selected prompt choice for prompted POIs\"\n                }\n            }\n        }\n    }\n}"
@@ -660,10 +658,10 @@ paths:
           description: No active scenario
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetScenarioStateRequest\"\
         ,\n    \"$defs\": {\n        \"GetScenarioStateRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to get current scenario state\",\n            \"required\": [\n                \"accountId\"\n       \
-        \     ],\n            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Account whose scenario state
-        to retrieve\"\n                }\n            }\n        }\n    }\n}"
+        : \"Request to get current scenario state\",\n            \"required\": [\n                \"sessionId\"\n       \
+        \     ],\n            \"properties\": {\n                \"sessionId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID of the player\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ScenarioStateResponse\"\
         ,\n    \"$defs\": {\n        \"ScenarioStateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Current state of a scenario instance\",\n            \"required\": [\n                \"scenarioInstanceId\",\n\
@@ -723,12 +721,12 @@ paths:
           description: Scenario instance not found
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CompleteScenarioRequest\"\
         ,\n    \"$defs\": {\n        \"CompleteScenarioRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to complete a scenario\",\n            \"required\": [\n                \"accountId\",\n             \
-        \   \"scenarioInstanceId\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n    \
+        : \"Request to complete a scenario\",\n            \"required\": [\n                \"sessionId\",\n             \
+        \   \"scenarioInstanceId\"\n            ],\n            \"properties\": {\n                \"sessionId\": {\n    \
         \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Account completing the scenario\"\n                },\n                \"scenarioInstanceId\": {\n           \
-        \         \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
-        Scenario instance to complete\"\n                }\n            }\n        }\n    }\n}"
+        : \"WebSocket session ID of the player\"\n                },\n                \"scenarioInstanceId\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Scenario instance to complete\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ScenarioCompletionResponse\"\
         ,\n    \"$defs\": {\n        \"ScenarioCompletionResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Response after completing a scenario\",\n            \"required\": [\n                \"scenarioInstanceId\"\
@@ -773,12 +771,12 @@ paths:
           description: Scenario instance not found
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AbandonScenarioRequest\"\
         ,\n    \"$defs\": {\n        \"AbandonScenarioRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to abandon a scenario\",\n            \"required\": [\n                \"accountId\",\n              \
-        \  \"scenarioInstanceId\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n     \
+        : \"Request to abandon a scenario\",\n            \"required\": [\n                \"sessionId\",\n              \
+        \  \"scenarioInstanceId\"\n            ],\n            \"properties\": {\n                \"sessionId\": {\n     \
         \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Account abandoning the scenario\"\n                },\n                \"scenarioInstanceId\": {\n           \
-        \         \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
-        Scenario instance to abandon\"\n                }\n            }\n        }\n    }\n}"
+        : \"WebSocket session ID of the player\"\n                },\n                \"scenarioInstanceId\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Scenario instance to abandon\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AbandonScenarioResponse\"\
         ,\n    \"$defs\": {\n        \"AbandonScenarioResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after abandoning a scenario\",\n            \"required\": [\n                \"scenarioInstanceId\",\n\
@@ -824,15 +822,15 @@ paths:
           description: Current scenario or target template not found
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ChainScenarioRequest\"\
         ,\n    \"$defs\": {\n        \"ChainScenarioRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to chain from one scenario to another\",\n            \"required\": [\n                \"accountId\",\n\
+        : \"Request to chain from one scenario to another\",\n            \"required\": [\n                \"sessionId\",\n\
         \                \"currentScenarioInstanceId\",\n                \"targetTemplateId\"\n            ],\n          \
-        \  \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"Account chaining scenarios\"\n              \
-        \  },\n                \"currentScenarioInstanceId\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"uuid\",\n                    \"description\": \"Currently active scenario instance\"\n     \
-        \           },\n                \"targetTemplateId\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"uuid\",\n                    \"description\": \"Template to chain into\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        \  \"properties\": {\n                \"sessionId\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID of the player\"\n      \
+        \          },\n                \"currentScenarioInstanceId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"Currently active scenario instance\"\
+        \n                },\n                \"targetTemplateId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"Template to chain into\"\n           \
+        \     }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ScenarioStateResponse\"\
         ,\n    \"$defs\": {\n        \"ScenarioStateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Current state of a scenario instance\",\n            \"required\": [\n                \"scenarioInstanceId\",\n\
@@ -2614,39 +2612,34 @@ components:
       type: object
       description: Request to enter the garden
       required:
-      - accountId
       - sessionId
       properties:
-        accountId:
-          type: string
-          format: uuid
-          description: Account entering the garden
         sessionId:
           type: string
           format: uuid
-          description: Current WebSocket session ID
+          description: WebSocket session ID of the player entering the garden
     GetGardenStateRequest:
       type: object
       description: Request to get current garden state
       required:
-      - accountId
+      - sessionId
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account whose garden state to retrieve
+          description: WebSocket session ID of the player
     UpdatePositionRequest:
       type: object
       description: Request to update player position in the garden
       required:
-      - accountId
+      - sessionId
       - position
       - velocity
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account whose position to update
+          description: WebSocket session ID of the player
         position:
           $ref: '#/components/schemas/Vec3'
           description: New position in garden space
@@ -2657,33 +2650,33 @@ components:
       type: object
       description: Request to leave the garden
       required:
-      - accountId
+      - sessionId
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account leaving the garden
+          description: WebSocket session ID of the player leaving the garden
     ListPoisRequest:
       type: object
       description: Request to list active POIs
       required:
-      - accountId
+      - sessionId
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account whose POIs to list
+          description: WebSocket session ID of the player
     InteractWithPoiRequest:
       type: object
       description: Request to interact with a POI
       required:
-      - accountId
+      - sessionId
       - poiId
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account interacting with the POI
+          description: WebSocket session ID of the player
         poiId:
           type: string
           format: uuid
@@ -2692,13 +2685,13 @@ components:
       type: object
       description: Request to decline a POI
       required:
-      - accountId
+      - sessionId
       - poiId
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account declining the POI
+          description: WebSocket session ID of the player
         poiId:
           type: string
           format: uuid
@@ -2707,13 +2700,13 @@ components:
       type: object
       description: Request to enter a scenario
       required:
-      - accountId
+      - sessionId
       - scenarioTemplateId
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account entering the scenario
+          description: WebSocket session ID of the player
         scenarioTemplateId:
           type: string
           format: uuid
@@ -2731,23 +2724,23 @@ components:
       type: object
       description: Request to get current scenario state
       required:
-      - accountId
+      - sessionId
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account whose scenario state to retrieve
+          description: WebSocket session ID of the player
     CompleteScenarioRequest:
       type: object
       description: Request to complete a scenario
       required:
-      - accountId
+      - sessionId
       - scenarioInstanceId
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account completing the scenario
+          description: WebSocket session ID of the player
         scenarioInstanceId:
           type: string
           format: uuid
@@ -2756,13 +2749,13 @@ components:
       type: object
       description: Request to abandon a scenario
       required:
-      - accountId
+      - sessionId
       - scenarioInstanceId
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account abandoning the scenario
+          description: WebSocket session ID of the player
         scenarioInstanceId:
           type: string
           format: uuid
@@ -2771,14 +2764,14 @@ components:
       type: object
       description: Request to chain from one scenario to another
       required:
-      - accountId
+      - sessionId
       - currentScenarioInstanceId
       - targetTemplateId
       properties:
-        accountId:
+        sessionId:
           type: string
           format: uuid
-          description: Account chaining scenarios
+          description: WebSocket session ID of the player
         currentScenarioInstanceId:
           type: string
           format: uuid

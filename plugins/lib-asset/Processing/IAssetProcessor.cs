@@ -118,12 +118,19 @@ public sealed class AssetProcessingContext
     public required string Filename { get; init; }
 
     /// <summary>
-    /// Owner of this processing operation. NOT a session ID.
-    /// Contains either an accountId (UUID format) for user-initiated processing
-    /// or a service name for service-initiated processing. Null when the dispatched
-    /// event does not include owner information.
+    /// Type of owner for this processing operation per FOUNDATION TENETS (Account Identity Boundary).
+    /// Session for user-initiated processing, Service for service-initiated processing.
+    /// Null when the dispatched event does not include owner information.
     /// </summary>
-    public string? Owner { get; init; }
+    public AssetOwnerType? OwnerType { get; init; }
+
+    /// <summary>
+    /// Owner identifier per FOUNDATION TENETS (Account Identity Boundary).
+    /// For Session type: the WebSocket session ID (UUID format).
+    /// For Service type: the service name (e.g., "orchestrator").
+    /// Null when the dispatched event does not include owner information.
+    /// </summary>
+    public string? OwnerId { get; init; }
 
     /// <summary>
     /// Optional realm-specific context for the asset.

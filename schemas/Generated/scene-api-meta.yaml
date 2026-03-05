@@ -1618,11 +1618,18 @@ paths:
         : \"Request to checkout a scene for editing\",\n            \"required\": [\n                \"sceneId\"\n       \
         \     ],\n            \"properties\": {\n                \"sceneId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Scene to checkout\"\n       \
-        \         },\n                \"editorId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Optional editor identifier (defaults to caller identity)\"\n     \
-        \           },\n                \"ttlMinutes\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Custom lock TTL (uses default if not specified)\"\n\
-        \                }\n            }\n        }\n    }\n}"
+        \         },\n                \"editorType\": {\n                    \"$ref\": \"#/$defs/SceneEditorType\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Type of editor. Defaults to Session if
+        not specified.\"\n                },\n                \"editorId\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Editor identifier. For Session type:
+        the WebSocket session ID (UUID format).\\nFor Service type: the app-id or service name.\\nDefaults to caller identity
+        if not specified.\\n\"\n                },\n                \"ttlMinutes\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Custom lock TTL (uses default if
+        not specified)\"\n                }\n            }\n        },\n        \"SceneEditorType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type of scene editor for polymorphic identification per FOUNDATION TENETS.\\
+        nSession identifies a WebSocket session (user editing via client).\\nService identifies a service or tool editing
+        programmatically.\\n\",\n            \"enum\": [\n                \"Session\",\n                \"Service\"\n    \
+        \        ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CheckoutResponse\"\
         ,\n    \"$defs\": {\n        \"CheckoutResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response containing checkout token and scene\",\n            \"required\": [\n                \"checkoutToken\"\
@@ -2993,6 +3000,15 @@ components:
       - Sphere
       - Capsule
       - Cylinder
+    SceneEditorType:
+      type: string
+      description: |
+        Type of scene editor for polymorphic identification per FOUNDATION TENETS.
+        Session identifies a WebSocket session (user editing via client).
+        Service identifies a service or tool editing programmatically.
+      enum:
+      - Session
+      - Service
     AffordanceType:
       type: string
       description: |
@@ -3842,10 +3858,17 @@ components:
           type: string
           format: uuid
           description: Scene to checkout
+        editorType:
+          $ref: '#/components/schemas/SceneEditorType'
+          nullable: true
+          description: Type of editor. Defaults to Session if not specified.
         editorId:
           type: string
           nullable: true
-          description: Optional editor identifier (defaults to caller identity)
+          description: |
+            Editor identifier. For Session type: the WebSocket session ID (UUID format).
+            For Service type: the app-id or service name.
+            Defaults to caller identity if not specified.
         ttlMinutes:
           type: integer
           nullable: true

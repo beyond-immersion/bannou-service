@@ -17,7 +17,7 @@ This document is the authoritative index for Bannou development standards. All s
 When documenting tenet compliance in source code comments, **NEVER use specific tenet numbers** (e.g., "T9", "Tenet 21", "TENET T4"). Tenet numbers change over time as tenets are added, removed, or reorganized.
 
 **Instead, use category names:**
-- `FOUNDATION TENETS` - for T4, T5, T6, T13, T15, T18, T27, T28, T29
+- `FOUNDATION TENETS` - for T4, T5, T6, T13, T15, T18, T27, T28, T29, T32
 - `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30, T31
 - `QUALITY TENETS` - for T10, T11, T12, T16, T19, T22
 - `SERVICE HIERARCHY` - for Tenet 2 (service layer dependencies)
@@ -177,7 +177,7 @@ Tenets are organized into categories based on when they're needed:
 |----------|--------|-------------------|
 | [**Schema Rules**](SCHEMA-RULES.md) | Tenet 1 | Before creating or modifying any schema file |
 | [**Service Hierarchy**](SERVICE-HIERARCHY.md) | Tenet 2 | Before adding any service client dependency |
-| [**Foundation**](tenets/FOUNDATION.md) | T4, T5, T6, T13, T15, T18, T27, T28, T29 | Before starting any new service or feature |
+| [**Foundation**](tenets/FOUNDATION.md) | T4, T5, T6, T13, T15, T18, T27, T28, T29, T32 | Before starting any new service or feature |
 | [**Implementation: Behavior**](tenets/IMPLEMENTATION-BEHAVIOR.md) | T3, T7, T8, T9, T17, T30, T31 | While designing service method behavior |
 | [**Implementation: Data**](tenets/IMPLEMENTATION-DATA.md) | T14, T20, T21, T23, T24, T25, T26 | While writing code and modeling data |
 | [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
@@ -201,6 +201,7 @@ Tenets are organized into categories based on when they're needed:
 | **T27** | Cross-Service Communication Discipline | Direct API for higher→lower; DI interfaces for lower↔higher; events for broadcast only; inverted subscriptions forbidden |
 | **T28** | Resource-Managed Cleanup | Dependent data cleanup via lib-resource only; never subscribe to lifecycle events for destruction; Account exempt for privacy |
 | **T29** | No Metadata Bag Contracts | `additionalProperties: true` is NEVER a data contract between services; metadata bags are client-only; services own their own domain data in their own schemas |
+| **T32** | Account Identity Boundary | accountId restricted to identity/session/access boundary; client-facing endpoints MUST NOT accept accountId; use webSocketSessionId or shortcuts |
 
 ---
 
@@ -385,6 +386,11 @@ Tenets are organized into categories based on when they're needed:
 | Delete endpoint on Category B entity | T31 | Remove; Category B templates persist forever |
 | Not checking deprecation before creating referencing entity | T31 | Check target's `Exists` or deprecation status; reject with `BadRequest` if deprecated |
 | Category B entity missing instance creation guard | T31 | Check `IsDeprecated` before creating instances; reject with `BadRequest` |
+| Client-facing endpoint accepting accountId in request body | T32 | Remove accountId; use webSocketSessionId; resolve account server-side if needed |
+| Non-boundary service emitting accountId in events | T32 | Use sessionId or domain-specific identifiers (ticketId, matchId) |
+| Polymorphic string field "accountId or service name" | T32, T14 | Use ownerType enum + ownerId; use sessionId for user-initiated operations |
+| Service outside identity boundary accepting accountId with `role: user` | T32 | Use shortcut system or remove accountId from request |
+| Adding service to identity boundary without approval | T32 | Discuss with team; justify domain-level accountId requirement |
 
 ---
 

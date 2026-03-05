@@ -1,10 +1,11 @@
 # Agency Plugin Deep Dive
 
-> **Plugin**: lib-agency
-> **Schema**: `schemas/agency-api.yaml` (pre-implementation)
-> **Version**: Pre-implementation. No schema, no code. L4-audited (2026-03-03).
-> **Layer**: GameFeatures
-> **State Store**: agency-domains (MySQL), agency-modules (MySQL), agency-influences (MySQL), agency-manifests (Redis), agency-manifest-history (MySQL), agency-seed-config (Redis)
+> **Plugin**: lib-agency (not yet created)
+> **Schema**: `schemas/agency-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: agency-domains (MySQL), agency-modules (MySQL), agency-influences (MySQL), agency-manifest-cache (Redis), agency-manifest-history (MySQL), agency-seed-config (Redis), agency-lock (Redis) — all planned
+> **Layer**: L4 GameFeatures
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists. L4-audited (2026-03-03).
 > **Implementation Map**: [docs/maps/AGENCY.md](../maps/AGENCY.md)
 
 ---
@@ -177,32 +178,6 @@ The same spirit might be at depth 7 in combat and depth 2 in social -- they see 
 
 ---
 
-## Dependencies
-
-### Hard Dependencies (L0, L1, L2)
-
-| Service | Layer | Usage |
-|---------|-------|-------|
-| lib-state | L0 | MySQL for definitions (domains, modules, influences), Redis for cached manifests |
-| lib-messaging | L0 | Event publishing (manifest.updated, influence.executed/resisted) and subscription (seed events) |
-| lib-mesh | L0 | Service-to-service calls (Seed, Disposition) |
-| lib-seed | L2 | Read capability manifests, subscribe to capability/growth events |
-
-### Soft Dependencies (L3, L4)
-
-| Service | Layer | Usage | If Missing |
-|---------|-------|-------|------------|
-| lib-disposition | L4 | Guardian feelings (trust, resentment, familiarity) for compliance computation | Compliance defaults to `DefaultComplianceBase` (0.5) |
-| lib-gardener | L4 | Garden context for manifest routing and influence execution | Manifests computed but not routed to gardens; influences not executable |
-
-### DI Provider Registrations
-
-| Interface | Direction | Purpose |
-|-----------|-----------|---------|
-| `IVariableProviderFactory` | Agency -> Actor (L2) | Provides `${spirit.*}` namespace for ABML behavior evaluation |
-
----
-
 ## Dependents
 
 | Dependent | Relationship |
@@ -211,145 +186,7 @@ The same spirit might be at depth 7 in combat and depth 2 in social -- they see 
 | lib-actor (L2) | Consumes `${spirit.*}` variables via `IVariableProviderFactory` for ABML behavior evaluation in character cognition pipelines |
 | lib-disposition (L4) | Receives guardian feeling updates triggered by influence outcomes (compliance increases trust, forced overrides increase resentment) |
 
----
-
-## State Storage
-
-**Status**: Pre-implementation. No state stores defined in `schemas/state-stores.yaml` yet.
-
-| Store Name | Backend | Contents |
-|------------|---------|----------|
-| `agency-domains` | MySQL | Domain definitions (code, display name, seed path mappings) |
-| `agency-modules` | MySQL | Module definitions (code, domain, threshold, fidelity curve, sort order) |
-| `agency-influences` | MySQL | Influence type definitions (code, domain, threshold, perception type, compliance factors) |
-| `agency-manifests` | Redis | Cached computed manifests per seed (JSON, TTL-based) |
-| `agency-manifest-history` | MySQL | Manifest change log (seedId, timestamp, delta, previous/new module states) |
-| `agency-seed-config` | Redis | Guardian seed type configuration per game service |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Model | Description |
-|-------|-------------|-------------|
-| `agency.manifest.updated` | `AgencyManifestUpdatedEvent` | Manifest changed for a seed. Includes seedId, changed modules (enabled/disabled, fidelity changes), changed influences. Consumed by Gardener for client push. |
-| `agency.influence.executed` | `AgencyInfluenceExecutedEvent` | Spirit influence validated and enriched. Includes seedId, influenceCode, perceptionType, complianceFactors. Consumed by Gardener god-actor for modulation. |
-| `agency.influence.resisted` | `AgencyInfluenceResistedEvent` | Character resisted spirit influence. Includes seedId, characterId, influenceCode, complianceBase, resistanceReason. Relayed from `actor.spirit-nudge.resisted` (see Consumed Events). |
-| `agency.influence.rejected` | `AgencyInfluenceRejectedEvent` | Influence not available in current manifest or rate-limited. Includes seedId, influenceCode, rejectionReason. |
-| `agency.domain.registered` | `AgencyDomainRegisteredEvent` | New UX domain registered. |
-| `agency.module.registered` | `AgencyModuleRegisteredEvent` | New UX module registered. Triggers manifest recomputation for all seeds with capabilities in this domain. |
-
-### Consumed Events
-
-| Topic | Event Model | Reaction |
-|-------|-------------|----------|
-| `seed.capability.updated` | `SeedCapabilityUpdatedEvent` | Recompute manifest for the affected seed. Debounced by `ManifestRecomputeDebounceMs`. |
-| `seed.growth.recorded` | `SeedGrowthRecordedEvent` | Check if any capability depth thresholds were crossed. If so, trigger manifest recomputation. |
-| `actor.spirit-nudge.resisted` | `ActorSpiritNudgeResistedEvent` | Actor (L2) publishes when character resists a spirit nudge. Agency relays as `agency.influence.resisted` with enriched data. Hierarchy-safe: L4 subscribes to L2 event. |
-| `connect.session.disconnected` | `SessionDisconnectedEvent` | Optional: clear cached manifest for the disconnected seed (prevents stale cache). |
-
----
-
-## Configuration
-
-**Status**: Pre-implementation. No configuration schema defined yet.
-
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `ManifestCacheTtlMinutes` | int | 30 | TTL for cached manifests in Redis |
-| `ManifestRecomputeDebounceMs` | int | 500 | Debounce interval for recomputation on rapid seed growth events. **Must use Redis-based debouncing for multi-instance safety (T9).** |
-| `DefaultComplianceBase` | float | 0.5 | Default compliance when Disposition is unavailable (min: 0.0, max: 1.0) |
-| `ComplianceResentmentWeight` | float | 0.7 | Weight of resentment in compliance formula (min: 0.0, max: 1.0) |
-| `ComplianceFamiliarityScale` | float | 1.2 | Familiarity multiplier in compliance formula (min: 0.0) |
-| `ComplianceFamiliarityFloor` | float | 0.2 | Familiarity floor in compliance formula (min: 0.0, max: 1.0) |
-| `MaxModulesPerDomain` | int | 50 | Maximum modules per domain |
-| `MaxInfluencesPerDomain` | int | 30 | Maximum influence types per domain |
-| `InfluenceRateLimitPerSecond` | int | 5 | Max spirit influences per second per seed (Redis counters) |
-| `InfluenceFrequencyWindowMinutes` | int | 5 | Rolling window size for `${spirit.influence.frequency}` variable |
-| `FidelityLevels` | int | 5 | Number of discrete fidelity levels (1-N) |
-| `PushManifestOnCapabilityChange` | bool | true | Auto-push manifest updates when seed capabilities change |
-| `SeedTypeCode` | string | `guardian` | Default seed type code for guardian spirits |
-| `ComplianceResistanceDecayRate` | float | 0.1 | How quickly resistance-from-overuse decays per game-hour (min: 0.0) |
-| `ManifestHistoryRetentionDays` | int | 30 | How long to retain manifest change history |
-| `CrossSeedPollinationEnabled` | bool | true | Whether manifest draws capabilities from all account seeds |
-| `CrossSeedPollinationFactor` | float | 0.3 | Depth multiplier for cross-pollinated seed capabilities (min: 0.0, max: 1.0) |
-
----
-
-## DI Services & Helpers
-
-**Status**: Pre-implementation. Planned DI dependencies:
-
-| Service | Role |
-|---------|------|
-| `ILogger<AgencyService>` | Structured logging |
-| `AgencyServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access (MySQL definitions, Redis manifests) |
-| `IMessageBus` | Event publishing and subscription |
-| `ISeedClient` | Read capability manifests from Seed (L2) — hard dependency, constructor injection |
-| `ITelemetryProvider` | Span creation for all async helpers (T30) |
-| `IServiceProvider` | Runtime resolution of soft dependencies (Disposition, Gardener) |
-| `SpiritProviderFactory` | `IVariableProviderFactory` implementation providing `${spirit.*}` namespace |
-
----
-
-## API Endpoints
-
-### Domain Management (4 endpoints)
-
-| Endpoint | Description |
-|----------|-------------|
-| POST /agency/domain/register | Register a UX domain with seed domain path mappings |
-| POST /agency/domain/get | Get domain definition by code |
-| POST /agency/domain/list | List all registered domains with module/influence counts |
-| POST /agency/domain/delete | Remove a domain (cascades to modules and influences) |
-
-### Module Management (5 endpoints)
-
-| Endpoint | Description |
-|----------|-------------|
-| POST /agency/module/register | Register a UX module definition with fidelity curve |
-| POST /agency/module/update | Update module definition (threshold, fidelity curve, sort order) |
-| POST /agency/module/get | Get module definition by code |
-| POST /agency/module/list | List modules, filterable by domain code |
-| POST /agency/module/delete | Remove a module definition |
-
-### Influence Management (5 endpoints)
-
-| Endpoint | Description |
-|----------|-------------|
-| POST /agency/influence/register | Register an influence type with compliance factors |
-| POST /agency/influence/update | Update influence definition |
-| POST /agency/influence/get | Get influence definition by code |
-| POST /agency/influence/list | List influences, filterable by domain code |
-| POST /agency/influence/delete | Remove an influence type |
-
-### Manifest Operations (4 endpoints)
-
-| Endpoint | Description |
-|----------|-------------|
-| POST /agency/manifest/get | Get current UX manifest for a seed |
-| POST /agency/manifest/recompute | Force manifest recomputation (after bulk registration changes) |
-| POST /agency/manifest/diff | Compare two manifests and return delta (for change notifications) |
-| POST /agency/manifest/history | Get manifest change history for a seed (paged) |
-
-### Spirit Influence Operations (2 endpoints)
-
-| Endpoint | Description |
-|----------|-------------|
-| POST /agency/influence/evaluate | Evaluate if an influence is available and estimate acceptance likelihood |
-| POST /agency/influence/execute | Execute a spirit influence: validate against manifest, enrich with compliance factors, return perception payload for Actor injection |
-
-### Seed Configuration (2 endpoints)
-
-| Endpoint | Description |
-|----------|-------------|
-| POST /agency/seed-config/set | Set the seed type code used for guardian spirits (per game service) |
-| POST /agency/seed-config/get | Get the current guardian seed type configuration |
-
-**Total: 22 endpoints**
+> **Note**: Dependencies, state storage, events, configuration, DI services, and API endpoints are documented in the [Implementation Map](../maps/AGENCY.md).
 
 ---
 
@@ -491,8 +328,7 @@ perception_handler:
 - Implement influence history tracking in Redis
 
 ### Phase 5: Integration
-- Integrate with Gardener for manifest push routing
-- Integrate with Entity Session Registry when available
+- Integrate with Gardener for manifest push routing via Entity Session Registry (available)
 - Seed from configuration support
 - Cross-seed pollination computation
 - Manifest history retention worker
@@ -501,7 +337,6 @@ perception_handler:
 - lib-seed (L2): Must be running for capability manifest reads (hard dependency)
 - lib-disposition (L4): Should be running for compliance computation (soft dependency — graceful degradation to `DefaultComplianceBase`)
 - lib-gardener (L4): Should be running for manifest push and influence execution routing (soft dependency)
-- ~~Entity Session Registry ([Connect Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)): Needed for session-aware manifest push~~ **COMPLETE** — `IEntitySessionRegistry` is implemented and available
 
 ---
 
@@ -529,9 +364,9 @@ perception_handler:
 
 6. **ManifestRecomputeWorker debouncing must use Redis**, not in-memory timers. Per-instance timers cause duplicate recomputation across nodes (T9).
 
-7. **Compliance formula magic numbers** now extracted to config properties (see Configuration section above).
+7. **Compliance formula magic numbers** now extracted to config properties (see [Implementation Map](../maps/AGENCY.md) Configuration section).
 
-8. **Rolling window for influence frequency** now configurable via `InfluenceFrequencyWindowMinutes` (see Configuration section above).
+8. **Rolling window for influence frequency** now configurable via `InfluenceFrequencyWindowMinutes` (see [Implementation Map](../maps/AGENCY.md) Configuration section).
 
 9. **Influence frequency counters must use Redis** (sorted sets or atomic counters), not in-memory state, for multi-instance safety (T9).
 
@@ -575,23 +410,9 @@ perception_handler:
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**Manifest push mechanism.**~~ **RESOLVED.** Event-based routing via Gardener. Agency publishes `agency.manifest.updated`; Gardener subscribes and routes to client via Entity Session Registry ([#426](https://github.com/beyond-immersion/bannou-service/issues/426), now complete). Agency stays session-unaware.
+1. **Cross-seed capability aggregation.** PLAYER-VISION says "accumulated experience crosses seed boundaries." Same-type cross-seed sharing is implemented in Seed ([#353](https://github.com/beyond-immersion/bannou-service/issues/353), closed). Cross-type transfer deferred ([#354](https://github.com/beyond-immersion/bannou-service/issues/354), open). **Needs clarification**: does Agency apply its own `CrossSeedPollinationFactor` on top of what Seed already handles internally, or does it just read the already-pollinated capabilities from Seed? If Seed's `SameOwnerGrowthMultiplier` already handles same-type pollination, Agency's `CrossSeedPollinationFactor` may be redundant or may only apply to cross-type scenarios.
 
-2. ~~**Influence execution path.**~~ **RESOLVED.** Three-hop path (Agency validate → Gardener god-actor modulate → Actor inject) is correct for god-modulation. Architecturally important for the vision (gods curate player experience).
-
-3. ~~**Module definition ownership.**~~ **RESOLVED.** Seed from configuration with admin API for runtime additions. Module definitions are game design decisions, not service infrastructure.
-
-4. ~~**Fidelity curve format.**~~ **RESOLVED.** Float array of depth thresholds for levels 1-N. Per-module arrays provide maximum flexibility. Simpler and more explicit than formulas.
-
-5. **Cross-seed capability aggregation.** PLAYER-VISION says "accumulated experience crosses seed boundaries." Same-type cross-seed sharing is implemented in Seed ([#353](https://github.com/beyond-immersion/bannou-service/issues/353), closed). Cross-type transfer deferred ([#354](https://github.com/beyond-immersion/bannou-service/issues/354), open). **Needs clarification**: does Agency apply its own `CrossSeedPollinationFactor` on top of what Seed already handles internally, or does it just read the already-pollinated capabilities from Seed? If Seed's `SameOwnerGrowthMultiplier` already handles same-type pollination, Agency's `CrossSeedPollinationFactor` may be redundant or may only apply to cross-type scenarios.
-
-6. ~~**Compliance computation vs. raw data.**~~ **RESOLVED.** Agency provides the configurable base; ABML can modify via additional conditions. Formula coefficients extracted to config properties.
-
-7. ~~**Entity Session Registry dependency.**~~ **RESOLVED.** Entity Session Registry ([#426](https://github.com/beyond-immersion/bannou-service/issues/426)) is complete and implemented. No longer a blocking dependency.
-
-8. ~~**Influence persistence.**~~ **RESOLVED.** Redis with simple counter/last-value pattern. Redis survives Actor restarts and enables multi-instance safety (T9). Full history stored separately in `agency-manifest-history`.
-
-9. ~~**Realm-specific module sets.**~~ **DEFERRED.** Game-service scoping sufficient for now. Realm-specific scoping would require a RealmId field on module definitions.
+2. **Realm-specific module sets.** Game-service scoping is sufficient for now. Realm-specific scoping would require a RealmId field on module definitions.
 
 ---
 
@@ -608,11 +429,11 @@ No Agency-specific issues exist yet (pre-implementation). The following cross-cu
 | [#502](https://github.com/beyond-immersion/bannou-service/issues/502) | Meta: Client Event Rollout for L1/L2 Plugins | Open | Agency's client events should be included in rollout plan. |
 | [#353](https://github.com/beyond-immersion/bannou-service/issues/353) | lib-seed: Cross-seed growth sharing (same owner, same type) | **Closed** | Implemented. Feeds Agency's capability reads. May make `CrossSeedPollinationFactor` redundant for same-type scenarios. |
 | [#354](https://github.com/beyond-immersion/bannou-service/issues/354) | lib-seed: Cross-seed-type growth transfer matrix | Open | Future enhancement. Agency's cross-type pollination depends on this. |
-| [#361](https://github.com/beyond-immersion/bannou-service/issues/361) | Seed variable provider | Open/Closed | Pattern Agency must follow for `IVariableProviderFactory`. |
+| [#361](https://github.com/beyond-immersion/bannou-service/issues/361) | Seed variable provider | **Closed** | Pattern Agency must follow for `IVariableProviderFactory`. |
 | [#191](https://github.com/beyond-immersion/bannou-service/issues/191) | Actor: Session-Bound Actor Support | Open | `${spirit.active}` variable depends on session-bound actor awareness. |
 | [#410](https://github.com/beyond-immersion/bannou-service/issues/410) | Second Thoughts (lib-obligation) | Open | Compliance interacts with obligation cost modifiers — potential cross-pollination between `${spirit.compliance_base}` and `${obligations.*}`. |
 | [#386](https://github.com/beyond-immersion/bannou-service/issues/386) | Gardener: Bond communication via Chat | Open | Alternative spirit-character communication channel alongside influence system. |
-| [#375](https://github.com/beyond-immersion/bannou-service/issues/375) | Collection→Seed→Status pipeline | Open/Closed | Foundational growth pipeline that feeds Agency's capability reads. |
+| [#375](https://github.com/beyond-immersion/bannou-service/issues/375) | Collection→Seed→Status pipeline | **Closed** | Foundational growth pipeline that feeds Agency's capability reads. |
 
 ### Issues to Create
 

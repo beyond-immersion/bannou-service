@@ -50,13 +50,21 @@ paths:
         ,\n    \"$defs\": {\n        \"TelemetryHealthResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing telemetry exporter health status. HTTP 200 confirms the
         subsystem is healthy.\",\n            \"required\": [\n                \"tracingEnabled\",\n                \"metricsEnabled\"\
-        \n            ],\n            \"properties\": {\n                \"tracingEnabled\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether distributed tracing export is enabled\"\n         \
-        \       },\n                \"metricsEnabled\": {\n                    \"type\": \"boolean\",\n                  \
-        \  \"description\": \"Whether metrics export is enabled\"\n                },\n                \"otlpEndpoint\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Configured OTLP endpoint (null if telemetry is disabled)\"\n                }\n            }\n        }\n    }\n\
-        }"
+        ,\n                \"otlpExportHealthy\",\n                \"consecutiveExportFailures\"\n            ],\n       \
+        \     \"properties\": {\n                \"tracingEnabled\": {\n                    \"type\": \"boolean\",\n     \
+        \               \"description\": \"Whether distributed tracing export is enabled\"\n                },\n         \
+        \       \"metricsEnabled\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
+        Whether metrics export is enabled\"\n                },\n                \"otlpEndpoint\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Configured
+        OTLP endpoint (null if telemetry is disabled)\"\n                },\n                \"otlpExportHealthy\": {\n  \
+        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the most recent OTLP trace
+        export batch succeeded. Always false when tracing is disabled.\"\n                },\n                \"consecutiveExportFailures\"\
+        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int32\",\n                    \"\
+        description\": \"Number of consecutive OTLP export failures since the last success. Zero when healthy or tracing disabled.\"\
+        \n                },\n                \"lastSuccessfulExportAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"UTC timestamp of the last successful OTLP trace export. Null if no export has succeeded yet or tracing is disabled.\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Check telemetry exporter health\",\n    \"description\": \"Returns the
         health status of telemetry exporters and current configuration state.\",\n    \"tags\": [\n        \"Telemetry\"\n\
         \    ],\n    \"deprecated\": false,\n    \"operationId\": \"health\"\n}"
@@ -126,6 +134,8 @@ components:
       required:
       - tracingEnabled
       - metricsEnabled
+      - otlpExportHealthy
+      - consecutiveExportFailures
       properties:
         tracingEnabled:
           type: boolean
@@ -137,6 +147,20 @@ components:
           type: string
           nullable: true
           description: Configured OTLP endpoint (null if telemetry is disabled)
+        otlpExportHealthy:
+          type: boolean
+          description: Whether the most recent OTLP trace export batch succeeded. Always false when tracing is disabled.
+        consecutiveExportFailures:
+          type: integer
+          format: int32
+          description: Number of consecutive OTLP export failures since the last success. Zero when healthy or tracing 
+            disabled.
+        lastSuccessfulExportAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: UTC timestamp of the last successful OTLP trace export. Null if no export has succeeded yet or 
+            tracing is disabled.
     TelemetryStatusRequest:
       type: object
       additionalProperties: false

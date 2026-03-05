@@ -440,6 +440,13 @@ public partial class SubscriptionService : ISubscriptionService
             return (StatusCodes.NotFound, null);
         }
 
+        if (model.AccountId != body.AccountId)
+        {
+            _logger.LogWarning("Account {AccountId} attempted to cancel subscription {SubscriptionId} owned by {OwnerAccountId}",
+                body.AccountId, body.SubscriptionId, model.AccountId);
+            return (StatusCodes.Forbidden, null);
+        }
+
         var now = DateTimeOffset.UtcNow;
 
         model.IsActive = false;
@@ -619,9 +626,8 @@ public partial class SubscriptionService : ISubscriptionService
 
         if (!lockResponse.Success)
         {
-            _logger.LogWarning("Failed to acquire lock for index update on {IndexKey}, subscription {SubscriptionId} may not appear in queries",
-                indexKey, subscriptionId);
-            return;
+            throw new InvalidOperationException(
+                $"Could not acquire distributed lock for index {indexKey} (subscription {subscriptionId})");
         }
 
         var subscriptionIds = await _indexStore.GetAsync(indexKey, cancellationToken) ?? new List<Guid>();

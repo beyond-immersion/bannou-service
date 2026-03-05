@@ -145,6 +145,18 @@ public partial class GardenerService : IGardenerService
     private const string PhaseConfigKey = "phase:config";
 
     /// <summary>
+    /// Resolves the account ID from the session-to-account mapping.
+    /// Per FOUNDATION TENETS (Account Identity Boundary), player-facing endpoints
+    /// receive sessionId only; accountId is resolved server-side from session events.
+    /// </summary>
+    /// <param name="sessionId">The WebSocket session ID from the request.</param>
+    /// <returns>The account ID if mapped, null otherwise.</returns>
+    private Guid? ResolveAccountId(Guid sessionId)
+    {
+        return _sessionAccountMap.TryGetValue(sessionId, out var accountId) ? accountId : null;
+    }
+
+    /// <summary>
     /// Redis set key tracking account IDs with active garden instances.
     /// Used by GardenerGardenOrchestratorWorker to iterate active gardens.
     /// </summary>
@@ -178,24 +190,31 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, GardenStateResponse?)> EnterGardenAsync(
         EnterGardenRequest body, CancellationToken cancellationToken)
     {
+        var accountId = ResolveAccountId(body.SessionId);
+        if (accountId == null)
+        {
+            _logger.LogWarning("No account mapping for session {SessionId}", body.SessionId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         var lockOwner = $"enter-garden-{Guid.NewGuid():N}";
         await using var lockResult = await _lockProvider.LockAsync(
             StateStoreDefinitions.GardenerLock,
-            $"garden:{body.AccountId}",
+            $"garden:{accountId.Value}",
             lockOwner,
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResult.Success)
         {
-            _logger.LogWarning("Could not acquire lock for entering garden, account {AccountId}", body.AccountId);
+            _logger.LogWarning("Could not acquire lock for entering garden, account {AccountId}", accountId.Value);
             return (StatusCodes.Conflict, null);
         }
 
-        var existing = await _gardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
+        var existing = await _gardenStore.GetAsync(GardenKey(accountId.Value), cancellationToken);
         if (existing != null)
         {
-            _logger.LogWarning("Account {AccountId} already has an active garden instance", body.AccountId);
+            _logger.LogWarning("Account {AccountId} already has an active garden instance", accountId.Value);
             return (StatusCodes.Conflict, null);
         }
 
@@ -203,7 +222,7 @@ public partial class GardenerService : IGardenerService
         var seedsResponse = await _seedClient.GetSeedsByOwnerAsync(
             new GetSeedsByOwnerRequest
             {
-                OwnerId = body.AccountId,
+                OwnerId = accountId.Value,
                 OwnerType = EntityType.Account,
                 SeedTypeCode = _configuration.SeedTypeCode
             }, cancellationToken);
@@ -212,7 +231,7 @@ public partial class GardenerService : IGardenerService
         if (activeSeed == null)
         {
             _logger.LogInformation(
-                "No active guardian seed found for account {AccountId}", body.AccountId);
+                "No active guardian seed found for account {AccountId}", accountId.Value);
             return (StatusCodes.NotFound, null);
         }
 
@@ -223,7 +242,7 @@ public partial class GardenerService : IGardenerService
         {
             GardenInstanceId = gardenInstanceId,
             SeedId = activeSeed.SeedId,
-            AccountId = body.AccountId,
+            AccountId = accountId.Value,
             SessionId = body.SessionId,
             CreatedAt = DateTimeOffset.UtcNow,
             Phase = phaseConfig.CurrentPhase,
@@ -232,25 +251,25 @@ public partial class GardenerService : IGardenerService
             NeedsReEvaluation = true
         };
 
-        await _gardenStore.SaveAsync(GardenKey(body.AccountId), garden, cancellationToken: cancellationToken);
+        await _gardenStore.SaveAsync(GardenKey(accountId.Value), garden, cancellationToken: cancellationToken);
 
         // Track active garden instance for background worker iteration
         await _gardenCacheStore.AddToSetAsync<Guid>(
-            ActiveGardensTrackingKey, body.AccountId, cancellationToken: cancellationToken);
+            ActiveGardensTrackingKey, accountId.Value, cancellationToken: cancellationToken);
 
         await _messageBus.TryPublishAsync("gardener.garden.entered",
             new GardenerGardenEnteredEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                AccountId = body.AccountId,
+                WebSocketSessionId = body.SessionId,
                 SeedId = activeSeed.SeedId,
                 GardenInstanceId = gardenInstanceId
             }, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Created garden instance {GardenInstanceId} for account {AccountId} with seed {SeedId}",
-            gardenInstanceId, body.AccountId, activeSeed.SeedId);
+            gardenInstanceId, accountId.Value, activeSeed.SeedId);
 
         return (StatusCodes.OK, MapToGardenStateResponse(garden, Array.Empty<PoiModel>()));
     }
@@ -259,7 +278,14 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, GardenStateResponse?)> GetGardenStateAsync(
         GetGardenStateRequest body, CancellationToken cancellationToken)
     {
-        var garden = await _gardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
+        var accountId = ResolveAccountId(body.SessionId);
+        if (accountId == null)
+        {
+            _logger.LogWarning("No account mapping for session {SessionId}", body.SessionId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var garden = await _gardenStore.GetAsync(GardenKey(accountId.Value), cancellationToken);
         if (garden == null)
             return (StatusCodes.NotFound, null);
 
@@ -276,7 +302,14 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, PositionUpdateResponse?)> UpdatePositionAsync(
         UpdatePositionRequest body, CancellationToken cancellationToken)
     {
-        var garden = await _gardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
+        var accountId = ResolveAccountId(body.SessionId);
+        if (accountId == null)
+        {
+            _logger.LogWarning("No account mapping for session {SessionId}", body.SessionId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var garden = await _gardenStore.GetAsync(GardenKey(accountId.Value), cancellationToken);
         if (garden == null)
             return (StatusCodes.NotFound, null);
 
@@ -318,7 +351,7 @@ public partial class GardenerService : IGardenerService
                         {
                             EventId = Guid.NewGuid(),
                             Timestamp = DateTimeOffset.UtcNow,
-                            AccountId = body.AccountId,
+                            WebSocketSessionId = body.SessionId,
                             PoiId = poiId,
                             ScenarioTemplateId = poi.ScenarioTemplateId
                         }, cancellationToken: cancellationToken);
@@ -326,7 +359,7 @@ public partial class GardenerService : IGardenerService
             }
         }
 
-        await _gardenStore.SaveAsync(GardenKey(body.AccountId), garden, cancellationToken: cancellationToken);
+        await _gardenStore.SaveAsync(GardenKey(accountId.Value), garden, cancellationToken: cancellationToken);
 
         return (StatusCodes.OK, new PositionUpdateResponse
         {
@@ -339,20 +372,27 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, LeaveGardenResponse?)> LeaveGardenAsync(
         LeaveGardenRequest body, CancellationToken cancellationToken)
     {
+        var accountId = ResolveAccountId(body.SessionId);
+        if (accountId == null)
+        {
+            _logger.LogWarning("No account mapping for session {SessionId}", body.SessionId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         await using var lockResult = await _lockProvider.LockAsync(
             StateStoreDefinitions.GardenerLock,
-            $"garden:{body.AccountId}",
+            $"garden:{accountId.Value}",
             Guid.NewGuid().ToString(),
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResult.Success)
         {
-            _logger.LogWarning("Failed to acquire lock for garden leave, account {AccountId}", body.AccountId);
+            _logger.LogWarning("Failed to acquire lock for garden leave, account {AccountId}", accountId.Value);
             return (StatusCodes.Conflict, null);
         }
 
-        var garden = await _gardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
+        var garden = await _gardenStore.GetAsync(GardenKey(accountId.Value), cancellationToken);
         if (garden == null)
             return (StatusCodes.NotFound, null);
 
@@ -363,29 +403,29 @@ public partial class GardenerService : IGardenerService
         }
 
         var sessionDuration = (float)(DateTimeOffset.UtcNow - garden.CreatedAt).TotalSeconds;
-        await _gardenStore.DeleteAsync(GardenKey(body.AccountId), cancellationToken);
+        await _gardenStore.DeleteAsync(GardenKey(accountId.Value), cancellationToken);
 
         // Remove from tracking set
         await _gardenCacheStore.RemoveFromSetAsync<Guid>(
-            ActiveGardensTrackingKey, body.AccountId, cancellationToken);
+            ActiveGardensTrackingKey, accountId.Value, cancellationToken);
 
         await _messageBus.TryPublishAsync("gardener.garden.left",
             new GardenerGardenLeftEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                AccountId = body.AccountId,
+                WebSocketSessionId = body.SessionId,
                 GardenInstanceId = garden.GardenInstanceId,
                 SessionDurationSeconds = sessionDuration
             }, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Garden instance {GardenInstanceId} ended for account {AccountId}, duration {Duration}s",
-            garden.GardenInstanceId, body.AccountId, sessionDuration);
+            garden.GardenInstanceId, accountId.Value, sessionDuration);
 
         return (StatusCodes.OK, new LeaveGardenResponse
         {
-            AccountId = body.AccountId,
+            AccountId = accountId.Value,
             SessionDurationSeconds = sessionDuration
         });
     }
@@ -398,7 +438,14 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, ListPoisResponse?)> ListPoisAsync(
         ListPoisRequest body, CancellationToken cancellationToken)
     {
-        var garden = await _gardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
+        var accountId = ResolveAccountId(body.SessionId);
+        if (accountId == null)
+        {
+            _logger.LogWarning("No account mapping for session {SessionId}", body.SessionId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var garden = await _gardenStore.GetAsync(GardenKey(accountId.Value), cancellationToken);
         if (garden == null)
             return (StatusCodes.NotFound, null);
 
@@ -414,9 +461,16 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, PoiInteractionResponse?)> InteractWithPoiAsync(
         InteractWithPoiRequest body, CancellationToken cancellationToken)
     {
+        var accountId = ResolveAccountId(body.SessionId);
+        if (accountId == null)
+        {
+            _logger.LogWarning("No account mapping for session {SessionId}", body.SessionId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         await using var lockResult = await _lockProvider.LockAsync(
             StateStoreDefinitions.GardenerLock,
-            $"garden:{body.AccountId}",
+            $"garden:{accountId.Value}",
             Guid.NewGuid().ToString(),
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
@@ -424,7 +478,7 @@ public partial class GardenerService : IGardenerService
         if (!lockResult.Success)
             return (StatusCodes.Conflict, null);
 
-        var garden = await _gardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
+        var garden = await _gardenStore.GetAsync(GardenKey(accountId.Value), cancellationToken);
         if (garden == null)
             return (StatusCodes.NotFound, null);
 
@@ -480,7 +534,7 @@ public partial class GardenerService : IGardenerService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                AccountId = body.AccountId,
+                WebSocketSessionId = body.SessionId,
                 PoiId = body.PoiId,
                 ScenarioTemplateId = poi.ScenarioTemplateId
             }, cancellationToken: cancellationToken);
@@ -499,9 +553,16 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, DeclinePoiResponse?)> DeclinePoiAsync(
         DeclinePoiRequest body, CancellationToken cancellationToken)
     {
+        var accountId = ResolveAccountId(body.SessionId);
+        if (accountId == null)
+        {
+            _logger.LogWarning("No account mapping for session {SessionId}", body.SessionId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         await using var lockResult = await _lockProvider.LockAsync(
             StateStoreDefinitions.GardenerLock,
-            $"garden:{body.AccountId}",
+            $"garden:{accountId.Value}",
             Guid.NewGuid().ToString(),
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
@@ -509,7 +570,7 @@ public partial class GardenerService : IGardenerService
         if (!lockResult.Success)
             return (StatusCodes.Conflict, null);
 
-        var garden = await _gardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
+        var garden = await _gardenStore.GetAsync(GardenKey(accountId.Value), cancellationToken);
         if (garden == null)
             return (StatusCodes.NotFound, null);
 
@@ -530,14 +591,14 @@ public partial class GardenerService : IGardenerService
         if (!garden.ScenarioHistory.Contains(poi.ScenarioTemplateId))
             garden.ScenarioHistory.Add(poi.ScenarioTemplateId);
         garden.NeedsReEvaluation = true;
-        await _gardenStore.SaveAsync(GardenKey(body.AccountId), garden, cancellationToken: cancellationToken);
+        await _gardenStore.SaveAsync(GardenKey(accountId.Value), garden, cancellationToken: cancellationToken);
 
         await _messageBus.TryPublishAsync("gardener.poi.declined",
             new GardenerPoiDeclinedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                AccountId = body.AccountId,
+                WebSocketSessionId = body.SessionId,
                 PoiId = body.PoiId,
                 ScenarioTemplateId = poi.ScenarioTemplateId
             }, cancellationToken: cancellationToken);
@@ -557,9 +618,16 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, ScenarioStateResponse?)> EnterScenarioAsync(
         EnterScenarioRequest body, CancellationToken cancellationToken)
     {
+        var accountId = ResolveAccountId(body.SessionId);
+        if (accountId == null)
+        {
+            _logger.LogWarning("No account mapping for session {SessionId}", body.SessionId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         await using var lockResult = await _lockProvider.LockAsync(
             StateStoreDefinitions.GardenerLock,
-            $"scenario:{body.AccountId}",
+            $"scenario:{accountId.Value}",
             Guid.NewGuid().ToString(),
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
@@ -567,21 +635,21 @@ public partial class GardenerService : IGardenerService
         if (!lockResult.Success)
             return (StatusCodes.Conflict, null);
 
-        var garden = await _gardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
+        var garden = await _gardenStore.GetAsync(GardenKey(accountId.Value), cancellationToken);
         if (garden == null)
         {
-            _logger.LogWarning("Account {AccountId} not in garden, cannot enter scenario", body.AccountId);
+            _logger.LogWarning("Account {AccountId} not in garden, cannot enter scenario", accountId.Value);
             return (StatusCodes.BadRequest, null);
         }
 
         // Check for existing active scenario
         var existingScenario = await _scenarioStore.GetAsync(
-            ScenarioKey(body.AccountId), cancellationToken);
+            ScenarioKey(accountId.Value), cancellationToken);
         if (existingScenario != null && existingScenario.Status == ScenarioStatus.Active)
         {
             _logger.LogWarning(
                 "Account {AccountId} already has an active scenario {ScenarioId}",
-                body.AccountId, existingScenario.ScenarioInstanceId);
+                accountId.Value, existingScenario.ScenarioInstanceId);
             return (StatusCodes.Conflict, null);
         }
 
@@ -630,8 +698,8 @@ public partial class GardenerService : IGardenerService
                     MaxPlayers = template.Multiplayer?.MaxPlayers ?? 1,
                     SessionName = $"Scenario: {template.DisplayName}",
                     SessionType = SessionType.Matchmade,
-                    OwnerId = body.AccountId,
-                    ExpectedPlayers = new List<Guid> { body.AccountId },
+                    OwnerId = accountId.Value,
+                    ExpectedPlayers = new List<Guid> { accountId.Value },
                     ReservationTtlSeconds = (int)(_configuration.ScenarioTimeoutMinutes * 60)
                 }, cancellationToken);
         }
@@ -639,11 +707,11 @@ public partial class GardenerService : IGardenerService
         {
             _logger.LogError(ex,
                 "Failed to create game session for scenario {TemplateId}, account {AccountId}: {StatusCode}",
-                body.ScenarioTemplateId, body.AccountId, ex.StatusCode);
+                body.ScenarioTemplateId, accountId.Value, ex.StatusCode);
             await _messageBus.TryPublishErrorAsync(
                 "gardener", "EnterScenario", "game_session_creation_failed", ex.Message,
                 dependency: "game-session", endpoint: "post:/game-session/create",
-                details: new { TemplateId = body.ScenarioTemplateId, AccountId = body.AccountId });
+                details: new { TemplateId = body.ScenarioTemplateId, AccountId = accountId.Value });
             return (StatusCodes.ServiceUnavailable, null);
         }
 
@@ -664,7 +732,7 @@ public partial class GardenerService : IGardenerService
                 new()
                 {
                     SeedId = garden.SeedId,
-                    AccountId = body.AccountId,
+                    AccountId = accountId.Value,
                     SessionId = garden.SessionId,
                     JoinedAt = now,
                     Role = ScenarioParticipantRole.Primary
@@ -672,20 +740,20 @@ public partial class GardenerService : IGardenerService
             }
         };
 
-        await _scenarioStore.SaveAsync(ScenarioKey(body.AccountId), scenario, cancellationToken: cancellationToken);
+        await _scenarioStore.SaveAsync(ScenarioKey(accountId.Value), scenario, cancellationToken: cancellationToken);
 
         // Update tracking sets: leaving garden, entering scenario
         await _gardenCacheStore.RemoveFromSetAsync<Guid>(
-            ActiveGardensTrackingKey, body.AccountId, cancellationToken);
+            ActiveGardensTrackingKey, accountId.Value, cancellationToken);
         await _gardenCacheStore.AddToSetAsync<Guid>(
-            ActiveScenariosTrackingKey, body.AccountId, cancellationToken: cancellationToken);
+            ActiveScenariosTrackingKey, accountId.Value, cancellationToken: cancellationToken);
 
         // Clean up garden instance -- player leaves the garden to enter the scenario
         foreach (var poiId in garden.ActivePoiIds)
         {
             await _poiStore.DeleteAsync(PoiKey(garden.GardenInstanceId, poiId), cancellationToken);
         }
-        await _gardenStore.DeleteAsync(GardenKey(body.AccountId), cancellationToken);
+        await _gardenStore.DeleteAsync(GardenKey(accountId.Value), cancellationToken);
 
         await _messageBus.TryPublishAsync("gardener.scenario.started",
             new GardenerScenarioStartedEvent
@@ -695,7 +763,7 @@ public partial class GardenerService : IGardenerService
                 ScenarioInstanceId = scenarioInstanceId,
                 ScenarioTemplateId = body.ScenarioTemplateId,
                 GameSessionId = gameSession.SessionId,
-                AccountId = body.AccountId,
+                WebSocketSessionId = body.SessionId,
                 SeedId = garden.SeedId
             }, cancellationToken: cancellationToken);
 
@@ -710,7 +778,7 @@ public partial class GardenerService : IGardenerService
 
         _logger.LogInformation(
             "Scenario {ScenarioId} started for account {AccountId}, template {TemplateCode}",
-            scenarioInstanceId, body.AccountId, template.Code);
+            scenarioInstanceId, accountId.Value, template.Code);
 
         return (StatusCodes.OK, MapToScenarioStateResponse(scenario));
     }
@@ -719,7 +787,14 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, ScenarioStateResponse?)> GetScenarioStateAsync(
         GetScenarioStateRequest body, CancellationToken cancellationToken)
     {
-        var scenario = await _scenarioStore.GetAsync(ScenarioKey(body.AccountId), cancellationToken);
+        var accountId = ResolveAccountId(body.SessionId);
+        if (accountId == null)
+        {
+            _logger.LogWarning("No account mapping for session {SessionId}", body.SessionId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var scenario = await _scenarioStore.GetAsync(ScenarioKey(accountId.Value), cancellationToken);
         if (scenario == null)
             return (StatusCodes.NotFound, null);
 
@@ -730,9 +805,16 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, ScenarioCompletionResponse?)> CompleteScenarioAsync(
         CompleteScenarioRequest body, CancellationToken cancellationToken)
     {
+        var accountId = ResolveAccountId(body.SessionId);
+        if (accountId == null)
+        {
+            _logger.LogWarning("No account mapping for session {SessionId}", body.SessionId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         await using var lockResult = await _lockProvider.LockAsync(
             StateStoreDefinitions.GardenerLock,
-            $"scenario:{body.AccountId}",
+            $"scenario:{accountId.Value}",
             Guid.NewGuid().ToString(),
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
@@ -740,7 +822,7 @@ public partial class GardenerService : IGardenerService
         if (!lockResult.Success)
             return (StatusCodes.Conflict, null);
 
-        var scenario = await _scenarioStore.GetAsync(ScenarioKey(body.AccountId), cancellationToken);
+        var scenario = await _scenarioStore.GetAsync(ScenarioKey(accountId.Value), cancellationToken);
         if (scenario == null)
             return (StatusCodes.NotFound, null);
 
@@ -765,17 +847,17 @@ public partial class GardenerService : IGardenerService
         scenario.Status = ScenarioStatus.Completed;
         scenario.CompletedAt = DateTimeOffset.UtcNow;
         scenario.GrowthAwarded = growthAwarded;
-        await _scenarioStore.SaveAsync(ScenarioKey(body.AccountId), scenario, cancellationToken: cancellationToken);
+        await _scenarioStore.SaveAsync(ScenarioKey(accountId.Value), scenario, cancellationToken: cancellationToken);
 
         // Move to durable history
         await WriteScenarioHistoryAsync(scenario, template, cancellationToken);
 
         // Clean up from Redis
-        await _scenarioStore.DeleteAsync(ScenarioKey(body.AccountId), cancellationToken);
+        await _scenarioStore.DeleteAsync(ScenarioKey(accountId.Value), cancellationToken);
 
         // Remove from tracking set
         await _gardenCacheStore.RemoveFromSetAsync<Guid>(
-            ActiveScenariosTrackingKey, body.AccountId, cancellationToken);
+            ActiveScenariosTrackingKey, accountId.Value, cancellationToken);
 
         // Clean up game session by having participant leave
         await TryCleanupGameSessionAsync(scenario, cancellationToken);
@@ -787,13 +869,13 @@ public partial class GardenerService : IGardenerService
                 Timestamp = DateTimeOffset.UtcNow,
                 ScenarioInstanceId = scenario.ScenarioInstanceId,
                 ScenarioTemplateId = scenario.ScenarioTemplateId,
-                AccountId = body.AccountId,
+                WebSocketSessionId = body.SessionId,
                 GrowthAwarded = growthAwarded
             }, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Scenario {ScenarioId} completed for account {AccountId}, growth awarded in {DomainCount} domains",
-            scenario.ScenarioInstanceId, body.AccountId, growthAwarded.Count);
+            scenario.ScenarioInstanceId, accountId.Value, growthAwarded.Count);
 
         return (StatusCodes.OK, new ScenarioCompletionResponse
         {
@@ -807,9 +889,16 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, AbandonScenarioResponse?)> AbandonScenarioAsync(
         AbandonScenarioRequest body, CancellationToken cancellationToken)
     {
+        var accountId = ResolveAccountId(body.SessionId);
+        if (accountId == null)
+        {
+            _logger.LogWarning("No account mapping for session {SessionId}", body.SessionId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         await using var lockResult = await _lockProvider.LockAsync(
             StateStoreDefinitions.GardenerLock,
-            $"scenario:{body.AccountId}",
+            $"scenario:{accountId.Value}",
             Guid.NewGuid().ToString(),
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
@@ -817,7 +906,7 @@ public partial class GardenerService : IGardenerService
         if (!lockResult.Success)
             return (StatusCodes.Conflict, null);
 
-        var scenario = await _scenarioStore.GetAsync(ScenarioKey(body.AccountId), cancellationToken);
+        var scenario = await _scenarioStore.GetAsync(ScenarioKey(accountId.Value), cancellationToken);
         if (scenario == null)
             return (StatusCodes.NotFound, null);
 
@@ -842,11 +931,11 @@ public partial class GardenerService : IGardenerService
         await WriteScenarioHistoryAsync(scenario, template, cancellationToken);
 
         // Clean up from Redis
-        await _scenarioStore.DeleteAsync(ScenarioKey(body.AccountId), cancellationToken);
+        await _scenarioStore.DeleteAsync(ScenarioKey(accountId.Value), cancellationToken);
 
         // Remove from tracking set
         await _gardenCacheStore.RemoveFromSetAsync<Guid>(
-            ActiveScenariosTrackingKey, body.AccountId, cancellationToken);
+            ActiveScenariosTrackingKey, accountId.Value, cancellationToken);
 
         await TryCleanupGameSessionAsync(scenario, cancellationToken);
 
@@ -856,12 +945,12 @@ public partial class GardenerService : IGardenerService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 ScenarioInstanceId = scenario.ScenarioInstanceId,
-                AccountId = body.AccountId
+                WebSocketSessionId = body.SessionId
             }, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Scenario {ScenarioId} abandoned by account {AccountId}",
-            scenario.ScenarioInstanceId, body.AccountId);
+            scenario.ScenarioInstanceId, accountId.Value);
 
         return (StatusCodes.OK, new AbandonScenarioResponse
         {
@@ -874,9 +963,16 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, ScenarioStateResponse?)> ChainScenarioAsync(
         ChainScenarioRequest body, CancellationToken cancellationToken)
     {
+        var accountId = ResolveAccountId(body.SessionId);
+        if (accountId == null)
+        {
+            _logger.LogWarning("No account mapping for session {SessionId}", body.SessionId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         await using var lockResult = await _lockProvider.LockAsync(
             StateStoreDefinitions.GardenerLock,
-            $"scenario:{body.AccountId}",
+            $"scenario:{accountId.Value}",
             Guid.NewGuid().ToString(),
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
@@ -885,7 +981,7 @@ public partial class GardenerService : IGardenerService
             return (StatusCodes.Conflict, null);
 
         var currentScenario = await _scenarioStore.GetAsync(
-            ScenarioKey(body.AccountId), cancellationToken);
+            ScenarioKey(accountId.Value), cancellationToken);
         if (currentScenario == null)
             return (StatusCodes.NotFound, null);
 
@@ -948,7 +1044,7 @@ public partial class GardenerService : IGardenerService
             Participants = currentScenario.Participants
         };
 
-        await _scenarioStore.SaveAsync(ScenarioKey(body.AccountId), newScenario, cancellationToken: cancellationToken);
+        await _scenarioStore.SaveAsync(ScenarioKey(accountId.Value), newScenario, cancellationToken: cancellationToken);
 
         await _messageBus.TryPublishAsync("gardener.scenario.chained",
             new GardenerScenarioChainedEvent
@@ -957,14 +1053,14 @@ public partial class GardenerService : IGardenerService
                 Timestamp = DateTimeOffset.UtcNow,
                 PreviousScenarioInstanceId = currentScenario.ScenarioInstanceId,
                 NewScenarioInstanceId = newScenarioId,
-                AccountId = body.AccountId,
+                WebSocketSessionId = body.SessionId,
                 ChainDepth = newScenario.ChainDepth
             }, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Scenario chained: {PrevId} -> {NewId} (depth {Depth}) for account {AccountId}",
             currentScenario.ScenarioInstanceId, newScenarioId,
-            newScenario.ChainDepth, body.AccountId);
+            newScenario.ChainDepth, accountId.Value);
 
         return (StatusCodes.OK, MapToScenarioStateResponse(newScenario));
     }
@@ -1539,7 +1635,7 @@ public partial class GardenerService : IGardenerService
                 BondId = body.BondId,
                 ScenarioInstanceId = scenarioId,
                 ScenarioTemplateId = body.ScenarioTemplateId,
-                Participants = partnerAccountIds
+                ParticipantSessionIds = gardens.Select(g => g.SessionId).ToList()
             }, cancellationToken: cancellationToken);
 
         _logger.LogInformation(

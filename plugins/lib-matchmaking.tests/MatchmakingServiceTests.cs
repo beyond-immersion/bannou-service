@@ -487,16 +487,46 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
     #region JoinMatchmaking Tests
 
     [Fact]
+    public async Task JoinMatchmakingAsync_WhenNoSessionMapping_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var request = new JoinMatchmakingRequest
+        {
+            QueueId = TEST_QUEUE_ID,
+            WebSocketSessionId = sessionId
+        };
+
+        // No session connected event fired - no session-to-account mapping exists
+
+        // Act
+        var (status, response) = await service.JoinMatchmakingAsync(request, CancellationToken.None);
+
+        // Assert - returns 400 because session is not mapped to an account
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
     public async Task JoinMatchmakingAsync_WhenQueueNotFound_ShouldReturnNotFound()
     {
         // Arrange
         var service = CreateService();
         var accountId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
+
+        // Simulate session connection to populate session-to-account mapping
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = sessionId,
+            AccountId = accountId,
+            Timestamp = DateTimeOffset.UtcNow
+        });
+
         var request = new JoinMatchmakingRequest
         {
             QueueId = "nonexistent",
-            AccountId = accountId,
             WebSocketSessionId = sessionId
         };
 
@@ -519,10 +549,18 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         var service = CreateService();
         var accountId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
+
+        // Simulate session connection to populate session-to-account mapping
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = sessionId,
+            AccountId = accountId,
+            Timestamp = DateTimeOffset.UtcNow
+        });
+
         var request = new JoinMatchmakingRequest
         {
             QueueId = TEST_QUEUE_ID,
-            AccountId = accountId,
             WebSocketSessionId = sessionId
         };
 
@@ -545,10 +583,18 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         var service = CreateService();
         var accountId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
+
+        // Simulate session connection to populate session-to-account mapping
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = sessionId,
+            AccountId = accountId,
+            Timestamp = DateTimeOffset.UtcNow
+        });
+
         var request = new JoinMatchmakingRequest
         {
             QueueId = TEST_QUEUE_ID,
-            AccountId = accountId,
             WebSocketSessionId = sessionId
         };
 
@@ -581,10 +627,18 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         var service = CreateService();
         var accountId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
+
+        // Simulate session connection to populate session-to-account mapping
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = sessionId,
+            AccountId = accountId,
+            Timestamp = DateTimeOffset.UtcNow
+        });
+
         var request = new JoinMatchmakingRequest
         {
             QueueId = TEST_QUEUE_ID,
-            AccountId = accountId,
             WebSocketSessionId = sessionId
         };
 

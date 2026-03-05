@@ -446,6 +446,8 @@ public class DocumentationServiceTests
             Namespace = TEST_NAMESPACE,
             RepositoryUrl = "https://github.com/test/repo.git",
             Branch = "main",
+            OwnerType = DocumentationOwnerType.Session,
+            OwnerId = "test-session-id",
             FilePatterns = new List<string> { "**/*.md" },
             ExcludePatterns = new List<string> { "node_modules/**" }
         };
@@ -476,7 +478,9 @@ public class DocumentationServiceTests
         {
             Namespace = "",
             RepositoryUrl = "https://github.com/test/repo.git",
-            Branch = "main"
+            Branch = "main",
+            OwnerType = DocumentationOwnerType.Session,
+            OwnerId = "test-session-id"
         };
 
         // Act
@@ -495,7 +499,9 @@ public class DocumentationServiceTests
         {
             Namespace = TEST_NAMESPACE,
             RepositoryUrl = "",
-            Branch = "main"
+            Branch = "main",
+            OwnerType = DocumentationOwnerType.Session,
+            OwnerId = "test-session-id"
         };
 
         // Act
@@ -521,7 +527,9 @@ public class DocumentationServiceTests
         {
             Namespace = TEST_NAMESPACE,
             RepositoryUrl = "https://github.com/test/new.git",
-            Branch = "main"
+            Branch = "main",
+            OwnerType = DocumentationOwnerType.Session,
+            OwnerId = "test-session-id"
         };
 
         _mockBindingStore.Setup(s => s.GetAsync(

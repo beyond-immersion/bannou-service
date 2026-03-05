@@ -408,7 +408,8 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
             }
         }
 
-        // Publish event
+        // Publish event — use participant's session ID per FOUNDATION TENETS (Account Identity Boundary)
+        var participantSessionId = scenario.Participants.FirstOrDefault()?.SessionId ?? Guid.Empty;
         var eventTopic = isTimeout
             ? "gardener.scenario.completed"
             : "gardener.scenario.abandoned";
@@ -422,7 +423,7 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
                     Timestamp = DateTimeOffset.UtcNow,
                     ScenarioInstanceId = scenario.ScenarioInstanceId,
                     ScenarioTemplateId = scenario.ScenarioTemplateId,
-                    AccountId = accountId,
+                    WebSocketSessionId = participantSessionId,
                     GrowthAwarded = partialGrowth
                 }, cancellationToken: ct);
         }
@@ -434,7 +435,7 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     ScenarioInstanceId = scenario.ScenarioInstanceId,
-                    AccountId = accountId
+                    WebSocketSessionId = participantSessionId
                 }, cancellationToken: ct);
         }
     }

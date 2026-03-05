@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Telemetry.Instrumentation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
@@ -32,6 +33,7 @@ public partial class TelemetryService : ITelemetryService
     private readonly TelemetryServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly HealthTrackingExporter? _healthTrackingExporter;
 
     /// <summary>
     /// Creates a new TelemetryService instance.
@@ -40,16 +42,20 @@ public partial class TelemetryService : ITelemetryService
     /// <param name="configuration">Telemetry service configuration.</param>
     /// <param name="appConfiguration">Application configuration for effective app-id.</param>
     /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
+    /// <param name="serviceProvider">Service provider for optional dependency resolution.</param>
     public TelemetryService(
         ILogger<TelemetryService> logger,
         TelemetryServiceConfiguration configuration,
         AppConfiguration appConfiguration,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IServiceProvider serviceProvider)
     {
         _logger = logger;
         _configuration = configuration;
         _appConfiguration = appConfiguration;
         _telemetryProvider = telemetryProvider;
+        // Optional: only registered when tracing is enabled
+        _healthTrackingExporter = serviceProvider.GetService<HealthTrackingExporter>();
     }
 
     /// <summary>
@@ -73,7 +79,10 @@ public partial class TelemetryService : ITelemetryService
             MetricsEnabled = _configuration.MetricsEnabled,
             OtlpEndpoint = (_configuration.TracingEnabled || _configuration.MetricsEnabled)
                 ? _configuration.OtlpEndpoint
-                : null
+                : null,
+            OtlpExportHealthy = _healthTrackingExporter?.IsHealthy ?? false,
+            ConsecutiveExportFailures = _healthTrackingExporter?.ConsecutiveFailures ?? 0,
+            LastSuccessfulExportAt = _healthTrackingExporter?.LastSuccessfulExportAt
         };
 
         await Task.CompletedTask;

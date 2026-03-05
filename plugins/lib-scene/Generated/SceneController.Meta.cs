@@ -4080,10 +4080,15 @@ public partial class SceneController
                     "format": "uuid",
                     "description": "Scene to checkout"
                 },
+                "editorType": {
+                    "$ref": "#/$defs/SceneEditorType",
+                    "nullable": true,
+                    "description": "Type of editor. Defaults to Session if not specified."
+                },
                 "editorId": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Optional editor identifier (defaults to caller identity)"
+                    "description": "Editor identifier. For Session type: the WebSocket session ID (UUID format).\nFor Service type: the app-id or service name.\nDefaults to caller identity if not specified.\n"
                 },
                 "ttlMinutes": {
                     "type": "integer",
@@ -4091,6 +4096,14 @@ public partial class SceneController
                     "description": "Custom lock TTL (uses default if not specified)"
                 }
             }
+        },
+        "SceneEditorType": {
+            "type": "string",
+            "description": "Type of scene editor for polymorphic identification per FOUNDATION TENETS.\ nSession identifies a WebSocket session (user editing via client).\nService identifies a service or tool editing programmatically.\n",
+            "enum": [
+                "Session",
+                "Service"
+            ]
         }
     }
 }

@@ -95,7 +95,7 @@ Session connected/disconnected/reconnected/heartbeat received via `ISessionActiv
 |---------|------|
 | `ILogger<PermissionService>` | Structured logging |
 | `PermissionServiceConfiguration` | RoleHierarchy, TTL, lock timeout, max recompilations |
-| `IStateStoreFactory` | Redis state access (acquired inline per-method, not cached in constructor) |
+| `IStateStoreFactory` | Redis state access (constructor-cached as `_permissionsStore`, `_sessionStatesStore`, `_stringStore`, `_hashSetStore`, `_registrationStore`, `_cacheStore`) |
 | `IDistributedLockProvider` | Distributed locks for session mutation |
 | `IMessageBus` | Service event publishing (permission.capability-update) + error events |
 | `IClientEventPublisher` | Session-specific capability push |

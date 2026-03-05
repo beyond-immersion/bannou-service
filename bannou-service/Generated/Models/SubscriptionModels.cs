@@ -177,7 +177,7 @@ public partial class UpdateSubscriptionRequest
 }
 
 /// <summary>
-/// Request to cancel a subscription
+/// Request to cancel a subscription. Requires accountId for ownership verification when called by non-admin users.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CancelSubscriptionRequest
@@ -190,6 +190,14 @@ public partial class CancelSubscriptionRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SubscriptionId { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID of the caller for ownership verification
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for cancellation

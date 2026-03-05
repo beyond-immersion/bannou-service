@@ -203,6 +203,26 @@ public enum SortOrder
 #pragma warning restore CS1591
 
 /// <summary>
+/// Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).
+/// <br/>Session: user-initiated operation identified by WebSocket session ID (UUID).
+/// <br/>Service: service-initiated operation identified by service name.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AssetOwnerType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Session")]
+    Session = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Service")]
+    Service = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Storage backend type for asset persistence
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -472,15 +492,23 @@ public partial class UploadRequest
 {
 
     /// <summary>
-    /// Owner of this asset operation. NOT a session ID.
-    /// <br/>For user-initiated uploads: the accountId (UUID format).
-    /// <br/>For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
+    /// Type of owner initiating this upload
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AssetOwnerType OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Owner identifier. For Session type: the WebSocket session ID (UUID format).
+    /// <br/>For Service type: the service name (e.g., "behavior", "orchestrator").
     /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Owner { get; set; } = default!;
+    public string OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Original filename with extension
@@ -1133,15 +1161,23 @@ public partial class CreateBundleRequest
 {
 
     /// <summary>
-    /// Owner of this bundle. NOT a session ID.
-    /// <br/>For user-initiated bundles: the accountId (UUID format).
-    /// <br/>For service-initiated bundles: the service name (e.g., "orchestrator").
-    /// <br/>
+    /// Type of owner creating this bundle
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Owner { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AssetOwnerType OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Owner identifier. For Session type: the WebSocket session ID (UUID format).
+    /// <br/>For Service type: the service name (e.g., "behavior", "orchestrator").
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
@@ -1324,15 +1360,23 @@ public partial class BundleUploadRequest
 {
 
     /// <summary>
-    /// Owner of this bundle upload. NOT a session ID.
-    /// <br/>For user-initiated uploads: the accountId (UUID format).
-    /// <br/>For service-initiated uploads: the service name (e.g., "orchestrator").
-    /// <br/>
+    /// Type of owner uploading this bundle
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Owner { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AssetOwnerType OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Owner identifier. For Session type: the WebSocket session ID (UUID format).
+    /// <br/>For Service type: the service name (e.g., "behavior", "orchestrator").
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Must end with .bannou or .zip
@@ -1520,15 +1564,23 @@ public partial class CreateMetabundleRequest
     public string Version { get; set; } = "1.0.0";
 
     /// <summary>
-    /// Owner of this metabundle. NOT a session ID.
-    /// <br/>For user-initiated: the accountId (UUID format).
-    /// <br/>For service-initiated: the service name.
-    /// <br/>
+    /// Type of owner creating this metabundle
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Owner { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AssetOwnerType OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Owner identifier. For Session type: the WebSocket session ID (UUID format).
+    /// <br/>For Service type: the service name (e.g., "behavior", "orchestrator").
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Game realm for this metabundle
@@ -2337,10 +2389,17 @@ public partial class BundleInfo
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Owner account ID or service name (null for system-owned bundles)
+    /// Type of owner (null for system-owned bundles)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("owner")]
-    public string? Owner { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AssetOwnerType? OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Owner identifier - session ID or service name (null for system-owned bundles)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    public string? OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Game realm this bundle belongs to. Null for cross-realm bundles.
@@ -2648,10 +2707,17 @@ public partial class QueryBundlesRequest
     public string? NameContains { get; set; } = default!;
 
     /// <summary>
-    /// Filter by bundle owner account ID
+    /// Filter by owner type (null for any type)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("owner")]
-    public string? Owner { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AssetOwnerType? OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Filter by owner identifier (session ID or service name)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    public string? OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Filter by realm
@@ -2827,7 +2893,7 @@ public partial class BundleVersionRecord
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Account ID that made the change
+    /// Session ID or service name that made the change
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdBy")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

@@ -1,6 +1,7 @@
 using BeyondImmersion.Bannou.Matchmaking.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Matchmaking;
 
@@ -10,6 +11,12 @@ namespace BeyondImmersion.BannouService.Matchmaking;
 /// </summary>
 public partial class MatchmakingService
 {
+    /// <summary>
+    /// Maps WebSocket session IDs to account IDs, populated from session.connected events.
+    /// Used to resolve account identity server-side per FOUNDATION TENETS (Account Identity Boundary).
+    /// </summary>
+    private readonly ConcurrentDictionary<Guid, Guid> _sessionAccountMap = new();
+
     /// <summary>
     /// Registers event consumers for pub/sub events this service handles.
     /// Called from the main service constructor.
@@ -33,27 +40,31 @@ public partial class MatchmakingService
 
     /// <summary>
     /// Handles session.connected events.
-    /// New connections don't require any matchmaking action - players must explicitly join queues.
+    /// Stores session-to-account mapping for server-side account resolution per FOUNDATION TENETS
+    /// (Account Identity Boundary). Players must explicitly join queues via the JoinMatchmaking endpoint.
     /// </summary>
     /// <param name="evt">The event data.</param>
     public async Task HandleSessionConnectedAsync(SessionConnectedEvent evt)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.HandleSessionConnectedAsync");
-        // New connections don't require any matchmaking action
-        // Players must explicitly join queues via the JoinMatchmaking endpoint
-        _logger.LogDebug("Session {SessionId} connected, account {AccountId}",
+        // Store session-to-account mapping for server-side resolution
+        _sessionAccountMap[evt.SessionId] = evt.AccountId;
+        _logger.LogDebug("Session {SessionId} connected, account {AccountId} mapped",
             evt.SessionId, evt.AccountId);
         await Task.CompletedTask;
     }
 
     /// <summary>
     /// Handles session.disconnected events.
-    /// Cancels all matchmaking tickets for the disconnected player.
+    /// Cancels all matchmaking tickets for the disconnected player and removes session-to-account mapping.
     /// </summary>
     /// <param name="evt">The event data.</param>
     public async Task HandleSessionDisconnectedAsync(SessionDisconnectedEvent evt)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.HandleSessionDisconnectedAsync");
+        // Remove session-to-account mapping
+        _sessionAccountMap.TryRemove(evt.SessionId, out _);
+
         // SessionDisconnectedEvent.AccountId is nullable Guid?
         if (!evt.AccountId.HasValue)
         {

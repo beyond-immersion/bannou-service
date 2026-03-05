@@ -2127,7 +2127,8 @@ public partial class DocumentationService : IDocumentationService
             ArchiveEnabled = body.ArchiveEnabled,
             ArchiveOnSync = body.ArchiveOnSync,
             CreatedAt = DateTimeOffset.UtcNow,
-            Owner = body.Owner
+            OwnerType = MapOwnerType(body.OwnerType),
+            OwnerId = body.OwnerId
         };
 
         // Save binding
@@ -2379,7 +2380,8 @@ public partial class DocumentationService : IDocumentationService
             DocumentCount = documents.Count,
             SizeBytes = bundleData.Length,
             CreatedAt = DateTimeOffset.UtcNow,
-            Owner = body.Owner,
+            OwnerType = MapOwnerType(body.OwnerType),
+            OwnerId = body.OwnerId,
             Description = body.Description,
             CommitHash = await GetCurrentCommitHashForNamespaceAsync(body.Namespace, cancellationToken)
         };
@@ -2394,7 +2396,8 @@ public partial class DocumentationService : IDocumentationService
             {
                 var uploadResponse = await assetClient.RequestBundleUploadAsync(new BundleUploadRequest
                 {
-                    Owner = body.Owner,
+                    OwnerType = AssetOwnerType.Service,
+                    OwnerId = "documentation",
                     Filename = $"docs-{body.Namespace}-{archiveId:N}.bannou",
                     Size = bundleData.Length
                 }, cancellationToken);
@@ -2460,7 +2463,8 @@ public partial class DocumentationService : IDocumentationService
                 ArchiveId = a.ArchiveId,
                 Namespace = a.Namespace,
                 CreatedAt = a.CreatedAt,
-                Owner = a.Owner,
+                OwnerType = MapOwnerTypeNullable(a.OwnerType),
+                OwnerId = a.OwnerId,
                 DocumentCount = a.DocumentCount,
                 SizeBytes = (int)Math.Min(a.SizeBytes, int.MaxValue),
                 Description = a.Description,
@@ -3120,6 +3124,36 @@ public partial class DocumentationService : IDocumentationService
     };
 
     /// <summary>
+    /// Maps API owner type to internal enum.
+    /// </summary>
+    private static Models.OwnerTypeInternal MapOwnerType(DocumentationOwnerType ownerType) => ownerType switch
+    {
+        DocumentationOwnerType.Session => Models.OwnerTypeInternal.Session,
+        DocumentationOwnerType.Service => Models.OwnerTypeInternal.Service,
+        _ => Models.OwnerTypeInternal.Session
+    };
+
+    /// <summary>
+    /// Maps internal owner type to API enum.
+    /// </summary>
+    private static DocumentationOwnerType MapOwnerTypeToApi(Models.OwnerTypeInternal ownerType) => ownerType switch
+    {
+        Models.OwnerTypeInternal.Session => DocumentationOwnerType.Session,
+        Models.OwnerTypeInternal.Service => DocumentationOwnerType.Service,
+        _ => DocumentationOwnerType.Session
+    };
+
+    /// <summary>
+    /// Maps internal owner type to nullable API enum (for response models where owner may be unknown).
+    /// </summary>
+    private static DocumentationOwnerType? MapOwnerTypeNullable(Models.OwnerTypeInternal ownerType) => ownerType switch
+    {
+        Models.OwnerTypeInternal.Session => DocumentationOwnerType.Session,
+        Models.OwnerTypeInternal.Service => DocumentationOwnerType.Service,
+        _ => DocumentationOwnerType.Session
+    };
+
+    /// <summary>
     /// Maps binding to API info model.
     /// </summary>
     private static RepositoryBindingInfo MapToBindingInfo(Models.RepositoryBinding binding) => new()
@@ -3133,7 +3167,8 @@ public partial class DocumentationService : IDocumentationService
         SyncIntervalMinutes = binding.SyncIntervalMinutes,
         DocumentCount = binding.DocumentCount,
         CreatedAt = binding.CreatedAt,
-        Owner = binding.Owner
+        OwnerType = MapOwnerTypeToApi(binding.OwnerType),
+        OwnerId = binding.OwnerId
     };
 
     /// <summary>

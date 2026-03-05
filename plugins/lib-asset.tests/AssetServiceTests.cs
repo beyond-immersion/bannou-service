@@ -375,7 +375,8 @@ public class AssetServiceTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
-            Owner = "test-account",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             CreatedAt = DateTimeOffset.UtcNow.AddHours(-2),
             ExpiresAt = DateTimeOffset.UtcNow.AddHours(-1) // Already expired
@@ -411,7 +412,8 @@ public class AssetServiceTests
             Filename = "large.glb",
             Size = 100 * 1024 * 1024,
             ContentType = "model/gltf-binary",
-            Owner = "test-account",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-account",
             StorageKey = $"temp/{uploadId:N}/large.glb",
             IsMultipart = true,
             PartCount = 5, // Expects 5 parts
@@ -446,7 +448,8 @@ public class AssetServiceTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
-            Owner = "test-account",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             IsMultipart = false,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -485,7 +488,8 @@ public class AssetServiceTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
-            Owner = "test-account",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             IsMultipart = false,
             Metadata = new AssetMetadataInput
@@ -574,7 +578,8 @@ public class AssetServiceTests
             Filename = "model.glb",
             Size = 50 * 1024 * 1024,
             ContentType = "model/gltf-binary",
-            Owner = "test-account",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-account",
             StorageKey = $"temp/{uploadId:N}/model.glb",
             IsMultipart = true,
             PartCount = 2,
@@ -1599,7 +1604,8 @@ public class AssetServiceTests
         {
             MetabundleId = "",
             SourceBundleIds = new List<string> { "bundle-1" },
-            Owner = "test-owner",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1621,7 +1627,8 @@ public class AssetServiceTests
             MetabundleId = "test-metabundle",
             SourceBundleIds = null,
             StandaloneAssetIds = null,
-            Owner = "test-owner",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1643,7 +1650,8 @@ public class AssetServiceTests
             MetabundleId = "test-metabundle",
             SourceBundleIds = new List<string>(),
             StandaloneAssetIds = new List<string>(),
-            Owner = "test-owner",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1664,7 +1672,8 @@ public class AssetServiceTests
         {
             MetabundleId = "existing-metabundle",
             SourceBundleIds = new List<string> { "bundle-1" },
-            Owner = "test-owner",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1702,7 +1711,8 @@ public class AssetServiceTests
         {
             MetabundleId = "new-metabundle",
             SourceBundleIds = new List<string> { "nonexistent-bundle" },
-            Owner = "test-owner",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1733,7 +1743,8 @@ public class AssetServiceTests
         {
             MetabundleId = "new-metabundle",
             StandaloneAssetIds = new List<string> { "nonexistent-asset" },
-            Owner = "test-owner",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1764,7 +1775,8 @@ public class AssetServiceTests
         {
             MetabundleId = "new-metabundle",
             SourceBundleIds = new List<string> { "pending-bundle" },
-            Owner = "test-owner",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1807,7 +1819,8 @@ public class AssetServiceTests
         {
             MetabundleId = "new-metabundle",
             StandaloneAssetIds = new List<string> { "pending-asset" },
-            Owner = "test-owner",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1853,7 +1866,8 @@ public class AssetServiceTests
         {
             MetabundleId = "new-metabundle",
             SourceBundleIds = new List<string> { "wrong-realm-bundle" },
-            Owner = "test-owner",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-owner",
             Realm = "test-realm" // Request is for test-realm
         };
 
@@ -1898,7 +1912,8 @@ public class AssetServiceTests
         {
             MetabundleId = "conflict-test-metabundle",
             SourceBundleIds = new List<string> { "bundle-1", "bundle-2" },
-            Owner = "test-owner",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-owner",
             Realm = "test-realm"
         };
 
@@ -3389,7 +3404,7 @@ public class AssetServiceTests
     {
         // Arrange
         var service = CreateService();
-        var request = new QueryBundlesRequest { Owner = null };
+        var request = new QueryBundlesRequest { OwnerId = null };
 
         // Act
         var (status, result) = await service.QueryBundlesAsync(request, CancellationToken.None);
@@ -3406,7 +3421,7 @@ public class AssetServiceTests
     {
         // Arrange
         var service = CreateService();
-        var request = new QueryBundlesRequest { Owner = "test-owner" };
+        var request = new QueryBundlesRequest { OwnerId = "test-owner" };
 
         _mockCacheableBundleStore
             .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -3436,7 +3451,7 @@ public class AssetServiceTests
 
         var request = new QueryBundlesRequest
         {
-            Owner = "test-owner",
+            OwnerId = "test-owner",
             IncludeDeleted = false
         };
 
@@ -3477,7 +3492,7 @@ public class AssetServiceTests
 
         var request = new QueryBundlesRequest
         {
-            Owner = "test-owner",
+            OwnerId = "test-owner",
             NameContains = "Adventure"
         };
 
@@ -3519,7 +3534,7 @@ public class AssetServiceTests
 
         var request = new QueryBundlesRequest
         {
-            Owner = "test-owner",
+            OwnerId = "test-owner",
             SortField = BundleSortField.Name,
             SortOrder = SortOrder.Asc
         };
@@ -3897,7 +3912,8 @@ public class AssetServiceTests
         {
             MetabundleId = "new-metabundle",
             SourceBundleIds = new List<string> { "source-1" },
-            Owner = "test-owner",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-owner",
             Realm = "test-realm"
         };
 
@@ -3991,7 +4007,8 @@ public class AssetServiceTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
-            Owner = "test-account",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             IsMultipart = false,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -4042,7 +4059,8 @@ public class AssetServiceTests
             CreatedAt = createdAt ?? DateTimeOffset.UtcNow,
             Status = BundleStatus.Ready,
             LifecycleStatus = lifecycleStatus,
-            Owner = "test-owner",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-owner",
             MetadataVersion = 1
         };
     }
@@ -4264,7 +4282,8 @@ public class MinioWebhookHandlerTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
-            Owner = "test-account",
+            OwnerType = AssetOwnerType.Session,
+            OwnerId = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             IsMultipart = false,
             CreatedAt = DateTimeOffset.UtcNow,

@@ -390,8 +390,14 @@ public partial class MatchmakingService : IMatchmakingService
         CancellationToken cancellationToken)
     {
         var sessionId = body.WebSocketSessionId;
-        var accountId = body.AccountId;
         var queueId = body.QueueId;
+
+        // Resolve account from session-to-account map per FOUNDATION TENETS (Account Identity Boundary)
+        if (!_sessionAccountMap.TryGetValue(sessionId, out var accountId))
+        {
+            _logger.LogWarning("No account mapping for session {SessionId}", sessionId);
+            return (StatusCodes.BadRequest, null);
+        }
 
         _logger.LogDebug("Player {AccountId} joining queue {QueueId}", accountId, queueId);
 
@@ -448,6 +454,26 @@ public partial class MatchmakingService : IMatchmakingService
             }
         }
 
+        // Resolve party member accounts from session map per FOUNDATION TENETS (Account Identity Boundary)
+        List<PartyMemberModel>? partyMembers = null;
+        if (body.PartyMembers != null)
+        {
+            partyMembers = new List<PartyMemberModel>();
+            foreach (var member in body.PartyMembers)
+            {
+                if (!_sessionAccountMap.TryGetValue(member.WebSocketSessionId, out _))
+                {
+                    _logger.LogWarning("No account mapping for party member session {SessionId}", member.WebSocketSessionId);
+                    return (StatusCodes.BadRequest, null);
+                }
+                partyMembers.Add(new PartyMemberModel
+                {
+                    WebSocketSessionId = member.WebSocketSessionId,
+                    SkillRating = member.SkillRating
+                });
+            }
+        }
+
         // Create ticket
         var ticketId = Guid.NewGuid();
         var ticket = new TicketModel
@@ -457,12 +483,7 @@ public partial class MatchmakingService : IMatchmakingService
             AccountId = accountId,
             WebSocketSessionId = sessionId,
             PartyId = body.PartyId,
-            PartyMembers = body.PartyMembers?.Select(m => new PartyMemberModel
-            {
-                AccountId = m.AccountId,
-                WebSocketSessionId = m.WebSocketSessionId,
-                SkillRating = m.SkillRating
-            }).ToList(),
+            PartyMembers = partyMembers,
             StringProperties = body.StringProperties?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<string, string>(),
             NumericProperties = body.NumericProperties?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<string, double>(),
             Query = body.Query,
@@ -539,14 +560,14 @@ public partial class MatchmakingService : IMatchmakingService
         // Publish shortcuts for leave/status endpoints
         await PublishMatchmakingShortcutsAsync(sessionId, accountId, ticketId, cancellationToken);
 
-        // Publish event
+        // Publish event - use webSocketSessionId per FOUNDATION TENETS (Account Identity Boundary)
         await _messageBus.TryPublishAsync(TICKET_CREATED_TOPIC, new MatchmakingTicketCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             TicketId = ticketId,
             QueueId = queueId,
-            AccountId = accountId,
+            WebSocketSessionId = sessionId,
             PartyId = ticket.PartyId,
             PartySize = ticket.PartyMembers?.Count,
             SkillRating = ticket.SkillRating
@@ -942,7 +963,7 @@ public partial class MatchmakingService : IMatchmakingService
             await PublishMatchShortcutsAsync(ticket.WebSocketSessionId, ticket.AccountId, matchId, cancellationToken);
         }
 
-        // Publish event
+        // Publish event - use webSocketSessionId per FOUNDATION TENETS (Account Identity Boundary)
         await _messageBus.TryPublishAsync(MATCH_FORMED_TOPIC, new MatchmakingMatchFormedEvent
         {
             EventId = Guid.NewGuid(),
@@ -952,9 +973,8 @@ public partial class MatchmakingService : IMatchmakingService
             Tickets = match.MatchedTickets.Select(t => new MatchedTicketInfo
             {
                 TicketId = t.TicketId,
-                AccountId = t.AccountId,
-                PartyId = t.PartyId,
                 WebSocketSessionId = t.WebSocketSessionId,
+                PartyId = t.PartyId,
                 SkillRating = t.SkillRating,
                 WaitTimeSeconds = t.WaitTimeSeconds
             }).ToList(),
@@ -1240,14 +1260,14 @@ public partial class MatchmakingService : IMatchmakingService
         await RemoveFromPlayerTicketsAsync(ticket.AccountId, ticketId, cancellationToken);
         await RemoveFromQueueTicketsAsync(ticket.QueueId, ticketId, cancellationToken);
 
-        // Publish service event (cast from client events enum to API enum - identical values)
+        // Publish service event - use webSocketSessionId per FOUNDATION TENETS (Account Identity Boundary)
         await _messageBus.TryPublishAsync(TICKET_CANCELLED_TOPIC, new MatchmakingTicketCancelledEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             TicketId = ticketId,
             QueueId = ticket.QueueId,
-            AccountId = ticket.AccountId,
+            WebSocketSessionId = ticket.WebSocketSessionId,
             PartyId = ticket.PartyId,
             Reason = (CancelReason)reason,
             WaitTimeSeconds = waitTime

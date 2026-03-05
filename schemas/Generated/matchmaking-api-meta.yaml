@@ -567,39 +567,34 @@ paths:
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/JoinMatchmakingRequest\"\
         ,\n    \"$defs\": {\n        \"JoinMatchmakingRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to join a matchmaking queue\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"webSocketSessionId\",\n                \"accountId\",\n                \"queueId\"\n      \
-        \      ],\n            \"properties\": {\n                \"webSocketSessionId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"WebSocket session
-        ID for event delivery\"\n                },\n                \"accountId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Account ID of the player joining\"\
-        \n                },\n                \"queueId\": {\n                    \"type\": \"string\",\n                \
-        \    \"description\": \"ID of the queue to join\"\n                },\n                \"partyId\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Party ID if joining as part of a party\"\n                },\n           \
-        \     \"partyMembers\": {\n                    \"type\": \"array\",\n                    \"items\": {\n          \
-        \              \"$ref\": \"#/$defs/PartyMemberInfo\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Party member information (required if partyId provided)\"\n              \
-        \  },\n                \"stringProperties\": {\n                    \"type\": \"object\",\n                    \"\
-        additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n                \
-        \    \"nullable\": true,\n                    \"description\": \"String properties for query matching\"\n        \
-        \        },\n                \"numericProperties\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": {\n                        \"type\": \"number\"\n                    },\n        \
-        \            \"nullable\": true,\n                    \"description\": \"Numeric properties for query matching\"\n\
-        \                },\n                \"query\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"maxLength\": 1000,\n                    \"description\": \"Lucene-like
-        query for opponent matching\"\n                },\n                \"tournamentId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Tournament ID if joining tournament queue\"\n                }\n            }\n        },\n\
-        \        \"PartyMemberInfo\": {\n            \"type\": \"object\",\n            \"description\": \"Information about
-        a party member for matchmaking\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
-        \             \"accountId\",\n                \"webSocketSessionId\"\n            ],\n            \"properties\":
-        {\n                \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Account ID of the party member\"\n                },\n           \
-        \     \"webSocketSessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"WebSocket session ID for event delivery\"\n                },\n        \
-        \        \"skillRating\": {\n                    \"type\": \"number\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Pre-fetched skill rating (optional, will be looked up if not provided)\"\n\
-        \                }\n            }\n        }\n    }\n}"
+        : [\n                \"webSocketSessionId\",\n                \"queueId\"\n            ],\n            \"properties\"\
+        : {\n                \"webSocketSessionId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"WebSocket session ID for event delivery\"\n          \
+        \      },\n                \"queueId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"ID of the queue to join\"\n                },\n                \"partyId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Party ID if joining as part of a party\"\n                },\n                \"partyMembers\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/PartyMemberInfo\"\n                    },\n                    \"nullable\": true,\n                 \
+        \   \"description\": \"Party member information (required if partyId provided)\"\n                },\n           \
+        \     \"stringProperties\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"String properties for query matching\"\n                },\n             \
+        \   \"numericProperties\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"number\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Numeric properties for query matching\"\n                },\n            \
+        \    \"query\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n          \
+        \          \"maxLength\": 1000,\n                    \"description\": \"Lucene-like query for opponent matching\"\n\
+        \                },\n                \"tournamentId\": {\n                    \"type\": \"string\",\n            \
+        \        \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Tournament
+        ID if joining tournament queue\"\n                }\n            }\n        },\n        \"PartyMemberInfo\": {\n \
+        \           \"type\": \"object\",\n            \"description\": \"Information about a party member for matchmaking\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"webSocketSessionId\"\
+        \n            ],\n            \"properties\": {\n                \"webSocketSessionId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"WebSocket session
+        ID for event delivery\"\n                },\n                \"skillRating\": {\n                    \"type\": \"\
+        number\",\n                    \"nullable\": true,\n                    \"description\": \"Pre-fetched skill rating
+        (optional, will be looked up if not provided)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/JoinMatchmakingResponse\"\
         ,\n    \"$defs\": {\n        \"JoinMatchmakingResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after joining a matchmaking queue\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1303,17 +1298,12 @@ components:
       additionalProperties: false
       required:
       - webSocketSessionId
-      - accountId
       - queueId
       properties:
         webSocketSessionId:
           type: string
           format: uuid
           description: WebSocket session ID for event delivery
-        accountId:
-          type: string
-          format: uuid
-          description: Account ID of the player joining
         queueId:
           type: string
           description: ID of the queue to join
@@ -1355,13 +1345,8 @@ components:
       description: Information about a party member for matchmaking
       additionalProperties: false
       required:
-      - accountId
       - webSocketSessionId
       properties:
-        accountId:
-          type: string
-          format: uuid
-          description: Account ID of the party member
         webSocketSessionId:
           type: string
           format: uuid

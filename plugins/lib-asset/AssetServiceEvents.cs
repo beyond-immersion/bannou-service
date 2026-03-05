@@ -313,7 +313,7 @@ public partial class AssetService
                 request.MetabundleId,
                 request.MetabundleId.ToString(),
                 request.Version ?? "1.0.0",
-                request.Owner,
+                request.OwnerId,
                 request.Description,
                 request.Metadata != null ? MetadataHelper.ConvertToStringDictionary(request.Metadata) : null,
                 cancellationToken).ConfigureAwait(false);
@@ -353,7 +353,8 @@ public partial class AssetService
             SizeBytes = bundleSize,
             CreatedAt = DateTimeOffset.UtcNow,
             Status = BundleStatus.Ready,
-            Owner = request.Owner,
+            OwnerType = request.OwnerType,
+            OwnerId = request.OwnerId,
             SourceBundles = sourceBundleRefs,
             StandaloneAssetIds = standaloneAssetIds.Count > 0 ? standaloneAssetIds : null,
             Metadata = request.Metadata != null ? MetadataHelper.ConvertToDictionary(request.Metadata) : null
@@ -384,7 +385,8 @@ public partial class AssetService
                 Bucket = bucket,
                 Key = metabundlePath,
                 SizeBytes = bundleSize,
-                Owner = request.Owner
+                OwnerType = request.OwnerType,
+                OwnerId = request.OwnerId
             }).ConfigureAwait(false);
 
         return new MetabundleJobResult

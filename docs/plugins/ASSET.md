@@ -4,7 +4,7 @@
 > **Schema**: schemas/asset-api.yaml
 > **Version**: 1.0.0
 > **Layer**: AppFeatures
-> **State Stores**: asset-statestore (Redis), asset-processor-pool (Redis)
+> **State Store**: asset-statestore (Redis), asset-processor-pool (Redis)
 > **Implementation Map**: [docs/maps/ASSET.md](../maps/ASSET.md)
 
 ---
@@ -12,23 +12,6 @@
 ## Overview
 
 The Asset service (L3 AppFeatures) provides storage, versioning, and distribution of large binary assets (textures, audio, 3D models) using MinIO/S3-compatible object storage. Issues pre-signed URLs so clients upload/download directly to the storage backend, never routing raw asset data through the WebSocket gateway. Also manages bundles (grouped assets in a custom `.bannou` format with LZ4 compression), metabundles (merged super-bundles), and a distributed processor pool for content-type-specific transcoding. Used by lib-behavior, lib-save-load, lib-mapping, and lib-documentation for binary storage needs.
-
----
-
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Persistence for upload sessions, asset records, bundle metadata, job state, processor pool state |
-| lib-messaging (`IMessageBus`) | Publishing asset lifecycle events and processing job dispatch |
-| lib-messaging (`IEventConsumer`) | Self-consumption of `asset.metabundle.job.queued` for async processing |
-| lib-mesh (`IOrchestratorClient`) | Processor pool scaling and node acquisition/release |
-| `IAssetEventEmitter` (internal) | WebSocket session-targeted client notifications via `IClientEventPublisher` |
-| MinIO SDK (`IMinioClient`) | Bucket operations, object listing, webhook handling |
-| AWS SDK (`IAmazonS3`) | Pre-signed URL generation (workaround for MinIO SDK Content-Type signing bug) |
-| lib-telemetry (`ITelemetryProvider`) | Distributed tracing spans for async operations |
-| `IBundleConverter` | `.bannou` ↔ `.zip` format conversion with LZ4 compression |
-| `IAssetProcessorPoolManager` | Redis-based distributed processor node tracking |
 
 ---
 
@@ -66,67 +49,6 @@ No external services subscribe to asset events; all event consumption is interna
 - Asset service has no `EntityType` enum fields (Category A). Ownership is tracked via plain string `owner` fields rather than typed entity references.
 - `GameRealm` is a plain `type: string` in the schema (not an enum), matching the opaque string pattern for game-configurable content.
 - `ProcessorError` enum (7 values: `UnsupportedContentType`, `UnsupportedFormat`, `FileTooLarge`, `MissingExtension`, `SourceNotFound`, `TranscodingFailed`, `ProcessingError`) exists in the internal processor interface (`IAssetProcessor.cs`) for validation/processing error categorization. API-level error reporting uses the generated `ProcessingErrorCode` enum from the schema.
-
----
-
-## State Storage
-
-### Store: `asset-statestore` (Backend: Redis, prefix: `asset`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `asset:{assetId}` | `InternalAssetRecord` | Core asset metadata (filename, contentType, size, hash, version, processing status, tags, realm) |
-| `upload:{uploadId}` | `UploadSession` | Tracks in-progress uploads (target path, content type, multipart state, expiry) |
-| `bundle:{bundleId}` | `BundleMetadata` | Bundle manifest (asset list, owner, version, compression, lifecycle state, provenance) |
-| `bundle-version:{bundleId}:{version}` | `StoredBundleVersionRecord` | Historical bundle version snapshot |
-| `bundle-version-index:{bundleId}` | `List<int>` | Set of version numbers for a bundle |
-| `bundle-owner-index:{owner}` | `List<string>` | All bundle IDs owned by an entity |
-| `bundle-upload:{uploadId}` | `BundleUploadSession` | Tracks pre-made bundle upload sessions |
-| `bundle-download:{token}` | `BundleDownloadToken` | Short-lived download authorization tokens |
-| `bundle-job:{jobId}` | `BundleCreationJob` | Inline bundle creation job state |
-| `metabundle-job:{jobId}` | `MetabundleJob` | Async metabundle job state (progress, status, error) |
-| `asset-index:type:{contentType}` | `List<string>` | Asset IDs indexed by content type |
-| `asset-index:realm:{realmId}` | `List<string>` | Asset IDs indexed by realm |
-| `asset-index:tag:{tag}` | `List<string>` | Asset IDs indexed by tag |
-| `{realm}:asset-bundles:{assetId}` | `AssetBundleIndex` | Reverse index: which bundles contain this asset |
-
-Key prefixes are configurable via `AssetServiceConfiguration` (see Configuration section).
-
-### Store: `asset-processor-pool` (Backend: Redis, prefix: `asset:pool`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `{poolType}:{nodeId}` | `ProcessorNodeState` | Per-node state (capacity, load, status, last heartbeat) |
-| `{poolType}:index` | `List<string>` | Node discovery index per pool type |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Trigger |
-|-------|---------|
-| `asset.upload.requested` | Upload URL generated for client |
-| `asset.upload.completed` | Webhook confirms object created in storage (also published by MinioWebhookHandler) |
-| `asset.bundle.create` | Bundle creation job starts |
-| `asset.bundle.created` | Bundle successfully assembled and stored |
-| `asset.bundle.updated` | Bundle metadata modified |
-| `asset.bundle.deleted` | Bundle soft-deleted |
-| `asset.bundle.restored` | Soft-deleted bundle restored |
-| `asset.metabundle.created` | Metabundle assembly complete |
-| `asset.metabundle.job.queued` | Async metabundle job queued (self-consumed) |
-| `asset.processing.queued` | Processing dispatched to pool during upload completion |
-| `asset.processing.retry` | Processing retry scheduled after failure |
-| `asset.processing.job.{poolType}` | Processing job dispatched to specific pool |
-| `asset.processing.completed` | Processing worker finishes a job (success or failure) |
-| `asset.ready` | Asset processing succeeded and asset is ready for consumption |
-
-### Consumed Events
-
-| Topic | Handler | Action |
-|-------|---------|--------|
-| `asset.metabundle.job.queued` | `HandleMetabundleJobQueuedAsync` | Loads job from state, streams source bundles, assembles metabundle, updates progress 0→100%, emits completion event |
 
 ---
 
@@ -226,71 +148,6 @@ Key prefixes are configurable via `AssetServiceConfiguration` (see Configuration
 | `AudioLargeFileWarningThresholdMb` | `ASSET_AUDIO_LARGE_FILE_WARNING_THRESHOLD_MB` | `100` | Audio file size warning threshold |
 | `TextureLargeFileWarningThresholdMb` | `ASSET_TEXTURE_LARGE_FILE_WARNING_THRESHOLD_MB` | `100` | Texture file size warning threshold |
 | `ModelLargeFileWarningThresholdMb` | `ASSET_MODEL_LARGE_FILE_WARNING_THRESHOLD_MB` | `50` | Model file size warning threshold |
-
----
-
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `ILogger<AssetService>` | Scoped | Structured logging |
-| `AssetServiceConfiguration` | Singleton | Typed configuration access |
-| `IStateStoreFactory` | Singleton | Access to asset-statestore and asset-processor-pool |
-| `IMessageBus` | Scoped | Event publishing |
-| `IEventConsumer` | Scoped | Self-subscription for async job processing |
-| `ITelemetryProvider` | Singleton | Distributed tracing spans (`StartActivity`) |
-| `IAssetEventEmitter` / `AssetEventEmitter` | Scoped | WebSocket session-targeted client notifications (8 event methods) |
-| `IAssetStorageProvider` / `MinioStorageProvider` | Singleton | Object storage abstraction (presigned URLs, streaming, multipart) |
-| `IOrchestratorClient` | Scoped | Processor pool scaling via orchestrator service |
-| `IAssetProcessorPoolManager` / `AssetProcessorPoolManager` | Singleton | Redis-backed processor node state tracking |
-| `IBundleConverter` / `BundleConverter` | Singleton | `.bannou` ↔ `.zip` format conversion |
-| `BundleValidator` | Singleton | Bundle manifest validation |
-| `IMinioClient` | Singleton | MinIO bucket operations and connectivity checks |
-| `IAmazonS3` / `AmazonS3Client` | Singleton | Pre-signed URL generation (Content-Type signing workaround) |
-| `IFFmpegService` / `FFmpegService` | Singleton | Audio/video transcoding via FFmpeg subprocess |
-| `AssetProcessorRegistry` | Singleton | Content-type → processor routing |
-| `TextureProcessor` | Singleton | Texture processing (format conversion, mipmap generation) |
-| `ModelProcessor` | Singleton | 3D model processing (validation, optimization) |
-| `AudioProcessor` | Singleton | Audio transcoding (WAV/FLAC → MP3/Opus/AAC via FFmpeg) |
-| `AssetProcessingWorker` | HostedService | Background job consumer with heartbeat, graceful drain |
-| `BundleCleanupWorker` | HostedService | Background purge of soft-deleted bundles past retention period |
-| `ZipCacheCleanupWorker` | HostedService | Background purge of expired ZIP cache entries from storage |
-| `AssetMetrics` | Singleton | OpenTelemetry counters/histograms (meter: `BeyondImmersion.Bannou.Asset`) |
-| `ContentTypeRegistry` | — | MIME type management with config-extensible allow/block lists |
-| `MinioWebhookHandler` | — | S3 event notification handler for upload completion |
-| `StreamingBundleWriter` | Per-use | Memory-bounded streaming metabundle assembly |
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Assets (7 endpoints)
-
-**Upload Flow** (`RequestUpload` → `CompleteUpload`): Two-phase upload. `RequestUpload` validates content type against forbidden list, generates upload ID, creates presigned PUT URL (or multipart initiation for files > `MultipartThresholdMb`), stores `UploadSession` in Redis. `CompleteUpload` is called after client uploads directly to MinIO; it computes SHA-256 hash of the stored object, derives a deterministic asset ID from the hash, copies from temp path to final path, creates `InternalAssetRecord`, updates type/realm/tag indexes using ETag-based optimistic concurrency, and conditionally delegates to processing pool if file is large and content type is processable.
-
-**GetAsset**: Looks up asset record, generates presigned download URL with configurable TTL (`DownloadTokenTtlSeconds`). URL rewriting substitutes internal MinIO endpoint with `StoragePublicEndpoint` for Docker/K8s environments.
-
-**SearchAssets**: Queries asset indexes (`asset-index:type:`, `asset-index:realm:`, `asset-index:tag:`) then intersects results. Returns paginated metadata without download URLs.
-
-**BulkGetAssets**: Batch metadata lookup with optional download URL generation. Limited to `MaxBulkGetAssets` per request.
-
-### Bundles (13 endpoints)
-
-**CreateBundle**: Validates all referenced assets exist, determines inline vs. queued processing based on asset count. Inline path uses `StreamingBundleWriter` to assemble `.bannou` file (LZ4-compressed manifest + index + asset data) via server-side multipart upload. Stores bundle metadata with version 1, updates owner index and per-asset reverse indexes.
-
-**UpdateBundle / DeleteBundle / RestoreBundle**: Standard lifecycle with versioning. Delete is soft-delete (sets `DeletedAt`, retains for `DeletedBundleRetentionDays`). Restore clears deletion timestamp.
-
-**RequestBundleUpload**: For pre-made bundles uploaded by clients. Generates presigned URL; on completion, validates `.bannou` format integrity before accepting.
-
-**ResolveBundles**: Given a set of desired asset IDs, computes the optimal set of bundles to download using a greedy set-cover algorithm. Prefers metabundles (larger coverage per download). Returns download plan with bundle IDs and per-bundle asset coverage.
-
-**QueryBundlesByAsset**: Reverse lookup via `{realm}:asset-bundles:{assetId}` index.
-
-### Metabundles (2 endpoints + 2 job endpoints)
-
-**CreateMetabundle**: Merges multiple source bundles (and/or standalone assets) into a single super-bundle. Uses three-threshold decision for sync vs. async: source bundle count (`MetabundleAsyncSourceBundleThreshold`), total asset count (`MetabundleAsyncAssetCountThreshold`), estimated size (`MetabundleAsyncSizeBytesThreshold`). Async path queues `MetabundleJobQueuedEvent` and returns job ID for polling.
-
-**GetJobStatus / CancelJob**: Poll async job progress (0-100%) or request cancellation. Job records retained for `MetabundleJobTtlSeconds` after completion.
 
 ---
 
@@ -397,18 +254,16 @@ Client                    Asset Service                     MinIO Storage
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**Model property initialization**~~: **FIXED** (2026-03-01) - `SourceBundleReferenceInternal` already used `required` (doc was outdated). Added `required` keyword to `UploadSession`'s four string properties (`Filename`, `ContentType`, `Owner`, `StorageKey`) for compile-time construction safety. Removed `= string.Empty` defaults since `required` enforces initialization. Fixed 6 test construction sites that were missing `Owner` initialization.
-
-2. ~~**Silent index retry exhaustion**~~: **FIXED** (2026-03-01) - Upgraded `LogWarning` to `LogError` and added `TryPublishErrorAsync` error event emission in both `AddToIndexWithOptimisticConcurrencyAsync` and `AddBundleToAssetIndexAsync` when all optimistic concurrency retries exhaust. Failures are now observable via error events and error-level logs with asset/bundle IDs for correlation. The upload still succeeds (asset is stored), but monitoring systems are alerted that the asset won't appear in search results for the affected index. The remaining design question — whether indexing failure should cause the upload to fail, or whether a reconciliation mechanism should exist — is tracked separately.
+1. **Index failure caller notification**: Index retry exhaustion is now logged and emitted as an error event, but the upload still succeeds. Whether indexing failure should cause the upload to fail, or whether a reconciliation mechanism should exist, requires a design decision.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/536 -->
 
-3. **No back-pressure on processing queue**: The `AssetProcessingWorker` polls for jobs at fixed intervals with `ProcessorMaxConcurrentJobs` concurrency, but there's no mechanism to reject or defer job dispatch when all processors are saturated. The orchestrator pool scaling is reactive (poll-based), meaning bursts of large uploads could queue indefinitely.
+2. **No back-pressure on processing queue**: The `AssetProcessingWorker` polls for jobs at fixed intervals with `ProcessorMaxConcurrentJobs` concurrency, but there's no mechanism to reject or defer job dispatch when all processors are saturated. The orchestrator pool scaling is reactive (poll-based), meaning bursts of large uploads could queue indefinitely.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/537 -->
 
-4. **Streaming metabundle memory model**: `StreamingMaxMemoryMb` limits buffer allocation, but the actual peak memory includes decompressed source bundle data being read, LZ4 compression buffers, and the multipart upload parts in flight. True memory usage can exceed the configured limit by `StreamingPartSizeMb + StreamingCompressionBufferKb/1024` MB.
+3. **Streaming metabundle memory model**: `StreamingMaxMemoryMb` limits buffer allocation, but the actual peak memory includes decompressed source bundle data being read, LZ4 compression buffers, and the multipart upload parts in flight. True memory usage can exceed the configured limit by `StreamingPartSizeMb + StreamingCompressionBufferKb/1024` MB.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/539 -->
 
-5. **Event emission without transactional guarantees**: Asset record creation and event publication are separate operations. If the service crashes between saving the record and publishing `asset.upload.completed`, no retry mechanism re-publishes the event. Dependent services relying on events would miss the asset until a manual reconciliation.
+4. **Event emission without transactional guarantees**: Asset record creation and event publication are separate operations. If the service crashes between saving the record and publishing `asset.upload.completed`, no retry mechanism re-publishes the event. Dependent services relying on events would miss the asset until a manual reconciliation.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/541 -->
 
 ---
@@ -417,8 +272,4 @@ Client                    Asset Service                     MinIO Storage
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-### Completed
-
-- **2026-03-01**: Fixed `UploadSession` model property initialization. Added `required` keyword to `Filename`, `ContentType`, `Owner`, `StorageKey` for compile-time construction safety. `SourceBundleReferenceInternal` already had `required` (doc was outdated). Fixed 6 test construction sites missing `Owner`.
-- **2026-03-01**: Moved "Interface async contract vs sync implementation" from Design Considerations to Intentional Quirks (#10). The `await Task.CompletedTask` pattern is the explicitly documented T23 pattern for synchronous implementations of async interfaces — not a gap.
-- **2026-03-01**: Fixed silent index retry exhaustion in `AddToIndexWithOptimisticConcurrencyAsync` and `AddBundleToAssetIndexAsync`. Upgraded `LogWarning` to `LogError` and added `TryPublishErrorAsync` error event emission. Remaining design question about caller notification tracked in [#536](https://github.com/beyond-immersion/bannou-service/issues/536).
+*(No completed items.)*

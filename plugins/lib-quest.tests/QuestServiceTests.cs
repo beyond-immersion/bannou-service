@@ -42,7 +42,6 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<QuestService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
-    private readonly Mock<IServiceProvider> _mockServiceProvider;
     private readonly Mock<IQuestDataCache> _mockQuestDataCache;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly List<IPrerequisiteProviderFactory> _prerequisiteProviders;
@@ -65,7 +64,6 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<QuestService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
-        _mockServiceProvider = new Mock<IServiceProvider>();
         _mockQuestDataCache = new Mock<IQuestDataCache>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _prerequisiteProviders = new List<IPrerequisiteProviderFactory>();
@@ -122,7 +120,6 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             _mockItemClient.Object,
             _mockLockProvider.Object,
             _mockEventConsumer.Object,
-            _mockServiceProvider.Object,
             _mockQuestDataCache.Object,
             _prerequisiteProviders,
             _mockTelemetryProvider.Object);

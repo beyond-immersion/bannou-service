@@ -188,7 +188,8 @@ components:
       description: Published when a scene is locked for editing
       required:
         - sceneId
-        - checkedOutBy
+        - checkedOutByType
+        - checkedOutById
         - expiresAt
       properties:
         sceneId:
@@ -203,9 +204,14 @@ components:
           type: string
           nullable: true
           description: Game ID of the scene
-        checkedOutBy:
+        checkedOutByType:
+          $ref: 'scene-api.yaml#/components/schemas/SceneEditorType'
+          description: Type of editor that checked out the scene
+        checkedOutById:
           type: string
-          description: Identifier of the editor (accountId or app-id)
+          description: |
+            Editor identifier. For Session type: the WebSocket session ID (UUID format).
+            For Service type: the app-id or service name.
         expiresAt:
           type: string
           format: date-time
@@ -220,7 +226,8 @@ components:
       required:
         - sceneId
         - version
-        - committedBy
+        - committedByType
+        - committedById
       properties:
         sceneId:
           type: string
@@ -241,9 +248,14 @@ components:
           type: string
           nullable: true
           description: Version before commit
-        committedBy:
+        committedByType:
+          $ref: 'scene-api.yaml#/components/schemas/SceneEditorType'
+          description: Type of editor that committed the scene
+        committedById:
           type: string
-          description: Identifier of the committer
+          description: |
+            Editor identifier. For Session type: the WebSocket session ID (UUID format).
+            For Service type: the app-id or service name.
         changesSummary:
           type: string
           nullable: true
@@ -261,7 +273,8 @@ components:
       description: Published when a checkout is discarded without saving
       required:
         - sceneId
-        - discardedBy
+        - discardedByType
+        - discardedById
       properties:
         sceneId:
           type: string
@@ -275,9 +288,14 @@ components:
           type: string
           nullable: true
           description: Game ID of the scene
-        discardedBy:
+        discardedByType:
+          $ref: 'scene-api.yaml#/components/schemas/SceneEditorType'
+          description: Type of editor that discarded the checkout
+        discardedById:
           type: string
-          description: Identifier of who discarded
+          description: |
+            Editor identifier. For Session type: the WebSocket session ID (UUID format).
+            For Service type: the app-id or service name.
 
     SceneCheckoutExpiredEvent:
       allOf:
@@ -305,10 +323,17 @@ components:
           type: string
           format: date-time
           description: When the lock actually expired
-        originalCheckoutBy:
+        originalCheckoutByType:
+          $ref: 'scene-api.yaml#/components/schemas/SceneEditorType'
+          nullable: true
+          description: Type of editor that originally checked out the scene
+        originalCheckoutById:
           type: string
           nullable: true
-          description: Who originally checked out the scene
+          description: |
+            Editor identifier of who originally checked out the scene.
+            For Session type: the WebSocket session ID (UUID format).
+            For Service type: the app-id or service name.
 
     # ========== VALIDATION EVENTS ==========
 

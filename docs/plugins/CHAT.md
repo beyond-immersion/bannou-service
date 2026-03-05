@@ -4,7 +4,7 @@
 > **Schema**: schemas/chat-api.yaml
 > **Version**: 1.0.0
 > **Layer**: AppFoundation
-> **State Store**: chat-rooms (MySQL), chat-rooms-cache (Redis), chat-messages (MySQL), chat-messages-ephemeral (Redis), chat-participants (Redis), chat-room-types (MySQL), chat-bans (MySQL)
+> **State Store**: chat-rooms (MySQL), chat-rooms-cache (Redis), chat-messages (MySQL), chat-messages-ephemeral (Redis), chat-participants (Redis), chat-room-types (MySQL), chat-bans (MySQL), chat-lock (Redis)
 > **Implementation Map**: [docs/maps/CHAT.md](../maps/CHAT.md)
 
 ---
@@ -12,22 +12,6 @@
 ## Overview
 
 The Chat service (L1 AppFoundation) provides universal typed message channel primitives for real-time communication. Room types determine valid message formats (text, sentiment, emoji, custom-validated payloads), with rooms optionally governed by Contract instances for lifecycle management. Supports ephemeral (Redis TTL) and persistent (MySQL) message storage, participant moderation (kick/ban/mute), rate limiting via atomic Redis counters, typing indicators via Redis sorted set with server-side expiry, and automatic idle room cleanup. Three built-in room types (text, sentiment, emoji) are registered on startup. Internal-only, never internet-facing.
-
----
-
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | 7 state stores: MySQL for room types, rooms, messages, bans; Redis for room cache, ephemeral messages, participants |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for room type, room, and participant mutations |
-| lib-state (`ICacheableStateStore`) | Redis hash operations for participant tracking, atomic INCR for rate limiting, sorted set for typing state |
-| lib-messaging (`IMessageBus`) | Publishing 16 service event types and error events via `TryPublishErrorAsync` |
-| lib-connect (`IClientEventPublisher`) | Publishing 16 client event types to WebSocket sessions for real-time UI updates |
-| lib-connect (`IEntitySessionRegistry`) | Room-level entity session registration for typing event fan-out to all room participants |
-| lib-contract (`IContractClient`) | Validating governing contract existence on room creation |
-| lib-resource (`IResourceClient`) | Archiving rooms via `ExecuteCompressAsync` (idle cleanup and contract actions) |
-| lib-permission (`IPermissionClient`) | Setting/clearing `in_room` permission state on join/leave/kick/ban |
 
 ---
 
@@ -41,127 +25,7 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 > - **Gardener** ([#386](https://github.com/beyond-immersion/bannou-service/issues/386)): Bond communication between paired guardian spirits via Chat rooms with progressive message format expansion gated by bond strength. Gardener (L4) creates and manages `bond_communication` rooms using Chat's existing room type and contract integration. No Chat changes needed.
 > - **Lexicon** ([#454](https://github.com/beyond-immersion/bannou-service/issues/454)): NPC structured communication via a custom `lexicon` room type where messages are Lexicon concept tuples (`[INTENT] + [SUBJECT]* + [MODIFIER]* + [CONTEXT]*`) validated against the Lexicon ontology. Chat's room type registration and custom `ValidatorConfig` are already sufficient. Blocked on lib-lexicon implementation.
 > - **Connect** ([#382](https://github.com/beyond-immersion/bannou-service/issues/382)): Companion chat room integration for WebSocket sessions. Connect (L1) can use `IChatClient` as a hard dependency (same layer). The `CompanionRoomMode` config property exists in Connect's schema but has no runtime implementation yet.
-> - Chat publishes 16 service events available for future consumers (e.g., analytics event ingestion).
-
----
-
-### Type Field Classification
-
-| Field | Category | Type | Rationale |
-|-------|----------|------|-----------|
-| `roomTypeCode` (on rooms, messages, events) | B (Content Code) | Opaque string | Room types are a dynamic registry of string codes; three built-in types (`text`, `sentiment`, `emoji`) plus unlimited custom types registered per game service via API. Extensible without schema changes. |
-| `senderType` (on join, participant, message models, and events) | B (Content Code) | Opaque string | Identifies what kind of entity sent a message (e.g., `"session"`, `"character"`, `"system"`, `"npc"`); opaque to Chat, defined by callers, extensible without schema changes. |
-| `MessageFormat` | C (System State) | Service-specific enum | Finite content format modes (`Text`, `Sentiment`, `Emoji`, `Custom`) determining validation rules for room messages. |
-| `PersistenceMode` | C (System State) | Service-specific enum | Finite storage modes (`Ephemeral`, `Persistent`) determining whether messages go to Redis (TTL) or MySQL (durable). |
-| `RoomTypeStatus` | C (System State) | Service-specific enum | Finite lifecycle states for room type definitions (`Active`, `Deprecated`). |
-| `ChatRoomStatus` | C (System State) | Service-specific enum | Finite room lifecycle states (`Active`, `Locked`, `Archived`). |
-| `ChatParticipantRole` | C (System State) | Service-specific enum | Finite participant privilege levels (`Owner`, `Moderator`, `Member`, `ReadOnly`) determining moderation capabilities. |
-| `ContractRoomAction` | C (System State) | Service-specific enum | Finite actions for contract lifecycle responses (`Continue`, `Lock`, `Archive`, `Delete`). |
-| `ChatRoomLockReason` | C (System State) | Service-specific enum | Finite reasons for room locking (`ContractFulfilled`, `ContractBreachDetected`, `ContractTerminated`, `ContractExpired`, `Manual`). |
-
----
-
-## State Storage
-
-### Store: `chat-room-types` (Backend: MySQL, `IJsonQueryableStateStore`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `type:{scope}:{code}` | `ChatRoomTypeModel` | Room type definitions. Scope is gameServiceId GUID or `"global"` for built-in types |
-
-### Store: `chat-rooms` (Backend: MySQL, `IJsonQueryableStateStore`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `room:{roomId}` | `ChatRoomModel` | Primary room records with lifecycle status, contract bindings, activity timestamps |
-
-### Store: `chat-rooms-cache` (Backend: Redis)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `room:{roomId}` | `ChatRoomModel` | Write-through cache for active rooms. Cache-aside read pattern: Redis first, MySQL fallback, populate on miss |
-
-### Store: `chat-messages` (Backend: MySQL, `IJsonQueryableStateStore`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `{roomId}:{messageId}` | `ChatMessageModel` | Persistent message history for durable room types |
-
-### Store: `chat-messages-ephemeral` (Backend: Redis)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `{roomId}:{messageId}` | `ChatMessageModel` | Ephemeral messages with TTL from `EphemeralMessageTtlMinutes` config |
-
-### Store: `chat-participants` (Backend: Redis, `ICacheableStateStore`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `{roomId}` (Redis hash) | Hash of `sessionId` -> `ChatParticipantModel` | All participants for a room in one hash. Uses `HashGetAll`, `HashSet`, `HashDelete`, `HashCount` |
-| `rate:{roomId}:{sessionId}` | Atomic counter | Rate limiting via Redis INCR with 60s TTL |
-| `typing:active` (Sorted set) | Members: `{roomId:N}:{sessionId:N}`, Scores: Unix ms | Global sorted set tracking active typing state. Worker queries by score range for expiry |
-
-### Store: `chat-bans` (Backend: MySQL, `IJsonQueryableStateStore`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `ban:{roomId}:{targetSessionId}` | `ChatBanModel` | Ban records with optional expiry timestamp |
-
----
-
-## Events
-
-### Published Service Events (via IMessageBus)
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `chat.room-type.created` | `ChatRoomTypeCreatedEvent` | Room type registered |
-| `chat.room-type.updated` | `ChatRoomTypeUpdatedEvent` | Room type updated or deprecated |
-| `chat.room.created` | `ChatRoomCreatedEvent` | Room created |
-| `chat.room.updated` | `ChatRoomUpdatedEvent` | Room updated |
-| `chat.room.deleted` | `ChatRoomDeletedEvent` | Room deleted (manual, idle cleanup, or contract action) |
-| `chat.participant.joined` | `ChatParticipantJoinedEvent` | Participant joins room |
-| `chat.participant.left` | `ChatParticipantLeftEvent` | Participant leaves room |
-| `chat.participant.kicked` | `ChatParticipantKickedEvent` | Participant kicked by moderator |
-| `chat.participant.banned` | `ChatParticipantBannedEvent` | Participant banned |
-| `chat.participant.muted` | `ChatParticipantMutedEvent` | Participant muted |
-| `chat.participant.unmuted` | `ChatParticipantUnmutedEvent` | Participant unmuted (explicit or lazy auto-unmute on send) |
-| `chat.participant.role-changed` | `ChatParticipantRoleChangedEvent` | Participant role changed (manual or automatic owner promotion on leave) |
-| `chat.participant.unbanned` | `ChatParticipantUnbannedEvent` | Participant unbanned |
-| `chat.message.sent` | `ChatMessageSentEvent` | Message sent (metadata only, no text content for privacy) |
-| `chat.message.deleted` | `ChatMessageDeletedEvent` | Message deleted |
-| `chat.room.locked` | `ChatRoomLockedEvent` | Room locked (contract-triggered) |
-| `chat.room.archived` | `ChatRoomArchivedEvent` | Room archived via Resource service |
-
-### Published Client Events (via IClientEventPublisher)
-
-| Event | Trigger | Recipients |
-|-------|---------|------------|
-| `ChatMessageReceivedEvent` | Message sent or batch sent | All room participants |
-| `ChatMessageDeletedClientEvent` | Message deleted | All room participants |
-| `ChatMessagePinnedEvent` | Message pinned/unpinned | All room participants |
-| `ChatParticipantJoinedClientEvent` | Participant joins | Existing room participants |
-| `ChatParticipantLeftClientEvent` | Participant leaves | Remaining participants |
-| `ChatParticipantKickedClientEvent` | Participant kicked | All participants + kicked target |
-| `ChatParticipantBannedClientEvent` | Participant banned | All participants + banned target |
-| `ChatParticipantMutedClientEvent` | Participant muted | All room participants |
-| `ChatParticipantUnmutedClientEvent` | Participant unmuted (explicit or lazy auto-unmute) | All room participants |
-| `ChatParticipantRoleChangedClientEvent` | Participant role changed (manual or auto-promotion) | All room participants |
-| `ChatParticipantUnbannedClientEvent` | Participant unbanned | All room participants |
-| `ChatRoomUpdatedClientEvent` | Room settings changed | All room participants |
-| `ChatRoomLockedClientEvent` | Room locked | All room participants |
-| `ChatRoomDeletedClientEvent` | Room deleted | All participants (before deletion) |
-| `ChatTypingStartedClientEvent` | Participant starts typing (new only, not heartbeat) | All room participants via `IEntitySessionRegistry` |
-| `ChatTypingStoppedClientEvent` | Participant stops typing (explicit, timeout, send, or departure) | All room participants via `IEntitySessionRegistry` |
-
-### Consumed Events
-
-| Topic | Handler | Action |
-|-------|---------|--------|
-| `contract.fulfilled` | `HandleContractFulfilledAsync` | Find rooms by contract, apply configured fulfilled action (default: Archive) |
-| `contract.breach.detected` | `HandleContractBreachDetectedAsync` | Find rooms by contract, apply configured breach action (default: Lock) |
-| `contract.terminated` | `HandleContractTerminatedAsync` | Find rooms by contract, apply configured terminated action (default: Delete) |
-| `contract.expired` | `HandleContractExpiredAsync` | Find rooms by contract, apply configured expired action (default: Archive) |
+> - Chat publishes 17 service events available for future consumers (e.g., analytics event ingestion).
 
 ---
 
@@ -200,57 +64,6 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 | `MessageRetentionMaxRoomTypeResults` | `CHAT_MESSAGE_RETENTION_MAX_ROOM_TYPE_RESULTS` | 1000 | Maximum room types with retention configuration to process per cleanup cycle |
 | `MessageRetentionMaxRoomsPerType` | `CHAT_MESSAGE_RETENTION_MAX_ROOMS_PER_TYPE` | 1000 | Maximum rooms per type to process per retention cleanup cycle |
 | `ServerSalt` | `CHAT_SERVER_SALT` | (dev default) | Server salt for session shortcut GUID generation |
-
----
-
-## DI Services & Helpers
-
-| Service | Role |
-|---------|------|
-| `IMessageBus` | Service event publishing (17 event types) and error event publishing |
-| `IClientEventPublisher` | WebSocket client event publishing (16 event types) and session shortcut publish/revoke |
-| `IEntitySessionRegistry` | Room-level entity session management and typing event fan-out |
-| `IDistributedLockProvider` | Distributed locks for room type, room, and participant mutations |
-| `ILogger<ChatService>` | Structured logging |
-| `ChatServiceConfiguration` | Typed configuration access (31 properties) |
-| `IEventConsumer` | Event consumer registration for 4 contract lifecycle events |
-| `IContractClient` | Contract instance validation on room creation |
-| `IResourceClient` | Room archival via `ExecuteCompressAsync` |
-| `IPermissionClient` | Permission state management (`in_room` state) |
-| `IStateStoreFactory` | Access to all 7 state stores |
-| `IdleRoomCleanupWorker` | Background hosted service for periodic idle room cleanup |
-| `TypingExpiryWorker` | Background hosted service for typing indicator timeout enforcement |
-| `BanExpiryWorker` | Background hosted service for periodic expired ban cleanup |
-| `MessageRetentionWorker` | Background hosted service for periodic expired persistent message cleanup |
-| `ITelemetryProvider` | Telemetry span instrumentation for async helpers |
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Room Type Management (5 endpoints)
-
-Standard CRUD for room type definitions. `RegisterRoomType` enforces uniqueness per game service scope and `MaxRoomTypesPerGameService` limit via count query. `DeprecateRoomType` is idempotent. Room types are never truly deleted -- only deprecated (Category B per T31; built-in types are re-registered on every startup). Room types support an optional `RetentionDays` field (nullable `int?` on `ChatRoomTypeModel`) that configures per-type message retention for persistent rooms. The `MessageRetentionWorker` queries room types with `RetentionDays` set and `PersistenceMode.Persistent`, then deletes messages older than the cutoff. Room types without `RetentionDays` retain persistent messages indefinitely.
-
-### Room Management (6 endpoints)
-
-`CreateRoom` validates room type exists and is active, optionally validates governing contract via `IContractClient.GetContractInstanceAsync`, and seeds contract action overrides from request or room type defaults. Room reads use cache-aside pattern (Redis first, MySQL fallback). `ArchiveRoom` delegates to `IResourceClient.ExecuteCompressAsync` and marks `IsArchived = true`. `DeleteRoom` notifies all participants via client event before clearing permission states, deleting participants, and removing room data from both MySQL and Redis cache.
-
-### Participant Management (9 endpoints)
-
-`JoinRoom` checks ban status, capacity, and assigns the requested role (defaults to Member if not specified). Sets `in_room` permission state on join. `LeaveRoom` includes owner promotion logic: if the leaving participant is Owner, promotes first Moderator, or oldest member (by `JoinedAt`) if no moderators exist; publishes role change events for the promotion. `KickParticipant` enforces role hierarchy (Owner can kick anyone, Moderator can kick Members only). `MuteParticipant` stores optional `MutedUntil` timestamp for timed mutes. `UnmuteParticipant` clears mute state explicitly; requires Owner or Moderator role. `UnbanParticipant` deletes the ban record and publishes unban events to room participants. `ChangeParticipantRole` allows the Owner to change any other participant's role (Moderator, Member, ReadOnly); cannot self-change or promote to Owner.
-
-### Message Operations (7 endpoints)
-
-`SendMessage` validates message content against room type's `MessageFormat` and `ValidatorConfig`, enforces rate limiting via atomic Redis INCR with 60s TTL, auto-unmutes lazily if `MutedUntil` has passed, stores in MySQL or Redis depending on `PersistenceMode`, and publishes both service event (metadata only) and client event (full content). `SendMessageBatch` processes entries sequentially, silently skipping validation failures. `GetMessageHistory` uses cursor-based pagination with ISO 8601 timestamp cursor; returns empty for ephemeral rooms. `SearchMessages` uses JSON query `Contains` operator for full-text search on persistent rooms only. `PinMessage` enforces `MaxPinnedMessagesPerRoom` limit.
-
-### Typing Indicators (2 endpoints)
-
-`Typing` records active typing state via Redis sorted set upsert (`typing:active` key, score = Unix ms). Only publishes `ChatTypingStartedClientEvent` on NEW typing (score was null); heartbeat refreshes silently update the timestamp. Accessed via session shortcuts published on room join -- `x-permissions: []` with authorization from shortcut existence. `EndTyping` immediately clears typing state and publishes `ChatTypingStoppedClientEvent` if the session was actively typing. Both use `IEntitySessionRegistry.PublishToEntitySessionsAsync` for room-wide fan-out.
-
-### Admin Operations (3 endpoints)
-
-`AdminListRooms` mirrors `ListRooms` with admin-level permission. `AdminGetStats` queries room counts by status and sums participant hash counts across all rooms (up to 1000). `AdminForceCleanup` delegates to the same `CleanupIdleRoomsAsync` method used by the background worker.
 
 ---
 
@@ -321,8 +134,6 @@ None. All 32 API endpoints are fully implemented with complete business logic, v
 3. **Message reactions**: Allow participants to add emoji reactions to messages, stored as a separate model linked by message ID.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/452 -->
 
-4. ~~**Client event extensions for role changes, moderation, and room updates**~~: **FIXED** (2026-02-26) - Added `ChatParticipantRoleChangedClientEvent` (manual + auto-promotion), `ChatParticipantUnbannedClientEvent`, `ChatParticipantUnmutedClientEvent` (explicit + lazy auto-unmute), and `ChatRoomUpdatedClientEvent` (full room state + changedFields). Added `UnmuteParticipant` and `ChangeParticipantRole` API endpoints. Wired service + client events into `LeaveRoomAsync` (owner promotion), `SendMessageAsync` (lazy unmute), `UnbanParticipantAsync`, and `UpdateRoomAsync`. Issue #493.
-
 ### North Star: Social Fabric Transport Layer
 
 Chat is a critical component of the NPC social communication stack described in VISION.md's "Social Fabric" section. The architecture positions Chat as the **transport layer** for a multi-service communication pipeline: Lexicon (L4) provides concept ontology and vocabulary validation, Collection (L2) gates vocabulary by character discovery level, Hearsay (L4) propagates beliefs with concept-level distortion across social hops, Disposition (L4) provides drive-motivated communication needs, and Actor (L2) executes ABML social behaviors that compose and interpret structured messages. Chat's role is to provide the typed message channels with format validation, rate limiting, persistence, and real-time delivery -- all of which are already implemented.
@@ -334,6 +145,22 @@ Key existing infrastructure that serves this vision:
 - **Contract-governed rooms**: Quest-bound, bond-bound, and encounter-bound conversations get lifecycle management
 
 No Chat changes are needed for this integration path -- the transport layer is ready. The blocking dependency is lib-lexicon (L4), tracked in [#454](https://github.com/beyond-immersion/bannou-service/issues/454).
+
+---
+
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `roomTypeCode` (on rooms, messages, events) | B (Content Code) | Opaque string | Room types are a dynamic registry of string codes; three built-in types (`text`, `sentiment`, `emoji`) plus unlimited custom types registered per game service via API. Extensible without schema changes. |
+| `senderType` (on join, participant, message models, and events) | B (Content Code) | Opaque string | Identifies what kind of entity sent a message (e.g., `"session"`, `"character"`, `"system"`, `"npc"`); opaque to Chat, defined by callers, extensible without schema changes. |
+| `MessageFormat` | C (System State) | Service-specific enum | Finite content format modes (`Text`, `Sentiment`, `Emoji`, `Custom`) determining validation rules for room messages. |
+| `PersistenceMode` | C (System State) | Service-specific enum | Finite storage modes (`Ephemeral`, `Persistent`) determining whether messages go to Redis (TTL) or MySQL (durable). |
+| `RoomTypeStatus` | C (System State) | Service-specific enum | Finite lifecycle states for room type definitions (`Active`, `Deprecated`). |
+| `ChatRoomStatus` | C (System State) | Service-specific enum | Finite room lifecycle states (`Active`, `Locked`, `Archived`). |
+| `ChatParticipantRole` | C (System State) | Service-specific enum | Finite participant privilege levels (`Owner`, `Moderator`, `Member`, `ReadOnly`) determining moderation capabilities. |
+| `ContractRoomAction` | C (System State) | Service-specific enum | Finite actions for contract lifecycle responses (`Continue`, `Lock`, `Archive`, `Delete`). |
+| `ChatRoomLockReason` | C (System State) | Service-specific enum | Finite reasons for room locking (`ContractFulfilled`, `ContractBreachDetected`, `ContractTerminated`, `ContractExpired`, `Manual`). |
 
 ---
 
@@ -373,6 +200,8 @@ No Chat changes are needed for this integration path -- the transport layer is r
 
 14. **Typing heartbeat deduplication**: Only the first typing signal for a session+room publishes `ChatTypingStartedClientEvent`. Subsequent heartbeat refreshes silently update the sorted set timestamp without re-publishing the start event. This prevents UI flicker from rapid heartbeat signals.
 
+15. **SendMessageBatch publishes per-message service events**: `SendMessageBatch` publishes a `ChatMessageSentEvent` for each successfully sent message in the batch, matching `SendMessage` behavior exactly. This ensures downstream consumers see all messages regardless of send path. RabbitMQ handles the per-message event volume efficiently even for large batches.
+
 ### Design Considerations (Requires Planning)
 
 1. **AdminGetStats has O(N) participant counting**: Queries up to 1000 rooms, then performs individual `HashCount` calls for each room to sum total participants. Could become slow with many active rooms. Consider maintaining a running total or using a dedicated counter.
@@ -385,6 +214,4 @@ No Chat changes are needed for this integration path -- the transport layer is r
 
 ## Work Tracking
 
-### Completed
-- **2026-02-26**: Issue #493 - Added client event extensions for role changes, moderation, and room updates. New endpoints: `UnmuteParticipant`, `ChangeParticipantRole`. New events: role changed, unbanned, unmuted (wired), room updated client event. Wired events into owner promotion, lazy unmute, unban, and room update paths.
-- **2026-02-22**: Fixed `IdleRoomCleanupWorker` T9 violation - added distributed lock for multi-instance safety
+*(No active items)*

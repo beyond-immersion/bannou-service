@@ -10,7 +10,7 @@ This document lists all typed events available for subscription in the Bannou Cl
 | Event Type | Event Name | Description |
 |------------|------------|-------------|
 | `AchievementProgressMilestoneClientEvent` | `achievement.progress.milestone-reached` | Sent to the entity's WebSocket sessions when a significant p... |
-| `AchievementUnlockedClientEvent` | `achievement.unlocked` | Sent to the unlocking entity's WebSocket sessions when an ac... |
+| `AchievementUnlockedClientEvent` | `achievement.progress.unlocked` | Sent to the unlocking entity's WebSocket sessions when an ac... |
 | `BundleCreationCompleteClientEvent` | `asset.bundle.creation.complete` | Sent when bundle creation from asset_ids completes. |
 | `BundleValidationCompleteClientEvent` | `asset.bundle.validation.complete` | Sent when a bundle upload has been validated and processed. |
 | `BundleValidationFailedClientEvent` | `asset.bundle.validation.failed` | Sent when bundle validation fails. Includes detailed error i... |
@@ -141,7 +141,7 @@ Sent to the entity's WebSocket sessions when a significant progress milestone
 
 ### `AchievementUnlockedClientEvent`
 
-**Event Name**: `achievement.unlocked`
+**Event Name**: `achievement.progress.unlocked`
 
 Sent to the unlocking entity's WebSocket sessions when an achievement is unlocked.
 

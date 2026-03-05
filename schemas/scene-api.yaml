@@ -619,6 +619,16 @@ components:
       - Capsule
       - Cylinder
 
+    SceneEditorType:
+      type: string
+      description: |
+        Type of scene editor for polymorphic identification per FOUNDATION TENETS.
+        Session identifies a WebSocket session (user editing via client).
+        Service identifies a service or tool editing programmatically.
+      enum:
+      - Session
+      - Service
+
     # ========== SCENE COMPOSER EXTENSIONS ==========
     # Types supporting the Scene Composer SDK for attachment points,
     # affordances, and procedural asset swapping.
@@ -1521,10 +1531,17 @@ components:
           type: string
           format: uuid
           description: Scene to checkout
+        editorType:
+          $ref: '#/components/schemas/SceneEditorType'
+          nullable: true
+          description: Type of editor. Defaults to Session if not specified.
         editorId:
           type: string
           nullable: true
-          description: Optional editor identifier (defaults to caller identity)
+          description: |
+            Editor identifier. For Session type: the WebSocket session ID (UUID format).
+            For Service type: the app-id or service name.
+            Defaults to caller identity if not specified.
         ttlMinutes:
           type: integer
           nullable: true

@@ -43,7 +43,9 @@ public partial class TelemetryController
             "description": "Response containing telemetry exporter health status. HTTP 200 confirms the subsystem is healthy.",
             "required": [
                 "tracingEnabled",
-                "metricsEnabled"
+                "metricsEnabled",
+                "otlpExportHealthy",
+                "consecutiveExportFailures"
             ],
             "properties": {
                 "tracingEnabled": {
@@ -58,6 +60,21 @@ public partial class TelemetryController
                     "type": "string",
                     "nullable": true,
                     "description": "Configured OTLP endpoint (null if telemetry is disabled)"
+                },
+                "otlpExportHealthy": {
+                    "type": "boolean",
+                    "description": "Whether the most recent OTLP trace export batch succeeded. Always false when tracing is disabled."
+                },
+                "consecutiveExportFailures": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Number of consecutive OTLP export failures since the last success. Zero when healthy or tracing disabled."
+                },
+                "lastSuccessfulExportAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "UTC timestamp of the last successful OTLP trace export. Null if no export has succeeded yet or tracing is disabled."
                 }
             }
         }

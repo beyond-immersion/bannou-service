@@ -198,12 +198,12 @@ public partial class GameSessionActionPerformedEvent
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Account ID of the player who performed the action
+    /// WebSocket session ID of the player who performed the action
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid WebSocketSessionId { get; set; } = default!;
 
     /// <summary>
     /// Unique identifier for the action

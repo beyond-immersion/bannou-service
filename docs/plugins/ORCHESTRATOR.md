@@ -4,7 +4,7 @@
 > **Schema**: schemas/orchestrator-api.yaml
 > **Version**: 3.0.0
 > **Layer**: AppFeatures
-> **State Stores**: orchestrator-heartbeats (Redis), orchestrator-routings (Redis), orchestrator-config (Redis), orchestrator-statestore (Redis)
+> **State Store**: orchestrator-heartbeats (Redis), orchestrator-routings (Redis), orchestrator-config (Redis), orchestrator-statestore (Redis)
 > **Implementation Map**: [docs/maps/ORCHESTRATOR.md](../maps/ORCHESTRATOR.md)
 
 ---
@@ -15,26 +15,6 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis persistence for heartbeats, routing, configuration versioning, and processing pool state (via `IOrchestratorStateManager`) |
-| lib-state (`IDistributedLockProvider`) | Pool-level locks for atomic acquire/release operations (15-second TTL); mappings version increment lock |
-| lib-messaging (`IMessageBus`) | Publishing health pings, service mapping broadcasts, deployment events, processor released events, error events, and permission registration |
-| lib-messaging (`IEventConsumer`) | Registering event handlers (heartbeat consumer) |
-| `IHttpClientFactory` (Microsoft.Extensions.Http) | HTTP client for OpenResty cache invalidation requests |
-| `IContainerOrchestrator` (internal) | Backend abstraction for container lifecycle: deploy, teardown, scale, restart, logs, status |
-| `IBackendDetector` (internal) | Detects available container backends (Docker socket, Portainer, Kubernetes) |
-| `IOrchestratorStateManager` (internal) | Encapsulates all Redis state operations with index-based patterns |
-| `IOrchestratorEventManager` (internal) | Encapsulates event publishing logic (deployment events, health pings) |
-| `IServiceHealthMonitor` (internal) | Manages service routing tables and heartbeat-based health status; consumes `IControlPlaneServiceProvider` for control plane introspection |
-| `ISmartRestartManager` (internal) | Evaluates whether services need restart based on configuration changes |
-| `ITelemetryProvider` (lib-telemetry) | Span instrumentation for all async methods (StartActivity) |
-| `PresetLoader` (internal) | Loads deployment preset YAML files from filesystem |
-
----
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -42,57 +22,6 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | lib-mesh | Consumes `bannou.full-service-mappings` events for dynamic service routing |
 | lib-actor | Uses processing pool acquire/release for NPC brain worker containers |
 | All services | Receive routing updates published by orchestrator after topology changes |
-
----
-
-## State Storage
-
-**Stores**: 4 state stores
-
-| Store | Backend | Purpose |
-|-------|---------|---------|
-| `orchestrator-heartbeats` | Redis | Service instance heartbeat data with TTL-based expiry |
-| `orchestrator-routings` | Redis | Service-to-app-id routing mappings with TTL |
-| `orchestrator-config` | Redis | Deployment configuration versions and history |
-| `orchestrator-statestore` | Redis | Processing pool state: instances, leases, configs, metrics |
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `{appId}` (heartbeats store) | `InstanceHealthStatus` | Per-instance health: status, services, capacity, issues |
-| `_index` (heartbeats store) | `HeartbeatIndex` | Set of all known app IDs (avoids KEYS/SCAN) |
-| `{serviceName}` (routings store) | `ServiceRouting` | Routing entry: appId, host, port, status |
-| `_index` (routings store) | `RoutingIndex` | Set of all known service names |
-| `version` (config store) | `ConfigVersion` | Current configuration version number |
-| `current` (config store) | `DeploymentConfiguration` | Active deployment configuration (no TTL) |
-| `history:{version}` (config store) | `DeploymentConfiguration` | Historical config versions (TTL: ConfigHistoryTtlDays) |
-| `processing-pool:{poolType}:instances` (pool store) | `List<ProcessorInstance>` | All instances in a pool |
-| `processing-pool:{poolType}:available` (pool store) | `List<ProcessorInstance>` | Available (unleased) instances |
-| `processing-pool:{poolType}:leases` (pool store) | `Dictionary<string, ProcessorLease>` | Active leases by lease ID |
-| `processing-pool:{poolType}:metrics` (pool store) | `PoolMetricsData` | Jobs completed/failed counts, avg time |
-| `processing-pool:{poolType}:config` (pool store) | `PoolConfiguration` | Pool settings: min/max instances, thresholds |
-| `processing-pool:known` (pool store) | `List<string>` | Registry of known pool types |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `orchestrator.health-ping` | `OrchestratorHealthPingEvent` | Infrastructure health check verifies pub/sub path |
-| `bannou.full-service-mappings` | `FullServiceMappingsEvent` | After any routing change (deploy, teardown, topology update, reset) |
-| `bannou.deployment-events` | `DeploymentEvent` | Deploy/teardown started, completed, failed, or topology changed |
-| `bannou.service-lifecycle` | `ServiceRestartEvent` | Service restart requested via SmartRestartManager |
-| `orchestrator.processor.released` | `ProcessorReleasedEvent` | Processor released back to pool (includes pool type, success/failure, lease duration) |
-| `bannou.configuration-events` | `ConfigurationChangedEvent` | Admin-triggered notification that configuration/secrets changed; plugins inspect `changedKeys` prefixes for self-service restart |
-| (error topic via `TryPublishErrorAsync`) | Error event | Any unexpected internal failure |
-
-### Consumed Events
-
-| Topic | Event Type | Handler |
-|-------|-----------|---------|
-| `bannou.service-heartbeat` | `ServiceHeartbeatEvent` | `HandleServiceHeartbeat`: Routes to `OrchestratorEventManager.ReceiveHeartbeat` which raises `HeartbeatReceived` event; `ServiceHealthMonitor` subscribes to write heartbeat to state store, update routing, and publish full mappings |
 
 ---
 
@@ -134,110 +63,6 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | `PortainerRequestTimeoutSeconds` | `ORCHESTRATOR_PORTAINER_REQUEST_TIMEOUT_SECONDS` | `30` | HTTP request timeout for Portainer API calls |
 | `DefaultServicePort` | `ORCHESTRATOR_DEFAULT_SERVICE_PORT` | `80` | Default HTTP port for discovered service instances used in health checks and mesh registration |
 | `RedisConnectionString` | `ORCHESTRATOR_REDIS_CONNECTION_STRING` | `"bannou-redis:6379"` | Redis connection string |
-
----
-
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `ILogger<OrchestratorService>` | Scoped | Structured logging |
-| `ILoggerFactory` | Singleton | Creates loggers for internal helpers (PresetLoader, BackendDetector backends) |
-| `OrchestratorServiceConfiguration` | Singleton | All 33 config properties |
-| `AppConfiguration` | Singleton | Global app configuration (DEFAULT_APP_NAME, etc.) |
-| `IDistributedLockProvider` | Singleton | Pool-level distributed locks (`orchestrator-pool`, 15s TTL); mappings version increment lock |
-| `IMessageBus` | Scoped | Event publishing |
-| `IEventConsumer` | Scoped | Event subscription registration |
-| `IHttpClientFactory` | Singleton | HTTP client for OpenResty cache invalidation |
-| `IOrchestratorStateManager` | Singleton | State operations: heartbeats, routings, config versions, pool data |
-| `IOrchestratorEventManager` | Singleton | Deployment/health event publishing |
-| `IServiceHealthMonitor` | Singleton | Routing table management, heartbeat evaluation, source-filtered health reports, periodic lease cleanup (injects IControlPlaneServiceProvider + IDistributedLockProvider) |
-| `ISmartRestartManager` | Singleton | Configuration-based restart determination |
-| `ITelemetryProvider` | Singleton | Span instrumentation for all async operations |
-| `IContainerOrchestrator` | (resolved at runtime) | Backend-specific container operations |
-| `IBackendDetector` | Singleton | Backend availability detection |
-| `PresetLoader` | (created in ctor) | Filesystem preset YAML loading (receives logger + telemetry provider) |
-
-Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Deployment & Lifecycle (4 endpoints)
-
-- **Deploy** (`/orchestrator/deploy`): Resolves orchestrator backend. If request is a "reset to default" (preset=default/bannou/empty, no topology), delegates to `ResetToDefaultTopologyAsync` which tears down tracked containers and resets all mappings to "bannou". Otherwise loads preset YAML via `PresetLoader`, builds per-node environment (BANNOU_SERVICES_ENABLED=false + individual enable flags), filters environment variables via whitelist (`IsAllowedEnvironmentVariable`), deploys containers via `DeployServiceAsync`, sets routing via `ServiceHealthMonitor`, initializes processing pool configurations if preset includes them, saves versioned deployment configuration, invalidates OpenResty cache, and publishes `DeploymentEvent`. Returns `DeployResponse` with success status, deployed services list, warnings, and duration.
-
-- **Teardown** (`/orchestrator/teardown`): Supports dry-run mode (returns preview of what would be torn down). Lists containers via orchestrator, identifies services to tear down, optionally includes infrastructure services. Iterates services: tears down container, restores routing to default via `ServiceHealthMonitor`. If `includeInfrastructure=true`, also tears down infrastructure containers (redis, rabbitmq, etc.). Publishes `DeploymentEvent` with completed/failed action. Returns `TeardownResponse` with stopped containers, removed volumes, removed infrastructure.
-
-- **GetStatus** (`/orchestrator/status`): Gets orchestrator backend, lists all containers, gets service heartbeats from state manager, gets routing mappings, derives environment status (running/degraded/stopped) from container health. Returns `EnvironmentStatus` with services, heartbeats, current deployment config, and topology metadata.
-
-- **Clean** (`/orchestrator/clean`): Accepts target types (containers, networks, volumes, images, all). For containers: lists stopped containers, checks `IsOrphanedContainer` (must have `bannou.orchestrator-managed` label, be stopped for 24+ hours). Tears down orphaned containers. Network/volume/image pruning delegates to `IContainerOrchestrator.PruneNetworksAsync/PruneVolumesAsync/PruneImagesAsync` (Docker backends use Docker.DotNet SDK; Kubernetes returns unsupported/managed messages). Returns `CleanResponse` with counts and reclaimed space.
-
-### Service & Container Management (4 endpoints)
-
-- **RestartService** (`/orchestrator/services/restart`): Uses `SmartRestartManager` to determine restart parameters. Delegates to orchestrator backend `RestartContainerAsync`. Returns restart confirmation with reason and timing.
-
-- **ShouldRestartService** (`/orchestrator/services/should-restart`): Evaluates if a service needs restart based on configuration changes. Uses `SmartRestartManager` logic to compare current vs desired state. Returns boolean recommendation with reason.
-
-- **RequestContainerRestart** (`/orchestrator/containers/request-restart`): Accepts app name and priority/reason. Builds `ContainerRestartRequest`, delegates to backend `RestartContainerAsync`. Returns `ContainerRestartResponse` with accepted status.
-
-- **GetContainerStatus** (`/orchestrator/containers/status`): Gets container status via backend `GetContainerStatusAsync`. Returns 404 if container has Stopped status with 0 instances. Returns `ContainerStatus` with status enum, instances, labels, timestamp.
-
-### Health Monitoring (2 endpoints)
-
-- **GetInfrastructureHealth** (`/orchestrator/health/infrastructure`): Checks health of infrastructure components. Uses state manager `CheckHealthAsync` for Redis connectivity (measures operation time). Publishes `OrchestratorHealthPingEvent` to verify pub/sub path. Returns health status for each component (redis, rabbitmq, docker).
-
-- **GetServiceHealth** (`/orchestrator/health/services`): Returns service health report with source filtering via `ServiceHealthSource` enum:
-  - `all` (default): Combines control plane services (from `IControlPlaneServiceProvider`) and deployed services (from heartbeats). Control plane services are immediately healthy; deployed services are evaluated against `HeartbeatTimeoutSeconds` and `DegradationThresholdMinutes` thresholds.
-  - `control_plane_only`: Returns only services running on the control plane (this Bannou instance). Useful for introspection.
-  - `deployed_only`: Returns only services with heartbeats from deployed containers. Excludes the control plane. Useful for monitoring distributed deployments.
-  - Optional `serviceFilter` parameter filters results by service name substring.
-  - Response includes `source` (the filter used), `controlPlaneAppId` (e.g., "bannou"), healthy/unhealthy service lists, counts, and health percentage.
-
-### Configuration Versioning (3 endpoints)
-
-- **RollbackConfiguration** (`/orchestrator/config/rollback`): Supports rolling back to any historical version. If `targetVersion` is specified, rolls back to that version; otherwise defaults to version N-1. Validates target version is >= 1 and < current version. Retrieves target config from history. Calls `RestoreConfigurationVersionAsync` which creates a NEW version (currentVersion+1) containing the old config (preserves audit trail). Computes changed keys (services and env vars that differ). Returns `ConfigRollbackResponse` with version numbers and changed keys list.
-
-- **GetConfigVersion** (`/orchestrator/config/version`): Gets current version number and configuration from Redis. Checks if previous version exists in history. Extracts key prefixes from current config (service names, env var prefixes). Returns `ConfigVersionResponse` with version, timestamp, hasPreviousConfig, keyCount, keyPrefixes.
-
-- **NotifyConfigChange** (`/orchestrator/config/notify-change`): Manual trigger for `ConfigurationChangedEvent`. External systems (CI/CD, admin tooling, K8s operators) call this after applying environment variable or secret changes. Reads current config version, publishes the event with caller-provided `changedKeys` prefixes. All running containers receive the event via RabbitMQ; plugins inspect prefixes to decide if they need a restart. See [#565](https://github.com/beyond-immersion/bannou-service/issues/565) for the auto-detection design question.
-
-### Topology Management (1 endpoint)
-
-- **UpdateTopology** (`/orchestrator/topology`): Accepts list of `TopologyChange` with actions. Iterates changes, applies each:
-  - `AddNode`: Deploys services to new node with `bannou-{service}-{nodeName}` app-id. Sets BANNOU_SERVICES_ENABLED=false plus per-service enable flags. Updates routing.
-  - `RemoveNode`: Tears down all services for a node. Restores routing to default.
-  - `MoveService`: Updates routing only (no container changes). Points service to new node app-id.
-  - `Scale`: Calls `ScaleServiceAsync` on orchestrator backend with target replicas.
-  - `UpdateEnv`: Redeploys services with new environment variables (DeployServiceAsync handles cleanup+recreation).
-  Reports partial success: per-change success/error tracking. Returns `TopologyUpdateResponse` with applied changes and warnings.
-
-### Processing Pool Management (4 endpoints)
-
-- **AcquireProcessor** (`/orchestrator/processing-pool/acquire`): Validates pool type. Acquires `orchestrator-pool` distributed lock on `{poolType}` (15s TTL) to prevent concurrent read-modify-write races. Gets available processor list from Redis. Pops first available, creates lease (Guid-based) with timeout (default 300s). Stores lease in hash. Returns 503 if no processors available. Returns processor ID, app-id, lease ID, expiry.
-
-- **ReleaseProcessor** (`/orchestrator/processing-pool/release`): Searches all known pool types for the lease ID (read-only, outside lock). Once target pool is identified, acquires `orchestrator-pool` distributed lock on `{poolType}` (15s TTL). Removes lease from hash, returns processor to available list. Updates pool metrics (job success/failure count). Publishes `orchestrator.processor.released` event with pool type, processor ID, success/failure, and lease duration. Returns release confirmation.
-
-- **GetPoolStatus** (`/orchestrator/processing-pool/status`): Reads instance list, available list, leases hash, and config for pool type. Computes total/available/busy instance counts. If `includeMetrics=true`, reads metrics data (jobs completed/failed 1h, avg processing time, last scale event). Returns `PoolStatusResponse`.
-
-- **ScalePool** (`/orchestrator/processing-pool/scale`): Loads pool config from Redis. If scaling up: deploys new worker containers via orchestrator backend with pool-specific environment (BANNOU_SERVICES_ENABLED=false, specific plugin enabled, BANNOU_APP_ID, ACTOR_POOL_NODE_ID). If scaling down: prefers removing available instances first; with `force=true` also removes busy instances. Tears down containers, cleans leases. Updates instance/available lists and metrics.
-
-### Pool Cleanup (1 endpoint)
-
-- **CleanupPool** (`/orchestrator/processing-pool/cleanup`): Gets available instances and pool config. If `preserveMinimum=true`, keeps minInstances alive. For each excess idle instance: calls `TeardownServiceAsync` to stop the container, then removes from both instance and available lists. Returns removed count.
-
-### Discovery & Routing (3 endpoints)
-
-- **GetServiceRouting** (`/orchestrator/service-routing`): Gets all service routing mappings from state manager. Returns dictionary of service name to app-id with host/port info.
-
-- **ListPresets** (`/orchestrator/presets/list`): Uses `PresetLoader` to scan presets directory. Reads YAML files, extracts name, services list, description. Returns list of available deployment presets.
-
-- **ListBackends** (`/orchestrator/backends/list`): Uses `BackendDetector` to check availability of each backend (Docker socket, Portainer API, Kubernetes config). Returns detected backends with availability status and connection info.
-
-### Logs (1 endpoint)
-
-- **GetLogs** (`/orchestrator/logs`): Resolves target from service name or container name (falls back to "bannou"). Calls `GetContainerLogsAsync` with tail count and optional since timestamp. Parses log text into `LogEntry` objects. Attempts to parse Docker timestamp prefix (ISO 8601 with nanoseconds) from each line; falls back to UtcNow if parsing fails. Handles `[STDERR]` markers to distinguish stream types.
 
 ---
 
@@ -429,7 +254,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
 | Idle timeout cleanup (pool) | No trigger | `IdleTimeoutMinutes` stored but no background timer |
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
-| ~~**Log timestamp parsing**~~ | **FIXED** (2026-03-02) | Continuation lines (e.g., stack traces) now inherit the preceding line's parsed timestamp instead of falling back to `DateTimeOffset.UtcNow`. Lines before any successfully parsed timestamp still use UtcNow as the initial default. |
+| Preset infrastructure config | Commented out | `ConvertInfrastructure` call in `PresetLoader.ConvertToTopology` is commented with TODO |
 
 ---
 
@@ -439,7 +264,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
 - **Idle timeout enforcement**: Background cleanup for pool workers that have been available beyond `IdleTimeoutMinutes`.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
-- ~~**Multi-version rollback**~~: **FIXED** (2026-03-02) - Added optional `targetVersion` field to `ConfigRollbackRequest`. When omitted, rolls back to N-1 (preserving backward compatibility). When specified, rolls back to the requested historical version with validation (must be >= 1 and < current version). Returns 404 if the target version has expired from history.
+
 - **Deploy validation**: Pre-flight checks before deployment (disk space, network reachability, image pull verification).
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/551 -->
 - **Blue-green deployment**: Deploy new topology alongside old, switch routing atomically, then teardown old.
@@ -448,7 +273,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/553 -->
 - **Processing pool priority queue**: Currently FIFO; could use priority field from acquire requests.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/554 -->
-- ~~**Lease expiry enforcement**~~: **FIXED** (2026-03-02) - Added periodic lease cleanup timer to ServiceHealthMonitor (60-second default interval, configurable via `ORCHESTRATOR_LEASE_CLEANUP_INTERVAL_SECONDS`). Timer iterates all known pool types under distributed lock and reclaims expired leases by returning processors to the available list. Lazy reclamation in AcquireProcessor still runs as fast-path; the background timer prevents metric inflation and resource leaks when no acquire requests arrive.
+
 - **Auto-detection of configuration changes per backend**: The `POST /orchestrator/config/notify-change` endpoint provides a manual trigger for `ConfigurationChangedEvent`, but auto-detecting config changes per backend (K8s ConfigMap watches, Portainer webhooks, Docker label-based detection) is a design question. Most deployments don't have live config update detection, and the manual endpoint covers all backends. The consumer side (plugins reacting to `changedKeys` prefixes to request restarts) is also unimplemented.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/565 -->
 
@@ -482,9 +307,7 @@ None currently active.
 
 3. **Backend detection at request time**: `GetOrchestratorAsync` is called per-request, not at startup. This allows the backend to change dynamically (e.g., Docker socket becomes available after orchestrator starts).
 
-4. ~~**GetOrchestratorAsync TTL check is ineffective for scoped service**~~: **FIXED** (2026-03-02) - Removed dead TTL-based cache invalidation logic and `_orchestratorCachedAt` field from `GetOrchestratorAsync`. Method now provides simple within-request reuse only. Removed `CacheTtlMinutes` config property (was dead config per IMPLEMENTATION TENETS).
-
-5. ~~**`_lastKnownDeployment` in-memory state divergence concern**~~: **FIXED** (2026-03-02) - Not an issue. `OrchestratorService` is Scoped (per-request), so `_lastKnownDeployment` starts null each request and is lazily loaded from Redis via `_stateManager.GetCurrentConfigurationAsync()`. The field already reads from distributed state; within-request caching cannot diverge across instances. Same pattern as Design Consideration #4 (`_orchestrator` TTL).
+4. **`_lastKnownDeployment` reads from distributed state per-request**: `OrchestratorService` is Scoped (per-request), so `_lastKnownDeployment` starts null each request and is lazily loaded from Redis via `_stateManager.GetCurrentConfigurationAsync()`. Within-request caching cannot diverge across instances.
 
 ---
 
@@ -492,13 +315,7 @@ None currently active.
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-### Completed
-
-- **Design Consideration #5 (`_lastKnownDeployment` divergence)**: Resolved as false concern (2026-03-02). Service is Scoped; field already reads from Redis per-request.
-- **Log timestamp parsing**: Fixed (2026-03-02). Continuation lines now inherit preceding line's timestamp instead of UtcNow.
-- **Design Consideration #4 (GetOrchestratorAsync TTL dead code)**: Fixed (2026-03-02). Removed dead TTL-based cache invalidation logic, `_orchestratorCachedAt` field, and `CacheTtlMinutes` config property. Method simplified to within-request reuse only.
-- **Multi-version rollback**: Fixed (2026-03-02). Added optional `targetVersion` field to `ConfigRollbackRequest` schema. Service validates target is >= 1 and < current version.
-- **Lease expiry enforcement**: Fixed (2026-03-02). Added background lease cleanup timer to ServiceHealthMonitor with configurable interval (`LeaseCleanupIntervalSeconds`, default 60s). Iterates all known pool types under distributed lock and returns expired processors to available list.
+No completed items. All items are tracked via AUDIT markers in the sections above.
 
 ---
 

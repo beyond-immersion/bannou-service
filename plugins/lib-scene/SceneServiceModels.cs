@@ -48,7 +48,8 @@ internal class SceneIndexEntry
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public bool IsCheckedOut { get; set; }
-    public string? CheckedOutBy { get; set; }
+    public SceneEditorType? CheckedOutByType { get; set; }
+    public string? CheckedOutById { get; set; }
 }
 
 /// <summary>
@@ -58,6 +59,7 @@ internal class CheckoutState
 {
     public Guid SceneId { get; set; }
     public string Token { get; set; } = string.Empty;
+    public SceneEditorType EditorType { get; set; }
     public string EditorId { get; set; } = string.Empty;
     public DateTimeOffset ExpiresAt { get; set; }
     public int ExtensionCount { get; set; }

@@ -131,27 +131,6 @@ Arcadia's specific calendar (month names, season names, day-period boundaries), 
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-### Hard Dependencies (constructor injection -- crash if missing)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Realm clocks (Redis), calendar templates (MySQL), ratio history (MySQL) |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for clock advancement, ratio changes, and calendar mutations |
-| lib-messaging (`IMessageBus`) | Publishing boundary events (day-changed, season-changed, etc.), lifecycle events, error event publication |
-| lib-messaging (`IEventConsumer`) | Subscribing to own `CalendarTemplateUpdatedEvent` for cross-node cache invalidation |
-| lib-resource (`IResourceClient`) | Reference registration/unregistration for realm and game-service targets (L1). Called during clock initialization, calendar creation, and cleanup operations. |
-| lib-connect (`IEntitySessionRegistry`) | Resolves realm→session mappings and publishes client events via `PublishToEntitySessionsAsync`. Used by clock worker (on period-changed boundaries), `SetTimeRatio`, `AdvanceClock`, and `TriggerTimeSync` endpoint. (L1) |
-| lib-realm (`IRealmClient`) | Validating realm existence during clock initialization (L2) |
-| lib-game-service (`IGameServiceClient`) | Validating game service existence during calendar template creation (L2) |
-
-### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
-
-None. Worldstate is a pure temporal authority with no optional dependencies. All consumers depend on worldstate, not the other way around.
-
----
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -190,113 +169,13 @@ None. Worldstate is a pure temporal authority with no optional dependencies. All
 
 ---
 
-## State Storage
+## Client Time Synchronization
 
-### Realm Clock Store
-**Store**: `worldstate-realm-clock` (Backend: Redis, prefix: `worldstate:clock`)
+Worldstate pushes `WorldstateTimeSyncEvent` (defined in `worldstate-client-events.yaml`) to connected WebSocket sessions via the Entity Session Registry pattern. Worldstate calls `IEntitySessionRegistry.PublishToEntitySessionsAsync("realm", realmId, event)` which resolves realm→session mappings and publishes to those sessions. Agency (L4) registers `("realm", realmId) → sessionId` bindings when a player enters a realm.
 
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `realm:{realmId}` | `RealmClockModel` | Current game time for a realm. Hot reads -- queried by every `${world.*}` variable resolution and every `GetRealmTime` call. Updated every `ClockTickIntervalSeconds`. |
+Syncs are published on period-changed boundaries (~5 per game day, ~12 real minutes at 24:1), on ratio changes, on admin clock advancement, and on-demand via the `TriggerTimeSync` endpoint.
 
-### Calendar Store
-**Store**: `worldstate-calendar` (Backend: MySQL, also accessed via `IQueryableStateStore<CalendarTemplateModel>` and `IQueryableStateStore<RealmWorldstateConfigModel>` for LINQ queries)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `calendar:{gameServiceId}:{templateCode}` | `CalendarTemplateModel` | Calendar structure definition. Read frequently (on clock advancement to resolve month/season names), cached in-memory via `ICalendarTemplateCache` after first load. Queryable for list-by-game-service and cleanup operations. |
-| `realm-config:{realmId}` | `RealmWorldstateConfigModel` | Per-realm configuration: which calendar template, time ratio, downtime policy, epoch. Links realm to its calendar. Queryable for realm clock enumeration by the background worker. |
-
-### Ratio History Store
-**Store**: `worldstate-ratio-history` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `ratio:{realmId}` | `TimeRatioHistoryModel` | Ordered list of `TimeRatioSegment` entries for a realm. Used by `GetElapsedGameTime` to compute game-time across ratio changes and pauses. Append-only; old segments are never modified. |
-
-### Distributed Locks (via `IDistributedLockProvider`)
-
-All locks use the single `WorldstateLock` store with different resource keys:
-
-| Lock Resource Key | Purpose |
-|------------------|---------|
-| `clock:{realmId}` | Serializes clock advancement (worker ticks), ratio changes (`SetTimeRatio`), admin advances (`AdvanceClock`), and clock initialization. Uses the same key for all clock mutations to prevent concurrent read-modify-write on `RealmClockModel`. |
-| `calendar:{gameServiceId}:{templateCode}` | Calendar template mutation lock (update, delete). |
-| `clock:{realmId}` (in `UpdateRealmConfig`) | Realm config mutation lock (shared with clock ops since config affects clock behavior). |
-
----
-
-## Events
-
-### Published Events
-
-**Boundary events** (published by clock worker on game-time transitions):
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `worldstate.hour-changed` | `WorldstateHourChangedEvent` | Game-hour boundary crossed. Includes realmId, previousHour, currentHour, full `GameTimeSnapshot`. |
-| `worldstate.period-changed` | `WorldstatePeriodChangedEvent` | Day-period boundary crossed (e.g., dawn→morning). Includes realmId, previousPeriod, currentPeriod, full `GameTimeSnapshot`. |
-| `worldstate.day-changed` | `WorldstateDayChangedEvent` | Game-day boundary crossed. Includes realmId, previousDay, currentDay, daysCrossed (for catch-up), isCatchUp flag, full `GameTimeSnapshot`. |
-| `worldstate.month-changed` | `WorldstateMonthChangedEvent` | Month boundary crossed. Includes realmId, previousMonth, currentMonth, monthsCrossed, full `GameTimeSnapshot`. |
-| `worldstate.season-changed` | `WorldstateSeasonChangedEvent` | Season boundary crossed. Includes realmId, previousSeason, currentSeason, currentYear, full `GameTimeSnapshot`. |
-| `worldstate.year-changed` | `WorldstateYearChangedEvent` | Year boundary crossed. Includes realmId, previousYear, currentYear, yearsCrossed, full `GameTimeSnapshot`. |
-
-**Administrative events** (published on explicit mutations):
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `worldstate.ratio-changed` | `WorldstateRatioChangedEvent` | Time ratio changed for a realm. Includes realmId, previousRatio, newRatio, reason (`TimeRatioChangeReason` enum). |
-| `worldstate.realm-clock.initialized` | `WorldstateRealmClockInitializedEvent` | A realm clock was initialized for the first time. Includes realmId, calendarTemplateCode, initialTimeRatio. |
-| `worldstate.clock-advanced` | `WorldstateClockAdvancedEvent` | A realm clock was manually advanced via `AdvanceClock` admin endpoint. Includes realmId, gameSecondsAdvanced. Used for cross-node `RealmClockCache` invalidation. |
-
-**Lifecycle events** (auto-generated via `x-lifecycle` in `worldstate-events.yaml`):
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `worldstate.calendar-template.created` | `CalendarTemplateCreatedEvent` | Calendar template seeded. Full template data. |
-| `worldstate.calendar-template.updated` | `CalendarTemplateUpdatedEvent` | Calendar template modified. Full template data + `changedFields`. Enables cross-node `CalendarTemplateCache` invalidation. |
-| `worldstate.calendar-template.deleted` | `CalendarTemplateDeletedEvent` | Calendar template deleted. Template identity + `deletedReason`. |
-| `worldstate.realm-config.created` | `RealmConfigCreatedEvent` | Realm worldstate config created (during clock initialization). Full config data. |
-| `worldstate.realm-config.updated` | `RealmConfigUpdatedEvent` | Realm worldstate config modified. Full config data + `changedFields`. |
-| `worldstate.realm-config.deleted` | `RealmConfigDeletedEvent` | Realm worldstate config deleted (during cleanup). Config identity + `deletedReason`. |
-
-All boundary events include `x-resource-mapping` with `resource_type: realm` and `resource_id_field: realmId` so Puppetmaster's watch system can observe per-realm temporal transitions for regional watcher behavior selection.
-
-### Consumed Events
-
-All consumed events are **self-subscriptions** for cross-node cache invalidation. When Node A modifies data, all nodes (including Node A) receive the event and invalidate their local in-memory caches.
-
-| Topic | Handler | Action |
-|-------|---------|--------|
-| `worldstate.calendar-template.updated` | `HandleCalendarTemplateUpdatedAsync` (via `IEventConsumer`) | Invalidates local `CalendarTemplateCache` entry for the updated template. |
-| `worldstate.calendar-template.deleted` | `HandleCalendarTemplateDeletedAsync` (via `IEventConsumer`) | Invalidates local `CalendarTemplateCache` entry for the deleted template. |
-| `worldstate.ratio-changed` | `HandleRatioChangedAsync` (via `IEventConsumer`) | Invalidates local `RealmClockCache` entry for the realm whose ratio changed. |
-| `worldstate.realm-config.deleted` | `HandleRealmConfigDeletedAsync` (via `IEventConsumer`) | Invalidates local `RealmClockCache` entry for the deleted realm config. |
-| `worldstate.clock-advanced` | `HandleClockAdvancedAsync` (via `IEventConsumer`) | Invalidates local `RealmClockCache` entry for the realm whose clock was advanced (via `AdvanceClock` admin endpoint, not the worker). |
-
-Worldstate does not subscribe to events from **other** services:
-
-- **Realm creation**: Handled by lib-realm directly calling `IWorldstateClient.InitializeRealmClockAsync()` when configured (see Dependents). This follows IMPLEMENTATION TENETS: same-layer direct API call instead of inverted event subscription.
-- **Realm deletion cleanup**: Handled exclusively by lib-resource calling `/worldstate/cleanup-by-realm` (see Resource Cleanup below). Per FOUNDATION TENETS, event-based cleanup for persistent dependent data is forbidden.
-
-### Resource Cleanup (FOUNDATION TENETS)
-
-Worldstate registers as a cleanup callback provider via `x-references` in the API schema. When lib-resource coordinates deletion of a referenced resource, it calls the cleanup endpoints below.
-
-| Target Resource | Source Type | On Delete | Cleanup Endpoint |
-|----------------|-------------|-----------|-----------------|
-| realm | worldstate | CASCADE | `/worldstate/cleanup-by-realm` |
-| game-service | worldstate | CASCADE | `/worldstate/cleanup-by-game-service` |
-
-### Published Client Events (via IEntitySessionRegistry)
-
-Client events pushed to connected WebSocket sessions via the Entity Session Registry pattern. Worldstate calls `IEntitySessionRegistry.PublishToEntitySessionsAsync("realm", realmId, event)` which resolves realm→session mappings and publishes to those sessions. Agency (L4) registers `("realm", realmId) → sessionId` bindings when a player enters a realm.
-
-| Event Name | Event Type | Trigger |
-|------------|-----------|---------|
-| `worldstate.time_sync` | `WorldstateTimeSyncEvent` | Published on period-changed boundaries (~5 per game day, ~12 real minutes at 24:1), on ratio changes, on admin clock advancement, and on-demand via `TriggerTimeSync` endpoint. |
-
-The `WorldstateTimeSyncEvent` (defined in `worldstate-client-events.yaml`) includes a full game time snapshot (all `GameTimeSnapshot` fields inlined), `previousPeriod` (nullable), and `syncReason` (`TimeSyncReason` enum). Between syncs, the client advances its local clock: `localGameSeconds += realDelta * timeRatio`. The `timestamp` field (inherited from `BaseClientEvent`) provides the reference for drift correction.
+The event includes a full game time snapshot (all `GameTimeSnapshot` fields inlined), `previousPeriod` (nullable), and `syncReason` (`TimeSyncReason` enum). Between syncs, the client advances its local clock: `localGameSeconds += realDelta * timeRatio`. The `timestamp` field (inherited from `BaseClientEvent`) provides the reference for drift correction.
 
 ---
 
@@ -313,94 +192,9 @@ The `WorldstateTimeSyncEvent` (defined in `worldstate-client-events.yaml`) inclu
 | `ClockCacheTtlSeconds` | `WORLDSTATE_CLOCK_CACHE_TTL_SECONDS` | `10` | TTL for in-memory clock cache used by the variable provider (range: 1-60). Variable providers query game time frequently; this prevents Redis round-trips on every ABML variable resolution. |
 | `CalendarCacheTtlMinutes` | `WORLDSTATE_CALENDAR_CACHE_TTL_MINUTES` | `60` | TTL for in-memory calendar template cache (range: 1-1440). Calendar structures change rarely. |
 | `MaxCalendarsPerGameService` | `WORLDSTATE_MAX_CALENDARS_PER_GAME_SERVICE` | `10` | Safety limit on calendar templates per game service (range: 1-100). |
-| `MaxBatchRealmTimeQueries` | `WORLDSTATE_MAX_BATCH_REALM_TIME_QUERIES` | `100` | Maximum realms in a single `BatchGetRealmTimes` request (range: 1-1000). |
+| `MaxBatchRealmTimeQueries` | `WORLDSTATE_MAX_BATCH_REALM_TIME_QUERIES` | `100` | Maximum realms in a single `BatchGetRealmTimes` request (range: 10-500). |
 | `DefaultCalendarTemplateCode` | `WORLDSTATE_DEFAULT_CALENDAR_TEMPLATE_CODE` | *(nullable)* | Default calendar template code used as fallback when `InitializeRealmClock` is called without specifying a template. Null = no default (caller must specify). |
 | `DistributedLockTimeoutSeconds` | `WORLDSTATE_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | `10` | Timeout for distributed lock acquisition (range: 5-60). |
-
----
-
-## DI Services & Helpers
-
-| Service | Role |
-|---------|------|
-| `ILogger<WorldstateService>` | Structured logging |
-| `ITelemetryProvider` | Telemetry span instrumentation (L0) |
-| `WorldstateServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access (creates realm-clock Redis, calendar MySQL, ratio-history MySQL stores; also queryable stores for calendar and realm-config queries) |
-| `IMessageBus` | Event publishing (boundary events, lifecycle events, administrative events) |
-| `IEventConsumer` | Subscribes to own events for cross-node cache invalidation (5 self-subscriptions) |
-| `IDistributedLockProvider` | Distributed lock acquisition (L0) |
-| `IRealmClient` | Realm existence validation (L2 hard dependency) |
-| `IGameServiceClient` | Game service existence validation (L2 hard dependency) |
-| `IResourceClient` | Reference registration/unregistration with lib-resource (L1 hard dependency). Called during clock initialization, calendar creation, and cleanup. |
-| `IEntitySessionRegistry` | Resolves `("realm", realmId) → Set<sessionId>` and publishes `WorldstateTimeSyncEvent` to connected sessions via `PublishToEntitySessionsAsync`. Used by the clock worker (on period-changed), `SetTimeRatio`, `AdvanceClock`, and `TriggerTimeSync` endpoint. L1 hard dependency (hosted by Connect). |
-| `WorldstateClockWorkerService` | Background `HostedService` that advances realm clocks on `ClockTickIntervalSeconds` interval. Acquires per-realm distributed locks to prevent concurrent advancement in multi-node deployments. Publishes `WorldstateTimeSyncEvent` to connected realm sessions on period-changed boundaries and ratio changes. |
-| `WorldProviderFactory` | Implements `IVariableProviderFactory` to provide `${world.*}` variables to Actor's behavior system. Creates `WorldProvider` instances from cached realm clock data. Receives `realmId` directly from the Actor runtime (always provided per the `IVariableProviderFactory.CreateAsync` contract). |
-| `IWorldstateTimeCalculator` / `WorldstateTimeCalculator` | Internal helper for calendar math: converting total game-seconds to year/month/day/hour, resolving day periods and seasons, computing elapsed game-time across ratio segments. |
-| `IRealmClockCache` / `RealmClockCache` | In-memory TTL cache for realm clock data used by the variable provider. Prevents Redis round-trips on every ABML variable resolution. Backed by `ConcurrentDictionary` with `ClockCacheTtlSeconds` expiry. |
-| `ICalendarTemplateCache` / `CalendarTemplateCache` | In-memory TTL cache for calendar templates. Calendars change rarely; caching avoids MySQL queries on every clock tick. |
-
-### Variable Provider Factory
-
-| Factory | Namespace | Data Source | Registration |
-|---------|-----------|-------------|--------------|
-| `WorldProviderFactory` | `${world.*}` | Reads realm clock from Redis (via `IRealmClockCache`) using the `realmId` provided directly by the Actor runtime in `CreateAsync`. Provides computed time variables. | `IVariableProviderFactory` (DI singleton) |
-
----
-
-## API Endpoints (Implementation Notes)
-
-**Total: 18 endpoints** (4 clock queries + 1 client sync + 3 clock admin + 5 calendar management + 3 realm configuration + 2 cleanup)
-
-### Clock Queries (4 endpoints) -- `x-permissions: [{ role: user }]`
-
-**GetRealmTime** (`/worldstate/clock/get-realm-time`): Returns full `GameTimeSnapshot` for a realm from Redis cache (hot path).
-
-**GetRealmTimeByCode** (`/worldstate/clock/get-realm-time-by-code`): Convenience endpoint accepting realm code string. Resolves to realm ID via `IRealmClient`, then delegates to `GetRealmTime`.
-
-**BatchGetRealmTimes** (`/worldstate/clock/batch-get-realm-times`): Returns `GameTimeSnapshot` for multiple realms in a single call (max 100).
-
-**GetElapsedGameTime** (`/worldstate/clock/get-elapsed-game-time`): Given a realmId, `fromRealTime`, and `toRealTime`, computes total game-seconds elapsed via piecewise integration over ratio history segments. Returns result as both raw game-seconds and decomposed calendar units (days, hours, minutes). Critical for lazy evaluation patterns.
-
-### Client Sync (1 endpoint) -- `x-permissions: [{ role: user }]`
-
-**TriggerTimeSync** (`/worldstate/clock/trigger-sync`): Publishes a `WorldstateTimeSyncEvent` with `syncReason: TriggerSync` to a specific entity's connected sessions. Takes `realmId` + `entityId`, resolves sessions via `IEntitySessionRegistry`, publishes via `IClientEventPublisher.PublishToSessionsAsync`. Returns `NotFound` if no initialized clock, `Ok` with sessions notified count. Primary caller is Agency (L4) on realm entry for immediate client time sync.
-
-### Clock Administration (3 endpoints) -- `x-permissions: [{ role: developer }]`
-
-**InitializeRealmClock** (`/worldstate/clock/initialize`): The primary path from "realm exists" to "realm has a clock." Request includes `realmId` (required), `calendarTemplateCode` (nullable, falls back to `DefaultCalendarTemplateCode` config), optional `epoch`/`startingYear`/`timeRatio`/`downtimePolicy` with config fallbacks. Validates realm exists, calendar template exists, no existing clock (Conflict). Registers reference with lib-resource (realm target). Publishes `WorldstateRealmClockInitializedEvent` + `RealmConfigCreatedEvent`.
-
-**SetTimeRatio** (`/worldstate/clock/set-ratio`): Materializes current clock state, records new ratio segment in history with `TimeRatioChangeReason`, updates realm clock. Publishes `worldstate.ratio-changed` + `WorldstateTimeSyncEvent`. Setting ratio to 0.0 pauses the clock.
-
-**AdvanceClock** (`/worldstate/clock/advance`): Manually advances a realm's clock by specified game-seconds, game-days, game-months, or game-years. Publishes all boundary events crossed. Respects `BoundaryEventBatchSize`.
-
-### Calendar Management (5 endpoints) -- `x-permissions: [{ role: developer }]`
-
-**SeedCalendar** (`/worldstate/calendar/seed`): Creates a calendar template. Validates game service exists, template code unique within game service, day periods cover `[0, gameHoursPerDay)` without gaps or overlaps, month season codes reference defined seasons, days-per-year sum matches month day counts. Enforces `MaxCalendarsPerGameService`. Registers reference with lib-resource (game-service target). Publishes `CalendarTemplateCreatedEvent`.
-
-**GetCalendar** (`/worldstate/calendar/get`): Returns a calendar template by game service ID + template code.
-
-**ListCalendars** (`/worldstate/calendar/list`): Lists all calendar templates for a game service.
-
-**UpdateCalendar** (`/worldstate/calendar/update`): Acquires distributed lock. Partial update (only non-null fields applied). Validates structural consistency. Cannot change template code or game service ID. Invalidates local cache; other nodes invalidated via `CalendarTemplateUpdatedEvent` subscription. Publishes `CalendarTemplateUpdatedEvent`.
-
-**DeleteCalendar** (`/worldstate/calendar/delete`): Fails with `Conflict` if active realm clocks reference this template. Acquires distributed lock. Unregisters reference with lib-resource. Publishes `CalendarTemplateDeletedEvent`.
-
-### Realm Configuration (3 endpoints) -- `x-permissions: [{ role: developer }]`
-
-**GetRealmConfig** (`/worldstate/realm-config/get`): Returns realm worldstate configuration. Returns `NotFound` if no clock initialized.
-
-**UpdateRealmConfig** (`/worldstate/realm-config/update`): Acquires distributed lock. Partial update. Supports changing `downtimePolicy` and `calendarTemplateCode` (validates template exists). Cannot change time ratio (use `SetTimeRatio`) or epoch (immutable). Publishes `RealmConfigUpdatedEvent`.
-
-**ListRealmClocks** (`/worldstate/realm-config/list`): Lists all active realm clocks with summary info. Supports pagination and optional `gameServiceId` filter.
-
-### Cleanup (2 endpoints) -- `x-permissions: []` (service-to-service only)
-
-Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). Called exclusively by lib-resource during coordinated deletion. **Worldstate does NOT subscribe to `realm.deleted` or `game-service.deleted` events for cleanup.**
-
-**CleanupByRealm** (`/worldstate/cleanup-by-realm`): Removes realm clock, ratio history, and realm configuration. Unregisters reference with lib-resource. Publishes `RealmConfigDeletedEvent`.
-
-**CleanupByGameService** (`/worldstate/cleanup-by-game-service`): Removes all calendar templates for a game service. Unregisters references with lib-resource. Publishes `CalendarTemplateDeletedEvent` for each removed template.
 
 ---
 
@@ -478,8 +272,6 @@ All 18 endpoints are fully implemented. No stubs remain.
 
 1. **Ratio history compaction**: The `RatioHistoryRetentionDays` configuration property was planned but is not implemented. The configuration property does not exist in the generated config class. Ratio history segments accumulate indefinitely. For long-running servers, this could grow unbounded.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/529 -->
-
-2. ~~**Cross-service integration with lib-realm**~~: **FIXED** (2026-03-01) - Added `AutoInitializeWorldstateClock` (default: false) and `DefaultCalendarTemplateCode` (nullable) config properties to `realm-configuration.yaml`. RealmService now injects `IWorldstateClient` and optionally calls `InitializeRealmClockAsync` after realm creation when enabled. Failure logs a warning but does not fail realm creation.
 
 ---
 
@@ -621,7 +413,7 @@ flows:
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Event topic `realm-clock.initialized` violates naming convention**~~: **FIXED** (2026-03-01) - Renamed topic from `realm-clock.initialized` to `worldstate.realm-clock.initialized` in both `worldstate-events.yaml` (x-event-publications) and `WorldstateService.cs` (TryPublishAsync call). No subscribers existed for the old topic so no consumer migration was needed.
+*(No active bugs.)*
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -661,10 +453,5 @@ flows:
 ---
 
 ## Work Tracking
-
-### Completed
-- **2026-03-01**: Fixed event topic naming convention violation — renamed `realm-clock.initialized` to `worldstate.realm-clock.initialized` in schema and service code.
-
-- **2026-03-01**: Implemented cross-service integration with lib-realm — added `AutoInitializeWorldstateClock` and `DefaultCalendarTemplateCode` config properties to realm-configuration.yaml, wired `IWorldstateClient` into RealmService constructor, added optional auto-initialization call in `CreateRealmAsync`.
 
 *Remaining stubs: ratio history compaction (issue #529).*

@@ -287,8 +287,8 @@ public partial class ChatService : IChatService
         }
 
         var changedFields = new List<string>();
-        if (body.DisplayName != null) { model.DisplayName = body.DisplayName; changedFields.Add("DisplayName"); }
-        if (body.Description != null) { model.Description = body.Description; changedFields.Add("Description"); }
+        if (body.DisplayName != null) { model.DisplayName = body.DisplayName; changedFields.Add("displayName"); }
+        if (body.Description != null) { model.Description = body.Description; changedFields.Add("description"); }
         if (body.ValidatorConfig != null)
         {
             model.ValidatorConfig = new ValidatorConfigModel
@@ -299,14 +299,14 @@ public partial class ChatService : IChatService
                 RequiredFields = body.ValidatorConfig.RequiredFields?.ToList(),
                 JsonSchema = body.ValidatorConfig.JsonSchema,
             };
-            changedFields.Add("ValidatorConfig");
+            changedFields.Add("validatorConfig");
         }
-        if (body.DefaultMaxParticipants.HasValue) { model.DefaultMaxParticipants = body.DefaultMaxParticipants; changedFields.Add("DefaultMaxParticipants"); }
-        if (body.RetentionDays.HasValue) { model.RetentionDays = body.RetentionDays; changedFields.Add("RetentionDays"); }
-        if (body.DefaultContractTemplateId.HasValue) { model.DefaultContractTemplateId = body.DefaultContractTemplateId; changedFields.Add("DefaultContractTemplateId"); }
-        if (body.AllowAnonymousSenders.HasValue) { model.AllowAnonymousSenders = body.AllowAnonymousSenders.Value; changedFields.Add("AllowAnonymousSenders"); }
-        if (body.RateLimitPerMinute.HasValue) { model.RateLimitPerMinute = body.RateLimitPerMinute; changedFields.Add("RateLimitPerMinute"); }
-        if (body.Metadata != null) { model.Metadata = body.Metadata; changedFields.Add("Metadata"); }
+        if (body.DefaultMaxParticipants.HasValue) { model.DefaultMaxParticipants = body.DefaultMaxParticipants; changedFields.Add("defaultMaxParticipants"); }
+        if (body.RetentionDays.HasValue) { model.RetentionDays = body.RetentionDays; changedFields.Add("retentionDays"); }
+        if (body.DefaultContractTemplateId.HasValue) { model.DefaultContractTemplateId = body.DefaultContractTemplateId; changedFields.Add("defaultContractTemplateId"); }
+        if (body.AllowAnonymousSenders.HasValue) { model.AllowAnonymousSenders = body.AllowAnonymousSenders.Value; changedFields.Add("allowAnonymousSenders"); }
+        if (body.RateLimitPerMinute.HasValue) { model.RateLimitPerMinute = body.RateLimitPerMinute; changedFields.Add("rateLimitPerMinute"); }
+        if (body.Metadata != null) { model.Metadata = body.Metadata; changedFields.Add("metadata"); }
 
         model.UpdatedAt = DateTimeOffset.UtcNow;
         await _roomTypeStore.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
@@ -370,7 +370,7 @@ public partial class ChatService : IChatService
             AllowAnonymousSenders = model.AllowAnonymousSenders,
             Status = model.Status,
             CreatedAt = model.CreatedAt,
-            ChangedFields = new List<string> { "Status" },
+            ChangedFields = new List<string> { "status" },
         }, cancellationToken);
 
         _logger.LogInformation("Deprecated room type {Code}", body.Code);
@@ -537,9 +537,9 @@ public partial class ChatService : IChatService
         }
 
         var changedFields = new List<string>();
-        if (body.DisplayName != null) { model.DisplayName = body.DisplayName; changedFields.Add("DisplayName"); }
-        if (body.MaxParticipants.HasValue) { model.MaxParticipants = body.MaxParticipants; changedFields.Add("MaxParticipants"); }
-        if (body.Metadata != null) { model.Metadata = body.Metadata; changedFields.Add("Metadata"); }
+        if (body.DisplayName != null) { model.DisplayName = body.DisplayName; changedFields.Add("displayName"); }
+        if (body.MaxParticipants.HasValue) { model.MaxParticipants = body.MaxParticipants; changedFields.Add("maxParticipants"); }
+        if (body.Metadata != null) { model.Metadata = body.Metadata; changedFields.Add("metadata"); }
 
         await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
         await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
@@ -1675,6 +1675,22 @@ public partial class ChatService : IChatService
                     await _messageBuffer.SaveAsync($"{body.RoomId}:{messageId}", message,
                         new StateOptions { Ttl = ttlSeconds }, cancellationToken);
                 }
+
+                // Publish service event (metadata only — no text/custom content for privacy)
+                await _messageBus.TryPublishAsync("chat.message.sent", new ChatMessageSentEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = now,
+                    RoomId = body.RoomId,
+                    RoomTypeCode = model.RoomTypeCode,
+                    MessageId = messageId,
+                    SenderType = message.SenderType,
+                    SenderId = message.SenderId,
+                    MessageFormat = roomType.MessageFormat,
+                    SentimentCategory = message.SentimentCategory,
+                    SentimentIntensity = message.SentimentIntensity,
+                    EmojiCode = message.EmojiCode,
+                }, cancellationToken);
 
                 await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessageReceivedClientEvent
                 {

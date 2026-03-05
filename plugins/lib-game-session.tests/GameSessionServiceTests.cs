@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Subscription;
@@ -774,12 +775,10 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange
         var service = CreateService();
-        var accountId = Guid.NewGuid();
-        var clientSessionId = Guid.NewGuid();
+        var callerSessionId = Guid.NewGuid();
+        ServiceRequestContext.SessionId = callerSessionId.ToString();
         var request = new GameActionRequest
         {
-            SessionId = clientSessionId,
-            AccountId = accountId,
             GameType = TEST_GAME_TYPE,
             ActionType = "move"
         };
@@ -807,13 +806,11 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange
         var service = CreateService();
-        var accountId = Guid.NewGuid();
-        var clientSessionId = Guid.NewGuid();
+        var callerSessionId = Guid.NewGuid();
+        ServiceRequestContext.SessionId = callerSessionId.ToString();
         var lobbyId = Guid.NewGuid();
         var request = new GameActionRequest
         {
-            SessionId = clientSessionId,
-            AccountId = accountId,
             GameType = TEST_GAME_TYPE,
             ActionType = "move"
         };
@@ -841,26 +838,23 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange
         var service = CreateService();
-        var accountId = Guid.NewGuid();
-        var otherPlayerId = Guid.NewGuid();
-        var clientSessionId = Guid.NewGuid();
+        var callerSessionId = Guid.NewGuid();
+        ServiceRequestContext.SessionId = callerSessionId.ToString();
         var lobbyId = Guid.NewGuid();
         var request = new GameActionRequest
         {
-            SessionId = clientSessionId,
-            AccountId = accountId,
             GameType = TEST_GAME_TYPE,
             ActionType = "move"
         };
 
-        // Setup lobby with a DIFFERENT player (not the requesting account)
+        // Setup lobby with a DIFFERENT player (not the caller's session)
         var lobby = new GameSessionModel
         {
             SessionId = lobbyId,
             Status = SessionStatus.Active,
             Players = new List<GamePlayer>
             {
-                new GamePlayer { AccountId = otherPlayerId, SessionId = Guid.NewGuid(), DisplayName = "Other" }
+                new GamePlayer { AccountId = Guid.NewGuid(), SessionId = Guid.NewGuid(), DisplayName = "Other" }
             },
             CurrentPlayers = 1,
             MaxPlayers = 16,
@@ -882,24 +876,23 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Arrange
         var service = CreateService();
         var accountId = Guid.NewGuid();
-        var clientSessionId = Guid.NewGuid();
+        var callerSessionId = Guid.NewGuid();
+        ServiceRequestContext.SessionId = callerSessionId.ToString();
         var lobbyId = Guid.NewGuid();
         var request = new GameActionRequest
         {
-            SessionId = clientSessionId,
-            AccountId = accountId,
             GameType = TEST_GAME_TYPE,
             ActionType = "move"
         };
 
-        // Setup lobby with the requesting player
+        // Setup lobby with the caller's session
         var lobby = new GameSessionModel
         {
             SessionId = lobbyId,
             Status = SessionStatus.Active,
             Players = new List<GamePlayer>
             {
-                new GamePlayer { AccountId = accountId, SessionId = clientSessionId, DisplayName = "Player" }
+                new GamePlayer { AccountId = accountId, SessionId = callerSessionId, DisplayName = "Player" }
             },
             CurrentPlayers = 1,
             MaxPlayers = 16,
@@ -1995,13 +1988,12 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var service = CreateService();
         var senderId = Guid.NewGuid();
         var senderSessionId = Guid.NewGuid();
+        ServiceRequestContext.SessionId = senderSessionId.ToString();
         var otherSessionId = Guid.NewGuid();
         var lobbyId = Guid.NewGuid();
 
         var request = new ChatMessageRequest
         {
-            SessionId = senderSessionId,
-            AccountId = senderId,
             GameType = TEST_GAME_TYPE,
             Message = "Hello everyone!",
             MessageType = ChatMessageType.Public
@@ -2055,14 +2047,13 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var service = CreateService();
         var senderId = Guid.NewGuid();
         var senderSessionId = Guid.NewGuid();
+        ServiceRequestContext.SessionId = senderSessionId.ToString();
         var targetPlayerId = Guid.NewGuid();
         var targetSessionId = Guid.NewGuid();
         var lobbyId = Guid.NewGuid();
 
         var request = new ChatMessageRequest
         {
-            SessionId = senderSessionId,
-            AccountId = senderId,
             GameType = TEST_GAME_TYPE,
             Message = "Secret message",
             MessageType = ChatMessageType.Whisper,
@@ -2116,10 +2107,9 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange
         var service = CreateService();
+        ServiceRequestContext.SessionId = Guid.NewGuid().ToString();
         var request = new ChatMessageRequest
         {
-            SessionId = Guid.NewGuid(),
-            AccountId = Guid.NewGuid(),
             GameType = TEST_GAME_TYPE,
             Message = "Hello",
             MessageType = ChatMessageType.Public
@@ -2142,11 +2132,10 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange
         var service = CreateService();
+        ServiceRequestContext.SessionId = Guid.NewGuid().ToString();
         var lobbyId = Guid.NewGuid();
         var request = new ChatMessageRequest
         {
-            SessionId = Guid.NewGuid(),
-            AccountId = Guid.NewGuid(),
             GameType = TEST_GAME_TYPE,
             Message = "Hello",
             MessageType = ChatMessageType.Public
@@ -2451,11 +2440,13 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var service = CreateService();
         var accountId = Guid.NewGuid();
         var lobbyId = Guid.NewGuid();
+        var callerSessionId = Guid.NewGuid();
+
+        // Set the caller identity via ambient context (simulates X-Bannou-Session-Id header)
+        ServiceRequestContext.SessionId = callerSessionId.ToString();
 
         var request = new GameActionRequest
         {
-            SessionId = Guid.NewGuid(),
-            AccountId = accountId,
             GameType = TEST_GAME_TYPE,
             ActionType = "attack",
             TargetId = Guid.NewGuid()
@@ -2467,7 +2458,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             Status = SessionStatus.Active,
             Players = new List<GamePlayer>
             {
-                new() { AccountId = accountId, SessionId = Guid.NewGuid(), DisplayName = "Player" }
+                new() { AccountId = accountId, SessionId = callerSessionId, DisplayName = "Player" }
             },
             CurrentPlayers = 1,
             MaxPlayers = 16,
@@ -2499,7 +2490,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<GameSessionActionPerformedEvent>(capturedEvent);
         Assert.Equal(lobbyId, typedEvent.SessionId);
-        Assert.Equal(accountId, typedEvent.AccountId);
+        Assert.Equal(callerSessionId, typedEvent.WebSocketSessionId);
         Assert.Equal("attack", typedEvent.ActionType);
         Assert.Equal(request.TargetId, typedEvent.TargetId);
     }

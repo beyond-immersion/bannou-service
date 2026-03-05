@@ -4,7 +4,7 @@
 > **Schema**: schemas/voice-api.yaml
 > **Version**: 2.0.0
 > **Layer**: AppFeatures
-> **State Stores**: voice-statestore (Redis), voice-lock (Redis)
+> **State Store**: voice-statestore (Redis), voice-lock (Redis)
 > **Implementation Map**: [docs/maps/VOICE.md](../maps/VOICE.md)
 
 ## Overview
@@ -95,20 +95,6 @@ Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis persistence for room data and participant registrations |
-| lib-messaging (`IMessageBus`) | Service event publishing (8 event types) and error events via `TryPublishErrorAsync` |
-| lib-permission (`IPermissionClient`) | Permission state management: `voice:in_room`, `voice:consent_pending`, `voice:ringing` |
-| lib-connect (`IClientEventPublisher`) | Publishing WebSocket events to specific sessions (peer events, broadcast consent events) |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for broadcast consent flow (store: `voice-lock`) |
-| Kamailio (external, config-only) | SIP proxy for scaled tier; host/port used in SIP credential generation (registrar URI). No active client code -- `IKamailioClient`/`KamailioClient` have been fully deleted. |
-| RTPEngine (external) | Media relay for SFU voice conferencing (UDP bencode ng protocol) |
-
----
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -134,84 +120,6 @@ Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a
 - Voice service has no `EntityType` enum fields (Category A). Participants are identified by `sessionId` (WebSocket session UUID), not by entity type polymorphism. This is a deliberate privacy-first design -- session IDs prevent leaking account information.
 - Voice service has no opaque string type fields (Category B). It is game-agnostic with no game-configurable content types.
 - All type fields are Category C (system state/mode), reflecting Voice's nature as a pure infrastructure primitive.
-
----
-
-## State Storage
-
-**Stores**:
-- `voice-statestore` (Backend: Redis, prefix: `voice`) — Room data, participants, session mappings
-- `voice-lock` (Backend: Redis, prefix: `voice:lock`) — Distributed locks for broadcast consent and room mutations
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `voice:room:{roomId}` | `VoiceRoomData` | Room configuration, broadcast consent state, room mode flags |
-| `voice:session-room:{sessionId}` | `string` | Session-to-room mapping for quick lookup (stores roomId as string) |
-| `voice:room:participants:{roomId}` | `List<ParticipantRegistration>` | Room participant list with endpoints and heartbeats |
-
-**VoiceRoomData Fields** (beyond basic room config):
-
-| Field | Type | Purpose |
-|-------|------|---------|
-| `BroadcastState` | `BroadcastConsentState` | Current broadcast consent state (Inactive/Pending/Approved) |
-| `BroadcastRequestedBy` | `Guid?` | Session that requested broadcast consent |
-| `BroadcastConsentedSessions` | `HashSet<Guid>` | Sessions that have consented to broadcasting |
-| `BroadcastRequestedAt` | `DateTimeOffset?` | When the current broadcast consent request was initiated |
-| `AutoCleanup` | `bool` | Whether the room auto-deletes when empty after grace period |
-| `Password` | `string?` | Optional room password for access control |
-| `LastParticipantLeftAt` | `DateTimeOffset?` | Timestamp for grace period tracking on empty autoCleanup rooms |
-
----
-
-## Events
-
-### Published Client Events (via IClientEventPublisher)
-
-| Event | Trigger |
-|-------|---------|
-| `VoiceRoomStateClientEvent` | Full room state snapshot pushed on join (room config, participants, broadcast state) |
-| `VoicePeerJoinedClientEvent` | New peer joins P2P room (includes SDP offer) |
-| `VoicePeerLeftClientEvent` | Peer leaves room |
-| `VoicePeerUpdatedClientEvent` | Peer sends SDP answer via `/voice/peer/answer` |
-| `VoiceTierUpgradeClientEvent` | Room upgrades from P2P to scaled (includes SIP credentials per participant) |
-| `VoiceRoomClosedClientEvent` | Room deleted (reason: Manual, Empty, Error) |
-| `VoiceBroadcastConsentRequestClientEvent` | Broadcast consent requested -- sent to all room participants |
-| `VoiceBroadcastConsentUpdateClientEvent` | Broadcast consent state changed (progress, approved, declined, stopped) |
-
-### Published Service Events (via IMessageBus)
-
-| Topic | Event Model | Trigger |
-|-------|-------------|---------|
-| `voice.room.created` | `VoiceRoomCreatedEvent` | Room created (via API or ad-hoc join) |
-| `voice.room.deleted` | `VoiceRoomDeletedEvent` | Room deleted (reason: Manual, Empty, Error) |
-| `voice.room.tier-upgraded` | `VoiceRoomTierUpgradedEvent` | Room upgrades from P2P to scaled tier |
-| `voice.peer.joined` | `VoicePeerJoinedEvent` | Participant joins a room |
-| `voice.peer.left` | `VoicePeerLeftEvent` | Participant leaves a room |
-| `voice.broadcast.approved` | `VoiceRoomBroadcastApprovedEvent` | All participants consented to broadcasting |
-| `voice.broadcast.declined` | `VoiceRoomBroadcastDeclinedEvent` | A participant declined (or consent timed out) |
-| `voice.broadcast.stopped` | `VoiceRoomBroadcastStoppedEvent` | Broadcasting stopped (reason: ConsentRevoked, RoomClosed, Manual, Error) |
-
-### Consumed Events
-
-| Topic | Event Type | Handler | Purpose |
-|-------|-----------|---------|---------|
-| `session.disconnected` | `SessionDisconnectedEvent` | `HandleSessionDisconnectedAsync` | Cleans up voice room participation for disconnected sessions (unregister, clear permission, notify peers, handle broadcast consent, empty room grace period) |
-| `session.reconnected` | `SessionReconnectedEvent` | `HandleSessionReconnectedAsync` | Restores voice room state for reconnected sessions (re-set permission, publish VoiceRoomStateClientEvent with peers/STUN servers) |
-
-Subscribes to Connect (L1) session lifecycle events. L3 subscribing to L1 events is correct hierarchy direction per FOUNDATION TENETS. The ParticipantEvictionWorker remains as a safety net for missed events.
-
-### Who Consumes These Events (Target Architecture)
-
-| Event | Consumer | Why |
-|-------|----------|-----|
-| `voice.room.created` | lib-showtime (L4) | Track voice rooms for audience context |
-| `voice.room.deleted` | lib-showtime (L4) | Clean up streaming session associations |
-| `voice.room.tier-upgraded` | lib-broadcast (L3) | Update RTP audio endpoint for active broadcasts |
-| `voice.peer.joined` | lib-showtime (L4) | Adjust audience behavior based on room size |
-| `voice.peer.left` | lib-showtime (L4) | Adjust audience behavior based on room size |
-| `voice.broadcast.approved` | lib-broadcast (L3) | Start RTMP output for the voice room |
-| `voice.broadcast.declined` | (nobody currently) | Informational; could drive UI feedback |
-| `voice.broadcast.stopped` | lib-broadcast (L3) | Stop RTMP output for the voice room |
 
 ---
 
@@ -300,54 +208,6 @@ Each participant calls /voice/room/broadcast/consent
 
 ---
 
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `VoiceService` | Scoped | Main service implementation |
-| `ParticipantEvictionWorker` | Hosted | Background worker for heartbeat TTL, empty room cleanup, consent timeouts |
-| `ISipEndpointRegistry` / `SipEndpointRegistry` | Singleton | Participant tracking with local ConcurrentDictionary cache + Redis persistence |
-| `IP2PCoordinator` / `P2PCoordinator` | Singleton | P2P mesh topology decisions and upgrade thresholds |
-| `IScaledTierCoordinator` / `ScaledTierCoordinator` | Singleton | SFU management, SIP credential generation, RTP allocation |
-| `IRtpEngineClient` / `RtpEngineClient` | Singleton | UDP bencode client for RTPEngine ng protocol |
-| `IDistributedLockProvider` | (via DI) | Distributed locks for broadcast consent atomicity |
-| `IPermissionClient` | (via mesh) | Permission state management: `voice:in_room`, `voice:consent_pending`, `voice:ringing` |
-| `IClientEventPublisher` | (via DI) | WebSocket event delivery to sessions |
-| `ITelemetryProvider` | (via DI) | Span instrumentation for async methods |
-| `IEventConsumer` | (via DI) | Event consumer registration (currently no handlers) |
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Room Management (internal-only, `x-permissions: []`)
-
-| Endpoint | Notes |
-|----------|-------|
-| `/voice/room/create` | Creates a new voice room associated with a session. Supports `autoCleanup` and `password` options. Publishes `voice.room.created` event. Default tier is P2P, default codec is Opus. Uses `P2PMaxParticipants` from config if `maxParticipants` is 0 or unset. |
-| `/voice/room/get` | Retrieves room details with live participant count from endpoint registry. Admin-only via `x-permissions`. |
-| `/voice/room/join` | **Most complex endpoint.** If room not found and `AdHocRoomsEnabled`, auto-creates with `autoCleanup=true`. Password validation if room is password-protected. Multi-step join with automatic tier upgrade: (1) capacity check, (2) tier upgrade if needed, (3) register participant, (4) set `voice:in_room` + `voice:ringing` for peers, (5) fire background tier upgrade if pending, (6) return peer list with `broadcastState` flag. Publishes `voice.peer.joined` event. |
-| `/voice/room/leave` | Unregisters participant via endpoint registry, clears `voice:in_room` permission state, notifies remaining peers with `VoicePeerLeftEvent`. If room is now empty and `autoCleanup=true`, sets `LastParticipantLeftAt` for grace period. If leaving breaks broadcast consent, stops broadcast. Publishes `voice.peer.left` event. |
-| `/voice/room/delete` | Deletes room and clears all participants. If broadcasting, stops broadcast first (reason: RoomClosed). For scaled tier rooms, releases RTP server resources. Notifies all participants with `VoiceRoomClosedEvent` (reason: Manual/Empty/Error). Publishes `voice.room.deleted` event. |
-
-### Broadcast Consent (`x-permissions: role: user, states: { voice: in_room }` or `voice: consent_pending`)
-
-| Endpoint | Notes |
-|----------|-------|
-| `/voice/room/broadcast/request` | Initiates broadcast consent flow. Sets room to Pending state, sends `VoiceBroadcastConsentRequestEvent` to all participants, sets `voice:consent_pending` permission state. Requires `voice:in_room`. 409 if already Pending/Approved. |
-| `/voice/room/broadcast/consent` | Responds to consent request. Protected by distributed lock (`voice-lock`) for multi-instance safety. If declined: resets to Inactive, publishes `voice.broadcast.declined`. If all consented: sets Approved, publishes `voice.broadcast.approved`. Requires `voice:consent_pending`. |
-| `/voice/room/broadcast/stop` | Stops active broadcast. Resets to Inactive, publishes `voice.broadcast.stopped`. Any participant can revoke. Requires `voice:in_room`. |
-| `/voice/room/broadcast/status` | Returns current `BroadcastConsentStatus` (state, consented/pending session IDs, RTP endpoint). Requires `voice:in_room`. |
-
-### Peer Management
-
-| Endpoint | Notes |
-|----------|-------|
-| `/voice/peer/heartbeat` | Updates participant heartbeat timestamp. Admin-only via `x-permissions`. |
-| `/voice/peer/answer` | **Client-facing endpoint.** Called by WebSocket clients after receiving `VoicePeerJoinedEvent`. Requires `voice:ringing` permission state (role=user, states: voice:ringing). Publishes `VoicePeerUpdatedEvent` with SDP answer to target session only. |
-
----
-
 ## Visual Aids
 
 ### Voice Communication Flow (P2P -> Scaled Upgrade)
@@ -428,15 +288,15 @@ VOICE_SERVICE_ENABLED=true
 
 # Voice + platform streaming (broadcast voice rooms to Twitch)
 VOICE_SERVICE_ENABLED=true
-STREAM_SERVICE_ENABLED=true
+BROADCAST_SERVICE_ENABLED=true
 
 # Full streaming metagame (voice + platform + in-game audiences)
 VOICE_SERVICE_ENABLED=true
-STREAM_SERVICE_ENABLED=true
+BROADCAST_SERVICE_ENABLED=true
 SHOWTIME_SERVICE_ENABLED=true
 
 # Platform streaming only (broadcast game cameras, no voice)
-STREAM_SERVICE_ENABLED=true
+BROADCAST_SERVICE_ENABLED=true
 
 # In-game metagame only (100% simulated audiences, no real platforms)
 SHOWTIME_SERVICE_ENABLED=true
@@ -452,7 +312,7 @@ SHOWTIME_SERVICE_ENABLED=true
 2. **RTP server pool allocation**: `AllocateRtpServerAsync` currently returns the single configured RTP server. The implementation notes "In production, this would select from a pool based on load."
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/258 -->
 
-3. **VoiceRoomStateEvent**: Defined in `voice-client-events.yaml`. Now published by `HandleSessionReconnectedAsync` for reconnection state restoration. Not yet published during normal join flow (still returns state via JoinVoiceRoomResponse).
+3. **VoiceRoomStateClientEvent**: Defined in `voice-client-events.yaml`. Now published by `HandleSessionReconnectedAsync` for reconnection state restoration. Not yet published during normal join flow (still returns state via JoinVoiceRoomResponse).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/396 -->
 
 4. **lib-broadcast integration**: lib-broadcast does not exist yet. When implemented, it will subscribe to `voice.broadcast.approved` and `voice.broadcast.stopped` to manage RTMP output. The RTP audio endpoint metadata in the broadcast approved event enables this integration. **Voice's integration surface is complete** — all three broadcast events (`approved`, `declined`, `stopped`) are published with correct typed models. No voice code changes needed; blocked on lib-broadcast service implementation.
@@ -461,8 +321,6 @@ SHOWTIME_SERVICE_ENABLED=true
 5. **lib-showtime integration**: lib-showtime does not exist yet. When implemented, it will subscribe to voice room lifecycle events and orchestrate the game-session-to-voice-room lifecycle that previously lived in GameSession (L2). **Voice's integration surface is complete** — all four lifecycle events (`voice.room.created`, `voice.room.deleted`, `voice.peer.joined`, `voice.peer.left`) are published with correct typed models. No voice code changes needed; blocked on lib-showtime service implementation.
 <!-- AUDIT:BLOCKED:2026-03-01 -->
 
-6. ~~**Session lifecycle event cleanup**: Voice service does not subscribe to `session.disconnected` or `session.reconnected` events.~~: **FIXED** (2026-03-03) - Added `session.disconnected` and `session.reconnected` event subscriptions. Disconnect handler cleans up participation (unregister, clear permission, notify peers, handle broadcast consent, empty room grace period). Reconnect handler restores state (re-set permission, publish VoiceRoomStateClientEvent). Eviction worker remains as safety net.
-<!-- AUDIT:FIXED:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/154 -->
 
 ---
 
@@ -529,18 +387,17 @@ None identified.
 |------|-------|-----|--------|
 | 2026-01-31 | [#195](https://github.com/beyond-immersion/bannou-service/issues/195) | RTPEngine publish/subscribe methods unused in scaled tier | Needs Design |
 | 2026-02-01 | [#258](https://github.com/beyond-immersion/bannou-service/issues/258) | RTP server pool allocation with load-based selection | Needs Design |
-| 2026-02-11 | [#396](https://github.com/beyond-immersion/bannou-service/issues/396) | VoiceRoomStateEvent defined but never published -- redundancy with JoinVoiceRoomResponse | Needs Design |
+| 2026-02-11 | [#396](https://github.com/beyond-immersion/bannou-service/issues/396) | VoiceRoomStateClientEvent not published during join flow -- redundancy with JoinVoiceRoomResponse | Needs Design |
 | 2026-02-11 | [#400](https://github.com/beyond-immersion/bannou-service/issues/400) | Room quality metrics design -- metric set, sources, storage, analytics integration | Needs Design |
 | 2026-02-11 | [#401](https://github.com/beyond-immersion/bannou-service/issues/401) | Voice recording support architecture -- storage, consent, RTPEngine protocol, retention | Needs Design |
 | 2026-02-11 | [#402](https://github.com/beyond-immersion/bannou-service/issues/402) | Mute state synchronization -- self vs admin mute, SFU enforcement, notification scope | Needs Design |
 | 2026-02-11 | [#403](https://github.com/beyond-immersion/bannou-service/issues/403) | ICE trickle support -- relay vs accumulate, permission gating, P2P/SFU scope | Needs Design |
 | 2026-02-11 | [#404](https://github.com/beyond-immersion/bannou-service/issues/404) | RTPEngine UDP client: cookie mismatch correctness bug and retry strategy | Needs Design |
 | 2026-02-11 | [#405](https://github.com/beyond-immersion/bannou-service/issues/405) | SIP credential expiration enforcement -- Bannou vs Kamailio, rotation strategy | Needs Design |
-| 2026-02-15 | [#154](https://github.com/beyond-immersion/bannou-service/issues/154) | Session lifecycle event subscriptions (session.disconnected/reconnected) for participant cleanup -- eviction worker is safety net, not primary mechanism | **Fixed** |
 | 2026-03-01 | [#547](https://github.com/beyond-immersion/bannou-service/issues/547) | Spatial audio: layer placement and position metadata design | Needs Design |
 | 2026-03-01 | [#548](https://github.com/beyond-immersion/bannou-service/issues/548) | Voice-to-text transcription: STT service, audio capture model, consent design | Needs Design |
 | 2026-03-01 | [#549](https://github.com/beyond-immersion/bannou-service/issues/549) | NPC voice integration: synthetic audio sources, layer placement, participant model | Needs Design |
 
 ### Completed
 
-- **2026-03-03**: Issue [#154](https://github.com/beyond-immersion/bannou-service/issues/154) - Added session lifecycle event subscriptions (session.disconnected/reconnected) for participant cleanup and state restoration. Eviction worker remains as safety net.
+(None — all processed items have been removed from the document.)

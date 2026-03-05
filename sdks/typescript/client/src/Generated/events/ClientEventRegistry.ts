@@ -35,9 +35,9 @@ export const eventRegistry = new Map<string, EventMetadata>([
     },
   ],
   [
-    'achievement.unlocked',
+    'achievement.progress.unlocked',
     {
-      eventName: 'achievement.unlocked',
+      eventName: 'achievement.progress.unlocked',
       typeName: 'AchievementUnlockedClientEvent',
       service: 'achievement',
     },

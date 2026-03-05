@@ -952,15 +952,21 @@ public partial class SubscriptionController
         "CancelSubscriptionRequest": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Request to cancel a subscription",
+            "description": "Request to cancel a subscription. Requires accountId for ownership verification when called by non-admin users.",
             "required": [
-                "subscriptionId"
+                "subscriptionId",
+                "accountId"
             ],
             "properties": {
                 "subscriptionId": {
                     "type": "string",
                     "format": "uuid",
                     "description": "ID of the subscription to cancel"
+                },
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account ID of the caller for ownership verification"
                 },
                 "reason": {
                     "type": "string",

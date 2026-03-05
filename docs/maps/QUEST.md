@@ -80,7 +80,6 @@
 **Notes:**
 - `IResourceClient` (L1) used at startup only in `QuestServicePlugin.OnRunningAsync` for compression callback registration; not stored in service.
 - `IEventTemplateRegistry` resolved via `GetService<T>()` at startup for ABML event template registration; graceful degradation if absent.
-- `IServiceProvider` stored as field but never called in any method body (dead injection).
 - `QuestProviderFactory` implements `IVariableProviderFactory` for Actor `${quest.*}` ABML variables (L2-to-L2 provider pattern for consistency with L4 data sources).
 
 ---

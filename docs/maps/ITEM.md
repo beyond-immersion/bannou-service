@@ -109,7 +109,7 @@ This plugin does not consume external events.
 |---------|------|
 | `ILogger<ItemService>` | Structured logging |
 | `ItemServiceConfiguration` | All 17 config properties (defaults cached at construction) |
-| `IStateStoreFactory` | State store access (5 stores, acquired inline per method) |
+| `IStateStoreFactory` | State store access (7 stores, constructor-cached as `_templateStore`, `_templateStringStore`, `_templateCacheStore`, `_instanceStore`, `_instanceStringStore`, `_instanceQueryableStore`, `_instanceCacheStore`) |
 | `IMessageBus` | Event publishing |
 | `IDistributedLockProvider` | Distributed locks for container changes and UseItemStep |
 | `ITelemetryProvider` | Span instrumentation |

@@ -476,23 +476,7 @@ public partial class ChatMessageRequest
 {
 
     /// <summary>
-    /// WebSocket session ID of the sender. Provided by shortcut system.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Account ID of the sender. Provided by shortcut system.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
-
-    /// <summary>
-    /// Game type for the chat. Determines which lobby's players receive the message. Provided by shortcut system.
+    /// Game type for the chat. Determines which lobby's players receive the message.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -531,23 +515,7 @@ public partial class GameActionRequest
 {
 
     /// <summary>
-    /// WebSocket session ID of the client. Provided by shortcut system.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Account ID of the player. Provided by shortcut system.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
-
-    /// <summary>
-    /// Game type for the action. Determines which lobby to apply the action. Provided by shortcut system.
+    /// Game type for the action. Determines which lobby to apply the action.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

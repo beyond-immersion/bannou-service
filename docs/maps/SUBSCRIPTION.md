@@ -190,7 +190,7 @@ LOCK subscription-lock:"account:{accountId}:service:{serviceId}" -> 409 if fails
 RETURN (200, SubscriptionInfo)
 ```
 
-// Inner index locks log Warning and skip silently if they fail.
+// Inner index locks throw InvalidOperationException if they fail (fatal, consistent with Location pattern).
 // StubName and DisplayName are denormalized from GameService at creation time.
 
 ---
@@ -218,6 +218,7 @@ POST /subscription/cancel | Roles: [user]
 ```
 LOCK subscription-lock:"{subscriptionId}"                      -> 409 if fails
   READ _subscriptionStore:"subscription:{subscriptionId}"      -> 404 if null
+  IF model.AccountId != body.AccountId                         -> 403 (ownership check)
   // Set IsActive=false, CancelledAtUnix=now, CancellationReason=reason, UpdatedAtUnix=now
   WRITE _subscriptionStore:"subscription:{subscriptionId}" <- updated model
   PUBLISH subscription.updated { ..., action: Cancelled, isActive: false }
@@ -226,6 +227,7 @@ RETURN (200, SubscriptionInfo)
 ```
 
 // Not idempotent: re-cancelling a cancelled subscription re-writes and re-publishes.
+// accountId is required in the request body for ownership verification.
 
 ---
 
