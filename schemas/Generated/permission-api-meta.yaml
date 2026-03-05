@@ -726,18 +726,3 @@ components:
           type: integer
           minimum: 0
           description: Number of API endpoints registered by this service
-    CapabilityUpdateType:
-      type: string
-      enum:
-      - Full
-      - Delta
-      description: Type of capability update — full capabilities or delta changes
-    CapabilityUpdateReason:
-      type: string
-      enum:
-      - SessionCreated
-      - SessionStateChanged
-      - RoleChanged
-      - ServiceRegistered
-      - ManualRefresh
-      description: Reason for the capability update

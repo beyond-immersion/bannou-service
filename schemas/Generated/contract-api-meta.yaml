@@ -2671,6 +2671,54 @@ paths:
         of an active contract. Depending on the\\ncontract's termination policy, this may require mutual consent or\\nincur
         penalties.\\n\",\n    \"tags\": [\n        \"Instances\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"terminateContractInstance\"\n}"
+  /contract/instance/delete:
+    post:
+      operationId: deleteContractInstance
+      tags:
+      - Instances
+      summary: Hard-delete a terminal contract instance
+      description: |
+        Permanently deletes a contract instance that has reached a terminal state
+        (Fulfilled, Terminated, Expired, or Declined). Removes the instance record
+        and all associated index entries. Breach records associated with the
+        contract are also deleted. This is a hard delete per T31 (instances use
+        immediate deletion, not deprecation).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteContractInstanceRequest'
+      responses:
+        '200':
+          description: Instance deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteContractInstanceResponse'
+        '400':
+          description: Contract is not in a terminal state and cannot be deleted
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: developer
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteContractInstanceRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteContractInstanceRequest\": {\n            \"type\": \"object\",\n           \
+        \ \"description\": \"Request to hard-delete a terminal contract instance\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"contractId\"\n            ],\n            \"properties\"\
+        : {\n                \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Contract instance to delete\"\n                }\n           \
+        \ }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteContractInstanceResponse\"\
+        ,\n    \"$defs\": {\n        \"DeleteContractInstanceResponse\": {\n            \"type\": \"object\",\n          \
+        \  \"description\": \"Empty response. HTTP 200 confirms the instance was deleted.\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {}\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Hard-delete a terminal contract instance\",\n    \"description\": \"Permanently
+        deletes a contract instance that has reached a terminal state\\n(Fulfilled, Terminated, Expired, or Declined). Removes
+        the instance record\\nand all associated index entries. Breach records associated with the\\ncontract are also deleted.
+        This is a hard delete per T31 (instances use\\nimmediate deletion, not deprecation).\\n\",\n    \"tags\": [\n    \
+        \    \"Instances\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteContractInstance\"\n}"
   /contract/instance/get-status:
     post:
       operationId: getContractInstanceStatus
@@ -4515,6 +4563,22 @@ components:
           maxLength: 1000
           nullable: true
           description: Reason for termination
+    DeleteContractInstanceRequest:
+      type: object
+      description: Request to hard-delete a terminal contract instance
+      additionalProperties: false
+      required:
+      - contractId
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance to delete
+    DeleteContractInstanceResponse:
+      type: object
+      description: Empty response. HTTP 200 confirms the instance was deleted.
+      additionalProperties: false
+      properties: {}
     GetContractInstanceStatusRequest:
       type: object
       description: Request to get contract status

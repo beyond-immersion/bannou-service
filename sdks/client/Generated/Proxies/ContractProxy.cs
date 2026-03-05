@@ -223,6 +223,24 @@ public sealed class ContractProxy
     }
 
     /// <summary>
+    /// Hard-delete a terminal contract instance
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing DeleteContractInstanceResponse on success.</returns>
+    public Task<ApiResponse<DeleteContractInstanceResponse>> DeleteContractInstanceAsync(
+        DeleteContractInstanceRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DeleteContractInstanceRequest, DeleteContractInstanceResponse>(
+            "/contract/instance/delete", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Get current status and milestone progress
     /// </summary>
     /// <param name="request">The request payload.</param>

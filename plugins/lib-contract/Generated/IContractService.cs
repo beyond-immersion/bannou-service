@@ -85,6 +85,11 @@ public partial interface IContractService : IBannouService
         Task<(StatusCodes, ContractInstanceResponse?)> TerminateContractInstanceAsync(TerminateContractInstanceRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// DeleteContractInstance operation
+        /// </summary>
+        Task<(StatusCodes, DeleteContractInstanceResponse?)> DeleteContractInstanceAsync(DeleteContractInstanceRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// GetContractInstanceStatus operation
         /// </summary>
         Task<(StatusCodes, ContractInstanceStatusResponse?)> GetContractInstanceStatusAsync(GetContractInstanceStatusRequest body, CancellationToken cancellationToken = default(CancellationToken));

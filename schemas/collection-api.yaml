@@ -51,7 +51,7 @@ servers:
 
 paths:
   # ===========================================================================
-  # Entry Template Management (5 endpoints)
+  # Entry Template Management (6 endpoints)
   # ===========================================================================
 
   /collection/entry-template/create:
@@ -163,13 +163,17 @@ paths:
         '404':
           description: Entry template not found
 
-  /collection/entry-template/delete:
+  /collection/entry-template/deprecate:
     post:
-      operationId: deleteEntryTemplate
+      operationId: deprecateEntryTemplate
       tags:
       - EntryTemplate
-      summary: Delete an entry template
-      description: Delete an entry template. Warns if instances reference it but does not block deletion.
+      summary: Deprecate an entry template
+      description: |
+        Marks an entry template as deprecated. Deprecated templates cannot be used
+        to grant new entries, but existing unlocked entries remain valid.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
       x-permissions:
       - role: developer
         states: {}
@@ -178,10 +182,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteEntryTemplateRequest'
+              $ref: '#/components/schemas/DeprecateEntryTemplateRequest'
       responses:
         '200':
-          description: Entry template deleted successfully
+          description: Entry template deprecated successfully (or already deprecated)
           content:
             application/json:
               schema:
@@ -465,7 +469,7 @@ paths:
           description: Collection not found
 
   # ===========================================================================
-  # Content Selection Operations (4 endpoints)
+  # Content Selection Operations (5 endpoints)
   # ===========================================================================
 
   /collection/content/select-for-area:
@@ -573,6 +577,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListAreaContentConfigsResponse'
 
+  /collection/content/area-config/delete:
+    post:
+      operationId: deleteAreaContentConfig
+      tags:
+      - Content
+      summary: Delete an area content config
+      description: Delete an area content configuration. Area configs are configuration singletons with no deprecation lifecycle — immediate hard delete.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAreaContentConfigRequest'
+      responses:
+        '200':
+          description: Area content config deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AreaContentConfigResponse'
+        '404':
+          description: Area content config not found
+
   # ===========================================================================
   # Discovery (1 endpoint)
   # ===========================================================================
@@ -662,12 +692,14 @@ components:
         Reason why a grant attempt failed.
         - already_unlocked: Entry is already unlocked in this collection
         - entry_not_found: Entry template does not exist
+        - template_deprecated: Entry template is deprecated (Category B instance creation guard)
         - collection_not_found: Collection instance does not exist and auto-create failed
         - max_entries_reached: Collection has reached the maximum number of entries
         - item_creation_failed: Failed to create item instance via lib-item
       enum:
       - AlreadyUnlocked
       - EntryNotFound
+      - TemplateDeprecated
       - CollectionNotFound
       - MaxEntriesReached
       - ItemCreationFailed
@@ -852,6 +884,10 @@ components:
           type: string
           nullable: true
           description: Optional filter by category
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated templates in results (excluded by default)
         cursor:
           type: string
           nullable: true
@@ -929,9 +965,9 @@ components:
           nullable: true
           description: Updated composer name
 
-    DeleteEntryTemplateRequest:
+    DeprecateEntryTemplateRequest:
       type: object
-      description: Request to delete an entry template
+      description: Request to deprecate an entry template (Category B — one-way, no delete)
       additionalProperties: false
       required:
       - entryTemplateId
@@ -939,7 +975,12 @@ components:
         entryTemplateId:
           type: string
           format: uuid
-          description: Entry template to delete
+          description: Entry template to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (recommended but not required for Category B templates)
 
     SeedEntryTemplatesRequest:
       type: object
@@ -966,6 +1007,7 @@ components:
       - displayName
       - hideWhenLocked
       - itemTemplateId
+      - isDeprecated
       - createdAt
       properties:
         entryTemplateId:
@@ -1038,6 +1080,19 @@ components:
           type: string
           nullable: true
           description: Composer or creator name
+        isDeprecated:
+          type: boolean
+          description: Whether this entry template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         createdAt:
           type: string
           format: date-time
@@ -1753,6 +1808,18 @@ components:
           items:
             $ref: '#/components/schemas/AreaContentConfigResponse'
           description: Area content configurations for this game service
+
+    DeleteAreaContentConfigRequest:
+      type: object
+      description: Request to delete an area content configuration
+      additionalProperties: false
+      required:
+      - areaConfigId
+      properties:
+        areaConfigId:
+          type: string
+          format: uuid
+          description: Area content config to delete
 
     # ==========================================================================
     # Request/Response Models - Discovery

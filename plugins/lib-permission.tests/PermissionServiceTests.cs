@@ -266,7 +266,7 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.True(response.PermissionsChanged);
+        Assert.NotNull(response.NewPermissions);
 
         // Verify session was atomically added to activeSessions
         _mockCacheableStore.Verify(s => s.AddToSetAsync<string>(
@@ -992,7 +992,7 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.True(response.PermissionsChanged);
+        Assert.Null(response.NewPermissions);
 
         // Verify session was atomically added to activeConnections via AddToSetAsync
         _mockCacheableStore.Verify(s => s.AddToSetAsync<string>(
@@ -1245,7 +1245,7 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.False(response.PermissionsChanged);
+        Assert.Null(response.NewPermissions);
 
         // Verify atomic remove from activeConnections via RemoveFromSetAsync
         _mockCacheableStore.Verify(s => s.RemoveFromSetAsync<string>(
@@ -1293,7 +1293,7 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.True(response.PermissionsChanged);
+        Assert.Null(response.NewPermissions);
 
         // Verify atomic remove from both connections and sessions
         _mockCacheableStore.Verify(s => s.RemoveFromSetAsync<string>(
@@ -1481,7 +1481,7 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.False(response.PermissionsChanged);
+        Assert.Null(response.NewPermissions);
     }
 
     [Fact]
@@ -1559,7 +1559,7 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.False(response.PermissionsChanged);
+        Assert.Null(response.NewPermissions);
     }
 
     [Fact]
@@ -1693,7 +1693,7 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.False(response.PermissionsChanged);
+        Assert.Null(response.NewPermissions);
     }
 
     #endregion
@@ -2582,7 +2582,7 @@ public class PermissionServiceTests
             {
                 ServiceId = "account",
                 Version = "2.0.0",
-                RegisteredAtUnix = DateTimeOffset.UtcNow.AddMinutes(-5).ToUnixTimeSeconds()
+                RegisteredAt = DateTimeOffset.UtcNow.AddMinutes(-5)
             });
 
         // Setup registration info for auth
@@ -2593,7 +2593,7 @@ public class PermissionServiceTests
             {
                 ServiceId = "auth",
                 Version = "4.0.0",
-                RegisteredAtUnix = DateTimeOffset.UtcNow.AddMinutes(-3).ToUnixTimeSeconds()
+                RegisteredAt = DateTimeOffset.UtcNow.AddMinutes(-3)
             });
 
         // Setup service states for endpoint counting

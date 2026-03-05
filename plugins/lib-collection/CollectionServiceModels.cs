@@ -83,6 +83,15 @@ internal class EntryTemplateModel
     /// <summary>Composer or creator name for music entries.</summary>
     public string? Composer { get; set; }
 
+    /// <summary>Whether this entry template is deprecated and should not be used for new grants.</summary>
+    public bool IsDeprecated { get; set; }
+
+    /// <summary>When deprecation occurred, null if not deprecated.</summary>
+    public DateTimeOffset? DeprecatedAt { get; set; }
+
+    /// <summary>Reason for deprecation, null if not deprecated.</summary>
+    public string? DeprecationReason { get; set; }
+
     /// <summary>When this entry template was created.</summary>
     public DateTimeOffset CreatedAt { get; set; }
 

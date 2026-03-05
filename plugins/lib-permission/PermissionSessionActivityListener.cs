@@ -33,7 +33,7 @@ namespace BeyondImmersion.BannouService.Permission;
 public class PermissionSessionActivityListener : ISessionActivityListener
 {
     private readonly PermissionService _permissionService;
-    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IRedisOperations? _redisOps;
     private readonly PermissionServiceConfiguration _configuration;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<PermissionSessionActivityListener> _logger;
@@ -75,7 +75,7 @@ public class PermissionSessionActivityListener : ISessionActivityListener
         // PermissionService is the only IPermissionService implementation and is always Singleton.
         // Cast is safe within the same plugin assembly.
         _permissionService = (PermissionService)permissionService;
-        _stateStoreFactory = stateStoreFactory;
+        _redisOps = stateStoreFactory.GetRedisOperations();
         _configuration = configuration;
         _telemetryProvider = telemetryProvider;
         _logger = logger;
@@ -96,8 +96,7 @@ public class PermissionSessionActivityListener : ISessionActivityListener
             return;
         }
 
-        var redisOps = _stateStoreFactory.GetRedisOperations();
-        if (redisOps == null)
+        if (_redisOps == null)
         {
             // InMemory mode — no TTL to refresh
             return;
@@ -110,8 +109,8 @@ public class PermissionSessionActivityListener : ISessionActivityListener
         var statesKey = $"{REDIS_KEY_PREFIX}:{string.Format(SESSION_STATES_KEY, sessionIdStr)}";
         var permissionsKey = $"{REDIS_KEY_PREFIX}:{string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr)}";
 
-        await redisOps.ExpireAsync(statesKey, ttl, ct);
-        await redisOps.ExpireAsync(permissionsKey, ttl, ct);
+        await _redisOps.ExpireAsync(statesKey, ttl, ct);
+        await _redisOps.ExpireAsync(permissionsKey, ttl, ct);
 
         _logger.LogDebug("Refreshed TTL on session data keys for session {SessionId}", sessionId);
     }
@@ -201,11 +200,10 @@ public class PermissionSessionActivityListener : ISessionActivityListener
     /// </summary>
     private async Task RefreshSessionTtlAsync(Guid sessionId, CancellationToken ct)
     {
-        if (_configuration.SessionDataTtlSeconds <= 0)
-            return;
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.permission", "PermissionSessionActivityListener.RefreshSessionTtl");
 
-        var redisOps = _stateStoreFactory.GetRedisOperations();
-        if (redisOps == null)
+        if (_configuration.SessionDataTtlSeconds <= 0 || _redisOps == null)
             return;
 
         var sessionIdStr = sessionId.ToString();
@@ -214,8 +212,8 @@ public class PermissionSessionActivityListener : ISessionActivityListener
         var statesKey = $"{REDIS_KEY_PREFIX}:{string.Format(SESSION_STATES_KEY, sessionIdStr)}";
         var permissionsKey = $"{REDIS_KEY_PREFIX}:{string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr)}";
 
-        await redisOps.ExpireAsync(statesKey, ttl, ct);
-        await redisOps.ExpireAsync(permissionsKey, ttl, ct);
+        await _redisOps.ExpireAsync(statesKey, ttl, ct);
+        await _redisOps.ExpireAsync(permissionsKey, ttl, ct);
     }
 
     /// <summary>
@@ -225,16 +223,18 @@ public class PermissionSessionActivityListener : ISessionActivityListener
     /// </summary>
     private async Task AlignSessionTtlAsync(Guid sessionId, TimeSpan reconnectionWindow, CancellationToken ct)
     {
-        var redisOps = _stateStoreFactory.GetRedisOperations();
-        if (redisOps == null)
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.permission", "PermissionSessionActivityListener.AlignSessionTtl");
+
+        if (_redisOps == null)
             return;
 
         var sessionIdStr = sessionId.ToString();
         var statesKey = $"{REDIS_KEY_PREFIX}:{string.Format(SESSION_STATES_KEY, sessionIdStr)}";
         var permissionsKey = $"{REDIS_KEY_PREFIX}:{string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr)}";
 
-        await redisOps.ExpireAsync(statesKey, reconnectionWindow, ct);
-        await redisOps.ExpireAsync(permissionsKey, reconnectionWindow, ct);
+        await _redisOps.ExpireAsync(statesKey, reconnectionWindow, ct);
+        await _redisOps.ExpireAsync(permissionsKey, reconnectionWindow, ct);
 
         _logger.LogDebug("Aligned session data TTL to reconnection window ({WindowSeconds}s) for session {SessionId}",
             reconnectionWindow.TotalSeconds, sessionId);

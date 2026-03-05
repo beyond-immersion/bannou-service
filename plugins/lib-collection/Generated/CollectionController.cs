@@ -82,16 +82,19 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> UpdateEntryTemplateAsync(UpdateEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Delete an entry template
+    /// Deprecate an entry template
     /// </summary>
 
     /// <remarks>
-    /// Delete an entry template. Warns if instances reference it but does not block deletion.
+    /// Marks an entry template as deprecated. Deprecated templates cannot be used
+    /// <br/>to grant new entries, but existing unlocked entries remain valid.
+    /// <br/>Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+    /// <br/>no delete. Idempotent — returns OK if already deprecated.
     /// </remarks>
 
-    /// <returns>Entry template deleted successfully</returns>
+    /// <returns>Entry template deprecated successfully (or already deprecated)</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> DeleteEntryTemplateAsync(DeleteEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> DeprecateEntryTemplateAsync(DeprecateEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Bulk seed entry templates
@@ -267,6 +270,18 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// <returns>Area content configs retrieved successfully</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListAreaContentConfigsResponse>> ListAreaContentConfigsAsync(ListAreaContentConfigsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Delete an area content config
+    /// </summary>
+
+    /// <remarks>
+    /// Delete an area content configuration. Area configs are configuration singletons with no deprecation lifecycle — immediate hard delete.
+    /// </remarks>
+
+    /// <returns>Area content config deleted successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaContentConfigResponse>> DeleteAreaContentConfigAsync(DeleteAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Advance progressive discovery level
@@ -545,46 +560,49 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     }
 
     /// <summary>
-    /// Delete an entry template
+    /// Deprecate an entry template
     /// </summary>
     /// <remarks>
-    /// Delete an entry template. Warns if instances reference it but does not block deletion.
+    /// Marks an entry template as deprecated. Deprecated templates cannot be used
+    /// <br/>to grant new entries, but existing unlocked entries remain valid.
+    /// <br/>Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+    /// <br/>no delete. Idempotent — returns OK if already deprecated.
     /// </remarks>
-    /// <returns>Entry template deleted successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("collection/entry-template/delete")]
+    /// <returns>Entry template deprecated successfully (or already deprecated)</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("collection/entry-template/deprecate")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> DeleteEntryTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> DeprecateEntryTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         using var activity_ = _telemetryProvider.StartActivity(
             "bannou.collection",
-            "CollectionController.DeleteEntryTemplate",
+            "CollectionController.DeprecateEntryTemplate",
             System.Diagnostics.ActivityKind.Server);
-        activity_?.SetTag("http.route", "collection/entry-template/delete");
+        activity_?.SetTag("http.route", "collection/entry-template/deprecate");
         try
         {
 
-            var (statusCode, result) = await _implementation.DeleteEntryTemplateAsync(body, cancellationToken);
+            var (statusCode, result) = await _implementation.DeprecateEntryTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CollectionController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:collection/entry-template/delete");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:collection/entry-template/deprecate");
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CollectionController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:collection/entry-template/delete");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:collection/entry-template/deprecate");
             var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
             await messageBus_.TryPublishErrorAsync(
                 "collection",
-                "DeleteEntryTemplate",
+                "DeprecateEntryTemplate",
                 "unexpected_exception",
                 ex_.Message,
-                endpoint: "post:collection/entry-template/delete",
+                endpoint: "post:collection/entry-template/deprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
@@ -1264,6 +1282,54 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:collection/content/area-config/list",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Delete an area content config
+    /// </summary>
+    /// <remarks>
+    /// Delete an area content configuration. Area configs are configuration singletons with no deprecation lifecycle — immediate hard delete.
+    /// </remarks>
+    /// <returns>Area content config deleted successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("collection/content/area-config/delete")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaContentConfigResponse>> DeleteAreaContentConfig([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.DeleteAreaContentConfig",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/content/area-config/delete");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DeleteAreaContentConfigAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CollectionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:collection/content/area-config/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CollectionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:collection/content/area-config/delete");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "collection",
+                "DeleteAreaContentConfig",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:collection/content/area-config/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

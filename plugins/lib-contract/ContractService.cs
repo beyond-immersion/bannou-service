@@ -635,6 +635,7 @@ public partial class ContractService : IContractService
 
         // Then publish events
         await PublishContractProposedEventAsync(model, cancellationToken);
+        await PublishInstanceUpdatedEventAsync(model, new List<string> { "status", "proposedAt" }, cancellationToken);
 
         _logger.LogInformation("Proposed contract: {ContractId}", body.ContractId);
         return (StatusCodes.OK, MapInstanceToResponse(model));
@@ -702,6 +703,7 @@ public partial class ContractService : IContractService
                     await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
                     await AddToListAsync($"{STATUS_INDEX_PREFIX}expired", body.ContractId.ToString(), cancellationToken);
                     await PublishContractExpiredEventAsync(model, cancellationToken);
+                    await PublishInstanceUpdatedEventAsync(model, new List<string> { "status" }, cancellationToken);
                 }
 
                 return (StatusCodes.BadRequest, null);
@@ -801,6 +803,16 @@ public partial class ContractService : IContractService
 
             await PublishContractAcceptedEventAsync(model, cancellationToken);
         }
+
+        // Publish lifecycle updated event with all changed fields
+        var consentChangedFields = new List<string> { "consentStatus" };
+        if (allConsented)
+        {
+            consentChangedFields.Add("status");
+            consentChangedFields.Add("acceptedAt");
+            if (model.EffectiveFrom != null) consentChangedFields.Add("effectiveFrom");
+        }
+        await PublishInstanceUpdatedEventAsync(model, consentChangedFields, cancellationToken);
 
         return (StatusCodes.OK, MapInstanceToResponse(model));
     }
@@ -983,9 +995,70 @@ public partial class ContractService : IContractService
         // Then publish events
         await PublishContractTerminatedEventAsync(model, body.RequestingEntityId,
             body.RequestingEntityType, body.Reason, false, cancellationToken);
+        await PublishInstanceUpdatedEventAsync(model, new List<string> { "status", "terminatedAt" }, cancellationToken);
 
         _logger.LogInformation("Terminated contract: {ContractId}", body.ContractId);
         return (StatusCodes.OK, MapInstanceToResponse(model));
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, DeleteContractInstanceResponse?)> DeleteContractInstanceAsync(
+        DeleteContractInstanceRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.DeleteContractInstanceAsync");
+
+        _logger.LogInformation("Deleting contract instance: {ContractId}", body.ContractId);
+
+        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+
+        var model = await store.GetAsync(instanceKey, cancellationToken);
+        if (model == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Only terminal-state instances can be deleted (per IMPLEMENTATION TENETS: T31 immediate hard delete for instances)
+        var terminalStatuses = new[] { ContractStatus.Fulfilled, ContractStatus.Terminated, ContractStatus.Expired, ContractStatus.Declined };
+        if (!terminalStatuses.Contains(model.Status))
+        {
+            _logger.LogWarning("Cannot delete contract {ContractId} in non-terminal state {Status}", body.ContractId, model.Status);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Delete the instance record
+        await store.DeleteAsync(instanceKey, cancellationToken);
+
+        // Remove from all indexes
+        var statusKey = $"{STATUS_INDEX_PREFIX}{model.Status.ToString().ToLowerInvariant()}";
+        await RemoveFromListAsync(statusKey, body.ContractId.ToString(), cancellationToken);
+        await RemoveFromListAsync($"{TEMPLATE_INDEX_PREFIX}{model.TemplateId}", body.ContractId.ToString(), cancellationToken);
+
+        if (model.Parties != null)
+        {
+            foreach (var party in model.Parties)
+            {
+                await RemoveFromListAsync($"{PARTY_INDEX_PREFIX}{party.EntityType}:{party.EntityId}", body.ContractId.ToString(), cancellationToken);
+            }
+        }
+
+        // Delete associated breach records
+        if (model.BreachIds != null)
+        {
+            var breachStore = _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract);
+            foreach (var breachId in model.BreachIds)
+            {
+                await breachStore.DeleteAsync($"{BREACH_PREFIX}{breachId}", cancellationToken);
+            }
+        }
+
+        // Publish lifecycle deleted event
+        await PublishInstanceDeletedEventAsync(model, "Hard deleted via API", cancellationToken);
+
+        _logger.LogInformation("Deleted contract instance: {ContractId}", body.ContractId);
+        return (StatusCodes.OK, new DeleteContractInstanceResponse());
     }
 
     /// <inheritdoc/>
@@ -1045,6 +1118,8 @@ public partial class ContractService : IContractService
                     await PublishContractActivatedEventAsync(model, cancellationToken);
                 }
 
+                await PublishInstanceUpdatedEventAsync(model, new List<string> { "status" }, cancellationToken);
+
                 // Update etag for subsequent operations in this method
                 etag = activatedEtag;
             }
@@ -1068,6 +1143,7 @@ public partial class ContractService : IContractService
                 await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
                 await AddToListAsync($"{STATUS_INDEX_PREFIX}expired", body.ContractId.ToString(), cancellationToken);
                 await PublishContractExpiredEventAsync(model, cancellationToken);
+                await PublishInstanceUpdatedEventAsync(model, new List<string> { "status" }, cancellationToken);
             }
         }
 
@@ -1090,6 +1166,7 @@ public partial class ContractService : IContractService
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
             await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            await PublishInstanceUpdatedEventAsync(model, new List<string> { "milestones", "status" }, cancellationToken);
         }
 
         var milestoneProgress = model.Milestones?.Select(m => new MilestoneProgressSummary
@@ -1246,6 +1323,10 @@ public partial class ContractService : IContractService
         // Publish milestone completed event
         await PublishMilestoneCompletedEventAsync(model, milestone, body.Evidence, apisExecuted, cancellationToken);
 
+        var milestoneChangedFields = new List<string> { "milestones" };
+        if (model.Status == ContractStatus.Fulfilled) milestoneChangedFields.Add("status");
+        await PublishInstanceUpdatedEventAsync(model, milestoneChangedFields, cancellationToken);
+
         return (StatusCodes.OK, new MilestoneResponse
         {
             ContractId = model.ContractId,
@@ -1326,6 +1407,7 @@ public partial class ContractService : IContractService
         // Then publish events
         await PublishMilestoneFailedEventAsync(model, milestone, body.Reason ?? "Milestone failed",
             milestone.Required, triggeredBreach, cancellationToken);
+        await PublishInstanceUpdatedEventAsync(model, new List<string> { "milestones" }, cancellationToken);
 
         return (StatusCodes.OK, new MilestoneResponse
         {
@@ -1362,6 +1444,7 @@ public partial class ContractService : IContractService
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
             await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            await PublishInstanceUpdatedEventAsync(model, new List<string> { "milestones", "status" }, cancellationToken);
         }
 
         return (StatusCodes.OK, new MilestoneResponse
@@ -1454,6 +1537,7 @@ public partial class ContractService : IContractService
 
         // Publish event
         await PublishBreachDetectedEventAsync(model, breachModel, cancellationToken);
+        await PublishInstanceUpdatedEventAsync(model, new List<string> { "breachIds" }, cancellationToken);
 
         // Check breach threshold for auto-termination
         await CheckBreachThresholdAsync(model, cancellationToken);
@@ -1568,6 +1652,8 @@ public partial class ContractService : IContractService
             _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
             return (StatusCodes.Conflict, null);
         }
+
+        await PublishInstanceUpdatedEventAsync(model, new List<string> { "gameMetadata" }, cancellationToken);
 
         return (StatusCodes.OK, new ContractMetadataResponse
         {
@@ -2645,6 +2731,56 @@ public partial class ContractService : IContractService
             TemplateCode = model.TemplateCode,
             Status = model.Status,
             CreatedAt = model.CreatedAt
+        });
+    }
+
+    private async Task PublishInstanceUpdatedEventAsync(
+        ContractInstanceModel model, List<string> changedFields, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.PublishInstanceUpdatedEventAsync");
+
+        await _messageBus.TryPublishAsync("contract.instance.updated", new ContractInstanceUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ContractId = model.ContractId,
+            TemplateId = model.TemplateId,
+            TemplateCode = model.TemplateCode,
+            Status = model.Status,
+            ProposedAt = model.ProposedAt,
+            AcceptedAt = model.AcceptedAt,
+            EffectiveFrom = model.EffectiveFrom,
+            EffectiveUntil = model.EffectiveUntil,
+            TerminatedAt = model.TerminatedAt,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt,
+            ChangedFields = changedFields
+        });
+    }
+
+    private async Task PublishInstanceDeletedEventAsync(
+        ContractInstanceModel model, string reason, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.PublishInstanceDeletedEventAsync");
+
+        await _messageBus.TryPublishAsync("contract.instance.deleted", new ContractInstanceDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ContractId = model.ContractId,
+            TemplateId = model.TemplateId,
+            TemplateCode = model.TemplateCode,
+            Status = model.Status,
+            ProposedAt = model.ProposedAt,
+            AcceptedAt = model.AcceptedAt,
+            EffectiveFrom = model.EffectiveFrom,
+            EffectiveUntil = model.EffectiveUntil,
+            TerminatedAt = model.TerminatedAt,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt,
+            DeletedReason = reason
         });
     }
 

@@ -436,6 +436,9 @@ public partial class GameSessionService : IGameSessionService
         model.Players.Add(player);
         model.CurrentPlayers = model.Players.Count;
 
+        // Capture status before mutation for client event
+        var previousStatus = model.Status;
+
         // Update status if full
         if (model.CurrentPlayers >= model.MaxPlayers)
         {
@@ -489,6 +492,42 @@ public partial class GameSessionService : IGameSessionService
         await _messageBus.TryPublishAsync(
             SESSION_UPDATED_TOPIC,
             BuildUpdatedEvent(model, "currentPlayers", "status"));
+
+        // Push client events to session participants
+        var otherSessionIds = model.Players
+            .Where(p => p.AccountId != accountId)
+            .Select(p => p.SessionId.ToString())
+            .ToList();
+
+        if (otherSessionIds.Count > 0)
+        {
+            await _clientEventPublisher.PublishToSessionsAsync(otherSessionIds, new PlayerJoinedClientEvent
+            {
+                SessionId = lobbyId.Value,
+                Player = new PlayerInfo
+                {
+                    AccountId = player.AccountId,
+                    DisplayName = player.DisplayName,
+                    Role = player.Role,
+                    CharacterData = player.CharacterData
+                },
+                CurrentPlayerCount = model.CurrentPlayers,
+                MaxPlayers = model.MaxPlayers
+            }, cancellationToken);
+        }
+
+        if (previousStatus != model.Status)
+        {
+            var allSessionIds = model.Players.Select(p => p.SessionId.ToString()).ToList();
+            await _clientEventPublisher.PublishToSessionsAsync(allSessionIds, new SessionStateChangedClientEvent
+            {
+                SessionId = lobbyId.Value,
+                PreviousState = previousStatus,
+                NewState = model.Status,
+                Reason = "player_joined",
+                ChangedBy = accountId
+            }, cancellationToken);
+        }
 
         // Build response (SessionId = lobby ID so client knows which game they joined)
         var response = new JoinGameSessionResponse
@@ -673,6 +712,9 @@ public partial class GameSessionService : IGameSessionService
         model.Players.Remove(leavingPlayer);
         model.CurrentPlayers = model.Players.Count;
 
+        // Capture status before mutation for client event
+        var previousStatus = model.Status;
+
         // Update status
         if (model.CurrentPlayers == 0)
         {
@@ -702,6 +744,31 @@ public partial class GameSessionService : IGameSessionService
         await _messageBus.TryPublishAsync(
             SESSION_UPDATED_TOPIC,
             BuildUpdatedEvent(model, "currentPlayers", "status"));
+
+        // Push client events to remaining session participants
+        var remainingSessionIds = model.Players.Select(p => p.SessionId.ToString()).ToList();
+
+        if (remainingSessionIds.Count > 0)
+        {
+            await _clientEventPublisher.PublishToSessionsAsync(remainingSessionIds, new PlayerLeftClientEvent
+            {
+                SessionId = lobbyId.Value,
+                PlayerId = leavingPlayer.AccountId,
+                DisplayName = leavingPlayer.DisplayName,
+                CurrentPlayerCount = model.CurrentPlayers
+            }, cancellationToken);
+        }
+
+        if (previousStatus != model.Status && remainingSessionIds.Count > 0)
+        {
+            await _clientEventPublisher.PublishToSessionsAsync(remainingSessionIds, new SessionStateChangedClientEvent
+            {
+                SessionId = lobbyId.Value,
+                PreviousState = previousStatus,
+                NewState = model.Status,
+                Reason = "player_left"
+            }, cancellationToken);
+        }
 
         _logger.LogInformation("Player {AccountId} left game {GameType} (lobby {LobbyId})",
             accountId, gameType, lobbyId);
@@ -822,6 +889,9 @@ public partial class GameSessionService : IGameSessionService
         model.Players.Add(player);
         model.CurrentPlayers = model.Players.Count;
 
+        // Capture status before mutation for client event
+        var previousStatus = model.Status;
+
         // Update status
         if (model.CurrentPlayers >= model.MaxPlayers)
         {
@@ -893,6 +963,42 @@ public partial class GameSessionService : IGameSessionService
         await _messageBus.TryPublishAsync(
             SESSION_UPDATED_TOPIC,
             BuildUpdatedEvent(model, "currentPlayers", "status", "reservations"));
+
+        // Push client events to session participants
+        var otherSessionIds = model.Players
+            .Where(p => p.AccountId != accountId)
+            .Select(p => p.SessionId.ToString())
+            .ToList();
+
+        if (otherSessionIds.Count > 0)
+        {
+            await _clientEventPublisher.PublishToSessionsAsync(otherSessionIds, new PlayerJoinedClientEvent
+            {
+                SessionId = body.GameSessionId,
+                Player = new PlayerInfo
+                {
+                    AccountId = player.AccountId,
+                    DisplayName = player.DisplayName,
+                    Role = player.Role,
+                    CharacterData = player.CharacterData
+                },
+                CurrentPlayerCount = model.CurrentPlayers,
+                MaxPlayers = model.MaxPlayers
+            }, cancellationToken);
+        }
+
+        if (previousStatus != model.Status)
+        {
+            var allSessionIds = model.Players.Select(p => p.SessionId.ToString()).ToList();
+            await _clientEventPublisher.PublishToSessionsAsync(allSessionIds, new SessionStateChangedClientEvent
+            {
+                SessionId = body.GameSessionId,
+                PreviousState = previousStatus,
+                NewState = model.Status,
+                Reason = "player_joined",
+                ChangedBy = accountId
+            }, cancellationToken);
+        }
 
         // Build response
         var response = new JoinGameSessionResponse
@@ -995,6 +1101,9 @@ public partial class GameSessionService : IGameSessionService
         model.Players.Remove(leavingPlayer);
         model.CurrentPlayers = model.Players.Count;
 
+        // Capture status before mutation for client event
+        var previousStatus = model.Status;
+
         // Update status
         if (model.CurrentPlayers == 0)
         {
@@ -1024,6 +1133,31 @@ public partial class GameSessionService : IGameSessionService
         await _messageBus.TryPublishAsync(
             SESSION_UPDATED_TOPIC,
             BuildUpdatedEvent(model, "currentPlayers", "status"));
+
+        // Push client events to remaining session participants
+        var remainingSessionIds = model.Players.Select(p => p.SessionId.ToString()).ToList();
+
+        if (remainingSessionIds.Count > 0)
+        {
+            await _clientEventPublisher.PublishToSessionsAsync(remainingSessionIds, new PlayerLeftClientEvent
+            {
+                SessionId = body.GameSessionId,
+                PlayerId = leavingPlayer.AccountId,
+                DisplayName = leavingPlayer.DisplayName,
+                CurrentPlayerCount = model.CurrentPlayers
+            }, cancellationToken);
+        }
+
+        if (previousStatus != model.Status && remainingSessionIds.Count > 0)
+        {
+            await _clientEventPublisher.PublishToSessionsAsync(remainingSessionIds, new SessionStateChangedClientEvent
+            {
+                SessionId = body.GameSessionId,
+                PreviousState = previousStatus,
+                NewState = model.Status,
+                Reason = "player_left"
+            }, cancellationToken);
+        }
 
         _logger.LogInformation("Player {AccountId} left game session {GameSessionId}", accountId, gameSessionId);
         return StatusCodes.OK;
@@ -1167,8 +1301,15 @@ public partial class GameSessionService : IGameSessionService
             return StatusCodes.NotFound;
         }
 
+        // Capture kicked player info for client events before removal
+        var kickedPlayerSessionId = playerToKick.SessionId.ToString();
+        var kickedPlayerDisplayName = playerToKick.DisplayName;
+
         model.Players.Remove(playerToKick);
         model.CurrentPlayers = model.Players.Count;
+
+        // Capture status before mutation for client event
+        var previousStatus = model.Status;
 
         // Clear game-session:in_game state via Permission service for the kicked player
         try
@@ -1235,6 +1376,29 @@ public partial class GameSessionService : IGameSessionService
         await _messageBus.TryPublishAsync(
             SESSION_UPDATED_TOPIC,
             BuildUpdatedEvent(model, "currentPlayers", "status"));
+
+        // Push client events to remaining session participants and the kicked player
+        var remainingSessionIds = model.Players.Select(p => p.SessionId.ToString()).ToList();
+        var allTargetSessionIds = new List<string>(remainingSessionIds) { kickedPlayerSessionId };
+
+        await _clientEventPublisher.PublishToSessionsAsync(allTargetSessionIds, new PlayerKickedClientEvent
+        {
+            SessionId = Guid.Parse(sessionId),
+            KickedPlayerId = targetAccountId,
+            KickedPlayerName = kickedPlayerDisplayName,
+            Reason = body.Reason
+        }, cancellationToken);
+
+        if (previousStatus != model.Status && remainingSessionIds.Count > 0)
+        {
+            await _clientEventPublisher.PublishToSessionsAsync(remainingSessionIds, new SessionStateChangedClientEvent
+            {
+                SessionId = Guid.Parse(sessionId),
+                PreviousState = previousStatus,
+                NewState = model.Status,
+                Reason = "player_kicked"
+            }, cancellationToken);
+        }
 
         _logger.LogInformation("Player {TargetAccountId} kicked from session {SessionId}", targetAccountId, sessionId);
         return StatusCodes.OK;

@@ -118,7 +118,12 @@ public partial class PermissionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process session.updated event for {SessionId}", evt.SessionId);
-            await PublishErrorEventAsync("HandleSessionUpdated", ex.GetType().Name, ex.Message, details: new { evt.SessionId });
+            await _messageBus.TryPublishErrorAsync(
+                serviceName: "permission",
+                operation: "HandleSessionUpdated",
+                errorType: ex.GetType().Name,
+                message: ex.Message,
+                details: new { evt.SessionId });
         }
     }
 

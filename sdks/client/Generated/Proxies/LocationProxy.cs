@@ -455,4 +455,22 @@ public sealed class LocationProxy
         return _client.InvokeAsync<ClearEntityPositionRequest, ClearEntityPositionResponse>(
             "/location/clear-entity-position", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Get location base data for compression
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing LocationBaseArchive on success.</returns>
+    public Task<ApiResponse<LocationBaseArchive>> GetLocationCompressDataAsync(
+        GetLocationCompressDataRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetLocationCompressDataRequest, LocationBaseArchive>(
+            "/location/get-compress-data", request, channel, timeout, cancellationToken);
+    }
 }

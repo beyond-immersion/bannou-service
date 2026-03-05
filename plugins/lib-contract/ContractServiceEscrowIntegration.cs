@@ -120,6 +120,7 @@ public partial class ContractService
 
         // Publish event
         await PublishContractLockedEventAsync(model, body.GuardianId, body.GuardianType, cancellationToken);
+        await PublishInstanceUpdatedEventAsync(model, new List<string> { "guardianId", "guardianType", "lockedAt" }, cancellationToken);
 
         _logger.LogInformation("Locked contract: {ContractId} under guardian: {GuardianId}",
             body.ContractInstanceId, body.GuardianId);
@@ -201,6 +202,7 @@ public partial class ContractService
 
         // Publish event
         await PublishContractUnlockedEventAsync(model, previousGuardianId, previousGuardianType, cancellationToken);
+        await PublishInstanceUpdatedEventAsync(model, new List<string> { "guardianId", "guardianType", "lockedAt" }, cancellationToken);
 
         _logger.LogInformation("Unlocked contract: {ContractId}", body.ContractInstanceId);
         return (StatusCodes.OK, response);
@@ -302,6 +304,7 @@ public partial class ContractService
         // Publish event
         await PublishPartyTransferredEventAsync(model, role, body.FromEntityId, body.FromEntityType,
             body.ToEntityId, body.ToEntityType, cancellationToken);
+        await PublishInstanceUpdatedEventAsync(model, new List<string> { "parties" }, cancellationToken);
 
         _logger.LogInformation("Transferred party in contract: {ContractId}, role: {Role}",
             body.ContractInstanceId, role);
@@ -571,6 +574,7 @@ public partial class ContractService
 
         // Publish event
         await PublishTemplateValuesSetEventAsync(model, body.TemplateValues.Keys.ToList(), cancellationToken);
+        await PublishInstanceUpdatedEventAsync(model, new List<string> { "templateValues" }, cancellationToken);
 
         _logger.LogInformation("Set {Count} template values on contract: {ContractId}",
             body.TemplateValues.Count, body.ContractInstanceId);
@@ -1031,6 +1035,7 @@ public partial class ContractService
 
         // Publish event
         await PublishContractExecutedEventAsync(model, distributions, cancellationToken);
+        await PublishInstanceUpdatedEventAsync(model, new List<string> { "executedAt", "executionIdempotencyKey", "executionDistributions" }, cancellationToken);
 
         _logger.LogInformation("Executed contract: {ContractId} with {Count} distributions",
             body.ContractInstanceId, distributions.Count);

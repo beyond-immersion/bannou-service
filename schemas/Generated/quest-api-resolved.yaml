@@ -1428,5 +1428,6 @@ components:
           description: Child archives from dependent resources (populated by lib-resource compression)
           items:
             $ref: '#/components/schemas/ResourceArchiveBase'
+
 x-inlined-types:
 - ResourceArchiveBase

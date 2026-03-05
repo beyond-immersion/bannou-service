@@ -393,6 +393,49 @@ public partial class ResourceArchiveBase
 
 }
 
+/// <summary>
+/// Type of capability update — full capabilities or delta changes
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CapabilityUpdateType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Full")]
+    Full = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Delta")]
+    Delta = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Reason for the capability update
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CapabilityUpdateReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"SessionCreated")]
+    SessionCreated = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"SessionStateChanged")]
+    SessionStateChanged = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"RoleChanged")]
+    RoleChanged = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ServiceRegistered")]
+    ServiceRegistered = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ManualRefresh")]
+    ManualRefresh = 4,
+
+}
+#pragma warning restore CS1591
+
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ServiceEndpointMethod

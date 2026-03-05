@@ -107,9 +107,9 @@ public static class CollectionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/collection/entry-template/delete",
+            Path = "/collection/entry-template/deprecate",
             Method = ServiceEndpointMethod.Post,
-            Description = "deleteEntryTemplate",
+            Description = "deprecateEntryTemplate",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
@@ -320,6 +320,21 @@ public static class CollectionPermissionRegistration
             Path = "/collection/content/area-config/list",
             Method = ServiceEndpointMethod.Post,
             Description = "listAreaContentConfigs",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/collection/content/area-config/delete",
+            Method = ServiceEndpointMethod.Post,
+            Description = "deleteAreaContentConfig",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement

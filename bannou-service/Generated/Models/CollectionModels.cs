@@ -34,6 +34,7 @@ using System = global::System;
 /// Reason why a grant attempt failed.
 /// <br/>- already_unlocked: Entry is already unlocked in this collection
 /// <br/>- entry_not_found: Entry template does not exist
+/// <br/>- template_deprecated: Entry template is deprecated (Category B instance creation guard)
 /// <br/>- collection_not_found: Collection instance does not exist and auto-create failed
 /// <br/>- max_entries_reached: Collection has reached the maximum number of entries
 /// <br/>- item_creation_failed: Failed to create item instance via lib-item
@@ -50,14 +51,17 @@ public enum GrantFailureReason
     [System.Runtime.Serialization.EnumMember(Value = @"EntryNotFound")]
     EntryNotFound = 1,
 
+    [System.Runtime.Serialization.EnumMember(Value = @"TemplateDeprecated")]
+    TemplateDeprecated = 2,
+
     [System.Runtime.Serialization.EnumMember(Value = @"CollectionNotFound")]
-    CollectionNotFound = 2,
+    CollectionNotFound = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"MaxEntriesReached")]
-    MaxEntriesReached = 3,
+    MaxEntriesReached = 4,
 
     [System.Runtime.Serialization.EnumMember(Value = @"ItemCreationFailed")]
-    ItemCreationFailed = 4,
+    ItemCreationFailed = 5,
 
 }
 #pragma warning restore CS1591
@@ -307,6 +311,12 @@ public partial class ListEntryTemplatesRequest
     public string? Category { get; set; } = default!;
 
     /// <summary>
+    /// Include deprecated templates in results (excluded by default)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
+    public bool IncludeDeprecated { get; set; } = false;
+
+    /// <summary>
     /// Opaque cursor from previous response for pagination
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cursor")]
@@ -411,19 +421,26 @@ public partial class UpdateEntryTemplateRequest
 }
 
 /// <summary>
-/// Request to delete an entry template
+/// Request to deprecate an entry template (Category B — one-way, no delete)
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DeleteEntryTemplateRequest
+public partial class DeprecateEntryTemplateRequest
 {
 
     /// <summary>
-    /// Entry template to delete
+    /// Entry template to deprecate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entryTemplateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntryTemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (recommended but not required for Category B templates)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? Reason { get; set; } = default!;
 
 }
 
@@ -564,6 +581,25 @@ public partial class EntryTemplateResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("composer")]
     public string? Composer { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this entry template is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When this template was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// When this entry template was created
@@ -1620,6 +1656,23 @@ public partial class ListAreaContentConfigsResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<AreaContentConfigResponse> Configs { get; set; } = new System.Collections.ObjectModel.Collection<AreaContentConfigResponse>();
+
+}
+
+/// <summary>
+/// Request to delete an area content configuration
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteAreaContentConfigRequest
+{
+
+    /// <summary>
+    /// Area content config to delete
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("areaConfigId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AreaConfigId { get; set; } = default!;
 
 }
 

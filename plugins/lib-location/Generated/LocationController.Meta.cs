@@ -5832,4 +5832,280 @@ public partial class LocationController
             _ClearEntityPosition_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for GetLocationCompressData
+
+    private static readonly string _GetLocationCompressData_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetLocationCompressDataRequest",
+    "$defs": {
+        "GetLocationCompressDataRequest": {
+            "description": "Request to get location base data for compression archive",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "locationId"
+            ],
+            "properties": {
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the location to compress"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetLocationCompressData_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/LocationBaseArchive",
+    "$defs": {
+        "LocationBaseArchive": {
+            "type": "object",
+            "x-archive-type": true,
+            "description": "Core location data for archive storage and content flywheel consumption.\ nInherits base archive properties from ResourceArchiveBase.\nThe locationId field equals resourceId for convenience.\ nIncludes one level of parent context to avoid hierarchy walking during archive queries.\n",
+            "allOf": [
+                {
+                    "type": "object"
+                }
+            ],
+            "additionalProperties": false,
+            "required": [
+                "locationId",
+                "name",
+                "code",
+                "locationType",
+                "realmId",
+                "depth",
+                "childrenCount",
+                "createdAt"
+            ],
+            "properties": {
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the location (equals resourceId)"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the location"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code identifier for the location"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description of the location"
+                },
+                "locationType": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/LocationType"
+                        }
+                    ],
+                    "description": "Category of location (Region, City, Building, Room, etc.)"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm this location belongs to"
+                },
+                "parentLocationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Parent location ID (null for root locations)"
+                },
+                "depth": {
+                    "type": "integer",
+                    "description": "Depth in the location hierarchy (0 for root)"
+                },
+                "parentName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Parent location name (one level of context, null if root)"
+                },
+                "parentCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Parent location code (one level of context, null if root)"
+                },
+                "parentLocationType": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/LocationType"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Parent location type (one level of context, null if root)"
+                },
+                "childrenCount": {
+                    "type": "integer",
+                    "description": "Number of immediate child locations"
+                },
+                "childrenCodes": {
+                    "type": "array",
+                    "nullable": true,
+                    "description": "Codes of immediate child locations (null if no children)",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Spatial bounding box of the location"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Precision level of the spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Coordinate system used for spatial data"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Local coordinate origin point"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Real-world creation timestamp"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Real-world last update timestamp"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the location was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation"
+                }
+            }
+        },
+        "LocationType": {
+            "type": "string",
+            "description": "Type classification for locations",
+            "enum": [
+                "Continent",
+                "Region",
+                "City",
+                "District",
+                "Building",
+                "Room",
+                "Landmark",
+                "Wilderness",
+                "Dungeon",
+                "Other"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _GetLocationCompressData_Info = """
+{
+    "summary": "Get location base data for compression",
+    "description": "Called by Resource service during compression.\nReturns core location data (name, type, hierarchy, spatial, parent context).\ nReturns BadRequest if location is not deprecated - only deprecated locations can be compressed.\n",
+    "tags": [
+        "Location Compression"
+    ],
+    "deprecated": false,
+    "operationId": "getLocationCompressData"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetLocationCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/get-compress-data/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetLocationCompressData_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Location",
+            "POST",
+            "/location/get-compress-data",
+            _GetLocationCompressData_Info));
+
+    /// <summary>Returns request schema for GetLocationCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/get-compress-data/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetLocationCompressData_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/get-compress-data",
+            "request-schema",
+            _GetLocationCompressData_RequestSchema));
+
+    /// <summary>Returns response schema for GetLocationCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/get-compress-data/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetLocationCompressData_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/get-compress-data",
+            "response-schema",
+            _GetLocationCompressData_ResponseSchema));
+
+    /// <summary>Returns full schema for GetLocationCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/get-compress-data/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetLocationCompressData_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Location",
+            "POST",
+            "/location/get-compress-data",
+            _GetLocationCompressData_Info,
+            _GetLocationCompressData_RequestSchema,
+            _GetLocationCompressData_ResponseSchema));
+
+    #endregion
 }

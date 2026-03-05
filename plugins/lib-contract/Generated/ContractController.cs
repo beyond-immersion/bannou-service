@@ -175,6 +175,22 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> TerminateContractInstanceAsync(TerminateContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Hard-delete a terminal contract instance
+    /// </summary>
+
+    /// <remarks>
+    /// Permanently deletes a contract instance that has reached a terminal state
+    /// <br/>(Fulfilled, Terminated, Expired, or Declined). Removes the instance record
+    /// <br/>and all associated index entries. Breach records associated with the
+    /// <br/>contract are also deleted. This is a hard delete per T31 (instances use
+    /// <br/>immediate deletion, not deprecation).
+    /// </remarks>
+
+    /// <returns>Instance deleted successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteContractInstanceResponse>> DeleteContractInstanceAsync(DeleteContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Get current status and milestone progress
     /// </summary>
 
@@ -1014,6 +1030,58 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:contract/instance/terminate",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Hard-delete a terminal contract instance
+    /// </summary>
+    /// <remarks>
+    /// Permanently deletes a contract instance that has reached a terminal state
+    /// <br/>(Fulfilled, Terminated, Expired, or Declined). Removes the instance record
+    /// <br/>and all associated index entries. Breach records associated with the
+    /// <br/>contract are also deleted. This is a hard delete per T31 (instances use
+    /// <br/>immediate deletion, not deprecation).
+    /// </remarks>
+    /// <returns>Instance deleted successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("contract/instance/delete")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteContractInstanceResponse>> DeleteContractInstance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.DeleteContractInstance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/instance/delete");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DeleteContractInstanceAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/instance/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:contract/instance/delete");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "contract",
+                "DeleteContractInstance",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:contract/instance/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

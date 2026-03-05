@@ -30,10 +30,18 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  x-resource-lifecycle:
+    resourceType: realm
+    cleanupPolicy: BEST_EFFORT
+  x-compression-callback:
+    resourceType: location
+    sourceType: realm-context
+    compressEndpoint: /realm/get-location-compress-context
+    compressPayloadTemplate: '{"locationId": "{{resourceId}}"}'
+    priority: 5
+    templateNamespace: realm
+    description: Realm context for location archives (realm name, code, description)
 x-service-layer: GameFoundation
-x-resource-lifecycle:
-  resourceType: realm
-  cleanupPolicy: BEST_EFFORT
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -887,6 +895,59 @@ paths:
         to seed realms from provided data.\\nCreates realms that don't exist, optionally updates existing realms.\\nTypically
         called at service startup with YAML-defined realms.\\n\",\n    \"tags\": [\n        \"Realm Admin\"\n    ],\n    \"\
         deprecated\": false,\n    \"operationId\": \"seedRealms\"\n}"
+  /realm/get-location-compress-context:
+    post:
+      summary: Get realm context for location archive
+      operationId: getLocationCompressContext
+      tags:
+      - Realm Compression
+      description: |
+        Called by Resource service during location compression.
+        Resolves the location's realm and returns realm context (name, code, description)
+        for inclusion in the location archive.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLocationCompressContextRequest'
+      responses:
+        '200':
+          description: Realm context for location archive returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmLocationArchiveContext'
+        '404':
+          description: Location or realm not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetLocationCompressContextRequest\"\
+        ,\n    \"$defs\": {\n        \"GetLocationCompressContextRequest\": {\n            \"description\": \"Request to get
+        realm context for a location's compression archive\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"locationId\"\n            ],\n            \"properties\"\
+        : {\n                \"locationId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"ID of the location being compressed (used to resolve realm)\"\n\
+        \                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmLocationArchiveContext\"\
+        ,\n    \"$defs\": {\n        \"RealmLocationArchiveContext\": {\n            \"type\": \"object\",\n            \"\
+        x-archive-type\": true,\n            \"description\": \"Realm context included in location compression archives.\\
+        nProvides realm identity and description for content flywheel consumption\\nwithout requiring realm lookups during
+        archive processing.\\nInherits base archive properties from ResourceArchiveBase.\\n\",\n            \"allOf\": [\n\
+        \                {\n                    \"type\": \"object\"\n                }\n            ],\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"realmId\",\n                \"realmName\",\n            \
+        \    \"realmCode\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
+        identifier of the realm\"\n                },\n                \"realmName\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Display name of the realm\"\n                },\n              \
+        \  \"realmCode\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code
+        identifier for the realm\"\n                },\n                \"realmDescription\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Detailed description
+        of the realm and its characteristics\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get realm context for location archive\",\n    \"description\": \"Called
+        by Resource service during location compression.\\nResolves the location's realm and returns realm context (name,
+        code, description)\\nfor inclusion in the location archive.\\n\",\n    \"tags\": [\n        \"Realm Compression\"\n\
+        \    ],\n    \"deprecated\": false,\n    \"operationId\": \"getLocationCompressContext\"\n}"
 components:
   schemas:
     GetRealmRequest:
@@ -1400,3 +1461,44 @@ components:
         sourceDeleted:
           type: boolean
           description: Whether the source realm was hard-deleted after merge
+    GetLocationCompressContextRequest:
+      description: Request to get realm context for a location's compression archive
+      type: object
+      additionalProperties: false
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location being compressed (used to resolve realm)
+    RealmLocationArchiveContext:
+      type: object
+      x-archive-type: true
+      description: |
+        Realm context included in location compression archives.
+        Provides realm identity and description for content flywheel consumption
+        without requiring realm lookups during archive processing.
+        Inherits base archive properties from ResourceArchiveBase.
+      allOf:
+      - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - realmId
+      - realmName
+      - realmCode
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Unique identifier of the realm
+        realmName:
+          type: string
+          description: Display name of the realm
+        realmCode:
+          type: string
+          description: Unique code identifier for the realm
+        realmDescription:
+          type: string
+          nullable: true
+          description: Detailed description of the realm and its characteristics

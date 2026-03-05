@@ -212,6 +212,21 @@ public static class ContractPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/contract/instance/delete",
+            Method = ServiceEndpointMethod.Post,
+            Description = "deleteContractInstance",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/contract/instance/get-status",
             Method = ServiceEndpointMethod.Post,
             Description = "getContractInstanceStatus",

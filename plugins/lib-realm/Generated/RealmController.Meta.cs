@@ -2082,4 +2082,129 @@ public partial class RealmController
             _SeedRealms_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for GetLocationCompressContext
+
+    private static readonly string _GetLocationCompressContext_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetLocationCompressContextRequest",
+    "$defs": {
+        "GetLocationCompressContextRequest": {
+            "description": "Request to get realm context for a location's compression archive",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "locationId"
+            ],
+            "properties": {
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the location being compressed (used to resolve realm)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetLocationCompressContext_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RealmLocationArchiveContext",
+    "$defs": {
+        "RealmLocationArchiveContext": {
+            "type": "object",
+            "x-archive-type": true,
+            "description": "Realm context included in location compression archives.\ nProvides realm identity and description for content flywheel consumption\nwithout requiring realm lookups during archive processing.\nInherits base archive properties from ResourceArchiveBase.\n",
+            "allOf": [
+                {
+                    "type": "object"
+                }
+            ],
+            "additionalProperties": false,
+            "required": [
+                "realmId",
+                "realmName",
+                "realmCode"
+            ],
+            "properties": {
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the realm"
+                },
+                "realmName": {
+                    "type": "string",
+                    "description": "Display name of the realm"
+                },
+                "realmCode": {
+                    "type": "string",
+                    "description": "Unique code identifier for the realm"
+                },
+                "realmDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Detailed description of the realm and its characteristics"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetLocationCompressContext_Info = """
+{
+    "summary": "Get realm context for location archive",
+    "description": "Called by Resource service during location compression.\nResolves the location's realm and returns realm context (name, code, description)\nfor inclusion in the location archive.\n",
+    "tags": [
+        "Realm Compression"
+    ],
+    "deprecated": false,
+    "operationId": "getLocationCompressContext"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetLocationCompressContext</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/get-location-compress-context/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetLocationCompressContext_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Realm",
+            "POST",
+            "/realm/get-location-compress-context",
+            _GetLocationCompressContext_Info));
+
+    /// <summary>Returns request schema for GetLocationCompressContext</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/get-location-compress-context/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetLocationCompressContext_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Realm",
+            "POST",
+            "/realm/get-location-compress-context",
+            "request-schema",
+            _GetLocationCompressContext_RequestSchema));
+
+    /// <summary>Returns response schema for GetLocationCompressContext</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/get-location-compress-context/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetLocationCompressContext_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Realm",
+            "POST",
+            "/realm/get-location-compress-context",
+            "response-schema",
+            _GetLocationCompressContext_ResponseSchema));
+
+    /// <summary>Returns full schema for GetLocationCompressContext</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/get-location-compress-context/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetLocationCompressContext_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Realm",
+            "POST",
+            "/realm/get-location-compress-context",
+            _GetLocationCompressContext_Info,
+            _GetLocationCompressContext_RequestSchema,
+            _GetLocationCompressContext_ResponseSchema));
+
+    #endregion
 }

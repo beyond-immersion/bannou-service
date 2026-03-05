@@ -650,7 +650,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     }
 
     [Fact]
-    public async Task DeleteEntryTemplate_Exists_DeletesBothKeysAndPublishesEvent()
+    public async Task DeprecateEntryTemplate_Exists_DeprecatesAndPublishesUpdatedEvent()
     {
         // Arrange
         var template = CreateTestTemplate();
@@ -661,25 +661,68 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var service = CreateService();
 
         // Act
-        var (status, response) = await service.DeleteEntryTemplateAsync(
-            new DeleteEntryTemplateRequest { EntryTemplateId = TestEntryTemplateId },
+        var (status, response) = await service.DeprecateEntryTemplateAsync(
+            new DeprecateEntryTemplateRequest { EntryTemplateId = TestEntryTemplateId, Reason = "No longer used" },
             CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
+        Assert.True(response.IsDeprecated);
+        Assert.NotNull(response.DeprecatedAt);
+        Assert.Equal("No longer used", response.DeprecationReason);
 
-        // Verify both keys deleted (by ID and by code)
+        // Verify both keys saved (by ID and by code)
         _mockTemplateStore.Verify(
-            s => s.DeleteAsync($"tpl:{TestEntryTemplateId}", It.IsAny<CancellationToken>()),
+            s => s.SaveAsync($"tpl:{TestEntryTemplateId}", It.Is<EntryTemplateModel>(m => m.IsDeprecated), null, It.IsAny<CancellationToken>()),
             Times.Once);
         _mockTemplateStore.Verify(
-            s => s.DeleteAsync($"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon", It.IsAny<CancellationToken>()),
+            s => s.SaveAsync($"tpl:{TestGameServiceId}:{"bestiary"}:boss_dragon", It.Is<EntryTemplateModel>(m => m.IsDeprecated), null, It.IsAny<CancellationToken>()),
             Times.Once);
 
+        // Verify publishes updated event (not deleted) with deprecation changedFields
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("collection.entry-template.deleted", It.IsAny<CollectionEntryTemplateDeletedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync(
+                "collection.entry-template.updated",
+                It.Is<CollectionEntryTemplateUpdatedEvent>(e =>
+                    e.ChangedFields.Contains("isDeprecated") &&
+                    e.ChangedFields.Contains("deprecatedAt") &&
+                    e.ChangedFields.Contains("deprecationReason")),
+                It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task DeprecateEntryTemplate_AlreadyDeprecated_ReturnsOkIdempotent()
+    {
+        // Arrange
+        var template = CreateTestTemplate();
+        template.IsDeprecated = true;
+        template.DeprecatedAt = DateTimeOffset.UtcNow.AddDays(-1);
+        template.DeprecationReason = "Previously deprecated";
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"tpl:{TestEntryTemplateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var service = CreateService();
+
+        // Act
+        var (status, response) = await service.DeprecateEntryTemplateAsync(
+            new DeprecateEntryTemplateRequest { EntryTemplateId = TestEntryTemplateId },
+            CancellationToken.None);
+
+        // Assert — idempotent: returns OK without re-saving
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.IsDeprecated);
+
+        // Verify no saves or events published (already deprecated)
+        _mockTemplateStore.Verify(
+            s => s.SaveAsync(It.IsAny<string>(), It.IsAny<EntryTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<CollectionEntryTemplateUpdatedEvent>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]

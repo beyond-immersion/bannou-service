@@ -225,9 +225,9 @@ components:
               type: string
           description: Map of ServiceID -> List of available endpoints (e.g., "account" -> ["/account/get"])
         reason:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/CapabilityUpdateReason'
           nullable: true
-          description: Why capabilities were sent (e.g., "session_connected", "service_registered", "role_changed")
+          description: Why capabilities were sent
 
     SystemNotificationClientEvent:
       allOf:

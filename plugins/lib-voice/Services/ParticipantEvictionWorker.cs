@@ -154,6 +154,7 @@ public class ParticipantEvictionWorker : BackgroundService
         var permissionClient = scope.ServiceProvider.GetRequiredService<IPermissionClient>();
         var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
         var roomStore = stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
+        var stringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.Voice);
 
         var now = DateTimeOffset.UtcNow;
         var heartbeatTimeout = TimeSpan.FromSeconds(_configuration.ParticipantHeartbeatTimeoutSeconds);
@@ -187,7 +188,7 @@ public class ParticipantEvictionWorker : BackgroundService
                     var currentCount = await _endpointRegistry.GetParticipantCountAsync(roomId, cancellationToken);
                     if (currentCount == 0 && now - roomData.LastParticipantLeftAt.Value > gracePeriod)
                     {
-                        await DeleteEmptyRoomAsync(roomId, roomData, messageBus, clientEventPublisher, roomStore, stateStoreFactory, cancellationToken);
+                        await DeleteEmptyRoomAsync(roomId, roomData, messageBus, clientEventPublisher, roomStore, stringStore, cancellationToken);
                         totalRoomsDeleted++;
                         continue;
                     }

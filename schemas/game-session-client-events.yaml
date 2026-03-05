@@ -164,7 +164,6 @@ components:
         - timestamp
         - sessionId
         - kickedPlayerId
-        - kickedBy
       properties:
         eventName:
           type: string
@@ -182,10 +181,6 @@ components:
           type: string
           nullable: true
           description: Display name for UI notification
-        kickedBy:
-          type: string
-          format: uuid
-          description: Account ID of user who performed the kick
         reason:
           type: string
           nullable: true

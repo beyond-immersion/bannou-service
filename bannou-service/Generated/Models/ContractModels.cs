@@ -966,6 +966,32 @@ public partial class TerminateContractInstanceRequest
 }
 
 /// <summary>
+/// Request to hard-delete a terminal contract instance
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteContractInstanceRequest
+{
+
+    /// <summary>
+    /// Contract instance to delete
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Empty response. HTTP 200 confirms the instance was deleted.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteContractInstanceResponse
+{
+
+}
+
+/// <summary>
 /// Request to get contract status
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

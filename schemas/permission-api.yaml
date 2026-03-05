@@ -421,12 +421,7 @@ components:
       description: Response from updating a session's state or role with recompiled permissions
       type: object
       additionalProperties: false
-      required:
-      - permissionsChanged
       properties:
-        permissionsChanged:
-          type: boolean
-          description: Whether compiled permissions actually changed
         newPermissions:
           type: object
           additionalProperties:
@@ -536,23 +531,7 @@ components:
           minimum: 0
           description: Number of API endpoints registered by this service
 
-    # Enums shared with permission-events.yaml
-    CapabilityUpdateType:
-      type: string
-      enum:
-      - Full
-      - Delta
-      description: Type of capability update — full capabilities or delta changes
-
-    CapabilityUpdateReason:
-      type: string
-      enum:
-      - SessionCreated
-      - SessionStateChanged
-      - RoleChanged
-      - ServiceRegistered
-      - ManualRefresh
-      description: Reason for the capability update
+# NOTE: CapabilityUpdateType and CapabilityUpdateReason moved to common-api.yaml (shared with common-client-events.yaml)
 
 # NOTE: Event subscriptions are defined in permission-events.yaml
 # They are processed by generate-event-subscriptions.sh to generate PermissionsEventsController.cs

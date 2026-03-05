@@ -50,9 +50,9 @@ public partial interface ICollectionService : IBannouService
         Task<(StatusCodes, EntryTemplateResponse?)> UpdateEntryTemplateAsync(UpdateEntryTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// DeleteEntryTemplate operation
+        /// DeprecateEntryTemplate operation
         /// </summary>
-        Task<(StatusCodes, EntryTemplateResponse?)> DeleteEntryTemplateAsync(DeleteEntryTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, EntryTemplateResponse?)> DeprecateEntryTemplateAsync(DeprecateEntryTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// SeedEntryTemplates operation
@@ -123,6 +123,11 @@ public partial interface ICollectionService : IBannouService
         /// ListAreaContentConfigs operation
         /// </summary>
         Task<(StatusCodes, ListAreaContentConfigsResponse?)> ListAreaContentConfigsAsync(ListAreaContentConfigsRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// DeleteAreaContentConfig operation
+        /// </summary>
+        Task<(StatusCodes, AreaContentConfigResponse?)> DeleteAreaContentConfigAsync(DeleteAreaContentConfigRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// AdvanceDiscovery operation

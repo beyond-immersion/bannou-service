@@ -105,11 +105,15 @@ public class CurrencyAutogainTaskService : BackgroundService
         var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
         var lockProvider = scope.ServiceProvider.GetRequiredService<IDistributedLockProvider>();
 
+        // Acquire all stores once per scope (FOUNDATION TENETS: BackgroundService store access)
         var defStore = stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
-        var stringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyDefinitions);
+        var defStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyDefinitions);
+        var balanceStore = stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalances);
+        var balanceStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyBalances);
+        var walletStore = stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
 
         // Get all definition IDs
-        var allDefsJson = await stringStore.GetAsync(ALL_DEFS_KEY, cancellationToken);
+        var allDefsJson = await defStringStore.GetAsync(ALL_DEFS_KEY, cancellationToken);
         if (string.IsNullOrEmpty(allDefsJson))
         {
             _logger.LogDebug("No currency definitions found for autogain processing");
@@ -128,7 +132,7 @@ public class CurrencyAutogainTaskService : BackgroundService
                 continue;
 
             var processed = await ProcessAutogainForCurrencyAsync(
-                definition, stateStoreFactory, messageBus, lockProvider, cancellationToken);
+                definition, balanceStore, balanceStringStore, walletStore, messageBus, lockProvider, cancellationToken);
             totalProcessed += processed;
         }
 
@@ -148,15 +152,14 @@ public class CurrencyAutogainTaskService : BackgroundService
     /// </summary>
     private async Task<int> ProcessAutogainForCurrencyAsync(
         CurrencyDefinitionModel definition,
-        IStateStoreFactory stateStoreFactory,
+        IStateStore<BalanceModel> balanceStore,
+        IStateStore<string> balanceStringStore,
+        IStateStore<WalletModel> walletStore,
         IMessageBus messageBus,
         IDistributedLockProvider lockProvider,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyAutogainTaskService.ProcessAutogainForCurrencyAsync");
-        var balanceStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyBalances);
-        var balanceStore = stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalances);
-        var walletStore = stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
 
         // Get all wallet IDs with this currency via reverse index
         var indexJson = await balanceStringStore.GetAsync(

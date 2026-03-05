@@ -41,6 +41,14 @@ info:
     resourceType: location
     gracePeriodSeconds: 604800
     cleanupPolicy: ALL_REQUIRED
+  x-compression-callback:
+    resourceType: location
+    sourceType: location-base
+    compressEndpoint: /location/get-compress-data
+    compressPayloadTemplate: '{"locationId": "{{resourceId}}"}'
+    priority: 0
+    templateNamespace: location
+    description: Base location data (name, code, type, realm, hierarchy, spatial data, parent context)
 x-service-layer: GameFoundation
 servers:
 - url: http://localhost:5012
@@ -2291,6 +2299,114 @@ paths:
         : \"Clears an entity's presence binding, removing it from its current location.\\nPublishes a departure event if the
         entity was present at a location.\\n\",\n    \"tags\": [\n        \"Location Presence\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"clearEntityPosition\"\n}"
+  /location/get-compress-data:
+    post:
+      summary: Get location base data for compression
+      operationId: getLocationCompressData
+      tags:
+      - Location Compression
+      description: |
+        Called by Resource service during compression.
+        Returns core location data (name, type, hierarchy, spatial, parent context).
+        Returns BadRequest if location is not deprecated - only deprecated locations can be compressed.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLocationCompressDataRequest'
+      responses:
+        '200':
+          description: Location base data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationBaseArchive'
+        '400':
+          description: Location is not deprecated (cannot compress active locations)
+        '404':
+          description: Location not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetLocationCompressDataRequest\"\
+        ,\n    \"$defs\": {\n        \"GetLocationCompressDataRequest\": {\n            \"description\": \"Request to get
+        location base data for compression archive\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"locationId\"\n            ],\n            \"properties\"\
+        : {\n                \"locationId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"ID of the location to compress\"\n                }\n        \
+        \    }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LocationBaseArchive\"\
+        ,\n    \"$defs\": {\n        \"LocationBaseArchive\": {\n            \"type\": \"object\",\n            \"x-archive-type\"\
+        : true,\n            \"description\": \"Core location data for archive storage and content flywheel consumption.\\
+        nInherits base archive properties from ResourceArchiveBase.\\nThe locationId field equals resourceId for convenience.\\
+        nIncludes one level of parent context to avoid hierarchy walking during archive queries.\\n\",\n            \"allOf\"\
+        : [\n                {\n                    \"type\": \"object\"\n                }\n            ],\n            \"\
+        additionalProperties\": false,\n            \"required\": [\n                \"locationId\",\n                \"name\"\
+        ,\n                \"code\",\n                \"locationType\",\n                \"realmId\",\n                \"\
+        depth\",\n                \"childrenCount\",\n                \"createdAt\"\n            ],\n            \"properties\"\
+        : {\n                \"locationId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique identifier for the location (equals resourceId)\"\n   \
+        \             },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Display name of the location\"\n                },\n                \"code\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Unique code identifier for the location\"\n                },\n\
+        \                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Human-readable description of the location\"\n                },\n \
+        \               \"locationType\": {\n                    \"allOf\": [\n                        {\n               \
+        \             \"$ref\": \"#/$defs/LocationType\"\n                        }\n                    ],\n            \
+        \        \"description\": \"Category of location (Region, City, Building, Room, etc.)\"\n                },\n    \
+        \            \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Realm this location belongs to\"\n                },\n                \"parentLocationId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Parent location ID (null for root locations)\"\n       \
+        \         },\n                \"depth\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Depth in the location hierarchy (0 for root)\"\n                },\n                \"parentName\": {\n      \
+        \              \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Parent location name (one level of context, null if root)\"\n                },\n                \"parentCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Parent location code (one level of context, null if root)\"\n                },\n                \"parentLocationType\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/LocationType\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Parent location type (one level of context, null if root)\"\n                },\n           \
+        \     \"childrenCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
+        of immediate child locations\"\n                },\n                \"childrenCodes\": {\n                    \"type\"\
+        : \"array\",\n                    \"nullable\": true,\n                    \"description\": \"Codes of immediate child
+        locations (null if no children)\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    }\n                },\n                \"bounds\": {\n                    \"allOf\": [\n   \
+        \                     {\n                            \"type\": \"object\"\n                        }\n           \
+        \         ],\n                    \"nullable\": true,\n                    \"description\": \"Spatial bounding box
+        of the location\"\n                },\n                \"boundsPrecision\": {\n                    \"allOf\": [\n\
+        \                        {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n                  \
+        \      }\n                    ],\n                    \"nullable\": true,\n                    \"description\": \"\
+        Precision level of the spatial bounds\"\n                },\n                \"coordinateMode\": {\n             \
+        \       \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/CoordinateMode\"\n\
+        \                        }\n                    ],\n                    \"nullable\": true,\n                    \"\
+        description\": \"Coordinate system used for spatial data\"\n                },\n                \"localOrigin\": {\n\
+        \                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\n \
+        \                       }\n                    ],\n                    \"nullable\": true,\n                    \"\
+        description\": \"Local coordinate origin point\"\n                },\n                \"createdAt\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Real-world creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Real-world last update timestamp\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When the location was deprecated\"\n             \
+        \   },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Reason for deprecation\"\n                }\n          \
+        \  }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        Type classification for locations\",\n            \"enum\": [\n                \"Continent\",\n                \"\
+        Region\",\n                \"City\",\n                \"District\",\n                \"Building\",\n             \
+        \   \"Room\",\n                \"Landmark\",\n                \"Wilderness\",\n                \"Dungeon\",\n    \
+        \            \"Other\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n \
+        \               \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n        },\n\
+        \        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this location's
+        coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n              \
+        \  \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get location base data for compression\",\n    \"description\": \"Called
+        by Resource service during compression.\\nReturns core location data (name, type, hierarchy, spatial, parent context).\\
+        nReturns BadRequest if location is not deprecated - only deprecated locations can be compressed.\\n\",\n    \"tags\"\
+        : [\n        \"Location Compression\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getLocationCompressData\"\
+        \n}"
 components:
   schemas:
     LocationType:
@@ -3253,3 +3369,125 @@ components:
           format: uuid
           nullable: true
           description: Location the entity was removed from (null if entity had no active presence)
+    GetLocationCompressDataRequest:
+      description: Request to get location base data for compression archive
+      type: object
+      additionalProperties: false
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to compress
+    LocationBaseArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Core location data for archive storage and content flywheel consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The locationId field equals resourceId for convenience.
+        Includes one level of parent context to avoid hierarchy walking during archive queries.
+      allOf:
+      - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - locationId
+      - name
+      - code
+      - locationType
+      - realmId
+      - depth
+      - childrenCount
+      - createdAt
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Unique identifier for the location (equals resourceId)
+        name:
+          type: string
+          description: Display name of the location
+        code:
+          type: string
+          description: Unique code identifier for the location
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of the location
+        locationType:
+          allOf:
+          - $ref: '#/components/schemas/LocationType'
+          description: Category of location (Region, City, Building, Room, etc.)
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this location belongs to
+        parentLocationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent location ID (null for root locations)
+        depth:
+          type: integer
+          description: Depth in the location hierarchy (0 for root)
+        parentName:
+          type: string
+          nullable: true
+          description: Parent location name (one level of context, null if root)
+        parentCode:
+          type: string
+          nullable: true
+          description: Parent location code (one level of context, null if root)
+        parentLocationType:
+          allOf:
+          - $ref: '#/components/schemas/LocationType'
+          nullable: true
+          description: Parent location type (one level of context, null if root)
+        childrenCount:
+          type: integer
+          description: Number of immediate child locations
+        childrenCodes:
+          type: array
+          nullable: true
+          description: Codes of immediate child locations (null if no children)
+          items:
+            type: string
+        bounds:
+          allOf:
+          - $ref: './common-api.yaml#/components/schemas/BoundingBox3D'
+          nullable: true
+          description: Spatial bounding box of the location
+        boundsPrecision:
+          allOf:
+          - $ref: '#/components/schemas/BoundsPrecision'
+          nullable: true
+          description: Precision level of the spatial bounds
+        coordinateMode:
+          allOf:
+          - $ref: '#/components/schemas/CoordinateMode'
+          nullable: true
+          description: Coordinate system used for spatial data
+        localOrigin:
+          allOf:
+          - $ref: './common-api.yaml#/components/schemas/Position3D'
+          nullable: true
+          description: Local coordinate origin point
+        createdAt:
+          type: string
+          format: date-time
+          description: Real-world creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Real-world last update timestamp
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the location was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation

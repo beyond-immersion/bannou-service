@@ -185,6 +185,22 @@ public partial interface IContractClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
+    /// Hard-delete a terminal contract instance
+    /// </summary>
+    /// <remarks>
+    /// Permanently deletes a contract instance that has reached a terminal state
+    /// <br/>(Fulfilled, Terminated, Expired, or Declined). Removes the instance record
+    /// <br/>and all associated index entries. Breach records associated with the
+    /// <br/>contract are also deleted. This is a hard delete per T31 (instances use
+    /// <br/>immediate deletion, not deprecation).
+    /// </remarks>
+    /// <returns>Instance deleted successfully</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<DeleteContractInstanceResponse> DeleteContractInstanceAsync(DeleteContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
     /// Get current status and milestone progress
     /// </summary>
     /// <remarks>
@@ -1579,6 +1595,105 @@ public partial class ContractClient : IContractClient, BeyondImmersion.BannouSer
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
                         throw new BeyondImmersion.Bannou.Core.ApiException("Contract cannot be terminated (policy violation)", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Contract not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Hard-delete a terminal contract instance
+    /// </summary>
+    /// <remarks>
+    /// Permanently deletes a contract instance that has reached a terminal state
+    /// <br/>(Fulfilled, Terminated, Expired, or Declined). Removes the instance record
+    /// <br/>and all associated index entries. Breach records associated with the
+    /// <br/>contract are also deleted. This is a hard delete per T31 (instances use
+    /// <br/>immediate deletion, not deprecation).
+    /// </remarks>
+    /// <returns>Instance deleted successfully</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<DeleteContractInstanceResponse> DeleteContractInstanceAsync(DeleteContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "contract/instance/delete"
+        urlBuilder_.Append("contract/instance/delete");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<DeleteContractInstanceResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Contract is not in a terminal state and cannot be deleted", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 404)
@@ -3509,7 +3624,7 @@ public partial class ContractClient : IContractClient, BeyondImmersion.BannouSer
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -3521,7 +3636,7 @@ public partial class ContractClient : IContractClient, BeyondImmersion.BannouSer
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

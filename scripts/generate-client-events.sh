@@ -47,6 +47,14 @@ if [ -f "$COMMON_CLIENT_EVENTS_SCHEMA" ]; then
     TARGET_DIR="../bannou-service/Generated"
     mkdir -p "$TARGET_DIR"
 
+    # Extract $refs to common-api.yaml types (shared types like CapabilityUpdateReason)
+    COMMON_REFS=$(extract_common_api_refs "$COMMON_CLIENT_EVENTS_SCHEMA")
+    COMMON_EXCLUSIONS="ApiException,ApiException\<TResult\>,BaseClientEvent"
+    if [ -n "$COMMON_REFS" ]; then
+        COMMON_EXCLUSIONS="${COMMON_EXCLUSIONS},${COMMON_REFS}"
+        echo -e "    ${BLUE}Excluding common types: ${COMMON_REFS}${NC}"
+    fi
+
     "$NSWAG_EXE" openapi2csclient \
         "/input:$COMMON_CLIENT_EVENTS_SCHEMA" \
         "/output:$TARGET_DIR/CommonClientEventsModels.cs" \
@@ -54,8 +62,8 @@ if [ -f "$COMMON_CLIENT_EVENTS_SCHEMA" ]; then
         "/generateClientClasses:false" \
         "/generateClientInterfaces:false" \
         "/generateDtoTypes:true" \
-        "/excludedTypeNames:ApiException,ApiException\<TResult\>,BaseClientEvent" \
-        "/additionalNamespaceUsages:BeyondImmersion.Bannou.Core" \
+        "/excludedTypeNames:${COMMON_EXCLUSIONS}" \
+        "/additionalNamespaceUsages:BeyondImmersion.Bannou.Core,BeyondImmersion.BannouService" \
         "/jsonLibrary:SystemTextJson" \
         "/generateNullableReferenceTypes:true" \
         "/newLineBehavior:LF" \

@@ -15,7 +15,7 @@
 | State Stores | game-session-statestore (MySQL) |
 | Events Published | 7 (`game-session.created`, `game-session.updated`, `game-session.deleted`, `game-session.player-joined`, `game-session.player-left`, `game-session.cancelled`, `game-session.action.performed`) |
 | Events Consumed | 4 |
-| Client Events | 4 pushed (4 additional defined in schema but not used in code) |
+| Client Events | 8 pushed (`SessionChatReceived`, `SessionCancelled`, `ShortcutPublished`, `PlayerJoined`, `PlayerLeft`, `PlayerKicked`, `SessionStateChanged` on join/leave/kick) |
 | Background Services | 2 |
 
 ---
@@ -91,7 +91,7 @@
 | `IDistributedLockProvider` | Distributed locks for session mutations |
 | `IMessageBus` | Event publishing |
 | `IEventConsumer` | Event handler registration |
-| `IClientEventPublisher` | WebSocket push (shortcuts, chat, cancellation) |
+| `IClientEventPublisher` | WebSocket push (shortcuts, chat, cancellation, player-joined, player-left, state-changed) |
 | `ITelemetryProvider` | Telemetry span instrumentation |
 | `IPermissionClient` | Permission state management |
 | `ISubscriptionClient` | Subscription queries |
@@ -186,6 +186,9 @@ LOCK GameSessionLock:session:{lobbyId}               -> 409 if fails
   WRITE session:session:{lobbyId} <- updated model
 PUBLISH game-session.player-joined { sessionId, accountId }
 PUBLISH game-session.updated { sessionId, changedFields: [currentPlayers, status] }
+PUSH PlayerJoinedClientEvent to OTHER players' sessions { sessionId, player { accountId, displayName, role, characterData }, currentPlayerCount, maxPlayers }
+IF previousStatus != model.Status
+  PUSH SessionStateChangedClientEvent to ALL players' sessions { sessionId, previousState, newState, reason = "player_joined", changedBy = accountId }
 RETURN (200, JoinGameSessionResponse { SessionId, PlayerRole = Player, GameData })
 ```
 
@@ -206,6 +209,9 @@ LOCK GameSessionLock:session:{lobbyId}               -> 409 if fails
   WRITE session:session:{lobbyId} <- updated model
 PUBLISH game-session.player-left { sessionId, accountId, kicked = false }
 PUBLISH game-session.updated { sessionId, changedFields: [currentPlayers, status] }
+PUSH PlayerLeftClientEvent to REMAINING players' sessions { sessionId, playerId, displayName, currentPlayerCount }
+IF previousStatus != model.Status
+  PUSH SessionStateChangedClientEvent to REMAINING players' sessions { sessionId, previousState, newState, reason = "player_left" }
 RETURN (200)
 ```
 
@@ -225,6 +231,9 @@ LOCK GameSessionLock:session:{sessionId}             -> 409 if fails
   WRITE session:session:{sessionId} <- updated model
 PUBLISH game-session.player-left { sessionId, accountId = targetAccountId, kicked = true, reason }
 PUBLISH game-session.updated { sessionId, changedFields: [currentPlayers, status] }
+PUSH PlayerKickedClientEvent to REMAINING + KICKED player sessions { sessionId, kickedPlayerId, kickedPlayerName, reason }
+IF previousStatus != model.Status
+  PUSH SessionStateChangedClientEvent to REMAINING players' sessions { sessionId, previousState, newState, reason = "player_kicked" }
 RETURN (200)
 ```
 
@@ -292,6 +301,9 @@ LOCK GameSessionLock:session:{gameSessionId}         -> 409 if fails
   WRITE session:session:{gameSessionId} <- updated model
 PUBLISH game-session.player-joined { sessionId = gameSessionId, accountId }
 PUBLISH game-session.updated { sessionId, changedFields: [currentPlayers, status, reservations] }
+PUSH PlayerJoinedClientEvent to OTHER players' sessions { sessionId, player { accountId, displayName, role, characterData }, currentPlayerCount, maxPlayers }
+IF previousStatus != model.Status
+  PUSH SessionStateChangedClientEvent to ALL players' sessions { sessionId, previousState, newState, reason = "player_joined", changedBy = accountId }
 RETURN (200, JoinGameSessionResponse { SessionId = gameSessionId, PlayerRole = Player, GameData })
 ```
 
@@ -312,6 +324,9 @@ LOCK GameSessionLock:session:{gameSessionId}         -> 409 if fails
   WRITE session:session:{gameSessionId} <- updated model
 PUBLISH game-session.player-left { sessionId = gameSessionId, accountId, kicked = false }
 PUBLISH game-session.updated { sessionId, changedFields: [currentPlayers, status] }
+PUSH PlayerLeftClientEvent to REMAINING players' sessions { sessionId, playerId, displayName, currentPlayerCount }
+IF previousStatus != model.Status
+  PUSH SessionStateChangedClientEvent to REMAINING players' sessions { sessionId, previousState, newState, reason = "player_left" }
 RETURN (200)
 ```
 

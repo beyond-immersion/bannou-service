@@ -239,4 +239,22 @@ public sealed class RealmProxy
         return _client.InvokeAsync<SeedRealmsRequest, SeedRealmsResponse>(
             "/realm/seed", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Get realm context for location archive
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RealmLocationArchiveContext on success.</returns>
+    public Task<ApiResponse<RealmLocationArchiveContext>> GetLocationCompressContextAsync(
+        GetLocationCompressContextRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetLocationCompressContextRequest, RealmLocationArchiveContext>(
+            "/realm/get-location-compress-context", request, channel, timeout, cancellationToken);
+    }
 }

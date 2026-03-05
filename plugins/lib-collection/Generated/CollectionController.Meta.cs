@@ -174,6 +174,7 @@ public partial class CollectionController
                 "displayName",
                 "hideWhenLocked",
                 "itemTemplateId",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -267,6 +268,22 @@ public partial class CollectionController
                     "nullable": true,
                     "description": "Composer or creator name"
                 },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this entry template is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this template was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation (null if not deprecated)"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -282,7 +299,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\ nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         },
         "DiscoveryLevel": {
             "type": "object",
@@ -408,6 +425,7 @@ public partial class CollectionController
                 "displayName",
                 "hideWhenLocked",
                 "itemTemplateId",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -501,6 +519,22 @@ public partial class CollectionController
                     "nullable": true,
                     "description": "Composer or creator name"
                 },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this entry template is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this template was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation (null if not deprecated)"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -516,7 +550,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\ nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         },
         "DiscoveryLevel": {
             "type": "object",
@@ -629,6 +663,11 @@ public partial class CollectionController
                     "nullable": true,
                     "description": "Optional filter by category"
                 },
+                "includeDeprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Include deprecated templates in results (excluded by default)"
+                },
                 "cursor": {
                     "type": "string",
                     "nullable": true,
@@ -645,7 +684,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -695,6 +734,7 @@ public partial class CollectionController
                 "displayName",
                 "hideWhenLocked",
                 "itemTemplateId",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -788,6 +828,22 @@ public partial class CollectionController
                     "nullable": true,
                     "description": "Composer or creator name"
                 },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this entry template is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this template was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation (null if not deprecated)"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -803,7 +859,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         },
         "DiscoveryLevel": {
             "type": "object",
@@ -1021,6 +1077,7 @@ public partial class CollectionController
                 "displayName",
                 "hideWhenLocked",
                 "itemTemplateId",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -1114,6 +1171,22 @@ public partial class CollectionController
                     "nullable": true,
                     "description": "Composer or creator name"
                 },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this entry template is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this template was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation (null if not deprecated)"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -1129,7 +1202,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\ nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         },
         "DiscoveryLevel": {
             "type": "object",
@@ -1212,16 +1285,16 @@ public partial class CollectionController
 
     #endregion
 
-    #region Meta Endpoints for DeleteEntryTemplate
+    #region Meta Endpoints for DeprecateEntryTemplate
 
-    private static readonly string _DeleteEntryTemplate_RequestSchema = """
+    private static readonly string _DeprecateEntryTemplate_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/DeleteEntryTemplateRequest",
+    "$ref": "#/$defs/DeprecateEntryTemplateRequest",
     "$defs": {
-        "DeleteEntryTemplateRequest": {
+        "DeprecateEntryTemplateRequest": {
             "type": "object",
-            "description": "Request to delete an entry template",
+            "description": "Request to deprecate an entry template (Category B \u2014 one-way, no delete)",
             "additionalProperties": false,
             "required": [
                 "entryTemplateId"
@@ -1230,7 +1303,13 @@ public partial class CollectionController
                 "entryTemplateId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Entry template to delete"
+                    "description": "Entry template to deprecate"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation (recommended but not required for Category B templates)"
                 }
             }
         }
@@ -1238,7 +1317,7 @@ public partial class CollectionController
 }
 """;
 
-    private static readonly string _DeleteEntryTemplate_ResponseSchema = """
+    private static readonly string _DeprecateEntryTemplate_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$ref": "#/$defs/EntryTemplateResponse",
@@ -1255,6 +1334,7 @@ public partial class CollectionController
                 "displayName",
                 "hideWhenLocked",
                 "itemTemplateId",
+                "isDeprecated",
                 "createdAt"
             ],
             "properties": {
@@ -1348,6 +1428,22 @@ public partial class CollectionController
                     "nullable": true,
                     "description": "Composer or creator name"
                 },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this entry template is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this template was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation (null if not deprecated)"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -1363,7 +1459,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\ nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         },
         "DiscoveryLevel": {
             "type": "object",
@@ -1392,57 +1488,57 @@ public partial class CollectionController
 }
 """;
 
-    private static readonly string _DeleteEntryTemplate_Info = """
+    private static readonly string _DeprecateEntryTemplate_Info = """
 {
-    "summary": "Delete an entry template",
-    "description": "Delete an entry template. Warns if instances reference it but does not block deletion.",
+    "summary": "Deprecate an entry template",
+    "description": "Marks an entry template as deprecated. Deprecated templates cannot be used\nto grant new entries, but existing unlocked entries remain valid.\ nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\nno delete. Idempotent \u2014 returns OK if already deprecated.\n",
     "tags": [
         "EntryTemplate"
     ],
     "deprecated": false,
-    "operationId": "deleteEntryTemplate"
+    "operationId": "deprecateEntryTemplate"
 }
 """;
 
-    /// <summary>Returns endpoint information for DeleteEntryTemplate</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/entry-template/delete/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteEntryTemplate_MetaInfo()
+    /// <summary>Returns endpoint information for DeprecateEntryTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/entry-template/deprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateEntryTemplate_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "Collection",
             "POST",
-            "/collection/entry-template/delete",
-            _DeleteEntryTemplate_Info));
+            "/collection/entry-template/deprecate",
+            _DeprecateEntryTemplate_Info));
 
-    /// <summary>Returns request schema for DeleteEntryTemplate</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/entry-template/delete/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteEntryTemplate_MetaRequestSchema()
+    /// <summary>Returns request schema for DeprecateEntryTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/entry-template/deprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateEntryTemplate_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Collection",
             "POST",
-            "/collection/entry-template/delete",
+            "/collection/entry-template/deprecate",
             "request-schema",
-            _DeleteEntryTemplate_RequestSchema));
+            _DeprecateEntryTemplate_RequestSchema));
 
-    /// <summary>Returns response schema for DeleteEntryTemplate</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/entry-template/delete/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteEntryTemplate_MetaResponseSchema()
+    /// <summary>Returns response schema for DeprecateEntryTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/entry-template/deprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateEntryTemplate_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Collection",
             "POST",
-            "/collection/entry-template/delete",
+            "/collection/entry-template/deprecate",
             "response-schema",
-            _DeleteEntryTemplate_ResponseSchema));
+            _DeprecateEntryTemplate_ResponseSchema));
 
-    /// <summary>Returns full schema for DeleteEntryTemplate</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/entry-template/delete/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteEntryTemplate_MetaFullSchema()
+    /// <summary>Returns full schema for DeprecateEntryTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/entry-template/deprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateEntryTemplate_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "Collection",
             "POST",
-            "/collection/entry-template/delete",
-            _DeleteEntryTemplate_Info,
-            _DeleteEntryTemplate_RequestSchema,
-            _DeleteEntryTemplate_ResponseSchema));
+            "/collection/entry-template/deprecate",
+            _DeprecateEntryTemplate_Info,
+            _DeprecateEntryTemplate_RequestSchema,
+            _DeprecateEntryTemplate_ResponseSchema));
 
     #endregion
 
@@ -4015,6 +4111,155 @@ public partial class CollectionController
             _ListAreaContentConfigs_Info,
             _ListAreaContentConfigs_RequestSchema,
             _ListAreaContentConfigs_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeleteAreaContentConfig
+
+    private static readonly string _DeleteAreaContentConfig_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteAreaContentConfigRequest",
+    "$defs": {
+        "DeleteAreaContentConfigRequest": {
+            "type": "object",
+            "description": "Request to delete an area content configuration",
+            "additionalProperties": false,
+            "required": [
+                "areaConfigId"
+            ],
+            "properties": {
+                "areaConfigId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Area content config to delete"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteAreaContentConfig_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AreaContentConfigResponse",
+    "$defs": {
+        "AreaContentConfigResponse": {
+            "type": "object",
+            "description": "Area content configuration",
+            "additionalProperties": false,
+            "required": [
+                "areaConfigId",
+                "areaCode",
+                "gameServiceId",
+                "collectionType",
+                "themes",
+                "defaultEntryCode",
+                "createdAt"
+            ],
+            "properties": {
+                "areaConfigId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique area config identifier"
+                },
+                "areaCode": {
+                    "type": "string",
+                    "description": "Area code"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game service this area config belongs to"
+                },
+                "collectionType": {
+                    "$ref": "#/$defs/CollectionType",
+                    "description": "Type of collection this config applies to"
+                },
+                "themes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Theme tags for this area"
+                },
+                "defaultEntryCode": {
+                    "type": "string",
+                    "description": "Default entry code"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this area config was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this area config was last updated"
+                }
+            }
+        },
+        "CollectionType": {
+            "type": "string",
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteAreaContentConfig_Info = """
+{
+    "summary": "Delete an area content config",
+    "description": "Delete an area content configuration. Area configs are configuration singletons with no deprecation lifecycle \u2014 immediate hard delete.",
+    "tags": [
+        "Content"
+    ],
+    "deprecated": false,
+    "operationId": "deleteAreaContentConfig"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteAreaContentConfig</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAreaContentConfig_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Collection",
+            "POST",
+            "/collection/content/area-config/delete",
+            _DeleteAreaContentConfig_Info));
+
+    /// <summary>Returns request schema for DeleteAreaContentConfig</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAreaContentConfig_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Collection",
+            "POST",
+            "/collection/content/area-config/delete",
+            "request-schema",
+            _DeleteAreaContentConfig_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteAreaContentConfig</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAreaContentConfig_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Collection",
+            "POST",
+            "/collection/content/area-config/delete",
+            "response-schema",
+            _DeleteAreaContentConfig_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteAreaContentConfig</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAreaContentConfig_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Collection",
+            "POST",
+            "/collection/content/area-config/delete",
+            _DeleteAreaContentConfig_Info,
+            _DeleteAreaContentConfig_RequestSchema,
+            _DeleteAreaContentConfig_ResponseSchema));
 
     #endregion
 

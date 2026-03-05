@@ -7158,6 +7158,101 @@ public partial class ContractController
 
     #endregion
 
+    #region Meta Endpoints for DeleteContractInstance
+
+    private static readonly string _DeleteContractInstance_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteContractInstanceRequest",
+    "$defs": {
+        "DeleteContractInstanceRequest": {
+            "type": "object",
+            "description": "Request to hard-delete a terminal contract instance",
+            "additionalProperties": false,
+            "required": [
+                "contractId"
+            ],
+            "properties": {
+                "contractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contract instance to delete"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteContractInstance_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteContractInstanceResponse",
+    "$defs": {
+        "DeleteContractInstanceResponse": {
+            "type": "object",
+            "description": "Empty response. HTTP 200 confirms the instance was deleted.",
+            "additionalProperties": false,
+            "properties": {}
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteContractInstance_Info = """
+{
+    "summary": "Hard-delete a terminal contract instance",
+    "description": "Permanently deletes a contract instance that has reached a terminal state\n(Fulfilled, Terminated, Expired, or Declined). Removes the instance record\nand all associated index entries. Breach records associated with the\ncontract are also deleted. This is a hard delete per T31 (instances use\nimmediate deletion, not deprecation).\n",
+    "tags": [
+        "Instances"
+    ],
+    "deprecated": false,
+    "operationId": "deleteContractInstance"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteContractInstance</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteContractInstance_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/delete",
+            _DeleteContractInstance_Info));
+
+    /// <summary>Returns request schema for DeleteContractInstance</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteContractInstance_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/delete",
+            "request-schema",
+            _DeleteContractInstance_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteContractInstance</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteContractInstance_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/delete",
+            "response-schema",
+            _DeleteContractInstance_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteContractInstance</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteContractInstance_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/delete",
+            _DeleteContractInstance_Info,
+            _DeleteContractInstance_RequestSchema,
+            _DeleteContractInstance_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for GetContractInstanceStatus
 
     private static readonly string _GetContractInstanceStatus_RequestSchema = """

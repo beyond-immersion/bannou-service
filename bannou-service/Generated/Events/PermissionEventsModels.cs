@@ -24,7 +24,6 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Permission;
 
 
 namespace BeyondImmersion.BannouService.Events;

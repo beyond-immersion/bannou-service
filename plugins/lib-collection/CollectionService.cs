@@ -265,6 +265,9 @@ public partial class CollectionService : ICollectionService
             Duration = model.Duration,
             LoopPoint = model.LoopPoint,
             Composer = model.Composer,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
         };
@@ -720,11 +723,17 @@ public partial class CollectionService : ICollectionService
             t => t.CollectionType == body.CollectionType && t.GameServiceId == body.GameServiceId,
             cancellationToken: cancellationToken);
 
-        // Apply optional category filter
+        // Filter out deprecated templates unless explicitly requested
         IEnumerable<EntryTemplateModel> filtered = results;
+        if (!body.IncludeDeprecated)
+        {
+            filtered = filtered.Where(t => !t.IsDeprecated);
+        }
+
+        // Apply optional category filter
         if (!string.IsNullOrEmpty(body.Category))
         {
-            filtered = results.Where(t => t.Category == body.Category);
+            filtered = filtered.Where(t => t.Category == body.Category);
         }
 
         var allItems = filtered.ToList();
@@ -884,8 +893,8 @@ public partial class CollectionService : ICollectionService
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, EntryTemplateResponse?)> DeleteEntryTemplateAsync(
-        DeleteEntryTemplateRequest body,
+    public async Task<(StatusCodes, EntryTemplateResponse?)> DeprecateEntryTemplateAsync(
+        DeprecateEntryTemplateRequest body,
         CancellationToken cancellationToken)
     {
         await using var lockHandle = await _lockProvider.LockAsync(
@@ -910,33 +919,33 @@ public partial class CollectionService : ICollectionService
             return (StatusCodes.NotFound, null);
         }
 
-        // Check if any collection instances reference this template (warn if so)
-        var collectionsOfType = await CollectionStore.QueryAsync(
-            c => c.CollectionType == template.CollectionType && c.GameServiceId == template.GameServiceId,
-            cancellationToken: cancellationToken);
-
-        foreach (var collection in collectionsOfType)
+        // Category B idempotency: already deprecated → return OK
+        if (template.IsDeprecated)
         {
-            var cache = await CollectionCache.GetAsync(BuildCacheKey(collection.CollectionId), cancellationToken);
-            if (cache?.UnlockedEntries.Any(e => e.Code == template.Code) == true)
-            {
-                _logger.LogWarning(
-                    "Deleting entry template {EntryTemplateId} ({Code}) which is referenced by collection {CollectionId} for {OwnerType} {OwnerId}",
-                    template.EntryTemplateId, template.Code, collection.CollectionId, collection.OwnerType, collection.OwnerId);
-            }
+            _logger.LogInformation("Entry template {EntryTemplateId} already deprecated, returning OK", body.EntryTemplateId);
+            return (StatusCodes.OK, MapTemplateToResponse(template));
         }
 
-        await EntryTemplateStore.DeleteAsync(
-            BuildTemplateKey(template.EntryTemplateId),
-            cancellationToken);
+        template.IsDeprecated = true;
+        template.DeprecatedAt = DateTimeOffset.UtcNow;
+        template.DeprecationReason = body.Reason;
+        template.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await EntryTemplateStore.DeleteAsync(
+        await EntryTemplateStore.SaveAsync(
+            BuildTemplateKey(template.EntryTemplateId),
+            template,
+            cancellationToken: cancellationToken);
+
+        await EntryTemplateStore.SaveAsync(
             BuildTemplateByCodeKey(template.GameServiceId, template.CollectionType, template.Code),
-            cancellationToken);
+            template,
+            cancellationToken: cancellationToken);
+
+        var changedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" };
 
         await _messageBus.TryPublishAsync(
-            "collection.entry-template.deleted",
-            new CollectionEntryTemplateDeletedEvent
+            "collection.entry-template.updated",
+            new CollectionEntryTemplateUpdatedEvent
             {
                 EntryTemplateId = template.EntryTemplateId,
                 Code = template.Code,
@@ -947,11 +956,12 @@ public partial class CollectionService : ICollectionService
                 HideWhenLocked = template.HideWhenLocked,
                 ItemTemplateId = template.ItemTemplateId,
                 CreatedAt = template.CreatedAt,
-                UpdatedAt = template.UpdatedAt
+                UpdatedAt = template.UpdatedAt,
+                ChangedFields = changedFields
             },
             cancellationToken: cancellationToken);
 
-        _logger.LogInformation("Deleted entry template {EntryTemplateId}", template.EntryTemplateId);
+        _logger.LogInformation("Deprecated entry template {EntryTemplateId}", template.EntryTemplateId);
 
         return (StatusCodes.OK, MapTemplateToResponse(template));
     }
@@ -1304,6 +1314,29 @@ public partial class CollectionService : ICollectionService
                 cancellationToken: cancellationToken);
 
             return (StatusCodes.NotFound, null);
+        }
+
+        // Category B instance creation guard: reject grants for deprecated templates
+        if (template.IsDeprecated)
+        {
+            _logger.LogWarning(
+                "Rejecting grant of deprecated entry template {EntryCode} for {OwnerType} {OwnerId}",
+                body.EntryCode, body.OwnerType, body.OwnerId);
+
+            await _messageBus.TryPublishAsync(
+                CollectionTopics.EntryGrantFailed,
+                new CollectionEntryGrantFailedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    OwnerId = body.OwnerId,
+                    OwnerType = body.OwnerType,
+                    EntryCode = body.EntryCode,
+                    Reason = GrantFailureReason.TemplateDeprecated
+                },
+                cancellationToken: cancellationToken);
+
+            return (StatusCodes.BadRequest, null);
         }
 
         // Find or auto-create collection
@@ -2134,6 +2167,47 @@ public partial class CollectionService : ICollectionService
         {
             Configs = configs.Select(MapAreaContentToResponse).ToList()
         });
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, AreaContentConfigResponse?)> DeleteAreaContentConfigAsync(
+        DeleteAreaContentConfigRequest body,
+        CancellationToken cancellationToken)
+    {
+        var config = await AreaContentStore.GetAsync(
+            BuildAreaContentKey(body.AreaConfigId),
+            cancellationToken);
+
+        if (config == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        await AreaContentStore.DeleteAsync(
+            BuildAreaContentKey(config.AreaConfigId),
+            cancellationToken);
+
+        await AreaContentStore.DeleteAsync(
+            BuildAreaContentByCodeKey(config.GameServiceId, config.CollectionType, config.AreaCode),
+            cancellationToken);
+
+        await _messageBus.TryPublishAsync(
+            "collection.area-content-config.deleted",
+            new CollectionAreaContentConfigDeletedEvent
+            {
+                AreaConfigId = config.AreaConfigId,
+                AreaCode = config.AreaCode,
+                CollectionType = config.CollectionType,
+                GameServiceId = config.GameServiceId,
+                DefaultEntryCode = config.DefaultEntryCode,
+                CreatedAt = config.CreatedAt,
+                UpdatedAt = config.UpdatedAt
+            },
+            cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Deleted area content config {AreaConfigId} for area {AreaCode}", config.AreaConfigId, config.AreaCode);
+
+        return (StatusCodes.OK, MapAreaContentToResponse(config));
     }
 
     #endregion

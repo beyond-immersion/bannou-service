@@ -2484,6 +2484,7 @@ components:
           description: Child archives from dependent resources (populated by lib-resource compression)
           items:
             $ref: '#/components/schemas/ResourceArchiveBase'
+
 tags:
 - name: Composition
   description: Storyline plan composition

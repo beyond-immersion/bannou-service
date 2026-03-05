@@ -25,13 +25,51 @@ namespace BeyondImmersion.BannouService.Currency;
 public partial class CurrencyService : ICurrencyService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<CurrencyService> _logger;
     private readonly CurrencyServiceConfiguration _configuration;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly ICurrencyDataCache _currencyCache;
+
+    /// <summary>State store for currency definition models (MySQL-backed).</summary>
+    private readonly IStateStore<CurrencyDefinitionModel> _definitionStore;
+
+    /// <summary>String index store for currency definitions (code-to-ID mappings, base currency index).</summary>
+    private readonly IStateStore<string> _definitionStringStore;
+
+    /// <summary>State store for wallet models (MySQL-backed).</summary>
+    private readonly IStateStore<WalletModel> _walletStore;
+
+    /// <summary>String index store for wallets (owner-to-wallet-ID mappings).</summary>
+    private readonly IStateStore<string> _walletStringStore;
+
+    /// <summary>State store for balance models (MySQL-backed).</summary>
+    private readonly IStateStore<BalanceModel> _balanceStore;
+
+    /// <summary>String index store for balances (wallet-balance and currency-balance indexes).</summary>
+    private readonly IStateStore<string> _balanceStringStore;
+
+    /// <summary>State store for transaction models (MySQL-backed).</summary>
+    private readonly IStateStore<TransactionModel> _transactionStore;
+
+    /// <summary>String index store for transactions (wallet and reference indexes).</summary>
+    private readonly IStateStore<string> _transactionStringStore;
+
+    /// <summary>State store for hold models (MySQL-backed).</summary>
+    private readonly IStateStore<HoldModel> _holdStore;
+
+    /// <summary>String index store for holds (wallet-currency hold indexes).</summary>
+    private readonly IStateStore<string> _holdStringStore;
+
+    /// <summary>String store for idempotency key tracking (Redis-backed with TTL).</summary>
+    private readonly IStateStore<string> _idempotencyStore;
+
+    /// <summary>Redis cache store for balance models (read-through cache with TTL).</summary>
+    private readonly IStateStore<BalanceModel> _balanceCacheStore;
+
+    /// <summary>Redis cache store for hold models (read-through cache with TTL).</summary>
+    private readonly IStateStore<HoldModel> _holdCacheStore;
 
     /// <summary>
     /// Initializes a new instance of the CurrencyService.
@@ -48,13 +86,26 @@ public partial class CurrencyService : ICurrencyService
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _lockProvider = lockProvider;
         _telemetryProvider = telemetryProvider;
         _entitySessionRegistry = entitySessionRegistry;
         _currencyCache = currencyCache;
+
+        _definitionStore = stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
+        _definitionStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyDefinitions);
+        _walletStore = stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
+        _walletStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyWallets);
+        _balanceStore = stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalances);
+        _balanceStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyBalances);
+        _transactionStore = stateStoreFactory.GetStore<TransactionModel>(StateStoreDefinitions.CurrencyTransactions);
+        _transactionStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyTransactions);
+        _holdStore = stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
+        _holdStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyHolds);
+        _idempotencyStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyIdempotency);
+        _balanceCacheStore = stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalanceCache);
+        _holdCacheStore = stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHoldsCache);
 
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
@@ -68,11 +119,8 @@ public partial class CurrencyService : ICurrencyService
     {
         _logger.LogInformation("Creating currency definition with code: {Code}", body.Code);
 
-        var store = _stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyDefinitions);
-
         // Check code uniqueness
-        var existingId = await stringStore.GetAsync($"{DEF_CODE_INDEX}{body.Code}", cancellationToken);
+        var existingId = await _definitionStringStore.GetAsync($"{DEF_CODE_INDEX}{body.Code}", cancellationToken);
         if (!string.IsNullOrEmpty(existingId))
         {
             _logger.LogWarning("Currency code already exists: {Code}", body.Code);
@@ -83,7 +131,7 @@ public partial class CurrencyService : ICurrencyService
         if (body.IsBaseCurrency)
         {
             var baseCurrencyIndexKey = $"{BASE_CURRENCY_INDEX}{body.Scope}";
-            var existingBaseId = await stringStore.GetAsync(baseCurrencyIndexKey, cancellationToken);
+            var existingBaseId = await _definitionStringStore.GetAsync(baseCurrencyIndexKey, cancellationToken);
             if (!string.IsNullOrEmpty(existingBaseId))
             {
                 _logger.LogWarning("Base currency already exists for scope: {Scope}", body.Scope);
@@ -134,13 +182,13 @@ public partial class CurrencyService : ICurrencyService
             ModifiedAt = now
         };
 
-        await store.SaveAsync($"{DEF_PREFIX}{definitionId}", model, cancellationToken: cancellationToken);
-        await stringStore.SaveAsync($"{DEF_CODE_INDEX}{body.Code}", definitionId.ToString(), cancellationToken: cancellationToken);
-        await AddToListAsync(StateStoreDefinitions.CurrencyDefinitions, ALL_DEFS_KEY, definitionId.ToString(), cancellationToken);
+        await _definitionStore.SaveAsync($"{DEF_PREFIX}{definitionId}", model, cancellationToken: cancellationToken);
+        await _definitionStringStore.SaveAsync($"{DEF_CODE_INDEX}{body.Code}", definitionId.ToString(), cancellationToken: cancellationToken);
+        await AddToListAsync(_definitionStringStore, ALL_DEFS_KEY, definitionId.ToString(), cancellationToken);
 
         if (body.IsBaseCurrency)
         {
-            await stringStore.SaveAsync($"{BASE_CURRENCY_INDEX}{body.Scope}", $"{definitionId}:{body.Code}", cancellationToken: cancellationToken);
+            await _definitionStringStore.SaveAsync($"{BASE_CURRENCY_INDEX}{body.Scope}", $"{definitionId}:{body.Code}", cancellationToken: cancellationToken);
         }
 
         await _messageBus.TryPublishAsync("currency.definition.created", new CurrencyDefinitionCreatedEvent
@@ -179,10 +227,7 @@ public partial class CurrencyService : ICurrencyService
         ListCurrencyDefinitionsRequest body,
         CancellationToken cancellationToken = default)
     {
-        var store = _stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyDefinitions);
-
-        var allDefsJson = await stringStore.GetAsync(ALL_DEFS_KEY, cancellationToken);
+        var allDefsJson = await _definitionStringStore.GetAsync(ALL_DEFS_KEY, cancellationToken);
         var allIds = string.IsNullOrEmpty(allDefsJson)
             ? new List<string>()
             : BannouJson.Deserialize<List<string>>(allDefsJson) ?? new List<string>();
@@ -190,7 +235,7 @@ public partial class CurrencyService : ICurrencyService
         var definitions = new List<CurrencyDefinitionResponse>();
         foreach (var id in allIds)
         {
-            var model = await store.GetAsync($"{DEF_PREFIX}{id}", cancellationToken);
+            var model = await _definitionStore.GetAsync($"{DEF_PREFIX}{id}", cancellationToken);
             if (model is null) continue;
             if (!body.IncludeInactive && !model.IsActive) continue;
             if (body.Scope is not null && model.Scope != body.Scope) continue;
@@ -212,9 +257,8 @@ public partial class CurrencyService : ICurrencyService
         UpdateCurrencyDefinitionRequest body,
         CancellationToken cancellationToken = default)
     {
-        var store = _stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
         var key = $"{DEF_PREFIX}{body.DefinitionId}";
-        var model = await store.GetAsync(key, cancellationToken);
+        var model = await _definitionStore.GetAsync(key, cancellationToken);
 
         if (model is null)
         {
@@ -247,7 +291,7 @@ public partial class CurrencyService : ICurrencyService
         if (body.IsActive is not null) model.IsActive = body.IsActive.Value;
         model.ModifiedAt = DateTimeOffset.UtcNow;
 
-        await store.SaveAsync(key, model, cancellationToken: cancellationToken);
+        await _definitionStore.SaveAsync(key, model, cancellationToken: cancellationToken);
 
         await _messageBus.TryPublishAsync("currency.definition.updated", new CurrencyDefinitionUpdatedEvent
         {
@@ -275,11 +319,8 @@ public partial class CurrencyService : ICurrencyService
         CreateWalletRequest body,
         CancellationToken cancellationToken = default)
     {
-        var store = _stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyWallets);
-
         var ownerKey = BuildOwnerKey(body.OwnerId, body.OwnerType, body.RealmId);
-        var existingId = await stringStore.GetAsync($"{WALLET_OWNER_INDEX}{ownerKey}", cancellationToken);
+        var existingId = await _walletStringStore.GetAsync($"{WALLET_OWNER_INDEX}{ownerKey}", cancellationToken);
         if (!string.IsNullOrEmpty(existingId))
         {
             return (StatusCodes.Conflict, null);
@@ -299,8 +340,8 @@ public partial class CurrencyService : ICurrencyService
             LastActivityAt = now
         };
 
-        await store.SaveAsync($"{WALLET_PREFIX}{walletId}", model, cancellationToken: cancellationToken);
-        await stringStore.SaveAsync($"{WALLET_OWNER_INDEX}{ownerKey}", walletId.ToString(), cancellationToken: cancellationToken);
+        await _walletStore.SaveAsync($"{WALLET_PREFIX}{walletId}", model, cancellationToken: cancellationToken);
+        await _walletStringStore.SaveAsync($"{WALLET_OWNER_INDEX}{ownerKey}", walletId.ToString(), cancellationToken: cancellationToken);
 
         await _messageBus.TryPublishAsync("currency.wallet.created", new CurrencyWalletCreatedEvent
         {
@@ -344,14 +385,12 @@ public partial class CurrencyService : ICurrencyService
         GetOrCreateWalletRequest body,
         CancellationToken cancellationToken = default)
     {
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyWallets);
         var ownerKey = BuildOwnerKey(body.OwnerId, body.OwnerType, body.RealmId);
-        var existingId = await stringStore.GetAsync($"{WALLET_OWNER_INDEX}{ownerKey}", cancellationToken);
+        var existingId = await _walletStringStore.GetAsync($"{WALLET_OWNER_INDEX}{ownerKey}", cancellationToken);
 
         if (!string.IsNullOrEmpty(existingId))
         {
-            var store = _stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
-            var existing = await store.GetAsync($"{WALLET_PREFIX}{existingId}", cancellationToken);
+            var existing = await _walletStore.GetAsync($"{WALLET_PREFIX}{existingId}", cancellationToken);
             if (existing is not null)
             {
                 var balances = await GetWalletBalanceSummariesAsync(existing.WalletId, cancellationToken);
@@ -375,11 +414,10 @@ public partial class CurrencyService : ICurrencyService
         // Handle race condition: another request created the wallet between our check and create
         if (status == StatusCodes.Conflict)
         {
-            var store = _stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
-            var raceExistingId = await stringStore.GetAsync($"{WALLET_OWNER_INDEX}{ownerKey}", cancellationToken);
+            var raceExistingId = await _walletStringStore.GetAsync($"{WALLET_OWNER_INDEX}{ownerKey}", cancellationToken);
             if (!string.IsNullOrEmpty(raceExistingId))
             {
-                var raceExisting = await store.GetAsync($"{WALLET_PREFIX}{raceExistingId}", cancellationToken);
+                var raceExisting = await _walletStore.GetAsync($"{WALLET_PREFIX}{raceExistingId}", cancellationToken);
                 if (raceExisting is not null)
                 {
                     var balances = await GetWalletBalanceSummariesAsync(raceExisting.WalletId, cancellationToken);
@@ -412,9 +450,8 @@ public partial class CurrencyService : ICurrencyService
         FreezeWalletRequest body,
         CancellationToken cancellationToken = default)
     {
-        var store = _stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
         var key = $"{WALLET_PREFIX}{body.WalletId}";
-        var (wallet, etag) = await store.GetWithETagAsync(key, cancellationToken);
+        var (wallet, etag) = await _walletStore.GetWithETagAsync(key, cancellationToken);
 
         if (wallet is null) return (StatusCodes.NotFound, null);
         if (wallet.Status == WalletStatus.Frozen) return (StatusCodes.Conflict, null);
@@ -425,7 +462,7 @@ public partial class CurrencyService : ICurrencyService
 
         // GetWithETagAsync returns non-null etag when entity exists (checked above);
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await store.TrySaveAsync(key, wallet, etag ?? string.Empty, cancellationToken);
+        var newEtag = await _walletStore.TrySaveAsync(key, wallet, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected freezing wallet {WalletId}", body.WalletId);
@@ -458,9 +495,8 @@ public partial class CurrencyService : ICurrencyService
         UnfreezeWalletRequest body,
         CancellationToken cancellationToken = default)
     {
-        var store = _stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
         var key = $"{WALLET_PREFIX}{body.WalletId}";
-        var (wallet, etag) = await store.GetWithETagAsync(key, cancellationToken);
+        var (wallet, etag) = await _walletStore.GetWithETagAsync(key, cancellationToken);
 
         if (wallet is null) return (StatusCodes.NotFound, null);
         if (wallet.Status != WalletStatus.Frozen) return (StatusCodes.BadRequest, null);
@@ -471,7 +507,7 @@ public partial class CurrencyService : ICurrencyService
 
         // GetWithETagAsync returns non-null etag when entity exists (checked above);
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newEtag = await store.TrySaveAsync(key, wallet, etag ?? string.Empty, cancellationToken);
+        var newEtag = await _walletStore.TrySaveAsync(key, wallet, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected unfreezing wallet {WalletId}", body.WalletId);
@@ -502,15 +538,14 @@ public partial class CurrencyService : ICurrencyService
         CloseWalletRequest body,
         CancellationToken cancellationToken = default)
     {
-        var store = _stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
         var walletKey = $"{WALLET_PREFIX}{body.WalletId}";
-        var (wallet, walletEtag) = await store.GetWithETagAsync(walletKey, cancellationToken);
+        var (wallet, walletEtag) = await _walletStore.GetWithETagAsync(walletKey, cancellationToken);
 
         if (wallet is null) return (StatusCodes.NotFound, null);
         if (wallet.Status == WalletStatus.Closed) return (StatusCodes.BadRequest, null);
 
         var destKey = $"{WALLET_PREFIX}{body.TransferRemainingTo}";
-        var destWallet = await store.GetAsync(destKey, cancellationToken);
+        var destWallet = await _walletStore.GetAsync(destKey, cancellationToken);
         if (destWallet is null) return (StatusCodes.NotFound, null);
 
         // Acquire wallet lock to prevent concurrent close/transfer operations
@@ -556,7 +591,7 @@ public partial class CurrencyService : ICurrencyService
         wallet.Status = WalletStatus.Closed;
         // GetWithETagAsync returns non-null etag when entity exists (checked above);
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newWalletEtag = await store.TrySaveAsync(walletKey, wallet, walletEtag ?? string.Empty, cancellationToken);
+        var newWalletEtag = await _walletStore.TrySaveAsync(walletKey, wallet, walletEtag ?? string.Empty, cancellationToken);
         if (newWalletEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected closing wallet {WalletId}", body.WalletId);
@@ -1058,7 +1093,6 @@ public partial class CurrencyService : ICurrencyService
         if (isDuplicate) return (StatusCodes.Conflict, null);
 
         var results = new List<BatchCreditResult>();
-        var txStore = _stateStoreFactory.GetStore<TransactionModel>(StateStoreDefinitions.CurrencyTransactions);
         var operations = body.Operations.ToList();
         for (var i = 0; i < operations.Count; i++)
         {
@@ -1075,7 +1109,7 @@ public partial class CurrencyService : ICurrencyService
                 TransactionModel? existingTx = null;
                 if (existingTxId.HasValue)
                 {
-                    existingTx = await txStore.GetAsync($"{TX_PREFIX}{existingTxId}", cancellationToken);
+                    existingTx = await _transactionStore.GetAsync($"{TX_PREFIX}{existingTxId}", cancellationToken);
                     if (existingTx is null)
                     {
                         _logger.LogWarning("Batch credit sub-operation {Index} idempotency hit but transaction {TxId} not found in store",
@@ -1127,7 +1161,6 @@ public partial class CurrencyService : ICurrencyService
         if (isDuplicate) return (StatusCodes.Conflict, null);
 
         var results = new List<BatchDebitResult>();
-        var txStore = _stateStoreFactory.GetStore<TransactionModel>(StateStoreDefinitions.CurrencyTransactions);
         var operations = body.Operations.ToList();
         for (var i = 0; i < operations.Count; i++)
         {
@@ -1144,7 +1177,7 @@ public partial class CurrencyService : ICurrencyService
                 TransactionModel? existingTx = null;
                 if (existingTxId.HasValue)
                 {
-                    existingTx = await txStore.GetAsync($"{TX_PREFIX}{existingTxId}", cancellationToken);
+                    existingTx = await _transactionStore.GetAsync($"{TX_PREFIX}{existingTxId}", cancellationToken);
                     if (existingTx is null)
                     {
                         _logger.LogWarning("Batch debit sub-operation {Index} idempotency hit but transaction {TxId} not found in store",
@@ -1347,12 +1380,11 @@ public partial class CurrencyService : ICurrencyService
         UpdateExchangeRateRequest body,
         CancellationToken cancellationToken = default)
     {
-        var store = _stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
         var key = $"{DEF_PREFIX}{body.CurrencyDefinitionId}";
 
         for (var attempt = 0; attempt < _configuration.ExchangeRateUpdateMaxRetries; attempt++)
         {
-            var (definition, etag) = await store.GetWithETagAsync(key, cancellationToken);
+            var (definition, etag) = await _definitionStore.GetWithETagAsync(key, cancellationToken);
 
             if (definition is null) return (StatusCodes.NotFound, null);
             if (definition.IsBaseCurrency) return (StatusCodes.BadRequest, null);
@@ -1364,7 +1396,7 @@ public partial class CurrencyService : ICurrencyService
 
             // GetWithETagAsync returns non-null etag when entity exists (checked above);
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await store.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
+            var saveResult = await _definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
             if (saveResult != null)
             {
                 var baseCurrencyCode = await FindBaseCurrencyCodeAsync(cancellationToken) ?? definition.Code;
@@ -1407,8 +1439,7 @@ public partial class CurrencyService : ICurrencyService
         GetTransactionRequest body,
         CancellationToken cancellationToken = default)
     {
-        var store = _stateStoreFactory.GetStore<TransactionModel>(StateStoreDefinitions.CurrencyTransactions);
-        var tx = await store.GetAsync($"{TX_PREFIX}{body.TransactionId}", cancellationToken);
+        var tx = await _transactionStore.GetAsync($"{TX_PREFIX}{body.TransactionId}", cancellationToken);
         if (tx is null) return (StatusCodes.NotFound, null);
 
         return (StatusCodes.OK, new TransactionResponse { Transaction = MapTransactionToRecord(tx) });
@@ -1422,10 +1453,7 @@ public partial class CurrencyService : ICurrencyService
         var wallet = await GetWalletByIdAsync(body.WalletId, cancellationToken);
         if (wallet is null) return (StatusCodes.NotFound, null);
 
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyTransactions);
-        var txStore = _stateStoreFactory.GetStore<TransactionModel>(StateStoreDefinitions.CurrencyTransactions);
-
-        var indexJson = await stringStore.GetAsync($"{TX_WALLET_INDEX}{body.WalletId}", cancellationToken);
+        var indexJson = await _transactionStringStore.GetAsync($"{TX_WALLET_INDEX}{body.WalletId}", cancellationToken);
         var txIds = string.IsNullOrEmpty(indexJson) ? new List<string>() : BannouJson.Deserialize<List<string>>(indexJson) ?? new List<string>();
 
         var retentionFloor = DateTimeOffset.UtcNow - TimeSpan.FromDays(_configuration.TransactionRetentionDays);
@@ -1436,7 +1464,7 @@ public partial class CurrencyService : ICurrencyService
         // Bulk-load all transactions in a single state store call to avoid N+1
         var txKeys = txIds.Select(id => $"{TX_PREFIX}{id}").ToList();
         var txMap = txKeys.Count > 0
-            ? await txStore.GetBulkAsync(txKeys, cancellationToken)
+            ? await _transactionStore.GetBulkAsync(txKeys, cancellationToken)
             : new Dictionary<string, TransactionModel>();
 
         var transactions = new List<CurrencyTransactionRecord>();
@@ -1471,17 +1499,14 @@ public partial class CurrencyService : ICurrencyService
         GetTransactionsByReferenceRequest body,
         CancellationToken cancellationToken = default)
     {
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyTransactions);
-        var txStore = _stateStoreFactory.GetStore<TransactionModel>(StateStoreDefinitions.CurrencyTransactions);
-
         var refKey = $"{TX_REF_INDEX}{body.ReferenceType}:{body.ReferenceId}";
-        var indexJson = await stringStore.GetAsync(refKey, cancellationToken);
+        var indexJson = await _transactionStringStore.GetAsync(refKey, cancellationToken);
         var txIds = string.IsNullOrEmpty(indexJson) ? new List<string>() : BannouJson.Deserialize<List<string>>(indexJson) ?? new List<string>();
 
         // Bulk-load all transactions in a single state store call to avoid N+1
         var txKeys = txIds.Select(id => $"{TX_PREFIX}{id}").ToList();
         var txMap = txKeys.Count > 0
-            ? await txStore.GetBulkAsync(txKeys, cancellationToken)
+            ? await _transactionStore.GetBulkAsync(txKeys, cancellationToken)
             : new Dictionary<string, TransactionModel>();
 
         var transactions = new List<CurrencyTransactionRecord>();
@@ -1697,14 +1722,13 @@ public partial class CurrencyService : ICurrencyService
             ReferenceId = body.ReferenceId
         };
 
-        var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
         var holdKey = $"{HOLD_PREFIX}{holdId}";
-        await holdStore.SaveAsync(holdKey, hold, cancellationToken: cancellationToken);
+        await _holdStore.SaveAsync(holdKey, hold, cancellationToken: cancellationToken);
 
         // Update Redis cache after MySQL write
         await UpdateHoldCacheAsync(holdKey, hold, cancellationToken);
 
-        await AddToListAsync(StateStoreDefinitions.CurrencyHolds,
+        await AddToListAsync(_holdStringStore,
             $"{HOLD_WALLET_INDEX}{body.WalletId}:{body.CurrencyDefinitionId}", holdId.ToString(), cancellationToken);
 
         await RecordIdempotencyAsync(body.IdempotencyKey, holdId.ToString(), cancellationToken);
@@ -1735,7 +1759,6 @@ public partial class CurrencyService : ICurrencyService
         if (isDuplicate) return (StatusCodes.Conflict, null);
 
         var holdKey = $"{HOLD_PREFIX}{body.HoldId}";
-        var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
 
         // Acquire hold lock before reading to prevent TOCTOU race conditions
         await using var holdLock = await _lockProvider.LockAsync(
@@ -1747,7 +1770,7 @@ public partial class CurrencyService : ICurrencyService
         }
 
         // Read from MySQL with ETag for optimistic concurrency (under lock)
-        var (hold, holdEtag) = await holdStore.GetWithETagAsync(holdKey, cancellationToken);
+        var (hold, holdEtag) = await _holdStore.GetWithETagAsync(holdKey, cancellationToken);
 
         if (hold is null) return (StatusCodes.NotFound, null);
         if (hold.Status != HoldStatus.Active) return (StatusCodes.BadRequest, null);
@@ -1775,7 +1798,7 @@ public partial class CurrencyService : ICurrencyService
 
         // GetWithETagAsync returns non-null etag when entity exists (checked above);
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newHoldEtag = await holdStore.TrySaveAsync(holdKey, hold, holdEtag ?? string.Empty, cancellationToken);
+        var newHoldEtag = await _holdStore.TrySaveAsync(holdKey, hold, holdEtag ?? string.Empty, cancellationToken);
         if (newHoldEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for hold {HoldId}", body.HoldId);
@@ -1786,7 +1809,7 @@ public partial class CurrencyService : ICurrencyService
         await UpdateHoldCacheAsync(holdKey, hold, cancellationToken);
 
         // Remove completed hold from wallet index to prevent unbounded index growth
-        await RemoveFromListAsync(StateStoreDefinitions.CurrencyHolds,
+        await RemoveFromListAsync(_holdStringStore,
             $"{HOLD_WALLET_INDEX}{hold.WalletId}:{hold.CurrencyDefinitionId}", hold.HoldId.ToString(), cancellationToken);
 
         await RecordIdempotencyAsync(body.IdempotencyKey, hold.HoldId.ToString(), cancellationToken);
@@ -1849,8 +1872,7 @@ public partial class CurrencyService : ICurrencyService
         }
 
         // Read from MySQL with ETag for optimistic concurrency (under lock)
-        var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
-        var (hold, holdEtag) = await holdStore.GetWithETagAsync(holdKey, cancellationToken);
+        var (hold, holdEtag) = await _holdStore.GetWithETagAsync(holdKey, cancellationToken);
 
         if (hold is null) return (StatusCodes.NotFound, null);
         if (hold.Status != HoldStatus.Active) return (StatusCodes.BadRequest, null);
@@ -1860,7 +1882,7 @@ public partial class CurrencyService : ICurrencyService
 
         // GetWithETagAsync returns non-null etag when entity exists (checked above);
         // coalesce satisfies compiler's nullable analysis (will never execute)
-        var newHoldEtag = await holdStore.TrySaveAsync(holdKey, hold, holdEtag ?? string.Empty, cancellationToken);
+        var newHoldEtag = await _holdStore.TrySaveAsync(holdKey, hold, holdEtag ?? string.Empty, cancellationToken);
         if (newHoldEtag == null)
         {
             _logger.LogWarning("Concurrent modification detected for hold {HoldId}", body.HoldId);
@@ -1871,7 +1893,7 @@ public partial class CurrencyService : ICurrencyService
         await UpdateHoldCacheAsync(holdKey, hold, cancellationToken);
 
         // Remove completed hold from wallet index to prevent unbounded index growth
-        await RemoveFromListAsync(StateStoreDefinitions.CurrencyHolds,
+        await RemoveFromListAsync(_holdStringStore,
             $"{HOLD_WALLET_INDEX}{hold.WalletId}:{hold.CurrencyDefinitionId}", hold.HoldId.ToString(), cancellationToken);
 
         // Fetch wallet for event - data integrity issue if missing
@@ -1919,8 +1941,7 @@ public partial class CurrencyService : ICurrencyService
             return (StatusCodes.OK, new HoldResponse { Hold = MapHoldToRecord(hold) });
 
         // Cache miss - read from MySQL
-        var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
-        hold = await holdStore.GetAsync(holdKey, cancellationToken);
+        hold = await _holdStore.GetAsync(holdKey, cancellationToken);
 
         if (hold is null) return (StatusCodes.NotFound, null);
 
@@ -1937,20 +1958,18 @@ public partial class CurrencyService : ICurrencyService
     private async Task<CurrencyDefinitionModel?> ResolveCurrencyDefinitionAsync(Guid? id, string? code, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.ResolveCurrencyDefinitionAsync");
-        var store = _stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyDefinitions);
 
         if (id.HasValue)
         {
-            return await store.GetAsync($"{DEF_PREFIX}{id}", ct);
+            return await _definitionStore.GetAsync($"{DEF_PREFIX}{id}", ct);
         }
 
         if (!string.IsNullOrEmpty(code))
         {
-            var resolvedId = await stringStore.GetAsync($"{DEF_CODE_INDEX}{code}", ct);
+            var resolvedId = await _definitionStringStore.GetAsync($"{DEF_CODE_INDEX}{code}", ct);
             if (!string.IsNullOrEmpty(resolvedId))
             {
-                return await store.GetAsync($"{DEF_PREFIX}{resolvedId}", ct);
+                return await _definitionStore.GetAsync($"{DEF_PREFIX}{resolvedId}", ct);
             }
         }
 
@@ -1960,15 +1979,13 @@ public partial class CurrencyService : ICurrencyService
     private async Task<CurrencyDefinitionModel?> GetDefinitionByIdAsync(Guid id, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.GetDefinitionByIdAsync");
-        var store = _stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
-        return await store.GetAsync($"{DEF_PREFIX}{id}", ct);
+        return await _definitionStore.GetAsync($"{DEF_PREFIX}{id}", ct);
     }
 
     private async Task<WalletModel?> GetWalletByIdAsync(Guid id, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.GetWalletByIdAsync");
-        var store = _stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
-        return await store.GetAsync($"{WALLET_PREFIX}{id}", ct);
+        return await _walletStore.GetAsync($"{WALLET_PREFIX}{id}", ct);
     }
 
     private async Task<WalletModel?> ResolveWalletAsync(Guid? walletId, Guid? ownerId, EntityType? ownerType, Guid? realmId, CancellationToken ct)
@@ -1981,9 +1998,8 @@ public partial class CurrencyService : ICurrencyService
 
         if (ownerId.HasValue && ownerType.HasValue)
         {
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyWallets);
             var ownerKey = BuildOwnerKey(ownerId.Value, ownerType.Value, realmId);
-            var resolvedId = await stringStore.GetAsync($"{WALLET_OWNER_INDEX}{ownerKey}", ct);
+            var resolvedId = await _walletStringStore.GetAsync($"{WALLET_OWNER_INDEX}{ownerKey}", ct);
             if (!string.IsNullOrEmpty(resolvedId) && Guid.TryParse(resolvedId, out var resolvedGuid))
             {
                 return await GetWalletByIdAsync(resolvedGuid, ct);
@@ -2004,8 +2020,7 @@ public partial class CurrencyService : ICurrencyService
             return cached;
 
         // Cache miss - read from MySQL
-        var store = _stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalances);
-        var balance = await store.GetAsync(key, ct);
+        var balance = await _balanceStore.GetAsync(key, ct);
 
         if (balance != null)
         {
@@ -2033,27 +2048,24 @@ public partial class CurrencyService : ICurrencyService
     private async Task SaveBalanceAsync(BalanceModel balance, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.SaveBalanceAsync");
-        var store = _stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalances);
         var key = $"{BALANCE_PREFIX}{balance.WalletId}:{balance.CurrencyDefinitionId}";
-        await store.SaveAsync(key, balance, cancellationToken: ct);
+        await _balanceStore.SaveAsync(key, balance, cancellationToken: ct);
 
         // Update Redis cache after MySQL write
         await UpdateBalanceCacheAsync(key, balance, ct);
 
         // Maintain wallet-balance index for efficient wallet queries
-        await AddToListAsync(StateStoreDefinitions.CurrencyBalances, $"{BALANCE_WALLET_INDEX}{balance.WalletId}", balance.CurrencyDefinitionId.ToString(), ct);
+        await AddToListAsync(_balanceStringStore, $"{BALANCE_WALLET_INDEX}{balance.WalletId}", balance.CurrencyDefinitionId.ToString(), ct);
 
         // Maintain currency-balance reverse index for autogain task processing
-        await AddToListAsync(StateStoreDefinitions.CurrencyBalances, $"{BALANCE_CURRENCY_INDEX}{balance.CurrencyDefinitionId}", balance.WalletId.ToString(), ct);
+        await AddToListAsync(_balanceStringStore, $"{BALANCE_CURRENCY_INDEX}{balance.CurrencyDefinitionId}", balance.WalletId.ToString(), ct);
     }
 
     private async Task<List<BalanceModel>> GetAllBalancesForWalletAsync(Guid walletId, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.GetAllBalancesForWalletAsync");
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyBalances);
-        var balanceStore = _stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalances);
 
-        var indexJson = await stringStore.GetAsync($"{BALANCE_WALLET_INDEX}{walletId}", ct);
+        var indexJson = await _balanceStringStore.GetAsync($"{BALANCE_WALLET_INDEX}{walletId}", ct);
         if (string.IsNullOrEmpty(indexJson))
             return new List<BalanceModel>();
 
@@ -2062,7 +2074,7 @@ public partial class CurrencyService : ICurrencyService
 
         foreach (var currencyDefId in currencyDefIds)
         {
-            var balance = await balanceStore.GetAsync($"{BALANCE_PREFIX}{walletId}:{currencyDefId}", ct);
+            var balance = await _balanceStore.GetAsync($"{BALANCE_PREFIX}{walletId}:{currencyDefId}", ct);
             if (balance is not null)
                 balances.Add(balance);
         }
@@ -2074,12 +2086,11 @@ public partial class CurrencyService : ICurrencyService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.GetWalletBalanceSummariesAsync");
         var balances = await GetAllBalancesForWalletAsync(walletId, ct);
-        var defStore = _stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
         var summaries = new List<BalanceSummary>();
 
         foreach (var balance in balances)
         {
-            var definition = await defStore.GetAsync($"{DEF_PREFIX}{balance.CurrencyDefinitionId}", ct);
+            var definition = await _definitionStore.GetAsync($"{DEF_PREFIX}{balance.CurrencyDefinitionId}", ct);
             if (definition is null) continue;
 
             var lockedAmount = await GetTotalHeldAmountAsync(balance.WalletId, balance.CurrencyDefinitionId, ct);
@@ -2249,18 +2260,17 @@ public partial class CurrencyService : ICurrencyService
             Metadata = metadata
         };
 
-        var store = _stateStoreFactory.GetStore<TransactionModel>(StateStoreDefinitions.CurrencyTransactions);
-        await store.SaveAsync($"{TX_PREFIX}{txId}", tx, cancellationToken: ct);
+        await _transactionStore.SaveAsync($"{TX_PREFIX}{txId}", tx, cancellationToken: ct);
 
         // Index by wallet
         if (sourceWalletId.HasValue)
-            await AddToListAsync(StateStoreDefinitions.CurrencyTransactions, $"{TX_WALLET_INDEX}{sourceWalletId}", txId.ToString(), ct);
+            await AddToListAsync(_transactionStringStore, $"{TX_WALLET_INDEX}{sourceWalletId}", txId.ToString(), ct);
         if (targetWalletId.HasValue)
-            await AddToListAsync(StateStoreDefinitions.CurrencyTransactions, $"{TX_WALLET_INDEX}{targetWalletId}", txId.ToString(), ct);
+            await AddToListAsync(_transactionStringStore, $"{TX_WALLET_INDEX}{targetWalletId}", txId.ToString(), ct);
 
         // Index by reference
         if (refType is not null && refId.HasValue)
-            await AddToListAsync(StateStoreDefinitions.CurrencyTransactions, $"{TX_REF_INDEX}{refType}:{refId}", txId.ToString(), ct);
+            await AddToListAsync(_transactionStringStore, $"{TX_REF_INDEX}{refType}:{refId}", txId.ToString(), ct);
 
         return tx;
     }
@@ -2268,8 +2278,7 @@ public partial class CurrencyService : ICurrencyService
     private async Task<(bool isDuplicate, Guid? existingTxId)> CheckIdempotencyAsync(string key, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.CheckIdempotencyAsync");
-        var store = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyIdempotency);
-        var existing = await store.GetAsync(key, ct);
+        var existing = await _idempotencyStore.GetAsync(key, ct);
         if (!string.IsNullOrEmpty(existing) && Guid.TryParse(existing, out var txId))
             return (true, txId);
         return (false, null);
@@ -2278,8 +2287,7 @@ public partial class CurrencyService : ICurrencyService
     private async Task RecordIdempotencyAsync(string key, string transactionId, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.RecordIdempotencyAsync");
-        var store = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyIdempotency);
-        await store.SaveAsync(key, transactionId, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, ct);
+        await _idempotencyStore.SaveAsync(key, transactionId, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, ct);
     }
 
     private async Task InternalCreditAsync(Guid walletId, Guid currencyDefId, double amount,
@@ -2302,10 +2310,8 @@ public partial class CurrencyService : ICurrencyService
     private async Task<double> GetTotalHeldAmountAsync(Guid walletId, Guid currencyDefId, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.GetTotalHeldAmountAsync");
-        var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyHolds);
 
-        var indexJson = await stringStore.GetAsync($"{HOLD_WALLET_INDEX}{walletId}:{currencyDefId}", ct);
+        var indexJson = await _holdStringStore.GetAsync($"{HOLD_WALLET_INDEX}{walletId}:{currencyDefId}", ct);
         if (string.IsNullOrEmpty(indexJson)) return 0;
 
         var holdIds = BannouJson.Deserialize<List<string>>(indexJson) ?? new List<string>();
@@ -2319,7 +2325,7 @@ public partial class CurrencyService : ICurrencyService
             if (hold is null)
             {
                 // Cache miss - read from MySQL
-                hold = await holdStore.GetAsync(holdKey, ct);
+                hold = await _holdStore.GetAsync(holdKey, ct);
                 if (hold != null)
                 {
                     // Populate cache for future reads
@@ -2338,14 +2344,13 @@ public partial class CurrencyService : ICurrencyService
     private async Task<string?> FindBaseCurrencyCodeAsync(CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.FindBaseCurrencyCodeAsync");
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyDefinitions);
 
         // O(1) lookup via dedicated base-currency index instead of iterating all definitions.
         // Check each scope (Global most likely for exchange rate pivot purposes).
         CurrencyScope[] scopes = [CurrencyScope.Global, CurrencyScope.RealmSpecific, CurrencyScope.MultiRealm];
         foreach (var scope in scopes)
         {
-            var indexValue = await stringStore.GetAsync($"{BASE_CURRENCY_INDEX}{scope}", ct);
+            var indexValue = await _definitionStringStore.GetAsync($"{BASE_CURRENCY_INDEX}{scope}", ct);
             if (!string.IsNullOrEmpty(indexValue))
             {
                 // Index value format: "{definitionId}:{code}"
@@ -2512,7 +2517,7 @@ public partial class CurrencyService : ICurrencyService
         return new DateTimeOffset(now.UtcDateTime.Date.AddDays(daysUntilMonday).Add(resetTime), TimeSpan.Zero);
     }
 
-    private async Task AddToListAsync(string storeName, string key, string value, CancellationToken ct)
+    private async Task AddToListAsync(IStateStore<string> store, string key, string value, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.AddToListAsync");
         for (var attempt = 0; attempt < _configuration.IndexLockMaxRetries; attempt++)
@@ -2521,7 +2526,6 @@ public partial class CurrencyService : ICurrencyService
                 StateStoreDefinitions.CurrencyLock, key, Guid.NewGuid().ToString(), _configuration.IndexLockTimeoutSeconds, ct);
             if (lockResponse.Success)
             {
-                var store = _stateStoreFactory.GetStore<string>(storeName);
                 var existing = await store.GetAsync(key, ct);
                 var list = string.IsNullOrEmpty(existing) ? new List<string>() : BannouJson.Deserialize<List<string>>(existing) ?? new List<string>();
                 if (!list.Contains(value))
@@ -2532,14 +2536,14 @@ public partial class CurrencyService : ICurrencyService
                 return;
             }
 
-            _logger.LogDebug("Index lock contention for key {Key} in store {Store}, attempt {Attempt}", key, storeName, attempt + 1);
+            _logger.LogDebug("Index lock contention for key {Key}, attempt {Attempt}", key, attempt + 1);
         }
 
-        _logger.LogError("Failed to acquire index lock for key {Key} in store {Store} after {MaxRetries} attempts; index may be inconsistent",
-            key, storeName, _configuration.IndexLockMaxRetries);
+        _logger.LogError("Failed to acquire index lock for key {Key} after {MaxRetries} attempts; index may be inconsistent",
+            key, _configuration.IndexLockMaxRetries);
     }
 
-    private async Task RemoveFromListAsync(string storeName, string key, string value, CancellationToken ct)
+    private async Task RemoveFromListAsync(IStateStore<string> store, string key, string value, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.RemoveFromListAsync");
         for (var attempt = 0; attempt < _configuration.IndexLockMaxRetries; attempt++)
@@ -2548,7 +2552,6 @@ public partial class CurrencyService : ICurrencyService
                 StateStoreDefinitions.CurrencyLock, key, Guid.NewGuid().ToString(), _configuration.IndexLockTimeoutSeconds, ct);
             if (lockResponse.Success)
             {
-                var store = _stateStoreFactory.GetStore<string>(storeName);
                 var existing = await store.GetAsync(key, ct);
                 if (string.IsNullOrEmpty(existing)) return;
 
@@ -2560,11 +2563,11 @@ public partial class CurrencyService : ICurrencyService
                 return;
             }
 
-            _logger.LogDebug("Index lock contention for removal on key {Key} in store {Store}, attempt {Attempt}", key, storeName, attempt + 1);
+            _logger.LogDebug("Index lock contention for removal on key {Key}, attempt {Attempt}", key, attempt + 1);
         }
 
-        _logger.LogError("Failed to acquire index lock for removal on key {Key} in store {Store} after {MaxRetries} attempts; index may be inconsistent",
-            key, storeName, _configuration.IndexLockMaxRetries);
+        _logger.LogError("Failed to acquire index lock for removal on key {Key} after {MaxRetries} attempts; index may be inconsistent",
+            key, _configuration.IndexLockMaxRetries);
     }
 
     #endregion
@@ -2678,15 +2681,14 @@ public partial class CurrencyService : ICurrencyService
 
     /// <summary>
     /// Attempts to retrieve a balance from the Redis cache.
-    /// Uses StateStoreDefinitions.CurrencyBalanceCache directly per IMPLEMENTATION TENETS.
+    /// Uses constructor-cached balance cache store per FOUNDATION TENETS.
     /// </summary>
     private async Task<BalanceModel?> TryGetBalanceFromCacheAsync(string key, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.TryGetBalanceFromCacheAsync");
         try
         {
-            var cache = _stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalanceCache);
-            return await cache.GetAsync(key, ct);
+            return await _balanceCacheStore.GetAsync(key, ct);
         }
         catch (Exception ex)
         {
@@ -2698,15 +2700,14 @@ public partial class CurrencyService : ICurrencyService
 
     /// <summary>
     /// Updates the balance cache after a read or write.
-    /// Uses StateStoreDefinitions.CurrencyBalanceCache directly per IMPLEMENTATION TENETS.
+    /// Uses constructor-cached balance cache store per FOUNDATION TENETS.
     /// </summary>
     private async Task UpdateBalanceCacheAsync(string key, BalanceModel balance, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.UpdateBalanceCacheAsync");
         try
         {
-            var cache = _stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalanceCache);
-            await cache.SaveAsync(key, balance, new StateOptions { Ttl = _configuration.BalanceCacheTtlSeconds }, ct);
+            await _balanceCacheStore.SaveAsync(key, balance, new StateOptions { Ttl = _configuration.BalanceCacheTtlSeconds }, ct);
         }
         catch (Exception ex)
         {
@@ -2721,15 +2722,14 @@ public partial class CurrencyService : ICurrencyService
 
     /// <summary>
     /// Attempts to retrieve a hold from the Redis cache.
-    /// Uses StateStoreDefinitions.CurrencyHoldsCache directly per IMPLEMENTATION TENETS.
+    /// Uses constructor-cached hold cache store per FOUNDATION TENETS.
     /// </summary>
     private async Task<HoldModel?> TryGetHoldFromCacheAsync(string key, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.TryGetHoldFromCacheAsync");
         try
         {
-            var cache = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHoldsCache);
-            return await cache.GetAsync(key, ct);
+            return await _holdCacheStore.GetAsync(key, ct);
         }
         catch (Exception ex)
         {
@@ -2741,15 +2741,14 @@ public partial class CurrencyService : ICurrencyService
 
     /// <summary>
     /// Updates the hold cache after a read or write.
-    /// Uses StateStoreDefinitions.CurrencyHoldsCache directly per IMPLEMENTATION TENETS.
+    /// Uses constructor-cached hold cache store per FOUNDATION TENETS.
     /// </summary>
     private async Task UpdateHoldCacheAsync(string key, HoldModel hold, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.UpdateHoldCacheAsync");
         try
         {
-            var cache = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHoldsCache);
-            await cache.SaveAsync(key, hold, new StateOptions { Ttl = _configuration.HoldCacheTtlSeconds }, ct);
+            await _holdCacheStore.SaveAsync(key, hold, new StateOptions { Ttl = _configuration.HoldCacheTtlSeconds }, ct);
         }
         catch (Exception ex)
         {

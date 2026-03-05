@@ -52,7 +52,7 @@ internal class ServiceRegistrationInfo
     public string Version { get; set; } = string.Empty;
 
     /// <summary>
-    /// Unix timestamp (seconds) of when the service registered its permissions.
+    /// When the service registered its permissions.
     /// </summary>
-    public long RegisteredAtUnix { get; set; }
+    public DateTimeOffset? RegisteredAt { get; set; }
 }

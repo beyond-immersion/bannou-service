@@ -99,21 +99,21 @@ public sealed class CollectionProxy
     }
 
     /// <summary>
-    /// Delete an entry template
+    /// Deprecate an entry template
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing EntryTemplateResponse on success.</returns>
-    public Task<ApiResponse<EntryTemplateResponse>> DeleteEntryTemplateAsync(
-        DeleteEntryTemplateRequest request,
+    public Task<ApiResponse<EntryTemplateResponse>> DeprecateEntryTemplateAsync(
+        DeprecateEntryTemplateRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<DeleteEntryTemplateRequest, EntryTemplateResponse>(
-            "/collection/entry-template/delete", request, channel, timeout, cancellationToken);
+        return _client.InvokeAsync<DeprecateEntryTemplateRequest, EntryTemplateResponse>(
+            "/collection/entry-template/deprecate", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -366,6 +366,24 @@ public sealed class CollectionProxy
     {
         return _client.InvokeAsync<ListAreaContentConfigsRequest, ListAreaContentConfigsResponse>(
             "/collection/content/area-config/list", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Delete an area content config
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing AreaContentConfigResponse on success.</returns>
+    public Task<ApiResponse<AreaContentConfigResponse>> DeleteAreaContentConfigAsync(
+        DeleteAreaContentConfigRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DeleteAreaContentConfigRequest, AreaContentConfigResponse>(
+            "/collection/content/area-config/delete", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>

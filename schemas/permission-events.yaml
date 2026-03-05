@@ -61,7 +61,7 @@ components:
           minimum: 0
           description: New capability version number (increments on each update)
         updateType:
-          $ref: 'permission-api.yaml#/components/schemas/CapabilityUpdateType'
+          $ref: 'common-api.yaml#/components/schemas/CapabilityUpdateType'
           description: Type of update — full capabilities or delta changes
         fullCapabilities:
           type: object
@@ -104,7 +104,7 @@ components:
           nullable: true
           description: When these capabilities expire and need refresh
         reason:
-          $ref: 'permission-api.yaml#/components/schemas/CapabilityUpdateReason'
+          $ref: 'common-api.yaml#/components/schemas/CapabilityUpdateReason'
           nullable: true
           description: Reason for the capability update
 
