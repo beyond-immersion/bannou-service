@@ -31,7 +31,7 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 
 ## Contract {#contract}
 
-**Version**: 1.0.0 | **Schema**: `schemas/contract-api.yaml` | **Endpoints**: 30 | **Deep Dive**: [docs/plugins/CONTRACT.md](plugins/CONTRACT.md)
+**Version**: 1.0.0 | **Schema**: `schemas/contract-api.yaml` | **Endpoints**: 31 | **Deep Dive**: [docs/plugins/CONTRACT.md](plugins/CONTRACT.md)
 
 Binding agreement management (L1 AppFoundation) between entities with milestone-based progression, consent flows, and prebound API execution on state transitions. Contracts are reactive: external systems report condition fulfillment via API calls; contracts store state, emit events, and execute callbacks. Templates define structure (party roles, milestones, terms, enforcement mode); instances track consent, sequential progression, and breach handling. Used as infrastructure by lib-quest (quest objectives map to contract milestones) and lib-escrow (asset-backed contracts via guardian locking).
 
@@ -50,7 +50,7 @@ Resource reference tracking, lifecycle management, and hierarchical compression 
 ## Summary
 
 - **Services in layer**: 7
-- **Endpoints in layer**: 131
+- **Endpoints in layer**: 132
 
 ---
 

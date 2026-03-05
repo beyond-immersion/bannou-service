@@ -33,8 +33,8 @@ The Telemetry service (L0 Infrastructure, optional) provides unified observabili
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-state (StateStoreFactory) | Injects `ITelemetryProvider` to wrap state stores with instrumentation |
-| lib-messaging (RabbitMQMessageBus, RabbitMQMessageSubscriber, NativeEventConsumerBackend) | Injects `ITelemetryProvider` for messaging operation tracing and metrics |
-| lib-mesh (MeshInvocationClient) | Injects `ITelemetryProvider` for service mesh call tracing and metrics |
+| lib-messaging (RabbitMQMessageBus, RabbitMQMessageSubscriber, NativeEventConsumerBackend, RabbitMQMessageTap, RabbitMQConnectionManager, DeadLetterConsumerService, MessageRetryBuffer) | Injects `ITelemetryProvider` for messaging operation tracing and metrics |
+| lib-mesh (MeshInvocationClient, DistributedCircuitBreaker, MeshHealthCheckService, MeshStateManager) | Injects `ITelemetryProvider` for service mesh call tracing and metrics |
 
 **Key Design**: `ITelemetryProvider` interface is defined in `bannou-service/Services/ITelemetryProvider.cs` (not in lib-telemetry) so infrastructure libs can depend on it without depending on the telemetry plugin. A `NullTelemetryProvider` is registered by default; when lib-telemetry loads, it overrides with the real implementation.
 
@@ -104,7 +104,7 @@ This plugin does not consume external events.
 
 | Endpoint | Notes |
 |----------|-------|
-| `POST /telemetry/health` | Returns health status (`healthy` always true if service running), tracing/metrics enabled flags, and OTLP endpoint (null if both disabled) |
+| `POST /telemetry/health` | Returns tracing/metrics enabled flags and OTLP endpoint (null if both disabled). Health is communicated by 200 OK per IMPLEMENTATION TENETS — no `healthy` boolean in the response. |
 | `POST /telemetry/status` | Returns full configuration details including sampling ratio, service name, namespace, environment, and OTLP protocol |
 
 Both endpoints are simple configuration introspection - no state access or side effects.
@@ -196,15 +196,15 @@ None currently identified.
 
 ### Bugs (Fix Immediately)
 
-None currently identified.
+1. **T23 violation in `TelemetryServicePlugin.OnInitializeAsync`**: The `OnInitializeAsync` override (line 213) returns `Task.FromResult(bool)` without being `async`. Per IMPLEMENTATION TENETS, all Task-returning methods must be `async` with at least one `await`. This causes different exception semantics (synchronous throw vs captured in task). Fix: add `async` keyword and replace `Task.FromResult` with direct returns after `await Task.CompletedTask`.
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **Plugin load priority**: Telemetry loads FIRST among infrastructure plugins (priority -1 in `InfrastructureLoadOrder`). This is enforced by PluginLoader to ensure `ITelemetryProvider` is available before lib-state, lib-messaging, and lib-mesh initialize. See `bannou-service/Plugins/PluginLoader.cs:39-45`.
+1. **Plugin load priority**: Telemetry loads FIRST among infrastructure plugins (priority -1 in `InfrastructureLoadOrder`). This is enforced by PluginLoader to ensure `ITelemetryProvider` is available before lib-state, lib-messaging, and lib-mesh initialize. See `bannou-service/Plugins/PluginLoader.cs:40-42`.
 
 2. **NullTelemetryProvider fallback**: If telemetry plugin fails to load or is disabled, infrastructure libs receive NullTelemetryProvider (all methods are no-ops). This is intentional graceful degradation, not a bug.
 
-3. **Health always reports healthy**: The `/telemetry/health` endpoint always returns `healthy: true` if the service is running - there's no actual health check of the OTLP collector connection.
+3. **No OTLP health check**: The `/telemetry/health` endpoint returns 200 OK with configuration flags but does not verify the OTLP collector is actually reachable. If the collector is down, traces silently fail to export.
 
 4. **Temporary service provider during setup**: `ConfigureOpenTelemetry` builds a temporary `ServiceProvider` to access configuration during SDK setup. This is documented as "the standard pattern for OpenTelemetry SDK setup when config is needed" but creates duplicate service instances temporarily.
 

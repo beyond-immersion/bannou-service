@@ -115,6 +115,11 @@ public partial interface IOrchestratorService : IBannouService
         Task<(StatusCodes, ConfigVersionResponse?)> GetConfigVersionAsync(GetConfigVersionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// NotifyConfigChange operation
+        /// </summary>
+        Task<(StatusCodes, NotifyConfigChangeResponse?)> NotifyConfigChangeAsync(NotifyConfigChangeRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// AcquireProcessor operation
         /// </summary>
         Task<(StatusCodes, AcquireProcessorResponse?)> AcquireProcessorAsync(AcquireProcessorRequest body, CancellationToken cancellationToken = default(CancellationToken));

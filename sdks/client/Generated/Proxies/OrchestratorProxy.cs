@@ -333,6 +333,24 @@ public sealed class OrchestratorProxy
     }
 
     /// <summary>
+    /// Notify that configuration or secrets have changed
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing NotifyConfigChangeResponse on success.</returns>
+    public Task<ApiResponse<NotifyConfigChangeResponse>> NotifyConfigChangeAsync(
+        NotifyConfigChangeRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<NotifyConfigChangeRequest, NotifyConfigChangeResponse>(
+            "/orchestrator/config/notify-change", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Acquire a processor from a pool
     /// </summary>
     /// <param name="request">The request payload.</param>

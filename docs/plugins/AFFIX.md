@@ -7,6 +7,7 @@
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: [Economy System Guide](../guides/ECONOMY-SYSTEM.md)
+> **Implementation Map**: [docs/maps/AFFIX.md](../maps/AFFIX.md)
 
 ---
 

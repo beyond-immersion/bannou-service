@@ -66,6 +66,10 @@ info:
     - topic: analytics.milestone.reached
       event: AnalyticsMilestoneReachedEvent
       description: Published when an entity reaches a statistical milestone
+    # Published when a controller possession/release event is recorded
+    - topic: analytics.controller.recorded
+      event: AnalyticsControllerRecordedEvent
+      description: Published when a controller possession or release event is recorded
 
 paths: {}  # Events don't have HTTP paths
 
@@ -86,6 +90,7 @@ components:
         - entityType
         - scoreType
         - newValue
+        - delta
       properties:
         eventId:
           type: string
@@ -108,6 +113,8 @@ components:
           description: Type of entity
         scoreType:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Type of score that changed (e.g., kills, points, xp)
         previousValue:
           type: number
@@ -142,6 +149,8 @@ components:
         - previousRating
         - newRating
         - ratingChange
+        - newRatingDeviation
+        - matchId
       properties:
         eventId:
           type: string
@@ -164,6 +173,8 @@ components:
           description: Type of entity
         ratingType:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Type of rating (e.g., overall, ranked, casual)
         previousRating:
           type: number
@@ -220,6 +231,8 @@ components:
           description: Type of entity
         milestoneType:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Type of milestone (e.g., total_kills, games_played)
         milestoneValue:
           type: number
@@ -228,4 +241,50 @@ components:
         milestoneName:
           type: string
           nullable: true
+          maxLength: 256
           description: Human-readable milestone name (e.g., "Century Club")
+
+    AnalyticsControllerRecordedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a controller possession or release event is recorded
+      required:
+        - eventId
+        - timestamp
+        - gameServiceId
+        - accountId
+        - targetEntityId
+        - targetEntityType
+        - action
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the controller event was recorded
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account that possessed or released control
+        targetEntityId:
+          type: string
+          format: uuid
+          description: ID of the entity that was controlled
+        targetEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of the controlled entity
+        action:
+          $ref: 'analytics-api.yaml#/components/schemas/ControllerAction'
+          description: Whether control was possessed or released
+        sessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game session ID where this occurred

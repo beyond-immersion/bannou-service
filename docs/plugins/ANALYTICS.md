@@ -73,6 +73,7 @@ The Analytics plugin (L4 GameFeatures) is the central event aggregation point fo
 | `analytics.score.updated` | `AnalyticsScoreUpdatedEvent` | During buffer flush, for each event with non-zero value |
 | `analytics.rating.updated` | `AnalyticsRatingUpdatedEvent` | After all players' Glicko-2 ratings are saved (batch publish) |
 | `analytics.milestone.reached` | `AnalyticsMilestoneReachedEvent` | When a score crosses a milestone threshold |
+| `analytics.controller.recorded` | `AnalyticsControllerRecordedEvent` | After a controller possession/release event is saved |
 
 ### Consumed Events
 

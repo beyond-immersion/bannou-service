@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Store**: achievement-definition (Redis), achievement-progress (Redis)
+> **Implementation Map**: [docs/maps/ACHIEVEMENT.md](../maps/ACHIEVEMENT.md)
 
 ## Overview
 

@@ -97,21 +97,21 @@ export class CollectionProxy {
   }
 
   /**
-   * Delete an entry template
+   * Deprecate an entry template
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async collectionDeleteEntryTemplateAsync(
-    request: Schemas['DeleteEntryTemplateRequest'],
+  async collectionDeprecateEntryTemplateAsync(
+    request: Schemas['DeprecateEntryTemplateRequest'],
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['EntryTemplateResponse']>> {
     return this.client.invokeAsync<
-      Schemas['DeleteEntryTemplateRequest'],
+      Schemas['DeprecateEntryTemplateRequest'],
       Schemas['EntryTemplateResponse']
-    >('/collection/entry-template/delete', request, channel, timeout);
+    >('/collection/entry-template/deprecate', request, channel, timeout);
   }
 
   /**
@@ -372,6 +372,24 @@ export class CollectionProxy {
       Schemas['ListAreaContentConfigsRequest'],
       Schemas['ListAreaContentConfigsResponse']
     >('/collection/content/area-config/list', request, channel, timeout);
+  }
+
+  /**
+   * Delete an area content config
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async collectionDeleteAreaContentConfigAsync(
+    request: Schemas['DeleteAreaContentConfigRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['AreaContentConfigResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['DeleteAreaContentConfigRequest'],
+      Schemas['AreaContentConfigResponse']
+    >('/collection/content/area-config/delete', request, channel, timeout);
   }
 
   /**

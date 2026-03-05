@@ -5,6 +5,7 @@
 > **Version**: 3.0.0
 > **Layer**: AppFeatures
 > **State Stores**: orchestrator-heartbeats (Redis), orchestrator-routings (Redis), orchestrator-config (Redis), orchestrator-statestore (Redis)
+> **Implementation Map**: [docs/maps/ORCHESTRATOR.md](../maps/ORCHESTRATOR.md)
 
 ---
 
@@ -84,6 +85,7 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | `bannou.deployment-events` | `DeploymentEvent` | Deploy/teardown started, completed, failed, or topology changed |
 | `bannou.service-lifecycle` | `ServiceRestartEvent` | Service restart requested via SmartRestartManager |
 | `orchestrator.processor.released` | `ProcessorReleasedEvent` | Processor released back to pool (includes pool type, success/failure, lease duration) |
+| `bannou.configuration-events` | `ConfigurationChangedEvent` | Admin-triggered notification that configuration/secrets changed; plugins inspect `changedKeys` prefixes for self-service restart |
 | (error topic via `TryPublishErrorAsync`) | Error event | Any unexpected internal failure |
 
 ### Consumed Events
@@ -193,11 +195,13 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
   - Optional `serviceFilter` parameter filters results by service name substring.
   - Response includes `source` (the filter used), `controlPlaneAppId` (e.g., "bannou"), healthy/unhealthy service lists, counts, and health percentage.
 
-### Configuration Versioning (2 endpoints)
+### Configuration Versioning (3 endpoints)
 
 - **RollbackConfiguration** (`/orchestrator/config/rollback`): Supports rolling back to any historical version. If `targetVersion` is specified, rolls back to that version; otherwise defaults to version N-1. Validates target version is >= 1 and < current version. Retrieves target config from history. Calls `RestoreConfigurationVersionAsync` which creates a NEW version (currentVersion+1) containing the old config (preserves audit trail). Computes changed keys (services and env vars that differ). Returns `ConfigRollbackResponse` with version numbers and changed keys list.
 
 - **GetConfigVersion** (`/orchestrator/config/version`): Gets current version number and configuration from Redis. Checks if previous version exists in history. Extracts key prefixes from current config (service names, env var prefixes). Returns `ConfigVersionResponse` with version, timestamp, hasPreviousConfig, keyCount, keyPrefixes.
+
+- **NotifyConfigChange** (`/orchestrator/config/notify-change`): Manual trigger for `ConfigurationChangedEvent`. External systems (CI/CD, admin tooling, K8s operators) call this after applying environment variable or secret changes. Reads current config version, publishes the event with caller-provided `changedKeys` prefixes. All running containers receive the event via RabbitMQ; plugins inspect prefixes to decide if they need a restart. See [#565](https://github.com/beyond-immersion/bannou-service/issues/565) for the auto-detection design question.
 
 ### Topology Management (1 endpoint)
 
@@ -445,6 +449,8 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 - **Processing pool priority queue**: Currently FIFO; could use priority field from acquire requests.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/554 -->
 - ~~**Lease expiry enforcement**~~: **FIXED** (2026-03-02) - Added periodic lease cleanup timer to ServiceHealthMonitor (60-second default interval, configurable via `ORCHESTRATOR_LEASE_CLEANUP_INTERVAL_SECONDS`). Timer iterates all known pool types under distributed lock and reclaims expired leases by returning processors to the available list. Lazy reclamation in AcquireProcessor still runs as fast-path; the background timer prevents metric inflation and resource leaks when no acquire requests arrive.
+- **Auto-detection of configuration changes per backend**: The `POST /orchestrator/config/notify-change` endpoint provides a manual trigger for `ConfigurationChangedEvent`, but auto-detecting config changes per backend (K8s ConfigMap watches, Portainer webhooks, Docker label-based detection) is a design question. Most deployments don't have live config update detection, and the manual endpoint covers all backends. The consumer side (plugins reacting to `changedKeys` prefixes to request restarts) is also unimplemented.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/565 -->
 
 ---
 

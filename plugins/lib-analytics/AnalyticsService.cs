@@ -206,7 +206,7 @@ public partial class AnalyticsService : IAnalyticsService
                 EventType = body.EventType,
                 Timestamp = body.Timestamp,
                 Value = body.Value,
-                Metadata = MetadataHelper.ConvertToDictionary(body.Metadata)
+                Metadata = body.Metadata
             };
 
             var buffered = await BufferAnalyticsEventAsync(bufferedEvent, cancellationToken);
@@ -217,8 +217,7 @@ public partial class AnalyticsService : IAnalyticsService
 
             return (StatusCodes.OK, new IngestEventResponse
             {
-                EventId = bufferedEvent.EventId,
-                Accepted = true
+                EventId = bufferedEvent.EventId
             });
         }
     }
@@ -248,7 +247,7 @@ public partial class AnalyticsService : IAnalyticsService
                     EventType = evt.EventType,
                     Timestamp = evt.Timestamp,
                     Value = evt.Value,
-                    Metadata = MetadataHelper.ConvertToDictionary(evt.Metadata)
+                    Metadata = evt.Metadata
                 };
 
                 var buffered = await BufferAnalyticsEventAsync(
@@ -291,7 +290,7 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     public async Task<(StatusCodes, EntitySummaryResponse?)> GetEntitySummaryAsync(GetEntitySummaryRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting entity summary for {EntityType}:{EntityId}", body.EntityType, body.EntityId);
+        _logger.LogDebug("Getting entity summary for {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
         {
             var entityKey = GetEntityKey(body.GameServiceId, body.EntityType, body.EntityId);
@@ -321,7 +320,7 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     public async Task<(StatusCodes, QueryEntitySummariesResponse?)> QueryEntitySummariesAsync(QueryEntitySummariesRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Querying entity summaries for game service {GameServiceId}", body.GameServiceId);
+        _logger.LogDebug("Querying entity summaries for game service {GameServiceId}", body.GameServiceId);
 
         {
             if (body.Limit <= 0)
@@ -446,7 +445,7 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     public async Task<(StatusCodes, SkillRatingResponse?)> GetSkillRatingAsync(GetSkillRatingRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting skill rating for {EntityType}:{EntityId}, type {RatingType}",
+        _logger.LogDebug("Getting skill rating for {EntityType}:{EntityId}, type {RatingType}",
             body.EntityType, body.EntityId, body.RatingType);
 
         var ratingKey = GetRatingKey(body.GameServiceId, body.RatingType, body.EntityType, body.EntityId);
@@ -618,7 +617,6 @@ public partial class AnalyticsService : IAnalyticsService
 
         return (StatusCodes.OK, new UpdateSkillRatingResponse
         {
-            MatchId = body.MatchId,
             UpdatedRatings = updatedRatings
         });
     }
@@ -629,7 +627,7 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     public async Task<StatusCodes> RecordControllerEventAsync(RecordControllerEventRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Recording controller {Action} event: account {AccountId} -> {EntityType}:{EntityId}",
+        _logger.LogDebug("Recording controller {Action} event: account {AccountId} -> {EntityType}:{EntityId}",
             body.Action, body.AccountId, body.TargetEntityType, body.TargetEntityId);
 
         var eventId = Guid.NewGuid();
@@ -648,6 +646,20 @@ public partial class AnalyticsService : IAnalyticsService
         };
 
         await _historyDataStore.SaveAsync(key, historyEvent, options: null, cancellationToken);
+
+        var controllerEvent = new AnalyticsControllerRecordedEvent
+        {
+            EventId = eventId,
+            Timestamp = body.Timestamp,
+            GameServiceId = body.GameServiceId,
+            AccountId = body.AccountId,
+            TargetEntityId = body.TargetEntityId,
+            TargetEntityType = body.TargetEntityType,
+            Action = body.Action,
+            SessionId = body.SessionId
+        };
+        await _messageBus.TryPublishAsync("analytics.controller.recorded", controllerEvent, cancellationToken: cancellationToken);
+
         return StatusCodes.OK;
     }
 
@@ -657,7 +669,7 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     public async Task<(StatusCodes, QueryControllerHistoryResponse?)> QueryControllerHistoryAsync(QueryControllerHistoryRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Querying controller history for game service {GameServiceId}", body.GameServiceId);
+        _logger.LogDebug("Querying controller history for game service {GameServiceId}", body.GameServiceId);
 
         {
             if (body.Limit <= 0)
@@ -769,7 +781,7 @@ public partial class AnalyticsService : IAnalyticsService
     public async Task<(StatusCodes, CleanupControllerHistoryResponse?)> CleanupControllerHistoryAsync(
         CleanupControllerHistoryRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Cleaning up controller history (dryRun={DryRun}, olderThanDays={OlderThanDays}, gameServiceId={GameServiceId})",
+        _logger.LogDebug("Cleaning up controller history (dryRun={DryRun}, olderThanDays={OlderThanDays}, gameServiceId={GameServiceId})",
             body.DryRun, body.OlderThanDays, body.GameServiceId);
 
         var retentionDays = body.OlderThanDays ?? _configuration.ControllerHistoryRetentionDays;
@@ -778,8 +790,7 @@ public partial class AnalyticsService : IAnalyticsService
             _logger.LogInformation("Controller history cleanup skipped: retention days is 0 (indefinite retention)");
             return (StatusCodes.OK, new CleanupControllerHistoryResponse
             {
-                RecordsDeleted = 0,
-                DryRun = body.DryRun
+                RecordsDeleted = 0
             });
         }
 
@@ -811,8 +822,7 @@ public partial class AnalyticsService : IAnalyticsService
             _logger.LogInformation("Controller history cleanup dry run: {Count} records would be deleted", count);
             return (StatusCodes.OK, new CleanupControllerHistoryResponse
             {
-                RecordsDeleted = count,
-                DryRun = true
+                RecordsDeleted = count
             });
         }
 
@@ -841,8 +851,7 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Controller history cleanup completed: {DeletedCount} records deleted", totalDeleted);
         return (StatusCodes.OK, new CleanupControllerHistoryResponse
         {
-            RecordsDeleted = totalDeleted,
-            DryRun = false
+            RecordsDeleted = totalDeleted
         });
     }
 
@@ -1105,7 +1114,7 @@ public partial class AnalyticsService : IAnalyticsService
 
             if (response == null)
             {
-                // Per IMPLEMENTATION TENETS T7: Not found (404) is expected, log at Warning, do NOT emit error events
+                // Per IMPLEMENTATION TENETS: Not found (404) is expected, log at Warning, do NOT emit error events
                 _logger.LogWarning("Game service lookup returned no data for game type {GameType}", gameType);
                 return null;
             }
@@ -1124,7 +1133,7 @@ public partial class AnalyticsService : IAnalyticsService
         }
         catch (ApiException ex)
         {
-            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            // Per IMPLEMENTATION TENETS: ApiException is expected, log at Warning, do NOT emit error events
             _logger.LogWarning(ex, "Failed to resolve game service for game type {GameType}: {Status}", gameType, ex.StatusCode);
             return null;
         }
@@ -1207,7 +1216,7 @@ public partial class AnalyticsService : IAnalyticsService
         }
         catch (ApiException ex)
         {
-            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            // Per IMPLEMENTATION TENETS: ApiException is expected, log at Warning, do NOT emit error events
             _logger.LogWarning(ex, "Failed to resolve game session {SessionId} for analytics event: {Status}", sessionId, ex.StatusCode);
             return null;
         }
@@ -1280,7 +1289,7 @@ public partial class AnalyticsService : IAnalyticsService
 
             if (realm == null)
             {
-                // Per IMPLEMENTATION TENETS T7: Not found (404) is expected, log at Warning, do NOT emit error events
+                // Per IMPLEMENTATION TENETS: Not found (404) is expected, log at Warning, do NOT emit error events
                 _logger.LogWarning("Realm lookup returned no data for realm {RealmId}", realmId);
                 return null;
             }
@@ -1299,7 +1308,7 @@ public partial class AnalyticsService : IAnalyticsService
         }
         catch (ApiException ex)
         {
-            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            // Per IMPLEMENTATION TENETS: ApiException is expected, log at Warning, do NOT emit error events
             _logger.LogWarning(ex, "Failed to resolve game service for realm {RealmId}: {Status}", realmId, ex.StatusCode);
             return null;
         }
@@ -1348,7 +1357,7 @@ public partial class AnalyticsService : IAnalyticsService
 
             if (character == null)
             {
-                // Per IMPLEMENTATION TENETS T7: Not found (404) is expected, log at Warning, do NOT emit error events
+                // Per IMPLEMENTATION TENETS: Not found (404) is expected, log at Warning, do NOT emit error events
                 _logger.LogWarning("Character lookup returned no data for character {CharacterId}", characterId);
                 return null;
             }
@@ -1367,7 +1376,7 @@ public partial class AnalyticsService : IAnalyticsService
         }
         catch (ApiException ex)
         {
-            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            // Per IMPLEMENTATION TENETS: ApiException is expected, log at Warning, do NOT emit error events
             _logger.LogWarning(ex, "Failed to resolve game service for character {CharacterId}: {Status}", characterId, ex.StatusCode);
             return null;
         }
@@ -1397,11 +1406,6 @@ public partial class AnalyticsService : IAnalyticsService
         if (!await EnsureSummaryStoreRedisAsync(cancellationToken))
         {
             return false;
-        }
-
-        if (bufferedEvent.Metadata != null && bufferedEvent.Metadata.Count == 0)
-        {
-            bufferedEvent.Metadata = null;
         }
 
         string? eventKey = null;
@@ -1684,11 +1688,6 @@ public partial class AnalyticsService : IAnalyticsService
                 foreach (var envelope in entityEvents)
                 {
                     var bufferedEvent = envelope.evt;
-                    var hasPrevious = summary.Aggregates.TryGetValue(bufferedEvent.EventType, out var previousAggregate);
-                    var previousValue = hasPrevious ? previousAggregate : 0.0;
-                    var newValue = previousValue + bufferedEvent.Value;
-
-                    summary.Aggregates[bufferedEvent.EventType] = newValue;
                     summary.EventCounts[bufferedEvent.EventType] = summary.EventCounts.GetValueOrDefault(bufferedEvent.EventType) + 1;
                     summary.TotalEvents++;
 
@@ -1701,8 +1700,13 @@ public partial class AnalyticsService : IAnalyticsService
                         summary.LastEventAt = bufferedEvent.Timestamp;
                     }
 
-                    if (bufferedEvent.Value != 0)
+                    if (bufferedEvent.Value.HasValue)
                     {
+                        var hasPrevious = summary.Aggregates.TryGetValue(bufferedEvent.EventType, out var previousAggregate);
+                        var previousValue = hasPrevious ? previousAggregate : 0.0;
+                        var newValue = previousValue + bufferedEvent.Value.Value;
+                        summary.Aggregates[bufferedEvent.EventType] = newValue;
+
                         scoreEvents.Add(new AnalyticsScoreUpdatedEvent
                         {
                             EventId = Guid.NewGuid(),
@@ -1713,7 +1717,7 @@ public partial class AnalyticsService : IAnalyticsService
                             ScoreType = bufferedEvent.EventType,
                             PreviousValue = hasPrevious ? previousValue : null,
                             NewValue = newValue,
-                            Delta = bufferedEvent.Value,
+                            Delta = bufferedEvent.Value.Value,
                             SessionId = bufferedEvent.SessionId
                         });
                         milestoneChecks.Add((bufferedEvent.GameServiceId, bufferedEvent.EntityId, bufferedEvent.EntityType, bufferedEvent.EventType, previousValue, newValue));

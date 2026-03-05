@@ -30,9 +30,9 @@ Compliant properties include one of these phrases in their description:
 | Metric | Count |
 |--------|-------|
 | Total metadata bag properties | 168 |
-| Compliant (has marker) | 148 |
-| Non-compliant (missing marker) | 20 |
-| Compliance rate | 88% |
+| Compliant (has marker) | 149 |
+| Non-compliant (missing marker) | 19 |
+| Compliance rate | 89% |
 
 ## Properties by Service
 
@@ -258,7 +258,7 @@ Compliant properties include one of these phrases in their description:
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `IngestEventRequest` | `metadata` | `analytics-api.yaml` | **N** | Additional event-specific data |
+| `IngestEventRequest` | `metadata` | `analytics-api.yaml` | Y | Client-only metadata. No Bannou plugin reads specific keys from this field by... |
 
 #### Behavior
 
@@ -446,7 +446,6 @@ or is it being misused as a cross-service data contract?
 
 | Service | Schema Type | Property | Schema File | Description |
 |---------|-------------|----------|-------------|-------------|
-| Analytics | `IngestEventRequest` | `metadata` | `analytics-api.yaml` | Additional event-specific data |
 | Asset | `AssetProcessingJobDispatchedEvent` | `processingOptions` | `asset-events.yaml` | Content-type-specific processing options (opaque pass-through to processor) |
 | Behavior | `CharacterContext` | `worldState` | `behavior-api.yaml` | Relevant world state information |
 | Behavior | `GoapPlanRequest` | `worldState` | `behavior-api.yaml` | Current world state as key-value pairs |

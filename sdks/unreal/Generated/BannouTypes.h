@@ -392,6 +392,7 @@ struct FDeityStatus;
 struct FDeleteActionMappingRequest;
 struct FDeleteActorTemplateRequest;
 struct FDeleteActorTemplateResponse;
+struct FDeleteAreaContentConfigRequest;
 struct FDeleteBoardRequest;
 struct FDeleteBoardTemplateRequest;
 struct FDeleteBundleRequest;
@@ -401,8 +402,9 @@ struct FDeleteCalendarResponse;
 struct FDeleteCollectionRequest;
 struct FDeleteConnectionRequest;
 struct FDeleteConnectionResponse;
+struct FDeleteContractInstanceRequest;
+struct FDeleteContractInstanceResponse;
 struct FDeleteDeityRequest;
-struct FDeleteEntryTemplateRequest;
 struct FDeleteLeaderboardDefinitionRequest;
 struct FDeleteMessageRequest;
 struct FDeleteModeRequest;
@@ -424,6 +426,7 @@ struct FDeploymentPhase;
 struct FDepositRequest;
 struct FDepositResponse;
 struct FDeprecateAchievementDefinitionRequest;
+struct FDeprecateEntryTemplateRequest;
 struct FDeprecateFactionRequest;
 struct FDeprecateModeRequest;
 struct FDeprecateQuestDefinitionRequest;
@@ -637,6 +640,8 @@ struct FGetJourneyRequest;
 struct FGetLicenseDefinitionRequest;
 struct FGetLocationAncestorsRequest;
 struct FGetLocationByCodeRequest;
+struct FGetLocationCompressContextRequest;
+struct FGetLocationCompressDataRequest;
 struct FGetLocationDescendantsRequest;
 struct FGetLocationRequest;
 struct FGetMatchmakingStatsRequest;
@@ -923,6 +928,7 @@ struct FListVersionsResponse;
 struct FLoadRequest;
 struct FLoadResponse;
 struct FLocation;
+struct FLocationBaseArchive;
 struct FLocationExistsRequest;
 struct FLocationExistsResponse;
 struct FLocationListResponse;
@@ -1113,6 +1119,7 @@ struct FRealmExistsRequest;
 struct FRealmExistsResponse;
 struct FRealmHistoricalParticipation;
 struct FRealmListResponse;
+struct FRealmLocationArchiveContext;
 struct FRealmLoreElement;
 struct FRealmLoreElementType;
 struct FRealmLoreResponse;
@@ -12253,6 +12260,20 @@ struct FDeleteActorTemplateResponse
 };
 
 /**
+ * Request to delete an area content configuration
+ */
+USTRUCT(BlueprintType)
+struct FDeleteAreaContentConfigRequest
+{
+    GENERATED_BODY()
+
+    /** Area content config to delete */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid AreaConfigId;
+
+};
+
+/**
  * Request to delete a board instance
  */
 USTRUCT(BlueprintType)
@@ -12391,6 +12412,30 @@ struct FDeleteConnectionResponse
 };
 
 /**
+ * Request to hard-delete a terminal contract instance
+ */
+USTRUCT(BlueprintType)
+struct FDeleteContractInstanceRequest
+{
+    GENERATED_BODY()
+
+    /** Contract instance to delete */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid ContractId;
+
+};
+
+/**
+ * Empty response. HTTP 200 confirms the instance was deleted.
+ */
+USTRUCT(BlueprintType)
+struct FDeleteContractInstanceResponse
+{
+    GENERATED_BODY()
+
+};
+
+/**
  * Request to permanently delete a deity and all dependent data
  */
 USTRUCT(BlueprintType)
@@ -12401,20 +12446,6 @@ struct FDeleteDeityRequest
     /** Deity to delete */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid DeityId;
-
-};
-
-/**
- * Request to delete an entry template
- */
-USTRUCT(BlueprintType)
-struct FDeleteEntryTemplateRequest
-{
-    GENERATED_BODY()
-
-    /** Entry template to delete */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid EntryTemplateId;
 
 };
 
@@ -12793,6 +12824,24 @@ struct FDeprecateAchievementDefinitionRequest
     /** Audit reason for deprecation, explaining why this achievement is being phased out */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString DeprecationReason;
+
+};
+
+/**
+ * Request to deprecate an entry template (Category B — one-way, no delete)
+ */
+USTRUCT(BlueprintType)
+struct FDeprecateEntryTemplateRequest
+{
+    GENERATED_BODY()
+
+    /** Entry template to deprecate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid EntryTemplateId;
+
+    /** Reason for deprecation (recommended but not required for Category B templates) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Reason;
 
 };
 
@@ -14279,6 +14328,18 @@ struct FEntryTemplateResponse
     /** Composer or creator name */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Composer;
+
+    /** Whether this entry template is deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
+
+    /** When this template was deprecated (null if not deprecated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Reason for deprecation (null if not deprecated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
 
     /** When this entry template was created */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -17999,6 +18060,34 @@ struct FGetLocationByCodeRequest
     /** Realm ID to scope the code lookup */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid RealmId;
+
+};
+
+/**
+ * Request to get realm context for a location's compression archive
+ */
+USTRUCT(BlueprintType)
+struct FGetLocationCompressContextRequest
+{
+    GENERATED_BODY()
+
+    /** ID of the location being compressed (used to resolve realm) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
+
+};
+
+/**
+ * Request to get location base data for compression archive
+ */
+USTRUCT(BlueprintType)
+struct FGetLocationCompressDataRequest
+{
+    GENERATED_BODY()
+
+    /** ID of the location to compress */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
 
 };
 
@@ -22530,6 +22619,10 @@ struct FListEntryTemplatesRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Category;
 
+    /** Include deprecated templates in results (excluded by default) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IncludeDeprecated = false;
+
     /** Opaque cursor from previous response for pagination */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Cursor;
@@ -24647,6 +24740,100 @@ struct FLocation
     /** 3D spatial coordinates of the character's position in the game world */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FCoordinates> Coordinates;
+
+};
+
+/**
+ * Core location data for archive storage and content flywheel consumption.
+ */
+USTRUCT(BlueprintType)
+struct FLocationBaseArchive
+{
+    GENERATED_BODY()
+
+    /** Unique identifier for the location (equals resourceId) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
+
+    /** Display name of the location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Name;
+
+    /** Unique code identifier for the location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Code;
+
+    /** Human-readable description of the location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Description;
+
+    /** Category of location (Region, City, Building, Room, etc.) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TMap<FString, FString> LocationType;
+
+    /** Realm this location belongs to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Parent location ID (null for root locations) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> ParentLocationId;
+
+    /** Depth in the location hierarchy (0 for root) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Depth = 0;
+
+    /** Parent location name (one level of context, null if root) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ParentName;
+
+    /** Parent location code (one level of context, null if root) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ParentCode;
+
+    /** Parent location type (one level of context, null if root) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TMap<FString, FString> ParentLocationType;
+
+    /** Number of immediate child locations */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 ChildrenCount = 0;
+
+    /** Codes of immediate child locations (null if no children) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> ChildrenCodes;
+
+    /** Spatial bounding box of the location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TMap<FString, FString> Bounds;
+
+    /** Precision level of the spatial bounds */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TMap<FString, FString> BoundsPrecision;
+
+    /** Coordinate system used for spatial data */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TMap<FString, FString> CoordinateMode;
+
+    /** Local coordinate origin point */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TMap<FString, FString> LocalOrigin;
+
+    /** Real-world creation timestamp */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDateTime CreatedAt;
+
+    /** Real-world last update timestamp */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> UpdatedAt;
+
+    /** When the location was deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Reason for deprecation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
 
 };
 
@@ -29599,6 +29786,32 @@ struct FRealmListResponse
     /** Whether there are realms available on the previous page */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool HasPreviousPage = false;
+
+};
+
+/**
+ * Realm context included in location compression archives.
+ */
+USTRUCT(BlueprintType)
+struct FRealmLocationArchiveContext
+{
+    GENERATED_BODY()
+
+    /** Unique identifier of the realm */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Display name of the realm */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RealmName;
+
+    /** Unique code identifier for the realm */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RealmCode;
+
+    /** Detailed description of the realm and its characteristics */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RealmDescription;
 
 };
 

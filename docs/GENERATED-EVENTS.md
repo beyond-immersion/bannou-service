@@ -57,6 +57,7 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `AnalyticsControllerRecordedEvent` | Custom | `analytics-controller-recorded` | Published when a controller possession or release ... |
 | `AnalyticsMilestoneReachedEvent` | Custom | `analytics-milestone-reached` | Published when an entity reaches a statistical mil... |
 | `AnalyticsRatingUpdatedEvent` | Lifecycle (Updated) | `analytics-rating.updated` | Published when an entity's Glicko-2 skill rating c... |
 | `AnalyticsScoreUpdatedEvent` | Lifecycle (Updated) | `analytics-score.updated` | Published when an entity's score or statistic chan... |

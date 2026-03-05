@@ -21,7 +21,7 @@ The Character service (L2 GameFoundation) manages game world characters for Arca
 
 ## Collection {#collection}
 
-**Version**: 1.0.0 | **Schema**: `schemas/collection-api.yaml` | **Endpoints**: 21 | **Deep Dive**: [docs/plugins/COLLECTION.md](plugins/COLLECTION.md)
+**Version**: 1.0.0 | **Schema**: `schemas/collection-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/COLLECTION.md](plugins/COLLECTION.md)
 
 The Collection service (L2 GameFoundation) manages universal content unlock and archive systems for collectible content: voice galleries, scene archives, music libraries, bestiaries, recipe books, and custom types. Follows the "items in inventories" pattern: entry templates define what can be collected, collection instances create inventory containers per owner, and granting an entry creates an item instance in that container. Unlike License (which orchestrates contracts for LP deduction), Collection uses direct grants without contract delegation. Features dynamic content selection based on unlocked entries and area theme configurations. Collection types are opaque strings (not enums), allowing new types without schema changes. Dispatches unlock notifications to registered `ICollectionUnlockListener` implementations via DI for guaranteed in-process delivery (e.g., Seed growth pipeline). Internal-only, never internet-facing.
 
@@ -59,7 +59,7 @@ Dual-model item management (L2 GameFoundation) with templates (definitions/proto
 
 ## Location {#location}
 
-**Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Endpoints**: 24 | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md)
+**Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Endpoints**: 25 | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md)
 
 Hierarchical location management (L2 GameFoundation) for the Arcadia game world. Manages physical places (cities, regions, buildings, rooms, landmarks) within realms as a tree structure with depth tracking. Each location belongs to exactly one realm and optionally has a parent location. Supports deprecation, circular reference prevention, cascading depth updates, code-based lookups, and bulk seeding with two-pass parent resolution.
 
@@ -71,7 +71,7 @@ The Quest service (L2 GameFoundation) provides objective-based gameplay progress
 
 ## Realm {#realm}
 
-**Version**: 1.0.0 | **Schema**: `schemas/realm-api.yaml` | **Endpoints**: 12 | **Deep Dive**: [docs/plugins/REALM.md](plugins/REALM.md)
+**Version**: 1.0.0 | **Schema**: `schemas/realm-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/REALM.md](plugins/REALM.md)
 
 The Realm service (L2 GameFoundation) manages top-level persistent worlds in the Arcadia game system. Realms are peer worlds (e.g., Omega, Arcadia, Fantasia) with no hierarchical relationships between them. Each realm operates as an independent world with distinct species populations and cultural contexts. Provides CRUD with deprecation lifecycle and seed-from-configuration support. Internal-only.
 
@@ -128,7 +128,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Services in layer**: 17
-- **Endpoints in layer**: 300
+- **Endpoints in layer**: 303
 
 ---
 

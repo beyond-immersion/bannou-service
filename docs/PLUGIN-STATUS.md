@@ -78,7 +78,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Broadcast](#broadcast-status) | L3 | 0% | 0 | Pre-implementation. Deep dive L3-audited: x-lifecycle events, Redis tracking IDs, camera API endpoints, nullable configs, codec enums, worker intervals, T15 webhook exception. No schema, no code. |
 | [Agency](#agency-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-03): 5 critical schema/tenet findings, 16 warnings, 7/9 design considerations resolved. No schema, no code. |
 | [Achievement](#achievement-status) | L4 | 90% | 1 | Production-hardened. T25/T29/T31/T8/T6/T26/T30/T17 compliant, typed fields, client events, Category B deprecation. 1 T16 Pattern A topic bug. Xbox/PS stubs remain. |
-| [Analytics](#analytics-status) | L4 | 82% | 0 | Robust pipeline. Glicko-2 ratings, event ingestion, summaries. Rating decay missing. |
+| [Analytics](#analytics-status) | L4 | 88% | 0 | Production-hardened. T8/T10/T29/T0/T5 compliant, NRT-clean schemas, validation bounds on all properties. Glicko-2, event ingestion, summaries, controller history. Rating decay missing. |
 | [Behavior](#behavior-status) | L4 | 80% | 0 | ABML compiler + GOAP planner work. 6 stubs: cinematics, bundles, embeddings. |
 | [Character Encounter](#character-encounter-status) | L4 | 88% | 0 | Feature-complete. Encounters, perspectives, decay, sentiment, pruning. Index growth concerns. |
 | [Character History](#character-history-status) | L4 | 90% | 0 | Feature-complete. Participations, backstory, summarization, compression. Minor typing gaps. |
@@ -1263,9 +1263,9 @@ gh issue list --search "Achievement:" --state open
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [ANALYTICS.md](plugins/ANALYTICS.md)
 
-### Production Readiness: 82%
+### Production Readiness: 88%
 
-Core analytics pipeline is robust: buffered event ingestion with distributed-lock-protected flush, entity summary aggregation in MySQL with server-side filtering/sorting/pagination, full Glicko-2 skill rating implementation with configurable parameters, controller history with retention-based cleanup, 11 event subscriptions across game-session/character-history/realm-history, and resolution caching for cross-service lookups. No bugs. The main gaps are rating period decay (inactive player RD never increases) and milestones being global-only (no per-game customization).
+Production-hardened (2026-03-05): schema NRT compliance fixed, T8 filler properties removed (accepted, matchId echo, dryRun echo), T29 metadata description corrected, validation bounds added to all schema properties across API/events/configuration, T0 tenet number references removed from source comments, T10 log levels corrected (query entry logs → LogDebug), T5 controller event gap closed (AnalyticsControllerRecordedEvent now published). Core pipeline is robust: buffered event ingestion with distributed-lock-protected flush, entity summary aggregation in MySQL with server-side filtering/sorting/pagination, full Glicko-2 skill rating implementation with configurable parameters, controller history with retention-based cleanup, 11 event subscriptions across game-session/character-history/realm-history, and resolution caching for cross-service lookups. No bugs. The main gaps are rating period decay (inactive player RD never increases) and milestones being global-only (no per-game customization).
 
 ### Bug Count: 0
 

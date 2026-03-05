@@ -35,18 +35,6 @@ The Messaging service (L0 Infrastructure) is the native RabbitMQ pub/sub infrast
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| RabbitMQ.Client 7.2.0 | Direct AMQP connection for publish/subscribe |
-| lib-state (`IStateStoreFactory`) | Persisting external subscription metadata for recovery |
-| lib-core (`BannouJson`) | Consistent JSON serialization via `BannouJson.Serialize/Deserialize` |
-| lib-core (`IBannouEvent`) | Event interface for generic envelope pattern |
-| lib-telemetry (`ITelemetryProvider`) | OpenTelemetry traces and metrics (NullProvider if telemetry disabled) |
-
----
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -58,30 +46,6 @@ The Messaging service (L0 Infrastructure) is the native RabbitMQ pub/sub infrast
 | lib-permission | Uses `IMessageBus` for permission registration broadcasts |
 
 All services depend on messaging infrastructure. The HTTP API (`IMessagingClient`) is rarely used directly.
-
----
-
-## State Storage
-
-**Store**: `messaging-external-subs` (Backend: Redis, keyed by app-id, TTL-based)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `msg:subs:{appId}` | `Set<ExternalSubscriptionData>` | Persisted HTTP callback subscriptions for recovery across restarts |
-
-ExternalSubscriptionData contains: SubscriptionId (Guid), Topic (string), CallbackUrl (string), CreatedAt (DateTimeOffset).
-
----
-
-## Events
-
-### Published Events
-
-This service **intentionally publishes no lifecycle events**. It is infrastructure, not a domain service. Debug/monitoring events (MessagePublished, SubscriptionCreated/Removed) were planned but never implemented. The events schema (`schemas/messaging-events.yaml`) documents this explicitly.
-
-### Consumed Events
-
-This plugin does not consume external events (it IS the event infrastructure).
 
 ---
 
@@ -141,7 +105,7 @@ When `EnablePublisherConfirms` is true, `BasicPublishAsync` waits for broker con
 | `DeadLetterExchange` | `MESSAGING_DEAD_LETTER_EXCHANGE` | `"bannou-dlx"` | Dead-letter routing exchange |
 | `DeadLetterMaxLength` | `MESSAGING_DEAD_LETTER_MAX_LENGTH` | `100000` | Max messages in DLX queue before oldest dropped |
 | `DeadLetterTtlMs` | `MESSAGING_DEAD_LETTER_TTL_MS` | `604800000` | TTL for DLX messages (7 days) |
-| `DeadLetterOverflowBehavior` | `MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR` | `"drop-head"` | Behavior when DLX exceeds max length |
+| `DeadLetterOverflowBehavior` | `MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR` | `DropHead` | Behavior when DLX exceeds max length |
 | `DeadLetterConsumerEnabled` | `MESSAGING_DEAD_LETTER_CONSUMER_ENABLED` | `true` | Enable dead letter consumer background service |
 | `DeadLetterConsumerStartupDelaySeconds` | `MESSAGING_DEAD_LETTER_CONSUMER_STARTUP_DELAY_SECONDS` | `5` | Delay before consumer starts subscribing |
 
@@ -180,56 +144,6 @@ These settings apply to the **MessageRetryBuffer** (publish failures). After `Re
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `ShutdownTimeoutSeconds` | `MESSAGING_SHUTDOWN_TIMEOUT_SECONDS` | `10` | Max seconds to wait for graceful subscription cleanup during shutdown |
-
----
-
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `IMessageBus` | Singleton | Event publishing (RabbitMQ or InMemory) |
-| `IMessageSubscriber` | Singleton | Topic subscriptions (static and dynamic) |
-| `IMessageTap` | Singleton | Event tapping/forwarding between exchanges |
-| `IChannelManager` | Singleton | Interface for channel pooling (testability) |
-| `RabbitMQConnectionManager` | Singleton | Connection pooling (configurable via `ChannelPoolSize`) |
-| `IRetryBuffer` | Singleton | Interface for retry buffer (testability) |
-| `MessageRetryBuffer` | Singleton | Transient publish failure recovery with crash-fast |
-| `NativeEventConsumerBackend` | HostedService | Bridges IEventConsumer fan-out to RabbitMQ |
-| `MessagingSubscriptionRecoveryService` | HostedService | Recovers external subscriptions on startup, refreshes TTL |
-| `DeadLetterConsumerService` | HostedService | Consumes dead-lettered messages, logs with structured data, publishes error events |
-| `MessagingUnhandledExceptionHandler` | Singleton | Publishes `ServiceErrorEvent` via IMessageBus for unhandled exceptions; AsyncLocal cycle prevention |
-| `MessagingService` | Singleton | HTTP API implementation (also registered as concrete for recovery service) |
-
-Service lifetime is **Singleton** (infrastructure must persist across requests).
-
-### Helper Classes
-
-| Class | Role |
-|-------|------|
-| `GenericMessageEnvelope` | Wraps arbitrary JSON payloads for MassTransit compatibility; implements `IBannouEvent` |
-| `TappedMessageEnvelope` | Extended envelope with tap routing metadata for multi-stream forwarding |
-| `ExternalSubscriptionData` | Record type for persisting HTTP callback subscriptions |
-| `IProcessTerminator` | Interface for crash-fast behavior; `DefaultProcessTerminator` calls `Environment.FailFast(string)` |
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Publish (`/messaging/publish`)
-
-Wraps arbitrary JSON payloads in `GenericMessageEnvelope` (MassTransit requires concrete types). Normalizes `Guid.Empty` to null for CorrelationId. Delegates to `IMessageBus.TryPublishAsync()`. Supports exchange types: fanout, direct, topic (default). Supports persistent flag, priority (0-9), expiration (ISO 8601 duration), and custom headers.
-
-### Subscribe (`/messaging/subscribe`)
-
-Creates dynamic HTTP callback subscriptions. Generates unique queue name `bannou-dynamic-{subscriptionId:N}`. Stores subscription in both in-memory dictionary (for disposal) and state store (for recovery). Retry logic: retries on `HttpRequestException` and `TaskCanceledException` (timeout) only; HTTP 4xx/5xx treated as successful delivery. Subscription options: durable, exclusive, autoAck, prefetchCount, useDeadLetter, consumerGroup.
-
-### Unsubscribe (`/messaging/unsubscribe`)
-
-Removes subscription from in-memory tracking and persistent state store. Disposes the subscription handle and HttpClient. Returns NotFound if subscription not active.
-
-### List Topics (`/messaging/list-topics`)
-
-Returns topics from active HTTP callback subscriptions on the current node. Returns topic name and consumer count per topic. Filters by exchangeFilter prefix.
 
 ---
 
@@ -331,6 +245,10 @@ No bugs identified.
 
 12. **Publisher confirms add latency**: When `EnablePublisherConfirms` is true (default), each `BasicPublishAsync` waits for broker confirmation before returning. This adds ~1-5ms latency per publish but provides at-least-once delivery guarantees. Fully configurable via `MESSAGING_ENABLE_PUBLISHER_CONFIRMS` and mitigated by `MESSAGING_ENABLE_PUBLISH_BATCHING` for high-throughput scenarios.
 
+### Design Considerations (Requires Planning)
+
+No active design considerations. All previous items were resolved to Intentional Quirks.
+
 ---
 
 ## Work Tracking
@@ -339,58 +257,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
-- **GitHub Issue #328**: Production readiness for 100k NPC agents
-  - Fixed channel pool exhaustion with configurable limits (`MaxTotalChannels`, `MaxConcurrentChannelCreation`)
-  - Fixed poison message infinite loop with retry counting and dead-lettering
-  - Fixed retry buffer crash thresholds (500k messages, 10 minute age, 80% backpressure)
-  - Fixed silent deserialization failures with error event publishing
-  - Fixed T23 async void timer callback violation
-  - Fixed T24 blocking on async (ReturnChannelAsync)
-  - Fixed T26 sentinel values (nullable TapId)
-  - Added message batching support for high-throughput scenarios
-  - Fixed connection recovery race condition (TOCTOU)
-  - Improved handler exception logging with telemetry
-  - Added DLX queue size/TTL limits
-  - Fixed temp ServiceProvider disposal
-  - Fixed publisher confirms configuration (tracking enabled)
-  - **Audit fixes (2026-02-07)**:
-    - Fixed T7 violation: Added error event publishing (`TryPublishErrorAsync`) when poison messages are discarded
-    - Fixed T21 violation: Removed dead config `PublisherConfirmTimeoutSeconds` (RabbitMQ.Client 7.x manages timeout internally)
-    - Added unit tests for poison message discard scenario
-
-- **L3 Hardening Audit (2026-02-21)**:
-    - Fixed T10 violations: Removed `[Messaging]` bracket-prefix from all log messages across RabbitMQMessageBus, RabbitMQMessageSubscriber, RabbitMQConnectionManager, MessageRetryBuffer, RabbitMQMessageTap, NativeEventConsumerBackend
-    - Fixed T25 violations: Changed `TappedMessageEnvelope.DestinationExchangeType` from `string` to `TapExchangeType` enum; updated all construction sites and tests
-    - Fixed T9 violation: Replaced `List<Func<...>>` + `lock (_subscriptionLock)` in InMemoryMessageBus with lock-free `ImmutableList<Func<...>>` via `ConcurrentDictionary.AddOrUpdate` pattern
-    - Fixed T30 violations: Added telemetry spans to 15+ async methods across RabbitMQMessageBus (TryPublishRawAsync, TryPublishErrorAsync, PublishBatchAsync), RabbitMQMessageSubscriber (SubscribeAsync, SubscribeDynamicAsync, SubscribeDynamicRawAsync, UnsubscribeAsync, RemoveDynamicSubscriptionAsync), NativeEventConsumerBackend (StartAsync), RabbitMQMessageTap (CreateTapAsync, ForwardRawMessageAsync, RemoveTapAsync), RabbitMQConnectionManager (InitializeAsync, GetChannelAsync, CreateConsumerChannelAsync), MessageRetryBuffer (ProcessBufferedMessagesInternalAsync)
-    - Injected `ITelemetryProvider` into RabbitMQMessageTap, RabbitMQConnectionManager, MessageRetryBuffer (previously lacked telemetry)
-    - Fixed CA2000 dispose warnings in RabbitMQMessageTap.RemoveTapAsync and RabbitMQMessageSubscriber.RemoveDynamicSubscriptionAsync with dedicated local variable pattern
-    - Schema fixes: Added NRT compliance (`nullable: true`), validation constraints (`minLength`, `maxLength`, `minimum`, `maximum`, `pattern`), consolidated `ExchangeType` and `OverflowBehavior` enums from configuration to API schema, fixed env var naming (`MESSAGING_RABBITMQ_VHOST` → `MESSAGING_RABBITMQ_VIRTUAL_HOST`), added `description` to all schema properties
-    - Removed `messageCount` field from TopicInfo schema (always returned 0, actively misleading) and `includeEmpty` filter (referenced removed field)
-    - Removed lifecycle events from stubs list (correctly rejected — self-referential events for infrastructure are circular and noisy)
-    - All 177 unit tests passing, 0 warnings, 0 errors
-
-- **Design Consideration Resolution (2026-02-22)**:
-    - Resolved "ServiceId from global static": Replaced `Program.ServiceGUID` with `IMeshInstanceIdentifier` (new interface in bannou-service, registered by lib-mesh). `RabbitMQMessageBus.TryPublishErrorAsync()` now uses injected `_instanceId` instead of static global access. All generated clients and `IServiceNavigator` also expose `InstanceId` for consistent node identification across all services.
-    - Resolved "No graceful drain on shutdown": Added `ShutdownTimeoutSeconds` config (`MESSAGING_SHUTDOWN_TIMEOUT_SECONDS`, default 10s). `RabbitMQMessageSubscriber.DisposeAsync` now wraps subscription cleanup in `WaitAsync(timeout)` to prevent indefinite blocking when channels hang.
-    - All 177 unit tests passing, 0 warnings, 0 errors
-
-- **Dead Letter Consumer (2026-02-22)**:
-    - Implemented `DeadLetterConsumerService` as a BackgroundService that subscribes to the DLX exchange, logs dead letters with structured data, and publishes `service.error` events for downstream monitoring
-    - Added `DeadLetterConsumerEnabled` and `DeadLetterConsumerStartupDelaySeconds` configuration properties
-    - Uses `IChannelManager` directly (not `IMessageSubscriber`) because dead letter processing requires access to `BasicProperties.Headers` for metadata extraction
-    - Durable shared queue `bannou-dlx-consumer` with competing consumers for multi-instance safety
-    - Handles both explicit dead letter paths (from MessageRetryBuffer) and RabbitMQ automatic dead-lettering (nack'd messages)
-    - All 216 unit tests passing, 0 warnings, 0 errors
-
-- **Audit (2026-02-22)**:
-    - Corrected Potential Extensions #1: "Prometheus metrics" description was factually inaccurate — publish/subscribe rate counters and duration histograms already implemented via `ITelemetryProvider.RecordCounter/RecordHistogram`. Updated to accurately describe remaining gap (ObservableGauge metrics for buffer depth, retry counts, channel pool utilization). Created [Issue #453](https://github.com/beyond-immersion/bannou-service/issues/453) for ITelemetryProvider interface design decision.
-    - Reclassified Design Considerations #1 (In-memory mode limitations) to Intentional Quirks #10 after code review of `InMemoryMessageBus.cs` confirmed fire-and-forget is intentional
-
-- **Audit (2026-02-22)**:
-    - Reclassified Design Considerations #1 (Tap creates exchange if not exists) to Intentional Quirks #11 — code review confirmed `CreateExchangeIfNotExists` default `true` is deliberate "exchanges as implicit infrastructure" pattern; typo masking is an acknowledged tradeoff, not a design question
-    - Reclassified Design Considerations #2 (Publisher confirms add latency) to Intentional Quirks #12 — fully configurable via `MESSAGING_ENABLE_PUBLISHER_CONFIRMS` with batching mitigation; this is a documented performance tradeoff, not an open design question
-    - Removed Design Considerations section (all items resolved to Intentional Quirks)
+All historical completed items have been archived to git history.
 
 ### Active
 

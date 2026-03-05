@@ -679,112 +679,112 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
         using var activity = _telemetryProvider.StartActivity("bannou.permission", "PermissionService.RecompileSessionPermissionsWithStates");
 
         if (sessionStates == null)
+        {
+            _logger.LogDebug("No session states provided for {SessionId}, skipping recompilation", sessionId);
+            return (false, null);
+        }
+
+        var defaultRole = _configuration.RoleHierarchy[0];
+        var role = sessionStates.GetValueOrDefault(SESSION_ROLE_KEY, defaultRole);
+        _logger.LogDebug("Recompiling permissions for session {SessionId}, role: {Role}, reason: {Reason}",
+            sessionId, role, reason);
+
+        var compiledPermissions = new Dictionary<string, HashSet<string>>();
+
+
+
+        var registeredServices = await _cacheStore.GetSetAsync<string>(REGISTERED_SERVICES_KEY, cancellationToken);
+
+        _logger.LogDebug("Found {Count} registered services: {Services}",
+            registeredServices.Count, string.Join(", ", registeredServices));
+
+        foreach (var serviceId in registeredServices)
+        {
+            var relevantStates = new List<string> { "default" };
+            foreach (var serviceState in sessionStates.Where(s => s.Key != SESSION_ROLE_KEY))
             {
-                _logger.LogDebug("No session states provided for {SessionId}, skipping recompilation", sessionId);
-                return (false, null);
+                var stateServiceId = serviceState.Key;
+                var stateValue = serviceState.Value;
+                if (stateValue == "default") continue;
+                relevantStates.Add(stateServiceId == serviceId ? stateValue : $"{stateServiceId}:{stateValue}");
             }
 
-            var defaultRole = _configuration.RoleHierarchy[0];
-            var role = sessionStates.GetValueOrDefault(SESSION_ROLE_KEY, defaultRole);
-            _logger.LogDebug("Recompiling permissions for session {SessionId}, role: {Role}, reason: {Reason}",
-                sessionId, role, reason);
-
-            var compiledPermissions = new Dictionary<string, HashSet<string>>();
-
-    
-    
-            var registeredServices = await _cacheStore.GetSetAsync<string>(REGISTERED_SERVICES_KEY, cancellationToken);
-
-            _logger.LogDebug("Found {Count} registered services: {Services}",
-                registeredServices.Count, string.Join(", ", registeredServices));
-
-            foreach (var serviceId in registeredServices)
+            foreach (var stateKey in relevantStates)
             {
-                var relevantStates = new List<string> { "default" };
-                foreach (var serviceState in sessionStates.Where(s => s.Key != SESSION_ROLE_KEY))
+                var maxRoleByEndpoint = new Dictionary<string, int>();
+
+                foreach (var roleName in _configuration.RoleHierarchy)
                 {
-                    var stateServiceId = serviceState.Key;
-                    var stateValue = serviceState.Value;
-                    if (stateValue == "default") continue;
-                    relevantStates.Add(stateServiceId == serviceId ? stateValue : $"{stateServiceId}:{stateValue}");
-                }
+                    var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, stateKey, roleName);
+                    var endpoints = await _hashSetStore.GetAsync(matrixKey, cancellationToken);
 
-                foreach (var stateKey in relevantStates)
-                {
-                    var maxRoleByEndpoint = new Dictionary<string, int>();
+                    _logger.LogDebug("State-based lookup: service={ServiceId}, stateKey={StateKey}, role={Role}, key={Key}, found={Count}",
+                        serviceId, stateKey, roleName, matrixKey, endpoints?.Count ?? 0);
 
-                    foreach (var roleName in _configuration.RoleHierarchy)
+                    if (endpoints == null) continue;
+
+                    foreach (var endpoint in endpoints)
                     {
-                        var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, stateKey, roleName);
-                        var endpoints = await _hashSetStore.GetAsync(matrixKey, cancellationToken);
-
-                        _logger.LogDebug("State-based lookup: service={ServiceId}, stateKey={StateKey}, role={Role}, key={Key}, found={Count}",
-                            serviceId, stateKey, roleName, matrixKey, endpoints?.Count ?? 0);
-
-                        if (endpoints == null) continue;
-
-                        foreach (var endpoint in endpoints)
-                        {
-                            var priority = Array.IndexOf(_configuration.RoleHierarchy, roleName);
-                            maxRoleByEndpoint[endpoint] = maxRoleByEndpoint.TryGetValue(endpoint, out var existing)
-                                ? Math.Max(existing, priority)
-                                : priority;
-                        }
-                    }
-
-                    var sessionPriority = Array.IndexOf(_configuration.RoleHierarchy, role);
-                    foreach (var kvp in maxRoleByEndpoint)
-                    {
-                        if (sessionPriority < kvp.Value)
-                        {
-                            continue;
-                        }
-
-                        if (!compiledPermissions.ContainsKey(serviceId))
-                        {
-                            compiledPermissions[serviceId] = new HashSet<string>();
-                        }
-
-                        compiledPermissions[serviceId].Add(kvp.Key);
+                        var priority = Array.IndexOf(_configuration.RoleHierarchy, roleName);
+                        maxRoleByEndpoint[endpoint] = maxRoleByEndpoint.TryGetValue(endpoint, out var existing)
+                            ? Math.Max(existing, priority)
+                            : priority;
                     }
                 }
+
+                var sessionPriority = Array.IndexOf(_configuration.RoleHierarchy, role);
+                foreach (var kvp in maxRoleByEndpoint)
+                {
+                    if (sessionPriority < kvp.Value)
+                    {
+                        continue;
+                    }
+
+                    if (!compiledPermissions.ContainsKey(serviceId))
+                    {
+                        compiledPermissions[serviceId] = new HashSet<string>();
+                    }
+
+                    compiledPermissions[serviceId].Add(kvp.Key);
+                }
             }
+        }
 
-            // Store compiled permissions with version increment
-            var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-            var existingPermissions = await _permissionsStore.GetAsync(permissionsKey, cancellationToken) ?? new Dictionary<string, object>();
+        // Store compiled permissions with version increment
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        var existingPermissions = await _permissionsStore.GetAsync(permissionsKey, cancellationToken) ?? new Dictionary<string, object>();
 
-            var currentVersion = 0;
-            if (existingPermissions.ContainsKey("version"))
-            {
-                int.TryParse(existingPermissions["version"]?.ToString(), out currentVersion);
-            }
+        var currentVersion = 0;
+        if (existingPermissions.ContainsKey("version"))
+        {
+            int.TryParse(existingPermissions["version"]?.ToString(), out currentVersion);
+        }
 
-            var newVersion = currentVersion + 1;
-            var newPermissionData = new Dictionary<string, object>();
-            foreach (var kvp in compiledPermissions)
-            {
-                newPermissionData[kvp.Key] = kvp.Value.ToList();
-            }
-            newPermissionData["version"] = newVersion;
-            newPermissionData["generated_at"] = DateTimeOffset.UtcNow.ToString("o");
+        var newVersion = currentVersion + 1;
+        var newPermissionData = new Dictionary<string, object>();
+        foreach (var kvp in compiledPermissions)
+        {
+            newPermissionData[kvp.Key] = kvp.Value.ToList();
+        }
+        newPermissionData["version"] = newVersion;
+        newPermissionData["generated_at"] = DateTimeOffset.UtcNow.ToString("o");
 
-            await _permissionsStore.SaveAsync(permissionsKey, newPermissionData, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
+        await _permissionsStore.SaveAsync(permissionsKey, newPermissionData, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
 
-            await PublishCapabilityUpdateAsync(
-                sessionId,
-                compiledPermissions.ToDictionary(k => k.Key, v => (IEnumerable<string>)v.Value.ToList()),
-                newVersion,
-                reason,
-                skipActiveConnectionsCheck,
-                cancellationToken);
+        await PublishCapabilityUpdateAsync(
+            sessionId,
+            compiledPermissions.ToDictionary(k => k.Key, v => (IEnumerable<string>)v.Value.ToList()),
+            newVersion,
+            reason,
+            skipActiveConnectionsCheck,
+            cancellationToken);
 
-            _logger.LogInformation("Recompiled permissions for session {SessionId}: {ServiceCount} services, version {Version}",
-                sessionId, compiledPermissions.Count, newVersion);
+        _logger.LogInformation("Recompiled permissions for session {SessionId}: {ServiceCount} services, version {Version}",
+            sessionId, compiledPermissions.Count, newVersion);
 
-            var resultPermissions = compiledPermissions.ToDictionary(
-                k => k.Key,
-                v => (ICollection<string>)v.Value.ToList());
+        var resultPermissions = compiledPermissions.ToDictionary(
+            k => k.Key,
+            v => (ICollection<string>)v.Value.ToList());
 
         return (true, resultPermissions);
     }
@@ -807,57 +807,57 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
         using var activity = _telemetryProvider.StartActivity("bannou.permission", "PermissionService.PublishCapabilityUpdate");
 
         var sessionGuid = Guid.Parse(sessionId);
-            var now = DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.UtcNow;
 
-            var permissionsDict = permissions.ToDictionary(
-                kvp => kvp.Key,
-                kvp => kvp.Value.ToList() as ICollection<string>);
+        var permissionsDict = permissions.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value.ToList() as ICollection<string>);
 
-            // Publish service event (broadcast to any subscriber, regardless of connection state)
-            await _messageBus.TryPublishAsync("permission.capability-update", new PermissionCapabilityUpdate
+        // Publish service event (broadcast to any subscriber, regardless of connection state)
+        await _messageBus.TryPublishAsync("permission.capability-update", new PermissionCapabilityUpdate
+        {
+            SessionId = sessionGuid,
+            Version = version,
+            UpdateType = CapabilityUpdateType.Full,
+            FullCapabilities = permissionsDict,
+            GeneratedAt = now,
+            Reason = reason
+        }, cancellationToken);
+
+        // Push client event to session channel (gated by active connection)
+        if (!skipActiveConnectionsCheck)
+        {
+
+            var isConnected = await _cacheStore.SetContainsAsync<string>(ACTIVE_CONNECTIONS_KEY, sessionId, cancellationToken);
+
+            if (!isConnected)
             {
-                SessionId = sessionGuid,
-                Version = version,
-                UpdateType = CapabilityUpdateType.Full,
-                FullCapabilities = permissionsDict,
-                GeneratedAt = now,
-                Reason = reason
-            }, cancellationToken);
-
-            // Push client event to session channel (gated by active connection)
-            if (!skipActiveConnectionsCheck)
-            {
-        
-                var isConnected = await _cacheStore.SetContainsAsync<string>(ACTIVE_CONNECTIONS_KEY, sessionId, cancellationToken);
-
-                if (!isConnected)
-                {
-                    _logger.LogDebug("Skipping client capability push for session {SessionId} - not in activeConnections (reason: {Reason})",
-                        sessionId, reason);
-                    return;
-                }
+                _logger.LogDebug("Skipping client capability push for session {SessionId} - not in activeConnections (reason: {Reason})",
+                    sessionId, reason);
+                return;
             }
+        }
 
-            var capabilitiesEvent = new SessionCapabilitiesEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                SessionId = sessionGuid,
-                Permissions = permissionsDict,
-                Reason = reason
-            };
+        var capabilitiesEvent = new SessionCapabilitiesEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            SessionId = sessionGuid,
+            Permissions = permissionsDict,
+            Reason = reason
+        };
 
-            var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, capabilitiesEvent, cancellationToken);
+        var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, capabilitiesEvent, cancellationToken);
 
-            if (published)
-            {
-                _logger.LogDebug("Published capabilities to session {SessionId} ({ServiceCount} services, reason: {Reason})",
-                    sessionId, permissions.Count, reason);
-            }
-            else
-            {
-                _logger.LogWarning("Failed to publish capabilities to session {SessionId}", sessionId);
-            }
+        if (published)
+        {
+            _logger.LogDebug("Published capabilities to session {SessionId} ({ServiceCount} services, reason: {Reason})",
+                sessionId, permissions.Count, reason);
+        }
+        else
+        {
+            _logger.LogWarning("Failed to publish capabilities to session {SessionId}", sessionId);
+        }
     }
 
     /// <summary>

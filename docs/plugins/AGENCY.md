@@ -5,6 +5,7 @@
 > **Version**: Pre-implementation. No schema, no code. L4-audited (2026-03-03).
 > **Layer**: GameFeatures
 > **State Store**: agency-domains (MySQL), agency-modules (MySQL), agency-influences (MySQL), agency-manifests (Redis), agency-manifest-history (MySQL), agency-seed-config (Redis)
+> **Implementation Map**: [docs/maps/AGENCY.md](../maps/AGENCY.md)
 
 ---
 

@@ -295,4 +295,22 @@ export class LocationProxy {
       Schemas['ClearEntityPositionResponse']
     >('/location/clear-entity-position', request, channel, timeout);
   }
+
+  /**
+   * Get location base data for compression
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async locationGetLocationCompressDataAsync(
+    request: Schemas['GetLocationCompressDataRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['LocationBaseArchive']>> {
+    return this.client.invokeAsync<
+      Schemas['GetLocationCompressDataRequest'],
+      Schemas['LocationBaseArchive']
+    >('/location/get-compress-data', request, channel, timeout);
+  }
 }

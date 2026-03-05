@@ -741,7 +741,7 @@ public partial class LeaderboardService : ILeaderboardService
         // Use per-request archivePrevious flag (defaults to true in schema)
         if (!body.ArchivePrevious && previousSeason.HasValue)
         {
-    
+
             var previousRankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, previousSeason.Value);
             await _rankingStore.SortedSetDeleteAsync(previousRankingKey, cancellationToken);
 

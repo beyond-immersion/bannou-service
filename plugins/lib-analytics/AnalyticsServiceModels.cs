@@ -42,9 +42,9 @@ internal sealed class BufferedAnalyticsEvent
     public EntityType EntityType { get; set; }
     public string EventType { get; set; } = string.Empty;
     public DateTimeOffset Timestamp { get; set; }
-    public double Value { get; set; }
+    public double? Value { get; set; }
     public Guid? SessionId { get; set; }
-    public Dictionary<string, object>? Metadata { get; set; }
+    public object? Metadata { get; set; }
 }
 
 /// <summary>

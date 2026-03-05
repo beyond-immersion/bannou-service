@@ -15,18 +15,6 @@ Native service mesh (L0 Infrastructure) providing direct in-process service-to-s
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis persistence for endpoint registry, app-id indexes, global index, and circuit breaker state |
-| lib-state (`IRedisOperations`) | Lua script execution for atomic circuit breaker state transitions |
-| lib-messaging (`IMessageBus`) | Publishing endpoint lifecycle events, circuit state change events, and error events |
-| lib-messaging (`IMessageSubscriber`) | Subscribing to `mesh.circuit.changed` for cross-instance circuit breaker sync |
-| lib-messaging (`IEventConsumer`) | Subscribing to `bannou.service-heartbeat` and `bannou.full-service-mappings` |
-
----
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -34,47 +22,6 @@ Native service mesh (L0 Infrastructure) providing direct in-process service-to-s
 | All services (via generated clients) | Every NSwag-generated client uses `IMeshInvocationClient` for service-to-service HTTP calls |
 | lib-connect | Routes WebSocket messages to backend services via mesh invocation |
 | lib-orchestrator | Manages service routing tables; publishes `FullServiceMappingsEvent` consumed by mesh |
-
----
-
-## State Storage
-
-**Stores**: 4 Redis stores (3 via `IStateStoreFactory`, 1 via `IRedisOperations` Lua scripts)
-
-| Store | Key Pattern | Data Type | Purpose |
-|-------|-------------|-----------|---------|
-| `mesh-endpoints` | `{instanceId}` (GUID string) | `MeshEndpoint` | Individual endpoint registration with health/load metadata |
-| `mesh-appid-index` | `{appId}` (set of instance IDs) | `Set<string>` | App-ID to instance-ID mapping for routing queries |
-| `mesh-global-index` | `_index` (set of instance IDs) | `Set<string>` | Global endpoint index for discovery (avoids KEYS/SCAN) |
-| `mesh-circuit-breaker` | `mesh:cb:{appId}` (hash) | Hash: failures, state, openedAt | Distributed circuit breaker state (key prefix from state-stores.yaml; operations via `IRedisOperations` Lua scripts, not state store factory) |
-
-**Key Patterns**:
-- Endpoint data keyed by instance ID (GUID)
-- App-ID index lists all instance IDs for a given app-id (with TTL refresh on heartbeat)
-- Global index (`_index` key) tracks all known instance IDs (no TTL - cleaned lazily on access)
-- Circuit breaker key prefix sourced from `StateStoreDefinitions.MeshCircuitBreaker` (schema-first), operations via `IRedisOperations` Lua scripts for atomic state transitions (no TTL - cleared on success)
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `mesh.endpoint.registered` | `MeshEndpointRegisteredEvent` | New endpoint registered (explicit or auto-discovered from heartbeat) |
-| `mesh.endpoint.deregistered` | `MeshEndpointDeregisteredEvent` | Endpoint removed (graceful shutdown or health check failure) |
-| `mesh.circuit.changed` | `MeshCircuitStateChangedEvent` | Circuit breaker state changes (Closed→Open, Open→HalfOpen, HalfOpen→Closed, etc.) |
-| `mesh.endpoint.health.failed` | `MeshEndpointHealthCheckFailedEvent` | Health check probe failed (before deregistration threshold - enables proactive monitoring) |
-| `mesh.endpoint.degraded` | `MeshEndpointDegradedEvent` | Endpoint transitioned to Degraded status (from Healthy; reason: MissedHeartbeat, HighLoad, HighConnectionCount) |
-
-### Consumed Events
-
-| Topic | Event Type | Handler |
-|-------|-----------|---------|
-| `bannou.service-heartbeat` | `ServiceHeartbeatEvent` | `HandleServiceHeartbeatAsync` - Updates existing endpoint metrics or auto-registers new endpoints |
-| `bannou.full-service-mappings` | `FullServiceMappingsEvent` | `HandleServiceMappingsAsync` - Atomically updates `IServiceAppMappingResolver` for all generated clients (configurable via `EnableServiceMappingSync`) |
-| `mesh.circuit.changed` | `MeshCircuitStateChangedEvent` | `HandleCircuitStateChanged` - Updates local circuit breaker cache from other instances |
 
 ---
 
@@ -113,52 +60,6 @@ Native service mesh (L0 Infrastructure) providing direct in-process service-to-s
 | `LoadBalancingStateMaxAppIds` | `MESH_LOAD_BALANCING_STATE_MAX_APP_IDS` | `0` | Max app-ids in load balancing state (0 = unlimited) |
 | `MaxTopEndpointsReturned` | `MESH_MAX_TOP_ENDPOINTS_RETURNED` | `2` | Max alternates in route response |
 | `MaxServiceMappingsDisplayed` | `MESH_MAX_SERVICE_MAPPINGS_DISPLAYED` | `10` | Max mappings in diagnostic logs |
-
----
-
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `ILogger<MeshService>` | Scoped | Structured logging |
-| `MeshServiceConfiguration` | Singleton | All 31 config properties above |
-| `IMessageBus` | Scoped | Event publishing and error events |
-| `IMessageSubscriber` | Scoped | Circuit state change subscription in MeshInvocationClient |
-| `IEventConsumer` | Scoped | Heartbeat and mapping event subscription (via generated code) |
-| `IMeshStateManager` | Singleton | Redis state via lib-state (3 stores + raw Redis) |
-| `IServiceAppMappingResolver` | Singleton | Shared service→app-id routing (used by all generated clients) |
-| `ITelemetryProvider` | Singleton | Distributed tracing and metrics instrumentation (`NullTelemetryProvider` when telemetry disabled) |
-| `IMeshInstanceIdentifier` | Singleton | Canonical mesh node identity (priority: `MESH_INSTANCE_ID` env > `--force-service-id` CLI > random GUID) |
-| `MeshInvocationClient` | Singleton | HTTP invocation with distributed circuit breaker, retries, caching |
-| `DistributedCircuitBreaker` | Internal (via MeshInvocationClient) | Redis-backed circuit breaker with local cache + event sync |
-| `MeshHealthCheckService` | Hosted (BackgroundService) | Active endpoint health probing |
-| `LocalMeshStateManager` | Singleton | In-memory state for `UseLocalRouting=true` mode |
-
-Service lifetime is **Scoped** (per-request) for MeshService itself. Infrastructure components (state manager, invocation client) are Singleton.
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Service Discovery (2 endpoints)
-
-- **GetEndpoints** (`/mesh/endpoints/get`): Returns endpoints for an app-id. Filters by health status (default: healthy only) and optional service name. Returns healthy/total counts.
-- **ListEndpoints** (`/mesh/endpoints/list`): Admin-level listing of all endpoints. Groups by status for summary (healthy, degraded, unavailable). Supports app-id prefix filter and status filter (filters in-memory after fetching from Redis).
-
-### Registration (3 endpoints)
-
-- **Register** (`/mesh/register`): Announces instance availability. Instance ID is required in request. Stores with configurable TTL. Publishes `mesh.endpoint.registered`.
-- **Deregister** (`/mesh/deregister`): Graceful shutdown removal. Looks up endpoint first (for app-id), removes from store, publishes `mesh.endpoint.deregistered` with reason=Graceful.
-- **Heartbeat** (`/mesh/heartbeat`): Refreshes TTL and updates metrics (status, load%, connections, issues). Issues are stored on the endpoint and visible in endpoint queries. Returns `NextHeartbeatSeconds` and `TtlSeconds` for client scheduling.
-
-### Routing (2 endpoints)
-
-- **GetRoute** (`/mesh/route`): Core routing logic. Filters: health (degradation threshold), load (threshold %), service name. Falls back to ALL endpoints if filtering empties the list. Applies load balancing algorithm. Returns primary endpoint + alternates.
-- **GetMappings** (`/mesh/mappings`): Returns service→app-id routing table from `IServiceAppMappingResolver`. Supports service name prefix filter. Version-tracked for stale detection.
-
-### Diagnostics (1 endpoint)
-
-- **GetHealth** (`/mesh/health`): Overall mesh health status. Checks Redis connectivity via state manager. Aggregates endpoint counts by status. Calculates uptime. Optionally includes full endpoint list.
 
 ---
 

@@ -66,8 +66,9 @@ public partial class IngestEventRequest
     /// Type of event (e.g., kill, death, score, action)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string EventType { get; set; } = default!;
 
     /// <summary>
@@ -96,13 +97,13 @@ public partial class IngestEventRequest
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// Numeric value associated with the event (e.g., score amount)
+    /// Numeric value associated with the event (e.g., score amount, null if event is presence-only)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("value")]
-    public double Value { get; set; } = default!;
+    public double? Value { get; set; } = default!;
 
     /// <summary>
-    /// Additional event-specific data
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -110,7 +111,7 @@ public partial class IngestEventRequest
 }
 
 /// <summary>
-/// Response after ingesting an event
+/// Response after ingesting an event. HTTP 200 confirms the event was accepted.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class IngestEventResponse
@@ -123,12 +124,6 @@ public partial class IngestEventResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the event was accepted for processing
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accepted")]
-    public bool Accepted { get; set; } = default!;
 
 }
 
@@ -145,6 +140,7 @@ public partial class IngestEventBatchRequest
     [System.Text.Json.Serialization.JsonPropertyName("events")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
     [System.ComponentModel.DataAnnotations.MaxLength(1000)]
     public System.Collections.Generic.ICollection<IngestEventRequest> Events { get; set; } = new System.Collections.ObjectModel.Collection<IngestEventRequest>();
 
@@ -239,6 +235,7 @@ public partial class EntitySummaryResponse
     /// Total number of events recorded
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalEvents")]
+    [System.ComponentModel.DataAnnotations.Range(0L, long.MaxValue)]
     public long TotalEvents { get; set; } = default!;
 
     /// <summary>
@@ -261,13 +258,17 @@ public partial class EntitySummaryResponse
     /// Count of events by type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventCounts")]
-    public System.Collections.Generic.IDictionary<string, long> EventCounts { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.IDictionary<string, long> EventCounts { get; set; } = new System.Collections.Generic.Dictionary<string, long>();
 
     /// <summary>
     /// Aggregated numeric values (sums, averages)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("aggregates")]
-    public System.Collections.Generic.IDictionary<string, double> Aggregates { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.IDictionary<string, double> Aggregates { get; set; } = new System.Collections.Generic.Dictionary<string, double>();
 
 }
 
@@ -300,15 +301,17 @@ public partial class QueryEntitySummariesRequest
     public string? EventType { get; set; } = default!;
 
     /// <summary>
-    /// Minimum number of events
+    /// Minimum number of events (null returns all)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("minEvents")]
-    public int MinEvents { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int? MinEvents { get; set; } = default!;
 
     /// <summary>
-    /// Field to sort by
+    /// Field to sort by (e.g., totalEvents, lastEventAt)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sortBy")]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
     public string? SortBy { get; set; } = default!;
 
     /// <summary>
@@ -321,13 +324,14 @@ public partial class QueryEntitySummariesRequest
     /// Maximum results to return
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
-    [System.ComponentModel.DataAnnotations.Range(int.MinValue, 1000)]
+    [System.ComponentModel.DataAnnotations.Range(1, 1000)]
     public int Limit { get; set; } = 100;
 
     /// <summary>
     /// Number of results to skip
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Offset { get; set; } = 0;
 
 }
@@ -351,6 +355,7 @@ public partial class QueryEntitySummariesResponse
     /// Total number of matching entities
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("total")]
+    [System.ComponentModel.DataAnnotations.Range(0L, long.MaxValue)]
     public long Total { get; set; } = default!;
 
 }
@@ -391,8 +396,9 @@ public partial class GetSkillRatingRequest
     /// Type of rating (e.g., overall, ranked, casual)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ratingType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string RatingType { get; set; } = default!;
 
 }
@@ -425,8 +431,9 @@ public partial class SkillRatingResponse
     /// Type of rating
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ratingType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string RatingType { get; set; } = default!;
 
     /// <summary>
@@ -451,6 +458,7 @@ public partial class SkillRatingResponse
     /// Number of rated matches played
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("matchesPlayed")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int MatchesPlayed { get; set; } = default!;
 
     /// <summary>
@@ -480,8 +488,9 @@ public partial class UpdateSkillRatingRequest
     /// Type of rating to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ratingType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string RatingType { get; set; } = default!;
 
     /// <summary>
@@ -543,19 +552,11 @@ public partial class MatchResult
 }
 
 /// <summary>
-/// Response after updating skill ratings
+/// Response after updating skill ratings. HTTP 200 confirms ratings were updated.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdateSkillRatingResponse
 {
-
-    /// <summary>
-    /// ID of the processed match
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("matchId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid MatchId { get; set; } = default!;
 
     /// <summary>
     /// Updated ratings for all participants
@@ -726,7 +727,7 @@ public partial class QueryControllerHistoryRequest
     /// Maximum results to return
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
-    [System.ComponentModel.DataAnnotations.Range(int.MinValue, 1000)]
+    [System.ComponentModel.DataAnnotations.Range(1, 1000)]
     public int Limit { get; set; } = 100;
 
 }
@@ -830,6 +831,7 @@ public partial class CleanupControllerHistoryRequest
     /// Override configured retention period (null uses ControllerHistoryRetentionDays config)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("olderThanDays")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? OlderThanDays { get; set; } = default!;
 
     /// <summary>
@@ -841,7 +843,7 @@ public partial class CleanupControllerHistoryRequest
 }
 
 /// <summary>
-/// Result of controller history cleanup
+/// Result of controller history cleanup. HTTP 200 confirms cleanup completed.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CleanupControllerHistoryResponse
@@ -851,13 +853,8 @@ public partial class CleanupControllerHistoryResponse
     /// Records deleted (or would be deleted if dry run)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("recordsDeleted")]
+    [System.ComponentModel.DataAnnotations.Range(0L, long.MaxValue)]
     public long RecordsDeleted { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this was a preview-only run
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
-    public bool DryRun { get; set; } = default!;
 
 }
 

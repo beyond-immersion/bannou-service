@@ -2125,6 +2125,36 @@ public partial class OrchestratorService : IOrchestratorService
     }
 
     /// <summary>
+    /// Publishes a ConfigurationChangedEvent so running containers can self-evaluate
+    /// whether they need a restart based on changedKeys prefixes.
+    /// </summary>
+    public async Task<(StatusCodes, NotifyConfigChangeResponse?)> NotifyConfigChangeAsync(NotifyConfigChangeRequest body, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.NotifyConfigChangeAsync");
+
+        var currentVersion = await _stateManager.GetConfigVersionAsync();
+
+        _logger.LogInformation(
+            "Publishing configuration change notification: {KeyCount} changed keys, config version {Version}, reason: {Reason}",
+            body.ChangedKeys.Count, currentVersion, body.Reason);
+
+        var now = DateTimeOffset.UtcNow;
+        await _messageBus.TryPublishAsync("bannou.configuration-events", new ConfigurationChangedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            ConfigVersion = currentVersion,
+            ChangedKeys = body.ChangedKeys.ToList()
+        });
+
+        return (StatusCodes.OK, new NotifyConfigChangeResponse
+        {
+            ConfigVersion = currentVersion,
+            NotifiedAt = now
+        });
+    }
+
+    /// <summary>
     /// Registers service permissions for the Orchestrator API endpoints.
     /// When SecureWebsocket is enabled (default), registers an empty permission matrix to make
     /// orchestrator inaccessible via WebSocket - only service-to-service calls work.

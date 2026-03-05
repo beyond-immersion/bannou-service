@@ -19,11 +19,12 @@ The State service (L0 Infrastructure) provides all Bannou services with unified 
 
 | Dependency | Usage |
 |------------|-------|
-| StackExchange.Redis 2.10.1 | Redis connection multiplexing and operations |
+| StackExchange.Redis 2.10.1 | Redis connection multiplexing and operations (transitive via bannou-service) |
 | NRedisStack 0.13.1 | Redis JSON and search (FT) commands |
 | Pomelo.EntityFrameworkCore.MySql 9.0.0 | MySQL via EF Core |
 | Microsoft.EntityFrameworkCore 9.0.0 | ORM and change tracking |
-| lib-messaging (`IMessageBus`) | Error event publishing via `TryPublishErrorAsync` |
+| Microsoft.EntityFrameworkCore.Sqlite 9.0.0 | SQLite via EF Core for self-hosted deployments |
+| lib-messaging (`IMessageBus`) | Error event publishing via `TryPublishErrorAsync` (optional, resolved lazily) |
 
 ---
 
@@ -129,11 +130,12 @@ When infrastructure errors occur (Redis connection failures, timeouts, etc.), th
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `IStateStoreFactory` | Singleton | Creates typed store instances, manages connections |
-| `StateStoreFactory` | Singleton | Implementation with Redis/MySQL initialization and store caching |
+| `StateStoreFactory` | Singleton | Implementation with Redis/MySQL/SQLite initialization and store caching |
+| `StateStoreFactoryConfiguration` | Singleton | Built from `StateServiceConfiguration` in `StateServicePlugin`; holds store registry and connection settings |
 | `IDistributedLockProvider` | Singleton | Distributed mutex using Redis (SET NX EX) with InMemory fallback |
 | `RedisDistributedLockProvider` | Singleton | Uses `IRedisOperations` for Lua-based safe unlock, falls back to in-memory locks |
-| `IRedisOperations` | - | Low-level Redis ops (Lua scripts, transactions only); obtained via `GetRedisOperations()` |
-| `RedisOperations` | Internal | Shares `ConnectionMultiplexer` with state stores |
+| `IRedisOperations` | - | Low-level Redis ops (Lua scripts, transactions only); obtained via `GetRedisOperations()`; null in InMemory/SQLite mode |
+| `RedisOperations` | Internal | Shares `ConnectionMultiplexer` with state stores; lazily initialized |
 | `RedisLuaScripts` | Static | Loads and caches Lua scripts from embedded resources (`Scripts/*.lua`) |
 | `StateService` | Scoped | HTTP API implementation |
 
@@ -143,11 +145,19 @@ When infrastructure errors occur (Redis connection failures, timeouts, etc.), th
 |--------|---------|-------------|
 | `GetStore<T>(name)` | `IStateStore<T>` | Basic CRUD operations (all backends) |
 | `GetStoreAsync<T>(name)` | `IStateStore<T>` | Async version, avoids sync-over-async |
-| `GetCacheableStore<T>(name)` | `ICacheableStateStore<T>` | Set, Sorted Set, Counter, Hash ops (throws for MySQL) |
+| `GetCacheableStore<T>(name)` | `ICacheableStateStore<T>` | Set, Sorted Set, Counter, Hash ops (throws for MySQL/SQLite) |
 | `GetCacheableStoreAsync<T>(name)` | `ICacheableStateStore<T>` | Async version |
+| `GetQueryableStore<T>(name)` | `IQueryableStateStore<T>` | LINQ queries (MySQL/SQLite only, throws for Redis) |
+| `GetJsonQueryableStore<T>(name)` | `IJsonQueryableStateStore<T>` | JSON path queries (MySQL/SQLite only, throws for Redis) |
 | `GetSearchableStore<T>(name)` | `ISearchableStateStore<T>` | Full-text search (RedisSearch only) |
-| `GetRedisOperations()` | `IRedisOperations?` | Lua scripts, transactions only; null when `UseInMemory=true` |
-| `GetKeyCountAsync(name)` | `long?` | Key count for store (O(1) InMemory, COUNT MySQL, null Redis) |
+| `GetRedisOperations()` | `IRedisOperations?` | Lua scripts, transactions only; null when `UseInMemory=true` or `UseSqlite=true` |
+| `GetKeyCountAsync(name)` | `long?` | Key count for store (O(1) InMemory, COUNT MySQL/SQLite, null Redis) |
+| `HasStore(name)` | `bool` | Check if store is configured |
+| `SupportsSearch(name)` | `bool` | Check if store supports full-text search |
+| `GetBackendType(name)` | `StateBackend` | Get effective backend type (respects UseInMemory/UseSqlite overrides) |
+| `GetStoreNames()` | `IEnumerable<string>` | All configured store names |
+| `GetStoreNames(backend)` | `IEnumerable<string>` | Store names filtered by backend type |
+| `InitializeAsync()` | `Task` | Pre-initialize connections (called by StateServicePlugin at startup) |
 
 ### Store Implementation Classes
 
@@ -197,7 +207,7 @@ Deletes multiple keys in a single operation. Returns count of keys actually dele
 
 ### List Stores (`/state/list-stores`)
 
-Returns registered store names with backend info. Optional backend filter (Redis/MySQL). `KeyCount` is backend-dependent: O(1) for InMemory, COUNT(*) query for MySQL, null for Redis (SCAN is O(N) on total keys).
+Returns registered store names with backend info. Optional backend filter (Redis/MySQL). `KeyCount` is backend-dependent: O(1) for InMemory, COUNT(*) query for MySQL/SQLite, null for Redis (SCAN is O(N) on total keys). Stats are only retrieved when `includeStats=true`.
 
 ---
 
@@ -326,9 +336,11 @@ None currently identified.
    - The generated `StateStoreDefinitions` constants guide correct usage via convention
    - This is internal infrastructure, not an external API requiring authorization
 
-8. **Asymmetric connection retry between MySQL and Redis**: MySQL initialization retries up to `ConnectionRetryCount` times with configurable delay. Redis initialization does not retry. This is intentional: StackExchange.Redis has built-in auto-reconnect functionality that handles connection failures and reconnection automatically. EF Core/MySQL does not have this capability, so explicit retry logic is required for MySQL only.
+8. **Lazy IMessageBus resolution in StateService**: `StateService` cannot inject `IMessageBus` in its constructor because State (L0) loads before Messaging (L0) in infrastructure load order. Instead, `MessageBus` is a lazily-resolved property via `_serviceProvider.GetRequiredService<IMessageBus>()`. By contrast, `StateStoreFactory` receives `IMessageBus` optionally via `GetService<IMessageBus>()` during DI registration in `StateServicePlugin`, since that runs after all `ConfigureServices` calls.
 
-9. **MySQL expression translator limitations**: `QueryAsync` and `QueryPagedAsync` attempt to translate LINQ expressions to SQL-level `JSON_EXTRACT` queries. Supported patterns include:
+9. **Asymmetric connection retry between MySQL and Redis**: MySQL initialization retries up to `ConnectionRetryCount` times with configurable delay. Redis initialization does not retry. This is intentional: StackExchange.Redis has built-in auto-reconnect functionality that handles connection failures and reconnection automatically. EF Core/MySQL does not have this capability, so explicit retry logic is required for MySQL only.
+
+10. **MySQL expression translator limitations**: `QueryAsync` and `QueryPagedAsync` attempt to translate LINQ expressions to SQL-level `JSON_EXTRACT` queries. Supported patterns include:
     - Simple comparisons: `x.Field == value`, `x.Field != value`, `x.Field > value`
     - Null comparisons: `x.Field == null`, `x.Field != null`
     - String operations: `x.Field.Contains("s")`, `x.Field.StartsWith("s")`, `x.Field.EndsWith("s")`
@@ -337,7 +349,7 @@ None currently identified.
 
     Unsupported patterns fall back to in-memory filtering with a configurable limit (`InMemoryFallbackLimit`, default 10000). Exceeding this limit throws `InvalidOperationException` to prevent OOM. Use `JsonQueryAsync` with explicit `QueryCondition` objects for complex queries on large datasets.
 
-10. **MySQL stores reject TTL requests**: Passing `StateOptions.Ttl` to `SaveAsync` or `SaveBulkAsync` on a MySQL store throws `InvalidOperationException`. This is by design: MySQL stores are for durable/queryable data that should not auto-expire. For ephemeral data requiring TTL, use a Redis-backed store instead. This enforces the architectural separation between Redis (ephemeral/session) and MySQL (durable/queryable) data.
+11. **MySQL stores reject TTL requests**: Passing `StateOptions.Ttl` to `SaveAsync` or `SaveBulkAsync` on a MySQL store throws `InvalidOperationException`. This is by design: MySQL stores are for durable/queryable data that should not auto-expire. For ephemeral data requiring TTL, use a Redis-backed store instead. This enforces the architectural separation between Redis (ephemeral/session) and MySQL (durable/queryable) data.
 
 ### Design Considerations (Requires Planning)
 

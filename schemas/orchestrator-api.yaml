@@ -588,6 +588,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/ConfigVersionResponse'
 
+  /orchestrator/config/notify-change:
+    post:
+      summary: Notify that configuration or secrets have changed
+      description: |
+        Admin-only notification endpoint that publishes a ConfigurationChangedEvent
+        to all running containers via RabbitMQ. Each plugin inspects changedKeys
+        prefixes to determine if it needs to request a restart to pick up new
+        environment variables or secrets.
+
+        This endpoint does not detect changes itself -- it is a manual trigger
+        for external systems (CI/CD pipelines, admin tooling, Kubernetes operators)
+        that have already applied configuration changes and need to notify running
+        services. The design question of auto-detecting changes per backend
+        (Docker labels, K8s ConfigMap watches, Portainer webhooks) is tracked
+        separately.
+      operationId: NotifyConfigChange
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotifyConfigChangeRequest'
+      responses:
+        '200':
+          description: Notification published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotifyConfigChangeResponse'
+
   /orchestrator/processing-pool/acquire:
     post:
       summary: Acquire a processor from a pool
@@ -2251,6 +2284,40 @@ components:
           items:
             type: string
           description: Configuration key prefixes present (e.g., "auth", "database"). Null if not requested.
+
+    NotifyConfigChangeRequest:
+      description: Request to notify all running containers that configuration or secrets have changed. External systems call this after applying changes.
+      type: object
+      additionalProperties: false
+      required:
+      - changedKeys
+      properties:
+        changedKeys:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: Configuration keys that changed (not values, for security). Key prefixes indicate scope (e.g., auth.jwt_secret, database.connection_string, mesh.timeout). Plugins match on prefixes to decide if they need a restart.
+        reason:
+          type: string
+          nullable: true
+          description: Human-readable reason for the change (for audit logging)
+
+    NotifyConfigChangeResponse:
+      description: Acknowledgment that the configuration change notification was published
+      type: object
+      additionalProperties: false
+      required:
+      - configVersion
+      - notifiedAt
+      properties:
+        configVersion:
+          type: integer
+          description: Current configuration version at time of notification
+        notifiedAt:
+          type: string
+          format: date-time
+          description: When the notification event was published
 
     # ============================================================
     # PROCESSING POOL MODELS

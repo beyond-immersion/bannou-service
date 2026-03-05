@@ -194,14 +194,11 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SessionUpdateResponse\"\
         ,\n    \"$defs\": {\n        \"SessionUpdateResponse\": {\n            \"description\": \"Response from updating a
         session's state or role with recompiled permissions\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"permissionsChanged\"\n            ],\n            \"properties\"\
-        : {\n                \"permissionsChanged\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether compiled permissions actually changed\"\n                },\n                \"newPermissions\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"array\",\n                        \"items\": {\n                            \"type\": \"string\"\
-        \n                        }\n                    },\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"Updated ServiceID -> Methods map, null if permissions did not change\"\n                }\n \
-        \           }\n        }\n    }\n}"
+        : false,\n            \"properties\": {\n                \"newPermissions\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": {\n                        \"type\": \"array\",\n               \
+        \         \"items\": {\n                            \"type\": \"string\"\n                        }\n            \
+        \        },\n                    \"nullable\": true,\n                    \"description\": \"Updated ServiceID ->
+        Methods map, null if permissions did not change\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update session state for specific service\",\n    \"description\": \"Updates
         SessionID -> ServiceID -> State and recompiles permissions\",\n    \"tags\": [\n        \"Session Management\"\n \
         \   ],\n    \"deprecated\": false,\n    \"operationId\": \"updateSessionState\"\n}"
@@ -240,14 +237,11 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SessionUpdateResponse\"\
         ,\n    \"$defs\": {\n        \"SessionUpdateResponse\": {\n            \"description\": \"Response from updating a
         session's state or role with recompiled permissions\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"permissionsChanged\"\n            ],\n            \"properties\"\
-        : {\n                \"permissionsChanged\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether compiled permissions actually changed\"\n                },\n                \"newPermissions\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"array\",\n                        \"items\": {\n                            \"type\": \"string\"\
-        \n                        }\n                    },\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"Updated ServiceID -> Methods map, null if permissions did not change\"\n                }\n \
-        \           }\n        }\n    }\n}"
+        : false,\n            \"properties\": {\n                \"newPermissions\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": {\n                        \"type\": \"array\",\n               \
+        \         \"items\": {\n                            \"type\": \"string\"\n                        }\n            \
+        \        },\n                    \"nullable\": true,\n                    \"description\": \"Updated ServiceID ->
+        Methods map, null if permissions did not change\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update session role (affects all services)\",\n    \"description\": \"\
         Updates SessionID -> Role and recompiles all service permissions\",\n    \"tags\": [\n        \"Session Management\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateSessionRole\"\n}"
@@ -291,14 +285,11 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SessionUpdateResponse\"\
         ,\n    \"$defs\": {\n        \"SessionUpdateResponse\": {\n            \"description\": \"Response from updating a
         session's state or role with recompiled permissions\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"permissionsChanged\"\n            ],\n            \"properties\"\
-        : {\n                \"permissionsChanged\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether compiled permissions actually changed\"\n                },\n                \"newPermissions\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"array\",\n                        \"items\": {\n                            \"type\": \"string\"\
-        \n                        }\n                    },\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"Updated ServiceID -> Methods map, null if permissions did not change\"\n                }\n \
-        \           }\n        }\n    }\n}"
+        : false,\n            \"properties\": {\n                \"newPermissions\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": {\n                        \"type\": \"array\",\n               \
+        \         \"items\": {\n                            \"type\": \"string\"\n                        }\n            \
+        \        },\n                    \"nullable\": true,\n                    \"description\": \"Updated ServiceID ->
+        Methods map, null if permissions did not change\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Clear session state for specific service\",\n    \"description\": \"Removes
         state for a specific service from the session and recompiles permissions.\\nIf states list is provided, only clears
         if current state matches one of the values.\\nIf states list is empty or not provided, clears the state unconditionally.\\\
@@ -401,17 +392,18 @@ paths:
         \           }\n        },\n        \"RegisteredServiceInfo\": {\n            \"description\": \"Information about
         a registered service including its ID, version, and endpoint count\",\n            \"type\": \"object\",\n       \
         \     \"additionalProperties\": false,\n            \"required\": [\n                \"serviceId\",\n            \
-        \    \"serviceName\",\n                \"version\",\n                \"registeredAt\",\n                \"endpointCount\"\
-        \n            ],\n            \"properties\": {\n                \"serviceId\": {\n                    \"type\": \"\
-        string\",\n                    \"minLength\": 1,\n                    \"description\": \"Unique service identifier\"\
-        \n                },\n                \"serviceName\": {\n                    \"type\": \"string\",\n            \
-        \        \"minLength\": 1,\n                    \"description\": \"Human-readable service name\"\n               \
-        \ },\n                \"version\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"description\": \"Service API version\"\n                },\n                \"registeredAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When the service registered its permissions\"\n                },\n                \"endpointCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Number of API endpoints registered by this service\"\n                }\n            }\n        }\n    }\n}"
+        \    \"serviceName\",\n                \"endpointCount\"\n            ],\n            \"properties\": {\n        \
+        \        \"serviceId\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n    \
+        \                \"description\": \"Unique service identifier\"\n                },\n                \"serviceName\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\"\
+        : \"Human-readable service name\"\n                },\n                \"version\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Service API version,
+        null if not provided during registration\"\n                },\n                \"registeredAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\":
+        true,\n                    \"description\": \"When the service registered its permissions, null if registration data
+        unavailable\"\n                },\n                \"endpointCount\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Number of API endpoints registered
+        by this service\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all registered services\",\n    \"description\": \"Returns list of
         all services that have registered their permissions.\\nThis endpoint is used by testers to wait for service readiness
         - a service\\nappearing in this list means it has completed startup and registered its\\nAPI permissions, indicating
@@ -618,12 +610,7 @@ components:
       description: Response from updating a session's state or role with recompiled permissions
       type: object
       additionalProperties: false
-      required:
-      - permissionsChanged
       properties:
-        permissionsChanged:
-          type: boolean
-          description: Whether compiled permissions actually changed
         newPermissions:
           type: object
           additionalProperties:
@@ -702,8 +689,6 @@ components:
       required:
       - serviceId
       - serviceName
-      - version
-      - registeredAt
       - endpointCount
       properties:
         serviceId:
@@ -716,12 +701,13 @@ components:
           description: Human-readable service name
         version:
           type: string
-          minLength: 1
-          description: Service API version
+          nullable: true
+          description: Service API version, null if not provided during registration
         registeredAt:
           type: string
           format: date-time
-          description: When the service registered its permissions
+          nullable: true
+          description: When the service registered its permissions, null if registration data unavailable
         endpointCount:
           type: integer
           minimum: 0

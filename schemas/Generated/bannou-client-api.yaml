@@ -3182,14 +3182,17 @@ paths:
                 $ref: '#/components/schemas/EntryTemplateResponse'
         '404':
           description: Entry template not found
-  /collection/entry-template/delete:
+  /collection/entry-template/deprecate:
     post:
-      operationId: collection_deleteEntryTemplate
+      operationId: collection_deprecateEntryTemplate
       tags:
       - EntryTemplate
-      summary: Delete an entry template
-      description: Delete an entry template. Warns if instances reference it but
-        does not block deletion.
+      summary: Deprecate an entry template
+      description: |
+        Marks an entry template as deprecated. Deprecated templates cannot be used
+        to grant new entries, but existing unlocked entries remain valid.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
       x-permissions:
       - role: developer
         states: {}
@@ -3198,10 +3201,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteEntryTemplateRequest'
+              $ref: '#/components/schemas/DeprecateEntryTemplateRequest'
       responses:
         '200':
-          description: Entry template deleted successfully
+          description: Entry template deprecated successfully (or already 
+            deprecated)
           content:
             application/json:
               schema:
@@ -3578,6 +3582,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListAreaContentConfigsResponse'
+  /collection/content/area-config/delete:
+    post:
+      operationId: collection_deleteAreaContentConfig
+      tags:
+      - Content
+      summary: Delete an area content config
+      description: Delete an area content configuration. Area configs are 
+        configuration singletons with no deprecation lifecycle — immediate hard 
+        delete.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAreaContentConfigRequest'
+      responses:
+        '200':
+          description: Area content config deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AreaContentConfigResponse'
+        '404':
+          description: Area content config not found
   /collection/discovery/advance:
     post:
       operationId: collection_advanceDiscovery
@@ -3898,6 +3929,38 @@ paths:
           description: Contract not found
       x-permissions:
       - role: user
+        states: {}
+  /contract/instance/delete:
+    post:
+      operationId: contract_deleteContractInstance
+      tags:
+      - Instances
+      summary: Hard-delete a terminal contract instance
+      description: |
+        Permanently deletes a contract instance that has reached a terminal state
+        (Fulfilled, Terminated, Expired, or Declined). Removes the instance record
+        and all associated index entries. Breach records associated with the
+        contract are also deleted. This is a hard delete per T31 (instances use
+        immediate deletion, not deprecation).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteContractInstanceRequest'
+      responses:
+        '200':
+          description: Instance deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteContractInstanceResponse'
+        '400':
+          description: Contract is not in a terminal state and cannot be deleted
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: developer
         states: {}
   /contract/instance/get-status:
     post:
@@ -9956,6 +10019,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClearEntityPositionResponse'
+  /location/get-compress-data:
+    post:
+      summary: Get location base data for compression
+      operationId: location_getLocationCompressData
+      tags:
+      - Location Compression
+      description: |
+        Called by Resource service during compression.
+        Returns core location data (name, type, hierarchy, spatial, parent context).
+        Returns BadRequest if location is not deprecated - only deprecated locations can be compressed.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLocationCompressDataRequest'
+      responses:
+        '200':
+          description: Location base data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationBaseArchive'
+        '400':
+          description: Location is not deprecated (cannot compress active 
+            locations)
+        '404':
+          description: Location not found
   /mapping/request-snapshot:
     post:
       summary: Request full snapshot for cold start
@@ -11413,6 +11506,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RealmsExistBatchResponse'
+  /realm/get-location-compress-context:
+    post:
+      summary: Get realm context for location archive
+      operationId: realm_getLocationCompressContext
+      tags:
+      - Realm Compression
+      description: |
+        Called by Resource service during location compression.
+        Resolves the location's realm and returns realm context (name, code, description)
+        for inclusion in the location archive.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLocationCompressContextRequest'
+      responses:
+        '200':
+          description: Realm context for location archive returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmLocationArchiveContext'
+        '404':
+          description: Location or realm not found
   /realm-history/get-participation:
     post:
       summary: Get all historical events a realm participated in
@@ -27488,6 +27608,17 @@ components:
         stoppedActorCount:
           type: integer
           description: Number of running actors that were stopped
+    DeleteAreaContentConfigRequest:
+      type: object
+      description: Request to delete an area content configuration
+      additionalProperties: false
+      required:
+      - areaConfigId
+      properties:
+        areaConfigId:
+          type: string
+          format: uuid
+          description: Area content config to delete
     DeleteBoardRequest:
       type: object
       description: Request to delete a board instance
@@ -27602,6 +27733,22 @@ components:
       additionalProperties: false
       description: Confirms successful connection deletion
       properties: {}
+    DeleteContractInstanceRequest:
+      type: object
+      description: Request to hard-delete a terminal contract instance
+      additionalProperties: false
+      required:
+      - contractId
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance to delete
+    DeleteContractInstanceResponse:
+      type: object
+      description: Empty response. HTTP 200 confirms the instance was deleted.
+      additionalProperties: false
+      properties: {}
     DeleteDeityRequest:
       type: object
       additionalProperties: false
@@ -27613,17 +27760,6 @@ components:
           type: string
           format: uuid
           description: Deity to delete
-    DeleteEntryTemplateRequest:
-      type: object
-      description: Request to delete an entry template
-      additionalProperties: false
-      required:
-      - entryTemplateId
-      properties:
-        entryTemplateId:
-          type: string
-          format: uuid
-          description: Entry template to delete
     DeleteLeaderboardDefinitionRequest:
       type: object
       description: Request to delete a leaderboard
@@ -27950,6 +28086,24 @@ components:
           nullable: true
           description: Audit reason for deprecation, explaining why this 
             achievement is being phased out
+    DeprecateEntryTemplateRequest:
+      type: object
+      description: Request to deprecate an entry template (Category B — one-way,
+        no delete)
+      additionalProperties: false
+      required:
+      - entryTemplateId
+      properties:
+        entryTemplateId:
+          type: string
+          format: uuid
+          description: Entry template to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (recommended but not required for 
+            Category B templates)
     DeprecateFactionRequest:
       type: object
       description: Request to deprecate a faction
@@ -29352,6 +29506,7 @@ components:
       - displayName
       - hideWhenLocked
       - itemTemplateId
+      - isDeprecated
       - createdAt
       properties:
         entryTemplateId:
@@ -29424,6 +29579,20 @@ components:
           type: string
           nullable: true
           description: Composer or creator name
+        isDeprecated:
+          type: boolean
+          description: Whether this entry template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this template was deprecated (null if not 
+            deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         createdAt:
           type: string
           format: date-time
@@ -33116,6 +33285,30 @@ components:
           type: string
           format: uuid
           description: Realm ID to scope the code lookup
+    GetLocationCompressContextRequest:
+      description: Request to get realm context for a location's compression 
+        archive
+      type: object
+      additionalProperties: false
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location being compressed (used to resolve 
+            realm)
+    GetLocationCompressDataRequest:
+      description: Request to get location base data for compression archive
+      type: object
+      additionalProperties: false
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to compress
     GetLocationDescendantsRequest:
       description: Request to retrieve all descendants of a location (children, 
         grandchildren, etc.)
@@ -37477,6 +37670,11 @@ components:
           type: string
           nullable: true
           description: Optional filter by category
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated templates in results (excluded by 
+            default)
         cursor:
           type: string
           nullable: true
@@ -39509,6 +39707,117 @@ components:
           nullable: true
           description: 3D spatial coordinates of the character's position in the
             game world
+    LocationBaseArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Core location data for archive storage and content flywheel consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The locationId field equals resourceId for convenience.
+        Includes one level of parent context to avoid hierarchy walking during archive queries.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - locationId
+      - name
+      - code
+      - locationType
+      - realmId
+      - depth
+      - childrenCount
+      - createdAt
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Unique identifier for the location (equals resourceId)
+        name:
+          type: string
+          description: Display name of the location
+        code:
+          type: string
+          description: Unique code identifier for the location
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of the location
+        locationType:
+          allOf:
+          - $ref: '#/components/schemas/LocationType'
+          description: Category of location (Region, City, Building, Room, etc.)
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this location belongs to
+        parentLocationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent location ID (null for root locations)
+        depth:
+          type: integer
+          description: Depth in the location hierarchy (0 for root)
+        parentName:
+          type: string
+          nullable: true
+          description: Parent location name (one level of context, null if root)
+        parentCode:
+          type: string
+          nullable: true
+          description: Parent location code (one level of context, null if root)
+        parentLocationType:
+          allOf:
+          - $ref: '#/components/schemas/LocationType'
+          nullable: true
+          description: Parent location type (one level of context, null if root)
+        childrenCount:
+          type: integer
+          description: Number of immediate child locations
+        childrenCodes:
+          type: array
+          nullable: true
+          description: Codes of immediate child locations (null if no children)
+          items:
+            type: string
+        bounds:
+          allOf:
+          - $ref: '#/components/schemas/BoundingBox3D'
+          nullable: true
+          description: Spatial bounding box of the location
+        boundsPrecision:
+          allOf:
+          - $ref: '#/components/schemas/BoundsPrecision'
+          nullable: true
+          description: Precision level of the spatial bounds
+        coordinateMode:
+          allOf:
+          - $ref: '#/components/schemas/CoordinateMode'
+          nullable: true
+          description: Coordinate system used for spatial data
+        localOrigin:
+          allOf:
+          - $ref: '#/components/schemas/Position3D'
+          nullable: true
+          description: Local coordinate origin point
+        createdAt:
+          type: string
+          format: date-time
+          description: Real-world creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Real-world last update timestamp
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the location was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation
     LocationExistsRequest:
       description: Request to check if a location exists and is active
       type: object
@@ -44536,6 +44845,36 @@ components:
         hasPreviousPage:
           type: boolean
           description: Whether there are realms available on the previous page
+    RealmLocationArchiveContext:
+      type: object
+      x-archive-type: true
+      description: |
+        Realm context included in location compression archives.
+        Provides realm identity and description for content flywheel consumption
+        without requiring realm lookups during archive processing.
+        Inherits base archive properties from ResourceArchiveBase.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - realmId
+      - realmName
+      - realmCode
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Unique identifier of the realm
+        realmName:
+          type: string
+          description: Display name of the realm
+        realmCode:
+          type: string
+          description: Unique code identifier for the realm
+        realmDescription:
+          type: string
+          nullable: true
+          description: Detailed description of the realm and its characteristics
     RealmLoreElement:
       type: object
       description: A machine-readable lore element for behavior system 

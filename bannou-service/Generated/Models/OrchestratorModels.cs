@@ -2462,6 +2462,53 @@ public partial class ConfigVersionResponse
 }
 
 /// <summary>
+/// Request to notify all running containers that configuration or secrets have changed. External systems call this after applying changes.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class NotifyConfigChangeRequest
+{
+
+    /// <summary>
+    /// Configuration keys that changed (not values, for security). Key prefixes indicate scope (e.g., auth.jwt_secret, database.connection_string, mesh.timeout). Plugins match on prefixes to decide if they need a restart.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changedKeys")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    public System.Collections.Generic.ICollection<string> ChangedKeys { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// Human-readable reason for the change (for audit logging)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Acknowledgment that the configuration change notification was published
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class NotifyConfigChangeResponse
+{
+
+    /// <summary>
+    /// Current configuration version at time of notification
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("configVersion")]
+    public int ConfigVersion { get; set; } = default!;
+
+    /// <summary>
+    /// When the notification event was published
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("notifiedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset NotifiedAt { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to acquire a processor instance from a processing pool
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

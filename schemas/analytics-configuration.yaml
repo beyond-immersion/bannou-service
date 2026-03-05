@@ -17,11 +17,15 @@ x-service-configuration:
     # Event Buffer Configuration
     EventBufferSize:
       type: integer
+      minimum: 1
+      maximum: 100000
       description: Maximum events to buffer before flushing to storage
       default: 1000
       env: ANALYTICS_EVENT_BUFFER_SIZE
     EventBufferFlushIntervalSeconds:
       type: integer
+      minimum: 1
+      maximum: 300
       description: Interval in seconds to flush event buffer
       default: 5
       env: ANALYTICS_EVENT_BUFFER_FLUSH_INTERVAL_SECONDS
@@ -29,71 +33,95 @@ x-service-configuration:
     Glicko2DefaultRating:
       type: number
       format: double
+      minimum: 0
+      maximum: 10000
       description: Default Glicko-2 rating for new entities
       default: 1500.0
       env: ANALYTICS_GLICKO2_DEFAULT_RATING
     Glicko2DefaultDeviation:
       type: number
       format: double
+      minimum: 1
+      maximum: 1000
       description: Default rating deviation for new entities (higher = less certain)
       default: 350.0
       env: ANALYTICS_GLICKO2_DEFAULT_DEVIATION
     Glicko2DefaultVolatility:
       type: number
       format: double
+      minimum: 0.01
+      maximum: 1.0
       description: Default volatility for new entities (0.06 is standard)
       default: 0.06
       env: ANALYTICS_GLICKO2_DEFAULT_VOLATILITY
     Glicko2SystemConstant:
       type: number
       format: double
+      minimum: 0.1
+      maximum: 2.0
       description: Glicko-2 system constant (tau) - controls volatility change speed
       default: 0.5
       env: ANALYTICS_GLICKO2_SYSTEM_CONSTANT
     Glicko2MinRating:
       type: number
       format: double
+      minimum: 0
+      maximum: 5000
       description: Minimum allowed Glicko-2 rating (floor for clamping)
       default: 100.0
       env: ANALYTICS_GLICKO2_MIN_RATING
     Glicko2MaxRating:
       type: number
       format: double
+      minimum: 1000
+      maximum: 10000
       description: Maximum allowed Glicko-2 rating (ceiling for clamping)
       default: 4000.0
       env: ANALYTICS_GLICKO2_MAX_RATING
     Glicko2MinDeviation:
       type: number
       format: double
+      minimum: 1
+      maximum: 500
       description: Minimum rating deviation (prevents overconfidence)
       default: 30.0
       env: ANALYTICS_GLICKO2_MIN_DEVIATION
     Glicko2MaxVolatilityIterations:
       type: integer
+      minimum: 1
+      maximum: 1000
       description: Maximum iterations for Glicko-2 volatility convergence algorithm
       default: 100
       env: ANALYTICS_GLICKO2_MAX_VOLATILITY_ITERATIONS
     # Resolution Cache Configuration
     ResolutionCacheTtlSeconds:
       type: integer
+      minimum: 1
+      maximum: 3600
       description: TTL in seconds for resolution caches (game service, realm, character lookups)
       default: 300
       env: ANALYTICS_RESOLUTION_CACHE_TTL_SECONDS
     # Session Mapping Configuration
     SessionMappingTtlSeconds:
       type: integer
+      minimum: 60
+      maximum: 86400
       description: TTL in seconds for game session mappings (should exceed typical session duration)
       default: 3600
       env: ANALYTICS_SESSION_MAPPING_TTL_SECONDS
     # Event Buffer Lock Configuration
     EventBufferLockExpiryBaseSeconds:
       type: integer
+      minimum: 1
+      maximum: 300
       description: Base lock expiry time in seconds for event buffer flush operations (actual expiry is max of this and 2x flush interval)
       default: 10
       env: ANALYTICS_EVENT_BUFFER_LOCK_EXPIRY_BASE_SECONDS
     # Rating Update Lock Configuration
     RatingUpdateLockExpirySeconds:
       type: integer
+      minimum: 1
+      maximum: 300
       description: Lock expiry time in seconds for skill rating update operations
       default: 30
       env: ANALYTICS_RATING_UPDATE_LOCK_EXPIRY_SECONDS
@@ -101,28 +129,38 @@ x-service-configuration:
     Glicko2VolatilityConvergenceTolerance:
       type: number
       format: double
+      minimum: 0.0000001
+      maximum: 0.01
       description: Convergence tolerance for Glicko-2 volatility iteration (smaller = more precise but slower)
       default: 0.000001
       env: ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE
     # Controller History Retention
     ControllerHistoryRetentionDays:
       type: integer
+      minimum: 0
+      maximum: 3650
       description: Days to retain controller history records (0 = indefinite retention)
       default: 90
       env: ANALYTICS_CONTROLLER_HISTORY_RETENTION_DAYS
     ControllerHistoryCleanupBatchSize:
       type: integer
+      minimum: 1
+      maximum: 100000
       description: Maximum records to delete per cleanup invocation
       default: 5000
       env: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_BATCH_SIZE
     ControllerHistoryCleanupSubBatchSize:
       type: integer
+      minimum: 1
+      maximum: 10000
       description: Number of records to delete per iteration within a cleanup batch
       default: 100
       env: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_SUB_BATCH_SIZE
     # Milestone Configuration
     MilestoneThresholds:
       type: string
+      minLength: 1
+      maxLength: 1024
       description: Comma-separated list of score thresholds that trigger milestone events (e.g., "10,25,50,100")
       default: "10,25,50,100,250,500,1000,2500,5000,10000,25000,50000,100000"
       env: ANALYTICS_MILESTONE_THRESHOLDS

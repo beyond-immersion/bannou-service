@@ -21,9 +21,9 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 12 | Historical event participation and backstory management for ... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 12 | Machine-readable personality traits for NPC behavior decisio... |
 | [Chat Service API](#chat) | `client.Chat` | 32 | Typed message channel service (L1 AppFoundation) providing u... |
-| [Collection Service API](#collection) | `client.Collection` | 21 | Universal content unlock and archive system for collectible ... |
+| [Collection Service API](#collection) | `client.Collection` | 22 | Universal content unlock and archive system for collectible ... |
 | [Bannou Connect API](#connect) | `client.Connect` | 5 | Real-time communication and WebSocket connection management ... |
-| [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
+| [Contract Service API](#contract) | `client.Contract` | 31 | Binding agreements between entities with milestone-based pro... |
 | [Currency Service API](#currency) | `client.Currency` | 33 | Multi-currency management service for game economies. |
 | [Bannou Divine Service API](#divine) | `client.Divine` | 22 | Pantheon management service (L4 GameFeatures) for deity enti... |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
@@ -36,18 +36,18 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Item Service API](#item) | `client.Item` | 16 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [License Service API](#license) | `client.License` | 20 | Grid-based progression boards via itemized contracts. |
-| [Bannou Location Service API](#location) | `client.Location` | 24 | Location management service for game worlds. |
+| [Bannou Location Service API](#location) | `client.Location` | 25 | Location management service for game worlds. |
 | [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for game worlds. |
 | [Bannou Matchmaking Service API](#matchmaking) | `client.Matchmaking` | 11 | Matchmaking service for competitive and casual game matching... |
 | [Bannou Mesh Service API](#mesh) | `client.Mesh` | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Bannou Messaging Service API](#messaging) | `client.Messaging` | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
 | [Music Theory Engine API](#music) | `client.Music` | 8 | Pure computation music generation using formal music theory ... |
 | [Bannou Obligation Service API](#obligation) | `client.Obligation` | 11 | Contract-aware obligation tracking for NPC cognition (L4 Gam... |
-| [Orchestrator API](#orchestrator) | `client.Orchestrator` | 22 | Central intelligence for Bannou environment management and s... |
+| [Orchestrator API](#orchestrator) | `client.Orchestrator` | 23 | Central intelligence for Bannou environment management and s... |
 | [Bannou Permission System API](#permission) | `client.Permission` | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Bannou Puppetmaster Service API](#puppetmaster) | `client.Puppetmaster` | 6 | Orchestration service for dynamic behaviors, regional watche... |
 | [Bannou Quest Service API](#quest) | `client.Quest` | 17 | Quest system providing objective-based gameplay progression ... |
-| [Bannou Realm Service API](#realm) | `client.Realm` | 12 | Realm management service for game worlds. |
+| [Bannou Realm Service API](#realm) | `client.Realm` | 13 | Realm management service for game worlds. |
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 12 | Historical event participation and lore management for realm... |
 | [Relationship Service API](#relationship) | `client.Relationship` | 21 | Relationship and relationship type management service for en... |
 | [Resource Lifecycle API](#resource) | `client.Resource` | 17 | Resource reference tracking and lifecycle management. |
@@ -622,6 +622,7 @@ Universal content unlock and archive system for collectible content.
 | `SetareacontentconfigAsync` | `SetAreaContentConfigRequest` | `AreaContentConfigResponse` | Set area-to-theme mapping |
 | `GetAreacontentconfigAsync` | `GetAreaContentConfigRequest` | `AreaContentConfigResponse` | Get area content config |
 | `ListAreacontentconfigsAsync` | `ListAreaContentConfigsRequest` | `ListAreaContentConfigsResponse` | List area configs for a game service |
+| `DeleteAreacontentconfigAsync` | `DeleteAreaContentConfigRequest` | `AreaContentConfigResponse` | Delete an area content config |
 
 ### Discovery
 
@@ -647,7 +648,7 @@ Universal content unlock and archive system for collectible content.
 | `GetEntrytemplateAsync` | `GetEntryTemplateRequest` | `EntryTemplateResponse` | Get an entry template by ID |
 | `ListEntrytemplatesAsync` | `ListEntryTemplatesRequest` | `ListEntryTemplatesResponse` | List entry templates |
 | `UpdateEntrytemplateAsync` | `UpdateEntryTemplateRequest` | `EntryTemplateResponse` | Update an entry template |
-| `DeleteEntrytemplateAsync` | `DeleteEntryTemplateRequest` | `EntryTemplateResponse` | Delete an entry template |
+| `DeprecateentrytemplateAsync` | `DeprecateEntryTemplateRequest` | `EntryTemplateResponse` | Deprecate an entry template |
 | `SeedentrytemplatesAsync` | `SeedEntryTemplatesRequest` | `SeedEntryTemplatesResponse` | Bulk seed entry templates |
 
 ### Resource Cleanup
@@ -750,6 +751,7 @@ Binding agreements between entities with milestone-based progression.
 | `GetContractinstanceAsync` | `GetContractInstanceRequest` | `ContractInstanceResponse` | Get instance by ID |
 | `QuerycontractinstancesAsync` | `QueryContractInstancesRequest` | `QueryContractInstancesResponse` | Query instances by party, template, status |
 | `TerminatecontractinstanceAsync` | `TerminateContractInstanceRequest` | `ContractInstanceResponse` | Request early termination |
+| `DeleteContractinstanceAsync` | `DeleteContractInstanceRequest` | `DeleteContractInstanceResponse` | Hard-delete a terminal contract instance |
 | `GetContractinstancestatusAsync` | `GetContractInstanceStatusRequest` | `ContractInstanceStatusResponse` | Get current status and milestone progress |
 
 ### Metadata
@@ -1438,6 +1440,12 @@ Location management service for game worlds.
 | `UndeprecatelocationAsync` | `UndeprecateLocationRequest` | `LocationResponse` | Restore a deprecated location |
 | `SeedlocationsAsync` | `SeedLocationsRequest` | `SeedLocationsResponse` | Seed locations from configuration |
 
+### Location Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetLocationcompressdataAsync` | `GetLocationCompressDataRequest` | `LocationBaseArchive` | Get location base data for compression |
+
 ### Location Presence
 
 | Method | Request | Response | Summary |
@@ -1704,6 +1712,7 @@ Central intelligence for Bannou environment management and service orchestration
 | `GetContainerstatusAsync` | `GetContainerStatusRequest` | `ContainerStatus` | Get container health and restart history |
 | `RollbackconfigurationAsync` | `ConfigRollbackRequest` | `ConfigRollbackResponse` | Rollback to a previous configuration version |
 | `GetConfigversionAsync` | `GetConfigVersionRequest` | `ConfigVersionResponse` | Get current configuration version and metadata |
+| `NotifyconfigchangeAsync` | `NotifyConfigChangeRequest` | `NotifyConfigChangeResponse` | Notify that configuration or secrets have changed |
 | `AcquireprocessorAsync` | `AcquireProcessorRequest` | `AcquireProcessorResponse` | Acquire a processor from a pool |
 | `ReleaseprocessorAsync` | `ReleaseProcessorRequest` | `ReleaseProcessorResponse` | Release a processor back to the pool |
 | `GetPoolstatusAsync` | `GetPoolStatusRequest` | `PoolStatusResponse` | Get processing pool status |
@@ -1854,6 +1863,12 @@ Realm management service for game worlds.
 | `UndeprecaterealmAsync` | `UndeprecateRealmRequest` | `RealmResponse` | Restore a deprecated realm |
 | `MergerealmsAsync` | `MergeRealmsRequest` | `MergeRealmsResponse` | Merge a deprecated realm into another realm |
 | `SeedrealmsAsync` | `SeedRealmsRequest` | `SeedRealmsResponse` | Seed realms from configuration |
+
+### Realm Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetLocationcompresscontextAsync` | `GetLocationCompressContextRequest` | `RealmLocationArchiveContext` | Get realm context for location archive |
 
 ---
 
@@ -2528,7 +2543,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 55
-- **Total methods**: 885
+- **Total methods**: 890
 
 ---
 

@@ -384,8 +384,8 @@ namespace Bannou
         /** Update an entry template */
         constexpr const TCHAR* CollectionUpdateEntryTemplate = TEXT("POST:/collection/entry-template/update");
 
-        /** Delete an entry template */
-        constexpr const TCHAR* CollectionDeleteEntryTemplate = TEXT("POST:/collection/entry-template/delete");
+        /** Deprecate an entry template */
+        constexpr const TCHAR* CollectionDeprecateEntryTemplate = TEXT("POST:/collection/entry-template/deprecate");
 
         /** Bulk seed entry templates */
         constexpr const TCHAR* CollectionSeedEntryTemplates = TEXT("POST:/collection/entry-template/seed");
@@ -429,6 +429,9 @@ namespace Bannou
         /** List area configs for a game service */
         constexpr const TCHAR* CollectionListAreaContentConfigs = TEXT("POST:/collection/content/area-config/list");
 
+        /** Delete an area content config */
+        constexpr const TCHAR* CollectionDeleteAreaContentConfig = TEXT("POST:/collection/content/area-config/delete");
+
         /** Advance progressive discovery level */
         constexpr const TCHAR* CollectionAdvanceDiscovery = TEXT("POST:/collection/discovery/advance");
 
@@ -463,6 +466,9 @@ namespace Bannou
 
         /** Request early termination */
         constexpr const TCHAR* ContractTerminateContractInstance = TEXT("POST:/contract/instance/terminate");
+
+        /** Hard-delete a terminal contract instance */
+        constexpr const TCHAR* ContractDeleteContractInstance = TEXT("POST:/contract/instance/delete");
 
         /** Get current status and milestone progress */
         constexpr const TCHAR* ContractGetContractInstanceStatus = TEXT("POST:/contract/instance/get-status");
@@ -1137,6 +1143,9 @@ namespace Bannou
         /** Remove entity presence from its current location */
         constexpr const TCHAR* LocationClearEntityPosition = TEXT("POST:/location/clear-entity-position");
 
+        /** Get location base data for compression */
+        constexpr const TCHAR* LocationGetLocationCompressData = TEXT("POST:/location/get-compress-data");
+
         // Mapping Service
         /** Request full snapshot for cold start */
         constexpr const TCHAR* MappingRequestSnapshot = TEXT("POST:/mapping/request-snapshot");
@@ -1311,6 +1320,9 @@ namespace Bannou
 
         /** Check if multiple realms exist and are active */
         constexpr const TCHAR* RealmRealmsExistBatch = TEXT("POST:/realm/exists-batch");
+
+        /** Get realm context for location archive */
+        constexpr const TCHAR* RealmGetLocationCompressContext = TEXT("POST:/realm/get-location-compress-context");
 
         // RealmHistory Service
         /** Get all historical events a realm participated in */
@@ -2892,13 +2904,13 @@ namespace Bannou
                 TEXT("FEntryTemplateResponse"),
                 TEXT("Update an entry template")
             });
-            Registry.Add(TEXT("CollectionDeleteEntryTemplate"), FEndpointInfo{
+            Registry.Add(TEXT("CollectionDeprecateEntryTemplate"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/collection/entry-template/delete"),
+                TEXT("/collection/entry-template/deprecate"),
                 TEXT("collection"),
-                TEXT("FDeleteEntryTemplateRequest"),
+                TEXT("FDeprecateEntryTemplateRequest"),
                 TEXT("FEntryTemplateResponse"),
-                TEXT("Delete an entry template")
+                TEXT("Deprecate an entry template")
             });
             Registry.Add(TEXT("CollectionSeedEntryTemplates"), FEndpointInfo{
                 TEXT("POST"),
@@ -3012,6 +3024,14 @@ namespace Bannou
                 TEXT("FListAreaContentConfigsResponse"),
                 TEXT("List area configs for a game service")
             });
+            Registry.Add(TEXT("CollectionDeleteAreaContentConfig"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/collection/content/area-config/delete"),
+                TEXT("collection"),
+                TEXT("FDeleteAreaContentConfigRequest"),
+                TEXT("FAreaContentConfigResponse"),
+                TEXT("Delete an area content config")
+            });
             Registry.Add(TEXT("CollectionAdvanceDiscovery"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/collection/discovery/advance"),
@@ -3099,6 +3119,14 @@ namespace Bannou
                 TEXT("FTerminateContractInstanceRequest"),
                 TEXT("FContractInstanceResponse"),
                 TEXT("Request early termination")
+            });
+            Registry.Add(TEXT("ContractDeleteContractInstance"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/contract/instance/delete"),
+                TEXT("contract"),
+                TEXT("FDeleteContractInstanceRequest"),
+                TEXT("FDeleteContractInstanceResponse"),
+                TEXT("Hard-delete a terminal contract instance")
             });
             Registry.Add(TEXT("ContractGetContractInstanceStatus"), FEndpointInfo{
                 TEXT("POST"),
@@ -4860,6 +4888,14 @@ namespace Bannou
                 TEXT("FClearEntityPositionResponse"),
                 TEXT("Remove entity presence from its current location")
             });
+            Registry.Add(TEXT("LocationGetLocationCompressData"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/location/get-compress-data"),
+                TEXT("location"),
+                TEXT("FGetLocationCompressDataRequest"),
+                TEXT("FLocationBaseArchive"),
+                TEXT("Get location base data for compression")
+            });
             Registry.Add(TEXT("MappingRequestSnapshot"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/mapping/request-snapshot"),
@@ -5307,6 +5343,14 @@ namespace Bannou
                 TEXT("FRealmsExistBatchRequest"),
                 TEXT("FRealmsExistBatchResponse"),
                 TEXT("Check if multiple realms exist and are active")
+            });
+            Registry.Add(TEXT("RealmGetLocationCompressContext"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/realm/get-location-compress-context"),
+                TEXT("realm"),
+                TEXT("FGetLocationCompressContextRequest"),
+                TEXT("FRealmLocationArchiveContext"),
+                TEXT("Get realm context for location archive")
             });
             Registry.Add(TEXT("RealmHistoryGetRealmParticipation"), FEndpointInfo{
                 TEXT("POST"),

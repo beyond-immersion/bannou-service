@@ -2091,7 +2091,7 @@ public partial class GameSessionService : IGameSessionService
 
         try
         {
-    
+
 
             // Check for existing lobby (fast path without lock)
             var existingLobby = await _sessionStore.GetAsync(lobbyKey);
@@ -2178,7 +2178,7 @@ public partial class GameSessionService : IGameSessionService
 
         try
         {
-    
+
             var existingLobby = await _sessionStore.GetAsync(lobbyKey);
 
             if (existingLobby != null)

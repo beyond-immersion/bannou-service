@@ -121,4 +121,22 @@ export class RealmProxy {
       Schemas['RealmsExistBatchResponse']
     >('/realm/exists-batch', request, channel, timeout);
   }
+
+  /**
+   * Get realm context for location archive
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async realmGetLocationCompressContextAsync(
+    request: Schemas['GetLocationCompressContextRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['RealmLocationArchiveContext']>> {
+    return this.client.invokeAsync<
+      Schemas['GetLocationCompressContextRequest'],
+      Schemas['RealmLocationArchiveContext']
+    >('/realm/get-location-compress-context', request, channel, timeout);
+  }
 }

@@ -355,6 +355,28 @@ public partial interface IOrchestratorClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
+    /// Notify that configuration or secrets have changed
+    /// </summary>
+    /// <remarks>
+    /// Admin-only notification endpoint that publishes a ConfigurationChangedEvent
+    /// <br/>to all running containers via RabbitMQ. Each plugin inspects changedKeys
+    /// <br/>prefixes to determine if it needs to request a restart to pick up new
+    /// <br/>environment variables or secrets.
+    /// <br/>
+    /// <br/>This endpoint does not detect changes itself -- it is a manual trigger
+    /// <br/>for external systems (CI/CD pipelines, admin tooling, Kubernetes operators)
+    /// <br/>that have already applied configuration changes and need to notify running
+    /// <br/>services. The design question of auto-detecting changes per backend
+    /// <br/>(Docker labels, K8s ConfigMap watches, Portainer webhooks) is tracked
+    /// <br/>separately.
+    /// </remarks>
+    /// <returns>Notification published successfully</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<NotifyConfigChangeResponse> NotifyConfigChangeAsync(NotifyConfigChangeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
     /// Acquire a processor from a pool
     /// </summary>
     /// <remarks>
@@ -2194,6 +2216,99 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
+    /// Notify that configuration or secrets have changed
+    /// </summary>
+    /// <remarks>
+    /// Admin-only notification endpoint that publishes a ConfigurationChangedEvent
+    /// <br/>to all running containers via RabbitMQ. Each plugin inspects changedKeys
+    /// <br/>prefixes to determine if it needs to request a restart to pick up new
+    /// <br/>environment variables or secrets.
+    /// <br/>
+    /// <br/>This endpoint does not detect changes itself -- it is a manual trigger
+    /// <br/>for external systems (CI/CD pipelines, admin tooling, Kubernetes operators)
+    /// <br/>that have already applied configuration changes and need to notify running
+    /// <br/>services. The design question of auto-detecting changes per backend
+    /// <br/>(Docker labels, K8s ConfigMap watches, Portainer webhooks) is tracked
+    /// <br/>separately.
+    /// </remarks>
+    /// <returns>Notification published successfully</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<NotifyConfigChangeResponse> NotifyConfigChangeAsync(NotifyConfigChangeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "orchestrator/config/notify-change"
+        urlBuilder_.Append("orchestrator/config/notify-change");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<NotifyConfigChangeResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
     /// Acquire a processor from a pool
     /// </summary>
     /// <remarks>
@@ -2763,7 +2878,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -2775,7 +2890,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool) 
+        else if (value is bool)
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

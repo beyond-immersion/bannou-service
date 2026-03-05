@@ -55,114 +55,133 @@ public class AnalyticsServiceConfiguration : BaseServiceConfiguration
     /// Maximum events to buffer before flushing to storage
     /// Environment variable: ANALYTICS_EVENT_BUFFER_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100000)]
     public int EventBufferSize { get; set; } = 1000;
 
     /// <summary>
     /// Interval in seconds to flush event buffer
     /// Environment variable: ANALYTICS_EVENT_BUFFER_FLUSH_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int EventBufferFlushIntervalSeconds { get; set; } = 5;
 
     /// <summary>
     /// Default Glicko-2 rating for new entities
     /// Environment variable: ANALYTICS_GLICKO2_DEFAULT_RATING
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 10000)]
     public double Glicko2DefaultRating { get; set; } = 1500.0;
 
     /// <summary>
     /// Default rating deviation for new entities (higher = less certain)
     /// Environment variable: ANALYTICS_GLICKO2_DEFAULT_DEVIATION
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1000)]
     public double Glicko2DefaultDeviation { get; set; } = 350.0;
 
     /// <summary>
     /// Default volatility for new entities (0.06 is standard)
     /// Environment variable: ANALYTICS_GLICKO2_DEFAULT_VOLATILITY
     /// </summary>
+    [ConfigRange(Minimum = 0.01, Maximum = 1.0)]
     public double Glicko2DefaultVolatility { get; set; } = 0.06;
 
     /// <summary>
     /// Glicko-2 system constant (tau) - controls volatility change speed
     /// Environment variable: ANALYTICS_GLICKO2_SYSTEM_CONSTANT
     /// </summary>
+    [ConfigRange(Minimum = 0.1, Maximum = 2.0)]
     public double Glicko2SystemConstant { get; set; } = 0.5;
 
     /// <summary>
     /// Minimum allowed Glicko-2 rating (floor for clamping)
     /// Environment variable: ANALYTICS_GLICKO2_MIN_RATING
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 5000)]
     public double Glicko2MinRating { get; set; } = 100.0;
 
     /// <summary>
     /// Maximum allowed Glicko-2 rating (ceiling for clamping)
     /// Environment variable: ANALYTICS_GLICKO2_MAX_RATING
     /// </summary>
+    [ConfigRange(Minimum = 1000, Maximum = 10000)]
     public double Glicko2MaxRating { get; set; } = 4000.0;
 
     /// <summary>
     /// Minimum rating deviation (prevents overconfidence)
     /// Environment variable: ANALYTICS_GLICKO2_MIN_DEVIATION
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 500)]
     public double Glicko2MinDeviation { get; set; } = 30.0;
 
     /// <summary>
     /// Maximum iterations for Glicko-2 volatility convergence algorithm
     /// Environment variable: ANALYTICS_GLICKO2_MAX_VOLATILITY_ITERATIONS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1000)]
     public int Glicko2MaxVolatilityIterations { get; set; } = 100;
 
     /// <summary>
     /// TTL in seconds for resolution caches (game service, realm, character lookups)
     /// Environment variable: ANALYTICS_RESOLUTION_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 3600)]
     public int ResolutionCacheTtlSeconds { get; set; } = 300;
 
     /// <summary>
     /// TTL in seconds for game session mappings (should exceed typical session duration)
     /// Environment variable: ANALYTICS_SESSION_MAPPING_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 60, Maximum = 86400)]
     public int SessionMappingTtlSeconds { get; set; } = 3600;
 
     /// <summary>
     /// Base lock expiry time in seconds for event buffer flush operations (actual expiry is max of this and 2x flush interval)
     /// Environment variable: ANALYTICS_EVENT_BUFFER_LOCK_EXPIRY_BASE_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int EventBufferLockExpiryBaseSeconds { get; set; } = 10;
 
     /// <summary>
     /// Lock expiry time in seconds for skill rating update operations
     /// Environment variable: ANALYTICS_RATING_UPDATE_LOCK_EXPIRY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int RatingUpdateLockExpirySeconds { get; set; } = 30;
 
     /// <summary>
     /// Convergence tolerance for Glicko-2 volatility iteration (smaller = more precise but slower)
     /// Environment variable: ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE
     /// </summary>
+    [ConfigRange(Minimum = 1e-07, Maximum = 0.01)]
     public double Glicko2VolatilityConvergenceTolerance { get; set; } = 1e-06;
 
     /// <summary>
     /// Days to retain controller history records (0 = indefinite retention)
     /// Environment variable: ANALYTICS_CONTROLLER_HISTORY_RETENTION_DAYS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 3650)]
     public int ControllerHistoryRetentionDays { get; set; } = 90;
 
     /// <summary>
     /// Maximum records to delete per cleanup invocation
     /// Environment variable: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_BATCH_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100000)]
     public int ControllerHistoryCleanupBatchSize { get; set; } = 5000;
 
     /// <summary>
     /// Number of records to delete per iteration within a cleanup batch
     /// Environment variable: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_SUB_BATCH_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int ControllerHistoryCleanupSubBatchSize { get; set; } = 100;
 
     /// <summary>
     /// Comma-separated list of score thresholds that trigger milestone events (e.g., "10,25,50,100")
     /// Environment variable: ANALYTICS_MILESTONE_THRESHOLDS
     /// </summary>
+    [ConfigStringLength(MinLength = 1, MaxLength = 1024)]
     public string MilestoneThresholds { get; set; } = "10,25,50,100,250,500,1000,2500,5000,10000,25000,50000,100000";
 
 }

@@ -4382,6 +4382,121 @@ public partial class OrchestratorController
 
     #endregion
 
+    #region Meta Endpoints for NotifyConfigChange
+
+    private static readonly string _NotifyConfigChange_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/NotifyConfigChangeRequest",
+    "$defs": {
+        "NotifyConfigChangeRequest": {
+            "description": "Request to notify all running containers that configuration or secrets have changed. External systems call this after applying changes.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "changedKeys"
+            ],
+            "properties": {
+                "changedKeys": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "description": "Configuration keys that changed (not values, for security). Key prefixes indicate scope (e.g., auth.jwt_secret, database.connection_string, mesh.timeout). Plugins match on prefixes to decide if they need a restart."
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable reason for the change (for audit logging)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _NotifyConfigChange_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/NotifyConfigChangeResponse",
+    "$defs": {
+        "NotifyConfigChangeResponse": {
+            "description": "Acknowledgment that the configuration change notification was published",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "configVersion",
+                "notifiedAt"
+            ],
+            "properties": {
+                "configVersion": {
+                    "type": "integer",
+                    "description": "Current configuration version at time of notification"
+                },
+                "notifiedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the notification event was published"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _NotifyConfigChange_Info = """
+{
+    "summary": "Notify that configuration or secrets have changed",
+    "description": "Admin-only notification endpoint that publishes a ConfigurationChangedEvent\nto all running containers via RabbitMQ. Each plugin inspects changedKeys\nprefixes to determine if it needs to request a restart to pick up new\nenvironment variables or secrets.\n\nThis endpoint does not detect changes itself -- it is a manual trigger\nfor external systems (CI/CD pipelines, admin tooling, Kubernetes operators)\nthat have already applied configuration changes and need to notify running\nservices. The design question of auto-detecting changes per backend\n(Docker labels, K8s ConfigMap watches, Portainer webhooks) is tracked\nseparately.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "NotifyConfigChange"
+}
+""";
+
+    /// <summary>Returns endpoint information for NotifyConfigChange</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/orchestrator/config/notify-change/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> NotifyConfigChange_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "POST",
+            "/orchestrator/config/notify-change",
+            _NotifyConfigChange_Info));
+
+    /// <summary>Returns request schema for NotifyConfigChange</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/orchestrator/config/notify-change/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> NotifyConfigChange_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "POST",
+            "/orchestrator/config/notify-change",
+            "request-schema",
+            _NotifyConfigChange_RequestSchema));
+
+    /// <summary>Returns response schema for NotifyConfigChange</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/orchestrator/config/notify-change/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> NotifyConfigChange_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "POST",
+            "/orchestrator/config/notify-change",
+            "response-schema",
+            _NotifyConfigChange_ResponseSchema));
+
+    /// <summary>Returns full schema for NotifyConfigChange</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/orchestrator/config/notify-change/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> NotifyConfigChange_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "POST",
+            "/orchestrator/config/notify-change",
+            _NotifyConfigChange_Info,
+            _NotifyConfigChange_RequestSchema,
+            _NotifyConfigChange_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for AcquireProcessor
 
     private static readonly string _AcquireProcessor_RequestSchema = """

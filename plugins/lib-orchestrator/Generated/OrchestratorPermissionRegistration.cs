@@ -302,6 +302,21 @@ public static class OrchestratorPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/orchestrator/config/notify-change",
+            Method = ServiceEndpointMethod.Post,
+            Description = "NotifyConfigChange",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/orchestrator/processing-pool/acquire",
             Method = ServiceEndpointMethod.Post,
             Description = "AcquireProcessor",

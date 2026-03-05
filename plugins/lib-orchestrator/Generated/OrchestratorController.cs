@@ -345,6 +345,28 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigVersionResponse>> GetConfigVersionAsync(GetConfigVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Notify that configuration or secrets have changed
+    /// </summary>
+
+    /// <remarks>
+    /// Admin-only notification endpoint that publishes a ConfigurationChangedEvent
+    /// <br/>to all running containers via RabbitMQ. Each plugin inspects changedKeys
+    /// <br/>prefixes to determine if it needs to request a restart to pick up new
+    /// <br/>environment variables or secrets.
+    /// <br/>
+    /// <br/>This endpoint does not detect changes itself -- it is a manual trigger
+    /// <br/>for external systems (CI/CD pipelines, admin tooling, Kubernetes operators)
+    /// <br/>that have already applied configuration changes and need to notify running
+    /// <br/>services. The design question of auto-detecting changes per backend
+    /// <br/>(Docker labels, K8s ConfigMap watches, Portainer webhooks) is tracked
+    /// <br/>separately.
+    /// </remarks>
+
+    /// <returns>Notification published successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NotifyConfigChangeResponse>> NotifyConfigChangeAsync(NotifyConfigChangeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Acquire a processor from a pool
     /// </summary>
 
@@ -1383,6 +1405,64 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:orchestrator/config/version",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Notify that configuration or secrets have changed
+    /// </summary>
+    /// <remarks>
+    /// Admin-only notification endpoint that publishes a ConfigurationChangedEvent
+    /// <br/>to all running containers via RabbitMQ. Each plugin inspects changedKeys
+    /// <br/>prefixes to determine if it needs to request a restart to pick up new
+    /// <br/>environment variables or secrets.
+    /// <br/>
+    /// <br/>This endpoint does not detect changes itself -- it is a manual trigger
+    /// <br/>for external systems (CI/CD pipelines, admin tooling, Kubernetes operators)
+    /// <br/>that have already applied configuration changes and need to notify running
+    /// <br/>services. The design question of auto-detecting changes per backend
+    /// <br/>(Docker labels, K8s ConfigMap watches, Portainer webhooks) is tracked
+    /// <br/>separately.
+    /// </remarks>
+    /// <returns>Notification published successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/config/notify-change")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NotifyConfigChangeResponse>> NotifyConfigChange([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] NotifyConfigChangeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.NotifyConfigChange",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/config/notify-change");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.NotifyConfigChangeAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/config/notify-change");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:orchestrator/config/notify-change");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "orchestrator",
+                "NotifyConfigChange",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:orchestrator/config/notify-change",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

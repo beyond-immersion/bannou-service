@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Analytics;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -82,8 +83,9 @@ public partial class AnalyticsScoreUpdatedEvent
     /// Type of score that changed (e.g., kills, points, xp)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scoreType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string ScoreType { get; set; } = default!;
 
     /// <summary>
@@ -164,8 +166,9 @@ public partial class AnalyticsRatingUpdatedEvent
     /// Type of rating (e.g., overall, ranked, casual)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ratingType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string RatingType { get; set; } = default!;
 
     /// <summary>
@@ -196,6 +199,8 @@ public partial class AnalyticsRatingUpdatedEvent
     /// ID of the match that caused this update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("matchId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid MatchId { get; set; } = default!;
 
 }
@@ -252,8 +257,9 @@ public partial class AnalyticsMilestoneReachedEvent
     /// Type of milestone (e.g., total_kills, games_played)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("milestoneType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string MilestoneType { get; set; } = default!;
 
     /// <summary>
@@ -266,7 +272,81 @@ public partial class AnalyticsMilestoneReachedEvent
     /// Human-readable milestone name (e.g., "Century Club")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("milestoneName")]
+    [System.ComponentModel.DataAnnotations.StringLength(256)]
     public string? MilestoneName { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a controller possession or release event is recorded
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AnalyticsControllerRecordedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the controller event was recorded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the account that possessed or released control
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity that was controlled
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetEntityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetEntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of the controlled entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetEntityType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType TargetEntityType { get; set; } = default!;
+
+    /// <summary>
+    /// Whether control was possessed or released
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("action")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ControllerAction Action { get; set; } = default!;
+
+    /// <summary>
+    /// Game session ID where this occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    public System.Guid? SessionId { get; set; } = default!;
 
 }
 

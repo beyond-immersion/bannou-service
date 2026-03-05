@@ -7,6 +7,7 @@
 > **Layer**: AppFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: N/A
+> **Implementation Map**: [docs/maps/BROADCAST.md](../maps/BROADCAST.md)
 
 ## Overview
 

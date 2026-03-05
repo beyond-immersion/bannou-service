@@ -444,14 +444,7 @@ public partial class PermissionController
             "description": "Response from updating a session's state or role with recompiled permissions",
             "type": "object",
             "additionalProperties": false,
-            "required": [
-                "permissionsChanged"
-            ],
             "properties": {
-                "permissionsChanged": {
-                    "type": "boolean",
-                    "description": "Whether compiled permissions actually changed"
-                },
                 "newPermissions": {
                     "type": "object",
                     "additionalProperties": {
@@ -569,14 +562,7 @@ public partial class PermissionController
             "description": "Response from updating a session's state or role with recompiled permissions",
             "type": "object",
             "additionalProperties": false,
-            "required": [
-                "permissionsChanged"
-            ],
             "properties": {
-                "permissionsChanged": {
-                    "type": "boolean",
-                    "description": "Whether compiled permissions actually changed"
-                },
                 "newPermissions": {
                     "type": "object",
                     "additionalProperties": {
@@ -696,14 +682,7 @@ public partial class PermissionController
             "description": "Response from updating a session's state or role with recompiled permissions",
             "type": "object",
             "additionalProperties": false,
-            "required": [
-                "permissionsChanged"
-            ],
             "properties": {
-                "permissionsChanged": {
-                    "type": "boolean",
-                    "description": "Whether compiled permissions actually changed"
-                },
                 "newPermissions": {
                     "type": "object",
                     "additionalProperties": {
@@ -968,8 +947,6 @@ public partial class PermissionController
             "required": [
                 "serviceId",
                 "serviceName",
-                "version",
-                "registeredAt",
                 "endpointCount"
             ],
             "properties": {
@@ -985,13 +962,14 @@ public partial class PermissionController
                 },
                 "version": {
                     "type": "string",
-                    "minLength": 1,
-                    "description": "Service API version"
+                    "nullable": true,
+                    "description": "Service API version, null if not provided during registration"
                 },
                 "registeredAt": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "When the service registered its permissions"
+                    "nullable": true,
+                    "description": "When the service registered its permissions, null if registration data unavailable"
                 },
                 "endpointCount": {
                     "type": "integer",

@@ -388,7 +388,7 @@ public partial class SceneService : ISceneService
                 return (StatusCodes.Conflict, null);
             }
 
-    
+
             var checkout = await _checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
             if (checkout == null || checkout.Token != body.CheckoutToken)
             {
@@ -521,7 +521,7 @@ public partial class SceneService : ISceneService
         if (body.ApplyGameRules)
         {
             // Fetch game validation rules from state store
-    
+
             var key = $"{VALIDATION_RULES_PREFIX}{body.Scene.GameId}:{body.Scene.SceneType}";
             var rules = await _rulesStore.GetAsync(key, cancellationToken);
 
@@ -1527,7 +1527,7 @@ public partial class SceneService : ISceneService
                 }
                 else
                 {
-            
+
                     var indexEntry = await _indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{referencedSceneId.Value}", cancellationToken);
 
                     if (indexEntry == null)

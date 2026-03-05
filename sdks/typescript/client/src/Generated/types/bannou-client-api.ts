@@ -2480,7 +2480,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/collection/entry-template/delete': {
+  '/collection/entry-template/deprecate': {
     parameters: {
       query?: never;
       header?: never;
@@ -2490,10 +2490,13 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Delete an entry template
-     * @description Delete an entry template. Warns if instances reference it but does not block deletion.
+     * Deprecate an entry template
+     * @description Marks an entry template as deprecated. Deprecated templates cannot be used
+     *     to grant new entries, but existing unlocked entries remain valid.
+     *     Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+     *     no delete. Idempotent — returns OK if already deprecated.
      */
-    post: operations['collection_deleteEntryTemplate'];
+    post: operations['collection_deprecateEntryTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2787,6 +2790,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/collection/content/area-config/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete an area content config
+     * @description Delete an area content configuration. Area configs are configuration singletons with no deprecation lifecycle — immediate hard delete.
+     */
+    post: operations['collection_deleteAreaContentConfig'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/collection/discovery/advance': {
     parameters: {
       query?: never;
@@ -3028,6 +3051,30 @@ export interface paths {
      *     incur penalties.
      */
     post: operations['contract_terminateContractInstance'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/instance/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Hard-delete a terminal contract instance
+     * @description Permanently deletes a contract instance that has reached a terminal state
+     *     (Fulfilled, Terminated, Expired, or Declined). Removes the instance record
+     *     and all associated index entries. Breach records associated with the
+     *     contract are also deleted. This is a hard delete per T31 (instances use
+     *     immediate deletion, not deprecation).
+     */
+    post: operations['contract_deleteContractInstance'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7761,6 +7808,28 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/location/get-compress-data': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get location base data for compression
+     * @description Called by Resource service during compression.
+     *     Returns core location data (name, type, hierarchy, spatial, parent context).
+     *     Returns BadRequest if location is not deprecated - only deprecated locations can be compressed.
+     */
+    post: operations['location_getLocationCompressData'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/mapping/request-snapshot': {
     parameters: {
       query?: never;
@@ -8943,6 +9012,28 @@ export interface paths {
      *     N+1 API calls when validating multiple realms.
      */
     post: operations['realm_realmsExistBatch'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/realm/get-location-compress-context': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get realm context for location archive
+     * @description Called by Resource service during location compression.
+     *     Resolves the location's realm and returns realm context (name, code, description)
+     *     for inclusion in the location archive.
+     */
+    post: operations['realm_getLocationCompressContext'];
     delete?: never;
     options?: never;
     head?: never;
@@ -19883,6 +19974,14 @@ export interface components {
       /** @description Number of running actors that were stopped */
       stoppedActorCount: number;
     };
+    /** @description Request to delete an area content configuration */
+    DeleteAreaContentConfigRequest: {
+      /**
+       * Format: uuid
+       * @description Area content config to delete
+       */
+      areaConfigId: string;
+    };
     /** @description Request to delete a board instance */
     DeleteBoardRequest: {
       /**
@@ -19956,6 +20055,16 @@ export interface components {
     };
     /** @description Confirms successful connection deletion */
     DeleteConnectionResponse: Record<string, never>;
+    /** @description Request to hard-delete a terminal contract instance */
+    DeleteContractInstanceRequest: {
+      /**
+       * Format: uuid
+       * @description Contract instance to delete
+       */
+      contractId: string;
+    };
+    /** @description Empty response. HTTP 200 confirms the instance was deleted. */
+    DeleteContractInstanceResponse: Record<string, never>;
     /** @description Request to permanently delete a deity and all dependent data */
     DeleteDeityRequest: {
       /**
@@ -19963,14 +20072,6 @@ export interface components {
        * @description Deity to delete
        */
       deityId: string;
-    };
-    /** @description Request to delete an entry template */
-    DeleteEntryTemplateRequest: {
-      /**
-       * Format: uuid
-       * @description Entry template to delete
-       */
-      entryTemplateId: string;
     };
     /** @description Request to delete a leaderboard */
     DeleteLeaderboardDefinitionRequest: {
@@ -20180,6 +20281,16 @@ export interface components {
       achievementId: string;
       /** @description Audit reason for deprecation, explaining why this achievement is being phased out */
       deprecationReason?: string | null;
+    };
+    /** @description Request to deprecate an entry template (Category B — one-way, no delete) */
+    DeprecateEntryTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Entry template to deprecate
+       */
+      entryTemplateId: string;
+      /** @description Reason for deprecation (recommended but not required for Category B templates) */
+      reason?: string | null;
     };
     /** @description Request to deprecate a faction */
     DeprecateFactionRequest: {
@@ -21149,6 +21260,15 @@ export interface components {
       loopPoint?: string | null;
       /** @description Composer or creator name */
       composer?: string | null;
+      /** @description Whether this entry template is deprecated */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When this template was deprecated (null if not deprecated)
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation (null if not deprecated) */
+      deprecationReason?: string | null;
       /**
        * Format: date-time
        * @description When this entry template was created
@@ -23628,6 +23748,22 @@ export interface components {
        * @description Realm ID to scope the code lookup
        */
       realmId: string;
+    };
+    /** @description Request to get realm context for a location's compression archive */
+    GetLocationCompressContextRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the location being compressed (used to resolve realm)
+       */
+      locationId: string;
+    };
+    /** @description Request to get location base data for compression archive */
+    GetLocationCompressDataRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the location to compress
+       */
+      locationId: string;
     };
     /** @description Request to retrieve all descendants of a location (children, grandchildren, etc.) */
     GetLocationDescendantsRequest: {
@@ -26499,6 +26635,11 @@ export interface components {
       gameServiceId: string;
       /** @description Optional filter by category */
       category?: string | null;
+      /**
+       * @description Include deprecated templates in results (excluded by default)
+       * @default false
+       */
+      includeDeprecated: boolean;
       /** @description Opaque cursor from previous response for pagination */
       cursor?: string | null;
       /** @description Number of items per page (uses service default if not specified) */
@@ -27808,6 +27949,74 @@ export interface components {
       /** @description 3D spatial coordinates of the character's position in the game world */
       coordinates?: components['schemas']['Coordinates'];
     };
+    /**
+     * @description Core location data for archive storage and content flywheel consumption.
+     *     Inherits base archive properties from ResourceArchiveBase.
+     *     The locationId field equals resourceId for convenience.
+     *     Includes one level of parent context to avoid hierarchy walking during archive queries.
+     */
+    LocationBaseArchive: {
+      /**
+       * Format: uuid
+       * @description Unique identifier for the location (equals resourceId)
+       */
+      locationId: string;
+      /** @description Display name of the location */
+      name: string;
+      /** @description Unique code identifier for the location */
+      code: string;
+      /** @description Human-readable description of the location */
+      description?: string | null;
+      /** @description Category of location (Region, City, Building, Room, etc.) */
+      locationType: components['schemas']['LocationType'];
+      /**
+       * Format: uuid
+       * @description Realm this location belongs to
+       */
+      realmId: string;
+      /**
+       * Format: uuid
+       * @description Parent location ID (null for root locations)
+       */
+      parentLocationId?: string | null;
+      /** @description Depth in the location hierarchy (0 for root) */
+      depth: number;
+      /** @description Parent location name (one level of context, null if root) */
+      parentName?: string | null;
+      /** @description Parent location code (one level of context, null if root) */
+      parentCode?: string | null;
+      /** @description Parent location type (one level of context, null if root) */
+      parentLocationType?: components['schemas']['LocationType'] | null;
+      /** @description Number of immediate child locations */
+      childrenCount: number;
+      /** @description Codes of immediate child locations (null if no children) */
+      childrenCodes?: string[] | null;
+      /** @description Spatial bounding box of the location */
+      bounds?: components['schemas']['BoundingBox3D'] | null;
+      /** @description Precision level of the spatial bounds */
+      boundsPrecision?: components['schemas']['BoundsPrecision'] | null;
+      /** @description Coordinate system used for spatial data */
+      coordinateMode?: components['schemas']['CoordinateMode'] | null;
+      /** @description Local coordinate origin point */
+      localOrigin?: components['schemas']['Position3D'] | null;
+      /**
+       * Format: date-time
+       * @description Real-world creation timestamp
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description Real-world last update timestamp
+       */
+      updatedAt?: string | null;
+      /**
+       * Format: date-time
+       * @description When the location was deprecated
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation */
+      deprecationReason?: string | null;
+    } & components['schemas']['ResourceArchiveBase'];
     /** @description Request to check if a location exists and is active */
     LocationExistsRequest: {
       /**
@@ -31003,6 +31212,25 @@ export interface components {
       /** @description Whether there are realms available on the previous page */
       hasPreviousPage: boolean;
     };
+    /**
+     * @description Realm context included in location compression archives.
+     *     Provides realm identity and description for content flywheel consumption
+     *     without requiring realm lookups during archive processing.
+     *     Inherits base archive properties from ResourceArchiveBase.
+     */
+    RealmLocationArchiveContext: {
+      /**
+       * Format: uuid
+       * @description Unique identifier of the realm
+       */
+      realmId: string;
+      /** @description Display name of the realm */
+      realmName: string;
+      /** @description Unique code identifier for the realm */
+      realmCode: string;
+      /** @description Detailed description of the realm and its characteristics */
+      realmDescription?: string | null;
+    } & components['schemas']['ResourceArchiveBase'];
     /** @description A machine-readable lore element for behavior system consumption */
     RealmLoreElement: {
       /** @description Category of this lore element */
@@ -41068,7 +41296,7 @@ export interface operations {
       };
     };
   };
-  collection_deleteEntryTemplate: {
+  collection_deprecateEntryTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -41077,11 +41305,11 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['DeleteEntryTemplateRequest'];
+        'application/json': components['schemas']['DeprecateEntryTemplateRequest'];
       };
     };
     responses: {
-      /** @description Entry template deleted successfully */
+      /** @description Entry template deprecated successfully (or already deprecated) */
       200: {
         headers: {
           [name: string]: unknown;
@@ -41526,6 +41754,37 @@ export interface operations {
       };
     };
   };
+  collection_deleteAreaContentConfig: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteAreaContentConfigRequest'];
+      };
+    };
+    responses: {
+      /** @description Area content config deleted successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AreaContentConfigResponse'];
+        };
+      };
+      /** @description Area content config not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   collection_advanceDiscovery: {
     parameters: {
       query?: never;
@@ -41887,6 +42146,44 @@ export interface operations {
         };
       };
       /** @description Contract cannot be terminated (policy violation) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Contract not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  contract_deleteContractInstance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteContractInstanceRequest'];
+      };
+    };
+    responses: {
+      /** @description Instance deleted successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeleteContractInstanceResponse'];
+        };
+      };
+      /** @description Contract is not in a terminal state and cannot be deleted */
       400: {
         headers: {
           [name: string]: unknown;
@@ -49066,6 +49363,44 @@ export interface operations {
       };
     };
   };
+  location_getLocationCompressData: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetLocationCompressDataRequest'];
+      };
+    };
+    responses: {
+      /** @description Location base data returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LocationBaseArchive'];
+        };
+      };
+      /** @description Location is not deprecated (cannot compress active locations) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Location not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   mapping_requestSnapshot: {
     parameters: {
       query?: never;
@@ -50667,6 +51002,37 @@ export interface operations {
         content: {
           'application/json': components['schemas']['RealmsExistBatchResponse'];
         };
+      };
+    };
+  };
+  realm_getLocationCompressContext: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetLocationCompressContextRequest'];
+      };
+    };
+    responses: {
+      /** @description Realm context for location archive returned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RealmLocationArchiveContext'];
+        };
+      };
+      /** @description Location or realm not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

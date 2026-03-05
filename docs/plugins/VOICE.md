@@ -5,6 +5,7 @@
 > **Version**: 2.0.0
 > **Layer**: AppFeatures
 > **State Stores**: voice-statestore (Redis), voice-lock (Redis)
+> **Implementation Map**: [docs/maps/VOICE.md](../maps/VOICE.md)
 
 ## Overview
 

@@ -41,6 +41,8 @@ public partial class AnalyticsController
                 },
                 "eventType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Type of event (e.g., kill, death, score, action)"
                 },
                 "entityId": {
@@ -60,13 +62,14 @@ public partial class AnalyticsController
                 "value": {
                     "type": "number",
                     "format": "double",
-                    "description": "Numeric value associated with the event (e.g., score amount)"
+                    "nullable": true,
+                    "description": "Numeric value associated with the event (e.g., score amount, null if event is presence-only)"
                 },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional event-specific data"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -81,21 +84,16 @@ public partial class AnalyticsController
     "$defs": {
         "IngestEventResponse": {
             "type": "object",
-            "description": "Response after ingesting an event",
+            "description": "Response after ingesting an event. HTTP 200 confirms the event was accepted.",
             "additionalProperties": false,
             "required": [
-                "eventId",
-                "accepted"
+                "eventId"
             ],
             "properties": {
                 "eventId": {
                     "type": "string",
                     "format": "uuid",
                     "description": "Unique identifier assigned to this event"
-                },
-                "accepted": {
-                    "type": "boolean",
-                    "description": "Whether the event was accepted for processing"
                 }
             }
         }
@@ -177,6 +175,7 @@ public partial class AnalyticsController
                     "items": {
                         "$ref": "#/$defs/IngestEventRequest"
                     },
+                    "minItems": 1,
                     "maxItems": 1000,
                     "description": "List of events to ingest (max 1000)"
                 }
@@ -201,6 +200,8 @@ public partial class AnalyticsController
                 },
                 "eventType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Type of event (e.g., kill, death, score, action)"
                 },
                 "entityId": {
@@ -220,13 +221,14 @@ public partial class AnalyticsController
                 "value": {
                     "type": "number",
                     "format": "double",
-                    "description": "Numeric value associated with the event (e.g., score amount)"
+                    "nullable": true,
+                    "description": "Numeric value associated with the event (e.g., score amount, null if event is presence-only)"
                 },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional event-specific data"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -375,7 +377,9 @@ public partial class AnalyticsController
                 "entityType",
                 "totalEvents",
                 "firstEventAt",
-                "lastEventAt"
+                "lastEventAt",
+                "eventCounts",
+                "aggregates"
             ],
             "properties": {
                 "entityId": {
@@ -390,6 +394,7 @@ public partial class AnalyticsController
                 "totalEvents": {
                     "type": "integer",
                     "format": "int64",
+                    "minimum": 0,
                     "description": "Total number of events recorded"
                 },
                 "firstEventAt": {
@@ -510,12 +515,15 @@ public partial class AnalyticsController
                 },
                 "minEvents": {
                     "type": "integer",
-                    "description": "Minimum number of events"
+                    "nullable": true,
+                    "minimum": 0,
+                    "description": "Minimum number of events (null returns all)"
                 },
                 "sortBy": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Field to sort by"
+                    "maxLength": 64,
+                    "description": "Field to sort by (e.g., totalEvents, lastEventAt)"
                 },
                 "sortDescending": {
                     "type": "boolean",
@@ -525,12 +533,14 @@ public partial class AnalyticsController
                 "limit": {
                     "type": "integer",
                     "default": 100,
+                    "minimum": 1,
                     "maximum": 1000,
                     "description": "Maximum results to return"
                 },
                 "offset": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Number of results to skip"
                 }
             }
@@ -563,6 +573,7 @@ public partial class AnalyticsController
                 "total": {
                     "type": "integer",
                     "format": "int64",
+                    "minimum": 0,
                     "description": "Total number of matching entities"
                 }
             }
@@ -576,7 +587,9 @@ public partial class AnalyticsController
                 "entityType",
                 "totalEvents",
                 "firstEventAt",
-                "lastEventAt"
+                "lastEventAt",
+                "eventCounts",
+                "aggregates"
             ],
             "properties": {
                 "entityId": {
@@ -591,6 +604,7 @@ public partial class AnalyticsController
                 "totalEvents": {
                     "type": "integer",
                     "format": "int64",
+                    "minimum": 0,
                     "description": "Total number of events recorded"
                 },
                 "firstEventAt": {
@@ -713,6 +727,8 @@ public partial class AnalyticsController
                 },
                 "ratingType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Type of rating (e.g., overall, ranked, casual)"
                 }
             }
@@ -751,6 +767,8 @@ public partial class AnalyticsController
                 },
                 "ratingType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Type of rating"
                 },
                 "rating": {
@@ -770,6 +788,7 @@ public partial class AnalyticsController
                 },
                 "matchesPlayed": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Number of rated matches played"
                 },
                 "lastMatchAt": {
@@ -863,6 +882,8 @@ public partial class AnalyticsController
                 },
                 "ratingType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Type of rating to update"
                 },
                 "matchId": {
@@ -925,18 +946,12 @@ public partial class AnalyticsController
     "$defs": {
         "UpdateSkillRatingResponse": {
             "type": "object",
-            "description": "Response after updating skill ratings",
+            "description": "Response after updating skill ratings. HTTP 200 confirms ratings were updated.",
             "additionalProperties": false,
             "required": [
-                "matchId",
                 "updatedRatings"
             ],
             "properties": {
-                "matchId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the processed match"
-                },
                 "updatedRatings": {
                     "type": "array",
                     "items": {
@@ -1220,6 +1235,7 @@ public partial class AnalyticsController
                 "limit": {
                     "type": "integer",
                     "default": 100,
+                    "minimum": 1,
                     "maximum": 1000,
                     "description": "Maximum results to return"
                 }
@@ -1386,6 +1402,7 @@ public partial class AnalyticsController
                 "olderThanDays": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Override configured retention period (null uses ControllerHistoryRetentionDays config)"
                 },
                 "gameServiceId": {
@@ -1407,21 +1424,17 @@ public partial class AnalyticsController
     "$defs": {
         "CleanupControllerHistoryResponse": {
             "type": "object",
-            "description": "Result of controller history cleanup",
+            "description": "Result of controller history cleanup. HTTP 200 confirms cleanup completed.",
             "additionalProperties": false,
             "required": [
-                "recordsDeleted",
-                "dryRun"
+                "recordsDeleted"
             ],
             "properties": {
                 "recordsDeleted": {
                     "type": "integer",
                     "format": "int64",
+                    "minimum": 0,
                     "description": "Records deleted (or would be deleted if dry run)"
-                },
-                "dryRun": {
-                    "type": "boolean",
-                    "description": "Whether this was a preview-only run"
                 }
             }
         }

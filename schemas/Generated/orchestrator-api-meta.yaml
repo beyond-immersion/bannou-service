@@ -1853,6 +1853,67 @@ paths:
         : \"Returns the current configuration version, last update time,\\nand summary of configuration state (not actual
         values for security).\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"GetConfigVersion\"\
         \n}"
+  /orchestrator/config/notify-change:
+    post:
+      summary: Notify that configuration or secrets have changed
+      description: |
+        Admin-only notification endpoint that publishes a ConfigurationChangedEvent
+        to all running containers via RabbitMQ. Each plugin inspects changedKeys
+        prefixes to determine if it needs to request a restart to pick up new
+        environment variables or secrets.
+
+        This endpoint does not detect changes itself -- it is a manual trigger
+        for external systems (CI/CD pipelines, admin tooling, Kubernetes operators)
+        that have already applied configuration changes and need to notify running
+        services. The design question of auto-detecting changes per backend
+        (Docker labels, K8s ConfigMap watches, Portainer webhooks) is tracked
+        separately.
+      operationId: NotifyConfigChange
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotifyConfigChangeRequest'
+      responses:
+        '200':
+          description: Notification published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotifyConfigChangeResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/NotifyConfigChangeRequest\"\
+        ,\n    \"$defs\": {\n        \"NotifyConfigChangeRequest\": {\n            \"description\": \"Request to notify all
+        running containers that configuration or secrets have changed. External systems call this after applying changes.\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"changedKeys\"\n            ],\n            \"properties\": {\n                \"changedKeys\":
+        {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
+        string\"\n                    },\n                    \"minItems\": 1,\n                    \"description\": \"Configuration
+        keys that changed (not values, for security). Key prefixes indicate scope (e.g., auth.jwt_secret, database.connection_string,
+        mesh.timeout). Plugins match on prefixes to decide if they need a restart.\"\n                },\n               \
+        \ \"reason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Human-readable reason for the change (for audit logging)\"\n                }\n      \
+        \      }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/NotifyConfigChangeResponse\"\
+        ,\n    \"$defs\": {\n        \"NotifyConfigChangeResponse\": {\n            \"description\": \"Acknowledgment that
+        the configuration change notification was published\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"configVersion\",\n                \"notifiedAt\"\n      \
+        \      ],\n            \"properties\": {\n                \"configVersion\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Current configuration version at time of notification\"\n              \
+        \  },\n                \"notifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"When the notification event was published\"\n           \
+        \     }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Notify that configuration or secrets have changed\",\n    \"description\"\
+        : \"Admin-only notification endpoint that publishes a ConfigurationChangedEvent\\nto all running containers via RabbitMQ.
+        Each plugin inspects changedKeys\\nprefixes to determine if it needs to request a restart to pick up new\\nenvironment
+        variables or secrets.\\n\\nThis endpoint does not detect changes itself -- it is a manual trigger\\nfor external systems
+        (CI/CD pipelines, admin tooling, Kubernetes operators)\\nthat have already applied configuration changes and need
+        to notify running\\nservices. The design question of auto-detecting changes per backend\\n(Docker labels, K8s ConfigMap
+        watches, Portainer webhooks) is tracked\\nseparately.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"\
+        operationId\": \"NotifyConfigChange\"\n}"
   /orchestrator/processing-pool/acquire:
     post:
       summary: Acquire a processor from a pool
@@ -3629,6 +3690,41 @@ components:
           items:
             type: string
           description: Configuration key prefixes present (e.g., "auth", "database"). Null if not requested.
+    NotifyConfigChangeRequest:
+      description: Request to notify all running containers that configuration or secrets have changed. External systems
+        call this after applying changes.
+      type: object
+      additionalProperties: false
+      required:
+      - changedKeys
+      properties:
+        changedKeys:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: Configuration keys that changed (not values, for security). Key prefixes indicate scope (e.g., 
+            auth.jwt_secret, database.connection_string, mesh.timeout). Plugins match on prefixes to decide if they need
+            a restart.
+        reason:
+          type: string
+          nullable: true
+          description: Human-readable reason for the change (for audit logging)
+    NotifyConfigChangeResponse:
+      description: Acknowledgment that the configuration change notification was published
+      type: object
+      additionalProperties: false
+      required:
+      - configVersion
+      - notifiedAt
+      properties:
+        configVersion:
+          type: integer
+          description: Current configuration version at time of notification
+        notifiedAt:
+          type: string
+          format: date-time
+          description: When the notification event was published
     AcquireProcessorRequest:
       description: Request to acquire a processor instance from a processing pool
       type: object

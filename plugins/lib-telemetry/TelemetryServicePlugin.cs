@@ -210,7 +210,7 @@ public class TelemetryServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Initialize the telemetry service.
     /// </summary>
-    protected override Task<bool> OnInitializeAsync()
+    protected override async Task<bool> OnInitializeAsync()
     {
         Logger?.LogInformation("Initializing Telemetry service");
 
@@ -219,7 +219,7 @@ public class TelemetryServicePlugin : BaseBannouPlugin
             if (_serviceProvider == null)
             {
                 Logger?.LogError("ServiceProvider not available - ConfigureApplication must be called first");
-                return Task.FromResult(false);
+                return false;
             }
 
             // Verify ITelemetryProvider is registered correctly
@@ -235,12 +235,13 @@ public class TelemetryServicePlugin : BaseBannouPlugin
                 Logger?.LogWarning("ITelemetryProvider not available in DI container");
             }
 
-            return Task.FromResult(true);
+            await Task.CompletedTask;
+            return true;
         }
         catch (Exception ex)
         {
             Logger?.LogError(ex, "Failed to initialize Telemetry service");
-            return Task.FromResult(false);
+            return false;
         }
     }
 

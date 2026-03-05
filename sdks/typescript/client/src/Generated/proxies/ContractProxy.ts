@@ -169,6 +169,24 @@ export class ContractProxy {
   }
 
   /**
+   * Hard-delete a terminal contract instance
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async contractDeleteContractInstanceAsync(
+    request: Schemas['DeleteContractInstanceRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['DeleteContractInstanceResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['DeleteContractInstanceRequest'],
+      Schemas['DeleteContractInstanceResponse']
+    >('/contract/instance/delete', request, channel, timeout);
+  }
+
+  /**
    * Get current status and milestone progress
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).

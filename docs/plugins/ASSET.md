@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: AppFeatures
 > **State Stores**: asset-statestore (Redis), asset-processor-pool (Redis)
+> **Implementation Map**: [docs/maps/ASSET.md](../maps/ASSET.md)
 
 ---
 

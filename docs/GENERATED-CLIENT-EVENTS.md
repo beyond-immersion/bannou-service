@@ -912,7 +912,6 @@ Sent to all session participants when a player is kicked.
 
 | Property | Description |
 |----------|-------------|
-| `kickedBy` | Account ID of user who performed the kick |
 | `kickedPlayerId` | Account ID of player who was kicked |
 | `kickedPlayerName` | Display name for UI notification |
 | `reason` | Reason provided for the kick |

@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: AppFeatures
 > **State Store**: documentation-statestore (Redis)
+> **Implementation Map**: [docs/maps/DOCUMENTATION.md](../maps/DOCUMENTATION.md)
 
 ---
 
