@@ -947,6 +947,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task EnterScenarioAsync_TemplateNotFound_ReturnsNotFound()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         _mockGardenStore
             .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestGarden());
@@ -1017,6 +1022,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task EnterScenarioAsync_EmptyAllowedPhases_TreatedAsUnrestricted()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         _mockGardenStore
             .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestGarden());
@@ -1054,6 +1064,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task CompleteScenarioAsync_ValidRequest_AwardsGrowthAndPublishesEvent()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         var scenario = CreateTestScenario();
         var scenarioId = scenario.ScenarioInstanceId;
 
@@ -1141,6 +1156,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task CompleteScenarioAsync_NotFound_ReturnsNotFound()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
 
         var (status, _) = await service.CompleteScenarioAsync(
             new CompleteScenarioRequest
@@ -1161,6 +1181,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task AbandonScenarioAsync_ValidRequest_AwardsPartialGrowthAndPublishesEvent()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         var scenario = CreateTestScenario();
         var scenarioId = scenario.ScenarioInstanceId;
 
@@ -1216,6 +1241,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task ChainScenarioAsync_ValidChain_CompletesCurrentAndCreatesNew()
     {
         var service = CreateService();
+        await service.HandleSessionConnectedAsync(new SessionConnectedEvent
+        {
+            SessionId = _testSessionId,
+            AccountId = _testAccountId
+        });
         var currentScenario = CreateTestScenario();
         var currentScenarioId = currentScenario.ScenarioInstanceId;
 

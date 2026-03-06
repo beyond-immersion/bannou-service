@@ -796,6 +796,7 @@ public class SubscriptionServiceTests
         var request = new CancelSubscriptionRequest
         {
             SubscriptionId = subscriptionId,
+            AccountId = accountId,
             Reason = "User requested cancellation"
         };
 
@@ -850,6 +851,7 @@ public class SubscriptionServiceTests
         var request = new CancelSubscriptionRequest
         {
             SubscriptionId = subscriptionId,
+            AccountId = accountId,
             Reason = "Test cancellation"
         };
 
