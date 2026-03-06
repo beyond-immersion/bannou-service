@@ -840,7 +840,7 @@ public class InstrumentedCacheableStateStoreTests
     {
         // Arrange
         _innerStoreMock
-            .Setup(x => x.HashExistsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.HashExistsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         // Act

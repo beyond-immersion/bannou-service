@@ -109,16 +109,16 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
 
         // Default delete behavior
         _mockTemplateStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockDefinitionStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockBoardStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockBoardCache
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Default query behavior (empty results)
@@ -1930,7 +1930,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
 
         // Verify no delete was attempted
         _mockDefinitionStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

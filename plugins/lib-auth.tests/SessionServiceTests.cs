@@ -489,7 +489,7 @@ public class SessionServiceTests
             $"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(sessionKeys);
 
-        _mockSessionStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockSessionStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         _mockCacheableStringStore.Setup(s => s.DeleteAsync(
@@ -723,7 +723,7 @@ public class SessionServiceTests
         _mockSessionStore.Setup(s => s.GetAsync($"session:{sessionKey}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(sessionData);
 
-        _mockSessionStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockSessionStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         _mockCacheableStringStore.Setup(s => s.DeleteAsync(
@@ -786,7 +786,7 @@ public class SessionServiceTests
         _mockSessionStore.Setup(s => s.GetAsync($"session:{sessionKey}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(sessionData);
 
-        _mockSessionStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockSessionStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         _mockCacheableStringStore.Setup(s => s.DeleteAsync(

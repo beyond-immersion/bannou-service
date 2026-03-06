@@ -43,16 +43,16 @@ public class EntitySessionRegistryTests
             .Setup(s => s.AddToSetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockCacheStore
-            .Setup(s => s.RemoveFromSetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.RemoveFromSetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockCacheStore
-            .Setup(s => s.DeleteSetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteSetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockCacheStore
-            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1L);
         _mockCacheStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Configure state store factory
@@ -210,7 +210,7 @@ public class EntitySessionRegistryTests
         var sessionId = Guid.NewGuid().ToString();
 
         _mockCacheStore
-            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(0L);
 
         // Act
@@ -231,7 +231,7 @@ public class EntitySessionRegistryTests
         var sessionId = Guid.NewGuid().ToString();
 
         _mockCacheStore
-            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(2L);
 
         // Act
@@ -240,7 +240,7 @@ public class EntitySessionRegistryTests
         // Assert - forward set should NOT be deleted
         _mockCacheStore.Verify(s => s.DeleteSetAsync(
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -248,7 +248,7 @@ public class EntitySessionRegistryTests
     {
         // Arrange
         _mockCacheStore
-            .Setup(s => s.RemoveFromSetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.RemoveFromSetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Store error"));
 
         // Act & Assert - should not throw
@@ -266,7 +266,7 @@ public class EntitySessionRegistryTests
     {
         // Arrange
         _mockCacheStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act
@@ -287,7 +287,7 @@ public class EntitySessionRegistryTests
         var sessionId2 = Guid.NewGuid().ToString();
 
         _mockCacheStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { sessionId1, sessionId2 });
 
         // Both sessions have heartbeats (alive)
@@ -314,7 +314,7 @@ public class EntitySessionRegistryTests
         var staleSessionId = Guid.NewGuid().ToString();
 
         _mockCacheStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { liveSessionId, staleSessionId });
 
         // Live session has heartbeat, stale does not
@@ -345,7 +345,7 @@ public class EntitySessionRegistryTests
     {
         // Arrange
         _mockCacheStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Store error"));
 
         // Act
@@ -367,7 +367,7 @@ public class EntitySessionRegistryTests
         var sessionId = Guid.NewGuid().ToString();
 
         _mockCacheStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act
@@ -377,7 +377,7 @@ public class EntitySessionRegistryTests
         _mockCacheStore.Verify(s => s.RemoveFromSetAsync(
             It.Is<string>(k => k.Contains("entity-sessions:")),
             It.IsAny<string>(),
-            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -398,7 +398,7 @@ public class EntitySessionRegistryTests
 
         // Simulate non-empty forward sets so they're not deleted
         _mockCacheStore
-            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1L);
 
         // Act
@@ -436,7 +436,7 @@ public class EntitySessionRegistryTests
 
         // Forward set is now empty after removal
         _mockCacheStore
-            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(0L);
 
         // Act
@@ -480,7 +480,7 @@ public class EntitySessionRegistryTests
             });
 
         _mockCacheStore
-            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1L);
 
         // Act - should not throw
@@ -505,7 +505,7 @@ public class EntitySessionRegistryTests
         var sessionId = Guid.NewGuid().ToString();
 
         _mockCacheStore
-            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Store error"));
 
         // Act & Assert - should not throw

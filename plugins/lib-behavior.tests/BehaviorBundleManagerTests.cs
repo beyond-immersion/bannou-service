@@ -533,7 +533,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync(existingMetadata);
 
         _mockGoapMetadataStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act

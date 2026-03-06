@@ -62,7 +62,7 @@ public class InstrumentedStateStoreTests
     {
         // Arrange
         _innerStoreMock
-            .Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new TestEntity());
 
         // Act
@@ -100,7 +100,7 @@ public class InstrumentedStateStoreTests
         // Arrange
         var expectedException = new InvalidOperationException("Test error");
         _innerStoreMock
-            .Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(expectedException);
 
         // Act & Assert

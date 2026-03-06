@@ -184,7 +184,7 @@ public class TransitServiceTests
             It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
         _mockJourneyIndexStore.Setup(s => s.GetWithETagAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Guid>(), "etag-idx"));
         _mockJourneyIndexStore.Setup(s => s.TrySaveAsync(
             It.IsAny<string>(), It.IsAny<List<Guid>>(),
@@ -678,7 +678,7 @@ public class TransitServiceTests
 
         // Should NOT have deleted
         _mockModeStore.Verify(s => s.DeleteAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never());
     }
 
@@ -1572,12 +1572,12 @@ public class TransitServiceTests
 
         // Mock: no existing discovery
         _mockDiscoveryStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((TransitDiscoveryModel?)null);
 
         // Mock: discovery cache for update
         _mockDiscoveryCacheStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((HashSet<Guid>?)null);
 
         TransitDiscoveryModel? capturedDiscovery = null;
@@ -1643,7 +1643,7 @@ public class TransitServiceTests
             IsNew = false
         };
         _mockDiscoveryStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingDiscovery);
 
         // Act
@@ -1798,7 +1798,7 @@ public class TransitServiceTests
 
         // Discovery cache: entity has discovered everything (or connection is not discoverable)
         mockDiscoveryCacheStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<Guid> { connectionId });
 
         // Connection store for realm determination (QueryAsync for BuildFilteredGraphAsync)
@@ -1895,7 +1895,7 @@ public class TransitServiceTests
 
         // Discovery cache: not relevant (connections are not discoverable)
         mockDiscoveryCacheStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<Guid> { openConnectionId, closedConnectionId });
 
         // Connection store for realm determination
@@ -1991,7 +1991,7 @@ public class TransitServiceTests
 
         // Discovery cache: entity has only discovered one connection
         mockDiscoveryCacheStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<Guid> { discoveredConnectionId }); // Only first one discovered
 
         // Connection store for realm determination
@@ -2395,7 +2395,7 @@ public class TransitServiceTests
         var request = new GetConnectionRequest { ConnectionId = Guid.NewGuid() };
 
         _mockConnectionStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((TransitConnectionModel?)null);
 
         // Act
@@ -2608,7 +2608,7 @@ public class TransitServiceTests
         };
 
         _mockConnectionStore.Setup(s => s.GetWithETagAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(((TransitConnectionModel?)null, (string?)null));
 
         // Act
@@ -3545,12 +3545,12 @@ public class TransitServiceTests
             .ReturnsAsync(new List<TransitDiscoveryModel> { discovery1 });
 
         _mockDiscoveryStore.Setup(s => s.DeleteAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Step 2: Discovery cache delete
         _mockDiscoveryCacheStore.Setup(s => s.DeleteAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Step 3: Active archived journey to abandon
@@ -3586,11 +3586,11 @@ public class TransitServiceTests
 
         // Verify discovery was deleted
         _mockDiscoveryStore.Verify(s => s.DeleteAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Once());
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once());
 
         // Verify cache was invalidated
         _mockDiscoveryCacheStore.Verify(s => s.DeleteAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Once());
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once());
 
         // Verify journey was abandoned via event
         var abandonedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.journey.abandoned");
@@ -3615,7 +3615,7 @@ public class TransitServiceTests
             .ReturnsAsync(new List<TransitDiscoveryModel>());
 
         _mockDiscoveryCacheStore.Setup(s => s.DeleteAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // No archived journeys

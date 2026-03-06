@@ -1325,7 +1325,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         var perspectiveB = CreateTestPerspective(perspectiveIdB, encounterId, charB);
 
         _mockEncounterStore.Setup(s => s.GetAsync($"enc-{encounterId}", It.IsAny<CancellationToken>())).ReturnsAsync(encounter);
-        _mockEncounterStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockEncounterStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _mockCharIndexStore.Setup(s => s.GetAsync($"char-idx-{charA}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterIndexData { CharacterId = charA, PerspectiveIds = new List<Guid> { perspectiveIdA } });
@@ -1335,7 +1335,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         _mockPerspectiveStore.Setup(s => s.GetAsync($"pers-{perspectiveIdA}", It.IsAny<CancellationToken>())).ReturnsAsync(perspectiveA);
         _mockPerspectiveStore.Setup(s => s.GetAsync($"pers-{perspectiveIdB}", It.IsAny<CancellationToken>())).ReturnsAsync(perspectiveB);
-        _mockPerspectiveStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockPerspectiveStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _mockPairIndexStore.Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("pair-idx-")), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PairIndexData { EncounterIds = new List<Guid> { encounterId } });
@@ -1392,14 +1392,14 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         var encounter = CreateTestEncounter(encounterId, new List<Guid> { characterId, otherCharId });
 
         _mockCharIndexStore.Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>())).ReturnsAsync(charIndex);
-        _mockCharIndexStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockCharIndexStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
         _mockCharIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CharacterIndexData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag-1");
 
         _mockPerspectiveStore.Setup(s => s.GetAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>())).ReturnsAsync(perspective);
-        _mockPerspectiveStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockPerspectiveStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _mockEncounterStore.Setup(s => s.GetAsync($"enc-{encounterId}", It.IsAny<CancellationToken>())).ReturnsAsync(encounter);
-        _mockEncounterStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockEncounterStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _mockPairIndexStore.Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("pair-idx-")), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PairIndexData { EncounterIds = new List<Guid> { encounterId } });
@@ -1861,7 +1861,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         var perspectiveB = CreateTestPerspective(perspectiveIdB, encounterId, charB);
 
         _mockEncounterStore.Setup(s => s.GetAsync($"enc-{encounterId}", It.IsAny<CancellationToken>())).ReturnsAsync(encounter);
-        _mockEncounterStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockEncounterStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _mockCharIndexStore.Setup(s => s.GetAsync($"char-idx-{charA}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterIndexData { CharacterId = charA, PerspectiveIds = new List<Guid> { perspectiveIdA } });
@@ -1871,7 +1871,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         _mockPerspectiveStore.Setup(s => s.GetAsync($"pers-{perspectiveIdA}", It.IsAny<CancellationToken>())).ReturnsAsync(perspectiveA);
         _mockPerspectiveStore.Setup(s => s.GetAsync($"pers-{perspectiveIdB}", It.IsAny<CancellationToken>())).ReturnsAsync(perspectiveB);
-        _mockPerspectiveStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockPerspectiveStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _mockPairIndexStore.Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("pair-idx-")), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PairIndexData { EncounterIds = new List<Guid> { encounterId } });

@@ -108,10 +108,10 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
 
         // Default action is Delete: verify room deleted
         MockRoomStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
         MockRoomCache.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         // Verify delete event
@@ -176,7 +176,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
                 It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Never);
         MockRoomStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -506,10 +506,10 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
 
         // Verify room deleted
         MockRoomStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
         MockRoomCache.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -536,7 +536,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
 
         // Nothing deleted or archived
         MockRoomStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
         MockResourceClient.Verify(
             r => r.ExecuteCompressAsync(It.IsAny<ExecuteCompressRequest>(), It.IsAny<CancellationToken>()),
@@ -627,7 +627,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
 
         // Verify room deleted
         MockRoomStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -775,7 +775,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
                 It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Never);
         MockRoomStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -816,7 +816,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
 
         // Verify only 1 delete call
         MockRoomStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

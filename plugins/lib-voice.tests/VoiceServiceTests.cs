@@ -2265,7 +2265,7 @@ public class ParticipantEvictionWorkerTests
         await worker.ProcessEvictionCycleAsync(CancellationToken.None);
 
         // Assert - room was NOT deleted (within grace period)
-        _mockRoomStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockRoomStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
 
         // Assert - no room deleted event was published
         _mockMessageBus.Verify(m => m.TryPublishAsync(

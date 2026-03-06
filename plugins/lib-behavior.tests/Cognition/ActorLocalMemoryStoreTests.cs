@@ -449,7 +449,7 @@ public class ActorLocalMemoryStoreTests
         var deletedKey = "";
         List<string>? savedIndex = null;
 
-        _mockMemoryStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockMemoryStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Callback<string, CancellationToken>((key, _) => deletedKey = key)
             .ReturnsAsync(true);
 
@@ -478,7 +478,7 @@ public class ActorLocalMemoryStoreTests
         var entityId = "entity-1";
         var memoryId = "non-existent";
 
-        _mockMemoryStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockMemoryStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         _mockIndexStore.Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -502,11 +502,11 @@ public class ActorLocalMemoryStoreTests
         _mockIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { "mem-1", "mem-2" });
 
-        _mockMemoryStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockMemoryStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Callback<string, CancellationToken>((key, _) => deletedKeys.Add(key))
             .ReturnsAsync(true);
 
-        _mockIndexStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Callback<string, CancellationToken>((_, _) => indexDeleted = true)
             .ReturnsAsync(true);
 
@@ -525,7 +525,7 @@ public class ActorLocalMemoryStoreTests
         _mockIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
-        _mockIndexStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockIndexStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Callback<string, CancellationToken>((_, _) => indexDeleted = true)
             .ReturnsAsync(true);
 
@@ -533,7 +533,7 @@ public class ActorLocalMemoryStoreTests
 
         Assert.True(indexDeleted);
         _mockMemoryStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

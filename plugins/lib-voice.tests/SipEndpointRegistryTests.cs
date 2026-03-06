@@ -114,7 +114,7 @@ public class SipEndpointRegistryTests
         var endpoint = CreateTestEndpoint();
 
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         _mockStateStore.Setup(s => s.SaveAsync(
@@ -195,7 +195,7 @@ public class SipEndpointRegistryTests
         var endpoint = CreateTestEndpoint();
 
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         _mockStateStore.Setup(s => s.SaveAsync(
@@ -241,7 +241,7 @@ public class SipEndpointRegistryTests
 
         // State store returns null (room doesn't exist in state)
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         // Act
@@ -261,7 +261,7 @@ public class SipEndpointRegistryTests
         var otherSessionId = Guid.NewGuid();
 
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         _mockStateStore.Setup(s => s.SaveAsync(
@@ -293,7 +293,7 @@ public class SipEndpointRegistryTests
         var session2 = Guid.NewGuid();
 
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         _mockStateStore.Setup(s => s.SaveAsync(
@@ -322,7 +322,7 @@ public class SipEndpointRegistryTests
         var roomId = Guid.NewGuid();
 
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         // Act
@@ -378,7 +378,7 @@ public class SipEndpointRegistryTests
         var sessionId = Guid.NewGuid();
 
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         _mockStateStore.Setup(s => s.SaveAsync(
@@ -412,7 +412,7 @@ public class SipEndpointRegistryTests
         var roomId = Guid.NewGuid();
 
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         // Act
@@ -432,7 +432,7 @@ public class SipEndpointRegistryTests
 
         // Empty state store
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         // Act
@@ -455,7 +455,7 @@ public class SipEndpointRegistryTests
         var sessionId = Guid.NewGuid();
 
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         _mockStateStore.Setup(s => s.SaveAsync(
@@ -488,7 +488,7 @@ public class SipEndpointRegistryTests
         var roomId = Guid.NewGuid();
 
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         // Act
@@ -511,7 +511,7 @@ public class SipEndpointRegistryTests
         var sessionId = Guid.NewGuid();
 
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         _mockStateStore.Setup(s => s.SaveAsync(
@@ -539,7 +539,7 @@ public class SipEndpointRegistryTests
         var roomId = Guid.NewGuid();
 
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         // Act
@@ -561,7 +561,7 @@ public class SipEndpointRegistryTests
         var roomId = Guid.NewGuid();
 
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         _mockStateStore.Setup(s => s.SaveAsync(
@@ -589,7 +589,7 @@ public class SipEndpointRegistryTests
         var roomId = Guid.NewGuid();
 
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         // Act
@@ -613,7 +613,7 @@ public class SipEndpointRegistryTests
         var session2 = Guid.NewGuid();
 
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         _mockStateStore.Setup(s => s.SaveAsync(
@@ -675,7 +675,7 @@ public class SipEndpointRegistryTests
         var room2 = Guid.NewGuid();
 
         _mockStateStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         _mockStateStore.Setup(s => s.SaveAsync(

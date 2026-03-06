@@ -50,9 +50,9 @@ public class BannouSessionManagerTests
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        _mockConnectionStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
-        _mockHeartbeatStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
-        _mockStringStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockConnectionStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockHeartbeatStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockStringStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         // Configure state store factory to return appropriate stores
         _mockStateStoreFactory
@@ -334,7 +334,7 @@ public class BannouSessionManagerTests
         var reconnectionToken = "token";
 
         _mockStringStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Delete failed"));
 
         // Act & Assert - should not throw
@@ -549,7 +549,7 @@ public class BannouSessionManagerTests
         var sessionId = Guid.NewGuid().ToString();
 
         _mockConnectionStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Delete failed"));
 
         // Act & Assert - should not throw

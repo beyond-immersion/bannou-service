@@ -1230,7 +1230,7 @@ public class MeshStateManagerTests
 
         // Health check calls ExistsAsync on global index
         mockGlobalIndexStore
-            .Setup(x => x.ExistsAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.ExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
@@ -1261,7 +1261,7 @@ public class MeshStateManagerTests
             .ReturnsAsync(mockGlobalIndexStore.Object);
 
         mockGlobalIndexStore
-            .Setup(x => x.ExistsAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.ExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
@@ -1312,7 +1312,7 @@ public class MeshStateManagerTests
             .ReturnsAsync(mockGlobalIndexStore.Object);
 
         mockGlobalIndexStore
-            .Setup(x => x.ExistsAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.ExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
@@ -1348,7 +1348,7 @@ public class MeshStateManagerTests
         // First call succeeds (initialization), second call throws (health check after init)
         var callCount = 0;
         mockGlobalIndexStore
-            .Setup(x => x.ExistsAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.ExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(() =>
             {
                 callCount++;
@@ -1519,7 +1519,7 @@ public class MeshStateManagerTests
         SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
 
         mockEndpointStore
-            .Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Redis delete failed"));
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
@@ -1976,7 +1976,7 @@ public class MeshStateManagerTests
             .ReturnsAsync(mockGlobalIndexStore.Object);
 
         mockGlobalIndexStore
-            .Setup(x => x.ExistsAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.ExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Default return for SaveAsync (returns etag string)

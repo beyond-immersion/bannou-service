@@ -2100,7 +2100,7 @@ public class AuthServiceTests
         Assert.Equal(StatusCodes.NotFound, status);
 
         // Verify no session store operations occurred
-        _mockSessionStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockSessionStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

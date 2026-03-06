@@ -1072,8 +1072,8 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         _mockCharacterClient.Setup(c => c.ListCharactersAsync(It.IsAny<ListCharactersRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterListResponse { Characters = new List<CharacterResponse>(), TotalCount = 0 });
         _mockListStore.Setup(s => s.GetAsync("all-species", It.IsAny<CancellationToken>())).ReturnsAsync(new List<Guid> { sourceId });
-        _mockSpeciesStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
-        _mockStringStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockSpeciesStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockStringStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         // Act
         var (status, response) = await service.MergeSpeciesAsync(
@@ -1437,8 +1437,8 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         model.IsDeprecated = true;
 
         _mockSpeciesStore.Setup(s => s.GetAsync($"species:{speciesId}", It.IsAny<CancellationToken>())).ReturnsAsync(model);
-        _mockSpeciesStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
-        _mockStringStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockSpeciesStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockStringStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
         _mockListStore.Setup(s => s.GetAsync("all-species", It.IsAny<CancellationToken>())).ReturnsAsync(new List<Guid> { speciesId });
 
         // Act
@@ -1932,10 +1932,10 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .ReturnsAsync(new Resource.ExecuteCleanupResponse { Success = true });
 
         _mockSpeciesStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockStringStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockListStore
             .Setup(s => s.GetAsync("all-species", It.IsAny<CancellationToken>()))
@@ -1978,7 +1978,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         // Assert - cleanup failed (RESTRICT), deletion blocked
         Assert.Equal(StatusCodes.Conflict, status);
         _mockSpeciesStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -2005,7 +2005,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         // Assert - fail closed: resource service unavailable blocks deletion
         Assert.Equal(StatusCodes.ServiceUnavailable, status);
         _mockSpeciesStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -2027,10 +2027,10 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
 
         _mockSpeciesStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockStringStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockListStore
             .Setup(s => s.GetAsync("all-species", It.IsAny<CancellationToken>()))
@@ -2059,12 +2059,12 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .ReturnsAsync(model);
 
         _mockSpeciesStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         string? deletedCodeIndexKey = null;
         _mockStringStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Callback<string, CancellationToken>((k, _) => deletedCodeIndexKey = k)
             .ReturnsAsync(true);
 
@@ -2107,10 +2107,10 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .Setup(s => s.GetAsync($"species:{speciesId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
         _mockSpeciesStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockStringStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockListStore
             .Setup(s => s.GetAsync("all-species", It.IsAny<CancellationToken>()))

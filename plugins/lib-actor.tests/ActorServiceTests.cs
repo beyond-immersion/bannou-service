@@ -1119,7 +1119,7 @@ public class ActorServiceTests
         IActorRunner? runner = null;
         _mockActorRegistry.Setup(r => r.TryGet("nonexistent-actor", out runner)).Returns(false);
 
-        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ActorAssignment?)null);
 
         // Act
@@ -1223,7 +1223,7 @@ public class ActorServiceTests
         IActorRunner? runner = null;
         _mockActorRegistry.Setup(r => r.TryGet("nonexistent-actor", out runner)).Returns(false);
 
-        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ActorAssignment?)null);
 
         // Act
@@ -1295,7 +1295,7 @@ public class ActorServiceTests
         IActorRunner? runner = null;
         _mockActorRegistry.Setup(r => r.TryGet("nonexistent-actor", out runner)).Returns(false);
 
-        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ActorAssignment?)null);
 
         // Act
@@ -1402,7 +1402,7 @@ public class ActorServiceTests
         IActorRunner? runner = null;
         _mockActorRegistry.Setup(r => r.TryGet("nonexistent-actor", out runner)).Returns(false);
 
-        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ActorAssignment?)null);
 
         // Act

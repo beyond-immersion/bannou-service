@@ -121,16 +121,16 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         // Default delete behavior
         _mockTemplateStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockCollectionStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockCollectionCache
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _mockAreaContentStore
-            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Default query behavior (empty results)
@@ -2121,12 +2121,12 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         // Assert - both collection instances deleted (by ID and by owner key = 4 deletes)
         _mockCollectionStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Exactly(4));
 
         // Assert - both cache entries deleted
         _mockCollectionCache.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Exactly(2));
     }
 
@@ -2159,7 +2159,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         // Assert - collection instance deleted
         _mockCollectionStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Exactly(2));
     }
 
@@ -2189,7 +2189,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             c => c.DeleteContainerAsync(It.IsAny<DeleteContainerRequest>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _mockCollectionStore.Verify(
-            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

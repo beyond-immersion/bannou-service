@@ -1114,7 +1114,7 @@ public class MappingServiceTests
         Assert.True(response.Deleted);
 
         // Verify delete was called
-        _mockDefinitionStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockDefinitionStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

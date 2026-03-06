@@ -293,7 +293,7 @@ public class ScaledTierCoordinatorTests
         await coordinator.ReleaseRtpServerAsync(roomId, CancellationToken.None);
 
         // Assert
-        _mockRtpEngineClient.Verify(r => r.DeleteAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockRtpEngineClient.Verify(r => r.DeleteAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

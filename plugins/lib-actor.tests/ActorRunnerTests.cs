@@ -90,7 +90,7 @@ public class ActorRunnerTests
 
         // Mock the behavior document loader directly
         var behaviorLoaderMock = new Mock<IBehaviorDocumentLoader>();
-        behaviorLoaderMock.Setup(l => l.GetDocumentAsync(It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        behaviorLoaderMock.Setup(l => l.GetDocumentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(document);
 
         // Empty provider factories list - tests don't need actual providers
