@@ -38,7 +38,6 @@ paths:
       - ABML
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -221,7 +220,6 @@ paths:
       - Validation
       x-permissions:
       - role: developer
-        states: {}
       requestBody:
         required: true
         content:
@@ -292,9 +290,7 @@ paths:
       operationId: GetCachedBehavior
       tags:
       - Cache
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -394,9 +390,7 @@ paths:
       operationId: InvalidateCachedBehavior
       tags:
       - Cache
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -429,9 +423,7 @@ paths:
       operationId: GenerateGoapPlan
       tags:
       - GOAP
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -536,9 +528,7 @@ paths:
       operationId: ValidateGoapPlan
       tags:
       - GOAP
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

@@ -286,8 +286,9 @@ paths:
       tags:
       - Game Sessions
       x-permissions:
-      - role: developer
-        states: {}
+      - role: user
+        states:
+          game-session: in_game
       requestBody:
         required: true
         content:
@@ -462,8 +463,9 @@ paths:
       tags:
       - Game Sessions
       x-permissions:
-      - role: developer
-        states: {}
+      - role: user
+        states:
+          game-session: in_game
       requestBody:
         required: true
         content:
@@ -718,8 +720,9 @@ paths:
       tags:
       - Game Sessions
       x-permissions:
-      - role: developer
-        states: {}
+      - role: user
+        states:
+          game-session: in_game
       requestBody:
         required: true
         content:

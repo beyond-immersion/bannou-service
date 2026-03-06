@@ -47,21 +47,6 @@ public static class PermissionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/permission/update-session-state",
-            Method = ServiceEndpointMethod.Post,
-            Description = "updateSessionState",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/permission/services/list",
             Method = ServiceEndpointMethod.Post,
             Description = "getRegisteredServices",

@@ -47,141 +47,6 @@ public static class LocationPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/location/get",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getLocation",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/location/get-by-code",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getLocationByCode",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/location/list",
-            Method = ServiceEndpointMethod.Post,
-            Description = "listLocations",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/location/list-by-realm",
-            Method = ServiceEndpointMethod.Post,
-            Description = "listLocationsByRealm",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/location/list-by-parent",
-            Method = ServiceEndpointMethod.Post,
-            Description = "listLocationsByParent",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/location/list-root",
-            Method = ServiceEndpointMethod.Post,
-            Description = "listRootLocations",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/location/get-ancestors",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getLocationAncestors",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/location/validate-territory",
-            Method = ServiceEndpointMethod.Post,
-            Description = "validateTerritory",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/location/get-descendants",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getLocationDescendants",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/location/create",
             Method = ServiceEndpointMethod.Post,
             Description = "createLocation",
@@ -189,7 +54,7 @@ public static class LocationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -204,7 +69,7 @@ public static class LocationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -219,7 +84,7 @@ public static class LocationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -234,7 +99,7 @@ public static class LocationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -249,7 +114,7 @@ public static class LocationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -264,7 +129,7 @@ public static class LocationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -279,7 +144,7 @@ public static class LocationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -294,37 +159,7 @@ public static class LocationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/location/exists",
-            Method = ServiceEndpointMethod.Post,
-            Description = "locationExists",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/location/query/by-position",
-            Method = ServiceEndpointMethod.Post,
-            Description = "queryLocationsByPosition",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -335,81 +170,6 @@ public static class LocationPermissionRegistration
             Path = "/location/seed",
             Method = ServiceEndpointMethod.Post,
             Description = "seedLocations",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/location/report-entity-position",
-            Method = ServiceEndpointMethod.Post,
-            Description = "reportEntityPosition",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/location/get-entity-location",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getEntityLocation",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/location/list-entities-at-location",
-            Method = ServiceEndpointMethod.Post,
-            Description = "listEntitiesAtLocation",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/location/clear-entity-position",
-            Method = ServiceEndpointMethod.Post,
-            Description = "clearEntityPosition",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/location/get-compress-data",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getLocationCompressData",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement

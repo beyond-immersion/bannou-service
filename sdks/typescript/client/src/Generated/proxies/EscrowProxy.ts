@@ -25,26 +25,6 @@ export class EscrowProxy {
   }
 
   /**
-   * Create a new escrow agreement
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async escrowCreateEscrowAsync(
-    request: Schemas['CreateEscrowRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['CreateEscrowResponse']>> {
-    return this.client.invokeAsync<Schemas['CreateEscrowRequest'], Schemas['CreateEscrowResponse']>(
-      '/escrow/create',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
    * Get escrow details
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -179,66 +159,6 @@ export class EscrowProxy {
   }
 
   /**
-   * Trigger release
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async escrowReleaseAsync(
-    request: Schemas['ReleaseRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['ReleaseResponse']>> {
-    return this.client.invokeAsync<Schemas['ReleaseRequest'], Schemas['ReleaseResponse']>(
-      '/escrow/release',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Trigger refund
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async escrowRefundAsync(
-    request: Schemas['RefundRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['RefundResponse']>> {
-    return this.client.invokeAsync<Schemas['RefundRequest'], Schemas['RefundResponse']>(
-      '/escrow/refund',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Cancel escrow before fully funded
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async escrowCancelAsync(
-    request: Schemas['CancelRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['CancelResponse']>> {
-    return this.client.invokeAsync<Schemas['CancelRequest'], Schemas['CancelResponse']>(
-      '/escrow/cancel',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
    * Raise a dispute on funded escrow
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -292,44 +212,6 @@ export class EscrowProxy {
       Schemas['ConfirmRefundRequest'],
       Schemas['ConfirmRefundResponse']
     >('/escrow/confirm-refund', request, channel, timeout);
-  }
-
-  /**
-   * Arbiter resolves disputed escrow
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async escrowResolveAsync(
-    request: Schemas['ResolveRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['ResolveResponse']>> {
-    return this.client.invokeAsync<Schemas['ResolveRequest'], Schemas['ResolveResponse']>(
-      '/escrow/resolve',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Verify condition for conditional escrow
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async escrowVerifyConditionAsync(
-    request: Schemas['VerifyConditionRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['VerifyConditionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['VerifyConditionRequest'],
-      Schemas['VerifyConditionResponse']
-    >('/escrow/verify-condition', request, channel, timeout);
   }
 
   /**

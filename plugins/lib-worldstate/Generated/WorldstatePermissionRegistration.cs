@@ -47,81 +47,6 @@ public static class WorldstatePermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/worldstate/clock/get-realm-time",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getRealmTime",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/worldstate/clock/get-realm-time-by-code",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getRealmTimeByCode",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/worldstate/clock/batch-get-realm-times",
-            Method = ServiceEndpointMethod.Post,
-            Description = "batchGetRealmTimes",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/worldstate/clock/get-elapsed-game-time",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getElapsedGameTime",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/worldstate/clock/trigger-sync",
-            Method = ServiceEndpointMethod.Post,
-            Description = "triggerTimeSync",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/worldstate/clock/initialize",
             Method = ServiceEndpointMethod.Post,
             Description = "initializeRealmClock",
@@ -182,36 +107,6 @@ public static class WorldstatePermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/worldstate/calendar/get",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getCalendar",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/worldstate/calendar/list",
-            Method = ServiceEndpointMethod.Post,
-            Description = "listCalendars",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/worldstate/calendar/update",
             Method = ServiceEndpointMethod.Post,
             Description = "updateCalendar",
@@ -242,39 +137,9 @@ public static class WorldstatePermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/worldstate/realm-config/get",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getRealmConfig",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/worldstate/realm-config/update",
             Method = ServiceEndpointMethod.Post,
             Description = "updateRealmConfig",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/worldstate/realm-config/list",
-            Method = ServiceEndpointMethod.Post,
-            Description = "listRealmClocks",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement

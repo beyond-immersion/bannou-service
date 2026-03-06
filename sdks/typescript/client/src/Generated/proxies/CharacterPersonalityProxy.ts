@@ -25,130 +25,38 @@ export class CharacterPersonalityProxy {
   }
 
   /**
-   * Get personality for a character
+   * Create or update personality for a character
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async characterPersonalityGetPersonalityAsync(
-    request: Schemas['GetPersonalityRequest'],
+  async characterPersonalitySetPersonalityAsync(
+    request: Schemas['SetPersonalityRequest'],
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['PersonalityResponse']>> {
     return this.client.invokeAsync<
-      Schemas['GetPersonalityRequest'],
+      Schemas['SetPersonalityRequest'],
       Schemas['PersonalityResponse']
-    >('/character-personality/get', request, channel, timeout);
+    >('/character-personality/set', request, channel, timeout);
   }
 
   /**
-   * Record an experience that may evolve personality
+   * Create or update combat preferences for a character
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async characterPersonalityRecordExperienceAsync(
-    request: Schemas['RecordExperienceRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['ExperienceResult']>> {
-    return this.client.invokeAsync<Schemas['RecordExperienceRequest'], Schemas['ExperienceResult']>(
-      '/character-personality/evolve',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Get personalities for multiple characters
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async characterPersonalityBatchGetPersonalitiesAsync(
-    request: Schemas['BatchGetPersonalitiesRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['BatchPersonalityResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['BatchGetPersonalitiesRequest'],
-      Schemas['BatchPersonalityResponse']
-    >('/character-personality/batch-get', request, channel, timeout);
-  }
-
-  /**
-   * Get combat preferences for a character
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async characterPersonalityGetCombatPreferencesAsync(
-    request: Schemas['GetCombatPreferencesRequest'],
+  async characterPersonalitySetCombatPreferencesAsync(
+    request: Schemas['SetCombatPreferencesRequest'],
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CombatPreferencesResponse']>> {
     return this.client.invokeAsync<
-      Schemas['GetCombatPreferencesRequest'],
+      Schemas['SetCombatPreferencesRequest'],
       Schemas['CombatPreferencesResponse']
-    >('/character-personality/get-combat', request, channel, timeout);
-  }
-
-  /**
-   * Record combat experience that may evolve preferences
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async characterPersonalityEvolveCombatPreferencesAsync(
-    request: Schemas['EvolveCombatRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['CombatEvolutionResult']>> {
-    return this.client.invokeAsync<
-      Schemas['EvolveCombatRequest'],
-      Schemas['CombatEvolutionResult']
-    >('/character-personality/evolve-combat', request, channel, timeout);
-  }
-
-  /**
-   * Get personality data for compression
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async characterPersonalityGetCompressDataAsync(
-    request: Schemas['GetCompressDataRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['CharacterPersonalityArchive']>> {
-    return this.client.invokeAsync<
-      Schemas['GetCompressDataRequest'],
-      Schemas['CharacterPersonalityArchive']
-    >('/character-personality/get-compress-data', request, channel, timeout);
-  }
-
-  /**
-   * Cleanup all personality data for a deleted character
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async characterPersonalityCleanupByCharacterAsync(
-    request: Schemas['CleanupByCharacterRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['CleanupByCharacterResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CleanupByCharacterRequest'],
-      Schemas['CleanupByCharacterResponse']
-    >('/character-personality/cleanup-by-character', request, channel, timeout);
+    >('/character-personality/set-combat', request, channel, timeout);
   }
 }

@@ -27,9 +27,7 @@ paths:
       operationId: getAccountSubscriptions
       tags:
       - Subscription Management
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -187,9 +185,7 @@ paths:
       operationId: getSubscription
       tags:
       - Subscription Management
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -252,9 +248,7 @@ paths:
       operationId: createSubscription
       tags:
       - Subscription Management
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -331,9 +325,7 @@ paths:
       operationId: updateSubscription
       tags:
       - Subscription Management
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -404,7 +396,6 @@ paths:
       - Subscription Management
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -475,9 +466,7 @@ paths:
       operationId: renewSubscription
       tags:
       - Subscription Management
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

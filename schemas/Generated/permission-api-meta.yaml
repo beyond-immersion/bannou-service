@@ -162,9 +162,7 @@ paths:
       operationId: updateSessionState
       tags:
       - Session Management
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -360,7 +358,6 @@ paths:
       - Service Management
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:

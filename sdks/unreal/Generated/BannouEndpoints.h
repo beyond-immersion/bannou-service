@@ -23,15 +23,6 @@ namespace Bannou
         /** Update account profile */
         constexpr const TCHAR* AccountUpdateProfile = TEXT("POST:/account/profile/update");
 
-        /** Update account password hash */
-        constexpr const TCHAR* AccountUpdatePasswordHash = TEXT("POST:/account/password/update");
-
-        /** Update MFA settings for an account */
-        constexpr const TCHAR* AccountUpdateMfa = TEXT("POST:/account/mfa/update");
-
-        /** Update email verification status */
-        constexpr const TCHAR* AccountUpdateVerificationStatus = TEXT("POST:/account/verification/update");
-
         // Achievement Service
         /** Create a new achievement definition */
         constexpr const TCHAR* AchievementCreateAchievementDefinition = TEXT("POST:/achievement/definition/create");
@@ -60,30 +51,6 @@ namespace Bannou
 
         /** Delete an actor template */
         constexpr const TCHAR* ActorDeleteActorTemplate = TEXT("POST:/actor/template/delete");
-
-        /** Spawn a new actor from a template */
-        constexpr const TCHAR* ActorSpawnActor = TEXT("POST:/actor/spawn");
-
-        /** Stop a running actor */
-        constexpr const TCHAR* ActorStopActor = TEXT("POST:/actor/stop");
-
-        /** Bind an unbound actor to a character */
-        constexpr const TCHAR* ActorBindActorCharacter = TEXT("POST:/actor/bind-character");
-
-        /** Cleanup actors referencing a deleted character */
-        constexpr const TCHAR* ActorCleanupByCharacter = TEXT("POST:/actor/cleanup-by-character");
-
-        /** Inject a perception event into an actor's queue (testing) */
-        constexpr const TCHAR* ActorInjectPerception = TEXT("POST:/actor/inject-perception");
-
-        /** Start an encounter managed by an Event Brain actor */
-        constexpr const TCHAR* ActorStartEncounter = TEXT("POST:/actor/encounter/start");
-
-        /** Update the phase of an active encounter */
-        constexpr const TCHAR* ActorUpdateEncounterPhase = TEXT("POST:/actor/encounter/update-phase");
-
-        /** End an active encounter */
-        constexpr const TCHAR* ActorEndEncounter = TEXT("POST:/actor/encounter/end");
 
         // Assets Service
         /** Request upload URL for a new asset */
@@ -196,13 +163,6 @@ namespace Bannou
         /** List version history for a bundle */
         constexpr const TCHAR* AssetListBundleVersions = TEXT("POST:/bundles/list-versions");
 
-        // Cache Service
-        /** Get cached compiled behavior */
-        constexpr const TCHAR* BehaviorGetCachedBehavior = TEXT("POST:/cache/get");
-
-        /** Invalidate cached behavior */
-        constexpr const TCHAR* BehaviorInvalidateCachedBehavior = TEXT("POST:/cache/invalidate");
-
         // Character Service
         /** Get character by ID */
         constexpr const TCHAR* CharacterGetCharacter = TEXT("POST:/character/get");
@@ -219,83 +179,22 @@ namespace Bannou
         /** Get all characters in a realm (primary query pattern) */
         constexpr const TCHAR* CharacterGetCharactersByRealm = TEXT("POST:/character/by-realm");
 
-        /** Get character base data for compression */
-        constexpr const TCHAR* CharacterGetCompressData = TEXT("POST:/character/get-compress-data");
-
         // CharacterEncounter Service
-        /** Get encounter type by code */
-        constexpr const TCHAR* CharacterEncounterGetEncounterType = TEXT("POST:/character-encounter/type/get");
+        /** Create new encounter type */
+        constexpr const TCHAR* CharacterEncounterCreateEncounterType = TEXT("POST:/character-encounter/type/create");
 
-        /** List all encounter types */
-        constexpr const TCHAR* CharacterEncounterListEncounterTypes = TEXT("POST:/character-encounter/type/list");
+        /** Update encounter type */
+        constexpr const TCHAR* CharacterEncounterUpdateEncounterType = TEXT("POST:/character-encounter/type/update");
 
-        /** Record new encounter with perspectives */
-        constexpr const TCHAR* CharacterEncounterRecordEncounter = TEXT("POST:/character-encounter/record");
-
-        /** Get character's encounters (paginated) */
-        constexpr const TCHAR* CharacterEncounterQueryByCharacter = TEXT("POST:/character-encounter/query/by-character");
-
-        /** Get encounters between two characters */
-        constexpr const TCHAR* CharacterEncounterQueryBetween = TEXT("POST:/character-encounter/query/between");
-
-        /** Recent encounters at location */
-        constexpr const TCHAR* CharacterEncounterQueryByLocation = TEXT("POST:/character-encounter/query/by-location");
-
-        /** Quick check if two characters have met */
-        constexpr const TCHAR* CharacterEncounterHasMet = TEXT("POST:/character-encounter/has-met");
-
-        /** Aggregate sentiment toward another character */
-        constexpr const TCHAR* CharacterEncounterGetSentiment = TEXT("POST:/character-encounter/get-sentiment");
-
-        /** Bulk sentiment for multiple targets */
-        constexpr const TCHAR* CharacterEncounterBatchGetSentiment = TEXT("POST:/character-encounter/batch-get");
-
-        /** Get character's view of encounter */
-        constexpr const TCHAR* CharacterEncounterGetPerspective = TEXT("POST:/character-encounter/get-perspective");
-
-        /** Update perspective (reflection) */
-        constexpr const TCHAR* CharacterEncounterUpdatePerspective = TEXT("POST:/character-encounter/update-perspective");
-
-        /** Strengthen memory (referenced) */
-        constexpr const TCHAR* CharacterEncounterRefreshMemory = TEXT("POST:/character-encounter/refresh-memory");
-
-        /** Get encounter data for compression */
-        constexpr const TCHAR* CharacterEncounterGetCompressData = TEXT("POST:/character-encounter/get-compress-data");
-
-        // CharacterHistory Service
-        /** Get all historical events a character participated in */
-        constexpr const TCHAR* CharacterHistoryGetParticipation = TEXT("POST:/character-history/get-participation");
-
-        /** Get all characters who participated in a historical event */
-        constexpr const TCHAR* CharacterHistoryGetEventParticipants = TEXT("POST:/character-history/get-event-participants");
-
-        /** Get machine-readable backstory elements for behavior system */
-        constexpr const TCHAR* CharacterHistoryGetBackstory = TEXT("POST:/character-history/get-backstory");
-
-        /** Get history data for compression */
-        constexpr const TCHAR* CharacterHistoryGetCompressData = TEXT("POST:/character-history/get-compress-data");
+        /** Delete encounter type */
+        constexpr const TCHAR* CharacterEncounterDeleteEncounterType = TEXT("POST:/character-encounter/type/delete");
 
         // CharacterPersonality Service
-        /** Get personality for a character */
-        constexpr const TCHAR* CharacterPersonalityGetPersonality = TEXT("POST:/character-personality/get");
+        /** Create or update personality for a character */
+        constexpr const TCHAR* CharacterPersonalitySetPersonality = TEXT("POST:/character-personality/set");
 
-        /** Record an experience that may evolve personality */
-        constexpr const TCHAR* CharacterPersonalityRecordExperience = TEXT("POST:/character-personality/evolve");
-
-        /** Get personalities for multiple characters */
-        constexpr const TCHAR* CharacterPersonalityBatchGetPersonalities = TEXT("POST:/character-personality/batch-get");
-
-        /** Get combat preferences for a character */
-        constexpr const TCHAR* CharacterPersonalityGetCombatPreferences = TEXT("POST:/character-personality/get-combat");
-
-        /** Record combat experience that may evolve preferences */
-        constexpr const TCHAR* CharacterPersonalityEvolveCombatPreferences = TEXT("POST:/character-personality/evolve-combat");
-
-        /** Get personality data for compression */
-        constexpr const TCHAR* CharacterPersonalityGetCompressData = TEXT("POST:/character-personality/get-compress-data");
-
-        /** Cleanup all personality data for a deleted character */
-        constexpr const TCHAR* CharacterPersonalityCleanupByCharacter = TEXT("POST:/character-personality/cleanup-by-character");
+        /** Create or update combat preferences for a character */
+        constexpr const TCHAR* CharacterPersonalitySetCombatPreferences = TEXT("POST:/character-personality/set-combat");
 
         // Chat Service
         /** Register a new room type */
@@ -361,9 +260,6 @@ namespace Bannou
         /** Send a message to a room */
         constexpr const TCHAR* ChatSendMessage = TEXT("POST:/chat/message/send");
 
-        /** Send multiple messages */
-        constexpr const TCHAR* ChatSendMessageBatch = TEXT("POST:/chat/message/send-batch");
-
         /** Get message history */
         constexpr const TCHAR* ChatGetMessageHistory = TEXT("POST:/chat/message/history");
 
@@ -378,15 +274,6 @@ namespace Bannou
 
         /** Full-text search in persistent rooms */
         constexpr const TCHAR* ChatSearchMessages = TEXT("POST:/chat/message/search");
-
-        /** List all rooms system-wide */
-        constexpr const TCHAR* ChatAdminListRooms = TEXT("POST:/chat/admin/rooms");
-
-        /** Room and message statistics */
-        constexpr const TCHAR* ChatAdminGetStats = TEXT("POST:/chat/admin/stats");
-
-        /** Force cleanup of idle rooms */
-        constexpr const TCHAR* ChatAdminForceCleanup = TEXT("POST:/chat/admin/cleanup");
 
         // ClientCapabilities Service
         /** Get client capability manifest (GUID → API mappings) */
@@ -455,9 +342,6 @@ namespace Bannou
 
         /** Advance progressive discovery level */
         constexpr const TCHAR* CollectionAdvanceDiscovery = TEXT("POST:/collection/discovery/advance");
-
-        /** Cleanup all collections for a deleted character */
-        constexpr const TCHAR* CollectionCleanupByCharacter = TEXT("POST:/collection/cleanup-by-character");
 
         // Compile Service
         /** Compile ABML behavior definition */
@@ -546,20 +430,8 @@ namespace Bannou
         constexpr const TCHAR* ContractExecuteContract = TEXT("POST:/contract/instance/execute");
 
         // Currency Service
-        /** Get currency definition by ID or code */
-        constexpr const TCHAR* CurrencyGetCurrencyDefinition = TEXT("POST:/currency/definition/get");
-
-        /** List currency definitions with filters */
-        constexpr const TCHAR* CurrencyListCurrencyDefinitions = TEXT("POST:/currency/definition/list");
-
-        /** Create a new wallet for an owner */
-        constexpr const TCHAR* CurrencyCreateWallet = TEXT("POST:/currency/wallet/create");
-
-        /** Get wallet by ID or owner */
-        constexpr const TCHAR* CurrencyGetWallet = TEXT("POST:/currency/wallet/get");
-
-        /** Get existing wallet or create if not exists */
-        constexpr const TCHAR* CurrencyGetOrCreateWallet = TEXT("POST:/currency/wallet/get-or-create");
+        /** Update mutable fields of a currency definition */
+        constexpr const TCHAR* CurrencyUpdateCurrencyDefinition = TEXT("POST:/currency/definition/update");
 
         /** Get balance for a specific currency in a wallet */
         constexpr const TCHAR* CurrencyGetBalance = TEXT("POST:/currency/balance/get");
@@ -567,148 +439,54 @@ namespace Bannou
         /** Get multiple balances in one call */
         constexpr const TCHAR* CurrencyBatchGetBalances = TEXT("POST:/currency/balance/batch-get");
 
-        /** Credit currency to a wallet (faucet operation) */
-        constexpr const TCHAR* CurrencyCreditCurrency = TEXT("POST:/currency/credit");
-
-        /** Debit currency from a wallet (sink operation) */
-        constexpr const TCHAR* CurrencyDebitCurrency = TEXT("POST:/currency/debit");
-
-        /** Transfer currency between wallets */
-        constexpr const TCHAR* CurrencyTransferCurrency = TEXT("POST:/currency/transfer");
-
-        /** Credit multiple wallets in one call */
-        constexpr const TCHAR* CurrencyBatchCreditCurrency = TEXT("POST:/currency/batch-credit");
-
-        /** Debit multiple wallets in one call */
-        constexpr const TCHAR* CurrencyBatchDebitCurrency = TEXT("POST:/currency/batch-debit");
-
         /** Calculate conversion without executing */
         constexpr const TCHAR* CurrencyCalculateConversion = TEXT("POST:/currency/convert/calculate");
-
-        /** Execute currency conversion in a wallet */
-        constexpr const TCHAR* CurrencyExecuteConversion = TEXT("POST:/currency/convert/execute");
 
         /** Get exchange rate between two currencies */
         constexpr const TCHAR* CurrencyGetExchangeRate = TEXT("POST:/currency/exchange-rate/get");
 
-        /** Get a transaction by ID */
-        constexpr const TCHAR* CurrencyGetTransaction = TEXT("POST:/currency/transaction/get");
+        /** Update a currency's exchange rate to base */
+        constexpr const TCHAR* CurrencyUpdateExchangeRate = TEXT("POST:/currency/exchange-rate/update");
 
         /** Get paginated transaction history for a wallet */
         constexpr const TCHAR* CurrencyGetTransactionHistory = TEXT("POST:/currency/transaction/history");
 
-        /** Get transactions by reference type and ID */
-        constexpr const TCHAR* CurrencyGetTransactionsByReference = TEXT("POST:/currency/transaction/by-reference");
-
-        /** Get global supply statistics for a currency */
-        constexpr const TCHAR* CurrencyGetGlobalSupply = TEXT("POST:/currency/stats/global-supply");
-
-        /** Debit wallet for escrow deposit */
-        constexpr const TCHAR* CurrencyEscrowDeposit = TEXT("POST:/currency/escrow/deposit");
-
-        /** Credit recipient on escrow completion */
-        constexpr const TCHAR* CurrencyEscrowRelease = TEXT("POST:/currency/escrow/release");
-
-        /** Credit depositor on escrow refund */
-        constexpr const TCHAR* CurrencyEscrowRefund = TEXT("POST:/currency/escrow/refund");
-
-        /** Create an authorization hold (reserve funds) */
-        constexpr const TCHAR* CurrencyCreateHold = TEXT("POST:/currency/hold/create");
-
-        /** Capture held funds (debit final amount) */
-        constexpr const TCHAR* CurrencyCaptureHold = TEXT("POST:/currency/hold/capture");
-
-        /** Release held funds (make available again) */
-        constexpr const TCHAR* CurrencyReleaseHold = TEXT("POST:/currency/hold/release");
-
-        /** Get hold status and details */
-        constexpr const TCHAR* CurrencyGetHold = TEXT("POST:/currency/hold/get");
-
-        // Divine Service
-        /** Create a new deity */
-        constexpr const TCHAR* DivineCreateDeity = TEXT("POST:/divine/deity/create");
-
-        /** Get a deity by ID */
-        constexpr const TCHAR* DivineGetDeity = TEXT("POST:/divine/deity/get");
-
-        /** Get a deity by code within a game service */
-        constexpr const TCHAR* DivineGetDeityByCode = TEXT("POST:/divine/deity/get-by-code");
-
-        /** List deities with optional filters */
-        constexpr const TCHAR* DivineListDeities = TEXT("POST:/divine/deity/list");
-
-        /** Update deity properties */
-        constexpr const TCHAR* DivineUpdateDeity = TEXT("POST:/divine/deity/update");
-
-        /** Activate a dormant deity */
-        constexpr const TCHAR* DivineActivateDeity = TEXT("POST:/divine/deity/activate");
-
-        /** Deactivate an active deity */
-        constexpr const TCHAR* DivineDeactivateDeity = TEXT("POST:/divine/deity/deactivate");
-
-        /** Delete a deity */
-        constexpr const TCHAR* DivineDeleteDeity = TEXT("POST:/divine/deity/delete");
-
-        /** Get a deity's divinity balance */
-        constexpr const TCHAR* DivineGetDivinityBalance = TEXT("POST:/divine/divinity/get-balance");
-
-        /** Credit divinity to a deity */
-        constexpr const TCHAR* DivineCreditDivinity = TEXT("POST:/divine/divinity/credit");
-
-        /** Debit divinity from a deity */
-        constexpr const TCHAR* DivineDebitDivinity = TEXT("POST:/divine/divinity/debit");
-
-        /** Get divinity transaction history */
-        constexpr const TCHAR* DivineGetDivinityHistory = TEXT("POST:/divine/divinity/get-history");
-
-        /** Grant a blessing from a deity to an entity */
-        constexpr const TCHAR* DivineGrantBlessing = TEXT("POST:/divine/blessing/grant");
-
-        /** Revoke an active blessing */
-        constexpr const TCHAR* DivineRevokeBlessing = TEXT("POST:/divine/blessing/revoke");
-
-        /** List blessings for an entity */
-        constexpr const TCHAR* DivineListBlessingsByEntity = TEXT("POST:/divine/blessing/list-by-entity");
-
-        /** List blessings granted by a deity */
-        constexpr const TCHAR* DivineListBlessingsByDeity = TEXT("POST:/divine/blessing/list-by-deity");
-
-        /** Get a blessing by ID */
-        constexpr const TCHAR* DivineGetBlessing = TEXT("POST:/divine/blessing/get");
-
-        /** Register a character as a follower of a deity */
-        constexpr const TCHAR* DivineRegisterFollower = TEXT("POST:/divine/follower/register");
-
-        /** Unregister a character as a follower */
-        constexpr const TCHAR* DivineUnregisterFollower = TEXT("POST:/divine/follower/unregister");
-
-        /** Get followers of a deity */
-        constexpr const TCHAR* DivineGetFollowers = TEXT("POST:/divine/follower/get-followers");
-
-        /** Cleanup divine data for a deleted character */
-        constexpr const TCHAR* DivineCleanupByCharacter = TEXT("POST:/divine/cleanup-by-character");
-
-        /** Cleanup divine data for a deleted game service */
-        constexpr const TCHAR* DivineCleanupByGameService = TEXT("POST:/divine/cleanup-by-game-service");
-
         // Documentation Service
-        /** Natural language documentation search */
-        constexpr const TCHAR* DocumentationQueryDocumentation = TEXT("POST:/documentation/query");
+        /** Create new documentation entry */
+        constexpr const TCHAR* DocumentationCreateDocument = TEXT("POST:/documentation/create");
 
-        /** Get specific document by ID or slug */
-        constexpr const TCHAR* DocumentationGetDocument = TEXT("POST:/documentation/get");
+        /** Update existing documentation entry */
+        constexpr const TCHAR* DocumentationUpdateDocument = TEXT("POST:/documentation/update");
 
-        /** Full-text keyword search */
-        constexpr const TCHAR* DocumentationSearchDocumentation = TEXT("POST:/documentation/search");
+        /** Soft-delete documentation entry to trashcan */
+        constexpr const TCHAR* DocumentationDeleteDocument = TEXT("POST:/documentation/delete");
 
-        /** List documents by category */
-        constexpr const TCHAR* DocumentationListDocuments = TEXT("POST:/documentation/list");
+        /** Recover document from trashcan */
+        constexpr const TCHAR* DocumentationRecoverDocument = TEXT("POST:/documentation/recover");
 
-        /** Get related topics and follow-up suggestions */
-        constexpr const TCHAR* DocumentationSuggestRelatedTopics = TEXT("POST:/documentation/suggest");
+        /** Bulk update document metadata */
+        constexpr const TCHAR* DocumentationBulkUpdateDocuments = TEXT("POST:/documentation/bulk-update");
+
+        /** Bulk soft-delete documents to trashcan */
+        constexpr const TCHAR* DocumentationBulkDeleteDocuments = TEXT("POST:/documentation/bulk-delete");
+
+        /** Bulk import documentation from structured source */
+        constexpr const TCHAR* DocumentationImportDocumentation = TEXT("POST:/documentation/import");
+
+        /** List documents in the trashcan */
+        constexpr const TCHAR* DocumentationListTrashcan = TEXT("POST:/documentation/trashcan");
+
+        /** Permanently delete trashcan items */
+        constexpr const TCHAR* DocumentationPurgeTrashcan = TEXT("POST:/documentation/purge");
+
+        /** Get namespace documentation statistics */
+        constexpr const TCHAR* DocumentationGetNamespaceStats = TEXT("POST:/documentation/stats");
 
         /** Bind a git repository to a documentation namespace */
         constexpr const TCHAR* DocumentationBindRepository = TEXT("POST:/documentation/repo/bind");
+
+        /** Remove repository binding from namespace */
+        constexpr const TCHAR* DocumentationUnbindRepository = TEXT("POST:/documentation/repo/unbind");
 
         /** Manually trigger repository sync */
         constexpr const TCHAR* DocumentationSyncRepository = TEXT("POST:/documentation/repo/sync");
@@ -728,10 +506,13 @@ namespace Bannou
         /** List documentation archives */
         constexpr const TCHAR* DocumentationListDocumentationArchives = TEXT("POST:/documentation/repo/archive/list");
 
-        // Escrow Service
-        /** Create a new escrow agreement */
-        constexpr const TCHAR* EscrowCreateEscrow = TEXT("POST:/escrow/create");
+        /** Restore documentation from archive */
+        constexpr const TCHAR* DocumentationRestoreDocumentationArchive = TEXT("POST:/documentation/repo/archive/restore");
 
+        /** Delete documentation archive */
+        constexpr const TCHAR* DocumentationDeleteDocumentationArchive = TEXT("POST:/documentation/repo/archive/delete");
+
+        // Escrow Service
         /** Get escrow details */
         constexpr const TCHAR* EscrowGetEscrow = TEXT("POST:/escrow/get");
 
@@ -753,15 +534,6 @@ namespace Bannou
         /** Get consent status for escrow */
         constexpr const TCHAR* EscrowGetConsentStatus = TEXT("POST:/escrow/consent/status");
 
-        /** Trigger release */
-        constexpr const TCHAR* EscrowRelease = TEXT("POST:/escrow/release");
-
-        /** Trigger refund */
-        constexpr const TCHAR* EscrowRefund = TEXT("POST:/escrow/refund");
-
-        /** Cancel escrow before fully funded */
-        constexpr const TCHAR* EscrowCancel = TEXT("POST:/escrow/cancel");
-
         /** Raise a dispute on funded escrow */
         constexpr const TCHAR* EscrowDispute = TEXT("POST:/escrow/dispute");
 
@@ -770,12 +542,6 @@ namespace Bannou
 
         /** Confirm receipt of refunded assets */
         constexpr const TCHAR* EscrowConfirmRefund = TEXT("POST:/escrow/confirm-refund");
-
-        /** Arbiter resolves disputed escrow */
-        constexpr const TCHAR* EscrowResolve = TEXT("POST:/escrow/resolve");
-
-        /** Verify condition for conditional escrow */
-        constexpr const TCHAR* EscrowVerifyCondition = TEXT("POST:/escrow/verify-condition");
 
         /** Re-affirm after validation failure */
         constexpr const TCHAR* EscrowReaffirm = TEXT("POST:/escrow/reaffirm");
@@ -850,25 +616,6 @@ namespace Bannou
         /** List norms defined by a faction */
         constexpr const TCHAR* FactionListNorms = TEXT("POST:/faction/norm/list");
 
-        /** Cleanup faction data for a deleted character */
-        constexpr const TCHAR* FactionCleanupByCharacter = TEXT("POST:/faction/cleanup-by-character");
-
-        /** Cleanup faction data for a deleted realm */
-        constexpr const TCHAR* FactionCleanupByRealm = TEXT("POST:/faction/cleanup-by-realm");
-
-        /** Cleanup territory claims for a deleted location */
-        constexpr const TCHAR* FactionCleanupByLocation = TEXT("POST:/faction/cleanup-by-location");
-
-        /** Get faction data for character archival compression */
-        constexpr const TCHAR* FactionGetCompressData = TEXT("POST:/faction/get-compress-data");
-
-        // GameService Service
-        /** List all registered game services */
-        constexpr const TCHAR* GameServiceListServices = TEXT("POST:/game-service/services/list");
-
-        /** Get service by ID or stub name */
-        constexpr const TCHAR* GameServiceGetService = TEXT("POST:/game-service/services/get");
-
         // Gardener Service
         /** Enter the garden */
         constexpr const TCHAR* GardenerEnterGarden = TEXT("POST:/gardener/garden/enter");
@@ -942,13 +689,6 @@ namespace Bannou
         /** Get shared garden state for bonded players */
         constexpr const TCHAR* GardenerGetSharedGardenState = TEXT("POST:/gardener/bond/get-shared-garden");
 
-        // Goap Service
-        /** Generate GOAP plan */
-        constexpr const TCHAR* BehaviorGenerateGoapPlan = TEXT("POST:/goap/plan");
-
-        /** Validate existing GOAP plan */
-        constexpr const TCHAR* BehaviorValidateGoapPlan = TEXT("POST:/goap/validate-plan");
-
         // Inventory Service
         /** Create a new container */
         constexpr const TCHAR* InventoryCreateContainer = TEXT("POST:/inventory/container/create");
@@ -965,17 +705,8 @@ namespace Bannou
         /** Update container properties */
         constexpr const TCHAR* InventoryUpdateContainer = TEXT("POST:/inventory/container/update");
 
-        /** Add item to container */
-        constexpr const TCHAR* InventoryAddItemToContainer = TEXT("POST:/inventory/add");
-
-        /** Remove item from container */
-        constexpr const TCHAR* InventoryRemoveItemFromContainer = TEXT("POST:/inventory/remove");
-
         /** Move item to different slot or container */
         constexpr const TCHAR* InventoryMoveItem = TEXT("POST:/inventory/move");
-
-        /** Transfer item to different owner */
-        constexpr const TCHAR* InventoryTransferItem = TEXT("POST:/inventory/transfer");
 
         /** Split stack into two */
         constexpr const TCHAR* InventorySplitStack = TEXT("POST:/inventory/split");
@@ -1119,53 +850,32 @@ namespace Bannou
         constexpr const TCHAR* LicenseCleanupByOwner = TEXT("POST:/license/cleanup-by-owner");
 
         // Location Service
-        /** Get location by ID */
-        constexpr const TCHAR* LocationGetLocation = TEXT("POST:/location/get");
+        /** Create new location */
+        constexpr const TCHAR* LocationCreateLocation = TEXT("POST:/location/create");
 
-        /** Get location by code and realm */
-        constexpr const TCHAR* LocationGetLocationByCode = TEXT("POST:/location/get-by-code");
+        /** Update location */
+        constexpr const TCHAR* LocationUpdateLocation = TEXT("POST:/location/update");
 
-        /** List locations with filtering */
-        constexpr const TCHAR* LocationListLocations = TEXT("POST:/location/list");
+        /** Set or change the parent of a location */
+        constexpr const TCHAR* LocationSetLocationParent = TEXT("POST:/location/set-parent");
 
-        /** List all locations in a realm (primary query pattern) */
-        constexpr const TCHAR* LocationListLocationsByRealm = TEXT("POST:/location/list-by-realm");
+        /** Remove parent from a location (make it a root location) */
+        constexpr const TCHAR* LocationRemoveLocationParent = TEXT("POST:/location/remove-parent");
 
-        /** Get child locations for a parent location */
-        constexpr const TCHAR* LocationListLocationsByParent = TEXT("POST:/location/list-by-parent");
+        /** Delete location */
+        constexpr const TCHAR* LocationDeleteLocation = TEXT("POST:/location/delete");
 
-        /** Get root locations in a realm */
-        constexpr const TCHAR* LocationListRootLocations = TEXT("POST:/location/list-root");
+        /** Transfer a location to a different realm */
+        constexpr const TCHAR* LocationTransferLocationToRealm = TEXT("POST:/location/transfer-realm");
 
-        /** Get all ancestors of a location */
-        constexpr const TCHAR* LocationGetLocationAncestors = TEXT("POST:/location/get-ancestors");
+        /** Deprecate a location */
+        constexpr const TCHAR* LocationDeprecateLocation = TEXT("POST:/location/deprecate");
 
-        /** Validate location against territory boundaries */
-        constexpr const TCHAR* LocationValidateTerritory = TEXT("POST:/location/validate-territory");
+        /** Restore a deprecated location */
+        constexpr const TCHAR* LocationUndeprecateLocation = TEXT("POST:/location/undeprecate");
 
-        /** Get all descendants of a location */
-        constexpr const TCHAR* LocationGetLocationDescendants = TEXT("POST:/location/get-descendants");
-
-        /** Check if location exists and is active */
-        constexpr const TCHAR* LocationLocationExists = TEXT("POST:/location/exists");
-
-        /** Find locations containing a spatial position */
-        constexpr const TCHAR* LocationQueryLocationsByPosition = TEXT("POST:/location/query/by-position");
-
-        /** Report entity presence at a location */
-        constexpr const TCHAR* LocationReportEntityPosition = TEXT("POST:/location/report-entity-position");
-
-        /** Get the current location of an entity */
-        constexpr const TCHAR* LocationGetEntityLocation = TEXT("POST:/location/get-entity-location");
-
-        /** List entities currently at a location */
-        constexpr const TCHAR* LocationListEntitiesAtLocation = TEXT("POST:/location/list-entities-at-location");
-
-        /** Remove entity presence from its current location */
-        constexpr const TCHAR* LocationClearEntityPosition = TEXT("POST:/location/clear-entity-position");
-
-        /** Get location base data for compression */
-        constexpr const TCHAR* LocationGetLocationCompressData = TEXT("POST:/location/get-compress-data");
+        /** Seed locations from configuration */
+        constexpr const TCHAR* LocationSeedLocations = TEXT("POST:/location/seed");
 
         // Mapping Service
         /** Request full snapshot for cold start */
@@ -1323,28 +1033,6 @@ namespace Bannou
         /** Get objective progress details */
         constexpr const TCHAR* QuestGetObjectiveProgress = TEXT("POST:/quest/objective/get");
 
-        /** Get quest data for compression */
-        constexpr const TCHAR* QuestGetCompressData = TEXT("POST:/quest/get-compress-data");
-
-        // Realm Service
-        /** Get realm by ID */
-        constexpr const TCHAR* RealmGetRealm = TEXT("POST:/realm/get");
-
-        /** Get realm by code */
-        constexpr const TCHAR* RealmGetRealmByCode = TEXT("POST:/realm/get-by-code");
-
-        /** List all realms */
-        constexpr const TCHAR* RealmListRealms = TEXT("POST:/realm/list");
-
-        /** Check if realm exists and is active */
-        constexpr const TCHAR* RealmRealmExists = TEXT("POST:/realm/exists");
-
-        /** Check if multiple realms exist and are active */
-        constexpr const TCHAR* RealmRealmsExistBatch = TEXT("POST:/realm/exists-batch");
-
-        /** Get realm context for location archive */
-        constexpr const TCHAR* RealmGetLocationCompressContext = TEXT("POST:/realm/get-location-compress-context");
-
         // RealmHistory Service
         /** Get all historical events a realm participated in */
         constexpr const TCHAR* RealmHistoryGetRealmParticipation = TEXT("POST:/realm-history/get-participation");
@@ -1368,9 +1056,6 @@ namespace Bannou
         /** List all relationships of a specific type */
         constexpr const TCHAR* RelationshipListRelationshipsByType = TEXT("POST:/relationship/list-by-type");
 
-        /** Cleanup relationships referencing a deleted entity */
-        constexpr const TCHAR* RelationshipCleanupByEntity = TEXT("POST:/relationship/cleanup-by-entity");
-
         // RelationshipType Service
         /** Get relationship type by ID */
         constexpr const TCHAR* RelationshipGetRelationshipType = TEXT("POST:/relationship-type/get");
@@ -1390,39 +1075,23 @@ namespace Bannou
         /** Get all ancestors of a relationship type */
         constexpr const TCHAR* RelationshipGetAncestors = TEXT("POST:/relationship-type/get-ancestors");
 
-        // Resource Service
-        /** Register a reference to a resource */
-        constexpr const TCHAR* ResourceRegisterReference = TEXT("POST:/resource/register");
+        /** Create new relationship type */
+        constexpr const TCHAR* RelationshipCreateRelationshipType = TEXT("POST:/relationship-type/create");
 
-        /** Remove a reference to a resource */
-        constexpr const TCHAR* ResourceUnregisterReference = TEXT("POST:/resource/unregister");
+        /** Update relationship type */
+        constexpr const TCHAR* RelationshipUpdateRelationshipType = TEXT("POST:/relationship-type/update");
 
-        /** Check reference count and cleanup eligibility */
-        constexpr const TCHAR* ResourceCheckReferences = TEXT("POST:/resource/check");
+        /** Delete relationship type */
+        constexpr const TCHAR* RelationshipDeleteRelationshipType = TEXT("POST:/relationship-type/delete");
 
-        /** List all references to a resource */
-        constexpr const TCHAR* ResourceListReferences = TEXT("POST:/resource/list");
+        /** Deprecate a relationship type */
+        constexpr const TCHAR* RelationshipDeprecateRelationshipType = TEXT("POST:/relationship-type/deprecate");
 
-        /** Execute cleanup for a resource */
-        constexpr const TCHAR* ResourceExecuteCleanup = TEXT("POST:/resource/cleanup/execute");
+        /** Restore a deprecated relationship type */
+        constexpr const TCHAR* RelationshipUndeprecateRelationshipType = TEXT("POST:/relationship-type/undeprecate");
 
-        /** List registered cleanup callbacks */
-        constexpr const TCHAR* ResourceListCleanupCallbacks = TEXT("POST:/resource/cleanup/list");
-
-        /** Compress a resource and all dependents */
-        constexpr const TCHAR* ResourceExecuteCompress = TEXT("POST:/resource/compress/execute");
-
-        /** List registered compression callbacks */
-        constexpr const TCHAR* ResourceListCompressCallbacks = TEXT("POST:/resource/compress/list");
-
-        /** Retrieve compressed archive */
-        constexpr const TCHAR* ResourceGetArchive = TEXT("POST:/resource/archive/get");
-
-        /** Create ephemeral snapshot of a living resource */
-        constexpr const TCHAR* ResourceExecuteSnapshot = TEXT("POST:/resource/snapshot/execute");
-
-        /** Retrieve an ephemeral snapshot */
-        constexpr const TCHAR* ResourceGetSnapshot = TEXT("POST:/resource/snapshot/get");
+        /** Merge a deprecated type into another type */
+        constexpr const TCHAR* RelationshipMergeRelationshipType = TEXT("POST:/relationship-type/merge");
 
         // SaveLoad Service
         /** Create or configure a save slot */
@@ -1565,12 +1234,6 @@ namespace Bannou
         /** Get full growth domain map */
         constexpr const TCHAR* SeedGetGrowth = TEXT("POST:/seed/growth/get");
 
-        /** Record growth in a domain */
-        constexpr const TCHAR* SeedRecordGrowth = TEXT("POST:/seed/growth/record");
-
-        /** Record growth across multiple domains atomically */
-        constexpr const TCHAR* SeedRecordGrowthBatch = TEXT("POST:/seed/growth/record-batch");
-
         /** Get current growth phase */
         constexpr const TCHAR* SeedGetGrowthPhase = TEXT("POST:/seed/growth/get-phase");
 
@@ -1628,19 +1291,6 @@ namespace Bannou
 
         /** Leave a specific game session by ID */
         constexpr const TCHAR* GameSessionLeaveGameSessionById = TEXT("POST:/sessions/leave-session");
-
-        // Species Service
-        /** Get species by ID */
-        constexpr const TCHAR* SpeciesGetSpecies = TEXT("POST:/species/get");
-
-        /** Get species by code */
-        constexpr const TCHAR* SpeciesGetSpeciesByCode = TEXT("POST:/species/get-by-code");
-
-        /** List all species */
-        constexpr const TCHAR* SpeciesListSpecies = TEXT("POST:/species/list");
-
-        /** List species available in a realm */
-        constexpr const TCHAR* SpeciesListSpeciesByRealm = TEXT("POST:/species/list-by-realm");
 
         // Status Service
         /** Create a status template */
@@ -1729,12 +1379,6 @@ namespace Bannou
         constexpr const TCHAR* StorylineGetCompressData = TEXT("POST:/storyline/get-compress-data");
 
         // Subscription Service
-        /** Get subscriptions for an account */
-        constexpr const TCHAR* SubscriptionGetAccountSubscriptions = TEXT("POST:/subscription/account/list");
-
-        /** Get a specific subscription by ID */
-        constexpr const TCHAR* SubscriptionGetSubscription = TEXT("POST:/subscription/get");
-
         /** Cancel a subscription */
         constexpr const TCHAR* SubscriptionCancelSubscription = TEXT("POST:/subscription/cancel");
 
@@ -1837,6 +1481,12 @@ namespace Bannou
         constexpr const TCHAR* BehaviorValidateAbml = TEXT("POST:/validate");
 
         // Voice Service
+        /** Join voice room and register SIP endpoint */
+        constexpr const TCHAR* VoiceJoinVoiceRoom = TEXT("POST:/voice/room/join");
+
+        /** Leave voice room */
+        constexpr const TCHAR* VoiceLeaveVoiceRoom = TEXT("POST:/voice/room/leave");
+
         /** Send SDP answer to complete WebRTC handshake */
         constexpr const TCHAR* VoiceAnswerPeer = TEXT("POST:/voice/peer/answer");
 
@@ -1896,21 +1546,6 @@ namespace Bannou
         constexpr const TCHAR* WebsiteUpdateTheme = TEXT("PUT:/website/cms/theme");
 
         // Worldstate Service
-        /** Get current game time for a realm */
-        constexpr const TCHAR* WorldstateGetRealmTime = TEXT("POST:/worldstate/clock/get-realm-time");
-
-        /** Get current game time by realm code */
-        constexpr const TCHAR* WorldstateGetRealmTimeByCode = TEXT("POST:/worldstate/clock/get-realm-time-by-code");
-
-        /** Get current game time for multiple realms */
-        constexpr const TCHAR* WorldstateBatchGetRealmTimes = TEXT("POST:/worldstate/clock/batch-get-realm-times");
-
-        /** Compute elapsed game-time between two real timestamps */
-        constexpr const TCHAR* WorldstateGetElapsedGameTime = TEXT("POST:/worldstate/clock/get-elapsed-game-time");
-
-        /** Trigger a time sync event for an entity's sessions */
-        constexpr const TCHAR* WorldstateTriggerTimeSync = TEXT("POST:/worldstate/clock/trigger-sync");
-
         /** Initialize a clock for a realm */
         constexpr const TCHAR* WorldstateInitializeRealmClock = TEXT("POST:/worldstate/clock/initialize");
 
@@ -1923,26 +1558,14 @@ namespace Bannou
         /** Create a calendar template */
         constexpr const TCHAR* WorldstateSeedCalendar = TEXT("POST:/worldstate/calendar/seed");
 
-        /** Get a calendar template */
-        constexpr const TCHAR* WorldstateGetCalendar = TEXT("POST:/worldstate/calendar/get");
-
-        /** List calendar templates for a game service */
-        constexpr const TCHAR* WorldstateListCalendars = TEXT("POST:/worldstate/calendar/list");
-
         /** Update a calendar template */
         constexpr const TCHAR* WorldstateUpdateCalendar = TEXT("POST:/worldstate/calendar/update");
 
         /** Delete a calendar template */
         constexpr const TCHAR* WorldstateDeleteCalendar = TEXT("POST:/worldstate/calendar/delete");
 
-        /** Get realm worldstate configuration */
-        constexpr const TCHAR* WorldstateGetRealmConfig = TEXT("POST:/worldstate/realm-config/get");
-
         /** Update realm worldstate configuration */
         constexpr const TCHAR* WorldstateUpdateRealmConfig = TEXT("POST:/worldstate/realm-config/update");
-
-        /** List active realm clocks */
-        constexpr const TCHAR* WorldstateListRealmClocks = TEXT("POST:/worldstate/realm-config/list");
 
     } // namespace Endpoints
 
@@ -1996,30 +1619,6 @@ namespace Bannou
                 TEXT("FUpdateProfileRequest"),
                 TEXT("FAccountResponse"),
                 TEXT("Update account profile")
-            });
-            Registry.Add(TEXT("AccountUpdatePasswordHash"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/account/password/update"),
-                TEXT("account"),
-                TEXT("FUpdatePasswordRequest"),
-                TEXT(""),
-                TEXT("Update account password hash")
-            });
-            Registry.Add(TEXT("AccountUpdateMfa"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/account/mfa/update"),
-                TEXT("account"),
-                TEXT("FUpdateMfaRequest"),
-                TEXT(""),
-                TEXT("Update MFA settings for an account")
-            });
-            Registry.Add(TEXT("AccountUpdateVerificationStatus"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/account/verification/update"),
-                TEXT("account"),
-                TEXT("FUpdateVerificationRequest"),
-                TEXT(""),
-                TEXT("Update email verification status")
             });
             Registry.Add(TEXT("AchievementCreateAchievementDefinition"), FEndpointInfo{
                 TEXT("POST"),
@@ -2092,70 +1691,6 @@ namespace Bannou
                 TEXT("FDeleteActorTemplateRequest"),
                 TEXT("FDeleteActorTemplateResponse"),
                 TEXT("Delete an actor template")
-            });
-            Registry.Add(TEXT("ActorSpawnActor"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/actor/spawn"),
-                TEXT("actor"),
-                TEXT("FSpawnActorRequest"),
-                TEXT("FActorInstanceResponse"),
-                TEXT("Spawn a new actor from a template")
-            });
-            Registry.Add(TEXT("ActorStopActor"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/actor/stop"),
-                TEXT("actor"),
-                TEXT("FStopActorRequest"),
-                TEXT("FStopActorResponse"),
-                TEXT("Stop a running actor")
-            });
-            Registry.Add(TEXT("ActorBindActorCharacter"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/actor/bind-character"),
-                TEXT("actor"),
-                TEXT("FBindActorCharacterRequest"),
-                TEXT("FActorInstanceResponse"),
-                TEXT("Bind an unbound actor to a character")
-            });
-            Registry.Add(TEXT("ActorCleanupByCharacter"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/actor/cleanup-by-character"),
-                TEXT("actor"),
-                TEXT("FCleanupByCharacterRequest"),
-                TEXT("FCleanupByCharacterResponse"),
-                TEXT("Cleanup actors referencing a deleted character")
-            });
-            Registry.Add(TEXT("ActorInjectPerception"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/actor/inject-perception"),
-                TEXT("actor"),
-                TEXT("FInjectPerceptionRequest"),
-                TEXT("FInjectPerceptionResponse"),
-                TEXT("Inject a perception event into an actor's queue (testing)")
-            });
-            Registry.Add(TEXT("ActorStartEncounter"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/actor/encounter/start"),
-                TEXT("actor"),
-                TEXT("FStartEncounterRequest"),
-                TEXT("FStartEncounterResponse"),
-                TEXT("Start an encounter managed by an Event Brain actor")
-            });
-            Registry.Add(TEXT("ActorUpdateEncounterPhase"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/actor/encounter/update-phase"),
-                TEXT("actor"),
-                TEXT("FUpdateEncounterPhaseRequest"),
-                TEXT("FUpdateEncounterPhaseResponse"),
-                TEXT("Update the phase of an active encounter")
-            });
-            Registry.Add(TEXT("ActorEndEncounter"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/actor/encounter/end"),
-                TEXT("actor"),
-                TEXT("FEndEncounterRequest"),
-                TEXT("FEndEncounterResponse"),
-                TEXT("End an active encounter")
             });
             Registry.Add(TEXT("AssetRequestUpload"), FEndpointInfo{
                 TEXT("POST"),
@@ -2445,22 +1980,6 @@ namespace Bannou
                 TEXT("FListBundleVersionsResponse"),
                 TEXT("List version history for a bundle")
             });
-            Registry.Add(TEXT("BehaviorGetCachedBehavior"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/cache/get"),
-                TEXT("cache"),
-                TEXT("FGetCachedBehaviorRequest"),
-                TEXT("FCachedBehaviorResponse"),
-                TEXT("Get cached compiled behavior")
-            });
-            Registry.Add(TEXT("BehaviorInvalidateCachedBehavior"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/cache/invalidate"),
-                TEXT("cache"),
-                TEXT("FInvalidateCacheRequest"),
-                TEXT(""),
-                TEXT("Invalidate cached behavior")
-            });
             Registry.Add(TEXT("CharacterGetCharacter"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/character/get"),
@@ -2501,205 +2020,45 @@ namespace Bannou
                 TEXT("FCharacterListResponse"),
                 TEXT("Get all characters in a realm (primary query pattern)")
             });
-            Registry.Add(TEXT("CharacterGetCompressData"), FEndpointInfo{
+            Registry.Add(TEXT("CharacterEncounterCreateEncounterType"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/character/get-compress-data"),
-                TEXT("character"),
-                TEXT("FGetCompressDataRequest"),
-                TEXT("FCharacterBaseArchive"),
-                TEXT("Get character base data for compression")
-            });
-            Registry.Add(TEXT("CharacterEncounterGetEncounterType"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-encounter/type/get"),
+                TEXT("/character-encounter/type/create"),
                 TEXT("character-encounter"),
-                TEXT("FGetEncounterTypeRequest"),
+                TEXT("FCreateEncounterTypeRequest"),
                 TEXT("FEncounterTypeResponse"),
-                TEXT("Get encounter type by code")
+                TEXT("Create new encounter type")
             });
-            Registry.Add(TEXT("CharacterEncounterListEncounterTypes"), FEndpointInfo{
+            Registry.Add(TEXT("CharacterEncounterUpdateEncounterType"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/character-encounter/type/list"),
+                TEXT("/character-encounter/type/update"),
                 TEXT("character-encounter"),
-                TEXT("FListEncounterTypesRequest"),
-                TEXT("FEncounterTypeListResponse"),
-                TEXT("List all encounter types")
+                TEXT("FUpdateEncounterTypeRequest"),
+                TEXT("FEncounterTypeResponse"),
+                TEXT("Update encounter type")
             });
-            Registry.Add(TEXT("CharacterEncounterRecordEncounter"), FEndpointInfo{
+            Registry.Add(TEXT("CharacterEncounterDeleteEncounterType"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/character-encounter/record"),
+                TEXT("/character-encounter/type/delete"),
                 TEXT("character-encounter"),
-                TEXT("FRecordEncounterRequest"),
-                TEXT("FEncounterResponse"),
-                TEXT("Record new encounter with perspectives")
+                TEXT("FDeleteEncounterTypeRequest"),
+                TEXT(""),
+                TEXT("Delete encounter type")
             });
-            Registry.Add(TEXT("CharacterEncounterQueryByCharacter"), FEndpointInfo{
+            Registry.Add(TEXT("CharacterPersonalitySetPersonality"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/character-encounter/query/by-character"),
-                TEXT("character-encounter"),
-                TEXT("FQueryByCharacterRequest"),
-                TEXT("FEncounterListResponse"),
-                TEXT("Get character's encounters (paginated)")
-            });
-            Registry.Add(TEXT("CharacterEncounterQueryBetween"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-encounter/query/between"),
-                TEXT("character-encounter"),
-                TEXT("FQueryBetweenRequest"),
-                TEXT("FEncounterListResponse"),
-                TEXT("Get encounters between two characters")
-            });
-            Registry.Add(TEXT("CharacterEncounterQueryByLocation"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-encounter/query/by-location"),
-                TEXT("character-encounter"),
-                TEXT("FQueryByLocationRequest"),
-                TEXT("FEncounterListResponse"),
-                TEXT("Recent encounters at location")
-            });
-            Registry.Add(TEXT("CharacterEncounterHasMet"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-encounter/has-met"),
-                TEXT("character-encounter"),
-                TEXT("FHasMetRequest"),
-                TEXT("FHasMetResponse"),
-                TEXT("Quick check if two characters have met")
-            });
-            Registry.Add(TEXT("CharacterEncounterGetSentiment"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-encounter/get-sentiment"),
-                TEXT("character-encounter"),
-                TEXT("FGetSentimentRequest"),
-                TEXT("FSentimentResponse"),
-                TEXT("Aggregate sentiment toward another character")
-            });
-            Registry.Add(TEXT("CharacterEncounterBatchGetSentiment"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-encounter/batch-get"),
-                TEXT("character-encounter"),
-                TEXT("FBatchGetSentimentRequest"),
-                TEXT("FBatchSentimentResponse"),
-                TEXT("Bulk sentiment for multiple targets")
-            });
-            Registry.Add(TEXT("CharacterEncounterGetPerspective"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-encounter/get-perspective"),
-                TEXT("character-encounter"),
-                TEXT("FGetPerspectiveRequest"),
-                TEXT("FPerspectiveResponse"),
-                TEXT("Get character's view of encounter")
-            });
-            Registry.Add(TEXT("CharacterEncounterUpdatePerspective"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-encounter/update-perspective"),
-                TEXT("character-encounter"),
-                TEXT("FUpdatePerspectiveRequest"),
-                TEXT("FPerspectiveResponse"),
-                TEXT("Update perspective (reflection)")
-            });
-            Registry.Add(TEXT("CharacterEncounterRefreshMemory"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-encounter/refresh-memory"),
-                TEXT("character-encounter"),
-                TEXT("FRefreshMemoryRequest"),
-                TEXT("FPerspectiveResponse"),
-                TEXT("Strengthen memory (referenced)")
-            });
-            Registry.Add(TEXT("CharacterEncounterGetCompressData"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-encounter/get-compress-data"),
-                TEXT("character-encounter"),
-                TEXT("FGetCompressDataRequest"),
-                TEXT("FCharacterEncounterArchive"),
-                TEXT("Get encounter data for compression")
-            });
-            Registry.Add(TEXT("CharacterHistoryGetParticipation"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-history/get-participation"),
-                TEXT("character-history"),
-                TEXT("FGetParticipationRequest"),
-                TEXT("FParticipationListResponse"),
-                TEXT("Get all historical events a character participated in")
-            });
-            Registry.Add(TEXT("CharacterHistoryGetEventParticipants"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-history/get-event-participants"),
-                TEXT("character-history"),
-                TEXT("FGetEventParticipantsRequest"),
-                TEXT("FParticipationListResponse"),
-                TEXT("Get all characters who participated in a historical event")
-            });
-            Registry.Add(TEXT("CharacterHistoryGetBackstory"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-history/get-backstory"),
-                TEXT("character-history"),
-                TEXT("FGetBackstoryRequest"),
-                TEXT("FBackstoryResponse"),
-                TEXT("Get machine-readable backstory elements for behavior system")
-            });
-            Registry.Add(TEXT("CharacterHistoryGetCompressData"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-history/get-compress-data"),
-                TEXT("character-history"),
-                TEXT("FGetCompressDataRequest"),
-                TEXT("FCharacterHistoryArchive"),
-                TEXT("Get history data for compression")
-            });
-            Registry.Add(TEXT("CharacterPersonalityGetPersonality"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-personality/get"),
+                TEXT("/character-personality/set"),
                 TEXT("character-personality"),
-                TEXT("FGetPersonalityRequest"),
+                TEXT("FSetPersonalityRequest"),
                 TEXT("FPersonalityResponse"),
-                TEXT("Get personality for a character")
+                TEXT("Create or update personality for a character")
             });
-            Registry.Add(TEXT("CharacterPersonalityRecordExperience"), FEndpointInfo{
+            Registry.Add(TEXT("CharacterPersonalitySetCombatPreferences"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/character-personality/evolve"),
+                TEXT("/character-personality/set-combat"),
                 TEXT("character-personality"),
-                TEXT("FRecordExperienceRequest"),
-                TEXT("FExperienceResult"),
-                TEXT("Record an experience that may evolve personality")
-            });
-            Registry.Add(TEXT("CharacterPersonalityBatchGetPersonalities"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-personality/batch-get"),
-                TEXT("character-personality"),
-                TEXT("FBatchGetPersonalitiesRequest"),
-                TEXT("FBatchPersonalityResponse"),
-                TEXT("Get personalities for multiple characters")
-            });
-            Registry.Add(TEXT("CharacterPersonalityGetCombatPreferences"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-personality/get-combat"),
-                TEXT("character-personality"),
-                TEXT("FGetCombatPreferencesRequest"),
+                TEXT("FSetCombatPreferencesRequest"),
                 TEXT("FCombatPreferencesResponse"),
-                TEXT("Get combat preferences for a character")
-            });
-            Registry.Add(TEXT("CharacterPersonalityEvolveCombatPreferences"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-personality/evolve-combat"),
-                TEXT("character-personality"),
-                TEXT("FEvolveCombatRequest"),
-                TEXT("FCombatEvolutionResult"),
-                TEXT("Record combat experience that may evolve preferences")
-            });
-            Registry.Add(TEXT("CharacterPersonalityGetCompressData"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-personality/get-compress-data"),
-                TEXT("character-personality"),
-                TEXT("FGetCompressDataRequest"),
-                TEXT("FCharacterPersonalityArchive"),
-                TEXT("Get personality data for compression")
-            });
-            Registry.Add(TEXT("CharacterPersonalityCleanupByCharacter"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/character-personality/cleanup-by-character"),
-                TEXT("character-personality"),
-                TEXT("FCleanupByCharacterRequest"),
-                TEXT("FCleanupByCharacterResponse"),
-                TEXT("Cleanup all personality data for a deleted character")
+                TEXT("Create or update combat preferences for a character")
             });
             Registry.Add(TEXT("ChatRegisterRoomType"), FEndpointInfo{
                 TEXT("POST"),
@@ -2869,14 +2228,6 @@ namespace Bannou
                 TEXT("FChatMessageResponse"),
                 TEXT("Send a message to a room")
             });
-            Registry.Add(TEXT("ChatSendMessageBatch"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/chat/message/send-batch"),
-                TEXT("chat"),
-                TEXT("FSendMessageBatchRequest"),
-                TEXT("FSendMessageBatchResponse"),
-                TEXT("Send multiple messages")
-            });
             Registry.Add(TEXT("ChatGetMessageHistory"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/chat/message/history"),
@@ -2916,30 +2267,6 @@ namespace Bannou
                 TEXT("FSearchMessagesRequest"),
                 TEXT("FSearchMessagesResponse"),
                 TEXT("Full-text search in persistent rooms")
-            });
-            Registry.Add(TEXT("ChatAdminListRooms"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/chat/admin/rooms"),
-                TEXT("chat"),
-                TEXT("FAdminListRoomsRequest"),
-                TEXT("FListRoomsResponse"),
-                TEXT("List all rooms system-wide")
-            });
-            Registry.Add(TEXT("ChatAdminGetStats"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/chat/admin/stats"),
-                TEXT("chat"),
-                TEXT("FAdminGetStatsRequest"),
-                TEXT("FAdminStatsResponse"),
-                TEXT("Room and message statistics")
-            });
-            Registry.Add(TEXT("ChatAdminForceCleanup"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/chat/admin/cleanup"),
-                TEXT("chat"),
-                TEXT("FAdminForceCleanupRequest"),
-                TEXT("FAdminCleanupResponse"),
-                TEXT("Force cleanup of idle rooms")
             });
             Registry.Add(TEXT("ConnectGetClientCapabilities"), FEndpointInfo{
                 TEXT("POST"),
@@ -3116,14 +2443,6 @@ namespace Bannou
                 TEXT("FAdvanceDiscoveryRequest"),
                 TEXT("FAdvanceDiscoveryResponse"),
                 TEXT("Advance progressive discovery level")
-            });
-            Registry.Add(TEXT("CollectionCleanupByCharacter"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/collection/cleanup-by-character"),
-                TEXT("collection"),
-                TEXT("FCleanupByCharacterRequest"),
-                TEXT("FCleanupByCharacterResponse"),
-                TEXT("Cleanup all collections for a deleted character")
             });
             Registry.Add(TEXT("BehaviorCompileAbmlBehavior"), FEndpointInfo{
                 TEXT("POST"),
@@ -3349,45 +2668,13 @@ namespace Bannou
                 TEXT("FExecuteContractResponse"),
                 TEXT("Execute all contract clauses (idempotent)")
             });
-            Registry.Add(TEXT("CurrencyGetCurrencyDefinition"), FEndpointInfo{
+            Registry.Add(TEXT("CurrencyUpdateCurrencyDefinition"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/currency/definition/get"),
+                TEXT("/currency/definition/update"),
                 TEXT("currency"),
-                TEXT("FGetCurrencyDefinitionRequest"),
+                TEXT("FUpdateCurrencyDefinitionRequest"),
                 TEXT("FCurrencyDefinitionResponse"),
-                TEXT("Get currency definition by ID or code")
-            });
-            Registry.Add(TEXT("CurrencyListCurrencyDefinitions"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/definition/list"),
-                TEXT("currency"),
-                TEXT("FListCurrencyDefinitionsRequest"),
-                TEXT("FListCurrencyDefinitionsResponse"),
-                TEXT("List currency definitions with filters")
-            });
-            Registry.Add(TEXT("CurrencyCreateWallet"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/wallet/create"),
-                TEXT("currency"),
-                TEXT("FCreateWalletRequest"),
-                TEXT("FWalletResponse"),
-                TEXT("Create a new wallet for an owner")
-            });
-            Registry.Add(TEXT("CurrencyGetWallet"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/wallet/get"),
-                TEXT("currency"),
-                TEXT("FGetWalletRequest"),
-                TEXT("FWalletWithBalancesResponse"),
-                TEXT("Get wallet by ID or owner")
-            });
-            Registry.Add(TEXT("CurrencyGetOrCreateWallet"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/wallet/get-or-create"),
-                TEXT("currency"),
-                TEXT("FGetOrCreateWalletRequest"),
-                TEXT("FGetOrCreateWalletResponse"),
-                TEXT("Get existing wallet or create if not exists")
+                TEXT("Update mutable fields of a currency definition")
             });
             Registry.Add(TEXT("CurrencyGetBalance"), FEndpointInfo{
                 TEXT("POST"),
@@ -3405,46 +2692,6 @@ namespace Bannou
                 TEXT("FBatchGetBalancesResponse"),
                 TEXT("Get multiple balances in one call")
             });
-            Registry.Add(TEXT("CurrencyCreditCurrency"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/credit"),
-                TEXT("currency"),
-                TEXT("FCreditCurrencyRequest"),
-                TEXT("FCreditCurrencyResponse"),
-                TEXT("Credit currency to a wallet (faucet operation)")
-            });
-            Registry.Add(TEXT("CurrencyDebitCurrency"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/debit"),
-                TEXT("currency"),
-                TEXT("FDebitCurrencyRequest"),
-                TEXT("FDebitCurrencyResponse"),
-                TEXT("Debit currency from a wallet (sink operation)")
-            });
-            Registry.Add(TEXT("CurrencyTransferCurrency"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/transfer"),
-                TEXT("currency"),
-                TEXT("FTransferCurrencyRequest"),
-                TEXT("FTransferCurrencyResponse"),
-                TEXT("Transfer currency between wallets")
-            });
-            Registry.Add(TEXT("CurrencyBatchCreditCurrency"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/batch-credit"),
-                TEXT("currency"),
-                TEXT("FBatchCreditRequest"),
-                TEXT("FBatchCreditResponse"),
-                TEXT("Credit multiple wallets in one call")
-            });
-            Registry.Add(TEXT("CurrencyBatchDebitCurrency"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/batch-debit"),
-                TEXT("currency"),
-                TEXT("FBatchDebitRequest"),
-                TEXT("FBatchDebitResponse"),
-                TEXT("Debit multiple wallets in one call")
-            });
             Registry.Add(TEXT("CurrencyCalculateConversion"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/currency/convert/calculate"),
@@ -3452,14 +2699,6 @@ namespace Bannou
                 TEXT("FCalculateConversionRequest"),
                 TEXT("FCalculateConversionResponse"),
                 TEXT("Calculate conversion without executing")
-            });
-            Registry.Add(TEXT("CurrencyExecuteConversion"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/convert/execute"),
-                TEXT("currency"),
-                TEXT("FExecuteConversionRequest"),
-                TEXT("FExecuteConversionResponse"),
-                TEXT("Execute currency conversion in a wallet")
             });
             Registry.Add(TEXT("CurrencyGetExchangeRate"), FEndpointInfo{
                 TEXT("POST"),
@@ -3469,13 +2708,13 @@ namespace Bannou
                 TEXT("FGetExchangeRateResponse"),
                 TEXT("Get exchange rate between two currencies")
             });
-            Registry.Add(TEXT("CurrencyGetTransaction"), FEndpointInfo{
+            Registry.Add(TEXT("CurrencyUpdateExchangeRate"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/currency/transaction/get"),
+                TEXT("/currency/exchange-rate/update"),
                 TEXT("currency"),
-                TEXT("FGetTransactionRequest"),
-                TEXT("FTransactionResponse"),
-                TEXT("Get a transaction by ID")
+                TEXT("FUpdateExchangeRateRequest"),
+                TEXT("FUpdateExchangeRateResponse"),
+                TEXT("Update a currency's exchange rate to base")
             });
             Registry.Add(TEXT("CurrencyGetTransactionHistory"), FEndpointInfo{
                 TEXT("POST"),
@@ -3485,293 +2724,85 @@ namespace Bannou
                 TEXT("FGetTransactionHistoryResponse"),
                 TEXT("Get paginated transaction history for a wallet")
             });
-            Registry.Add(TEXT("CurrencyGetTransactionsByReference"), FEndpointInfo{
+            Registry.Add(TEXT("DocumentationCreateDocument"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/currency/transaction/by-reference"),
-                TEXT("currency"),
-                TEXT("FGetTransactionsByReferenceRequest"),
-                TEXT("FGetTransactionsByReferenceResponse"),
-                TEXT("Get transactions by reference type and ID")
-            });
-            Registry.Add(TEXT("CurrencyGetGlobalSupply"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/stats/global-supply"),
-                TEXT("currency"),
-                TEXT("FGetGlobalSupplyRequest"),
-                TEXT("FGetGlobalSupplyResponse"),
-                TEXT("Get global supply statistics for a currency")
-            });
-            Registry.Add(TEXT("CurrencyEscrowDeposit"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/escrow/deposit"),
-                TEXT("currency"),
-                TEXT("FEscrowDepositRequest"),
-                TEXT("FEscrowDepositResponse"),
-                TEXT("Debit wallet for escrow deposit")
-            });
-            Registry.Add(TEXT("CurrencyEscrowRelease"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/escrow/release"),
-                TEXT("currency"),
-                TEXT("FEscrowReleaseRequest"),
-                TEXT("FEscrowReleaseResponse"),
-                TEXT("Credit recipient on escrow completion")
-            });
-            Registry.Add(TEXT("CurrencyEscrowRefund"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/escrow/refund"),
-                TEXT("currency"),
-                TEXT("FEscrowRefundRequest"),
-                TEXT("FEscrowRefundResponse"),
-                TEXT("Credit depositor on escrow refund")
-            });
-            Registry.Add(TEXT("CurrencyCreateHold"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/hold/create"),
-                TEXT("currency"),
-                TEXT("FCreateHoldRequest"),
-                TEXT("FHoldResponse"),
-                TEXT("Create an authorization hold (reserve funds)")
-            });
-            Registry.Add(TEXT("CurrencyCaptureHold"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/hold/capture"),
-                TEXT("currency"),
-                TEXT("FCaptureHoldRequest"),
-                TEXT("FCaptureHoldResponse"),
-                TEXT("Capture held funds (debit final amount)")
-            });
-            Registry.Add(TEXT("CurrencyReleaseHold"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/hold/release"),
-                TEXT("currency"),
-                TEXT("FReleaseHoldRequest"),
-                TEXT("FHoldResponse"),
-                TEXT("Release held funds (make available again)")
-            });
-            Registry.Add(TEXT("CurrencyGetHold"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/currency/hold/get"),
-                TEXT("currency"),
-                TEXT("FGetHoldRequest"),
-                TEXT("FHoldResponse"),
-                TEXT("Get hold status and details")
-            });
-            Registry.Add(TEXT("DivineCreateDeity"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/deity/create"),
-                TEXT("divine"),
-                TEXT("FCreateDeityRequest"),
-                TEXT("FDeityResponse"),
-                TEXT("Create a new deity")
-            });
-            Registry.Add(TEXT("DivineGetDeity"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/deity/get"),
-                TEXT("divine"),
-                TEXT("FGetDeityRequest"),
-                TEXT("FDeityResponse"),
-                TEXT("Get a deity by ID")
-            });
-            Registry.Add(TEXT("DivineGetDeityByCode"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/deity/get-by-code"),
-                TEXT("divine"),
-                TEXT("FGetDeityByCodeRequest"),
-                TEXT("FDeityResponse"),
-                TEXT("Get a deity by code within a game service")
-            });
-            Registry.Add(TEXT("DivineListDeities"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/deity/list"),
-                TEXT("divine"),
-                TEXT("FListDeitiesRequest"),
-                TEXT("FListDeitiesResponse"),
-                TEXT("List deities with optional filters")
-            });
-            Registry.Add(TEXT("DivineUpdateDeity"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/deity/update"),
-                TEXT("divine"),
-                TEXT("FUpdateDeityRequest"),
-                TEXT("FDeityResponse"),
-                TEXT("Update deity properties")
-            });
-            Registry.Add(TEXT("DivineActivateDeity"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/deity/activate"),
-                TEXT("divine"),
-                TEXT("FActivateDeityRequest"),
-                TEXT("FDeityResponse"),
-                TEXT("Activate a dormant deity")
-            });
-            Registry.Add(TEXT("DivineDeactivateDeity"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/deity/deactivate"),
-                TEXT("divine"),
-                TEXT("FDeactivateDeityRequest"),
-                TEXT("FDeityResponse"),
-                TEXT("Deactivate an active deity")
-            });
-            Registry.Add(TEXT("DivineDeleteDeity"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/deity/delete"),
-                TEXT("divine"),
-                TEXT("FDeleteDeityRequest"),
-                TEXT(""),
-                TEXT("Delete a deity")
-            });
-            Registry.Add(TEXT("DivineGetDivinityBalance"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/divinity/get-balance"),
-                TEXT("divine"),
-                TEXT("FGetDivinityBalanceRequest"),
-                TEXT("FDivinityBalanceResponse"),
-                TEXT("Get a deity's divinity balance")
-            });
-            Registry.Add(TEXT("DivineCreditDivinity"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/divinity/credit"),
-                TEXT("divine"),
-                TEXT("FCreditDivinityRequest"),
-                TEXT("FDivinityBalanceResponse"),
-                TEXT("Credit divinity to a deity")
-            });
-            Registry.Add(TEXT("DivineDebitDivinity"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/divinity/debit"),
-                TEXT("divine"),
-                TEXT("FDebitDivinityRequest"),
-                TEXT("FDivinityBalanceResponse"),
-                TEXT("Debit divinity from a deity")
-            });
-            Registry.Add(TEXT("DivineGetDivinityHistory"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/divinity/get-history"),
-                TEXT("divine"),
-                TEXT("FGetDivinityHistoryRequest"),
-                TEXT("FDivinityHistoryResponse"),
-                TEXT("Get divinity transaction history")
-            });
-            Registry.Add(TEXT("DivineGrantBlessing"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/blessing/grant"),
-                TEXT("divine"),
-                TEXT("FGrantBlessingRequest"),
-                TEXT("FBlessingResponse"),
-                TEXT("Grant a blessing from a deity to an entity")
-            });
-            Registry.Add(TEXT("DivineRevokeBlessing"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/blessing/revoke"),
-                TEXT("divine"),
-                TEXT("FRevokeBlessingRequest"),
-                TEXT("FBlessingResponse"),
-                TEXT("Revoke an active blessing")
-            });
-            Registry.Add(TEXT("DivineListBlessingsByEntity"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/blessing/list-by-entity"),
-                TEXT("divine"),
-                TEXT("FListBlessingsByEntityRequest"),
-                TEXT("FListBlessingsResponse"),
-                TEXT("List blessings for an entity")
-            });
-            Registry.Add(TEXT("DivineListBlessingsByDeity"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/blessing/list-by-deity"),
-                TEXT("divine"),
-                TEXT("FListBlessingsByDeityRequest"),
-                TEXT("FListBlessingsResponse"),
-                TEXT("List blessings granted by a deity")
-            });
-            Registry.Add(TEXT("DivineGetBlessing"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/blessing/get"),
-                TEXT("divine"),
-                TEXT("FGetBlessingRequest"),
-                TEXT("FBlessingResponse"),
-                TEXT("Get a blessing by ID")
-            });
-            Registry.Add(TEXT("DivineRegisterFollower"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/follower/register"),
-                TEXT("divine"),
-                TEXT("FRegisterFollowerRequest"),
-                TEXT("FFollowerResponse"),
-                TEXT("Register a character as a follower of a deity")
-            });
-            Registry.Add(TEXT("DivineUnregisterFollower"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/follower/unregister"),
-                TEXT("divine"),
-                TEXT("FUnregisterFollowerRequest"),
-                TEXT(""),
-                TEXT("Unregister a character as a follower")
-            });
-            Registry.Add(TEXT("DivineGetFollowers"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/follower/get-followers"),
-                TEXT("divine"),
-                TEXT("FGetFollowersRequest"),
-                TEXT("FListFollowersResponse"),
-                TEXT("Get followers of a deity")
-            });
-            Registry.Add(TEXT("DivineCleanupByCharacter"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/cleanup-by-character"),
-                TEXT("divine"),
-                TEXT("FCleanupByCharacterRequest"),
-                TEXT(""),
-                TEXT("Cleanup divine data for a deleted character")
-            });
-            Registry.Add(TEXT("DivineCleanupByGameService"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/divine/cleanup-by-game-service"),
-                TEXT("divine"),
-                TEXT("FCleanupByGameServiceRequest"),
-                TEXT(""),
-                TEXT("Cleanup divine data for a deleted game service")
-            });
-            Registry.Add(TEXT("DocumentationQueryDocumentation"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/documentation/query"),
+                TEXT("/documentation/create"),
                 TEXT("documentation"),
-                TEXT("FQueryDocumentationRequest"),
-                TEXT("FQueryDocumentationResponse"),
-                TEXT("Natural language documentation search")
+                TEXT("FCreateDocumentRequest"),
+                TEXT("FCreateDocumentResponse"),
+                TEXT("Create new documentation entry")
             });
-            Registry.Add(TEXT("DocumentationGetDocument"), FEndpointInfo{
+            Registry.Add(TEXT("DocumentationUpdateDocument"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/documentation/get"),
+                TEXT("/documentation/update"),
                 TEXT("documentation"),
-                TEXT("FGetDocumentRequest"),
-                TEXT("FGetDocumentResponse"),
-                TEXT("Get specific document by ID or slug")
+                TEXT("FUpdateDocumentRequest"),
+                TEXT("FUpdateDocumentResponse"),
+                TEXT("Update existing documentation entry")
             });
-            Registry.Add(TEXT("DocumentationSearchDocumentation"), FEndpointInfo{
+            Registry.Add(TEXT("DocumentationDeleteDocument"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/documentation/search"),
+                TEXT("/documentation/delete"),
                 TEXT("documentation"),
-                TEXT("FSearchDocumentationRequest"),
-                TEXT("FSearchDocumentationResponse"),
-                TEXT("Full-text keyword search")
+                TEXT("FDeleteDocumentRequest"),
+                TEXT("FDeleteDocumentResponse"),
+                TEXT("Soft-delete documentation entry to trashcan")
             });
-            Registry.Add(TEXT("DocumentationListDocuments"), FEndpointInfo{
+            Registry.Add(TEXT("DocumentationRecoverDocument"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/documentation/list"),
+                TEXT("/documentation/recover"),
                 TEXT("documentation"),
-                TEXT("FListDocumentsRequest"),
-                TEXT("FListDocumentsResponse"),
-                TEXT("List documents by category")
+                TEXT("FRecoverDocumentRequest"),
+                TEXT("FRecoverDocumentResponse"),
+                TEXT("Recover document from trashcan")
             });
-            Registry.Add(TEXT("DocumentationSuggestRelatedTopics"), FEndpointInfo{
+            Registry.Add(TEXT("DocumentationBulkUpdateDocuments"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/documentation/suggest"),
+                TEXT("/documentation/bulk-update"),
                 TEXT("documentation"),
-                TEXT("FSuggestRelatedRequest"),
-                TEXT("FSuggestRelatedResponse"),
-                TEXT("Get related topics and follow-up suggestions")
+                TEXT("FBulkUpdateRequest"),
+                TEXT("FBulkUpdateResponse"),
+                TEXT("Bulk update document metadata")
+            });
+            Registry.Add(TEXT("DocumentationBulkDeleteDocuments"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/documentation/bulk-delete"),
+                TEXT("documentation"),
+                TEXT("FBulkDeleteRequest"),
+                TEXT("FBulkDeleteResponse"),
+                TEXT("Bulk soft-delete documents to trashcan")
+            });
+            Registry.Add(TEXT("DocumentationImportDocumentation"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/documentation/import"),
+                TEXT("documentation"),
+                TEXT("FImportDocumentationRequest"),
+                TEXT("FImportDocumentationResponse"),
+                TEXT("Bulk import documentation from structured source")
+            });
+            Registry.Add(TEXT("DocumentationListTrashcan"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/documentation/trashcan"),
+                TEXT("documentation"),
+                TEXT("FListTrashcanRequest"),
+                TEXT("FListTrashcanResponse"),
+                TEXT("List documents in the trashcan")
+            });
+            Registry.Add(TEXT("DocumentationPurgeTrashcan"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/documentation/purge"),
+                TEXT("documentation"),
+                TEXT("FPurgeTrashcanRequest"),
+                TEXT("FPurgeTrashcanResponse"),
+                TEXT("Permanently delete trashcan items")
+            });
+            Registry.Add(TEXT("DocumentationGetNamespaceStats"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/documentation/stats"),
+                TEXT("documentation"),
+                TEXT("FGetNamespaceStatsRequest"),
+                TEXT("FNamespaceStatsResponse"),
+                TEXT("Get namespace documentation statistics")
             });
             Registry.Add(TEXT("DocumentationBindRepository"), FEndpointInfo{
                 TEXT("POST"),
@@ -3780,6 +2811,14 @@ namespace Bannou
                 TEXT("FBindRepositoryRequest"),
                 TEXT("FBindRepositoryResponse"),
                 TEXT("Bind a git repository to a documentation namespace")
+            });
+            Registry.Add(TEXT("DocumentationUnbindRepository"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/documentation/repo/unbind"),
+                TEXT("documentation"),
+                TEXT("FUnbindRepositoryRequest"),
+                TEXT("FUnbindRepositoryResponse"),
+                TEXT("Remove repository binding from namespace")
             });
             Registry.Add(TEXT("DocumentationSyncRepository"), FEndpointInfo{
                 TEXT("POST"),
@@ -3829,13 +2868,21 @@ namespace Bannou
                 TEXT("FListArchivesResponse"),
                 TEXT("List documentation archives")
             });
-            Registry.Add(TEXT("EscrowCreateEscrow"), FEndpointInfo{
+            Registry.Add(TEXT("DocumentationRestoreDocumentationArchive"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/escrow/create"),
-                TEXT("escrow"),
-                TEXT("FCreateEscrowRequest"),
-                TEXT("FCreateEscrowResponse"),
-                TEXT("Create a new escrow agreement")
+                TEXT("/documentation/repo/archive/restore"),
+                TEXT("documentation"),
+                TEXT("FRestoreArchiveRequest"),
+                TEXT("FRestoreArchiveResponse"),
+                TEXT("Restore documentation from archive")
+            });
+            Registry.Add(TEXT("DocumentationDeleteDocumentationArchive"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/documentation/repo/archive/delete"),
+                TEXT("documentation"),
+                TEXT("FDeleteArchiveRequest"),
+                TEXT("FDeleteArchiveResponse"),
+                TEXT("Delete documentation archive")
             });
             Registry.Add(TEXT("EscrowGetEscrow"), FEndpointInfo{
                 TEXT("POST"),
@@ -3893,30 +2940,6 @@ namespace Bannou
                 TEXT("FGetConsentStatusResponse"),
                 TEXT("Get consent status for escrow")
             });
-            Registry.Add(TEXT("EscrowRelease"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/escrow/release"),
-                TEXT("escrow"),
-                TEXT("FReleaseRequest"),
-                TEXT("FReleaseResponse"),
-                TEXT("Trigger release")
-            });
-            Registry.Add(TEXT("EscrowRefund"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/escrow/refund"),
-                TEXT("escrow"),
-                TEXT("FRefundRequest"),
-                TEXT("FRefundResponse"),
-                TEXT("Trigger refund")
-            });
-            Registry.Add(TEXT("EscrowCancel"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/escrow/cancel"),
-                TEXT("escrow"),
-                TEXT("FCancelRequest"),
-                TEXT("FCancelResponse"),
-                TEXT("Cancel escrow before fully funded")
-            });
             Registry.Add(TEXT("EscrowDispute"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/escrow/dispute"),
@@ -3940,22 +2963,6 @@ namespace Bannou
                 TEXT("FConfirmRefundRequest"),
                 TEXT("FConfirmRefundResponse"),
                 TEXT("Confirm receipt of refunded assets")
-            });
-            Registry.Add(TEXT("EscrowResolve"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/escrow/resolve"),
-                TEXT("escrow"),
-                TEXT("FResolveRequest"),
-                TEXT("FResolveResponse"),
-                TEXT("Arbiter resolves disputed escrow")
-            });
-            Registry.Add(TEXT("EscrowVerifyCondition"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/escrow/verify-condition"),
-                TEXT("escrow"),
-                TEXT("FVerifyConditionRequest"),
-                TEXT("FVerifyConditionResponse"),
-                TEXT("Verify condition for conditional escrow")
             });
             Registry.Add(TEXT("EscrowReaffirm"), FEndpointInfo{
                 TEXT("POST"),
@@ -4149,54 +3156,6 @@ namespace Bannou
                 TEXT("FListNormsResponse"),
                 TEXT("List norms defined by a faction")
             });
-            Registry.Add(TEXT("FactionCleanupByCharacter"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/faction/cleanup-by-character"),
-                TEXT("faction"),
-                TEXT("FCleanupByCharacterRequest"),
-                TEXT("FCleanupByCharacterResponse"),
-                TEXT("Cleanup faction data for a deleted character")
-            });
-            Registry.Add(TEXT("FactionCleanupByRealm"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/faction/cleanup-by-realm"),
-                TEXT("faction"),
-                TEXT("FCleanupByRealmRequest"),
-                TEXT("FCleanupByRealmResponse"),
-                TEXT("Cleanup faction data for a deleted realm")
-            });
-            Registry.Add(TEXT("FactionCleanupByLocation"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/faction/cleanup-by-location"),
-                TEXT("faction"),
-                TEXT("FCleanupByLocationRequest"),
-                TEXT("FCleanupByLocationResponse"),
-                TEXT("Cleanup territory claims for a deleted location")
-            });
-            Registry.Add(TEXT("FactionGetCompressData"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/faction/get-compress-data"),
-                TEXT("faction"),
-                TEXT("FGetCompressDataRequest"),
-                TEXT("FFactionArchive"),
-                TEXT("Get faction data for character archival compression")
-            });
-            Registry.Add(TEXT("GameServiceListServices"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/game-service/services/list"),
-                TEXT("game-service"),
-                TEXT("FListServicesRequest"),
-                TEXT("FListServicesResponse"),
-                TEXT("List all registered game services")
-            });
-            Registry.Add(TEXT("GameServiceGetService"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/game-service/services/get"),
-                TEXT("game-service"),
-                TEXT("FGetServiceRequest"),
-                TEXT("FServiceInfo"),
-                TEXT("Get service by ID or stub name")
-            });
             Registry.Add(TEXT("GardenerEnterGarden"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/gardener/garden/enter"),
@@ -4389,22 +3348,6 @@ namespace Bannou
                 TEXT("FSharedGardenStateResponse"),
                 TEXT("Get shared garden state for bonded players")
             });
-            Registry.Add(TEXT("BehaviorGenerateGoapPlan"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/goap/plan"),
-                TEXT("goap"),
-                TEXT("FGoapPlanRequest"),
-                TEXT("FGoapPlanResponse"),
-                TEXT("Generate GOAP plan")
-            });
-            Registry.Add(TEXT("BehaviorValidateGoapPlan"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/goap/validate-plan"),
-                TEXT("goap"),
-                TEXT("FValidateGoapPlanRequest"),
-                TEXT("FValidateGoapPlanResponse"),
-                TEXT("Validate existing GOAP plan")
-            });
             Registry.Add(TEXT("InventoryCreateContainer"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/inventory/container/create"),
@@ -4445,22 +3388,6 @@ namespace Bannou
                 TEXT("FContainerResponse"),
                 TEXT("Update container properties")
             });
-            Registry.Add(TEXT("InventoryAddItemToContainer"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/inventory/add"),
-                TEXT("inventory"),
-                TEXT("FAddItemRequest"),
-                TEXT("FAddItemResponse"),
-                TEXT("Add item to container")
-            });
-            Registry.Add(TEXT("InventoryRemoveItemFromContainer"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/inventory/remove"),
-                TEXT("inventory"),
-                TEXT("FRemoveItemRequest"),
-                TEXT("FRemoveItemResponse"),
-                TEXT("Remove item from container")
-            });
             Registry.Add(TEXT("InventoryMoveItem"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/inventory/move"),
@@ -4468,14 +3395,6 @@ namespace Bannou
                 TEXT("FMoveItemRequest"),
                 TEXT("FMoveItemResponse"),
                 TEXT("Move item to different slot or container")
-            });
-            Registry.Add(TEXT("InventoryTransferItem"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/inventory/transfer"),
-                TEXT("inventory"),
-                TEXT("FTransferItemRequest"),
-                TEXT("FTransferItemResponse"),
-                TEXT("Transfer item to different owner")
             });
             Registry.Add(TEXT("InventorySplitStack"), FEndpointInfo{
                 TEXT("POST"),
@@ -4845,133 +3764,77 @@ namespace Bannou
                 TEXT("FCleanupByOwnerResponse"),
                 TEXT("Cleanup boards referencing a deleted owner")
             });
-            Registry.Add(TEXT("LocationGetLocation"), FEndpointInfo{
+            Registry.Add(TEXT("LocationCreateLocation"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/location/get"),
+                TEXT("/location/create"),
                 TEXT("location"),
-                TEXT("FGetLocationRequest"),
+                TEXT("FCreateLocationRequest"),
                 TEXT("FLocationResponse"),
-                TEXT("Get location by ID")
+                TEXT("Create new location")
             });
-            Registry.Add(TEXT("LocationGetLocationByCode"), FEndpointInfo{
+            Registry.Add(TEXT("LocationUpdateLocation"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/location/get-by-code"),
+                TEXT("/location/update"),
                 TEXT("location"),
-                TEXT("FGetLocationByCodeRequest"),
+                TEXT("FUpdateLocationRequest"),
                 TEXT("FLocationResponse"),
-                TEXT("Get location by code and realm")
+                TEXT("Update location")
             });
-            Registry.Add(TEXT("LocationListLocations"), FEndpointInfo{
+            Registry.Add(TEXT("LocationSetLocationParent"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/location/list"),
+                TEXT("/location/set-parent"),
                 TEXT("location"),
-                TEXT("FListLocationsRequest"),
-                TEXT("FLocationListResponse"),
-                TEXT("List locations with filtering")
+                TEXT("FSetLocationParentRequest"),
+                TEXT("FLocationResponse"),
+                TEXT("Set or change the parent of a location")
             });
-            Registry.Add(TEXT("LocationListLocationsByRealm"), FEndpointInfo{
+            Registry.Add(TEXT("LocationRemoveLocationParent"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/location/list-by-realm"),
+                TEXT("/location/remove-parent"),
                 TEXT("location"),
-                TEXT("FListLocationsByRealmRequest"),
-                TEXT("FLocationListResponse"),
-                TEXT("List all locations in a realm (primary query pattern)")
+                TEXT("FRemoveLocationParentRequest"),
+                TEXT("FLocationResponse"),
+                TEXT("Remove parent from a location (make it a root location)")
             });
-            Registry.Add(TEXT("LocationListLocationsByParent"), FEndpointInfo{
+            Registry.Add(TEXT("LocationDeleteLocation"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/location/list-by-parent"),
+                TEXT("/location/delete"),
                 TEXT("location"),
-                TEXT("FListLocationsByParentRequest"),
-                TEXT("FLocationListResponse"),
-                TEXT("Get child locations for a parent location")
+                TEXT("FDeleteLocationRequest"),
+                TEXT(""),
+                TEXT("Delete location")
             });
-            Registry.Add(TEXT("LocationListRootLocations"), FEndpointInfo{
+            Registry.Add(TEXT("LocationTransferLocationToRealm"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/location/list-root"),
+                TEXT("/location/transfer-realm"),
                 TEXT("location"),
-                TEXT("FListRootLocationsRequest"),
-                TEXT("FLocationListResponse"),
-                TEXT("Get root locations in a realm")
+                TEXT("FTransferLocationToRealmRequest"),
+                TEXT("FLocationResponse"),
+                TEXT("Transfer a location to a different realm")
             });
-            Registry.Add(TEXT("LocationGetLocationAncestors"), FEndpointInfo{
+            Registry.Add(TEXT("LocationDeprecateLocation"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/location/get-ancestors"),
+                TEXT("/location/deprecate"),
                 TEXT("location"),
-                TEXT("FGetLocationAncestorsRequest"),
-                TEXT("FLocationListResponse"),
-                TEXT("Get all ancestors of a location")
+                TEXT("FDeprecateLocationRequest"),
+                TEXT("FLocationResponse"),
+                TEXT("Deprecate a location")
             });
-            Registry.Add(TEXT("LocationValidateTerritory"), FEndpointInfo{
+            Registry.Add(TEXT("LocationUndeprecateLocation"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/location/validate-territory"),
+                TEXT("/location/undeprecate"),
                 TEXT("location"),
-                TEXT("FValidateTerritoryRequest"),
-                TEXT("FValidateTerritoryResponse"),
-                TEXT("Validate location against territory boundaries")
+                TEXT("FUndeprecateLocationRequest"),
+                TEXT("FLocationResponse"),
+                TEXT("Restore a deprecated location")
             });
-            Registry.Add(TEXT("LocationGetLocationDescendants"), FEndpointInfo{
+            Registry.Add(TEXT("LocationSeedLocations"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/location/get-descendants"),
+                TEXT("/location/seed"),
                 TEXT("location"),
-                TEXT("FGetLocationDescendantsRequest"),
-                TEXT("FLocationListResponse"),
-                TEXT("Get all descendants of a location")
-            });
-            Registry.Add(TEXT("LocationLocationExists"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/location/exists"),
-                TEXT("location"),
-                TEXT("FLocationExistsRequest"),
-                TEXT("FLocationExistsResponse"),
-                TEXT("Check if location exists and is active")
-            });
-            Registry.Add(TEXT("LocationQueryLocationsByPosition"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/location/query/by-position"),
-                TEXT("location"),
-                TEXT("FQueryLocationsByPositionRequest"),
-                TEXT("FLocationListResponse"),
-                TEXT("Find locations containing a spatial position")
-            });
-            Registry.Add(TEXT("LocationReportEntityPosition"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/location/report-entity-position"),
-                TEXT("location"),
-                TEXT("FReportEntityPositionRequest"),
-                TEXT("FReportEntityPositionResponse"),
-                TEXT("Report entity presence at a location")
-            });
-            Registry.Add(TEXT("LocationGetEntityLocation"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/location/get-entity-location"),
-                TEXT("location"),
-                TEXT("FGetEntityLocationRequest"),
-                TEXT("FGetEntityLocationResponse"),
-                TEXT("Get the current location of an entity")
-            });
-            Registry.Add(TEXT("LocationListEntitiesAtLocation"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/location/list-entities-at-location"),
-                TEXT("location"),
-                TEXT("FListEntitiesAtLocationRequest"),
-                TEXT("FListEntitiesAtLocationResponse"),
-                TEXT("List entities currently at a location")
-            });
-            Registry.Add(TEXT("LocationClearEntityPosition"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/location/clear-entity-position"),
-                TEXT("location"),
-                TEXT("FClearEntityPositionRequest"),
-                TEXT("FClearEntityPositionResponse"),
-                TEXT("Remove entity presence from its current location")
-            });
-            Registry.Add(TEXT("LocationGetLocationCompressData"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/location/get-compress-data"),
-                TEXT("location"),
-                TEXT("FGetLocationCompressDataRequest"),
-                TEXT("FLocationBaseArchive"),
-                TEXT("Get location base data for compression")
+                TEXT("FSeedLocationsRequest"),
+                TEXT("FSeedLocationsResponse"),
+                TEXT("Seed locations from configuration")
             });
             Registry.Add(TEXT("MappingRequestSnapshot"), FEndpointInfo{
                 TEXT("POST"),
@@ -5373,62 +4236,6 @@ namespace Bannou
                 TEXT("FObjectiveProgressResponse"),
                 TEXT("Get objective progress details")
             });
-            Registry.Add(TEXT("QuestGetCompressData"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/quest/get-compress-data"),
-                TEXT("quest"),
-                TEXT("FGetCompressDataRequest"),
-                TEXT("FQuestArchive"),
-                TEXT("Get quest data for compression")
-            });
-            Registry.Add(TEXT("RealmGetRealm"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/realm/get"),
-                TEXT("realm"),
-                TEXT("FGetRealmRequest"),
-                TEXT("FRealmResponse"),
-                TEXT("Get realm by ID")
-            });
-            Registry.Add(TEXT("RealmGetRealmByCode"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/realm/get-by-code"),
-                TEXT("realm"),
-                TEXT("FGetRealmByCodeRequest"),
-                TEXT("FRealmResponse"),
-                TEXT("Get realm by code")
-            });
-            Registry.Add(TEXT("RealmListRealms"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/realm/list"),
-                TEXT("realm"),
-                TEXT("FListRealmsRequest"),
-                TEXT("FRealmListResponse"),
-                TEXT("List all realms")
-            });
-            Registry.Add(TEXT("RealmRealmExists"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/realm/exists"),
-                TEXT("realm"),
-                TEXT("FRealmExistsRequest"),
-                TEXT("FRealmExistsResponse"),
-                TEXT("Check if realm exists and is active")
-            });
-            Registry.Add(TEXT("RealmRealmsExistBatch"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/realm/exists-batch"),
-                TEXT("realm"),
-                TEXT("FRealmsExistBatchRequest"),
-                TEXT("FRealmsExistBatchResponse"),
-                TEXT("Check if multiple realms exist and are active")
-            });
-            Registry.Add(TEXT("RealmGetLocationCompressContext"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/realm/get-location-compress-context"),
-                TEXT("realm"),
-                TEXT("FGetLocationCompressContextRequest"),
-                TEXT("FRealmLocationArchiveContext"),
-                TEXT("Get realm context for location archive")
-            });
             Registry.Add(TEXT("RealmHistoryGetRealmParticipation"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/realm-history/get-participation"),
@@ -5485,14 +4292,6 @@ namespace Bannou
                 TEXT("FRelationshipListResponse"),
                 TEXT("List all relationships of a specific type")
             });
-            Registry.Add(TEXT("RelationshipCleanupByEntity"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/relationship/cleanup-by-entity"),
-                TEXT("relationship"),
-                TEXT("FCleanupByEntityRequest"),
-                TEXT("FCleanupByEntityResponse"),
-                TEXT("Cleanup relationships referencing a deleted entity")
-            });
             Registry.Add(TEXT("RelationshipGetRelationshipType"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/relationship-type/get"),
@@ -5541,93 +4340,53 @@ namespace Bannou
                 TEXT("FRelationshipTypeListResponse"),
                 TEXT("Get all ancestors of a relationship type")
             });
-            Registry.Add(TEXT("ResourceRegisterReference"), FEndpointInfo{
+            Registry.Add(TEXT("RelationshipCreateRelationshipType"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/resource/register"),
-                TEXT("resource"),
-                TEXT("FRegisterReferenceRequest"),
-                TEXT("FRegisterReferenceResponse"),
-                TEXT("Register a reference to a resource")
+                TEXT("/relationship-type/create"),
+                TEXT("relationship-type"),
+                TEXT("FCreateRelationshipTypeRequest"),
+                TEXT("FRelationshipTypeResponse"),
+                TEXT("Create new relationship type")
             });
-            Registry.Add(TEXT("ResourceUnregisterReference"), FEndpointInfo{
+            Registry.Add(TEXT("RelationshipUpdateRelationshipType"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/resource/unregister"),
-                TEXT("resource"),
-                TEXT("FUnregisterReferenceRequest"),
-                TEXT("FUnregisterReferenceResponse"),
-                TEXT("Remove a reference to a resource")
+                TEXT("/relationship-type/update"),
+                TEXT("relationship-type"),
+                TEXT("FUpdateRelationshipTypeRequest"),
+                TEXT("FRelationshipTypeResponse"),
+                TEXT("Update relationship type")
             });
-            Registry.Add(TEXT("ResourceCheckReferences"), FEndpointInfo{
+            Registry.Add(TEXT("RelationshipDeleteRelationshipType"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/resource/check"),
-                TEXT("resource"),
-                TEXT("FCheckReferencesRequest"),
-                TEXT("FCheckReferencesResponse"),
-                TEXT("Check reference count and cleanup eligibility")
+                TEXT("/relationship-type/delete"),
+                TEXT("relationship-type"),
+                TEXT("FDeleteRelationshipTypeRequest"),
+                TEXT(""),
+                TEXT("Delete relationship type")
             });
-            Registry.Add(TEXT("ResourceListReferences"), FEndpointInfo{
+            Registry.Add(TEXT("RelationshipDeprecateRelationshipType"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/resource/list"),
-                TEXT("resource"),
-                TEXT("FListReferencesRequest"),
-                TEXT("FListReferencesResponse"),
-                TEXT("List all references to a resource")
+                TEXT("/relationship-type/deprecate"),
+                TEXT("relationship-type"),
+                TEXT("FDeprecateRelationshipTypeRequest"),
+                TEXT("FRelationshipTypeResponse"),
+                TEXT("Deprecate a relationship type")
             });
-            Registry.Add(TEXT("ResourceExecuteCleanup"), FEndpointInfo{
+            Registry.Add(TEXT("RelationshipUndeprecateRelationshipType"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/resource/cleanup/execute"),
-                TEXT("resource"),
-                TEXT("FExecuteCleanupRequest"),
-                TEXT("FExecuteCleanupResponse"),
-                TEXT("Execute cleanup for a resource")
+                TEXT("/relationship-type/undeprecate"),
+                TEXT("relationship-type"),
+                TEXT("FUndeprecateRelationshipTypeRequest"),
+                TEXT("FRelationshipTypeResponse"),
+                TEXT("Restore a deprecated relationship type")
             });
-            Registry.Add(TEXT("ResourceListCleanupCallbacks"), FEndpointInfo{
+            Registry.Add(TEXT("RelationshipMergeRelationshipType"), FEndpointInfo{
                 TEXT("POST"),
-                TEXT("/resource/cleanup/list"),
-                TEXT("resource"),
-                TEXT("FListCleanupCallbacksRequest"),
-                TEXT("FListCleanupCallbacksResponse"),
-                TEXT("List registered cleanup callbacks")
-            });
-            Registry.Add(TEXT("ResourceExecuteCompress"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/resource/compress/execute"),
-                TEXT("resource"),
-                TEXT("FExecuteCompressRequest"),
-                TEXT("FExecuteCompressResponse"),
-                TEXT("Compress a resource and all dependents")
-            });
-            Registry.Add(TEXT("ResourceListCompressCallbacks"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/resource/compress/list"),
-                TEXT("resource"),
-                TEXT("FListCompressCallbacksRequest"),
-                TEXT("FListCompressCallbacksResponse"),
-                TEXT("List registered compression callbacks")
-            });
-            Registry.Add(TEXT("ResourceGetArchive"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/resource/archive/get"),
-                TEXT("resource"),
-                TEXT("FGetArchiveRequest"),
-                TEXT("FGetArchiveResponse"),
-                TEXT("Retrieve compressed archive")
-            });
-            Registry.Add(TEXT("ResourceExecuteSnapshot"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/resource/snapshot/execute"),
-                TEXT("resource"),
-                TEXT("FExecuteSnapshotRequest"),
-                TEXT("FExecuteSnapshotResponse"),
-                TEXT("Create ephemeral snapshot of a living resource")
-            });
-            Registry.Add(TEXT("ResourceGetSnapshot"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/resource/snapshot/get"),
-                TEXT("resource"),
-                TEXT("FGetSnapshotRequest"),
-                TEXT("FGetSnapshotResponse"),
-                TEXT("Retrieve an ephemeral snapshot")
+                TEXT("/relationship-type/merge"),
+                TEXT("relationship-type"),
+                TEXT("FMergeRelationshipTypeRequest"),
+                TEXT("FMergeRelationshipTypeResponse"),
+                TEXT("Merge a deprecated type into another type")
             });
             Registry.Add(TEXT("SaveLoadCreateSlot"), FEndpointInfo{
                 TEXT("POST"),
@@ -5997,22 +4756,6 @@ namespace Bannou
                 TEXT("FGrowthResponse"),
                 TEXT("Get full growth domain map")
             });
-            Registry.Add(TEXT("SeedRecordGrowth"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/seed/growth/record"),
-                TEXT("seed"),
-                TEXT("FRecordGrowthRequest"),
-                TEXT("FGrowthResponse"),
-                TEXT("Record growth in a domain")
-            });
-            Registry.Add(TEXT("SeedRecordGrowthBatch"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/seed/growth/record-batch"),
-                TEXT("seed"),
-                TEXT("FRecordGrowthBatchRequest"),
-                TEXT("FGrowthResponse"),
-                TEXT("Record growth across multiple domains atomically")
-            });
             Registry.Add(TEXT("SeedGetGrowthPhase"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/seed/growth/get-phase"),
@@ -6164,38 +4907,6 @@ namespace Bannou
                 TEXT("FLeaveGameSessionByIdRequest"),
                 TEXT(""),
                 TEXT("Leave a specific game session by ID")
-            });
-            Registry.Add(TEXT("SpeciesGetSpecies"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/species/get"),
-                TEXT("species"),
-                TEXT("FGetSpeciesRequest"),
-                TEXT("FSpeciesResponse"),
-                TEXT("Get species by ID")
-            });
-            Registry.Add(TEXT("SpeciesGetSpeciesByCode"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/species/get-by-code"),
-                TEXT("species"),
-                TEXT("FGetSpeciesByCodeRequest"),
-                TEXT("FSpeciesResponse"),
-                TEXT("Get species by code")
-            });
-            Registry.Add(TEXT("SpeciesListSpecies"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/species/list"),
-                TEXT("species"),
-                TEXT("FListSpeciesRequest"),
-                TEXT("FSpeciesListResponse"),
-                TEXT("List all species")
-            });
-            Registry.Add(TEXT("SpeciesListSpeciesByRealm"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/species/list-by-realm"),
-                TEXT("species"),
-                TEXT("FListSpeciesByRealmRequest"),
-                TEXT("FSpeciesListResponse"),
-                TEXT("List species available in a realm")
             });
             Registry.Add(TEXT("StatusCreateStatusTemplate"), FEndpointInfo{
                 TEXT("POST"),
@@ -6420,22 +5131,6 @@ namespace Bannou
                 TEXT("FGetCompressDataRequest"),
                 TEXT("FStorylineArchive"),
                 TEXT("Get storyline data for compression")
-            });
-            Registry.Add(TEXT("SubscriptionGetAccountSubscriptions"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/subscription/account/list"),
-                TEXT("subscription"),
-                TEXT("FGetAccountSubscriptionsRequest"),
-                TEXT("FSubscriptionListResponse"),
-                TEXT("Get subscriptions for an account")
-            });
-            Registry.Add(TEXT("SubscriptionGetSubscription"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/subscription/get"),
-                TEXT("subscription"),
-                TEXT("FGetSubscriptionRequest"),
-                TEXT("FSubscriptionInfo"),
-                TEXT("Get a specific subscription by ID")
             });
             Registry.Add(TEXT("SubscriptionCancelSubscription"), FEndpointInfo{
                 TEXT("POST"),
@@ -6701,6 +5396,22 @@ namespace Bannou
                 TEXT("FValidateAbmlResponse"),
                 TEXT("Validate ABML definition")
             });
+            Registry.Add(TEXT("VoiceJoinVoiceRoom"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/voice/room/join"),
+                TEXT("voice"),
+                TEXT("FJoinVoiceRoomRequest"),
+                TEXT("FJoinVoiceRoomResponse"),
+                TEXT("Join voice room and register SIP endpoint")
+            });
+            Registry.Add(TEXT("VoiceLeaveVoiceRoom"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/voice/room/leave"),
+                TEXT("voice"),
+                TEXT("FLeaveVoiceRoomRequest"),
+                TEXT(""),
+                TEXT("Leave voice room")
+            });
             Registry.Add(TEXT("VoiceAnswerPeer"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/voice/peer/answer"),
@@ -6853,46 +5564,6 @@ namespace Bannou
                 TEXT(""),
                 TEXT("Update theme configuration")
             });
-            Registry.Add(TEXT("WorldstateGetRealmTime"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/worldstate/clock/get-realm-time"),
-                TEXT("worldstate"),
-                TEXT("FGetRealmTimeRequest"),
-                TEXT("FGameTimeSnapshot"),
-                TEXT("Get current game time for a realm")
-            });
-            Registry.Add(TEXT("WorldstateGetRealmTimeByCode"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/worldstate/clock/get-realm-time-by-code"),
-                TEXT("worldstate"),
-                TEXT("FGetRealmTimeByCodeRequest"),
-                TEXT("FGameTimeSnapshot"),
-                TEXT("Get current game time by realm code")
-            });
-            Registry.Add(TEXT("WorldstateBatchGetRealmTimes"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/worldstate/clock/batch-get-realm-times"),
-                TEXT("worldstate"),
-                TEXT("FBatchGetRealmTimesRequest"),
-                TEXT("FBatchGetRealmTimesResponse"),
-                TEXT("Get current game time for multiple realms")
-            });
-            Registry.Add(TEXT("WorldstateGetElapsedGameTime"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/worldstate/clock/get-elapsed-game-time"),
-                TEXT("worldstate"),
-                TEXT("FGetElapsedGameTimeRequest"),
-                TEXT("FGetElapsedGameTimeResponse"),
-                TEXT("Compute elapsed game-time between two real timestamps")
-            });
-            Registry.Add(TEXT("WorldstateTriggerTimeSync"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/worldstate/clock/trigger-sync"),
-                TEXT("worldstate"),
-                TEXT("FTriggerTimeSyncRequest"),
-                TEXT("FTriggerTimeSyncResponse"),
-                TEXT("Trigger a time sync event for an entity's sessions")
-            });
             Registry.Add(TEXT("WorldstateInitializeRealmClock"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/worldstate/clock/initialize"),
@@ -6925,22 +5596,6 @@ namespace Bannou
                 TEXT("FCalendarTemplateResponse"),
                 TEXT("Create a calendar template")
             });
-            Registry.Add(TEXT("WorldstateGetCalendar"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/worldstate/calendar/get"),
-                TEXT("worldstate"),
-                TEXT("FGetCalendarRequest"),
-                TEXT("FCalendarTemplateResponse"),
-                TEXT("Get a calendar template")
-            });
-            Registry.Add(TEXT("WorldstateListCalendars"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/worldstate/calendar/list"),
-                TEXT("worldstate"),
-                TEXT("FListCalendarsRequest"),
-                TEXT("FListCalendarsResponse"),
-                TEXT("List calendar templates for a game service")
-            });
             Registry.Add(TEXT("WorldstateUpdateCalendar"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/worldstate/calendar/update"),
@@ -6957,14 +5612,6 @@ namespace Bannou
                 TEXT("FDeleteCalendarResponse"),
                 TEXT("Delete a calendar template")
             });
-            Registry.Add(TEXT("WorldstateGetRealmConfig"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/worldstate/realm-config/get"),
-                TEXT("worldstate"),
-                TEXT("FGetRealmConfigRequest"),
-                TEXT("FRealmConfigResponse"),
-                TEXT("Get realm worldstate configuration")
-            });
             Registry.Add(TEXT("WorldstateUpdateRealmConfig"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/worldstate/realm-config/update"),
@@ -6972,14 +5619,6 @@ namespace Bannou
                 TEXT("FUpdateRealmConfigRequest"),
                 TEXT("FRealmConfigResponse"),
                 TEXT("Update realm worldstate configuration")
-            });
-            Registry.Add(TEXT("WorldstateListRealmClocks"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/worldstate/realm-config/list"),
-                TEXT("worldstate"),
-                TEXT("FListRealmClocksRequest"),
-                TEXT("FListRealmClocksResponse"),
-                TEXT("List active realm clocks")
             });
         }
 

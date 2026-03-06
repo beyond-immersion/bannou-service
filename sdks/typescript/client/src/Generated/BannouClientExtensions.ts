@@ -18,10 +18,8 @@ import { ActorProxy } from './proxies/ActorProxy.js';
 import { AssetsProxy } from './proxies/AssetsProxy.js';
 import { AuthProxy } from './proxies/AuthProxy.js';
 import { BundlesProxy } from './proxies/BundlesProxy.js';
-import { CacheProxy } from './proxies/CacheProxy.js';
 import { CharacterProxy } from './proxies/CharacterProxy.js';
 import { CharacterEncounterProxy } from './proxies/CharacterEncounterProxy.js';
-import { CharacterHistoryProxy } from './proxies/CharacterHistoryProxy.js';
 import { CharacterPersonalityProxy } from './proxies/CharacterPersonalityProxy.js';
 import { ChatProxy } from './proxies/ChatProxy.js';
 import { ClientCapabilitiesProxy } from './proxies/ClientCapabilitiesProxy.js';
@@ -29,13 +27,10 @@ import { CollectionProxy } from './proxies/CollectionProxy.js';
 import { CompileProxy } from './proxies/CompileProxy.js';
 import { ContractProxy } from './proxies/ContractProxy.js';
 import { CurrencyProxy } from './proxies/CurrencyProxy.js';
-import { DivineProxy } from './proxies/DivineProxy.js';
 import { DocumentationProxy } from './proxies/DocumentationProxy.js';
 import { EscrowProxy } from './proxies/EscrowProxy.js';
 import { FactionProxy } from './proxies/FactionProxy.js';
-import { GameServiceProxy } from './proxies/GameServiceProxy.js';
 import { GardenerProxy } from './proxies/GardenerProxy.js';
-import { GoapProxy } from './proxies/GoapProxy.js';
 import { InventoryProxy } from './proxies/InventoryProxy.js';
 import { ItemProxy } from './proxies/ItemProxy.js';
 import { LeaderboardProxy } from './proxies/LeaderboardProxy.js';
@@ -47,16 +42,13 @@ import { MusicProxy } from './proxies/MusicProxy.js';
 import { ObligationProxy } from './proxies/ObligationProxy.js';
 import { PuppetmasterProxy } from './proxies/PuppetmasterProxy.js';
 import { QuestProxy } from './proxies/QuestProxy.js';
-import { RealmProxy } from './proxies/RealmProxy.js';
 import { RealmHistoryProxy } from './proxies/RealmHistoryProxy.js';
 import { RelationshipProxy } from './proxies/RelationshipProxy.js';
 import { RelationshipTypeProxy } from './proxies/RelationshipTypeProxy.js';
-import { ResourceProxy } from './proxies/ResourceProxy.js';
 import { SaveLoadProxy } from './proxies/SaveLoadProxy.js';
 import { SceneProxy } from './proxies/SceneProxy.js';
 import { SeedProxy } from './proxies/SeedProxy.js';
 import { SessionsProxy } from './proxies/SessionsProxy.js';
-import { SpeciesProxy } from './proxies/SpeciesProxy.js';
 import { StatusProxy } from './proxies/StatusProxy.js';
 import { StorylineProxy } from './proxies/StorylineProxy.js';
 import { SubscriptionProxy } from './proxies/SubscriptionProxy.js';
@@ -77,10 +69,8 @@ interface ProxyCache {
   assets?: AssetsProxy;
   auth?: AuthProxy;
   bundles?: BundlesProxy;
-  cache?: CacheProxy;
   character?: CharacterProxy;
   characterEncounter?: CharacterEncounterProxy;
-  characterHistory?: CharacterHistoryProxy;
   characterPersonality?: CharacterPersonalityProxy;
   chat?: ChatProxy;
   clientCapabilities?: ClientCapabilitiesProxy;
@@ -88,13 +78,10 @@ interface ProxyCache {
   compile?: CompileProxy;
   contract?: ContractProxy;
   currency?: CurrencyProxy;
-  divine?: DivineProxy;
   documentation?: DocumentationProxy;
   escrow?: EscrowProxy;
   faction?: FactionProxy;
-  gameService?: GameServiceProxy;
   gardener?: GardenerProxy;
-  goap?: GoapProxy;
   inventory?: InventoryProxy;
   item?: ItemProxy;
   leaderboard?: LeaderboardProxy;
@@ -106,16 +93,13 @@ interface ProxyCache {
   obligation?: ObligationProxy;
   puppetmaster?: PuppetmasterProxy;
   quest?: QuestProxy;
-  realm?: RealmProxy;
   realmHistory?: RealmHistoryProxy;
   relationship?: RelationshipProxy;
   relationshipType?: RelationshipTypeProxy;
-  resource?: ResourceProxy;
   saveLoad?: SaveLoadProxy;
   scene?: SceneProxy;
   seed?: SeedProxy;
   sessions?: SessionsProxy;
-  species?: SpeciesProxy;
   status?: StatusProxy;
   storyline?: StorylineProxy;
   subscription?: SubscriptionProxy;
@@ -202,18 +186,6 @@ Object.defineProperty(BannouClient.prototype, 'bundles', {
 });
 
 /**
- * Add lazy-initialized cache proxy property to BannouClient.
- */
-Object.defineProperty(BannouClient.prototype, 'cache', {
-  get(this: BannouClientWithCache): CacheProxy {
-    const cache = (this[PROXY_CACHE] ??= {});
-    return (cache.cache ??= new CacheProxy(this));
-  },
-  configurable: true,
-  enumerable: true,
-});
-
-/**
  * Add lazy-initialized character proxy property to BannouClient.
  */
 Object.defineProperty(BannouClient.prototype, 'character', {
@@ -232,18 +204,6 @@ Object.defineProperty(BannouClient.prototype, 'characterEncounter', {
   get(this: BannouClientWithCache): CharacterEncounterProxy {
     const cache = (this[PROXY_CACHE] ??= {});
     return (cache.characterEncounter ??= new CharacterEncounterProxy(this));
-  },
-  configurable: true,
-  enumerable: true,
-});
-
-/**
- * Add lazy-initialized characterHistory proxy property to BannouClient.
- */
-Object.defineProperty(BannouClient.prototype, 'characterHistory', {
-  get(this: BannouClientWithCache): CharacterHistoryProxy {
-    const cache = (this[PROXY_CACHE] ??= {});
-    return (cache.characterHistory ??= new CharacterHistoryProxy(this));
   },
   configurable: true,
   enumerable: true,
@@ -334,18 +294,6 @@ Object.defineProperty(BannouClient.prototype, 'currency', {
 });
 
 /**
- * Add lazy-initialized divine proxy property to BannouClient.
- */
-Object.defineProperty(BannouClient.prototype, 'divine', {
-  get(this: BannouClientWithCache): DivineProxy {
-    const cache = (this[PROXY_CACHE] ??= {});
-    return (cache.divine ??= new DivineProxy(this));
-  },
-  configurable: true,
-  enumerable: true,
-});
-
-/**
  * Add lazy-initialized documentation proxy property to BannouClient.
  */
 Object.defineProperty(BannouClient.prototype, 'documentation', {
@@ -382,36 +330,12 @@ Object.defineProperty(BannouClient.prototype, 'faction', {
 });
 
 /**
- * Add lazy-initialized gameService proxy property to BannouClient.
- */
-Object.defineProperty(BannouClient.prototype, 'gameService', {
-  get(this: BannouClientWithCache): GameServiceProxy {
-    const cache = (this[PROXY_CACHE] ??= {});
-    return (cache.gameService ??= new GameServiceProxy(this));
-  },
-  configurable: true,
-  enumerable: true,
-});
-
-/**
  * Add lazy-initialized gardener proxy property to BannouClient.
  */
 Object.defineProperty(BannouClient.prototype, 'gardener', {
   get(this: BannouClientWithCache): GardenerProxy {
     const cache = (this[PROXY_CACHE] ??= {});
     return (cache.gardener ??= new GardenerProxy(this));
-  },
-  configurable: true,
-  enumerable: true,
-});
-
-/**
- * Add lazy-initialized goap proxy property to BannouClient.
- */
-Object.defineProperty(BannouClient.prototype, 'goap', {
-  get(this: BannouClientWithCache): GoapProxy {
-    const cache = (this[PROXY_CACHE] ??= {});
-    return (cache.goap ??= new GoapProxy(this));
   },
   configurable: true,
   enumerable: true,
@@ -550,18 +474,6 @@ Object.defineProperty(BannouClient.prototype, 'quest', {
 });
 
 /**
- * Add lazy-initialized realm proxy property to BannouClient.
- */
-Object.defineProperty(BannouClient.prototype, 'realm', {
-  get(this: BannouClientWithCache): RealmProxy {
-    const cache = (this[PROXY_CACHE] ??= {});
-    return (cache.realm ??= new RealmProxy(this));
-  },
-  configurable: true,
-  enumerable: true,
-});
-
-/**
  * Add lazy-initialized realmHistory proxy property to BannouClient.
  */
 Object.defineProperty(BannouClient.prototype, 'realmHistory', {
@@ -592,18 +504,6 @@ Object.defineProperty(BannouClient.prototype, 'relationshipType', {
   get(this: BannouClientWithCache): RelationshipTypeProxy {
     const cache = (this[PROXY_CACHE] ??= {});
     return (cache.relationshipType ??= new RelationshipTypeProxy(this));
-  },
-  configurable: true,
-  enumerable: true,
-});
-
-/**
- * Add lazy-initialized resource proxy property to BannouClient.
- */
-Object.defineProperty(BannouClient.prototype, 'resource', {
-  get(this: BannouClientWithCache): ResourceProxy {
-    const cache = (this[PROXY_CACHE] ??= {});
-    return (cache.resource ??= new ResourceProxy(this));
   },
   configurable: true,
   enumerable: true,
@@ -652,18 +552,6 @@ Object.defineProperty(BannouClient.prototype, 'sessions', {
   get(this: BannouClientWithCache): SessionsProxy {
     const cache = (this[PROXY_CACHE] ??= {});
     return (cache.sessions ??= new SessionsProxy(this));
-  },
-  configurable: true,
-  enumerable: true,
-});
-
-/**
- * Add lazy-initialized species proxy property to BannouClient.
- */
-Object.defineProperty(BannouClient.prototype, 'species', {
-  get(this: BannouClientWithCache): SpeciesProxy {
-    const cache = (this[PROXY_CACHE] ??= {});
-    return (cache.species ??= new SpeciesProxy(this));
   },
   configurable: true,
   enumerable: true,
@@ -793,10 +681,6 @@ declare module '../BannouClient.js' {
      */
     readonly bundles: BundlesProxy;
     /**
-     * Typed proxy for Cache API endpoints.
-     */
-    readonly cache: CacheProxy;
-    /**
      * Typed proxy for Character API endpoints.
      */
     readonly character: CharacterProxy;
@@ -804,10 +688,6 @@ declare module '../BannouClient.js' {
      * Typed proxy for CharacterEncounter API endpoints.
      */
     readonly characterEncounter: CharacterEncounterProxy;
-    /**
-     * Typed proxy for CharacterHistory API endpoints.
-     */
-    readonly characterHistory: CharacterHistoryProxy;
     /**
      * Typed proxy for CharacterPersonality API endpoints.
      */
@@ -837,10 +717,6 @@ declare module '../BannouClient.js' {
      */
     readonly currency: CurrencyProxy;
     /**
-     * Typed proxy for Divine API endpoints.
-     */
-    readonly divine: DivineProxy;
-    /**
      * Typed proxy for Documentation API endpoints.
      */
     readonly documentation: DocumentationProxy;
@@ -853,17 +729,9 @@ declare module '../BannouClient.js' {
      */
     readonly faction: FactionProxy;
     /**
-     * Typed proxy for GameService API endpoints.
-     */
-    readonly gameService: GameServiceProxy;
-    /**
      * Typed proxy for Gardener API endpoints.
      */
     readonly gardener: GardenerProxy;
-    /**
-     * Typed proxy for Goap API endpoints.
-     */
-    readonly goap: GoapProxy;
     /**
      * Typed proxy for Inventory API endpoints.
      */
@@ -909,10 +777,6 @@ declare module '../BannouClient.js' {
      */
     readonly quest: QuestProxy;
     /**
-     * Typed proxy for Realm API endpoints.
-     */
-    readonly realm: RealmProxy;
-    /**
      * Typed proxy for RealmHistory API endpoints.
      */
     readonly realmHistory: RealmHistoryProxy;
@@ -924,10 +788,6 @@ declare module '../BannouClient.js' {
      * Typed proxy for RelationshipType API endpoints.
      */
     readonly relationshipType: RelationshipTypeProxy;
-    /**
-     * Typed proxy for Resource API endpoints.
-     */
-    readonly resource: ResourceProxy;
     /**
      * Typed proxy for SaveLoad API endpoints.
      */
@@ -944,10 +804,6 @@ declare module '../BannouClient.js' {
      * Typed proxy for Sessions API endpoints.
      */
     readonly sessions: SessionsProxy;
-    /**
-     * Typed proxy for Species API endpoints.
-     */
-    readonly species: SpeciesProxy;
     /**
      * Typed proxy for Status API endpoints.
      */

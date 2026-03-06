@@ -60,7 +60,6 @@ paths:
           description: Invalid request (validation error)
       x-permissions:
       - role: developer
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateContainerRequest\"\
         ,\n    \"$defs\": {\n        \"CreateContainerRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to create a new container\",\n            \"additionalProperties\": false,\n            \"required\":
@@ -249,7 +248,6 @@ paths:
           description: Container not found
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetContainerRequest\"\
         ,\n    \"$defs\": {\n        \"GetContainerRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to get a container\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
@@ -392,7 +390,6 @@ paths:
                 $ref: '#/components/schemas/ContainerResponse'
       x-permissions:
       - role: developer
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetOrCreateContainerRequest\"\
         ,\n    \"$defs\": {\n        \"GetOrCreateContainerRequest\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Request to get or create a container\",\n            \"additionalProperties\": false,\n         \
@@ -534,7 +531,6 @@ paths:
                 $ref: '#/components/schemas/ListContainersResponse'
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListContainersRequest\"\
         ,\n    \"$defs\": {\n        \"ListContainersRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to list containers for an owner\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -671,7 +667,6 @@ paths:
           description: Container not found
       x-permissions:
       - role: developer
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateContainerRequest\"\
         ,\n    \"$defs\": {\n        \"UpdateContainerRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to update container properties\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -818,7 +813,6 @@ paths:
           description: Container not found
       x-permissions:
       - role: admin
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteContainerRequest\"\
         ,\n    \"$defs\": {\n        \"DeleteContainerRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to delete a container\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -868,9 +862,7 @@ paths:
           description: Constraint violation (full, overweight, wrong category)
         '404':
           description: Container or item not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AddItemRequest\"\
         ,\n    \"$defs\": {\n        \"AddItemRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to add item to container\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -929,9 +921,7 @@ paths:
                 $ref: '#/components/schemas/RemoveItemResponse'
         '404':
           description: Item not found in specified container
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RemoveItemRequest\"\
         ,\n    \"$defs\": {\n        \"RemoveItemRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to remove item from container\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -978,7 +968,6 @@ paths:
           description: Item or container not found
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MoveItemRequest\"\
         ,\n    \"$defs\": {\n        \"MoveItemRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to move item\",\n            \"additionalProperties\": false,\n            \"required\": [\n         \
@@ -1037,9 +1026,7 @@ paths:
           description: Item is bound or not tradeable
         '404':
           description: Item or container not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TransferItemRequest\"\
         ,\n    \"$defs\": {\n        \"TransferItemRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to transfer item ownership\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1095,7 +1082,6 @@ paths:
           description: Item not found
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SplitStackRequest\"\
         ,\n    \"$defs\": {\n        \"SplitStackRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to split a stack\",\n            \"additionalProperties\": false,\n            \"required\": [\n     \
@@ -1154,7 +1140,6 @@ paths:
           description: Item not found
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MergeStacksRequest\"\
         ,\n    \"$defs\": {\n        \"MergeStacksRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to merge stacks\",\n            \"additionalProperties\": false,\n            \"required\": [\n      \
@@ -1202,7 +1187,6 @@ paths:
                 $ref: '#/components/schemas/QueryItemsResponse'
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryItemsRequest\"\
         ,\n    \"$defs\": {\n        \"QueryItemsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to query items\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
@@ -1277,7 +1261,6 @@ paths:
                 $ref: '#/components/schemas/CountItemsResponse'
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CountItemsRequest\"\
         ,\n    \"$defs\": {\n        \"CountItemsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to count items\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
@@ -1329,7 +1312,6 @@ paths:
                 $ref: '#/components/schemas/HasItemsResponse'
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/HasItemsRequest\"\
         ,\n    \"$defs\": {\n        \"HasItemsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to check for items\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
@@ -1398,7 +1380,6 @@ paths:
                 $ref: '#/components/schemas/FindSpaceResponse'
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/FindSpaceRequest\"\
         ,\n    \"$defs\": {\n        \"FindSpaceRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to find space for item\",\n            \"additionalProperties\": false,\n            \"required\": [\n\

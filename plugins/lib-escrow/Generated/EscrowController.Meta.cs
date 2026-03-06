@@ -24,6 +24,7 @@ public partial class EscrowController
     "$defs": {
         "CreateEscrowRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to create a new escrow agreement",
             "required": [
                 "escrowType",
@@ -162,6 +163,7 @@ public partial class EscrowController
         },
         "CreateEscrowPartyInput": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Input for defining a party in escrow creation",
             "required": [
                 "partyId",
@@ -219,6 +221,7 @@ public partial class EscrowController
         },
         "ExpectedDepositInput": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Input for defining expected deposits from a party",
             "required": [
                 "partyId",
@@ -257,6 +260,7 @@ public partial class EscrowController
         },
         "EscrowAssetInput": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Input for specifying an asset in escrow operations",
             "required": [
                 "assetType"
@@ -361,6 +365,7 @@ public partial class EscrowController
         },
         "ReleaseAllocationInput": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Input for specifying how assets should be allocated on release",
             "required": [
                 "recipientPartyId",
@@ -400,7 +405,7 @@ public partial class EscrowController
         },
         "ReleaseMode": {
             "type": "string",
-            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\ n- party_required: Wait for all parties to call /confirm-release.\n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
                 "Immediate",
                 "ServiceOnly",
@@ -428,6 +433,7 @@ public partial class EscrowController
     "$defs": {
         "CreateEscrowResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response from creating an escrow agreement",
             "required": [
                 "escrow",
@@ -449,6 +455,7 @@ public partial class EscrowController
         },
         "EscrowAgreement": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Main escrow agreement record",
             "required": [
                 "id",
@@ -663,6 +670,7 @@ public partial class EscrowController
         },
         "EscrowParty": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A party in the escrow agreement",
             "required": [
                 "partyId",
@@ -764,6 +772,7 @@ public partial class EscrowController
         },
         "ExpectedDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines what a party should deposit",
             "required": [
                 "partyId",
@@ -807,6 +816,7 @@ public partial class EscrowController
         },
         "EscrowAsset": {
             "type": "object",
+            "additionalProperties": false,
             "description": "An asset held in escrow",
             "required": [
                 "assetType",
@@ -928,6 +938,7 @@ public partial class EscrowController
         },
         "EscrowDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records an actual deposit",
             "required": [
                 "id",
@@ -980,6 +991,7 @@ public partial class EscrowController
         },
         "EscrowAssetBundle": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Groups multiple assets for a single deposit or release",
             "required": [
                 "bundleId",
@@ -1012,6 +1024,7 @@ public partial class EscrowController
         },
         "ReleaseAllocation": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines who gets what on release",
             "required": [
                 "recipientPartyId",
@@ -1051,6 +1064,7 @@ public partial class EscrowController
         },
         "EscrowConsent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a party consent decision",
             "required": [
                 "partyId",
@@ -1121,6 +1135,7 @@ public partial class EscrowController
         },
         "ValidationFailure": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a validation check failure",
             "required": [
                 "detectedAt",
@@ -1208,6 +1223,7 @@ public partial class EscrowController
         },
         "PartyToken": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Token issued to a party for deposit or release operations",
             "required": [
                 "partyId",
@@ -1297,6 +1313,7 @@ public partial class EscrowController
     "$defs": {
         "GetEscrowRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to retrieve an escrow agreement by ID",
             "required": [
                 "escrowId"
@@ -1320,6 +1337,7 @@ public partial class EscrowController
     "$defs": {
         "GetEscrowResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response containing escrow agreement details",
             "required": [
                 "escrow"
@@ -1333,6 +1351,7 @@ public partial class EscrowController
         },
         "EscrowAgreement": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Main escrow agreement record",
             "required": [
                 "id",
@@ -1547,6 +1566,7 @@ public partial class EscrowController
         },
         "EscrowParty": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A party in the escrow agreement",
             "required": [
                 "partyId",
@@ -1648,6 +1668,7 @@ public partial class EscrowController
         },
         "ExpectedDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines what a party should deposit",
             "required": [
                 "partyId",
@@ -1691,6 +1712,7 @@ public partial class EscrowController
         },
         "EscrowAsset": {
             "type": "object",
+            "additionalProperties": false,
             "description": "An asset held in escrow",
             "required": [
                 "assetType",
@@ -1812,6 +1834,7 @@ public partial class EscrowController
         },
         "EscrowDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records an actual deposit",
             "required": [
                 "id",
@@ -1864,6 +1887,7 @@ public partial class EscrowController
         },
         "EscrowAssetBundle": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Groups multiple assets for a single deposit or release",
             "required": [
                 "bundleId",
@@ -1896,6 +1920,7 @@ public partial class EscrowController
         },
         "ReleaseAllocation": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines who gets what on release",
             "required": [
                 "recipientPartyId",
@@ -1935,6 +1960,7 @@ public partial class EscrowController
         },
         "EscrowConsent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a party consent decision",
             "required": [
                 "partyId",
@@ -2005,6 +2031,7 @@ public partial class EscrowController
         },
         "ValidationFailure": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a validation check failure",
             "required": [
                 "detectedAt",
@@ -2157,6 +2184,7 @@ public partial class EscrowController
     "$defs": {
         "ListEscrowsRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to list escrow agreements with optional filters",
             "properties": {
                 "partyId": {
@@ -2219,7 +2247,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\ n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\ n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "PendingDeposits",
                 "PartiallyFunded",
@@ -2248,6 +2276,7 @@ public partial class EscrowController
     "$defs": {
         "ListEscrowsResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response containing list of escrow agreements",
             "required": [
                 "escrows",
@@ -2269,6 +2298,7 @@ public partial class EscrowController
         },
         "EscrowAgreement": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Main escrow agreement record",
             "required": [
                 "id",
@@ -2483,6 +2513,7 @@ public partial class EscrowController
         },
         "EscrowParty": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A party in the escrow agreement",
             "required": [
                 "partyId",
@@ -2584,6 +2615,7 @@ public partial class EscrowController
         },
         "ExpectedDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines what a party should deposit",
             "required": [
                 "partyId",
@@ -2627,6 +2659,7 @@ public partial class EscrowController
         },
         "EscrowAsset": {
             "type": "object",
+            "additionalProperties": false,
             "description": "An asset held in escrow",
             "required": [
                 "assetType",
@@ -2748,6 +2781,7 @@ public partial class EscrowController
         },
         "EscrowDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records an actual deposit",
             "required": [
                 "id",
@@ -2800,6 +2834,7 @@ public partial class EscrowController
         },
         "EscrowAssetBundle": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Groups multiple assets for a single deposit or release",
             "required": [
                 "bundleId",
@@ -2832,6 +2867,7 @@ public partial class EscrowController
         },
         "ReleaseAllocation": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines who gets what on release",
             "required": [
                 "recipientPartyId",
@@ -2871,6 +2907,7 @@ public partial class EscrowController
         },
         "EscrowConsent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a party consent decision",
             "required": [
                 "partyId",
@@ -2941,6 +2978,7 @@ public partial class EscrowController
         },
         "ValidationFailure": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a validation check failure",
             "required": [
                 "detectedAt",
@@ -3093,6 +3131,7 @@ public partial class EscrowController
     "$defs": {
         "GetMyTokenRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to retrieve a party token for deposit or release",
             "required": [
                 "escrowId",
@@ -3123,7 +3162,7 @@ public partial class EscrowController
         },
         "TokenType": {
             "type": "string",
-            "description": "Type of token being requested.\n- deposit: Token for depositing assets\n- release: Token for consenting to release\n",
+            "description": "Type of token being requested.\ n- deposit: Token for depositing assets\n- release: Token for consenting to release\n",
             "enum": [
                 "Deposit",
                 "Release"
@@ -3140,6 +3179,7 @@ public partial class EscrowController
     "$defs": {
         "GetMyTokenResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response containing party token information",
             "required": [
                 "tokenUsed"
@@ -3229,6 +3269,7 @@ public partial class EscrowController
     "$defs": {
         "DepositRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to deposit assets into an escrow",
             "required": [
                 "escrowId",
@@ -3269,6 +3310,7 @@ public partial class EscrowController
         },
         "EscrowAssetBundleInput": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Input for specifying a bundle of assets",
             "required": [
                 "assets"
@@ -3295,6 +3337,7 @@ public partial class EscrowController
         },
         "EscrowAssetInput": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Input for specifying an asset in escrow operations",
             "required": [
                 "assetType"
@@ -3408,6 +3451,7 @@ public partial class EscrowController
     "$defs": {
         "DepositResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response from depositing assets into an escrow",
             "required": [
                 "escrow",
@@ -3439,6 +3483,7 @@ public partial class EscrowController
         },
         "EscrowAgreement": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Main escrow agreement record",
             "required": [
                 "id",
@@ -3653,6 +3698,7 @@ public partial class EscrowController
         },
         "EscrowParty": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A party in the escrow agreement",
             "required": [
                 "partyId",
@@ -3754,6 +3800,7 @@ public partial class EscrowController
         },
         "ExpectedDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines what a party should deposit",
             "required": [
                 "partyId",
@@ -3797,6 +3844,7 @@ public partial class EscrowController
         },
         "EscrowAsset": {
             "type": "object",
+            "additionalProperties": false,
             "description": "An asset held in escrow",
             "required": [
                 "assetType",
@@ -3918,6 +3966,7 @@ public partial class EscrowController
         },
         "EscrowDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records an actual deposit",
             "required": [
                 "id",
@@ -3970,6 +4019,7 @@ public partial class EscrowController
         },
         "EscrowAssetBundle": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Groups multiple assets for a single deposit or release",
             "required": [
                 "bundleId",
@@ -4002,6 +4052,7 @@ public partial class EscrowController
         },
         "ReleaseAllocation": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines who gets what on release",
             "required": [
                 "recipientPartyId",
@@ -4041,6 +4092,7 @@ public partial class EscrowController
         },
         "EscrowConsent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a party consent decision",
             "required": [
                 "partyId",
@@ -4111,6 +4163,7 @@ public partial class EscrowController
         },
         "ValidationFailure": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a validation check failure",
             "required": [
                 "detectedAt",
@@ -4198,6 +4251,7 @@ public partial class EscrowController
         },
         "PartyToken": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Token issued to a party for deposit or release operations",
             "required": [
                 "partyId",
@@ -4287,6 +4341,7 @@ public partial class EscrowController
     "$defs": {
         "ValidateDepositRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to validate a deposit without executing",
             "required": [
                 "escrowId",
@@ -4317,6 +4372,7 @@ public partial class EscrowController
         },
         "EscrowAssetBundleInput": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Input for specifying a bundle of assets",
             "required": [
                 "assets"
@@ -4343,6 +4399,7 @@ public partial class EscrowController
         },
         "EscrowAssetInput": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Input for specifying an asset in escrow operations",
             "required": [
                 "assetType"
@@ -4456,6 +4513,7 @@ public partial class EscrowController
     "$defs": {
         "ValidateDepositResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response from deposit validation",
             "required": [
                 "valid",
@@ -4550,6 +4608,7 @@ public partial class EscrowController
     "$defs": {
         "GetDepositStatusRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to get deposit status for a party",
             "required": [
                 "escrowId",
@@ -4584,6 +4643,7 @@ public partial class EscrowController
     "$defs": {
         "GetDepositStatusResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response containing party deposit status",
             "required": [
                 "expectedAssets",
@@ -4624,6 +4684,7 @@ public partial class EscrowController
         },
         "EscrowAsset": {
             "type": "object",
+            "additionalProperties": false,
             "description": "An asset held in escrow",
             "required": [
                 "assetType",
@@ -4810,6 +4871,7 @@ public partial class EscrowController
     "$defs": {
         "ConsentRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to record party consent for release or refund",
             "required": [
                 "escrowId",
@@ -4855,7 +4917,7 @@ public partial class EscrowController
         },
         "EscrowConsentType": {
             "type": "string",
-            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\ n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
+            "description": "Type of consent being given.\ n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
                 "Release",
                 "Refund",
@@ -4874,6 +4936,7 @@ public partial class EscrowController
     "$defs": {
         "ConsentResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response from recording party consent",
             "required": [
                 "escrow",
@@ -4897,6 +4960,7 @@ public partial class EscrowController
         },
         "EscrowAgreement": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Main escrow agreement record",
             "required": [
                 "id",
@@ -5111,6 +5175,7 @@ public partial class EscrowController
         },
         "EscrowParty": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A party in the escrow agreement",
             "required": [
                 "partyId",
@@ -5212,6 +5277,7 @@ public partial class EscrowController
         },
         "ExpectedDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines what a party should deposit",
             "required": [
                 "partyId",
@@ -5255,6 +5321,7 @@ public partial class EscrowController
         },
         "EscrowAsset": {
             "type": "object",
+            "additionalProperties": false,
             "description": "An asset held in escrow",
             "required": [
                 "assetType",
@@ -5376,6 +5443,7 @@ public partial class EscrowController
         },
         "EscrowDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records an actual deposit",
             "required": [
                 "id",
@@ -5428,6 +5496,7 @@ public partial class EscrowController
         },
         "EscrowAssetBundle": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Groups multiple assets for a single deposit or release",
             "required": [
                 "bundleId",
@@ -5460,6 +5529,7 @@ public partial class EscrowController
         },
         "ReleaseAllocation": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines who gets what on release",
             "required": [
                 "recipientPartyId",
@@ -5499,6 +5569,7 @@ public partial class EscrowController
         },
         "EscrowConsent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a party consent decision",
             "required": [
                 "partyId",
@@ -5569,6 +5640,7 @@ public partial class EscrowController
         },
         "ValidationFailure": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a validation check failure",
             "required": [
                 "detectedAt",
@@ -5721,6 +5793,7 @@ public partial class EscrowController
     "$defs": {
         "GetConsentStatusRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to get consent status for all parties",
             "required": [
                 "escrowId"
@@ -5744,6 +5817,7 @@ public partial class EscrowController
     "$defs": {
         "GetConsentStatusResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response containing consent status for all parties",
             "required": [
                 "partiesRequiringConsent",
@@ -5780,6 +5854,7 @@ public partial class EscrowController
         },
         "PartyConsentStatus": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Consent status for a single party",
             "required": [
                 "partyId",
@@ -5820,7 +5895,7 @@ public partial class EscrowController
         },
         "EscrowConsentType": {
             "type": "string",
-            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\ n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
+            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
                 "Release",
                 "Refund",
@@ -5895,6 +5970,7 @@ public partial class EscrowController
     "$defs": {
         "ReleaseRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to trigger escrow release to recipients",
             "required": [
                 "escrowId",
@@ -5933,6 +6009,7 @@ public partial class EscrowController
     "$defs": {
         "ReleaseResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response from releasing escrow assets to recipients",
             "required": [
                 "escrow",
@@ -5962,6 +6039,7 @@ public partial class EscrowController
         },
         "EscrowAgreement": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Main escrow agreement record",
             "required": [
                 "id",
@@ -6176,6 +6254,7 @@ public partial class EscrowController
         },
         "EscrowParty": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A party in the escrow agreement",
             "required": [
                 "partyId",
@@ -6277,6 +6356,7 @@ public partial class EscrowController
         },
         "ExpectedDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines what a party should deposit",
             "required": [
                 "partyId",
@@ -6320,6 +6400,7 @@ public partial class EscrowController
         },
         "EscrowAsset": {
             "type": "object",
+            "additionalProperties": false,
             "description": "An asset held in escrow",
             "required": [
                 "assetType",
@@ -6441,6 +6522,7 @@ public partial class EscrowController
         },
         "EscrowDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records an actual deposit",
             "required": [
                 "id",
@@ -6493,6 +6575,7 @@ public partial class EscrowController
         },
         "EscrowAssetBundle": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Groups multiple assets for a single deposit or release",
             "required": [
                 "bundleId",
@@ -6525,6 +6608,7 @@ public partial class EscrowController
         },
         "ReleaseAllocation": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines who gets what on release",
             "required": [
                 "recipientPartyId",
@@ -6564,6 +6648,7 @@ public partial class EscrowController
         },
         "EscrowConsent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a party consent decision",
             "required": [
                 "partyId",
@@ -6634,6 +6719,7 @@ public partial class EscrowController
         },
         "ValidationFailure": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a validation check failure",
             "required": [
                 "detectedAt",
@@ -6721,6 +6807,7 @@ public partial class EscrowController
         },
         "FinalizerResult": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result from a contract finalizer API call",
             "required": [
                 "endpoint",
@@ -6744,6 +6831,7 @@ public partial class EscrowController
         },
         "ReleaseResult": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of releasing assets to a single recipient",
             "required": [
                 "recipientPartyId",
@@ -6838,6 +6926,7 @@ public partial class EscrowController
     "$defs": {
         "RefundRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to trigger escrow refund to depositors",
             "required": [
                 "escrowId",
@@ -6876,6 +6965,7 @@ public partial class EscrowController
     "$defs": {
         "RefundResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response from refunding escrow assets to depositors",
             "required": [
                 "escrow",
@@ -6897,6 +6987,7 @@ public partial class EscrowController
         },
         "EscrowAgreement": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Main escrow agreement record",
             "required": [
                 "id",
@@ -7111,6 +7202,7 @@ public partial class EscrowController
         },
         "EscrowParty": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A party in the escrow agreement",
             "required": [
                 "partyId",
@@ -7212,6 +7304,7 @@ public partial class EscrowController
         },
         "ExpectedDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines what a party should deposit",
             "required": [
                 "partyId",
@@ -7255,6 +7348,7 @@ public partial class EscrowController
         },
         "EscrowAsset": {
             "type": "object",
+            "additionalProperties": false,
             "description": "An asset held in escrow",
             "required": [
                 "assetType",
@@ -7376,6 +7470,7 @@ public partial class EscrowController
         },
         "EscrowDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records an actual deposit",
             "required": [
                 "id",
@@ -7428,6 +7523,7 @@ public partial class EscrowController
         },
         "EscrowAssetBundle": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Groups multiple assets for a single deposit or release",
             "required": [
                 "bundleId",
@@ -7460,6 +7556,7 @@ public partial class EscrowController
         },
         "ReleaseAllocation": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines who gets what on release",
             "required": [
                 "recipientPartyId",
@@ -7499,6 +7596,7 @@ public partial class EscrowController
         },
         "EscrowConsent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a party consent decision",
             "required": [
                 "partyId",
@@ -7569,6 +7667,7 @@ public partial class EscrowController
         },
         "ValidationFailure": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a validation check failure",
             "required": [
                 "detectedAt",
@@ -7656,6 +7755,7 @@ public partial class EscrowController
         },
         "RefundResult": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of refunding assets to a single depositor",
             "required": [
                 "depositorPartyId",
@@ -7750,6 +7850,7 @@ public partial class EscrowController
     "$defs": {
         "CancelRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to cancel escrow before fully funded",
             "required": [
                 "escrowId",
@@ -7783,6 +7884,7 @@ public partial class EscrowController
     "$defs": {
         "CancelResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response from cancelling an escrow",
             "required": [
                 "escrow",
@@ -7804,6 +7906,7 @@ public partial class EscrowController
         },
         "EscrowAgreement": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Main escrow agreement record",
             "required": [
                 "id",
@@ -8018,6 +8121,7 @@ public partial class EscrowController
         },
         "EscrowParty": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A party in the escrow agreement",
             "required": [
                 "partyId",
@@ -8119,6 +8223,7 @@ public partial class EscrowController
         },
         "ExpectedDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines what a party should deposit",
             "required": [
                 "partyId",
@@ -8162,6 +8267,7 @@ public partial class EscrowController
         },
         "EscrowAsset": {
             "type": "object",
+            "additionalProperties": false,
             "description": "An asset held in escrow",
             "required": [
                 "assetType",
@@ -8283,6 +8389,7 @@ public partial class EscrowController
         },
         "EscrowDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records an actual deposit",
             "required": [
                 "id",
@@ -8335,6 +8442,7 @@ public partial class EscrowController
         },
         "EscrowAssetBundle": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Groups multiple assets for a single deposit or release",
             "required": [
                 "bundleId",
@@ -8367,6 +8475,7 @@ public partial class EscrowController
         },
         "ReleaseAllocation": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines who gets what on release",
             "required": [
                 "recipientPartyId",
@@ -8406,6 +8515,7 @@ public partial class EscrowController
         },
         "EscrowConsent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a party consent decision",
             "required": [
                 "partyId",
@@ -8476,6 +8586,7 @@ public partial class EscrowController
         },
         "ValidationFailure": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a validation check failure",
             "required": [
                 "detectedAt",
@@ -8563,6 +8674,7 @@ public partial class EscrowController
         },
         "RefundResult": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of refunding assets to a single depositor",
             "required": [
                 "depositorPartyId",
@@ -8657,6 +8769,7 @@ public partial class EscrowController
     "$defs": {
         "DisputeRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to raise a dispute on a funded escrow",
             "required": [
                 "escrowId",
@@ -8706,6 +8819,7 @@ public partial class EscrowController
     "$defs": {
         "DisputeResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response from raising a dispute on an escrow",
             "required": [
                 "escrow"
@@ -8719,6 +8833,7 @@ public partial class EscrowController
         },
         "EscrowAgreement": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Main escrow agreement record",
             "required": [
                 "id",
@@ -8933,6 +9048,7 @@ public partial class EscrowController
         },
         "EscrowParty": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A party in the escrow agreement",
             "required": [
                 "partyId",
@@ -9034,6 +9150,7 @@ public partial class EscrowController
         },
         "ExpectedDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines what a party should deposit",
             "required": [
                 "partyId",
@@ -9077,6 +9194,7 @@ public partial class EscrowController
         },
         "EscrowAsset": {
             "type": "object",
+            "additionalProperties": false,
             "description": "An asset held in escrow",
             "required": [
                 "assetType",
@@ -9198,6 +9316,7 @@ public partial class EscrowController
         },
         "EscrowDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records an actual deposit",
             "required": [
                 "id",
@@ -9250,6 +9369,7 @@ public partial class EscrowController
         },
         "EscrowAssetBundle": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Groups multiple assets for a single deposit or release",
             "required": [
                 "bundleId",
@@ -9282,6 +9402,7 @@ public partial class EscrowController
         },
         "ReleaseAllocation": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines who gets what on release",
             "required": [
                 "recipientPartyId",
@@ -9321,6 +9442,7 @@ public partial class EscrowController
         },
         "EscrowConsent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a party consent decision",
             "required": [
                 "partyId",
@@ -9391,6 +9513,7 @@ public partial class EscrowController
         },
         "ValidationFailure": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a validation check failure",
             "required": [
                 "detectedAt",
@@ -9848,6 +9971,7 @@ public partial class EscrowController
     "$defs": {
         "ResolveRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request for arbiter to resolve a disputed escrow",
             "required": [
                 "escrowId",
@@ -9896,7 +10020,7 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\ n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "Released",
                 "Refunded",
@@ -9908,6 +10032,7 @@ public partial class EscrowController
         },
         "SplitAllocation": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Allocation of assets to a party in a split resolution",
             "required": [
                 "partyId",
@@ -9935,6 +10060,7 @@ public partial class EscrowController
         },
         "EscrowAssetInput": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Input for specifying an asset in escrow operations",
             "required": [
                 "assetType"
@@ -10048,6 +10174,7 @@ public partial class EscrowController
     "$defs": {
         "ResolveResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response from arbiter resolving a disputed escrow",
             "required": [
                 "escrow",
@@ -10069,6 +10196,7 @@ public partial class EscrowController
         },
         "EscrowAgreement": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Main escrow agreement record",
             "required": [
                 "id",
@@ -10283,6 +10411,7 @@ public partial class EscrowController
         },
         "EscrowParty": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A party in the escrow agreement",
             "required": [
                 "partyId",
@@ -10384,6 +10513,7 @@ public partial class EscrowController
         },
         "ExpectedDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines what a party should deposit",
             "required": [
                 "partyId",
@@ -10427,6 +10557,7 @@ public partial class EscrowController
         },
         "EscrowAsset": {
             "type": "object",
+            "additionalProperties": false,
             "description": "An asset held in escrow",
             "required": [
                 "assetType",
@@ -10548,6 +10679,7 @@ public partial class EscrowController
         },
         "EscrowDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records an actual deposit",
             "required": [
                 "id",
@@ -10600,6 +10732,7 @@ public partial class EscrowController
         },
         "EscrowAssetBundle": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Groups multiple assets for a single deposit or release",
             "required": [
                 "bundleId",
@@ -10632,6 +10765,7 @@ public partial class EscrowController
         },
         "ReleaseAllocation": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines who gets what on release",
             "required": [
                 "recipientPartyId",
@@ -10671,6 +10805,7 @@ public partial class EscrowController
         },
         "EscrowConsent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a party consent decision",
             "required": [
                 "partyId",
@@ -10741,6 +10876,7 @@ public partial class EscrowController
         },
         "ValidationFailure": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a validation check failure",
             "required": [
                 "detectedAt",
@@ -10828,6 +10964,7 @@ public partial class EscrowController
         },
         "TransferResult": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Result of transferring assets to a party during resolution",
             "required": [
                 "partyId",
@@ -10922,6 +11059,7 @@ public partial class EscrowController
     "$defs": {
         "VerifyConditionRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to verify a condition for conditional escrow",
             "required": [
                 "escrowId",
@@ -10972,6 +11110,7 @@ public partial class EscrowController
     "$defs": {
         "VerifyConditionResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response from verifying a condition on an escrow",
             "required": [
                 "escrow",
@@ -10990,6 +11129,7 @@ public partial class EscrowController
         },
         "EscrowAgreement": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Main escrow agreement record",
             "required": [
                 "id",
@@ -11204,6 +11344,7 @@ public partial class EscrowController
         },
         "EscrowParty": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A party in the escrow agreement",
             "required": [
                 "partyId",
@@ -11305,6 +11446,7 @@ public partial class EscrowController
         },
         "ExpectedDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines what a party should deposit",
             "required": [
                 "partyId",
@@ -11348,6 +11490,7 @@ public partial class EscrowController
         },
         "EscrowAsset": {
             "type": "object",
+            "additionalProperties": false,
             "description": "An asset held in escrow",
             "required": [
                 "assetType",
@@ -11469,6 +11612,7 @@ public partial class EscrowController
         },
         "EscrowDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records an actual deposit",
             "required": [
                 "id",
@@ -11521,6 +11665,7 @@ public partial class EscrowController
         },
         "EscrowAssetBundle": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Groups multiple assets for a single deposit or release",
             "required": [
                 "bundleId",
@@ -11553,6 +11698,7 @@ public partial class EscrowController
         },
         "ReleaseAllocation": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines who gets what on release",
             "required": [
                 "recipientPartyId",
@@ -11592,6 +11738,7 @@ public partial class EscrowController
         },
         "EscrowConsent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a party consent decision",
             "required": [
                 "partyId",
@@ -11662,6 +11809,7 @@ public partial class EscrowController
         },
         "ValidationFailure": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a validation check failure",
             "required": [
                 "detectedAt",
@@ -11814,6 +11962,7 @@ public partial class EscrowController
     "$defs": {
         "ValidateEscrowRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to manually validate escrow assets",
             "required": [
                 "escrowId"
@@ -11837,6 +11986,7 @@ public partial class EscrowController
     "$defs": {
         "ValidateEscrowResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response from validating escrow assets",
             "required": [
                 "valid",
@@ -11863,6 +12013,7 @@ public partial class EscrowController
         },
         "ValidationFailure": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a validation check failure",
             "required": [
                 "detectedAt",
@@ -11930,6 +12081,7 @@ public partial class EscrowController
         },
         "EscrowAgreement": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Main escrow agreement record",
             "required": [
                 "id",
@@ -12144,6 +12296,7 @@ public partial class EscrowController
         },
         "EscrowParty": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A party in the escrow agreement",
             "required": [
                 "partyId",
@@ -12245,6 +12398,7 @@ public partial class EscrowController
         },
         "ExpectedDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines what a party should deposit",
             "required": [
                 "partyId",
@@ -12288,6 +12442,7 @@ public partial class EscrowController
         },
         "EscrowAsset": {
             "type": "object",
+            "additionalProperties": false,
             "description": "An asset held in escrow",
             "required": [
                 "assetType",
@@ -12398,6 +12553,7 @@ public partial class EscrowController
         },
         "EscrowDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records an actual deposit",
             "required": [
                 "id",
@@ -12450,6 +12606,7 @@ public partial class EscrowController
         },
         "EscrowAssetBundle": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Groups multiple assets for a single deposit or release",
             "required": [
                 "bundleId",
@@ -12482,6 +12639,7 @@ public partial class EscrowController
         },
         "ReleaseAllocation": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines who gets what on release",
             "required": [
                 "recipientPartyId",
@@ -12521,6 +12679,7 @@ public partial class EscrowController
         },
         "EscrowConsent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a party consent decision",
             "required": [
                 "partyId",
@@ -12561,7 +12720,7 @@ public partial class EscrowController
         },
         "EscrowConsentType": {
             "type": "string",
-            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
+            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\ n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
                 "Release",
                 "Refund",
@@ -12571,7 +12730,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\ n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\ n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "PendingDeposits",
                 "PartiallyFunded",
@@ -12687,6 +12846,7 @@ public partial class EscrowController
     "$defs": {
         "ReaffirmRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to re-affirm after validation failure",
             "required": [
                 "escrowId",
@@ -12731,6 +12891,7 @@ public partial class EscrowController
     "$defs": {
         "ReaffirmResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response from party re-affirming after validation failure",
             "required": [
                 "escrow",
@@ -12749,6 +12910,7 @@ public partial class EscrowController
         },
         "EscrowAgreement": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Main escrow agreement record",
             "required": [
                 "id",
@@ -12963,6 +13125,7 @@ public partial class EscrowController
         },
         "EscrowParty": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A party in the escrow agreement",
             "required": [
                 "partyId",
@@ -13064,6 +13227,7 @@ public partial class EscrowController
         },
         "ExpectedDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines what a party should deposit",
             "required": [
                 "partyId",
@@ -13107,6 +13271,7 @@ public partial class EscrowController
         },
         "EscrowAsset": {
             "type": "object",
+            "additionalProperties": false,
             "description": "An asset held in escrow",
             "required": [
                 "assetType",
@@ -13228,6 +13393,7 @@ public partial class EscrowController
         },
         "EscrowDeposit": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records an actual deposit",
             "required": [
                 "id",
@@ -13280,6 +13446,7 @@ public partial class EscrowController
         },
         "EscrowAssetBundle": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Groups multiple assets for a single deposit or release",
             "required": [
                 "bundleId",
@@ -13312,6 +13479,7 @@ public partial class EscrowController
         },
         "ReleaseAllocation": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines who gets what on release",
             "required": [
                 "recipientPartyId",
@@ -13351,6 +13519,7 @@ public partial class EscrowController
         },
         "EscrowConsent": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a party consent decision",
             "required": [
                 "partyId",
@@ -13421,6 +13590,7 @@ public partial class EscrowController
         },
         "ValidationFailure": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Records a validation check failure",
             "required": [
                 "detectedAt",
@@ -13573,6 +13743,7 @@ public partial class EscrowController
     "$defs": {
         "RegisterHandlerRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to register a custom asset type handler",
             "required": [
                 "assetType",
@@ -13620,6 +13791,7 @@ public partial class EscrowController
     "$defs": {
         "RegisterHandlerResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response from registering an asset handler",
             "properties": {}
         }
@@ -13690,6 +13862,7 @@ public partial class EscrowController
     "$defs": {
         "ListHandlersRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Empty request to list handlers",
             "properties": {}
         }
@@ -13704,6 +13877,7 @@ public partial class EscrowController
     "$defs": {
         "ListHandlersResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response containing list of registered asset handlers",
             "required": [
                 "handlers"
@@ -13720,6 +13894,7 @@ public partial class EscrowController
         },
         "AssetHandlerInfo": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Information about a registered asset handler",
             "required": [
                 "assetType",
@@ -13828,6 +14003,7 @@ public partial class EscrowController
     "$defs": {
         "DeregisterHandlerRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to remove a custom asset handler registration",
             "required": [
                 "assetType"
@@ -13850,6 +14026,7 @@ public partial class EscrowController
     "$defs": {
         "DeregisterHandlerResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Response from deregistering an asset handler",
             "properties": {}
         }

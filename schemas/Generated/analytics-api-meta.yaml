@@ -154,7 +154,6 @@ paths:
       - Statistics
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -217,7 +216,6 @@ paths:
       - Statistics
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -296,7 +294,6 @@ paths:
       - Skill Ratings
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -482,7 +479,6 @@ paths:
       - Controller History
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -557,7 +553,6 @@ paths:
       - Controller History
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:

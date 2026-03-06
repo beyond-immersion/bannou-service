@@ -25,19 +25,19 @@ export class LocationProxy {
   }
 
   /**
-   * Get location by ID
+   * Create new location
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async locationGetLocationAsync(
-    request: Schemas['GetLocationRequest'],
+  async locationCreateLocationAsync(
+    request: Schemas['CreateLocationRequest'],
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['LocationResponse']>> {
-    return this.client.invokeAsync<Schemas['GetLocationRequest'], Schemas['LocationResponse']>(
-      '/location/get',
+    return this.client.invokeAsync<Schemas['CreateLocationRequest'], Schemas['LocationResponse']>(
+      '/location/create',
       request,
       channel,
       timeout
@@ -45,272 +45,147 @@ export class LocationProxy {
   }
 
   /**
-   * Get location by code and realm
+   * Update location
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async locationGetLocationByCodeAsync(
-    request: Schemas['GetLocationByCodeRequest'],
+  async locationUpdateLocationAsync(
+    request: Schemas['UpdateLocationRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['LocationResponse']>> {
+    return this.client.invokeAsync<Schemas['UpdateLocationRequest'], Schemas['LocationResponse']>(
+      '/location/update',
+      request,
+      channel,
+      timeout
+    );
+  }
+
+  /**
+   * Set or change the parent of a location
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async locationSetLocationParentAsync(
+    request: Schemas['SetLocationParentRequest'],
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['LocationResponse']>> {
     return this.client.invokeAsync<
-      Schemas['GetLocationByCodeRequest'],
+      Schemas['SetLocationParentRequest'],
       Schemas['LocationResponse']
-    >('/location/get-by-code', request, channel, timeout);
+    >('/location/set-parent', request, channel, timeout);
   }
 
   /**
-   * List locations with filtering
+   * Remove parent from a location (make it a root location)
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async locationListLocationsAsync(
-    request: Schemas['ListLocationsRequest'],
+  async locationRemoveLocationParentAsync(
+    request: Schemas['RemoveLocationParentRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['LocationListResponse']>> {
+  ): Promise<ApiResponse<Schemas['LocationResponse']>> {
     return this.client.invokeAsync<
-      Schemas['ListLocationsRequest'],
-      Schemas['LocationListResponse']
-    >('/location/list', request, channel, timeout);
+      Schemas['RemoveLocationParentRequest'],
+      Schemas['LocationResponse']
+    >('/location/remove-parent', request, channel, timeout);
   }
 
   /**
-   * List all locations in a realm (primary query pattern)
+   * Delete location
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async locationDeleteLocationEventAsync(
+    request: Schemas['DeleteLocationRequest'],
+    channel: number = 0
+  ): Promise<void> {
+    return this.client.sendEventAsync<Schemas['DeleteLocationRequest']>(
+      '/location/delete',
+      request,
+      channel
+    );
+  }
+
+  /**
+   * Transfer a location to a different realm
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async locationListLocationsByRealmAsync(
-    request: Schemas['ListLocationsByRealmRequest'],
+  async locationTransferLocationToRealmAsync(
+    request: Schemas['TransferLocationToRealmRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['LocationListResponse']>> {
+  ): Promise<ApiResponse<Schemas['LocationResponse']>> {
     return this.client.invokeAsync<
-      Schemas['ListLocationsByRealmRequest'],
-      Schemas['LocationListResponse']
-    >('/location/list-by-realm', request, channel, timeout);
+      Schemas['TransferLocationToRealmRequest'],
+      Schemas['LocationResponse']
+    >('/location/transfer-realm', request, channel, timeout);
   }
 
   /**
-   * Get child locations for a parent location
+   * Deprecate a location
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async locationListLocationsByParentAsync(
-    request: Schemas['ListLocationsByParentRequest'],
+  async locationDeprecateLocationAsync(
+    request: Schemas['DeprecateLocationRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['LocationListResponse']>> {
+  ): Promise<ApiResponse<Schemas['LocationResponse']>> {
     return this.client.invokeAsync<
-      Schemas['ListLocationsByParentRequest'],
-      Schemas['LocationListResponse']
-    >('/location/list-by-parent', request, channel, timeout);
+      Schemas['DeprecateLocationRequest'],
+      Schemas['LocationResponse']
+    >('/location/deprecate', request, channel, timeout);
   }
 
   /**
-   * Get root locations in a realm
+   * Restore a deprecated location
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async locationListRootLocationsAsync(
-    request: Schemas['ListRootLocationsRequest'],
+  async locationUndeprecateLocationAsync(
+    request: Schemas['UndeprecateLocationRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['LocationListResponse']>> {
+  ): Promise<ApiResponse<Schemas['LocationResponse']>> {
     return this.client.invokeAsync<
-      Schemas['ListRootLocationsRequest'],
-      Schemas['LocationListResponse']
-    >('/location/list-root', request, channel, timeout);
+      Schemas['UndeprecateLocationRequest'],
+      Schemas['LocationResponse']
+    >('/location/undeprecate', request, channel, timeout);
   }
 
   /**
-   * Get all ancestors of a location
+   * Seed locations from configuration
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async locationGetLocationAncestorsAsync(
-    request: Schemas['GetLocationAncestorsRequest'],
+  async locationSeedLocationsAsync(
+    request: Schemas['SeedLocationsRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['LocationListResponse']>> {
+  ): Promise<ApiResponse<Schemas['SeedLocationsResponse']>> {
     return this.client.invokeAsync<
-      Schemas['GetLocationAncestorsRequest'],
-      Schemas['LocationListResponse']
-    >('/location/get-ancestors', request, channel, timeout);
-  }
-
-  /**
-   * Validate location against territory boundaries
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async locationValidateTerritoryAsync(
-    request: Schemas['ValidateTerritoryRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['ValidateTerritoryResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ValidateTerritoryRequest'],
-      Schemas['ValidateTerritoryResponse']
-    >('/location/validate-territory', request, channel, timeout);
-  }
-
-  /**
-   * Get all descendants of a location
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async locationGetLocationDescendantsAsync(
-    request: Schemas['GetLocationDescendantsRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['LocationListResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetLocationDescendantsRequest'],
-      Schemas['LocationListResponse']
-    >('/location/get-descendants', request, channel, timeout);
-  }
-
-  /**
-   * Check if location exists and is active
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async locationLocationExistsAsync(
-    request: Schemas['LocationExistsRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['LocationExistsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['LocationExistsRequest'],
-      Schemas['LocationExistsResponse']
-    >('/location/exists', request, channel, timeout);
-  }
-
-  /**
-   * Find locations containing a spatial position
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async locationQueryLocationsByPositionAsync(
-    request: Schemas['QueryLocationsByPositionRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['LocationListResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['QueryLocationsByPositionRequest'],
-      Schemas['LocationListResponse']
-    >('/location/query/by-position', request, channel, timeout);
-  }
-
-  /**
-   * Report entity presence at a location
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async locationReportEntityPositionAsync(
-    request: Schemas['ReportEntityPositionRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['ReportEntityPositionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ReportEntityPositionRequest'],
-      Schemas['ReportEntityPositionResponse']
-    >('/location/report-entity-position', request, channel, timeout);
-  }
-
-  /**
-   * Get the current location of an entity
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async locationGetEntityLocationAsync(
-    request: Schemas['GetEntityLocationRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['GetEntityLocationResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetEntityLocationRequest'],
-      Schemas['GetEntityLocationResponse']
-    >('/location/get-entity-location', request, channel, timeout);
-  }
-
-  /**
-   * List entities currently at a location
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async locationListEntitiesAtLocationAsync(
-    request: Schemas['ListEntitiesAtLocationRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['ListEntitiesAtLocationResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListEntitiesAtLocationRequest'],
-      Schemas['ListEntitiesAtLocationResponse']
-    >('/location/list-entities-at-location', request, channel, timeout);
-  }
-
-  /**
-   * Remove entity presence from its current location
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async locationClearEntityPositionAsync(
-    request: Schemas['ClearEntityPositionRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['ClearEntityPositionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ClearEntityPositionRequest'],
-      Schemas['ClearEntityPositionResponse']
-    >('/location/clear-entity-position', request, channel, timeout);
-  }
-
-  /**
-   * Get location base data for compression
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async locationGetLocationCompressDataAsync(
-    request: Schemas['GetLocationCompressDataRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['LocationBaseArchive']>> {
-    return this.client.invokeAsync<
-      Schemas['GetLocationCompressDataRequest'],
-      Schemas['LocationBaseArchive']
-    >('/location/get-compress-data', request, channel, timeout);
+      Schemas['SeedLocationsRequest'],
+      Schemas['SeedLocationsResponse']
+    >('/location/seed', request, channel, timeout);
   }
 }

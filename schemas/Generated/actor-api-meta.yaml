@@ -146,9 +146,7 @@ paths:
     post:
       operationId: GetActorTemplate
       summary: Get an actor template by ID or category
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -225,9 +223,7 @@ paths:
     post:
       operationId: ListActorTemplates
       summary: List all actor templates
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -457,8 +453,7 @@ paths:
     post:
       operationId: SpawnActor
       summary: Spawn a new actor from a template
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -535,9 +530,7 @@ paths:
         If the actor exists, returns its current state.
         If the actor doesn't exist but a matching template has auto-spawn enabled,
         instantiates the actor and returns it.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -597,8 +590,7 @@ paths:
     post:
       operationId: StopActor
       summary: Stop a running actor
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -641,8 +633,7 @@ paths:
         After binding, the actor receives character perception events and variable
         providers begin loading character-specific data on subsequent ticks.
         Fails if the actor is already bound to a character.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -713,8 +704,7 @@ paths:
         Stops and removes all actors that reference the specified characterId.
         This endpoint is designed for internal service-to-service calls during
         cascading resource cleanup.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -752,9 +742,7 @@ paths:
     post:
       operationId: ListActors
       summary: List actors with optional filters
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -836,8 +824,7 @@ paths:
         Injects a perception event directly into the actor's perception queue
         for testing purposes. Useful for testing actor behavior without a
         full game server setup.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1104,8 +1091,7 @@ paths:
         Initializes an encounter with the specified participants. The Event Brain actor
         will coordinate the encounter, sending instructions to participant NPC Brain actors
         via their character perception channels.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1152,8 +1138,7 @@ paths:
       description: |
         Updates the phase of an encounter being managed by an Event Brain actor.
         Phase changes are logged and can trigger behavior changes in participant actors.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1197,8 +1182,7 @@ paths:
       description: |
         Ends an encounter being managed by an Event Brain actor. This clears the
         encounter state and allows the actor to manage a new encounter.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1238,9 +1222,7 @@ paths:
       description: |
         Retrieves the current encounter state for an Event Brain actor. Returns
         null encounter data if the actor is not managing an encounter.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

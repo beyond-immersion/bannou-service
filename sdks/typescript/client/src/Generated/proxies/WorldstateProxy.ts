@@ -25,98 +25,6 @@ export class WorldstateProxy {
   }
 
   /**
-   * Get current game time for a realm
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async worldstateGetRealmTimeAsync(
-    request: Schemas['GetRealmTimeRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['GameTimeSnapshot']>> {
-    return this.client.invokeAsync<Schemas['GetRealmTimeRequest'], Schemas['GameTimeSnapshot']>(
-      '/worldstate/clock/get-realm-time',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Get current game time by realm code
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async worldstateGetRealmTimeByCodeAsync(
-    request: Schemas['GetRealmTimeByCodeRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['GameTimeSnapshot']>> {
-    return this.client.invokeAsync<
-      Schemas['GetRealmTimeByCodeRequest'],
-      Schemas['GameTimeSnapshot']
-    >('/worldstate/clock/get-realm-time-by-code', request, channel, timeout);
-  }
-
-  /**
-   * Get current game time for multiple realms
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async worldstateBatchGetRealmTimesAsync(
-    request: Schemas['BatchGetRealmTimesRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['BatchGetRealmTimesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['BatchGetRealmTimesRequest'],
-      Schemas['BatchGetRealmTimesResponse']
-    >('/worldstate/clock/batch-get-realm-times', request, channel, timeout);
-  }
-
-  /**
-   * Compute elapsed game-time between two real timestamps
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async worldstateGetElapsedGameTimeAsync(
-    request: Schemas['GetElapsedGameTimeRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['GetElapsedGameTimeResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetElapsedGameTimeRequest'],
-      Schemas['GetElapsedGameTimeResponse']
-    >('/worldstate/clock/get-elapsed-game-time', request, channel, timeout);
-  }
-
-  /**
-   * Trigger a time sync event for an entity's sessions
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async worldstateTriggerTimeSyncAsync(
-    request: Schemas['TriggerTimeSyncRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['TriggerTimeSyncResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['TriggerTimeSyncRequest'],
-      Schemas['TriggerTimeSyncResponse']
-    >('/worldstate/clock/trigger-sync', request, channel, timeout);
-  }
-
-  /**
    * Initialize a clock for a realm
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -193,42 +101,6 @@ export class WorldstateProxy {
   }
 
   /**
-   * Get a calendar template
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async worldstateGetCalendarAsync(
-    request: Schemas['GetCalendarRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['CalendarTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetCalendarRequest'],
-      Schemas['CalendarTemplateResponse']
-    >('/worldstate/calendar/get', request, channel, timeout);
-  }
-
-  /**
-   * List calendar templates for a game service
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async worldstateListCalendarsAsync(
-    request: Schemas['ListCalendarsRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['ListCalendarsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListCalendarsRequest'],
-      Schemas['ListCalendarsResponse']
-    >('/worldstate/calendar/list', request, channel, timeout);
-  }
-
-  /**
    * Update a calendar template
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -265,24 +137,6 @@ export class WorldstateProxy {
   }
 
   /**
-   * Get realm worldstate configuration
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async worldstateGetRealmConfigAsync(
-    request: Schemas['GetRealmConfigRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['RealmConfigResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetRealmConfigRequest'],
-      Schemas['RealmConfigResponse']
-    >('/worldstate/realm-config/get', request, channel, timeout);
-  }
-
-  /**
    * Update realm worldstate configuration
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -298,23 +152,5 @@ export class WorldstateProxy {
       Schemas['UpdateRealmConfigRequest'],
       Schemas['RealmConfigResponse']
     >('/worldstate/realm-config/update', request, channel, timeout);
-  }
-
-  /**
-   * List active realm clocks
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async worldstateListRealmClocksAsync(
-    request: Schemas['ListRealmClocksRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['ListRealmClocksResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListRealmClocksRequest'],
-      Schemas['ListRealmClocksResponse']
-    >('/worldstate/realm-config/list', request, channel, timeout);
   }
 }

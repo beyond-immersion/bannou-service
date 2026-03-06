@@ -362,21 +362,6 @@ public static class ChatPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/chat/message/send-batch",
-            Method = ServiceEndpointMethod.Post,
-            Description = "SendMessageBatch",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/chat/message/history",
             Method = ServiceEndpointMethod.Post,
             Description = "GetMessageHistory",
@@ -459,7 +444,7 @@ public static class ChatPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "developer",
+                    Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -474,7 +459,7 @@ public static class ChatPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "developer",
+                    Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -489,7 +474,7 @@ public static class ChatPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "developer",
+                    Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }

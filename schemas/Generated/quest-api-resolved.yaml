@@ -413,8 +413,7 @@ paths:
       description: |
         Called by Resource service during character compression.
         Returns active quests, completion counts, and category breakdown for archival.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:

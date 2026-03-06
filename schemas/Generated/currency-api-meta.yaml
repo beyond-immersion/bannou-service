@@ -57,7 +57,6 @@ paths:
           description: Code already exists or base currency already set for scope
       x-permissions:
       - role: admin
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateCurrencyDefinitionRequest\"\
         ,\n    \"$defs\": {\n        \"CreateCurrencyDefinitionRequest\": {\n            \"type\": \"object\",\n         \
         \   \"description\": \"Request to create a new currency definition\",\n            \"additionalProperties\": false,\n\
@@ -279,9 +278,7 @@ paths:
           description: Neither definitionId nor code provided
         '404':
           description: Currency definition not found
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCurrencyDefinitionRequest\"\
         ,\n    \"$defs\": {\n        \"GetCurrencyDefinitionRequest\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Request to get a currency definition\",\n            \"additionalProperties\": false,\n         \
@@ -412,9 +409,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListCurrencyDefinitionsResponse'
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListCurrencyDefinitionsRequest\"\
         ,\n    \"$defs\": {\n        \"ListCurrencyDefinitionsRequest\": {\n            \"type\": \"object\",\n          \
         \  \"description\": \"Request to list currency definitions\",\n            \"additionalProperties\": false,\n    \
@@ -560,8 +555,7 @@ paths:
         '404':
           description: Currency definition not found
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateCurrencyDefinitionRequest\"\
         ,\n    \"$defs\": {\n        \"UpdateCurrencyDefinitionRequest\": {\n            \"type\": \"object\",\n         \
         \   \"description\": \"Request to update mutable fields of a currency definition\",\n            \"additionalProperties\"\
@@ -736,9 +730,7 @@ paths:
                 $ref: '#/components/schemas/WalletResponse'
         '409':
           description: Wallet already exists for this owner/realm
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateWalletRequest\"\
         ,\n    \"$defs\": {\n        \"CreateWalletRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to create a new wallet\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -803,9 +795,7 @@ paths:
                 $ref: '#/components/schemas/WalletWithBalancesResponse'
         '404':
           description: Wallet not found
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetWalletRequest\"\
         ,\n    \"$defs\": {\n        \"GetWalletRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to get a wallet\",\n            \"additionalProperties\": false,\n            \"properties\": {\n    \
@@ -889,9 +879,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetOrCreateWalletResponse'
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetOrCreateWalletRequest\"\
         ,\n    \"$defs\": {\n        \"GetOrCreateWalletRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to get or create a wallet\",\n            \"additionalProperties\": false,\n            \"required\":
@@ -981,7 +969,6 @@ paths:
           description: Wallet already frozen
       x-permissions:
       - role: admin
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/FreezeWalletRequest\"\
         ,\n    \"$defs\": {\n        \"FreezeWalletRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to freeze a wallet\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
@@ -1047,7 +1034,6 @@ paths:
           description: Wallet is not frozen
       x-permissions:
       - role: admin
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UnfreezeWalletRequest\"\
         ,\n    \"$defs\": {\n        \"UnfreezeWalletRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to unfreeze a wallet\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
@@ -1111,7 +1097,6 @@ paths:
           description: Wallet already closed
       x-permissions:
       - role: admin
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CloseWalletRequest\"\
         ,\n    \"$defs\": {\n        \"CloseWalletRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to close a wallet and transfer remaining balances\",\n            \"additionalProperties\": false,\n \
@@ -1191,7 +1176,6 @@ paths:
           description: Wallet or currency not found
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetBalanceRequest\"\
         ,\n    \"$defs\": {\n        \"GetBalanceRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to get a specific currency balance\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1278,7 +1262,6 @@ paths:
                 $ref: '#/components/schemas/BatchGetBalancesResponse'
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BatchGetBalancesRequest\"\
         ,\n    \"$defs\": {\n        \"BatchGetBalancesRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to get multiple balances\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -1346,9 +1329,7 @@ paths:
           description: Idempotency key already used
         '422':
           description: Earn cap or supply cap exceeded
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreditCurrencyRequest\"\
         ,\n    \"$defs\": {\n        \"CreditCurrencyRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to credit currency to a wallet\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1483,9 +1464,7 @@ paths:
           description: Wallet or currency not found
         '422':
           description: Insufficient funds
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DebitCurrencyRequest\"\
         ,\n    \"$defs\": {\n        \"DebitCurrencyRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to debit currency from a wallet\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1611,9 +1590,7 @@ paths:
           description: Wallet or currency not found
         '422':
           description: Insufficient funds or cross-realm not allowed
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TransferCurrencyRequest\"\
         ,\n    \"$defs\": {\n        \"TransferCurrencyRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to transfer currency between wallets\",\n            \"additionalProperties\": false,\n            \"\
@@ -1740,9 +1717,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BatchCreditResponse'
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BatchCreditRequest\"\
         ,\n    \"$defs\": {\n        \"BatchCreditRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to credit multiple wallets\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1871,9 +1846,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BatchDebitResponse'
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BatchDebitRequest\"\
         ,\n    \"$defs\": {\n        \"BatchDebitRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to debit multiple wallets\",\n            \"additionalProperties\": false,\n            \"required\":
@@ -2013,7 +1986,6 @@ paths:
           description: No base currency or missing exchange rate
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CalculateConversionRequest\"\
         ,\n    \"$defs\": {\n        \"CalculateConversionRequest\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Request to preview a currency conversion\",\n            \"additionalProperties\": false,\n     \
@@ -2077,9 +2049,7 @@ paths:
           description: Wallet or currency not found
         '422':
           description: Insufficient funds or missing exchange rate
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExecuteConversionRequest\"\
         ,\n    \"$defs\": {\n        \"ExecuteConversionRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to execute a currency conversion\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -2195,7 +2165,6 @@ paths:
           description: No base currency or missing exchange rate
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetExchangeRateRequest\"\
         ,\n    \"$defs\": {\n        \"GetExchangeRateRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to get exchange rate between currencies\",\n            \"additionalProperties\": false,\n           \
@@ -2249,8 +2218,7 @@ paths:
         '404':
           description: Currency not found
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateExchangeRateRequest\"\
         ,\n    \"$defs\": {\n        \"UpdateExchangeRateRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to update exchange rate\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -2388,9 +2356,7 @@ paths:
                 $ref: '#/components/schemas/TransactionResponse'
         '404':
           description: Transaction not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetTransactionRequest\"\
         ,\n    \"$defs\": {\n        \"GetTransactionRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to get a transaction by ID\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -2484,7 +2450,6 @@ paths:
           description: Wallet not found
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetTransactionHistoryRequest\"\
         ,\n    \"$defs\": {\n        \"GetTransactionHistoryRequest\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Request to get transaction history\",\n            \"additionalProperties\": false,\n           \
@@ -2599,9 +2564,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetTransactionsByReferenceResponse'
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetTransactionsByReferenceRequest\"\
         ,\n    \"$defs\": {\n        \"GetTransactionsByReferenceRequest\": {\n            \"type\": \"object\",\n       \
         \     \"description\": \"Request to get transactions by reference\",\n            \"additionalProperties\": false,\n\
@@ -2699,9 +2662,7 @@ paths:
                 $ref: '#/components/schemas/GetGlobalSupplyResponse'
         '404':
           description: Currency not found
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetGlobalSupplyRequest\"\
         ,\n    \"$defs\": {\n        \"GetGlobalSupplyRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to get global supply stats\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -2755,9 +2716,7 @@ paths:
                 $ref: '#/components/schemas/GetWalletDistributionResponse'
         '404':
           description: Currency not found
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetWalletDistributionRequest\"\
         ,\n    \"$defs\": {\n        \"GetWalletDistributionRequest\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Request to get wealth distribution stats\",\n            \"additionalProperties\": false,\n     \
@@ -2827,9 +2786,7 @@ paths:
           description: Wallet or currency not found
         '422':
           description: Insufficient funds or wallet frozen
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EscrowDepositRequest\"\
         ,\n    \"$defs\": {\n        \"EscrowDepositRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request from lib-escrow to debit wallet for deposit\",\n            \"additionalProperties\": false,\n       \
@@ -2935,9 +2892,7 @@ paths:
                 $ref: '#/components/schemas/EscrowReleaseResponse'
         '404':
           description: Wallet or currency not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EscrowReleaseRequest\"\
         ,\n    \"$defs\": {\n        \"EscrowReleaseRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request from lib-escrow to credit recipient on completion\",\n            \"additionalProperties\": false,\n \
@@ -3043,9 +2998,7 @@ paths:
                 $ref: '#/components/schemas/EscrowRefundResponse'
         '404':
           description: Wallet or currency not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EscrowRefundRequest\"\
         ,\n    \"$defs\": {\n        \"EscrowRefundRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request from lib-escrow to credit depositor on refund\",\n            \"additionalProperties\": false,\n     \
@@ -3154,9 +3107,7 @@ paths:
           description: Wallet or currency not found
         '422':
           description: Insufficient effective balance for hold
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateHoldRequest\"\
         ,\n    \"$defs\": {\n        \"CreateHoldRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to create an authorization hold\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -3242,9 +3193,7 @@ paths:
           description: Hold is not in active status or capture amount exceeds hold
         '404':
           description: Hold not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CaptureHoldRequest\"\
         ,\n    \"$defs\": {\n        \"CaptureHoldRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to capture (finalize) a hold\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -3380,9 +3329,7 @@ paths:
           description: Hold is not in active status
         '404':
           description: Hold not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ReleaseHoldRequest\"\
         ,\n    \"$defs\": {\n        \"ReleaseHoldRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to release a hold\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
@@ -3448,9 +3395,7 @@ paths:
                 $ref: '#/components/schemas/HoldResponse'
         '404':
           description: Hold not found
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetHoldRequest\"\
         ,\n    \"$defs\": {\n        \"GetHoldRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to get hold details\",\n            \"additionalProperties\": false,\n            \"required\": [\n  \

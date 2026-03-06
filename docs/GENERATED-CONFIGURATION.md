@@ -579,6 +579,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `FACTION_COLLECTION_GROWTH_AMOUNT` | double | `1.0` | Growth amount contributed to faction seed when a collection ... |
 | `FACTION_DEFAULT_MEMBER_ROLE` | string | `Member` | Default role assigned to new members when no role is specifi... |
 | `FACTION_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed lock acquisition on facti... |
 | `FACTION_MAX_HIERARCHY_DEPTH` | int | `5` | Maximum parent/child nesting depth for faction hierarchy |
@@ -1278,9 +1279,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 982
+- **Total properties**: 983
 - **Required (no default)**: 59
-- **Optional (has default)**: 923
+- **Optional (has default)**: 924
 
 ## Environment Variable Naming Convention
 

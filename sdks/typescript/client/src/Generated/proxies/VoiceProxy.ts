@@ -25,6 +25,41 @@ export class VoiceProxy {
   }
 
   /**
+   * Join voice room and register SIP endpoint
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async voiceJoinVoiceRoomAsync(
+    request: Schemas['JoinVoiceRoomRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['JoinVoiceRoomResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['JoinVoiceRoomRequest'],
+      Schemas['JoinVoiceRoomResponse']
+    >('/voice/room/join', request, channel, timeout);
+  }
+
+  /**
+   * Leave voice room
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async voiceLeaveVoiceRoomEventAsync(
+    request: Schemas['LeaveVoiceRoomRequest'],
+    channel: number = 0
+  ): Promise<void> {
+    return this.client.sendEventAsync<Schemas['LeaveVoiceRoomRequest']>(
+      '/voice/room/leave',
+      request,
+      channel
+    );
+  }
+
+  /**
    * Send SDP answer to complete WebRTC handshake
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).

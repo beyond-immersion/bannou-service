@@ -52,9 +52,7 @@ paths:
       operationId: getRealm
       tags:
       - Realm
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -120,9 +118,7 @@ paths:
       operationId: getRealmByCode
       tags:
       - Realm
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -190,9 +186,7 @@ paths:
       operationId: listRealms
       tags:
       - Realm
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -280,9 +274,7 @@ paths:
       operationId: createRealm
       tags:
       - Realm Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -366,9 +358,7 @@ paths:
       operationId: updateRealm
       tags:
       - Realm Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -456,9 +446,7 @@ paths:
       operationId: deleteRealm
       tags:
       - Realm Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -496,9 +484,7 @@ paths:
       operationId: deprecateRealm
       tags:
       - Realm Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -571,9 +557,7 @@ paths:
       operationId: undeprecateRealm
       tags:
       - Realm Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -649,9 +633,7 @@ paths:
       operationId: mergeRealms
       tags:
       - Realm Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -716,9 +698,7 @@ paths:
       operationId: realmExists
       tags:
       - Realm
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -763,9 +743,7 @@ paths:
       operationId: realmsExistBatch
       tags:
       - Realm
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -828,9 +806,7 @@ paths:
       operationId: seedRealms
       tags:
       - Realm Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -905,8 +881,7 @@ paths:
         Called by Resource service during location compression.
         Resolves the location's realm and returns realm context (name, code, description)
         for inclusion in the location archive.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:

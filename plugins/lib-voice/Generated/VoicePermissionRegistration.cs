@@ -47,14 +47,14 @@ public static class VoicePermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/voice/room/get",
+            Path = "/voice/room/join",
             Method = ServiceEndpointMethod.Post,
-            Description = "getVoiceRoom",
+            Description = "joinVoiceRoom",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "user",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -62,15 +62,15 @@ public static class VoicePermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/voice/peer/heartbeat",
+            Path = "/voice/room/leave",
             Method = ServiceEndpointMethod.Post,
-            Description = "peerHeartbeat",
+            Description = "leaveVoiceRoom",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"voice", "in_room"} }
                 },
             }
         });

@@ -67,9 +67,7 @@ paths:
       description: |
         Retrieves the personality profile for a character. Returns 404 if no
         personality has been defined for this character.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -143,8 +141,7 @@ paths:
         Creates or replaces the personality profile for a character. If a personality
         already exists, it will be completely replaced (not merged).
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -247,9 +244,7 @@ paths:
 
         This endpoint is typically called by the behavior service when significant
         events occur during gameplay.
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -334,9 +329,7 @@ paths:
         returned in the notFound array.
 
         Maximum 100 characters per request.
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -418,9 +411,7 @@ paths:
       description: |
         Removes the personality profile for a character. Typically called during
         character compression or deletion.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -454,9 +445,7 @@ paths:
         Retrieves the combat preferences for a character. Combat preferences
         influence tactical decisions in the behavior system, including engagement
         style, positioning, and retreat conditions.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -538,8 +527,7 @@ paths:
         Creates or replaces the combat preferences for a character. If preferences
         already exist, they will be completely replaced (not merged).
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -654,9 +642,7 @@ paths:
 
         Combat experiences can shift style (e.g., repeated losses may make a
         character more defensive), adjust risk tolerance, or change retreat thresholds.
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -750,9 +736,7 @@ paths:
       description: |
         Removes the combat preferences for a character. Typically called during
         character compression or deletion.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -785,8 +769,7 @@ paths:
       description: |
         Called by Resource service during character compression.
         Returns personality traits and combat preferences for archival.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -918,9 +901,7 @@ paths:
       description: |
         Called by Resource service during character decompression.
         Restores personality traits and combat preferences from archive data.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -968,8 +949,7 @@ paths:
         Removes BOTH personality traits AND combat preferences for the specified character.
         This endpoint is designed for internal service-to-service calls during
         cascading resource cleanup.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:

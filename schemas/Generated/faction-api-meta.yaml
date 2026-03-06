@@ -232,8 +232,13 @@ paths:
         \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
         \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
         \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"memberCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
         : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
         \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
@@ -260,7 +265,6 @@ paths:
         growth phase (denormalized from lib-seed for convenience) and member count.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -311,8 +315,13 @@ paths:
         \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
         \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
         \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"memberCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
         : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
         \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
@@ -336,7 +345,6 @@ paths:
         Codes are human-readable identifiers like "thieves_guild" or "royal_guard".
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -390,8 +398,13 @@ paths:
         \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
         \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
         \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"memberCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
         : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
         \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
@@ -415,7 +428,6 @@ paths:
         game service, status, and parent faction. Supports cursor-based pagination.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -445,11 +457,13 @@ paths:
         : false,\n                    \"description\": \"When true, returns only factions with no parent\"\n             \
         \   },\n                \"isRealmBaseline\": {\n                    \"type\": \"boolean\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Filter by realm baseline status\"\n                },\n\
-        \                \"cursor\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"maxLength\": 512,\n                    \"description\": \"Pagination cursor from a previous
-        response\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n    \
-        \                \"default\": 20,\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n  \
-        \                  \"description\": \"Number of factions to return per page\"\n                }\n            }\n\
+        \                \"includeDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Whether to include deprecated factions in results\"\n           \
+        \     },\n                \"cursor\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 512,\n                    \"description\": \"Pagination cursor from a
+        previous response\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"default\": 20,\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n\
+        \                    \"description\": \"Number of factions to return per page\"\n                }\n            }\n\
         \        },\n        \"FactionStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Lifecycle
         status of a faction entity\",\n            \"enum\": [\n                \"Active\",\n                \"Deprecated\"\
         ,\n                \"Dissolved\"\n            ]\n        }\n    }\n}"
@@ -492,9 +506,14 @@ paths:
         : \"Current lifecycle status\"\n                },\n                \"currentPhase\": {\n                    \"type\"\
         : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 64,\n                 \
         \   \"description\": \"Current seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n\
-        \                \"memberCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\":
-        0,\n                    \"description\": \"Current number of members in this faction\"\n                },\n     \
-        \           \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        \                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When this faction was
+        deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n            \
+        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 1024,\n\
+        \                    \"description\": \"Reason for deprecation (null if not deprecated)\"\n                },\n  \
+        \              \"memberCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Current number of members in this faction\"\n                },\n        \
+        \        \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"When this faction was created\"\n                },\n                \"\
         updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
         \              \"description\": \"When this faction was last updated\"\n                }\n            }\n       \
@@ -577,8 +596,13 @@ paths:
         \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
         \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
         \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"memberCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
         : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
         \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
@@ -619,13 +643,16 @@ paths:
         '404':
           description: Faction not found
         '409':
-          description: Faction is already deprecated or dissolved
+          description: Faction is dissolved (cannot deprecate)
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateFactionRequest\"\
         ,\n    \"$defs\": {\n        \"DeprecateFactionRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to deprecate a faction\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"factionId\"\n            ],\n            \"properties\": {\n                \"factionId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the faction to deprecate\"\n                }\n            }\n        }\n    }\n}"
+        \                \"factionId\",\n                \"deprecationReason\"\n            ],\n            \"properties\"\
+        : {\n                \"factionId\": {\n                    \"type\": \"string\",\n                    \"format\":
+        \"uuid\",\n                    \"description\": \"ID of the faction to deprecate\"\n                },\n         \
+        \       \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 1024,\n                    \"description\": \"Reason for deprecation (audit context
+        for Category A entities)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/FactionResponse\"\
         ,\n    \"$defs\": {\n        \"FactionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Complete faction entity with seed growth status\",\n            \"additionalProperties\": false,\n           \
@@ -655,8 +682,13 @@ paths:
         \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
         \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
         \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"memberCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
         : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
         \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
@@ -694,7 +726,7 @@ paths:
         '404':
           description: Faction not found
         '409':
-          description: Faction is not in deprecated status
+          description: Faction is dissolved (cannot undeprecate)
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UndeprecateFactionRequest\"\
         ,\n    \"$defs\": {\n        \"UndeprecateFactionRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to reactivate a deprecated faction\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -730,8 +762,13 @@ paths:
         \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
         \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
         \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"memberCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
         : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
         \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
@@ -756,7 +793,6 @@ paths:
         the associated seed.
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -796,7 +832,6 @@ paths:
         factions (matched by code within game service) are skipped.
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -927,8 +962,13 @@ paths:
         \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
         \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
         \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"memberCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
         : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
         \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
@@ -954,7 +994,6 @@ paths:
         Returns 404 if no baseline has been designated.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -1005,8 +1044,13 @@ paths:
         \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
         \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
         \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"memberCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
         : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
         \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
@@ -1036,7 +1080,6 @@ paths:
         Publishes a faction.member.added event for downstream consumers.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -1102,7 +1145,6 @@ paths:
         faction.member.removed event for downstream consumers.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -1139,7 +1181,6 @@ paths:
         by role and cursor-based pagination. Ordered by join date descending.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -1214,7 +1255,6 @@ paths:
         ${faction.*} variable provider for ABML behavior expressions.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -1240,28 +1280,27 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListMembershipsByCharacterResponse\"\
         ,\n    \"$defs\": {\n        \"ListMembershipsByCharacterResponse\": {\n            \"type\": \"object\",\n      \
         \      \"description\": \"All faction memberships for a character\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"characterId\",\n                \"memberships\"\n            ],\n\
-        \            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"uuid\",\n                    \"description\": \"Character these memberships belong
-        to\"\n                },\n                \"memberships\": {\n                    \"type\": \"array\",\n         \
-        \           \"items\": {\n                        \"$ref\": \"#/$defs/CharacterMembershipEntry\"\n               \
-        \     },\n                    \"description\": \"All faction memberships for the character\"\n                }\n\
-        \            }\n        },\n        \"CharacterMembershipEntry\": {\n            \"type\": \"object\",\n         \
-        \   \"description\": \"A character's membership in a faction with faction details\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"factionId\",\n                \"factionName\",\n        \
-        \        \"factionCode\",\n                \"role\",\n                \"joinedAt\"\n            ],\n            \"\
-        properties\": {\n                \"factionId\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"uuid\",\n                    \"description\": \"Faction the character belongs to\"\n             \
-        \   },\n                \"factionName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Display name of the faction\"\n                },\n                \"factionCode\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Unique code of the faction\"\n                },\n   \
-        \             \"role\": {\n                    \"$ref\": \"#/$defs/FactionMemberRole\",\n                    \"description\"\
-        : \"Character's role in this faction\"\n                },\n                \"joinedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the
-        character joined this faction\"\n                }\n            }\n        },\n        \"FactionMemberRole\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Role hierarchy for faction membership\",\n    \
-        \        \"enum\": [\n                \"Leader\",\n                \"Officer\",\n                \"Member\",\n   \
-        \             \"Recruit\"\n            ]\n        }\n    }\n}"
+        \            \"required\": [\n                \"memberships\"\n            ],\n            \"properties\": {\n   \
+        \             \"memberships\": {\n                    \"type\": \"array\",\n                    \"items\": {\n   \
+        \                     \"$ref\": \"#/$defs/CharacterMembershipEntry\"\n                    },\n                   \
+        \ \"description\": \"All faction memberships for the character\"\n                }\n            }\n        },\n \
+        \       \"CharacterMembershipEntry\": {\n            \"type\": \"object\",\n            \"description\": \"A character's
+        membership in a faction with faction details\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"factionId\",\n                \"factionName\",\n                \"factionCode\",\n        \
+        \        \"role\",\n                \"joinedAt\"\n            ],\n            \"properties\": {\n                \"\
+        factionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
+        \         \"description\": \"Faction the character belongs to\"\n                },\n                \"factionName\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 256,\n                    \"description\": \"Display name of the faction\"\n                },\n               \
+        \ \"factionCode\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n         \
+        \           \"maxLength\": 128,\n                    \"description\": \"Unique code of the faction\"\n           \
+        \     },\n                \"role\": {\n                    \"$ref\": \"#/$defs/FactionMemberRole\",\n            \
+        \        \"description\": \"Character's role in this faction\"\n                },\n                \"joinedAt\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
+        \ \"description\": \"When the character joined this faction\"\n                }\n            }\n        },\n    \
+        \    \"FactionMemberRole\": {\n            \"type\": \"string\",\n            \"description\": \"Role hierarchy for
+        faction membership\",\n            \"enum\": [\n                \"Leader\",\n                \"Officer\",\n      \
+        \          \"Member\",\n                \"Recruit\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List a character's faction memberships\",\n    \"description\": \"Returns
         all faction memberships for a character. Used by lib-obligation\\nto determine which guild faction norms apply to
         a character, and by the\\n${faction.*} variable provider for ABML behavior expressions.\\n\",\n    \"tags\": [\n \
@@ -1277,7 +1316,6 @@ paths:
         faction.member.role-changed event for downstream consumers.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -1338,7 +1376,6 @@ paths:
         and if so, their role. Lightweight lookup for permission/capability checks.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -1363,18 +1400,14 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CheckMembershipResponse\"\
         ,\n    \"$defs\": {\n        \"CheckMembershipResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of a membership check\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
-        \               \"factionId\",\n                \"characterId\",\n                \"isMember\"\n            ],\n \
-        \           \"properties\": {\n                \"factionId\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"uuid\",\n                    \"description\": \"Faction that was checked\"\n       \
-        \         },\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"description\": \"Character that was checked\"\n                },\n   \
-        \             \"isMember\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
-        Whether the character is a member\"\n                },\n                \"role\": {\n                    \"$ref\"\
-        : \"#/$defs/FactionMemberRole\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Member's role (null if not a member)\"\n                }\n            }\n        },\n        \"FactionMemberRole\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Role hierarchy for faction membership\",\n\
-        \            \"enum\": [\n                \"Leader\",\n                \"Officer\",\n                \"Member\",\n\
-        \                \"Recruit\"\n            ]\n        }\n    }\n}"
+        \               \"isMember\"\n            ],\n            \"properties\": {\n                \"isMember\": {\n   \
+        \                 \"type\": \"boolean\",\n                    \"description\": \"Whether the character is a member\"\
+        \n                },\n                \"role\": {\n                    \"$ref\": \"#/$defs/FactionMemberRole\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Member's role (null if not a member)\"\
+        \n                }\n            }\n        },\n        \"FactionMemberRole\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Role hierarchy for faction membership\",\n            \"enum\": [\n            \
+        \    \"Leader\",\n                \"Officer\",\n                \"Member\",\n                \"Recruit\"\n       \
+        \     ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Check if a character is a member of a faction\",\n    \"description\":
         \"Returns whether a character is currently a member of the specified faction,\\nand if so, their role. Lightweight
         lookup for permission/capability checks.\\n\",\n    \"tags\": [\n        \"Membership\"\n    ],\n    \"deprecated\"\
@@ -1492,7 +1525,6 @@ paths:
         and cursor-based pagination.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -1570,7 +1602,6 @@ paths:
         Returns 404 if the location has no controlling faction.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -1633,8 +1664,13 @@ paths:
         \ \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\n      \
         \          },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n                  \
         \  \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current seed
-        growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"memberCount\":
-        {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
         : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
         \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
@@ -1878,7 +1914,6 @@ paths:
         by severity and scope.
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -2004,21 +2039,14 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryApplicableNormsResponse\"\
         ,\n    \"$defs\": {\n        \"QueryApplicableNormsResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Resolved applicable norms for a character with hierarchy merge results\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"characterId\",\n                \"realmId\",\n          \
-        \      \"applicableNorms\",\n                \"mergedNormMap\",\n                \"membershipFactionCount\",\n   \
-        \             \"territoryFactionResolved\",\n                \"realmBaselineResolved\"\n            ],\n         \
-        \   \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\",\n           \
-        \         \"format\": \"uuid\",\n                    \"description\": \"Character norms were resolved for\"\n    \
-        \            },\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"description\": \"Realm used for baseline resolution\"\n               \
-        \ },\n                \"locationId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Location used for territory
-        resolution (null if not provided)\"\n                },\n                \"applicableNorms\": {\n                \
-        \    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ApplicableNormEntry\"\
-        \n                    },\n                    \"description\": \"All applicable norms from all resolution layers\"\
-        \n                },\n                \"mergedNormMap\": {\n                    \"type\": \"object\",\n          \
-        \          \"additionalProperties\": {\n                        \"$ref\": \"#/$defs/MergedNormEntry\"\n          \
-        \          },\n                    \"description\": \"Violation type to winning norm after most-specific-wins resolution\"\
+        : false,\n            \"required\": [\n                \"applicableNorms\",\n                \"mergedNormMap\",\n\
+        \                \"membershipFactionCount\",\n                \"territoryFactionResolved\",\n                \"realmBaselineResolved\"\
+        \n            ],\n            \"properties\": {\n                \"applicableNorms\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ApplicableNormEntry\"\n\
+        \                    },\n                    \"description\": \"All applicable norms from all resolution layers\"\n\
+        \                },\n                \"mergedNormMap\": {\n                    \"type\": \"object\",\n           \
+        \         \"additionalProperties\": {\n                        \"$ref\": \"#/$defs/MergedNormEntry\"\n           \
+        \         },\n                    \"description\": \"Violation type to winning norm after most-specific-wins resolution\"\
         \n                },\n                \"membershipFactionCount\": {\n                    \"type\": \"integer\",\n\
         \                    \"minimum\": 0,\n                    \"description\": \"Number of factions the character is a
         member of\"\n                },\n                \"territoryFactionResolved\": {\n                    \"type\": \"\
@@ -2034,21 +2062,22 @@ paths:
         \      \"description\": \"Unique identifier of the norm definition\"\n                },\n                \"factionId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Faction that owns this norm\"\n                },\n                \"factionName\": {\n         \
-        \           \"type\": \"string\",\n                    \"description\": \"Display name of the owning faction\"\n \
-        \               },\n                \"violationType\": {\n                    \"type\": \"string\",\n            \
-        \        \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Violation
-        type code\"\n                },\n                \"basePenalty\": {\n                    \"type\": \"number\",\n \
-        \                   \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"description\"\
-        : \"Base GOAP cost penalty\"\n                },\n                \"severity\": {\n                    \"$ref\": \"\
-        #/$defs/NormSeverity\",\n                    \"description\": \"Enforcement intensity level\"\n                },\n\
-        \                \"scope\": {\n                    \"$ref\": \"#/$defs/NormScope\",\n                    \"description\"\
-        : \"Applicability scope\"\n                },\n                \"source\": {\n                    \"$ref\": \"#/$defs/NormSource\"\
-        ,\n                    \"description\": \"Resolution layer this norm came from\"\n                },\n           \
-        \     \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n   \
-        \                 \"maxLength\": 1024,\n                    \"description\": \"Human-readable description of the norm\"\
-        \n                }\n            }\n        },\n        \"NormSeverity\": {\n            \"type\": \"string\",\n \
-        \           \"description\": \"Enforcement intensity level for a behavioral norm\",\n            \"enum\": [\n   \
-        \             \"Advisory\",\n                \"Standard\",\n                \"Strict\"\n            ]\n        },\n\
+        \           \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n\
+        \                    \"description\": \"Display name of the owning faction\"\n                },\n               \
+        \ \"violationType\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n       \
+        \             \"maxLength\": 128,\n                    \"description\": \"Violation type code\"\n                },\n\
+        \                \"basePenalty\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        float\",\n                    \"minimum\": 0.0,\n                    \"description\": \"Base GOAP cost penalty\"\n\
+        \                },\n                \"severity\": {\n                    \"$ref\": \"#/$defs/NormSeverity\",\n  \
+        \                  \"description\": \"Enforcement intensity level\"\n                },\n                \"scope\"\
+        : {\n                    \"$ref\": \"#/$defs/NormScope\",\n                    \"description\": \"Applicability scope\"\
+        \n                },\n                \"source\": {\n                    \"$ref\": \"#/$defs/NormSource\",\n     \
+        \               \"description\": \"Resolution layer this norm came from\"\n                },\n                \"\
+        description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"maxLength\": 1024,\n                    \"description\": \"Human-readable description of the norm\"\n\
+        \                }\n            }\n        },\n        \"NormSeverity\": {\n            \"type\": \"string\",\n  \
+        \          \"description\": \"Enforcement intensity level for a behavioral norm\",\n            \"enum\": [\n    \
+        \            \"Advisory\",\n                \"Standard\",\n                \"Strict\"\n            ]\n        },\n\
         \        \"NormScope\": {\n            \"type\": \"string\",\n            \"description\": \"Applicability scope for
         a behavioral norm\",\n            \"enum\": [\n                \"Internal\",\n                \"External\"\n     \
         \       ]\n        },\n        \"NormSource\": {\n            \"type\": \"string\",\n            \"description\":
@@ -2088,8 +2117,7 @@ paths:
         Called by lib-resource cleanup coordination when a character is deleted.
         Removes all faction memberships for the character. Territory claims and
         norm definitions are faction-owned, not character-owned, so they remain.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -2113,12 +2141,10 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByCharacterResponse\"\
         ,\n    \"$defs\": {\n        \"CleanupByCharacterResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Result of character faction data cleanup\",\n            \"additionalProperties\": false,\n     \
-        \       \"required\": [\n                \"membershipsRemoved\",\n                \"success\"\n            ],\n  \
-        \          \"properties\": {\n                \"membershipsRemoved\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 0,\n                    \"description\": \"Number of faction memberships removed\"\
-        \n                },\n                \"success\": {\n                    \"type\": \"boolean\",\n               \
-        \     \"description\": \"Whether cleanup completed successfully\"\n                }\n            }\n        }\n \
-        \   }\n}"
+        \       \"required\": [\n                \"membershipsRemoved\"\n            ],\n            \"properties\": {\n \
+        \               \"membershipsRemoved\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Number of faction memberships removed\"\n                }\n        \
+        \    }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Cleanup faction data for a deleted character\",\n    \"description\": \"\
         Called by lib-resource cleanup coordination when a character is deleted.\\nRemoves all faction memberships for the
         character. Territory claims and\\nnorm definitions are faction-owned, not character-owned, so they remain.\\n\",\n\
@@ -2134,8 +2160,7 @@ paths:
         Called by lib-resource cleanup coordination when a realm is deleted.
         Removes all factions belonging to the realm, including their memberships,
         territory claims, norm definitions, and associated seeds.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -2160,17 +2185,15 @@ paths:
         ,\n    \"$defs\": {\n        \"CleanupByRealmResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of realm faction data cleanup\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"factionsRemoved\",\n                \"membershipsRemoved\",\n                \"territoryClaimsRemoved\"\
-        ,\n                \"normsRemoved\",\n                \"success\"\n            ],\n            \"properties\": {\n\
-        \                \"factionsRemoved\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
-        : 0,\n                    \"description\": \"Number of factions removed\"\n                },\n                \"\
-        membershipsRemoved\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n       \
-        \             \"description\": \"Number of memberships removed across all factions\"\n                },\n       \
-        \         \"territoryClaimsRemoved\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
-        : 0,\n                    \"description\": \"Number of territory claims removed\"\n                },\n          \
-        \      \"normsRemoved\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n    \
-        \                \"description\": \"Number of norm definitions removed\"\n                },\n                \"success\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether cleanup completed
-        successfully\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                \"normsRemoved\"\n            ],\n            \"properties\": {\n                \"factionsRemoved\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Number of factions removed\"\n                },\n                \"membershipsRemoved\": {\n                \
+        \    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Number of
+        memberships removed across all factions\"\n                },\n                \"territoryClaimsRemoved\": {\n   \
+        \                 \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Number of territory claims removed\"\n                },\n                \"normsRemoved\": {\n              \
+        \      \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Number
+        of norm definitions removed\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Cleanup faction data for a deleted realm\",\n    \"description\": \"Called
         by lib-resource cleanup coordination when a realm is deleted.\\nRemoves all factions belonging to the realm, including
         their memberships,\\nterritory claims, norm definitions, and associated seeds.\\n\",\n    \"tags\": [\n        \"\
@@ -2185,8 +2208,7 @@ paths:
         Called by lib-resource cleanup coordination when a location is deleted.
         Removes all territory claims referencing the location. The faction itself
         remains intact.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -2210,11 +2232,9 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByLocationResponse\"\
         ,\n    \"$defs\": {\n        \"CleanupByLocationResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of location territory claim cleanup\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"claimsRemoved\",\n                \"success\"\n            ],\n            \"properties\":
-        {\n                \"claimsRemoved\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
-        : 0,\n                    \"description\": \"Number of territory claims removed\"\n                },\n          \
-        \      \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        cleanup completed successfully\"\n                }\n            }\n        }\n    }\n}"
+        : [\n                \"claimsRemoved\"\n            ],\n            \"properties\": {\n                \"claimsRemoved\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Number of territory claims removed\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Cleanup territory claims for a deleted location\",\n    \"description\"\
         : \"Called by lib-resource cleanup coordination when a location is deleted.\\nRemoves all territory claims referencing
         the location. The faction itself\\nremains intact.\\n\",\n    \"tags\": [\n        \"Resource Cleanup\"\n    ],\n\
@@ -2229,8 +2249,7 @@ paths:
         Called by Resource service during character compression. Returns faction
         memberships and roles for the character for archival. Norm definitions
         are faction-owned data and not included in character archives.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -2300,9 +2319,7 @@ paths:
         Called by Resource service during character decompression. Restores
         faction memberships from archive data. Only restores memberships for
         factions that still exist.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -2324,18 +2341,16 @@ paths:
         required\": [\n                \"characterId\",\n                \"data\"\n            ],\n            \"properties\"\
         : {\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"uuid\",\n                    \"description\": \"ID of the character to restore data for\"\n                },\n\
-        \                \"data\": {\n                    \"type\": \"string\",\n                    \"description\": \"Base64-encoded
-        gzipped FactionArchive JSON\"\n                }\n            }\n        }\n    }\n}"
+        \                \"data\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n \
+        \                   \"description\": \"Base64-encoded gzipped FactionArchive JSON\"\n                }\n         \
+        \   }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RestoreFromArchiveResponse\"\
         ,\n    \"$defs\": {\n        \"RestoreFromArchiveResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Result of restoration from archive\",\n            \"additionalProperties\": false,\n           \
-        \ \"required\": [\n                \"characterId\",\n                \"membershipsRestored\",\n                \"\
-        success\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n                   \
-        \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character
-        data was restored for\"\n                },\n                \"membershipsRestored\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether faction memberships were restored\"\n             \
-        \   },\n                \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the restoration completed successfully\"\n                }\n            }\n        }\n    }\n}"
+        \ \"required\": [\n                \"membershipsRestoredCount\"\n            ],\n            \"properties\": {\n \
+        \               \"membershipsRestoredCount\": {\n                    \"type\": \"integer\",\n                    \"\
+        minimum\": 0,\n                    \"description\": \"Number of faction memberships restored from archive\"\n    \
+        \            }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Restore faction data from archive\",\n    \"description\": \"Called by
         Resource service during character decompression. Restores\\nfaction memberships from archive data. Only restores memberships
         for\\nfactions that still exist.\\n\",\n    \"tags\": [\n        \"Compression\"\n    ],\n    \"deprecated\": false,\n\
@@ -2448,6 +2463,16 @@ components:
           nullable: true
           maxLength: 64
           description: Current seed growth phase (denormalized from lib-seed for convenience)
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this faction was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 1024
+          description: Reason for deprecation (null if not deprecated)
         memberCount:
           type: integer
           minimum: 0
@@ -2558,6 +2583,10 @@ components:
           type: boolean
           nullable: true
           description: Filter by realm baseline status
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated factions in results
         cursor:
           type: string
           nullable: true
@@ -2624,11 +2653,17 @@ components:
       additionalProperties: false
       required:
       - factionId
+      - deprecationReason
       properties:
         factionId:
           type: string
           format: uuid
           description: ID of the faction to deprecate
+        deprecationReason:
+          type: string
+          minLength: 1
+          maxLength: 1024
+          description: Reason for deprecation (audit context for Category A entities)
     UndeprecateFactionRequest:
       type: object
       description: Request to reactivate a deprecated faction
@@ -2890,13 +2925,8 @@ components:
       description: All faction memberships for a character
       additionalProperties: false
       required:
-      - characterId
       - memberships
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character these memberships belong to
         memberships:
           type: array
           items:
@@ -2919,9 +2949,13 @@ components:
           description: Faction the character belongs to
         factionName:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Display name of the faction
         factionCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Unique code of the faction
         role:
           $ref: '#/components/schemas/FactionMemberRole'
@@ -2971,18 +3005,8 @@ components:
       description: Result of a membership check
       additionalProperties: false
       required:
-      - factionId
-      - characterId
       - isMember
       properties:
-        factionId:
-          type: string
-          format: uuid
-          description: Faction that was checked
-        characterId:
-          type: string
-          format: uuid
-          description: Character that was checked
         isMember:
           type: boolean
           description: Whether the character is a member
@@ -3353,6 +3377,8 @@ components:
           description: Faction that owns this norm
         factionName:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Display name of the owning faction
         violationType:
           type: string
@@ -3414,27 +3440,12 @@ components:
       description: Resolved applicable norms for a character with hierarchy merge results
       additionalProperties: false
       required:
-      - characterId
-      - realmId
       - applicableNorms
       - mergedNormMap
       - membershipFactionCount
       - territoryFactionResolved
       - realmBaselineResolved
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character norms were resolved for
-        realmId:
-          type: string
-          format: uuid
-          description: Realm used for baseline resolution
-        locationId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Location used for territory resolution (null if not provided)
         applicableNorms:
           type: array
           items:
@@ -3472,15 +3483,11 @@ components:
       additionalProperties: false
       required:
       - membershipsRemoved
-      - success
       properties:
         membershipsRemoved:
           type: integer
           minimum: 0
           description: Number of faction memberships removed
-        success:
-          type: boolean
-          description: Whether cleanup completed successfully
     CleanupByRealmRequest:
       type: object
       description: Request to cleanup faction data for a deleted realm
@@ -3501,7 +3508,6 @@ components:
       - membershipsRemoved
       - territoryClaimsRemoved
       - normsRemoved
-      - success
       properties:
         factionsRemoved:
           type: integer
@@ -3519,9 +3525,6 @@ components:
           type: integer
           minimum: 0
           description: Number of norm definitions removed
-        success:
-          type: boolean
-          description: Whether cleanup completed successfully
     CleanupByLocationRequest:
       type: object
       description: Request to cleanup territory claims for a deleted location
@@ -3539,15 +3542,11 @@ components:
       additionalProperties: false
       required:
       - claimsRemoved
-      - success
       properties:
         claimsRemoved:
           type: integer
           minimum: 0
           description: Number of territory claims removed
-        success:
-          type: boolean
-          description: Whether cleanup completed successfully
     GetCompressDataRequest:
       type: object
       description: Request to get faction data for character compression
@@ -3605,23 +3604,16 @@ components:
           description: ID of the character to restore data for
         data:
           type: string
+          minLength: 1
           description: Base64-encoded gzipped FactionArchive JSON
     RestoreFromArchiveResponse:
       type: object
       description: Result of restoration from archive
       additionalProperties: false
       required:
-      - characterId
-      - membershipsRestored
-      - success
+      - membershipsRestoredCount
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character data was restored for
-        membershipsRestored:
-          type: boolean
-          description: Whether faction memberships were restored
-        success:
-          type: boolean
-          description: Whether the restoration completed successfully
+        membershipsRestoredCount:
+          type: integer
+          minimum: 0
+          description: Number of faction memberships restored from archive

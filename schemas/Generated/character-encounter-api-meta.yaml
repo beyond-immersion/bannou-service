@@ -63,8 +63,7 @@ paths:
         Creates a new encounter type code for game-specific encounter categories.
         Built-in types (COMBAT, TRADE, etc.) cannot be created via this endpoint.
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -138,9 +137,7 @@ paths:
       tags:
       - Encounter Type Management
       description: Retrieve an encounter type by its unique code.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -197,9 +194,7 @@ paths:
       tags:
       - Encounter Type Management
       description: Retrieve all encounter types including built-in and custom types.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -268,8 +263,7 @@ paths:
         Update an existing encounter type. Built-in types can only have their
         description and defaultEmotionalImpact updated.
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -345,8 +339,7 @@ paths:
         Delete a custom encounter type. Built-in types cannot be deleted.
         Types with existing encounters cannot be deleted.
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -382,9 +375,7 @@ paths:
       description: |
         Idempotent operation to seed built-in encounter types. Called automatically
         at service startup, but can be invoked manually to restore defaults.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -429,9 +420,7 @@ paths:
 
         Perspectives can be provided in the request or will be auto-generated with
         default values if not specified.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -598,9 +587,7 @@ paths:
       description: |
         Retrieves all encounters for a character with optional filtering.
         Memory decay is applied lazily on access.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -742,9 +729,7 @@ paths:
       description: |
         Retrieves all encounters between two specific characters.
         Useful for relationship history and dialogue context.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -879,9 +864,7 @@ paths:
       description: |
         Retrieves recent encounters at a specific location.
         Useful for scene context and area history.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1013,9 +996,7 @@ paths:
       description: |
         Fast boolean check for whether two characters have any recorded encounters.
         Does not apply memory decay or return encounter details.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1058,9 +1039,7 @@ paths:
       description: |
         Calculates the aggregate sentiment a character has toward another based
         on all their encounters. Memory strength is factored into the calculation.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1116,9 +1095,7 @@ paths:
       description: |
         Calculates sentiment toward multiple target characters in a single call.
         Efficient for behavior system queries that check multiple NPCs.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1182,9 +1159,7 @@ paths:
       description: |
         Retrieves a specific character's perspective on an encounter.
         Includes emotional impact, sentiment shift, and memory strength.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1265,9 +1240,7 @@ paths:
       description: |
         Updates a character's perspective on an encounter. Used when a character
         reflects on past events or gains new information about an encounter.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1362,9 +1335,7 @@ paths:
       description: |
         Strengthens a character's memory of an encounter. Called when the encounter
         is referenced in dialogue, thought, or action. Counteracts memory decay.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1448,9 +1419,7 @@ paths:
       description: |
         Deletes an encounter record and all associated perspectives.
         This is a hard delete and cannot be undone.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1490,9 +1459,7 @@ paths:
       description: |
         Deletes all encounter records and perspectives involving a specific character.
         Used during character deletion or compression. This is a hard delete.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1536,9 +1503,7 @@ paths:
         Manually triggers memory decay processing for all or specific characters.
         Normally decay is applied lazily on access, but this can be used for
         maintenance or testing purposes.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1582,8 +1547,7 @@ paths:
       description: |
         Called by Resource service during character compression.
         Returns encounters and perspectives involving this character for archival.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1715,9 +1679,7 @@ paths:
       description: |
         Called by Resource service during character decompression.
         Restores encounters and perspectives from archive data.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

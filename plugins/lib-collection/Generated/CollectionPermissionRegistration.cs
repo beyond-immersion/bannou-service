@@ -360,21 +360,6 @@ public static class CollectionPermissionRegistration
             }
         });
 
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/collection/cleanup-by-character",
-            Method = ServiceEndpointMethod.Post,
-            Description = "cleanupByCharacter",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
         return endpoints;
     }
 

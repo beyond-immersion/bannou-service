@@ -27,7 +27,6 @@ paths:
       - Account Management
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -137,9 +136,7 @@ paths:
       operationId: createAccount
       tags:
       - Account Management
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -238,9 +235,7 @@ paths:
       operationId: getAccount
       tags:
       - Account Management
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -323,9 +318,7 @@ paths:
       operationId: updateAccount
       tags:
       - Account Management
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -419,9 +412,7 @@ paths:
       operationId: deleteAccount
       tags:
       - Account Management
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -450,9 +441,7 @@ paths:
       operationId: getAccountByEmail
       tags:
       - Account Lookup
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -536,9 +525,7 @@ paths:
       operationId: getAuthMethods
       tags:
       - Authentication Methods
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -593,9 +580,7 @@ paths:
       operationId: addAuthMethod
       tags:
       - Authentication Methods
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -656,9 +641,7 @@ paths:
       operationId: removeAuthMethod
       tags:
       - Authentication Methods
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -691,9 +674,7 @@ paths:
       operationId: getAccountByProvider
       tags:
       - Account Lookup
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -785,7 +766,6 @@ paths:
       - Profile Management
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -873,9 +853,7 @@ paths:
       operationId: updatePasswordHash
       tags:
       - Account Management
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -910,9 +888,7 @@ paths:
       operationId: updateMfa
       tags:
       - Account Management
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -950,9 +926,7 @@ paths:
       operationId: batchGetAccounts
       tags:
       - Account Management
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1054,9 +1028,7 @@ paths:
       operationId: countAccounts
       tags:
       - Account Management
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1099,7 +1071,6 @@ paths:
       - Account Management
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -1153,9 +1124,7 @@ paths:
       operationId: updateVerificationStatus
       tags:
       - Account Management
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1185,9 +1154,7 @@ paths:
       operationId: updateEmail
       tags:
       - Account Management
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

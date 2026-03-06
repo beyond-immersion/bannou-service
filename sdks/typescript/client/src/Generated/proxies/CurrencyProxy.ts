@@ -25,95 +25,21 @@ export class CurrencyProxy {
   }
 
   /**
-   * Get currency definition by ID or code
+   * Update mutable fields of a currency definition
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async currencyGetCurrencyDefinitionAsync(
-    request: Schemas['GetCurrencyDefinitionRequest'],
+  async currencyUpdateCurrencyDefinitionAsync(
+    request: Schemas['UpdateCurrencyDefinitionRequest'],
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CurrencyDefinitionResponse']>> {
     return this.client.invokeAsync<
-      Schemas['GetCurrencyDefinitionRequest'],
+      Schemas['UpdateCurrencyDefinitionRequest'],
       Schemas['CurrencyDefinitionResponse']
-    >('/currency/definition/get', request, channel, timeout);
-  }
-
-  /**
-   * List currency definitions with filters
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyListCurrencyDefinitionsAsync(
-    request: Schemas['ListCurrencyDefinitionsRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['ListCurrencyDefinitionsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListCurrencyDefinitionsRequest'],
-      Schemas['ListCurrencyDefinitionsResponse']
-    >('/currency/definition/list', request, channel, timeout);
-  }
-
-  /**
-   * Create a new wallet for an owner
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyCreateWalletAsync(
-    request: Schemas['CreateWalletRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['WalletResponse']>> {
-    return this.client.invokeAsync<Schemas['CreateWalletRequest'], Schemas['WalletResponse']>(
-      '/currency/wallet/create',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Get wallet by ID or owner
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyGetWalletAsync(
-    request: Schemas['GetWalletRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['WalletWithBalancesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetWalletRequest'],
-      Schemas['WalletWithBalancesResponse']
-    >('/currency/wallet/get', request, channel, timeout);
-  }
-
-  /**
-   * Get existing wallet or create if not exists
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyGetOrCreateWalletAsync(
-    request: Schemas['GetOrCreateWalletRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['GetOrCreateWalletResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetOrCreateWalletRequest'],
-      Schemas['GetOrCreateWalletResponse']
-    >('/currency/wallet/get-or-create', request, channel, timeout);
+    >('/currency/definition/update', request, channel, timeout);
   }
 
   /**
@@ -155,100 +81,6 @@ export class CurrencyProxy {
   }
 
   /**
-   * Credit currency to a wallet (faucet operation)
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyCreditCurrencyAsync(
-    request: Schemas['CreditCurrencyRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['CreditCurrencyResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CreditCurrencyRequest'],
-      Schemas['CreditCurrencyResponse']
-    >('/currency/credit', request, channel, timeout);
-  }
-
-  /**
-   * Debit currency from a wallet (sink operation)
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyDebitCurrencyAsync(
-    request: Schemas['DebitCurrencyRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['DebitCurrencyResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['DebitCurrencyRequest'],
-      Schemas['DebitCurrencyResponse']
-    >('/currency/debit', request, channel, timeout);
-  }
-
-  /**
-   * Transfer currency between wallets
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyTransferCurrencyAsync(
-    request: Schemas['TransferCurrencyRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['TransferCurrencyResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['TransferCurrencyRequest'],
-      Schemas['TransferCurrencyResponse']
-    >('/currency/transfer', request, channel, timeout);
-  }
-
-  /**
-   * Credit multiple wallets in one call
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyBatchCreditCurrencyAsync(
-    request: Schemas['BatchCreditRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['BatchCreditResponse']>> {
-    return this.client.invokeAsync<Schemas['BatchCreditRequest'], Schemas['BatchCreditResponse']>(
-      '/currency/batch-credit',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Debit multiple wallets in one call
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyBatchDebitCurrencyAsync(
-    request: Schemas['BatchDebitRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['BatchDebitResponse']>> {
-    return this.client.invokeAsync<Schemas['BatchDebitRequest'], Schemas['BatchDebitResponse']>(
-      '/currency/batch-debit',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
    * Calculate conversion without executing
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -264,24 +96,6 @@ export class CurrencyProxy {
       Schemas['CalculateConversionRequest'],
       Schemas['CalculateConversionResponse']
     >('/currency/convert/calculate', request, channel, timeout);
-  }
-
-  /**
-   * Execute currency conversion in a wallet
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyExecuteConversionAsync(
-    request: Schemas['ExecuteConversionRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['ExecuteConversionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ExecuteConversionRequest'],
-      Schemas['ExecuteConversionResponse']
-    >('/currency/convert/execute', request, channel, timeout);
   }
 
   /**
@@ -303,21 +117,21 @@ export class CurrencyProxy {
   }
 
   /**
-   * Get a transaction by ID
+   * Update a currency's exchange rate to base
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async currencyGetTransactionAsync(
-    request: Schemas['GetTransactionRequest'],
+  async currencyUpdateExchangeRateAsync(
+    request: Schemas['UpdateExchangeRateRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['TransactionResponse']>> {
+  ): Promise<ApiResponse<Schemas['UpdateExchangeRateResponse']>> {
     return this.client.invokeAsync<
-      Schemas['GetTransactionRequest'],
-      Schemas['TransactionResponse']
-    >('/currency/transaction/get', request, channel, timeout);
+      Schemas['UpdateExchangeRateRequest'],
+      Schemas['UpdateExchangeRateResponse']
+    >('/currency/exchange-rate/update', request, channel, timeout);
   }
 
   /**
@@ -336,177 +150,5 @@ export class CurrencyProxy {
       Schemas['GetTransactionHistoryRequest'],
       Schemas['GetTransactionHistoryResponse']
     >('/currency/transaction/history', request, channel, timeout);
-  }
-
-  /**
-   * Get transactions by reference type and ID
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyGetTransactionsByReferenceAsync(
-    request: Schemas['GetTransactionsByReferenceRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['GetTransactionsByReferenceResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetTransactionsByReferenceRequest'],
-      Schemas['GetTransactionsByReferenceResponse']
-    >('/currency/transaction/by-reference', request, channel, timeout);
-  }
-
-  /**
-   * Get global supply statistics for a currency
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyGetGlobalSupplyAsync(
-    request: Schemas['GetGlobalSupplyRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['GetGlobalSupplyResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetGlobalSupplyRequest'],
-      Schemas['GetGlobalSupplyResponse']
-    >('/currency/stats/global-supply', request, channel, timeout);
-  }
-
-  /**
-   * Debit wallet for escrow deposit
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyEscrowDepositAsync(
-    request: Schemas['EscrowDepositRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['EscrowDepositResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['EscrowDepositRequest'],
-      Schemas['EscrowDepositResponse']
-    >('/currency/escrow/deposit', request, channel, timeout);
-  }
-
-  /**
-   * Credit recipient on escrow completion
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyEscrowReleaseAsync(
-    request: Schemas['EscrowReleaseRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['EscrowReleaseResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['EscrowReleaseRequest'],
-      Schemas['EscrowReleaseResponse']
-    >('/currency/escrow/release', request, channel, timeout);
-  }
-
-  /**
-   * Credit depositor on escrow refund
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyEscrowRefundAsync(
-    request: Schemas['EscrowRefundRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['EscrowRefundResponse']>> {
-    return this.client.invokeAsync<Schemas['EscrowRefundRequest'], Schemas['EscrowRefundResponse']>(
-      '/currency/escrow/refund',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Create an authorization hold (reserve funds)
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyCreateHoldAsync(
-    request: Schemas['CreateHoldRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['HoldResponse']>> {
-    return this.client.invokeAsync<Schemas['CreateHoldRequest'], Schemas['HoldResponse']>(
-      '/currency/hold/create',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Capture held funds (debit final amount)
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyCaptureHoldAsync(
-    request: Schemas['CaptureHoldRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['CaptureHoldResponse']>> {
-    return this.client.invokeAsync<Schemas['CaptureHoldRequest'], Schemas['CaptureHoldResponse']>(
-      '/currency/hold/capture',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Release held funds (make available again)
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyReleaseHoldAsync(
-    request: Schemas['ReleaseHoldRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['HoldResponse']>> {
-    return this.client.invokeAsync<Schemas['ReleaseHoldRequest'], Schemas['HoldResponse']>(
-      '/currency/hold/release',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Get hold status and details
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async currencyGetHoldAsync(
-    request: Schemas['GetHoldRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['HoldResponse']>> {
-    return this.client.invokeAsync<Schemas['GetHoldRequest'], Schemas['HoldResponse']>(
-      '/currency/hold/get',
-      request,
-      channel,
-      timeout
-    );
   }
 }

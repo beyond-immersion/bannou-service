@@ -31,9 +31,7 @@ paths:
       operationId: listServices
       tags:
       - Game Service Registry
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -96,9 +94,7 @@ paths:
       operationId: getService
       tags:
       - Game Service Registry
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -154,9 +150,7 @@ paths:
       operationId: createService
       tags:
       - Game Service Registry
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -223,9 +217,7 @@ paths:
       operationId: updateService
       tags:
       - Game Service Registry
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -288,9 +280,7 @@ paths:
       operationId: deleteService
       tags:
       - Game Service Registry
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

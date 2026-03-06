@@ -119,46 +119,6 @@ export class InventoryProxy {
   }
 
   /**
-   * Add item to container
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async inventoryAddItemToContainerAsync(
-    request: Schemas['AddItemRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['AddItemResponse']>> {
-    return this.client.invokeAsync<Schemas['AddItemRequest'], Schemas['AddItemResponse']>(
-      '/inventory/add',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Remove item from container
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async inventoryRemoveItemFromContainerAsync(
-    request: Schemas['RemoveItemRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['RemoveItemResponse']>> {
-    return this.client.invokeAsync<Schemas['RemoveItemRequest'], Schemas['RemoveItemResponse']>(
-      '/inventory/remove',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
    * Move item to different slot or container
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -172,26 +132,6 @@ export class InventoryProxy {
   ): Promise<ApiResponse<Schemas['MoveItemResponse']>> {
     return this.client.invokeAsync<Schemas['MoveItemRequest'], Schemas['MoveItemResponse']>(
       '/inventory/move',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Transfer item to different owner
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async inventoryTransferItemAsync(
-    request: Schemas['TransferItemRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['TransferItemResponse']>> {
-    return this.client.invokeAsync<Schemas['TransferItemRequest'], Schemas['TransferItemResponse']>(
-      '/inventory/transfer',
       request,
       channel,
       timeout

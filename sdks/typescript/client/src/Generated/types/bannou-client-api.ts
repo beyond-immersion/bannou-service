@@ -21,62 +21,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/account/password/update': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Update account password hash */
-    post: operations['account_updatePasswordHash'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/account/mfa/update': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Update MFA settings for an account
-     * @description Sets or clears MFA-related fields (mfaEnabled, mfaSecret, mfaRecoveryCodes) atomically.
-     *     Used by Auth service during MFA enable/disable flows. Auth owns the encryption logic;
-     *     Account stores the opaque encrypted data.
-     */
-    post: operations['account_updateMfa'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/account/verification/update': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Update email verification status */
-    post: operations['account_updateVerificationStatus'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/achievement/definition/create': {
     parameters: {
       query?: never;
@@ -249,172 +193,6 @@ export interface paths {
     put?: never;
     /** Delete an actor template */
     post: operations['actor_DeleteActorTemplate'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/actor/spawn': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Spawn a new actor from a template */
-    post: operations['actor_SpawnActor'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/actor/stop': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Stop a running actor */
-    post: operations['actor_StopActor'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/actor/bind-character': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Bind an unbound actor to a character
-     * @description Transitions an unbound (event-mode) actor to a bound (character-mode) actor.
-     *     After binding, the actor receives character perception events and variable
-     *     providers begin loading character-specific data on subsequent ticks.
-     *     Fails if the actor is already bound to a character.
-     */
-    post: operations['actor_BindActorCharacter'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/actor/cleanup-by-character': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Cleanup actors referencing a deleted character
-     * @description Called by lib-resource cleanup coordination when a character is deleted.
-     *     Stops and removes all actors that reference the specified characterId.
-     *     This endpoint is designed for internal service-to-service calls during
-     *     cascading resource cleanup.
-     */
-    post: operations['actor_CleanupByCharacter'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/actor/inject-perception': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Inject a perception event into an actor's queue (testing)
-     * @description Injects a perception event directly into the actor's perception queue
-     *     for testing purposes. Useful for testing actor behavior without a
-     *     full game server setup.
-     */
-    post: operations['actor_InjectPerception'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/actor/encounter/start': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Start an encounter managed by an Event Brain actor
-     * @description Initializes an encounter with the specified participants. The Event Brain actor
-     *     will coordinate the encounter, sending instructions to participant NPC Brain actors
-     *     via their character perception channels.
-     */
-    post: operations['actor_StartEncounter'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/actor/encounter/update-phase': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Update the phase of an active encounter
-     * @description Updates the phase of an encounter being managed by an Event Brain actor.
-     *     Phase changes are logged and can trigger behavior changes in participant actors.
-     */
-    post: operations['actor_UpdateEncounterPhase'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/actor/encounter/end': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * End an active encounter
-     * @description Ends an encounter being managed by an Event Brain actor. This clears the
-     *     encounter state and allows the actor to manage a new encounter.
-     */
-    post: operations['actor_EndEncounter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1243,90 +1021,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/cache/get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get cached compiled behavior
-     * @description Retrieves a previously compiled behavior from the cache.
-     *     Used for performance optimization in high-frequency behavior execution.
-     */
-    post: operations['behavior_GetCachedBehavior'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/cache/invalidate': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Invalidate cached behavior
-     * @description Removes a behavior from the cache, forcing recompilation on next access.
-     *     Used when behavior definitions are updated.
-     */
-    post: operations['behavior_InvalidateCachedBehavior'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/goap/plan': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Generate GOAP plan
-     * @description Generates a GOAP plan to achieve a goal from the current world state.
-     *     Uses A* search to find the optimal sequence of actions.
-     */
-    post: operations['behavior_GenerateGoapPlan'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/goap/validate-plan': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Validate existing GOAP plan
-     * @description Validates an existing GOAP plan against the current world state.
-     *     Returns whether the plan is still valid or needs replanning.
-     */
-    post: operations['behavior_ValidateGoapPlan'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/character/get': {
     parameters: {
       query?: never;
@@ -1417,7 +1111,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/character/get-compress-data': {
+  '/character-encounter/type/create': {
     parameters: {
       query?: never;
       header?: never;
@@ -1427,19 +1121,18 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Get character base data for compression
-     * @description Called by Resource service during compression.
-     *     Returns core character data (name, dates, family summary).
-     *     Returns BadRequest if character is alive - only dead characters can be compressed.
+     * Create new encounter type
+     * @description Creates a new encounter type code for game-specific encounter categories.
+     *     Built-in types (COMBAT, TRADE, etc.) cannot be created via this endpoint.
      */
-    post: operations['character_getCompressData'];
+    post: operations['characterEncounter_createEncounterType'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/character-encounter/type/get': {
+  '/character-encounter/type/update': {
     parameters: {
       query?: never;
       header?: never;
@@ -1449,17 +1142,18 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Get encounter type by code
-     * @description Retrieve an encounter type by its unique code.
+     * Update encounter type
+     * @description Update an existing encounter type. Built-in types can only have their
+     *     description and defaultEmotionalImpact updated.
      */
-    post: operations['characterEncounter_getEncounterType'];
+    post: operations['characterEncounter_updateEncounterType'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/character-encounter/type/list': {
+  '/character-encounter/type/delete': {
     parameters: {
       query?: never;
       header?: never;
@@ -1469,17 +1163,18 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * List all encounter types
-     * @description Retrieve all encounter types including built-in and custom types.
+     * Delete encounter type
+     * @description Delete a custom encounter type. Built-in types cannot be deleted.
+     *     Types with existing encounters cannot be deleted.
      */
-    post: operations['characterEncounter_listEncounterTypes'];
+    post: operations['characterEncounter_deleteEncounterType'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/character-encounter/record': {
+  '/character-personality/set': {
     parameters: {
       query?: never;
       header?: never;
@@ -1489,21 +1184,18 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Record new encounter with perspectives
-     * @description Records a new encounter between two or more characters. Creates the shared
-     *     encounter record and individual perspectives for each participant.
-     *
-     *     Perspectives can be provided in the request or will be auto-generated with
-     *     default values if not specified.
+     * Create or update personality for a character
+     * @description Creates or replaces the personality profile for a character. If a personality
+     *     already exists, it will be completely replaced (not merged).
      */
-    post: operations['characterEncounter_recordEncounter'];
+    post: operations['characterPersonality_setPersonality'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/character-encounter/query/by-character': {
+  '/character-personality/set-combat': {
     parameters: {
       query?: never;
       header?: never;
@@ -1513,448 +1205,11 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Get character's encounters (paginated)
-     * @description Retrieves all encounters for a character with optional filtering.
-     *     Memory decay is applied lazily on access.
+     * Create or update combat preferences for a character
+     * @description Creates or replaces the combat preferences for a character. If preferences
+     *     already exist, they will be completely replaced (not merged).
      */
-    post: operations['characterEncounter_queryByCharacter'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-encounter/query/between': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get encounters between two characters
-     * @description Retrieves all encounters between two specific characters.
-     *     Useful for relationship history and dialogue context.
-     */
-    post: operations['characterEncounter_queryBetween'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-encounter/query/by-location': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Recent encounters at location
-     * @description Retrieves recent encounters at a specific location.
-     *     Useful for scene context and area history.
-     */
-    post: operations['characterEncounter_queryByLocation'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-encounter/has-met': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Quick check if two characters have met
-     * @description Fast boolean check for whether two characters have any recorded encounters.
-     *     Does not apply memory decay or return encounter details.
-     */
-    post: operations['characterEncounter_hasMet'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-encounter/get-sentiment': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Aggregate sentiment toward another character
-     * @description Calculates the aggregate sentiment a character has toward another based
-     *     on all their encounters. Memory strength is factored into the calculation.
-     */
-    post: operations['characterEncounter_getSentiment'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-encounter/batch-get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Bulk sentiment for multiple targets
-     * @description Calculates sentiment toward multiple target characters in a single call.
-     *     Efficient for behavior system queries that check multiple NPCs.
-     */
-    post: operations['characterEncounter_batchGetSentiment'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-encounter/get-perspective': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get character's view of encounter
-     * @description Retrieves a specific character's perspective on an encounter.
-     *     Includes emotional impact, sentiment shift, and memory strength.
-     */
-    post: operations['characterEncounter_getPerspective'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-encounter/update-perspective': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Update perspective (reflection)
-     * @description Updates a character's perspective on an encounter. Used when a character
-     *     reflects on past events or gains new information about an encounter.
-     */
-    post: operations['characterEncounter_updatePerspective'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-encounter/refresh-memory': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Strengthen memory (referenced)
-     * @description Strengthens a character's memory of an encounter. Called when the encounter
-     *     is referenced in dialogue, thought, or action. Counteracts memory decay.
-     */
-    post: operations['characterEncounter_refreshMemory'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-encounter/get-compress-data': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get encounter data for compression
-     * @description Called by Resource service during character compression.
-     *     Returns encounters and perspectives involving this character for archival.
-     */
-    post: operations['characterEncounter_getCompressData'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-history/get-participation': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get all historical events a character participated in
-     * @description Retrieves all historical event participation records for a character.
-     *     Supports filtering by event category and minimum significance.
-     */
-    post: operations['characterHistory_getParticipation'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-history/get-event-participants': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get all characters who participated in a historical event
-     * @description Retrieves all characters who participated in a specific historical event.
-     *     Useful for generating event summaries or finding related characters.
-     */
-    post: operations['characterHistory_getEventParticipants'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-history/get-backstory': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get machine-readable backstory elements for behavior system
-     * @description Retrieves structured backstory elements for a character. These elements
-     *     are machine-readable key-value pairs used by the behavior system for
-     *     decision-making, not narrative text for players.
-     */
-    post: operations['characterHistory_getBackstory'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-history/get-compress-data': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get history data for compression
-     * @description Called by Resource service during character compression.
-     *     Returns historical participations, backstory elements, and text summaries for archival.
-     */
-    post: operations['characterHistory_getCompressData'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-personality/get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get personality for a character
-     * @description Retrieves the personality profile for a character. Returns 404 if no
-     *     personality has been defined for this character.
-     */
-    post: operations['characterPersonality_getPersonality'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-personality/evolve': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Record an experience that may evolve personality
-     * @description Records a significant experience for a character. The system evaluates whether
-     *     the experience causes trait evolution based on:
-     *     - Experience type and its typical trait impacts
-     *     - Experience intensity (higher = more likely to cause change)
-     *     - Current trait values and resistance
-     *     - Random factor for rarity (most experiences don't cause changes)
-     *
-     *     This endpoint is typically called by the behavior service when significant
-     *     events occur during gameplay.
-     */
-    post: operations['characterPersonality_recordExperience'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-personality/batch-get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get personalities for multiple characters
-     * @description Bulk load personalities for multiple characters. Used by the behavior service
-     *     for efficient region initialization. Characters without personalities are
-     *     returned in the notFound array.
-     *
-     *     Maximum 100 characters per request.
-     */
-    post: operations['characterPersonality_batchGetPersonalities'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-personality/get-combat': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get combat preferences for a character
-     * @description Retrieves the combat preferences for a character. Combat preferences
-     *     influence tactical decisions in the behavior system, including engagement
-     *     style, positioning, and retreat conditions.
-     */
-    post: operations['characterPersonality_getCombatPreferences'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-personality/evolve-combat': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Record combat experience that may evolve preferences
-     * @description Records a significant combat experience that may cause preference evolution.
-     *     Similar to personality evolution, but focused on combat-specific traits.
-     *
-     *     Combat experiences can shift style (e.g., repeated losses may make a
-     *     character more defensive), adjust risk tolerance, or change retreat thresholds.
-     */
-    post: operations['characterPersonality_evolveCombatPreferences'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-personality/get-compress-data': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get personality data for compression
-     * @description Called by Resource service during character compression.
-     *     Returns personality traits and combat preferences for archival.
-     */
-    post: operations['characterPersonality_getCompressData'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/character-personality/cleanup-by-character': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Cleanup all personality data for a deleted character
-     * @description Called by lib-resource cleanup coordination when a character is deleted.
-     *     Removes BOTH personality traits AND combat preferences for the specified character.
-     *     This endpoint is designed for internal service-to-service calls during
-     *     cascading resource cleanup.
-     */
-    post: operations['characterPersonality_cleanupByCharacter'];
+    post: operations['characterPersonality_setCombatPreferences'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2381,26 +1636,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/chat/message/send-batch': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Send multiple messages
-     * @description Sends multiple messages to a room atomically. Intended for bulk sentiment pushes from higher-layer services.
-     */
-    post: operations['chat_SendMessageBatch'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/chat/message/history': {
     parameters: {
       query?: never;
@@ -2495,66 +1730,6 @@ export interface paths {
      * @description Searches message content in persistent rooms using MySQL full-text search. Not available for ephemeral rooms.
      */
     post: operations['chat_SearchMessages'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/chat/admin/rooms': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * List all rooms system-wide
-     * @description Returns all rooms across the system for administrative purposes. Supports filtering by status and type.
-     */
-    post: operations['chat_AdminListRooms'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/chat/admin/stats': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Room and message statistics
-     * @description Returns system-wide chat statistics for monitoring and debugging.
-     */
-    post: operations['chat_AdminGetStats'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/chat/admin/cleanup': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Force cleanup of idle rooms
-     * @description Triggers an immediate idle room cleanup cycle, bypassing the normal interval.
-     */
-    post: operations['chat_AdminForceCleanup'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2989,31 +2164,6 @@ export interface paths {
      *     in the entry template's discovery levels.
      */
     post: operations['collection_advanceDiscovery'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/collection/cleanup-by-character': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Cleanup all collections for a deleted character
-     * @description Called by lib-resource cleanup coordination when a character is deleted.
-     *     Removes all collections owned by the specified characterId, including
-     *     their inventory containers, cache entries, and publishes collection.deleted
-     *     lifecycle events.
-     *     This endpoint is designed for internal service-to-service calls during
-     *     cascading resource cleanup.
-     */
-    post: operations['collection_cleanupByCharacter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3630,7 +2780,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/currency/definition/get': {
+  '/currency/definition/update': {
     parameters: {
       query?: never;
       header?: never;
@@ -3640,95 +2790,11 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Get currency definition by ID or code
-     * @description Retrieves a currency definition by its unique ID or code.
-     *     At least one of definitionId or code must be provided.
+     * Update mutable fields of a currency definition
+     * @description Updates mutable fields of a currency definition. Code, precision, and scope
+     *     are immutable after creation and cannot be changed.
      */
-    post: operations['currency_getCurrencyDefinition'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/currency/definition/list': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * List currency definitions with filters
-     * @description Lists currency definitions with optional filtering by realm, scope,
-     *     active status, and base currency flag.
-     */
-    post: operations['currency_listCurrencyDefinitions'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/currency/wallet/create': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Create a new wallet for an owner
-     * @description Creates a new wallet for a polymorphic owner (account, character, NPC, guild, etc.).
-     *     Each owner+ownerType+realm combination can have at most one wallet.
-     */
-    post: operations['currency_createWallet'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/currency/wallet/get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get wallet by ID or owner
-     * @description Retrieves a wallet by its ID, or by owner+ownerType+realm combination.
-     *     Returns the wallet with all non-zero balances.
-     */
-    post: operations['currency_getWallet'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/currency/wallet/get-or-create': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get existing wallet or create if not exists
-     * @description Retrieves a wallet if it exists, otherwise creates a new one.
-     *     Upsert pattern for convenience.
-     */
-    post: operations['currency_getOrCreateWallet'];
+    post: operations['currency_updateCurrencyDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3778,111 +2844,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/currency/credit': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Credit currency to a wallet (faucet operation)
-     * @description Credits currency to a wallet. This is a faucet operation (currency enters the system).
-     *     Enforces earn caps, wallet caps, and global supply caps. Requires idempotency key.
-     */
-    post: operations['currency_creditCurrency'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/currency/debit': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Debit currency from a wallet (sink operation)
-     * @description Debits currency from a wallet. This is a sink operation (currency exits the system).
-     *     Checks for sufficient funds unless negative balance is allowed.
-     */
-    post: operations['currency_debitCurrency'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/currency/transfer': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Transfer currency between wallets
-     * @description Transfers currency from one wallet to another. Validates transferability,
-     *     realm compatibility, and sufficient funds.
-     */
-    post: operations['currency_transferCurrency'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/currency/batch-credit': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Credit multiple wallets in one call
-     * @description Credits currency to multiple wallets in one call. Each operation is independent;
-     *     failures do not rollback others. For atomic multi-wallet operations, use lib-escrow.
-     */
-    post: operations['currency_batchCreditCurrency'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/currency/batch-debit': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Debit multiple wallets in one call
-     * @description Debits currency from multiple wallets in one call. Each operation is independent;
-     *     failures do not rollback others. For atomic multi-wallet operations, use lib-escrow.
-     */
-    post: operations['currency_batchDebitCurrency'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/currency/convert/calculate': {
     parameters: {
       query?: never;
@@ -3898,27 +2859,6 @@ export interface paths {
      *     Uses base currency exchange rates to compute the effective rate.
      */
     post: operations['currency_calculateConversion'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/currency/convert/execute': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Execute currency conversion in a wallet
-     * @description Executes a currency conversion within a single wallet. Debits the source
-     *     currency and credits the target currency at the computed exchange rate.
-     */
-    post: operations['currency_executeConversion'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3946,7 +2886,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/currency/transaction/get': {
+  '/currency/exchange-rate/update': {
     parameters: {
       query?: never;
       header?: never;
@@ -3956,10 +2896,11 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Get a transaction by ID
-     * @description Retrieves a single transaction record by its unique ID.
+     * Update a currency's exchange rate to base
+     * @description Updates the exchange rate of a currency relative to the base currency.
+     *     Cannot set rate on the base currency itself.
      */
-    post: operations['currency_getTransaction'];
+    post: operations['currency_updateExchangeRate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3987,7 +2928,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/currency/transaction/by-reference': {
+  '/documentation/create': {
     parameters: {
       query?: never;
       header?: never;
@@ -3996,19 +2937,15 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /**
-     * Get transactions by reference type and ID
-     * @description Retrieves all transactions linked to a specific reference (quest, auction,
-     *     escrow, etc.).
-     */
-    post: operations['currency_getTransactionsByReference'];
+    /** Create new documentation entry */
+    post: operations['documentation_createDocument'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/currency/stats/global-supply': {
+  '/documentation/update': {
     parameters: {
       query?: never;
       header?: never;
@@ -4017,19 +2954,15 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /**
-     * Get global supply statistics for a currency
-     * @description Returns aggregate supply statistics including total supply, circulation,
-     *     escrow amounts, and lifetime mint/burn totals.
-     */
-    post: operations['currency_getGlobalSupply'];
+    /** Update existing documentation entry */
+    post: operations['documentation_updateDocument'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/currency/escrow/deposit': {
+  '/documentation/delete': {
     parameters: {
       query?: never;
       header?: never;
@@ -4039,18 +2972,18 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Debit wallet for escrow deposit
-     * @description Called by lib-escrow when a party deposits currency into an escrow agreement.
-     *     Immediately debits the wallet (no lock tracking needed - escrow owns the funds).
+     * Soft-delete documentation entry to trashcan
+     * @description Moves document to trashcan for recovery within TTL period.
+     *     Documents are automatically cleaned up after TrashcanTtlDays.
      */
-    post: operations['currency_escrowDeposit'];
+    post: operations['documentation_deleteDocument'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/currency/escrow/release': {
+  '/documentation/recover': {
     parameters: {
       query?: never;
       header?: never;
@@ -4060,18 +2993,18 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Credit recipient on escrow completion
-     * @description Called by lib-escrow when an escrow agreement completes successfully.
-     *     Credits the recipient wallet with the released funds.
+     * Recover document from trashcan
+     * @description Restores a soft-deleted document from the trashcan.
+     *     Must be called before the trashcan TTL expires.
      */
-    post: operations['currency_escrowRelease'];
+    post: operations['documentation_recoverDocument'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/currency/escrow/refund': {
+  '/documentation/bulk-update': {
     parameters: {
       query?: never;
       header?: never;
@@ -4081,18 +3014,18 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Credit depositor on escrow refund
-     * @description Called by lib-escrow when an escrow agreement is cancelled or refunded.
-     *     Credits the original depositor wallet with the refunded funds.
+     * Bulk update document metadata
+     * @description Apply category, tag, or metadata changes to multiple documents at once.
+     *     Each document is processed independently - partial success is possible.
      */
-    post: operations['currency_escrowRefund'];
+    post: operations['documentation_bulkUpdateDocuments'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/currency/hold/create': {
+  '/documentation/bulk-delete': {
     parameters: {
       query?: never;
       header?: never;
@@ -4102,19 +3035,18 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Create an authorization hold (reserve funds)
-     * @description Creates an authorization hold that reserves funds without debiting.
-     *     The held amount reduces the effective balance but does not leave the wallet.
-     *     Used for pre-auth scenarios (dining, gas, hotels) where final amount may differ.
+     * Bulk soft-delete documents to trashcan
+     * @description Move multiple documents to trashcan at once.
+     *     Each document is processed independently - partial success is possible.
      */
-    post: operations['currency_createHold'];
+    post: operations['documentation_bulkDeleteDocuments'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/currency/hold/capture': {
+  '/documentation/import': {
     parameters: {
       query?: never;
       header?: never;
@@ -4124,18 +3056,18 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Capture held funds (debit final amount)
-     * @description Captures an active hold by debiting the final amount (which may be less than
-     *     or equal to the held amount). Any difference is released back to available balance.
+     * Bulk import documentation from structured source
+     * @description Import multiple documents. Each document processed independently.
+     *     Partial success is possible - failures reported per document.
      */
-    post: operations['currency_captureHold'];
+    post: operations['documentation_importDocumentation'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/currency/hold/release': {
+  '/documentation/trashcan': {
     parameters: {
       query?: never;
       header?: never;
@@ -4145,18 +3077,18 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Release held funds (make available again)
-     * @description Releases an active hold, making all held funds available again.
-     *     No debit occurs.
+     * List documents in the trashcan
+     * @description List all soft-deleted documents within the namespace's trashcan.
+     *     Documents remain recoverable until TTL expires or purge is called.
      */
-    post: operations['currency_releaseHold'];
+    post: operations['documentation_listTrashcan'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/currency/hold/get': {
+  '/documentation/purge': {
     parameters: {
       query?: never;
       header?: never;
@@ -4166,17 +3098,18 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Get hold status and details
-     * @description Retrieves the current status and details of an authorization hold.
+     * Permanently delete trashcan items
+     * @description Permanently delete specified documents from trashcan, or purge all.
+     *     This operation is irreversible - documents cannot be recovered after purge.
      */
-    post: operations['currency_getHold'];
+    post: operations['documentation_purgeTrashcan'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/divine/deity/create': {
+  '/documentation/stats': {
     parameters: {
       query?: never;
       header?: never;
@@ -4186,561 +3119,11 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Create a new deity
-     * @description Creates a deity entity with domain influences and personality traits.
-     *     Provisions a divinity currency wallet, a domain power seed, and optionally
-     *     starts a deity watcher actor via Puppetmaster.
+     * Get namespace documentation statistics
+     * @description Retrieve usage statistics and metadata for a documentation namespace.
+     *     Useful for monitoring, capacity planning, and administrative dashboards.
      */
-    post: operations['divine_createDeity'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/deity/get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get a deity by ID
-     * @description Returns a single deity entity by its unique identifier.
-     */
-    post: operations['divine_getDeity'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/deity/get-by-code': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get a deity by code within a game service
-     * @description Looks up a deity by its unique code within a game service scope.
-     */
-    post: operations['divine_getDeityByCode'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/deity/list': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * List deities with optional filters
-     * @description Returns a paginated list of deities for a game service, optionally
-     *     filtered by domain code and status.
-     */
-    post: operations['divine_listDeities'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/deity/update': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Update deity properties
-     * @description Partial update of deity properties. Only non-null fields are applied.
-     *     Requires a distributed lock on the deity.
-     */
-    post: operations['divine_updateDeity'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/deity/activate': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Activate a dormant deity
-     * @description Sets the deity status to Active. If Puppetmaster is available and no
-     *     watcher actor exists, starts one. Publishes a deity activated event.
-     */
-    post: operations['divine_activateDeity'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/deity/deactivate': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Deactivate an active deity
-     * @description Sets the deity status to Dormant. Stops the watcher actor if Puppetmaster
-     *     is available. Clears all attention slots. Publishes a deity dormant event.
-     */
-    post: operations['divine_deactivateDeity'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/deity/delete': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Delete a deity
-     * @description Permanently deletes a deity and all dependent data. Deactivates the deity
-     *     if active, revokes all blessings, removes all follower relationships, deletes
-     *     attention slots, and coordinates cleanup via lib-resource. Publishes a
-     *     lifecycle deleted event.
-     */
-    post: operations['divine_deleteDeity'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/divinity/get-balance': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get a deity's divinity balance
-     * @description Returns the current divinity balance for a deity by querying its currency wallet.
-     */
-    post: operations['divine_getDivinityBalance'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/divinity/credit': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Credit divinity to a deity
-     * @description Credits divinity to a deity's currency wallet. Used for mortal actions
-     *     in the deity's domain, direct grants, or other divinity generation sources.
-     */
-    post: operations['divine_creditDivinity'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/divinity/debit': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Debit divinity from a deity
-     * @description Debits divinity from a deity's currency wallet. Used for blessing grants,
-     *     miracles, or other divinity expenditures. Validates sufficient balance
-     *     before debiting.
-     */
-    post: operations['divine_debitDivinity'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/divinity/get-history': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get divinity transaction history
-     * @description Returns paginated transaction history for a deity's divinity wallet.
-     */
-    post: operations['divine_getDivinityHistory'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/blessing/grant': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Grant a blessing from a deity to an entity
-     * @description Orchestrates the full blessing ceremony: validates deity is active, validates
-     *     target entity exists, checks blessing capacity, calculates divinity cost from tier,
-     *     debits divinity, grants the blessing via lib-collection (Greater/Supreme) or
-     *     Status Inventory (Minor/Standard), and records the blessing. Blessings are
-     *     entity-agnostic -- characters, accounts, deities, or any entity type can receive them.
-     */
-    post: operations['divine_grantBlessing'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/blessing/revoke': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Revoke an active blessing
-     * @description Revokes a blessing. For status-type blessings (Minor/Standard), removes
-     *     the status item. For permanent blessings (Greater/Supreme), marks as
-     *     revoked in collection. Updates the blessing record with revocation timestamp.
-     */
-    post: operations['divine_revokeBlessing'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/blessing/list-by-entity': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * List blessings for an entity
-     * @description Returns paginated blessings granted to a specific entity.
-     */
-    post: operations['divine_listBlessingsByEntity'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/blessing/list-by-deity': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * List blessings granted by a deity
-     * @description Returns paginated blessings granted by a specific deity, optionally filtered by tier.
-     */
-    post: operations['divine_listBlessingsByDeity'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/blessing/get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get a blessing by ID
-     * @description Returns a single blessing record by its unique identifier.
-     */
-    post: operations['divine_getBlessing'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/follower/register': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Register a character as a follower of a deity
-     * @description Creates a deity-character follower relationship via lib-relationship,
-     *     increments the deity's follower count, and adds the character to the
-     *     deity's attention slots if capacity is available.
-     */
-    post: operations['divine_registerFollower'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/follower/unregister': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Unregister a character as a follower
-     * @description Removes the deity-character follower relationship, decrements the
-     *     deity's follower count, and removes the character from attention slots.
-     */
-    post: operations['divine_unregisterFollower'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/follower/get-followers': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get followers of a deity
-     * @description Returns paginated follower list for a deity by querying relationships.
-     */
-    post: operations['divine_getFollowers'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/cleanup-by-character': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Cleanup divine data for a deleted character
-     * @description Called by lib-resource when a character is deleted. Revokes all active
-     *     blessings targeting this character (entityType=character), removes follower
-     *     relationships from all deities, updates follower counts, and clears
-     *     attention slots.
-     */
-    post: operations['divine_cleanupByCharacter'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/divine/cleanup-by-game-service': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Cleanup divine data for a deleted game service
-     * @description Called by lib-resource when a game service is deleted. Deletes all deities
-     *     for this game service along with their blessings, followers, attention
-     *     slots, and associated resources.
-     */
-    post: operations['divine_cleanupByGameService'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/documentation/query': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Natural language documentation search
-     * @description Search documentation using natural language queries.
-     *     Returns the most relevant documents with voice-friendly summaries.
-     */
-    post: operations['documentation_queryDocumentation'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/documentation/get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get specific document by ID or slug
-     * @description Retrieve a specific document by its unique identifier or slug.
-     *     Returns full content with metadata.
-     */
-    post: operations['documentation_getDocument'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/documentation/search': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Full-text keyword search
-     * @description Search documentation using exact keyword matching.
-     *     Faster than semantic search but less flexible.
-     */
-    post: operations['documentation_searchDocumentation'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/documentation/list': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * List documents by category
-     * @description List all documents in a specific category or all categories.
-     *     Supports pagination for large result sets.
-     */
-    post: operations['documentation_listDocuments'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/documentation/suggest': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get related topics and follow-up suggestions
-     * @description Given a topic or document ID, returns related topics the user
-     *     might want to explore. Useful for conversational AI flow.
-     */
-    post: operations['documentation_suggestRelatedTopics'];
+    post: operations['documentation_getNamespaceStats'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4763,6 +3146,27 @@ export interface paths {
      *     Triggers initial sync after binding.
      */
     post: operations['documentation_bindRepository'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/documentation/repo/unbind': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Remove repository binding from namespace
+     * @description Remove repository binding from a namespace, making it manually editable again.
+     *     Optionally delete all documents imported from the repository.
+     */
+    post: operations['documentation_unbindRepository'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4891,7 +3295,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/escrow/create': {
+  '/documentation/repo/archive/restore': {
     parameters: {
       query?: never;
       header?: never;
@@ -4901,13 +3305,31 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Create a new escrow agreement
-     * @description Create a new escrow agreement. For each party, creates a dedicated escrow wallet
-     *     and container (owned by escrow entity). Issues deposit tokens and returns ALL
-     *     tokens to the creating service, which is responsible for distributing them to
-     *     parties through appropriate channels. Sets template values on bound contract.
+     * Restore documentation from archive
+     * @description Restore documents from a .bannou bundle archive.
+     *     Replaces all documents in the namespace with archived content.
      */
-    post: operations['escrow_createEscrow'];
+    post: operations['documentation_restoreDocumentationArchive'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/documentation/repo/archive/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete documentation archive
+     * @description Delete an archive from Asset Service storage.
+     */
+    post: operations['documentation_deleteDocumentationArchive'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5058,68 +3480,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/escrow/release': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Trigger release
-     * @description Trigger release (for trusted modes or after consent).
-     *     If boundContractId is set, checks contract status first (must be fulfilled).
-     *     Runs finalization flow before releasing remaining assets.
-     */
-    post: operations['escrow_release'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/escrow/refund': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Trigger refund
-     * @description Trigger refund (for trusted modes or consent).
-     */
-    post: operations['escrow_refund'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/escrow/cancel': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Cancel escrow before fully funded
-     * @description Cancel escrow before fully funded, refunding any deposits.
-     */
-    post: operations['escrow_cancel'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/escrow/dispute': {
     parameters: {
       query?: never;
@@ -5176,47 +3536,6 @@ export interface paths {
      *     Required when RefundMode is party_required.
      */
     post: operations['escrow_confirmRefund'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/escrow/resolve': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Arbiter resolves disputed escrow
-     * @description Arbiter resolves a disputed escrow.
-     */
-    post: operations['escrow_resolve'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/escrow/verify-condition': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Verify condition for conditional escrow
-     * @description Verify condition for conditional escrow (non-contract path).
-     *     For escrows with boundContractId, use contract milestones instead.
-     */
-    post: operations['escrow_verifyCondition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5760,134 +4079,6 @@ export interface paths {
      *     by severity and scope.
      */
     post: operations['faction_listNorms'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/faction/cleanup-by-character': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Cleanup faction data for a deleted character
-     * @description Called by lib-resource cleanup coordination when a character is deleted.
-     *     Removes all faction memberships for the character. Territory claims and
-     *     norm definitions are faction-owned, not character-owned, so they remain.
-     */
-    post: operations['faction_cleanupByCharacter'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/faction/cleanup-by-realm': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Cleanup faction data for a deleted realm
-     * @description Called by lib-resource cleanup coordination when a realm is deleted.
-     *     Removes all factions belonging to the realm, including their memberships,
-     *     territory claims, norm definitions, and associated seeds.
-     */
-    post: operations['faction_cleanupByRealm'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/faction/cleanup-by-location': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Cleanup territory claims for a deleted location
-     * @description Called by lib-resource cleanup coordination when a location is deleted.
-     *     Removes all territory claims referencing the location. The faction itself
-     *     remains intact.
-     */
-    post: operations['faction_cleanupByLocation'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/faction/get-compress-data': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get faction data for character archival compression
-     * @description Called by Resource service during character compression. Returns faction
-     *     memberships and roles for the character for archival. Norm definitions
-     *     are faction-owned data and not included in character archives.
-     */
-    post: operations['faction_getCompressData'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/game-service/services/list': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * List all registered game services
-     * @description Returns all game services, optionally filtered by active status.
-     */
-    post: operations['gameService_listServices'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/game-service/services/get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get service by ID or stub name
-     * @description Retrieves a single service by either serviceId (GUID) or stubName.
-     */
-    post: operations['gameService_getService'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6583,49 +4774,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/inventory/add': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Add item to container
-     * @description Adds an item instance to a container. Validates container constraints
-     *     (slots, weight, grid, category filters). For stackable items, may
-     *     merge with existing stacks.
-     */
-    post: operations['inventory_addItemToContainer'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/inventory/remove': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Remove item from container
-     * @description Removes an item from its container. The item still exists but has no
-     *     container assignment. Use destroy via lib-item to permanently delete.
-     */
-    post: operations['inventory_removeItemFromContainer'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/inventory/move': {
     parameters: {
       query?: never;
@@ -6642,27 +4790,6 @@ export interface paths {
      *     effectively equips/unequips items.
      */
     post: operations['inventory_moveItem'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/inventory/transfer': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Transfer item to different owner
-     * @description Transfers an item to a container owned by a different entity.
-     *     Used for trades, gifts, and loot distribution.
-     */
-    post: operations['inventory_transferItem'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7646,7 +5773,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/location/get': {
+  '/location/create': {
     parameters: {
       query?: never;
       header?: never;
@@ -7655,15 +5782,32 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Get location by ID */
-    post: operations['location_getLocation'];
+    /** Create new location */
+    post: operations['location_createLocation'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/location/get-by-code': {
+  '/location/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Update location */
+    post: operations['location_updateLocation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/location/set-parent': {
     parameters: {
       query?: never;
       header?: never;
@@ -7673,17 +5817,21 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Get location by code and realm
-     * @description Retrieve a location using its unique code within a specific realm
+     * Set or change the parent of a location
+     * @description Update a location's parent, moving it in the hierarchy.
+     *     Validates that:
+     *     - New parent exists and is in the same realm
+     *     - No circular reference would be created
+     *     - Updates depth for location and all descendants
      */
-    post: operations['location_getLocationByCode'];
+    post: operations['location_setLocationParent'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/location/list': {
+  '/location/remove-parent': {
     parameters: {
       query?: never;
       header?: never;
@@ -7693,17 +5841,18 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * List locations with filtering
-     * @description Retrieve locations with optional realm, parent, and type filtering
+     * Remove parent from a location (make it a root location)
+     * @description Remove the parent of a location, making it a top-level root location
+     *     within its realm. Updates depth for location and all descendants.
      */
-    post: operations['location_listLocations'];
+    post: operations['location_removeLocationParent'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/location/list-by-realm': {
+  '/location/delete': {
     parameters: {
       query?: never;
       header?: never;
@@ -7713,19 +5862,21 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * List all locations in a realm (primary query pattern)
-     * @description Returns all locations within a specific realm, optionally filtered by
-     *     location type and parent. This is the primary access pattern for
-     *     realm-scoped location queries.
+     * Delete location
+     * @description Hard delete a location. This will fail if the location:
+     *     - Has child locations (must delete or reparent children first)
+     *     - Is still referenced by other entities
+     *     For safe removal, first deprecate the location, remove all children,
+     *     then delete.
      */
-    post: operations['location_listLocationsByRealm'];
+    post: operations['location_deleteLocation'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/location/list-by-parent': {
+  '/location/transfer-realm': {
     parameters: {
       query?: never;
       header?: never;
@@ -7735,18 +5886,21 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Get child locations for a parent location
-     * @description Retrieve all locations that have the specified location as their parent.
-     *     Useful for getting all cities in a region, all buildings in a city, etc.
+     * Transfer a location to a different realm
+     * @description Moves a location from its current realm to a target realm.
+     *     Updates all realm-scoped indexes (code-index, realm-index, parent/root indexes).
+     *     The transferred location becomes a root location in the target realm (parent cleared).
+     *     Returns Conflict if the target realm already has a location with the same code.
+     *     Does NOT move children — caller is responsible for tree ordering.
      */
-    post: operations['location_listLocationsByParent'];
+    post: operations['location_transferLocationToRealm'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/location/list-root': {
+  '/location/deprecate': {
     parameters: {
       query?: never;
       header?: never;
@@ -7756,18 +5910,21 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Get root locations in a realm
-     * @description Returns all top-level locations in a realm (locations with no parent).
-     *     These are typically regions or major areas within the realm.
+     * Deprecate a location
+     * @description Soft-delete a location by marking it as deprecated.
+     *     Deprecated locations:
+     *     - Remain queryable for historical data
+     *     - Cannot be used for placing new entities
+     *     - Can be hard-deleted after all references are removed
      */
-    post: operations['location_listRootLocations'];
+    post: operations['location_deprecateLocation'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/location/get-ancestors': {
+  '/location/undeprecate': {
     parameters: {
       query?: never;
       header?: never;
@@ -7777,19 +5934,18 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Get all ancestors of a location
-     * @description Returns the full ancestry chain from the specified location up to the
-     *     root location (parentLocationId=null). For example, for a specific building
-     *     might return [district, city, region].
+     * Restore a deprecated location
+     * @description Remove the deprecated status from a location, making it
+     *     available for entity placement again.
      */
-    post: operations['location_getLocationAncestors'];
+    post: operations['location_undeprecateLocation'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/location/validate-territory': {
+  '/location/seed': {
     parameters: {
       query?: never;
       header?: never;
@@ -7799,194 +5955,13 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Validate location against territory boundaries
-     * @description Checks if a proposed location falls within or outside specified territory boundaries.
-     *     Used by Contract service's clause type handler system for territory validation.
-     *
-     *     Territory modes:
-     *     - exclusive: Location must NOT be within any territory location (or descendants)
-     *     - inclusive: Location MUST be within at least one territory location (or descendants)
+     * Seed locations from configuration
+     * @description Idempotent operation to seed locations from provided data.
+     *     Creates locations that don't exist, optionally updates existing locations.
+     *     Processes locations in dependency order (parents before children).
+     *     Typically called at service startup with YAML-defined location hierarchies.
      */
-    post: operations['location_validateTerritory'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/location/get-descendants': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get all descendants of a location
-     * @description Returns all locations that are descendants of the specified location
-     *     (direct children, grandchildren, etc.). Useful for finding all places
-     *     within a region or city.
-     */
-    post: operations['location_getLocationDescendants'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/location/exists': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Check if location exists and is active
-     * @description Fast validation endpoint for other services to check location validity.
-     *     Returns true if location exists and is not deprecated, false otherwise.
-     */
-    post: operations['location_locationExists'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/location/query/by-position': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Find locations containing a spatial position
-     * @description Given a Position3D and realmId, returns all locations whose bounds contain
-     *     that position, ordered by depth descending (most specific first). Only
-     *     locations with spatial bounds data are considered. A position is "in" a
-     *     location if it falls within the location's axis-aligned bounding box.
-     */
-    post: operations['location_queryLocationsByPosition'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/location/report-entity-position': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Report entity presence at a location
-     * @description Reports that an entity is present at a location. Creates or refreshes an ephemeral
-     *     presence binding with configurable TTL. Reporters must call this periodically to
-     *     keep the presence alive. Publishes arrival/departure events only when the entity's
-     *     location actually changes (pure refreshes are silent).
-     *
-     *     The optional previousLocationId provides a caller-hint optimization: if provided
-     *     and matches the current stored location, only a TTL refresh occurs (no GET needed).
-     *     If omitted, the service reads the current value to detect location changes.
-     */
-    post: operations['location_reportEntityPosition'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/location/get-entity-location': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get the current location of an entity
-     * @description Queries where an entity currently is. Returns the entity's location if a
-     *     non-expired presence binding exists.
-     */
-    post: operations['location_getEntityLocation'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/location/list-entities-at-location': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * List entities currently at a location
-     * @description Queries which entities are currently present at a location. Supports optional
-     *     entity type filtering and pagination. Results are hydrated from the entity
-     *     presence store for reporting metadata.
-     */
-    post: operations['location_listEntitiesAtLocation'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/location/clear-entity-position': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Remove entity presence from its current location
-     * @description Clears an entity's presence binding, removing it from its current location.
-     *     Publishes a departure event if the entity was present at a location.
-     */
-    post: operations['location_clearEntityPosition'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/location/get-compress-data': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get location base data for compression
-     * @description Called by Resource service during compression.
-     *     Returns core location data (name, type, hierarchy, spatial, parent context).
-     *     Returns BadRequest if location is not deprecated - only deprecated locations can be compressed.
-     */
-    post: operations['location_getLocationCompressData'];
+    post: operations['location_seedLocations'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9060,149 +7035,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/quest/get-compress-data': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get quest data for compression
-     * @description Called by Resource service during character compression.
-     *     Returns active quests, completion counts, and category breakdown for archival.
-     */
-    post: operations['quest_getCompressData'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/realm/get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Get realm by ID */
-    post: operations['realm_getRealm'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/realm/get-by-code': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get realm by code
-     * @description Retrieve a realm using its unique code (e.g., "REALM_1", "REALM_2")
-     */
-    post: operations['realm_getRealmByCode'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/realm/list': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * List all realms
-     * @description Retrieve all realms with optional filtering
-     */
-    post: operations['realm_listRealms'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/realm/exists': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Check if realm exists and is active
-     * @description Fast validation endpoint for other services to check realm validity.
-     *     Returns true if realm exists and is not deprecated, false otherwise.
-     */
-    post: operations['realm_realmExists'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/realm/exists-batch': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Check if multiple realms exist and are active
-     * @description Batch validation endpoint for services creating multi-realm entities.
-     *     Returns validation results for each realm ID in a single call, avoiding
-     *     N+1 API calls when validating multiple realms.
-     */
-    post: operations['realm_realmsExistBatch'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/realm/get-location-compress-context': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get realm context for location archive
-     * @description Called by Resource service during location compression.
-     *     Resolves the location's realm and returns realm context (name, code, description)
-     *     for inclusion in the location archive.
-     */
-    post: operations['realm_getLocationCompressContext'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/realm-history/get-participation': {
     parameters: {
       query?: never;
@@ -9348,30 +7180,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/relationship/cleanup-by-entity': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Cleanup relationships referencing a deleted entity
-     * @description Called by lib-resource cleanup coordination when a foundational entity
-     *     (character, realm) is deleted. Ends all active relationships where the
-     *     specified entity is either entity1 or entity2. Ended relationships are
-     *     preserved for history (soft-delete via endedAt). This endpoint is designed
-     *     for internal service-to-service calls during cascading resource cleanup.
-     */
-    post: operations['relationship_cleanupByEntity'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/relationship-type/get': {
     parameters: {
       query?: never;
@@ -9492,7 +7300,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/resource/register': {
+  '/relationship-type/create': {
     parameters: {
       query?: never;
       header?: never;
@@ -9501,19 +7309,15 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /**
-     * Register a reference to a resource
-     * @description Records that sourceType:sourceId references resourceType:resourceId.
-     *     Typically called via event handlers, not directly.
-     */
-    post: operations['resource_registerReference'];
+    /** Create new relationship type */
+    post: operations['relationship_createRelationshipType'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/resource/unregister': {
+  '/relationship-type/update': {
     parameters: {
       query?: never;
       header?: never;
@@ -9522,19 +7326,15 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /**
-     * Remove a reference to a resource
-     * @description Records that sourceType:sourceId no longer references resourceType:resourceId.
-     *     Typically called via event handlers, not directly.
-     */
-    post: operations['resource_unregisterReference'];
+    /** Update relationship type */
+    post: operations['relationship_updateRelationshipType'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/resource/check': {
+  '/relationship-type/delete': {
     parameters: {
       query?: never;
       header?: never;
@@ -9544,18 +7344,19 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Check reference count and cleanup eligibility
-     * @description Returns the current reference count for a resource and whether it is
-     *     eligible for cleanup (refcount=0 and grace period passed).
+     * Delete relationship type
+     * @description Hard delete a relationship type. This will fail if the type is still in use.
+     *     For safe removal, first deprecate the type, then merge it into another type
+     *     (or VOID), then delete. Only deprecated types with zero references can be deleted.
      */
-    post: operations['resource_checkReferences'];
+    post: operations['relationship_deleteRelationshipType'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/resource/list': {
+  '/relationship-type/deprecate': {
     parameters: {
       query?: never;
       header?: never;
@@ -9565,18 +7366,22 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * List all references to a resource
-     * @description Returns all entities currently referencing a resource.
-     *     Useful for debugging and understanding reference chains.
+     * Deprecate a relationship type
+     * @description Soft-delete a relationship type by marking it as deprecated.
+     *     Deprecated types:
+     *     - Remain queryable for historical data
+     *     - Cannot be used for creating new relationships
+     *     - Can be merged into other types using the merge endpoint
+     *     - Can be hard-deleted after all references are removed
      */
-    post: operations['resource_listReferences'];
+    post: operations['relationship_deprecateRelationshipType'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/resource/cleanup/execute': {
+  '/relationship-type/undeprecate': {
     parameters: {
       query?: never;
       header?: never;
@@ -9586,19 +7391,18 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Execute cleanup for a resource
-     * @description Validates refcount=0, grace period passed, acquires distributed lock,
-     *     re-validates under lock, then executes all cleanup callbacks.
-     *     Returns Conflict if refcount changed during execution.
+     * Restore a deprecated relationship type
+     * @description Remove the deprecated status from a relationship type, making it
+     *     available for new relationships again.
      */
-    post: operations['resource_executeCleanup'];
+    post: operations['relationship_undeprecateRelationshipType'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/resource/cleanup/list': {
+  '/relationship-type/merge': {
     parameters: {
       query?: never;
       header?: never;
@@ -9608,146 +7412,20 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * List registered cleanup callbacks
-     * @description Returns all cleanup callbacks registered for a resource type.
-     *     Useful for debugging and admin inspection of cleanup chains.
-     */
-    post: operations['resource_listCleanupCallbacks'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/resource/compress/execute': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Compress a resource and all dependents
-     * @description Gathers data from all registered compression callbacks, bundles into
-     *     a unified archive, and stores in MySQL. Optionally deletes source data
-     *     after successful archival via existing cleanup callbacks.
+     * Merge a deprecated type into another type
+     * @description Migrate all relationships using a deprecated type to a target type.
+     *     This is the recommended way to handle type removal:
+     *     1. Deprecate the source type
+     *     2. Merge into the target type (or VOID for effective deletion)
+     *     3. Optionally hard-delete the now-empty deprecated type
      *
-     *     Flow:
-     *     1. Get all compression callbacks for resourceType, sorted by priority
-     *     2. If dryRun, return preview without executing
-     *     3. Acquire distributed lock
-     *     4. Execute each callback to gather data
-     *     5. Bundle responses into archive (gzipped JSON per entry)
-     *     6. Store archive in MySQL
-     *     7. If deleteSourceData, invoke cleanup callbacks
-     *     8. Publish resource.compressed event
+     *     The merge operation:
+     *     - Updates all relationships using sourceTypeId to use targetTypeId
+     *     - Publishes events for each affected relationship
+     *     - Returns count of migrated relationships
+     *     - Fails if source is not deprecated (safety check)
      */
-    post: operations['resource_executeCompress'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/resource/compress/list': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * List registered compression callbacks
-     * @description Returns all compression callbacks registered for a resource type.
-     *     Useful for debugging and admin inspection of compression chains.
-     */
-    post: operations['resource_listCompressCallbacks'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/resource/archive/get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Retrieve compressed archive
-     * @description Retrieves a compressed archive by resource type and ID.
-     *     Returns the latest version unless a specific archiveId is provided.
-     */
-    post: operations['resource_getArchive'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/resource/snapshot/execute': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Create ephemeral snapshot of a living resource
-     * @description Creates a non-destructive snapshot of a resource using the same compression
-     *     callbacks, but stores the result in Redis with a configurable TTL instead
-     *     of permanent MySQL storage.
-     *
-     *     **Use Case**: The Storyline Composer needs compressed data from living
-     *     entities (not just dead/archived ones) to seed emergent narratives.
-     *     This endpoint provides that capability without affecting the source data.
-     *
-     *     **Key Differences from compress/execute**:
-     *     1. Stores in Redis (ephemeral) not MySQL (permanent)
-     *     2. Never deletes source data
-     *     3. Publishes `resource.snapshot.created` event (not `resource.compressed`)
-     *     4. Snapshot expires after TTL (default 1 hour, max 24 hours)
-     *
-     *     **Intended Consumers**:
-     *     - Actor behaviors (via ABML service_call)
-     *     - Regional Watchers for storyline composition
-     *     - Analytics for living entity state capture
-     */
-    post: operations['resource_executeSnapshot'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/resource/snapshot/get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Retrieve an ephemeral snapshot
-     * @description Retrieves a previously created snapshot by its ID.
-     *     Returns 404 if the snapshot has expired or doesn't exist.
-     *
-     *     Snapshots are stored with TTL - if the TTL has elapsed, the snapshot
-     *     is automatically deleted by Redis.
-     */
-    post: operations['resource_getSnapshot'];
+    post: operations['relationship_mergeRelationshipType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10724,46 +8402,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/seed/growth/record': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Record growth in a domain
-     * @description Records growth in a specific domain for a seed. Primarily called internally by consuming services after processing game events. Triggers capability manifest recomputation if thresholds are crossed.
-     */
-    post: operations['seed_RecordGrowth'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/seed/growth/record-batch': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Record growth across multiple domains atomically
-     * @description Records growth across multiple domains in a single atomic operation. Useful when a single game event contributes to multiple domains simultaneously.
-     */
-    post: operations['seed_RecordGrowthBatch'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/seed/growth/get-phase': {
     parameters: {
       query?: never;
@@ -11038,83 +8676,6 @@ export interface paths {
      * @description Returns public information about the other seeds in the bond.
      */
     post: operations['seed_GetBondPartners'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/species/get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Get species by ID */
-    post: operations['species_getSpecies'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/species/get-by-code': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get species by code
-     * @description Retrieve a species using its unique code (e.g., "HUMAN", "ELF", "DWARF")
-     */
-    post: operations['species_getSpeciesByCode'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/species/list': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * List all species
-     * @description Retrieve all species with optional realm filtering
-     */
-    post: operations['species_listSpecies'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/species/list-by-realm': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * List species available in a realm
-     * @description Retrieve all species that are available in a specific realm
-     */
-    post: operations['species_listSpeciesByRealm'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11719,43 +9280,6 @@ export interface paths {
      *     Returns scenario participations, active arcs, and completion counts for archival.
      */
     post: operations['storyline_getCompressData'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/subscription/account/list': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get subscriptions for an account
-     * @description Returns all subscriptions for a given account, with optional filtering.
-     */
-    post: operations['subscription_getAccountSubscriptions'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/subscription/get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Get a specific subscription by ID */
-    post: operations['subscription_getSubscription'];
     delete?: never;
     options?: never;
     head?: never;
@@ -12471,6 +9995,49 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/voice/room/join': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Join voice room and register SIP endpoint
+     * @description Registers a participant in the voice room. If AdHocRoomsEnabled and room
+     *     doesn't exist, auto-creates it.
+     *     Returns connection info and current peer list for P2P mode,
+     *     or RTP server details for scaled mode.
+     */
+    post: operations['voice_joinVoiceRoom'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/voice/room/leave': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Leave voice room
+     * @description Removes a participant from the voice room.
+     */
+    post: operations['voice_leaveVoiceRoom'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/voice/peer/answer': {
     parameters: {
       query?: never;
@@ -12752,106 +10319,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/worldstate/clock/get-realm-time': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get current game time for a realm
-     * @description Returns full GameTimeSnapshot for a realm. Reads from Redis cache (hot path).
-     */
-    post: operations['worldstate_getRealmTime'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/worldstate/clock/get-realm-time-by-code': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get current game time by realm code
-     * @description Convenience endpoint accepting realm code string instead of GUID. Resolves to realm ID via IRealmClient, then delegates to GetRealmTime.
-     */
-    post: operations['worldstate_getRealmTimeByCode'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/worldstate/clock/batch-get-realm-times': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get current game time for multiple realms
-     * @description Returns GameTimeSnapshot for multiple realms in a single call. Used by services operating across realms.
-     */
-    post: operations['worldstate_batchGetRealmTimes'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/worldstate/clock/get-elapsed-game-time': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Compute elapsed game-time between two real timestamps
-     * @description Given a realmId, fromRealTime, and toRealTime, computes total game-seconds elapsed. Integrates over ratio history segments. Critical for lazy evaluation patterns.
-     */
-    post: operations['worldstate_getElapsedGameTime'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/worldstate/clock/trigger-sync': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Trigger a time sync event for an entity's sessions
-     * @description Publishes a WorldstateTimeSyncEvent with syncReason TriggerSync to a specific entity's connected sessions. Primary caller is Agency (L4) on realm entry for immediate client time sync.
-     */
-    post: operations['worldstate_triggerTimeSync'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/worldstate/clock/initialize': {
     parameters: {
       query?: never;
@@ -12932,46 +10399,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/worldstate/calendar/get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get a calendar template
-     * @description Returns a calendar template by game service ID and template code.
-     */
-    post: operations['worldstate_getCalendar'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/worldstate/calendar/list': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * List calendar templates for a game service
-     * @description Returns all calendar templates registered for a game service.
-     */
-    post: operations['worldstate_listCalendars'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/worldstate/calendar/update': {
     parameters: {
       query?: never;
@@ -13012,26 +10439,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/worldstate/realm-config/get': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Get realm worldstate configuration
-     * @description Returns the realm's worldstate configuration including calendar template, time ratio, downtime policy, epoch, and active status.
-     */
-    post: operations['worldstate_getRealmConfig'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/worldstate/realm-config/update': {
     parameters: {
       query?: never;
@@ -13046,26 +10453,6 @@ export interface paths {
      * @description Partial update of realm-level configuration. Acquires distributed lock. Supports changing downtimePolicy and calendarTemplateCode. Cannot change time ratio (use SetTimeRatio) or epoch (immutable).
      */
     post: operations['worldstate_updateRealmConfig'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/worldstate/realm-config/list': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * List active realm clocks
-     * @description Lists all active realm clocks with summary info. Supports pagination and optional gameServiceId filter.
-     */
-    post: operations['worldstate_listRealmClocks'];
     delete?: never;
     options?: never;
     head?: never;
@@ -13403,14 +10790,6 @@ export interface components {
        */
       updatedAt?: string | null;
     };
-    /** @description Request to activate a dormant deity */
-    ActivateDeityRequest: {
-      /**
-       * Format: uuid
-       * @description Deity to activate
-       */
-      deityId: string;
-    };
     /** @description Request to activate a seed. */
     ActivateSeedRequest: {
       /**
@@ -13418,29 +10797,6 @@ export interface components {
        * @description The seed to activate.
        */
       seedId: string;
-    };
-    /** @description Summary of an active quest for archive purposes */
-    ActiveQuestSummary: {
-      /**
-       * Format: uuid
-       * @description Quest instance ID
-       */
-      questId: string;
-      /** @description Quest code for lookup */
-      questCode: string;
-      /** @description Quest display name */
-      name: string;
-      /** @description Number of completed objectives */
-      currentObjective: number;
-      /** @description Total number of objectives */
-      totalObjectives: number;
-      /**
-       * Format: date-time
-       * @description When the quest was accepted
-       */
-      startedAt: string;
-      /** @description Quest category (if available) */
-      category?: components['schemas']['QuestCategory'];
     };
     /**
      * @description Actor-specific capabilities that affect affordance evaluation.
@@ -13473,60 +10829,12 @@ export interface components {
       /** @description Affects ambush/hidden_path affordance scoring */
       stealthRating?: number | null;
     };
-    /** @description Response containing actor instance details */
-    ActorInstanceResponse: {
-      /** @description Unique actor identifier */
-      actorId: string;
-      /**
-       * Format: uuid
-       * @description Template this actor was instantiated from
-       */
-      templateId: string;
-      /** @description Actor category from template */
-      category: string;
-      /** @description Pool node running this actor (null in bannou mode) */
-      nodeId?: string | null;
-      /** @description Pool node's app-id for direct messaging */
-      nodeAppId?: string | null;
-      /** @description Current actor lifecycle state */
-      status: components['schemas']['ActorStatus'];
-      /**
-       * Format: uuid
-       * @description Associated character ID (for NPC brains)
-       */
-      characterId?: string | null;
-      /**
-       * Format: uuid
-       * @description Realm the actor operates in (resolved at spawn time)
-       */
-      realmId?: string | null;
-      /**
-       * Format: date-time
-       * @description When the actor started running
-       */
-      startedAt: string;
-      /**
-       * Format: date-time
-       * @description Last heartbeat timestamp from the actor
-       */
-      lastHeartbeat?: string | null;
-      /**
-       * Format: int64
-       * @description Number of behavior loop iterations executed. Null when the actor is running on a remote pool node and the iteration count is not locally available.
-       */
-      loopIterations?: number | null;
-    };
     /**
      * @description Size classification affecting cover requirements and passage width
      * @default Medium
      * @enum {string}
      */
     ActorSize: 'Tiny' | 'Small' | 'Medium' | 'Large' | 'Huge';
-    /**
-     * @description Current actor lifecycle state
-     * @enum {string}
-     */
-    ActorStatus: 'Pending' | 'Starting' | 'Running' | 'Paused' | 'Stopping' | 'Stopped' | 'Error';
     /** @description Response containing actor template details */
     ActorTemplateResponse: {
       /**
@@ -13569,46 +10877,6 @@ export interface components {
        * @description When the template was last updated
        */
       updatedAt: string;
-    };
-    /** @description Request to add item to container */
-    AddItemRequest: {
-      /**
-       * Format: uuid
-       * @description Item instance ID to add
-       */
-      instanceId: string;
-      /**
-       * Format: uuid
-       * @description Target container ID
-       */
-      containerId: string;
-      /** @description Specific slot (auto-assign if null) */
-      slotIndex?: number | null;
-      /** @description Grid X position */
-      slotX?: number | null;
-      /** @description Grid Y position */
-      slotY?: number | null;
-      /** @description Rotate in grid */
-      rotated?: boolean | null;
-      /**
-       * @description Auto-merge with existing stacks
-       * @default true
-       */
-      autoStack: boolean;
-    };
-    /** @description Response after adding item. HTTP 200 confirms placement. */
-    AddItemResponse: {
-      /** @description Assigned slot */
-      slotIndex?: number | null;
-      /** @description Assigned X position */
-      slotX?: number | null;
-      /** @description Assigned Y position */
-      slotY?: number | null;
-      /**
-       * Format: uuid
-       * @description Instance merged into if stacked
-       */
-      mergedWithInstanceId?: string | null;
     };
     /** @description Request to add a license definition to a board template */
     AddLicenseDefinitionRequest: {
@@ -13659,51 +10927,6 @@ export interface components {
      * @enum {string}
      */
     AdjacencyMode: 'FourWay' | 'EightWay';
-    /** @description Result of admin-triggered idle room cleanup */
-    AdminCleanupResponse: {
-      /** @description Total rooms processed by cleanup */
-      cleanedRooms: number;
-      /** @description Number of rooms archived */
-      archivedRooms: number;
-      /** @description Number of rooms deleted */
-      deletedRooms: number;
-    };
-    /** @description Empty request body for force cleanup */
-    AdminForceCleanupRequest: Record<string, never>;
-    /** @description Empty request body for stats endpoint */
-    AdminGetStatsRequest: Record<string, never>;
-    /** @description Admin request to list all rooms with filters and pagination */
-    AdminListRoomsRequest: {
-      /** @description Filter by room type */
-      roomTypeCode?: string | null;
-      /** @description Filter by status */
-      status?: components['schemas']['ChatRoomStatus'] | null;
-      /**
-       * @description Page number (zero-based)
-       * @default 0
-       */
-      page: number;
-      /**
-       * @description Number of items per page
-       * @default 50
-       */
-      pageSize: number;
-    };
-    /** @description System-wide chat statistics for admin monitoring */
-    AdminStatsResponse: {
-      /** @description Total number of rooms in the system */
-      totalRooms: number;
-      /** @description Number of active rooms */
-      activeRooms: number;
-      /** @description Number of locked rooms */
-      lockedRooms: number;
-      /** @description Number of archived rooms */
-      archivedRooms: number;
-      /** @description Total participants across all rooms */
-      totalParticipants: number;
-      /** @description Total registered room types */
-      totalRoomTypes: number;
-    };
     /** @description Request to advance multiple journeys in a single call */
     AdvanceBatchRequest: {
       /** @description Individual advance entries */
@@ -13924,24 +11147,6 @@ export interface components {
      * @enum {string}
      */
     ArcType: 'RagsToRiches' | 'Tragedy' | 'ManInHole' | 'Icarus' | 'Cinderella' | 'Oedipus';
-    /** @description Single entry in the archive bundle */
-    ArchiveBundleEntry: {
-      /** @description Type of data (e.g., "character-personality") */
-      sourceType: string;
-      /** @description Service that provided the data */
-      serviceName: string;
-      /** @description Base64-encoded gzipped JSON from the service callback */
-      data: string;
-      /**
-       * Format: date-time
-       * @description When this entry was compressed
-       */
-      compressedAt: string;
-      /** @description SHA256 hash for integrity verification */
-      dataChecksum?: string | null;
-      /** @description Size before compression */
-      originalSizeBytes?: number | null;
-    };
     /** @description Archive metadata including size and document count */
     ArchiveInfo: {
       /**
@@ -14460,65 +11665,6 @@ export interface components {
      * @enum {string}
      */
     AutogainMode: 'Simple' | 'Compound';
-    /** @description A machine-readable backstory element for behavior system consumption */
-    BackstoryElement: {
-      /** @description Category of this backstory element */
-      elementType: components['schemas']['BackstoryElementType'];
-      /**
-       * @description Machine-readable key (e.g., "homeland", "trained_by", "past_job").
-       *     Used by behavior system to query specific aspects.
-       */
-      key: string;
-      /**
-       * @description Machine-readable value (e.g., "northlands", "knights_guild", "blacksmith").
-       *     Referenced in behavior rules.
-       */
-      value: string;
-      /**
-       * Format: float
-       * @description How strongly this element affects behavior (0.0 to 1.0).
-       *     Higher strength = greater influence on decisions.
-       * @default 0.5
-       */
-      strength: number;
-      /**
-       * Format: uuid
-       * @description Optional related entity (location, organization, character)
-       */
-      relatedEntityId?: string | null;
-      /** @description Type of the related entity (if any) */
-      relatedEntityType?: components['schemas']['EntityType'];
-    };
-    /**
-     * @description Types of backstory elements. Each type represents a different aspect
-     *     of the character's background that influences behavior.
-     * @enum {string}
-     */
-    BackstoryElementType:
-      | 'Origin'
-      | 'Occupation'
-      | 'Training'
-      | 'Trauma'
-      | 'Achievement'
-      | 'Secret'
-      | 'Goal'
-      | 'Fear'
-      | 'Belief';
-    /** @description Complete backstory data for a character */
-    BackstoryResponse: {
-      /** @description All backstory elements for this character */
-      elements: components['schemas']['BackstoryElement'][];
-      /**
-       * Format: date-time
-       * @description When this backstory was first created
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @description When this backstory was last modified
-       */
-      updatedAt?: string | null;
-    };
     /** @description Snapshot of a backstory element */
     BackstorySnapshot: {
       /** @description Backstory element type (e.g., TRAUMA, GOAL) */
@@ -14538,31 +11684,6 @@ export interface components {
        * @description Currency definition ID
        */
       currencyDefinitionId: string;
-    };
-    /** @description Summary of a balance in a wallet */
-    BalanceSummary: {
-      /**
-       * Format: uuid
-       * @description Currency definition ID
-       */
-      currencyDefinitionId: string;
-      /** @description Currency code for convenience */
-      currencyCode: string;
-      /**
-       * Format: double
-       * @description Total balance amount
-       */
-      amount: number;
-      /**
-       * Format: double
-       * @description Amount reserved by authorization holds
-       */
-      lockedAmount: number;
-      /**
-       * Format: double
-       * @description Available balance (amount - lockedAmount)
-       */
-      effectiveAmount: number;
     };
     /** @description Request to ban a participant from a room */
     BanParticipantRequest: {
@@ -14636,112 +11757,6 @@ export interface components {
        */
       effectiveAmount: number;
     };
-    /** @description A single credit operation in a batch */
-    BatchCreditOperation: {
-      /**
-       * Format: uuid
-       * @description Target wallet ID
-       */
-      walletId: string;
-      /**
-       * Format: uuid
-       * @description Currency to credit
-       */
-      currencyDefinitionId: string;
-      /**
-       * Format: double
-       * @description Amount to credit (must be positive)
-       */
-      amount: number;
-      /** @description Faucet transaction type */
-      transactionType: components['schemas']['TransactionType'];
-      /** @description Reference type */
-      referenceType?: string | null;
-      /**
-       * Format: uuid
-       * @description Reference ID
-       */
-      referenceId?: string | null;
-    };
-    /** @description Request to credit multiple wallets */
-    BatchCreditRequest: {
-      /** @description Credit operations to execute */
-      operations: components['schemas']['BatchCreditOperation'][];
-      /** @description Unique key covering the entire batch */
-      idempotencyKey: string;
-    };
-    /** @description Results of batch credit operations */
-    BatchCreditResponse: {
-      /** @description Results for each operation */
-      results: components['schemas']['BatchCreditResult'][];
-    };
-    /** @description Result of a single credit in a batch */
-    BatchCreditResult: {
-      /** @description Index in the operations array */
-      index: number;
-      /** @description Whether the operation succeeded */
-      success: boolean;
-      /** @description Transaction record if successful */
-      transaction?: components['schemas']['CurrencyTransactionRecord'];
-      /** @description Error code if failed */
-      error?: string | null;
-    };
-    /** @description A single debit operation in a batch */
-    BatchDebitOperation: {
-      /**
-       * Format: uuid
-       * @description Source wallet ID
-       */
-      walletId: string;
-      /**
-       * Format: uuid
-       * @description Currency to debit
-       */
-      currencyDefinitionId: string;
-      /**
-       * Format: double
-       * @description Amount to debit (must be positive)
-       */
-      amount: number;
-      /** @description Sink transaction type (burn, vendor_purchase, fee, etc.) */
-      transactionType: components['schemas']['TransactionType'];
-      /** @description What triggered this transaction */
-      referenceType?: string | null;
-      /**
-       * Format: uuid
-       * @description Reference entity ID
-       */
-      referenceId?: string | null;
-      /** @description Override negative balance allowance for this transaction */
-      allowNegative?: boolean | null;
-      /** @description Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention. */
-      metadata?: {
-        [key: string]: unknown;
-      } | null;
-    };
-    /** @description Request to debit multiple wallets */
-    BatchDebitRequest: {
-      /** @description Debit operations to execute */
-      operations: components['schemas']['BatchDebitOperation'][];
-      /** @description Unique key covering the entire batch */
-      idempotencyKey: string;
-    };
-    /** @description Results of batch debit operations */
-    BatchDebitResponse: {
-      /** @description Results for each operation */
-      results: components['schemas']['BatchDebitResult'][];
-    };
-    /** @description Result of a single debit in a batch */
-    BatchDebitResult: {
-      /** @description Index in the operations array */
-      index: number;
-      /** @description Whether the operation succeeded */
-      success: boolean;
-      /** @description Transaction record if successful */
-      transaction?: components['schemas']['CurrencyTransactionRecord'];
-      /** @description Error code if failed */
-      error?: string | null;
-    };
     /** @description Request to get multiple balances */
     BatchGetBalancesRequest: {
       /** @description Balance queries to execute */
@@ -14764,66 +11779,6 @@ export interface components {
       /** @description Instance IDs that were not found */
       notFound: string[];
     };
-    /** @description Request payload for bulk loading personalities */
-    BatchGetPersonalitiesRequest: {
-      /** @description IDs of characters to get personalities for (max 100) */
-      characterIds: string[];
-    };
-    /** @description Request to get current game time for multiple realms */
-    BatchGetRealmTimesRequest: {
-      /** @description Realm IDs to get current game time for */
-      realmIds: string[];
-    };
-    /** @description Game time snapshots for multiple realms */
-    BatchGetRealmTimesResponse: {
-      /** @description Game time snapshots for each requested realm that has an initialized clock */
-      snapshots: components['schemas']['GameTimeSnapshot'][];
-      /** @description Realm IDs from the request that had no initialized clock */
-      notFoundRealmIds: string[];
-    };
-    /** @description Request to get sentiment toward multiple characters */
-    BatchGetSentimentRequest: {
-      /**
-       * Format: uuid
-       * @description Character whose sentiment to query
-       */
-      characterId: string;
-      /** @description Target characters to measure sentiment toward */
-      targetCharacterIds: string[];
-    };
-    /** @description Individual message entry in a batch send operation */
-    BatchMessageEntry: {
-      /** @description Message content matching the room format */
-      content: components['schemas']['SendMessageContent'];
-      /** @description Opaque sender type */
-      senderType?: string | null;
-      /**
-       * Format: uuid
-       * @description Sender entity ID
-       */
-      senderId?: string | null;
-      /** @description Sender display name */
-      displayName?: string | null;
-    };
-    /** @description Details of a single message that failed in a batch send operation */
-    BatchMessageFailure: {
-      /** @description Zero-based index of the failed message in the request messages array */
-      index: number;
-      /** @description Human-readable error reason */
-      error: string;
-    };
-    /** @description Response containing personalities for multiple characters */
-    BatchPersonalityResponse: {
-      /** @description Successfully retrieved personalities */
-      personalities: components['schemas']['PersonalityResponse'][];
-      /** @description Character IDs that have no personality defined */
-      notFound: string[];
-    };
-    /** @description Response containing sentiment toward multiple targets */
-    BatchSentimentResponse: {
-      /** @description Sentiment toward each target */
-      sentiments: components['schemas']['SentimentResponse'][];
-    };
     /**
      * @description Category for organizing behaviors
      * @enum {string}
@@ -14837,16 +11792,6 @@ export interface components {
       bytecodeSize: number;
       /** @description URL to download the compiled behavior asset */
       downloadUrl?: string | null;
-    };
-    /** @description Request to bind an unbound actor to a character. After binding, the actor subscribes to the character's perception stream and variable providers begin loading character-specific data. The actor's behavior document continues executing — it should already handle both unbound and bound modes gracefully. */
-    BindActorCharacterRequest: {
-      /** @description ID of the actor to bind */
-      actorId: string;
-      /**
-       * Format: uuid
-       * @description ID of the character to bind to
-       */
-      characterId: string;
     };
     /** @description Request to bind an item to a character */
     BindItemInstanceRequest: {
@@ -14946,93 +11891,6 @@ export interface components {
      * @enum {string}
      */
     BindingStatus: 'Pending' | 'Syncing' | 'Synced' | 'Error' | 'Disabled';
-    /** @description Full blessing record response */
-    BlessingResponse: {
-      /**
-       * Format: uuid
-       * @description Unique blessing identifier
-       */
-      blessingId: string;
-      /**
-       * Format: uuid
-       * @description Deity that granted this blessing
-       */
-      deityId: string;
-      /**
-       * Format: uuid
-       * @description Entity that received this blessing
-       */
-      entityId: string;
-      /** @description Type of entity that received this blessing */
-      entityType: components['schemas']['EntityType'];
-      /** @description Tier of the blessing */
-      tier: components['schemas']['BlessingTier'];
-      /** @description Item template code for the blessing effect */
-      itemTemplateCode: string;
-      /**
-       * Format: uuid
-       * @description Item or collection entry instance backing this blessing
-       */
-      itemInstanceId: string;
-      /** @description Why the blessing was granted */
-      reason: string;
-      /**
-       * Format: date-time
-       * @description When the blessing was granted
-       */
-      grantedAt: string;
-      /**
-       * Format: date-time
-       * @description When the blessing was revoked (null if still active)
-       */
-      revokedAt?: string | null;
-      /** @description Current status of the blessing */
-      status: components['schemas']['BlessingStatus'];
-    };
-    /**
-     * @description Current status of a granted blessing
-     * @enum {string}
-     */
-    BlessingStatus: 'Active' | 'Revoked';
-    /** @description Compact blessing record for list responses */
-    BlessingSummary: {
-      /**
-       * Format: uuid
-       * @description Unique identifier for this blessing
-       */
-      blessingId: string;
-      /**
-       * Format: uuid
-       * @description Deity that granted this blessing
-       */
-      deityId: string;
-      /**
-       * Format: uuid
-       * @description Entity that received this blessing
-       */
-      entityId: string;
-      /** @description Type of entity that received this blessing */
-      entityType: components['schemas']['EntityType'];
-      /** @description Tier of the blessing */
-      tier: components['schemas']['BlessingTier'];
-      /**
-       * Format: uuid
-       * @description Item or collection entry instance backing this blessing
-       */
-      itemInstanceId: string;
-      /**
-       * Format: date-time
-       * @description When the blessing was granted
-       */
-      grantedAt: string;
-      /** @description Current status of the blessing */
-      status: components['schemas']['BlessingStatus'];
-    };
-    /**
-     * @description Tier of a blessing determining its power, cost, and storage mechanism
-     * @enum {string}
-     */
-    BlessingTier: 'Minor' | 'Standard' | 'Greater' | 'Supreme';
     /** @description State of a single license node on a board, including unlock status */
     BoardNodeState: {
       /** @description Unique license code within this board template */
@@ -15442,6 +12300,20 @@ export interface components {
        */
       roomId: string;
     };
+    /** @description Request to delete multiple documents at once */
+    BulkDeleteRequest: {
+      /** @description Documentation namespace containing the documents */
+      namespace: string;
+      /** @description List of document IDs to delete */
+      documentIds: string[];
+    };
+    /** @description Response reporting bulk deletion results with success and failure details */
+    BulkDeleteResponse: {
+      /** @description IDs of documents successfully deleted */
+      succeeded: string[];
+      /** @description Details of documents that failed to delete */
+      failed: components['schemas']['BulkOperationFailure'][];
+    };
     /** @description Request to retrieve metadata for multiple assets */
     BulkGetAssetsRequest: {
       /** @description Asset IDs to retrieve (max 100) */
@@ -15458,6 +12330,16 @@ export interface components {
       assets: components['schemas']['AssetWithDownloadUrl'][];
       /** @description Asset IDs that weren't found */
       notFound: string[];
+    };
+    /** @description Details of a failed bulk operation item */
+    BulkOperationFailure: {
+      /**
+       * Format: uuid
+       * @description Account ID that failed
+       */
+      accountId: string;
+      /** @description Human-readable error reason */
+      error: string;
     };
     /** @description A single connection entry in a bulk seed request */
     BulkSeedConnectionEntry: {
@@ -15513,6 +12395,26 @@ export interface components {
       updated: number;
       /** @description Error messages for individual entries that failed */
       errors: string[];
+    };
+    /** @description Request to update multiple documents at once */
+    BulkUpdateRequest: {
+      /** @description Documentation namespace containing the documents */
+      namespace: string;
+      /** @description List of document IDs to update */
+      documentIds: string[];
+      /** @description New category to apply to all documents (null to keep unchanged) */
+      category?: components['schemas']['DocumentCategory'];
+      /** @description Tags to add to all documents (null to skip adding) */
+      addTags?: string[] | null;
+      /** @description Tags to remove from all documents (null to skip removing) */
+      removeTags?: string[] | null;
+    };
+    /** @description Response reporting bulk update results with success and failure details */
+    BulkUpdateResponse: {
+      /** @description IDs of documents successfully updated */
+      succeeded: string[];
+      /** @description Details of documents that failed to update */
+      failed: components['schemas']['BulkOperationFailure'][];
     };
     /**
      * @description Bundle file format
@@ -15695,13 +12597,6 @@ export interface components {
       /** @description True if ZIP format was served from conversion cache */
       fromCache: boolean;
     };
-    /** @description Response containing a previously compiled behavior retrieved from cache */
-    CachedBehaviorResponse: {
-      /** @description Unique identifier for the cached behavior */
-      behaviorId: string;
-      /** @description The compiled behavior data retrieved from cache */
-      compiledBehavior: components['schemas']['CompiledBehavior'];
-    };
     /** @description Information about a cadence */
     CadenceInfo: {
       /**
@@ -15845,25 +12740,6 @@ export interface components {
       /** @description Current job status after cancellation attempt */
       status: components['schemas']['BundleStatus'];
     };
-    /** @description Request to cancel escrow before fully funded */
-    CancelRequest: {
-      /**
-       * Format: uuid
-       * @description Escrow ID
-       */
-      escrowId: string;
-      /** @description Reason for cancellation */
-      reason?: string | null;
-      /** @description Idempotency key */
-      idempotencyKey: string;
-    };
-    /** @description Response from cancelling an escrow */
-    CancelResponse: {
-      /** @description Cancelled escrow agreement */
-      escrow: components['schemas']['EscrowAgreement'];
-      /** @description Refund results for any deposits */
-      refunds: components['schemas']['RefundResult'][];
-    };
     /** @description Request to cancel a subscription. Requires accountId for ownership verification when called by non-admin users. */
     CancelSubscriptionRequest: {
       /**
@@ -15931,37 +12807,12 @@ export interface components {
       /** @description How domain depth maps to fidelity (0.0-1.0). Values: "linear", "logarithmic", "step". Consumers may define additional formulas. */
       fidelityFormula: string;
     };
-    /** @description Request to capture (finalize) a hold */
-    CaptureHoldRequest: {
-      /**
-       * Format: uuid
-       * @description Hold ID to capture
-       */
-      holdId: string;
-      /**
-       * Format: double
-       * @description Final amount to debit (may be less than hold amount)
-       */
-      captureAmount: number;
-      /** @description Idempotency key */
-      idempotencyKey: string;
-    };
-    /** @description Result of hold capture */
-    CaptureHoldResponse: {
-      /** @description Updated hold record */
-      hold: components['schemas']['HoldRecord'];
-      /** @description Debit transaction */
-      transaction: components['schemas']['CurrencyTransactionRecord'];
-      /**
-       * Format: double
-       * @description Balance after capture
-       */
-      newBalance: number;
-      /**
-       * Format: double
-       * @description Difference between hold and capture (released back)
-       */
-      amountReleased: number;
+    /** @description Document count for a specific category */
+    CategoryCount: {
+      /** @description The document category */
+      category: components['schemas']['DocumentCategory'];
+      /** @description Number of documents in this category */
+      count: number;
     };
     /** @description Completion statistics for a single category */
     CategoryStats: {
@@ -16067,107 +12918,6 @@ export interface components {
        */
       familySummary?: string | null;
     };
-    /**
-     * @description Core character data for archive storage and storyline SDK consumption.
-     *     Inherits base archive properties from ResourceArchiveBase.
-     *     The characterId field equals resourceId for convenience.
-     *
-     *     Note: This is distinct from CharacterArchive which contains text summaries
-     *     for cleanup. CharacterBaseArchive contains structured data for SDK consumption.
-     */
-    CharacterBaseArchive: {
-      /**
-       * Format: uuid
-       * @description Unique identifier for the character (equals resourceId)
-       */
-      characterId: string;
-      /** @description Display name of the character */
-      name: string;
-      /**
-       * Format: uuid
-       * @description Realm ID (partition key)
-       */
-      realmId: string;
-      /**
-       * Format: uuid
-       * @description Species ID (foreign key to Species service)
-       */
-      speciesId: string;
-      /**
-       * Format: date-time
-       * @description In-game birth timestamp
-       */
-      birthDate: string;
-      /**
-       * Format: date-time
-       * @description In-game death timestamp (required for compression)
-       */
-      deathDate: string;
-      /** @description Current lifecycle status (must be dead for compression) */
-      status: components['schemas']['CharacterStatus'];
-      /**
-       * @description Text summary of family relationships.
-       *     Example: "Father of 3, married to Elena, orphaned at young age"
-       */
-      familySummary?: string | null;
-      /**
-       * Format: date-time
-       * @description Real-world creation timestamp
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @description Real-world last update timestamp
-       */
-      updatedAt?: string | null;
-    } & components['schemas']['ResourceArchiveBase'];
-    /**
-     * @description Complete encounter data for archive storage and storyline SDK consumption.
-     *     Inherits base archive properties from ResourceArchiveBase.
-     *     The characterId field equals resourceId for convenience.
-     */
-    CharacterEncounterArchive: {
-      /**
-       * Format: uuid
-       * @description Character this data belongs to (equals resourceId)
-       */
-      characterId: string;
-      /** @description Whether encounters exist for this character */
-      hasEncounters: boolean;
-      /** @description Number of encounters archived */
-      encounterCount: number;
-      /** @description Encounters with perspectives (empty if hasEncounters=false) */
-      encounters?: components['schemas']['EncounterResponse'][];
-      /**
-       * @description Map of target characterId to aggregate sentiment.
-       *     Preserves sentiment relationships for historical reference.
-       */
-      aggregateSentiment?: {
-        [key: string]: number;
-      } | null;
-    } & components['schemas']['ResourceArchiveBase'];
-    /**
-     * @description Complete history data for archive storage and storyline SDK consumption.
-     *     Inherits base archive properties from ResourceArchiveBase.
-     *     The characterId field equals resourceId for convenience.
-     */
-    CharacterHistoryArchive: {
-      /**
-       * Format: uuid
-       * @description Character this data belongs to (equals resourceId)
-       */
-      characterId: string;
-      /** @description Whether historical participations exist */
-      hasParticipations: boolean;
-      /** @description Historical event participations (null if hasParticipations=false) */
-      participations?: components['schemas']['HistoricalParticipation'][] | null;
-      /** @description Whether backstory elements exist */
-      hasBackstory: boolean;
-      /** @description Backstory data (null if hasBackstory=false) */
-      backstory?: components['schemas']['BackstoryResponse'];
-      /** @description Text summaries for reference */
-      summaries?: components['schemas']['HistorySummaryResponse'];
-    } & components['schemas']['ResourceArchiveBase'];
     /** @description Paginated list of characters with metadata for navigation */
     CharacterListResponse: {
       /** @description List of characters matching the query */
@@ -16202,26 +12952,6 @@ export interface components {
        */
       joinedAt: string;
     };
-    /**
-     * @description Complete personality data for archive storage and storyline SDK consumption.
-     *     Inherits base archive properties from ResourceArchiveBase.
-     *     The characterId field equals resourceId for convenience.
-     */
-    CharacterPersonalityArchive: {
-      /**
-       * Format: uuid
-       * @description Character this data belongs to (equals resourceId)
-       */
-      characterId: string;
-      /** @description Whether personality traits exist */
-      hasPersonality: boolean;
-      /** @description Personality traits (null if hasPersonality=false) */
-      personality?: components['schemas']['PersonalityResponse'];
-      /** @description Whether combat preferences exist */
-      hasCombatPreferences: boolean;
-      /** @description Combat preferences (null if hasCombatPreferences=false) */
-      combatPreferences?: components['schemas']['CombatPreferencesResponse'];
-    } & components['schemas']['ResourceArchiveBase'];
     /** @description Complete character data returned from character operations */
     CharacterResponse: {
       /**
@@ -16452,16 +13182,6 @@ export interface components {
     };
     /** @description Result of a membership check */
     CheckMembershipResponse: {
-      /**
-       * Format: uuid
-       * @description Faction that was checked
-       */
-      factionId: string;
-      /**
-       * Format: uuid
-       * @description Character that was checked
-       */
-      characterId: string;
       /** @description Whether the character is a member */
       isMember: boolean;
       /** @description Member's role (null if not a member) */
@@ -16488,40 +13208,6 @@ export interface components {
     CheckModeAvailabilityResponse: {
       /** @description Availability status for each checked mode */
       availableModes: components['schemas']['ModeAvailabilityResult'][];
-    };
-    /** @description Request to check reference count for a character */
-    CheckReferencesRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the character to check references for
-       */
-      characterId: string;
-    };
-    /** @description Response containing reference status for a resource */
-    CheckReferencesResponse: {
-      /** @description Type of resource checked */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource checked
-       */
-      resourceId: string;
-      /** @description Current reference count */
-      refCount: number;
-      /** @description List of entities referencing this resource (optional, for diagnostics) */
-      sources?: components['schemas']['ResourceReference'][] | null;
-      /** @description True if refCount=0 and grace period has passed */
-      isCleanupEligible: boolean;
-      /**
-       * Format: date-time
-       * @description When grace period ends (null if refCount > 0 or already passed)
-       */
-      gracePeriodEndsAt?: string | null;
-      /**
-       * Format: date-time
-       * @description When refCount last became zero
-       */
-      lastZeroTimestamp?: string | null;
     };
     /** @description Request to check if a license can be unlocked */
     CheckUnlockableRequest: {
@@ -16692,46 +13378,6 @@ export interface components {
       /** @description Number of progress records deleted across all game services */
       progressRecordsDeleted: number;
     };
-    /** @description Request to end all relationships referencing a deleted entity during cascading resource cleanup */
-    CleanupByEntityRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the deleted entity whose relationships should be ended
-       */
-      entityId: string;
-      /** @description Type of the deleted entity (e.g., Character, Realm) */
-      entityType: components['schemas']['EntityType'];
-    };
-    /** @description Response summarizing the results of a cascading relationship cleanup operation. HTTP 200 confirms success. */
-    CleanupByEntityResponse: {
-      /** @description Number of active relationships that were ended during cleanup */
-      relationshipsEnded: number;
-      /** @description Number of relationships that were already ended (skipped) */
-      alreadyEnded: number;
-    };
-    /** @description Request to cleanup divine data for a deleted game service (called by lib-resource) */
-    CleanupByGameServiceRequest: {
-      /**
-       * Format: uuid
-       * @description Game service whose divine data to clean up
-       */
-      gameServiceId: string;
-    };
-    /** @description Request to cleanup territory claims for a deleted location */
-    CleanupByLocationRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the location that was deleted
-       */
-      locationId: string;
-    };
-    /** @description Result of location territory claim cleanup */
-    CleanupByLocationResponse: {
-      /** @description Number of territory claims removed */
-      claimsRemoved: number;
-      /** @description Whether cleanup completed successfully */
-      success: boolean;
-    };
     /** @description Request to cleanup all boards for a deleted owner entity */
     CleanupByOwnerRequest: {
       /** @description Type of entity whose boards should be cleaned up */
@@ -16754,95 +13400,12 @@ export interface components {
       /** @description Number of boards deleted during cleanup */
       boardsDeleted: number;
     };
-    /** @description Request to cleanup faction data for a deleted realm */
-    CleanupByRealmRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the realm that was deleted
-       */
-      realmId: string;
-    };
-    /** @description Result of realm faction data cleanup */
-    CleanupByRealmResponse: {
-      /** @description Number of factions removed */
-      factionsRemoved: number;
-      /** @description Number of memberships removed across all factions */
-      membershipsRemoved: number;
-      /** @description Number of territory claims removed */
-      territoryClaimsRemoved: number;
-      /** @description Number of norm definitions removed */
-      normsRemoved: number;
-      /** @description Whether cleanup completed successfully */
-      success: boolean;
-    };
-    /** @description Result of executing a single cleanup callback */
-    CleanupCallbackResult: {
-      /** @description Source type that was cleaned up (opaque identifier) */
-      sourceType: string;
-      /** @description Service that was called */
-      serviceName: string;
-      /** @description Endpoint that was called */
-      endpoint: string;
-      /** @description Whether callback succeeded */
-      success: boolean;
-      /** @description HTTP status code from callback */
-      statusCode?: number | null;
-      /** @description Error message if callback failed */
-      errorMessage?: string | null;
-      /** @description Callback execution time in milliseconds */
-      durationMs?: number;
-    };
-    /** @description Summary of a registered cleanup callback */
-    CleanupCallbackSummary: {
-      /** @description Type of resource this callback handles */
-      resourceType: string;
-      /** @description Type of entity that will be cleaned up */
-      sourceType: string;
-      /** @description Action taken when resource is deleted */
-      onDeleteAction: components['schemas']['OnDeleteAction'];
-      /** @description Target service for callback invocation */
-      serviceName: string;
-      /** @description Endpoint path called during cleanup */
-      callbackEndpoint: string;
-      /**
-       * Format: date-time
-       * @description When this callback was registered
-       */
-      registeredAt: string;
-      /** @description Human-readable description */
-      description?: string | null;
-    };
-    /**
-     * @description Policy for cleanup callback execution.
-     *     BestEffort: Proceed with deletion even if some callbacks fail
-     *     AllRequired: Abort deletion if any callback fails
-     * @enum {string}
-     */
-    CleanupPolicy: 'BestEffort' | 'AllRequired';
     /** @description Result of an owner cleanup operation */
     CleanupResponse: {
       /** @description Number of status instances removed */
       statusesRemoved: number;
       /** @description Number of status containers deleted */
       containersDeleted: number;
-    };
-    /** @description Request to clear an entity's presence from its current location */
-    ClearEntityPositionRequest: {
-      /** @description Type of entity (opaque string - character, actor, npc, player, etc.) */
-      entityType: string;
-      /**
-       * Format: uuid
-       * @description ID of the entity to clear
-       */
-      entityId: string;
-    };
-    /** @description Result of clearing entity presence. HTTP 200 confirms the operation completed. */
-    ClearEntityPositionResponse: {
-      /**
-       * Format: uuid
-       * @description Location the entity was removed from (null if entity had no active presence)
-       */
-      previousLocationId?: string | null;
     };
     /** @description Response containing the client's capability manifest with available API endpoints and shortcuts */
     ClientCapabilitiesResponse: {
@@ -17053,33 +13616,6 @@ export interface components {
      *     but any string code is valid.
      */
     CollectionType: string;
-    /** @description Result of recording a combat experience */
-    CombatEvolutionResult: {
-      /** @description Whether any preferences changed as a result */
-      preferencesEvolved: boolean;
-      /** @description Previous preferences (null if no change) */
-      previousPreferences?: components['schemas']['CombatPreferences'];
-      /** @description New preferences after evolution (null if no change) */
-      newPreferences?: components['schemas']['CombatPreferences'];
-      /** @description New version number if evolved (null if no change) */
-      newVersion?: number | null;
-    };
-    /**
-     * @description Categories of combat experiences that may cause preference evolution.
-     *     Each type affects different aspects of combat behavior.
-     * @enum {string}
-     */
-    CombatExperienceType:
-      | 'DecisiveVictory'
-      | 'NarrowVictory'
-      | 'Defeat'
-      | 'NearDeath'
-      | 'AllySaved'
-      | 'AllyLost'
-      | 'SuccessfulRetreat'
-      | 'FailedRetreat'
-      | 'AmbushSuccess'
-      | 'AmbushSurvived';
     /**
      * @description Combat behavior preferences that influence tactical decisions.
      *     These values affect GOAP action selection, retreat conditions,
@@ -17423,54 +13959,6 @@ export interface components {
       /** @description Random seed used */
       seed?: number | null;
     };
-    /** @description Result of a single compression callback */
-    CompressCallbackResult: {
-      /** @description Source type that provided data */
-      sourceType: string;
-      /** @description Service that was called */
-      serviceName: string;
-      /** @description Endpoint that was called */
-      endpoint: string;
-      /** @description Whether callback succeeded */
-      success: boolean;
-      /** @description HTTP status code from callback */
-      statusCode?: number | null;
-      /** @description Error message if callback failed */
-      errorMessage?: string | null;
-      /** @description Size of compressed data in bytes */
-      dataSize?: number | null;
-      /** @description Callback execution time in milliseconds */
-      durationMs: number;
-    };
-    /** @description Summary of a registered compression callback */
-    CompressCallbackSummary: {
-      /** @description Type of resource this callback handles */
-      resourceType: string;
-      /** @description Type of data being compressed */
-      sourceType: string;
-      /** @description Target service for callback invocation */
-      serviceName: string;
-      /** @description Endpoint called during compression */
-      compressEndpoint: string;
-      /** @description Endpoint called during decompression */
-      decompressEndpoint?: string | null;
-      /** @description Execution order (lower = earlier) */
-      priority: number;
-      /**
-       * Format: date-time
-       * @description When this callback was registered
-       */
-      registeredAt: string;
-      /** @description Human-readable description */
-      description?: string | null;
-    };
-    /**
-     * @description Policy for compression callback execution.
-     *     BestEffort: Create archive even if some callbacks fail (partial archive)
-     *     AllRequired: Abort compression if any callback fails
-     * @enum {string}
-     */
-    CompressionPolicy: 'BestEffort' | 'AllRequired';
     /**
      * @description Compression algorithm for bundles
      * @enum {string}
@@ -17562,6 +14050,12 @@ export interface components {
       /** @description Current escrow status after confirmation. */
       status?: components['schemas']['EscrowStatus'];
     };
+    /**
+     * @description How to handle documents with existing slugs during import
+     * @default Skip
+     * @enum {string}
+     */
+    ConflictResolution: 'Skip' | 'Update' | 'Fail';
     /** @description A bundle entry in an asset conflict */
     ConflictingBundleEntry: {
       /** @description Bundle containing this version */
@@ -17843,11 +14337,6 @@ export interface components {
       /** @description Items in container */
       items: components['schemas']['ContainerItem'][];
     };
-    /**
-     * @description Format of the content field in a document response
-     * @enum {string}
-     */
-    ContentFormat: 'Markdown' | 'Html' | 'None';
     /** @description Selected content entry for an area */
     ContentSelectionResponse: {
       /** @description Code of the selected entry */
@@ -18718,33 +15207,61 @@ export interface components {
         [key: string]: unknown;
       } | null;
     };
-    /** @description Request to create a new deity entity */
-    CreateDeityRequest: {
+    /** @description Request to create a new documentation entry */
+    CreateDocumentRequest: {
+      /** @description Documentation namespace to create document in */
+      namespace: string;
+      /** @description URL-friendly unique identifier for the document */
+      slug: string;
+      /** @description Display title of the document */
+      title: string;
+      /** @description Category for organizing the document */
+      category: components['schemas']['DocumentCategory'];
+      /** @description Markdown content (max 500KB) */
+      content: string;
+      /** @description Brief text summary of the document (null if not provided) */
+      summary?: string | null;
+      /** @description Concise summary optimized for voice AI (null if not provided) */
+      voiceSummary?: string | null;
+      /** @description Tags for filtering and search (null to skip tagging) */
+      tags?: string[] | null;
+      /** @description IDs of related documents to link (null to skip linking) */
+      relatedDocuments?: string[] | null;
+      /** @description Client-provided custom metadata. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Response confirming document creation with assigned identifiers */
+    CreateDocumentResponse: {
       /**
        * Format: uuid
-       * @description Game service this deity belongs to
+       * @description Unique identifier of the created document
        */
-      gameServiceId: string;
-      /** @description Unique code for this deity within the game service (e.g., mnemosyne, nexius) */
+      documentId: string;
+      /** @description URL-friendly slug of the created document */
+      slug: string;
+      /**
+       * Format: date-time
+       * @description Timestamp when the document was created
+       */
+      createdAt: string;
+    };
+    /** @description Request to create a new encounter type */
+    CreateEncounterTypeRequest: {
+      /** @description Unique code for the encounter type */
       code: string;
-      /** @description Human-readable display name */
-      displayName: string;
-      /** @description Description of the deity's nature and role */
-      description: string;
-      /** @description Domain influences (at least one required) */
-      domains: components['schemas']['DomainInfluence'][];
-      /** @description Personality traits influencing behavior decisions */
-      personalityTraits: components['schemas']['DeityPersonalityTraits'];
+      /** @description Display name for the encounter type */
+      name: string;
+      /** @description Description of this encounter type */
+      description?: string | null;
+      /** @description Suggested emotional response */
+      defaultEmotionalImpact?: components['schemas']['EmotionalImpact'];
       /**
-       * @description Maximum characters this deity can actively monitor simultaneously
-       * @default 10
+       * @description Display ordering (lower = first)
+       * @default 100
        */
-      maxAttentionSlots: number;
-      /**
-       * Format: uuid
-       * @description Home realm for this deity (null if not realm-bound)
-       */
-      realmId?: string | null;
+      sortOrder: number;
     };
     /** @description Request to create a new entry template */
     CreateEntryTemplateRequest: {
@@ -18790,93 +15307,6 @@ export interface components {
       /** @description Composer or creator name */
       composer?: string | null;
     };
-    /** @description Input for defining a party in escrow creation */
-    CreateEscrowPartyInput: {
-      /**
-       * Format: uuid
-       * @description Party entity ID
-       */
-      partyId: string;
-      /** @description Type of entity (Account, Character, etc.) */
-      partyType: components['schemas']['EntityType'];
-      /** @description Display name */
-      displayName?: string | null;
-      /** @description Role of this party in the escrow */
-      role: components['schemas']['EscrowPartyRole'];
-      /** @description Whether consent is required (defaults based on role) */
-      consentRequired?: boolean | null;
-      /**
-       * Format: uuid
-       * @description Party wallet for currency operations
-       */
-      walletId?: string | null;
-      /**
-       * Format: uuid
-       * @description Party container for item operations
-       */
-      containerId?: string | null;
-    };
-    /** @description Request to create a new escrow agreement */
-    CreateEscrowRequest: {
-      /** @description Type of escrow agreement */
-      escrowType: components['schemas']['EscrowType'];
-      /** @description Trust mode for the escrow */
-      trustMode: components['schemas']['EscrowTrustMode'];
-      /**
-       * Format: uuid
-       * @description For single_party_trusted mode
-       */
-      trustedPartyId?: string | null;
-      /** @description Type of the trusted party */
-      trustedPartyType?: components['schemas']['EntityType'] | null;
-      /** @description Parties in the escrow */
-      parties: components['schemas']['CreateEscrowPartyInput'][];
-      /** @description Expected deposits from parties */
-      expectedDeposits: components['schemas']['ExpectedDepositInput'][];
-      /** @description Optional explicit release allocations */
-      releaseAllocations?: components['schemas']['ReleaseAllocationInput'][] | null;
-      /**
-       * Format: uuid
-       * @description Contract governing this escrow
-       */
-      boundContractId?: string | null;
-      /** @description Number of consents required (null = all consent-required parties) */
-      requiredConsentsForRelease?: number | null;
-      /**
-       * Format: date-time
-       * @description Optional expiration time
-       */
-      expiresAt?: string | null;
-      /** @description Reference type (trade, auction, etc.) */
-      referenceType?: string | null;
-      /**
-       * Format: uuid
-       * @description Reference entity ID
-       */
-      referenceId?: string | null;
-      /** @description Human-readable description */
-      description?: string | null;
-      /** @description Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention. */
-      metadata?: {
-        [key: string]: unknown;
-      } | null;
-      /**
-       * @description How release confirmation is handled. Defaults to service_only if not specified.
-       *     Only applies to unbound escrows; contract-bound escrows follow contract fulfillment.
-       */
-      releaseMode?: components['schemas']['ReleaseMode'] | null;
-      /** @description How refund confirmation is handled. Defaults to immediate if not specified. */
-      refundMode?: components['schemas']['RefundMode'] | null;
-      /** @description Idempotency key for this operation */
-      idempotencyKey: string;
-    };
-    /** @description Response from creating an escrow agreement */
-    CreateEscrowResponse: {
-      /** @description Created escrow agreement */
-      escrow: components['schemas']['EscrowAgreement'];
-      /** @description Deposit tokens for each party (full_consent mode) */
-      depositTokens: components['schemas']['PartyToken'][];
-    };
     /** @description Request to create a new faction */
     CreateFactionRequest: {
       /**
@@ -18900,38 +15330,6 @@ export interface components {
        * @description Parent faction for hierarchy (null for top-level)
        */
       parentFactionId?: string | null;
-    };
-    /** @description Request to create an authorization hold */
-    CreateHoldRequest: {
-      /**
-       * Format: uuid
-       * @description Wallet to hold funds in
-       */
-      walletId: string;
-      /**
-       * Format: uuid
-       * @description Currency to hold
-       */
-      currencyDefinitionId: string;
-      /**
-       * Format: double
-       * @description Amount to reserve
-       */
-      amount: number;
-      /**
-       * Format: date-time
-       * @description When the hold auto-releases
-       */
-      expiresAt: string;
-      /** @description Reference type (e.g. dining, hotel, gas) */
-      referenceType?: string | null;
-      /**
-       * Format: uuid
-       * @description Reference entity ID
-       */
-      referenceId?: string | null;
-      /** @description Idempotency key */
-      idempotencyKey: string;
     };
     /** @description Request to create a new item instance */
     CreateItemInstanceRequest: {
@@ -19179,6 +15577,39 @@ export interface components {
         [key: string]: unknown;
       } | null;
     };
+    /** @description Request to create a new location within a realm */
+    CreateLocationRequest: {
+      /** @description Unique code for the location within the realm */
+      code: string;
+      /** @description Display name for the location */
+      name: string;
+      /** @description Description of the location */
+      description?: string | null;
+      /**
+       * Format: uuid
+       * @description Realm this location belongs to
+       */
+      realmId: string;
+      /** @description Type classification for this location */
+      locationType: components['schemas']['LocationType'];
+      /**
+       * Format: uuid
+       * @description Parent location ID for hierarchy (null for root locations)
+       */
+      parentLocationId?: string | null;
+      /** @description Optional spatial extent in world coordinates */
+      bounds?: components['schemas']['BoundingBox3D'] | null;
+      /** @description Precision level of spatial bounds (defaults to none) */
+      boundsPrecision?: components['schemas']['BoundsPrecision'] | null;
+      /** @description How this location's coordinate system relates to its parent (defaults to inherit) */
+      coordinateMode?: components['schemas']['CoordinateMode'] | null;
+      /** @description Origin point for local or inherited coordinate systems */
+      localOrigin?: components['schemas']['Position3D'] | null;
+      /** @description Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
     /**
      * @description Request to create a metabundle from source bundles and/or standalone assets.
      *     At least one of sourceBundleIds or standaloneAssetIds must be provided.
@@ -19313,6 +15744,33 @@ export interface components {
        * @description Game service this quest belongs to
        */
       gameServiceId: string;
+    };
+    /** @description Request to create a new relationship type with code, name, and optional hierarchy and inverse settings */
+    CreateRelationshipTypeRequest: {
+      /** @description Unique code for the relationship type (e.g., "SON", "MOTHER") */
+      code: string;
+      /** @description Display name for the relationship type */
+      name: string;
+      /** @description Description of the relationship type (null if not provided) */
+      description?: string | null;
+      /** @description Category for grouping (e.g., "FAMILY", "SOCIAL", "ECONOMIC") (null if not categorized) */
+      category?: string | null;
+      /**
+       * Format: uuid
+       * @description Parent type ID for hierarchy (null for root types)
+       */
+      parentTypeId?: string | null;
+      /** @description Code of the inverse relationship (e.g., "PARENT" for "CHILD") */
+      inverseTypeCode?: string | null;
+      /**
+       * @description Whether the relationship is the same in both directions (e.g., "SIBLING")
+       * @default false
+       */
+      isBidirectional: boolean;
+      /** @description Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
     };
     /** @description Request to create a new chat room */
     CreateRoomRequest: {
@@ -19522,105 +15980,6 @@ export interface components {
       multiplayer?: components['schemas']['ScenarioMultiplayer'];
       /** @description Game content references */
       content?: components['schemas']['ScenarioContent'];
-    };
-    /** @description Request to create a new wallet */
-    CreateWalletRequest: {
-      /**
-       * Format: uuid
-       * @description Owner entity ID
-       */
-      ownerId: string;
-      /** @description Type of owner entity */
-      ownerType: components['schemas']['EntityType'];
-      /**
-       * Format: uuid
-       * @description Realm ID for realm-scoped wallets (null for global)
-       */
-      realmId?: string | null;
-    };
-    /** @description Request to credit currency to a wallet */
-    CreditCurrencyRequest: {
-      /**
-       * Format: uuid
-       * @description Target wallet ID
-       */
-      walletId: string;
-      /**
-       * Format: uuid
-       * @description Currency to credit
-       */
-      currencyDefinitionId: string;
-      /**
-       * Format: double
-       * @description Amount to credit (must be positive)
-       */
-      amount: number;
-      /** @description Must be a faucet type (mint, quest_reward, loot_drop, etc.) */
-      transactionType: components['schemas']['TransactionType'];
-      /** @description What triggered this transaction (quest, admin, etc.) */
-      referenceType?: string | null;
-      /**
-       * Format: uuid
-       * @description Reference entity ID
-       */
-      referenceId?: string | null;
-      /** @description Unique key to prevent duplicate processing */
-      idempotencyKey: string;
-      /**
-       * @description Skip earn cap enforcement (admin use)
-       * @default false
-       */
-      bypassEarnCap: boolean;
-      /** @description Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention. */
-      metadata?: {
-        [key: string]: unknown;
-      } | null;
-    };
-    /** @description Result of credit operation */
-    CreditCurrencyResponse: {
-      /** @description Created transaction record */
-      transaction: components['schemas']['CurrencyTransactionRecord'];
-      /**
-       * Format: double
-       * @description Balance after credit
-       */
-      newBalance: number;
-      /** @description Whether earn cap limited the credit */
-      earnCapApplied: boolean;
-      /**
-       * Format: double
-       * @description Amount reduced by earn cap
-       */
-      earnCapAmountLimited?: number | null;
-      /** @description Whether wallet cap limited the credit */
-      walletCapApplied: boolean;
-      /**
-       * Format: double
-       * @description Amount lost due to wallet cap (cap_and_lose behavior)
-       */
-      walletCapAmountLost?: number | null;
-    };
-    /** @description Request to credit divinity to a deity's wallet */
-    CreditDivinityRequest: {
-      /**
-       * Format: uuid
-       * @description Deity to credit
-       */
-      deityId: string;
-      /**
-       * Format: double
-       * @description Amount of divinity to credit (must be positive)
-       */
-      amount: number;
-      /** @description Source of the divinity gain (e.g., mortal_action, domain_event, manual) */
-      source: string;
-      /**
-       * Format: uuid
-       * @description Triggering event identifier if applicable
-       */
-      sourceEventId?: string | null;
-      /** @description Human-readable description of the credit reason */
-      description?: string | null;
     };
     /** @description Request to cure a breach */
     CureBreachRequest: {
@@ -19892,81 +16251,6 @@ export interface components {
       /** @description True if this period has sunlight, used by ${world.time.is_day} and ${world.time.is_night} */
       isDaylight: boolean;
     };
-    /** @description Request to deactivate an active deity */
-    DeactivateDeityRequest: {
-      /**
-       * Format: uuid
-       * @description Deity to deactivate
-       */
-      deityId: string;
-    };
-    /** @description Request to debit currency from a wallet */
-    DebitCurrencyRequest: {
-      /**
-       * Format: uuid
-       * @description Source wallet ID
-       */
-      walletId: string;
-      /**
-       * Format: uuid
-       * @description Currency to debit
-       */
-      currencyDefinitionId: string;
-      /**
-       * Format: double
-       * @description Amount to debit (must be positive)
-       */
-      amount: number;
-      /** @description Must be a sink type (burn, vendor_purchase, fee, etc.) */
-      transactionType: components['schemas']['TransactionType'];
-      /** @description What triggered this transaction */
-      referenceType?: string | null;
-      /**
-       * Format: uuid
-       * @description Reference entity ID
-       */
-      referenceId?: string | null;
-      /** @description Unique key to prevent duplicate processing */
-      idempotencyKey: string;
-      /** @description Override negative balance allowance for this transaction */
-      allowNegative?: boolean | null;
-      /** @description Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention. */
-      metadata?: {
-        [key: string]: unknown;
-      } | null;
-    };
-    /** @description Result of debit operation */
-    DebitCurrencyResponse: {
-      /** @description Created transaction record */
-      transaction: components['schemas']['CurrencyTransactionRecord'];
-      /**
-       * Format: double
-       * @description Balance after debit
-       */
-      newBalance: number;
-    };
-    /** @description Request to debit divinity from a deity's wallet */
-    DebitDivinityRequest: {
-      /**
-       * Format: uuid
-       * @description Deity to debit
-       */
-      deityId: string;
-      /**
-       * Format: double
-       * @description Amount of divinity to debit (must be positive)
-       */
-      amount: number;
-      /** @description Purpose of the expenditure (e.g., blessing_grant, miracle, intervention) */
-      purpose: string;
-      /**
-       * Format: uuid
-       * @description Target character if the expenditure is blessing-related
-       */
-      targetCharacterId?: string | null;
-      /** @description Human-readable description of the debit reason */
-      description?: string | null;
-    };
     /** @description Request to decline a formed match */
     DeclineMatchRequest: {
       /**
@@ -20029,87 +16313,6 @@ export interface components {
       /** @description Human-readable description of the norm */
       description?: string | null;
     };
-    /** @description Machine-readable personality traits influencing deity behavior decisions */
-    DeityPersonalityTraits: {
-      /** @description Primary temperament descriptor (e.g., wrathful, benevolent, capricious) */
-      temperament: string;
-      /** @description What type of mortal actions draw this deity's attention (e.g., combat, devotion, craft) */
-      attentionBias: string;
-      /**
-       * Format: double
-       * @description How freely the deity grants blessings (0.0 miserly, 1.0 lavish)
-       */
-      generosity: number;
-      /**
-       * Format: double
-       * @description How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)
-       */
-      jealousy: number;
-    };
-    /** @description Full deity entity response */
-    DeityResponse: {
-      /**
-       * Format: uuid
-       * @description Unique deity identifier
-       */
-      deityId: string;
-      /**
-       * Format: uuid
-       * @description Game service this deity belongs to
-       */
-      gameServiceId: string;
-      /** @description Unique code within the game service */
-      code: string;
-      /** @description Human-readable display name */
-      displayName: string;
-      /** @description Description of the deity */
-      description: string;
-      /** @description Domain influences */
-      domains: components['schemas']['DomainInfluence'][];
-      /** @description Personality traits */
-      personalityTraits: components['schemas']['DeityPersonalityTraits'];
-      /** @description Maximum characters the deity can actively monitor */
-      maxAttentionSlots: number;
-      /**
-       * Format: uuid
-       * @description Associated actor ID for the deity watcher brain (null if no watcher started)
-       */
-      actorId?: string | null;
-      /**
-       * Format: uuid
-       * @description Domain power seed ID (null if seed creation failed or pending)
-       */
-      seedId?: string | null;
-      /**
-       * Format: uuid
-       * @description Divinity currency wallet ID (null if wallet creation failed or pending)
-       */
-      currencyWalletId?: string | null;
-      /**
-       * Format: uuid
-       * @description Home realm for this deity (null if not realm-bound)
-       */
-      realmId?: string | null;
-      /** @description Current lifecycle status */
-      status: components['schemas']['DeityStatus'];
-      /** @description Number of active followers */
-      followerCount: number;
-      /**
-       * Format: date-time
-       * @description When the deity was created
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @description When the deity was last updated
-       */
-      updatedAt: string;
-    };
-    /**
-     * @description Lifecycle status of a deity entity
-     * @enum {string}
-     */
-    DeityStatus: 'Active' | 'Dormant' | 'Archived';
     /** @description Request to delete an action tag mapping */
     DeleteActionMappingRequest: {
       /** @description The GOAP action tag whose mapping should be deleted */
@@ -20133,6 +16336,16 @@ export interface components {
       /** @description Number of running actors that were stopped */
       stoppedActorCount: number;
     };
+    /** @description Request to permanently delete an archive */
+    DeleteArchiveRequest: {
+      /**
+       * Format: uuid
+       * @description Unique identifier of the archive to delete
+       */
+      archiveId: string;
+    };
+    /** @description Response confirming archive deletion */
+    DeleteArchiveResponse: Record<string, never>;
     /** @description Request to delete an area content configuration */
     DeleteAreaContentConfigRequest: {
       /**
@@ -20224,13 +16437,40 @@ export interface components {
     };
     /** @description Empty response. HTTP 200 confirms the instance was deleted. */
     DeleteContractInstanceResponse: Record<string, never>;
-    /** @description Request to permanently delete a deity and all dependent data */
-    DeleteDeityRequest: {
+    /** @description Request to soft-delete a document to the trashcan */
+    DeleteDocumentRequest: {
+      /** @description Documentation namespace containing the document */
+      namespace: string;
       /**
        * Format: uuid
-       * @description Deity to delete
+       * @description Unique identifier of the document to delete (null if using slug)
        */
-      deityId: string;
+      documentId?: string | null;
+      /** @description URL-friendly slug of the document to delete (null if using documentId) */
+      slug?: string | null;
+    };
+    /** @description Response confirming document deletion with recovery deadline */
+    DeleteDocumentResponse: {
+      /**
+       * Format: uuid
+       * @description Unique identifier of the deleted document
+       */
+      documentId: string;
+      /**
+       * Format: date-time
+       * @description Timestamp when the document was deleted
+       */
+      deletedAt: string;
+      /**
+       * Format: date-time
+       * @description Deadline for recovering the document from trashcan
+       */
+      recoverableUntil: string;
+    };
+    /** @description Request to delete an encounter type */
+    DeleteEncounterTypeRequest: {
+      /** @description Code of the type to delete */
+      code: string;
     };
     /** @description Request to delete a leaderboard */
     DeleteLeaderboardDefinitionRequest: {
@@ -20241,6 +16481,14 @@ export interface components {
       gameServiceId: string;
       /** @description ID of the leaderboard to delete */
       leaderboardId: string;
+    };
+    /** @description Request to permanently delete a location from the system */
+    DeleteLocationRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the location to delete
+       */
+      locationId: string;
     };
     /** @description Request to delete a message from a room */
     DeleteMessageRequest: {
@@ -20269,6 +16517,14 @@ export interface components {
        * @description ID of the norm to delete
        */
       normId: string;
+    };
+    /** @description Request to permanently delete a relationship type (typically after deprecation and merge) */
+    DeleteRelationshipTypeRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the relationship type to delete
+       */
+      relationshipTypeId: string;
     };
     /** @description Request to permanently delete a room and all its messages */
     DeleteRoomRequest: {
@@ -20458,6 +16714,18 @@ export interface components {
        * @description ID of the faction to deprecate
        */
       factionId: string;
+      /** @description Reason for deprecation (audit context for Category A entities) */
+      deprecationReason: string;
+    };
+    /** @description Request to soft-delete a location by marking it as deprecated */
+    DeprecateLocationRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the location to deprecate
+       */
+      locationId: string;
+      /** @description Optional reason for deprecation (for audit purposes) */
+      reason?: string | null;
     };
     /** @description Request to deprecate a transit mode */
     DeprecateModeRequest: {
@@ -20474,6 +16742,16 @@ export interface components {
        */
       definitionId: string;
       /** @description Reason for deprecation */
+      reason?: string | null;
+    };
+    /** @description Request to deprecate a relationship type, preventing its use for new relationships while preserving existing ones */
+    DeprecateRelationshipTypeRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the relationship type to deprecate
+       */
+      relationshipTypeId: string;
+      /** @description Optional reason for deprecation (for audit purposes) */
       reason?: string | null;
     };
     /** @description Request to deprecate a room type (prevents new room creation) */
@@ -20650,109 +16928,6 @@ export interface components {
       /** @description Disputed escrow agreement */
       escrow: components['schemas']['EscrowAgreement'];
     };
-    /** @description Current divinity balance for a deity */
-    DivinityBalanceResponse: {
-      /**
-       * Format: uuid
-       * @description Deity this balance belongs to
-       */
-      deityId: string;
-      /**
-       * Format: double
-       * @description Current divinity balance
-       */
-      balance: number;
-      /** @description Currency code for the divinity type */
-      currencyCode: string;
-      /**
-       * Format: uuid
-       * @description Currency wallet ID
-       */
-      walletId: string;
-    };
-    /** @description Paginated divinity transaction history */
-    DivinityHistoryResponse: {
-      /** @description Transactions in the current page */
-      transactions: components['schemas']['DivinityTransaction'][];
-      /** @description Total number of transactions */
-      totalCount: number;
-      /** @description Current page number */
-      page: number;
-      /** @description Number of results per page */
-      pageSize: number;
-    };
-    /** @description A single divinity transaction record from the currency wallet history */
-    DivinityTransaction: {
-      /**
-       * Format: uuid
-       * @description Unique transaction identifier
-       */
-      transactionId: string;
-      /**
-       * Format: uuid
-       * @description Wallet the transaction belongs to
-       */
-      walletId: string;
-      /**
-       * Format: double
-       * @description Transaction amount (positive for credits, negative for debits)
-       */
-      amount: number;
-      /** @description Type of transaction (e.g., mortal_action, blessing_grant, manual_credit) */
-      transactionType: string;
-      /** @description Type of entity involved in this transaction (e.g., character, deity) */
-      targetType?: string | null;
-      /**
-       * Format: uuid
-       * @description Entity ID involved in this transaction (e.g., the blessed character, the rival deity)
-       */
-      targetId?: string | null;
-      /**
-       * Format: date-time
-       * @description When the transaction was recorded
-       */
-      createdAt: string;
-    };
-    /** @description Complete document with all metadata and content */
-    Document: {
-      /**
-       * Format: uuid
-       * @description Unique identifier of the document
-       */
-      documentId: string;
-      /** @description Namespace the document belongs to */
-      namespace: string;
-      /** @description URL-friendly unique identifier */
-      slug: string;
-      /** @description Display title of the document */
-      title: string;
-      /** @description Category for organizing the document */
-      category: components['schemas']['DocumentCategory'];
-      /** @description Full markdown content of the document (null if content not requested) */
-      content?: string | null;
-      /** @description Brief text summary of the document */
-      summary?: string | null;
-      /** @description Concise summary optimized for voice AI */
-      voiceSummary?: string | null;
-      /** @description Tags for filtering and search (null if no tags) */
-      tags?: string[] | null;
-      /** @description IDs of related documents (null if none linked) */
-      relatedDocuments?: string[] | null;
-      /** @description Client-provided custom metadata (null if none set). No Bannou plugin reads specific keys from this field by convention. */
-      metadata?: {
-        [key: string]: unknown;
-      } | null;
-      /**
-       * Format: date-time
-       * @description Timestamp when the document was created
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @description Timestamp when the document was last updated
-       */
-      updatedAt: string;
-    };
     /**
      * @description Fixed categories for type-safe filtering
      * @enum {string}
@@ -20768,68 +16943,11 @@ export interface components {
       | 'WorldLore'
       | 'NpcAi'
       | 'Other';
-    /** @description Search result with relevance scoring and match highlights */
-    DocumentResult: {
-      /**
-       * Format: uuid
-       * @description Unique identifier of the document
-       */
-      documentId: string;
-      /** @description URL-friendly unique identifier */
-      slug: string;
-      /** @description Display title of the document */
-      title: string;
-      /** @description Category of the document (null if uncategorized) */
-      category?: components['schemas']['DocumentCategory'];
-      /** @description Brief text summary of the document */
-      summary?: string | null;
-      /** @description Concise summary optimized for voice AI */
-      voiceSummary?: string | null;
-      /** @description Full document content if requested */
-      content?: string | null;
-      /**
-       * Format: float
-       * @description Relevance score from 0.0 to 1.0
-       */
-      relevanceScore: number;
-      /** @description Text snippets showing where matches occurred (null if not computed) */
-      matchHighlights?: string[] | null;
-    };
-    /** @description Lightweight document representation for listings and references */
-    DocumentSummary: {
-      /**
-       * Format: uuid
-       * @description Unique identifier of the document
-       */
-      documentId: string;
-      /** @description URL-friendly unique identifier */
-      slug: string;
-      /** @description Display title of the document */
-      title: string;
-      /** @description Category of the document */
-      category: components['schemas']['DocumentCategory'];
-      /** @description Brief text summary of the document */
-      summary?: string | null;
-      /** @description Concise summary optimized for voice AI */
-      voiceSummary?: string | null;
-      /** @description Tags associated with the document (null if no tags) */
-      tags?: string[] | null;
-    };
     /**
      * @description Type of documentation resource owner
      * @enum {string}
      */
     DocumentationOwnerType: 'Session' | 'Service';
-    /** @description A deity's influence in a specific domain with a weight representing strength */
-    DomainInfluence: {
-      /** @description Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum. */
-      domain: string;
-      /**
-       * Format: double
-       * @description Strength of influence in this domain (0.0-1.0)
-       */
-      weight: number;
-    };
     /** @description Domain name and weight pair for scenario template growth weighting */
     DomainWeight: {
       /** @description Growth domain path (e.g. combat.melee, exploration.caves) */
@@ -20982,132 +17100,6 @@ export interface components {
       /** @description Valence level (0-1) */
       valence?: number;
     };
-    /** @description Paginated list of encounters */
-    EncounterListResponse: {
-      /** @description List of encounters with perspectives */
-      encounters: components['schemas']['EncounterResponse'][];
-      /** @description Total matching encounters */
-      totalCount: number;
-      /** @description Current page (1-based) */
-      page: number;
-      /** @description Results per page */
-      pageSize: number;
-      /** @description Whether more results exist */
-      hasNextPage?: boolean;
-      /** @description Whether previous results exist */
-      hasPreviousPage?: boolean;
-    };
-    /** @description Core encounter record representing a memorable interaction */
-    EncounterModel: {
-      /**
-       * Format: uuid
-       * @description Unique identifier for this encounter
-       */
-      encounterId: string;
-      /**
-       * Format: date-time
-       * @description In-game time when the encounter occurred
-       */
-      timestamp: string;
-      /**
-       * Format: uuid
-       * @description Realm where the encounter took place
-       */
-      realmId: string;
-      /**
-       * Format: uuid
-       * @description Specific location within the realm (optional)
-       */
-      locationId?: string | null;
-      /** @description Type code for this encounter (e.g., COMBAT, TRADE) */
-      encounterTypeCode: string;
-      /** @description What triggered or contextualized the encounter */
-      context?: string | null;
-      /** @description Outcome of the encounter (POSITIVE, NEGATIVE, NEUTRAL, MEMORABLE, TRANSFORMATIVE) */
-      outcome: components['schemas']['EncounterOutcome'];
-      /** @description All character IDs involved in the encounter */
-      participantIds: string[];
-      /** @description Client-provided encounter-specific data. No Bannou plugin reads specific keys from this field by convention. */
-      metadata?: {
-        [key: string]: unknown;
-      } | null;
-      /**
-       * Format: date-time
-       * @description System timestamp when record was created
-       */
-      createdAt: string;
-    };
-    /**
-     * @description Overall outcome of an encounter
-     * @enum {string}
-     */
-    EncounterOutcome: 'Positive' | 'Negative' | 'Neutral' | 'Memorable' | 'Transformative';
-    /** @description A character's individual perspective on an encounter */
-    EncounterPerspectiveModel: {
-      /**
-       * Format: uuid
-       * @description Unique identifier for this perspective
-       */
-      perspectiveId: string;
-      /**
-       * Format: uuid
-       * @description Reference to the shared encounter record
-       */
-      encounterId: string;
-      /**
-       * Format: uuid
-       * @description Character holding this perspective
-       */
-      characterId: string;
-      /** @description Primary emotional response to the encounter */
-      emotionalImpact: components['schemas']['EmotionalImpact'];
-      /**
-       * Format: float
-       * @description Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter).
-       */
-      impactIntensity?: number;
-      /**
-       * Format: float
-       * @description Opinion change toward other participants (-1.0 to +1.0)
-       */
-      sentimentShift?: number | null;
-      /**
-       * Format: float
-       * @description How strongly remembered (0.0-1.0, decays over time)
-       */
-      memoryStrength: number;
-      /** @description Short description from this character's POV */
-      rememberedAs?: string | null;
-      /**
-       * Format: date-time
-       * @description When memory decay was last applied
-       */
-      lastDecayedAt?: string | null;
-      /**
-       * Format: date-time
-       * @description System timestamp when record was created
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @description Last modification timestamp
-       */
-      updatedAt?: string | null;
-    };
-    /** @description Response containing an encounter with perspectives */
-    EncounterResponse: {
-      /** @description The shared encounter record */
-      encounter: components['schemas']['EncounterModel'];
-      /** @description All perspectives on this encounter */
-      perspectives: components['schemas']['EncounterPerspectiveModel'][];
-    };
-    /** @description Response containing a list of encounter types */
-    EncounterTypeListResponse: {
-      /** @description List of encounter types */
-      types: components['schemas']['EncounterTypeResponse'][];
-      /** @description Total number of types */
-      totalCount: number;
-    };
     /** @description Response containing an encounter type */
     EncounterTypeResponse: {
       /**
@@ -21134,23 +17126,6 @@ export interface components {
        * @description When the type was created
        */
       createdAt: string;
-    };
-    /** @description Request to end an active encounter */
-    EndEncounterRequest: {
-      /** @description ID of the Event Brain actor managing the encounter */
-      actorId: string;
-    };
-    /** @description Response after ending an encounter */
-    EndEncounterResponse: {
-      /** @description ID of the actor */
-      actorId: string;
-      /**
-       * Format: uuid
-       * @description ID of the ended encounter
-       */
-      encounterId: string;
-      /** @description Duration of the encounter in milliseconds */
-      durationMs?: number | null;
     };
     /**
      * @description How contract breaches are handled
@@ -21244,23 +17219,6 @@ export interface components {
        * @description Template to instantiate for the bond
        */
       scenarioTemplateId: string;
-    };
-    /** @description An entity currently present at a location */
-    EntityPresenceEntry: {
-      /** @description Type of entity (opaque string) */
-      entityType: string;
-      /**
-       * Format: uuid
-       * @description ID of the entity
-       */
-      entityId: string;
-      /**
-       * Format: date-time
-       * @description When the presence was last reported
-       */
-      reportedAt?: string | null;
-      /** @description Identifier of the last reporter */
-      reportedBy?: string | null;
     };
     /** @description Entity's rank on a leaderboard */
     EntityRankResponse: {
@@ -21742,41 +17700,6 @@ export interface components {
       /** @description Idempotency key for this deposit */
       idempotencyKey: string;
     };
-    /** @description Request from lib-escrow to debit wallet for deposit */
-    EscrowDepositRequest: {
-      /**
-       * Format: uuid
-       * @description Wallet to debit
-       */
-      walletId: string;
-      /**
-       * Format: uuid
-       * @description Currency to debit
-       */
-      currencyDefinitionId: string;
-      /**
-       * Format: double
-       * @description Amount to debit for escrow
-       */
-      amount: number;
-      /**
-       * Format: uuid
-       * @description Associated escrow agreement ID
-       */
-      escrowId: string;
-      /** @description Idempotency key */
-      idempotencyKey: string;
-    };
-    /** @description Result of escrow deposit (wallet debit) */
-    EscrowDepositResponse: {
-      /** @description Debit transaction record */
-      transaction: components['schemas']['CurrencyTransactionRecord'];
-      /**
-       * Format: double
-       * @description Wallet balance after debit
-       */
-      newBalance: number;
-    };
     /** @description A party in the escrow agreement */
     EscrowParty: {
       /**
@@ -21841,76 +17764,6 @@ export interface components {
      * @enum {string}
      */
     EscrowPartyRole: 'Depositor' | 'Recipient' | 'DepositorRecipient' | 'Arbiter' | 'Observer';
-    /** @description Request from lib-escrow to credit depositor on refund */
-    EscrowRefundRequest: {
-      /**
-       * Format: uuid
-       * @description Depositor wallet to credit
-       */
-      walletId: string;
-      /**
-       * Format: uuid
-       * @description Currency to credit
-       */
-      currencyDefinitionId: string;
-      /**
-       * Format: double
-       * @description Amount to refund
-       */
-      amount: number;
-      /**
-       * Format: uuid
-       * @description Associated escrow agreement ID
-       */
-      escrowId: string;
-      /** @description Idempotency key */
-      idempotencyKey: string;
-    };
-    /** @description Result of escrow refund (depositor credit) */
-    EscrowRefundResponse: {
-      /** @description Credit transaction record */
-      transaction: components['schemas']['CurrencyTransactionRecord'];
-      /**
-       * Format: double
-       * @description Depositor balance after credit
-       */
-      newBalance: number;
-    };
-    /** @description Request from lib-escrow to credit recipient on completion */
-    EscrowReleaseRequest: {
-      /**
-       * Format: uuid
-       * @description Recipient wallet to credit
-       */
-      walletId: string;
-      /**
-       * Format: uuid
-       * @description Currency to credit
-       */
-      currencyDefinitionId: string;
-      /**
-       * Format: double
-       * @description Amount to credit
-       */
-      amount: number;
-      /**
-       * Format: uuid
-       * @description Associated escrow agreement ID
-       */
-      escrowId: string;
-      /** @description Idempotency key */
-      idempotencyKey: string;
-    };
-    /** @description Result of escrow release (recipient credit) */
-    EscrowReleaseResponse: {
-      /** @description Credit transaction record */
-      transaction: components['schemas']['CurrencyTransactionRecord'];
-      /**
-       * Format: double
-       * @description Recipient balance after credit
-       */
-      newBalance: number;
-    };
     /**
      * @description How the escrow was resolved.
      *     - released: Assets went to designated recipients
@@ -21978,137 +17831,6 @@ export interface components {
      * @enum {string}
      */
     EscrowType: 'TwoParty' | 'MultiParty' | 'Conditional' | 'Auction';
-    /**
-     * @description Categories of historical events that characters can participate in
-     * @enum {string}
-     */
-    EventCategory:
-      | 'War'
-      | 'NaturalDisaster'
-      | 'Political'
-      | 'Economic'
-      | 'Religious'
-      | 'Cultural'
-      | 'Personal';
-    /** @description Request payload for recording combat experience that may evolve preferences */
-    EvolveCombatRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the character who had the combat experience
-       */
-      characterId: string;
-      /** @description Category of combat experience */
-      experienceType: components['schemas']['CombatExperienceType'];
-      /**
-       * Format: float
-       * @description How significant the combat experience was (0.0 to 1.0).
-       *     Higher intensity = higher probability of preference evolution.
-       */
-      intensity: number;
-      /**
-       * @description Optional context for logging and debugging (e.g., enemy type,
-       *     ally count, location). Not used in evolution calculations.
-       *     No Bannou plugin reads specific keys from this field by convention.
-       */
-      contextData?: {
-        [key: string]: unknown;
-      } | null;
-    };
-    /** @description Request to execute cleanup for a resource */
-    ExecuteCleanupRequest: {
-      /** @description Type of resource to clean up (opaque identifier) */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource to clean up
-       */
-      resourceId: string;
-      /** @description Override grace period in seconds (uses default if not specified, 0 to skip) */
-      gracePeriodSeconds?: number | null;
-      /** @description Override cleanup policy (uses resource default if not specified) */
-      cleanupPolicy?: components['schemas']['CleanupPolicy'];
-      /**
-       * @description If true, returns what callbacks WOULD execute without actually
-       *     executing them. Useful for pre-deletion validation and debugging.
-       *     Defaults to false.
-       */
-      dryRun?: boolean | null;
-    };
-    /** @description Response after attempting to execute cleanup */
-    ExecuteCleanupResponse: {
-      /** @description Type of resource cleaned up */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource cleaned up
-       */
-      resourceId: string;
-      /** @description True if cleanup completed (per cleanup policy) */
-      success: boolean;
-      /** @description Why cleanup was aborted (refcount changed, callback failed with ALL_REQUIRED, etc.) */
-      abortReason?: string | null;
-      /** @description Results of each cleanup callback */
-      callbackResults: components['schemas']['CleanupCallbackResult'][];
-      /** @description Total cleanup execution time in milliseconds */
-      cleanupDurationMs?: number;
-      /** @description True if this was a preview (no callbacks were actually executed) */
-      dryRun: boolean;
-    };
-    /** @description Request to compress a resource */
-    ExecuteCompressRequest: {
-      /** @description Type of resource to compress */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource to compress
-       */
-      resourceId: string;
-      /**
-       * @description If true, invoke cleanup callbacks after successful archival
-       * @default false
-       */
-      deleteSourceData: boolean;
-      /**
-       * @description Cleanup policy for source data deletion after archival.
-       *     Only applies when deleteSourceData is true.
-       *     If not specified, uses the configured DefaultCleanupPolicy.
-       */
-      deleteSourceDataPolicy?: components['schemas']['CleanupPolicy'];
-      /** @description Override policy (uses default from config if not specified) */
-      compressionPolicy?: components['schemas']['CompressionPolicy'];
-      /**
-       * @description If true, return what would be compressed without executing
-       * @default false
-       */
-      dryRun: boolean;
-    };
-    /** @description Compression execution result */
-    ExecuteCompressResponse: {
-      /** @description Type of resource compressed */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource compressed
-       */
-      resourceId: string;
-      /** @description True if compression completed successfully */
-      success: boolean;
-      /**
-       * Format: uuid
-       * @description ID of created archive (null if failed or dryRun)
-       */
-      archiveId?: string | null;
-      /** @description Why compression was aborted */
-      abortReason?: string | null;
-      /** @description Results of each compression callback */
-      callbackResults: components['schemas']['CompressCallbackResult'][];
-      /** @description Whether cleanup callbacks were executed after archival */
-      sourceDataDeleted?: boolean;
-      /** @description True if this was a preview (no callbacks actually executed) */
-      dryRun: boolean;
-      /** @description Total compression execution time in milliseconds */
-      compressionDurationMs: number;
-    };
     /** @description Request to execute contract clauses */
     ExecuteContractRequest: {
       /**
@@ -22130,125 +17852,6 @@ export interface components {
       contractId: string;
       /** @description Per-clause distribution outcomes with success/failure details */
       distributions?: components['schemas']['ClauseDistributionResult'][] | null;
-    };
-    /** @description Request to execute a currency conversion */
-    ExecuteConversionRequest: {
-      /**
-       * Format: uuid
-       * @description Wallet to perform conversion in
-       */
-      walletId: string;
-      /**
-       * Format: uuid
-       * @description Currency to debit
-       */
-      fromCurrencyId: string;
-      /**
-       * Format: uuid
-       * @description Currency to credit
-       */
-      toCurrencyId: string;
-      /**
-       * Format: double
-       * @description Amount to convert (must be positive)
-       */
-      fromAmount: number;
-      /** @description Unique key for idempotency */
-      idempotencyKey: string;
-    };
-    /** @description Result of conversion execution */
-    ExecuteConversionResponse: {
-      /** @description Debit transaction (conversion_debit) */
-      debitTransaction: components['schemas']['CurrencyTransactionRecord'];
-      /** @description Credit transaction (conversion_credit) */
-      creditTransaction: components['schemas']['CurrencyTransactionRecord'];
-      /**
-       * Format: double
-       * @description Amount debited
-       */
-      fromDebited: number;
-      /**
-       * Format: double
-       * @description Amount credited
-       */
-      toCredited: number;
-      /**
-       * Format: double
-       * @description Rate applied
-       */
-      effectiveRate: number;
-    };
-    /** @description Request to create an ephemeral snapshot of a living resource */
-    ExecuteSnapshotRequest: {
-      /**
-       * @description Type of resource to snapshot (opaque identifier).
-       *     Must match compression callback registrations.
-       */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource to snapshot
-       */
-      resourceId: string;
-      /**
-       * @description Optional label for the snapshot purpose (e.g., "storyline_seed", "analytics").
-       *     Stored in metadata for filtering/debugging.
-       */
-      snapshotType?: string;
-      /**
-       * @description Time-to-live in seconds for the snapshot.
-       *     If not specified, uses the configured default (RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS).
-       *     Value is clamped to configured min/max range.
-       *     Snapshot is automatically deleted by Redis after TTL expires.
-       */
-      ttlSeconds?: number | null;
-      /**
-       * @description Policy for callback execution.
-       *     If not specified, uses the configured default (RESOURCE_DEFAULT_COMPRESSION_POLICY).
-       */
-      compressionPolicy?: components['schemas']['CompressionPolicy'];
-      /**
-       * @description If true, return what would be captured without storing
-       * @default false
-       */
-      dryRun: boolean;
-      /**
-       * @description Optional list of source types to include in the snapshot.
-       *     Only compression callbacks matching these source types will be executed.
-       *     If omitted or empty, all registered compression callbacks are executed.
-       *     Example: ["character-personality", "character-history"]
-       */
-      filterSourceTypes?: string[] | null;
-    };
-    /** @description Result of snapshot execution */
-    ExecuteSnapshotResponse: {
-      /** @description Type of resource snapshotted */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource snapshotted
-       */
-      resourceId: string;
-      /** @description True if snapshot completed successfully */
-      success: boolean;
-      /** @description True if this was a dry run */
-      dryRun: boolean;
-      /**
-       * Format: uuid
-       * @description Unique ID for this snapshot (null on failure or dry run)
-       */
-      snapshotId?: string | null;
-      /**
-       * Format: date-time
-       * @description When this snapshot will expire (null on failure or dry run)
-       */
-      expiresAt?: string | null;
-      /** @description Why snapshot was aborted */
-      abortReason?: string | null;
-      /** @description Results of each compression callback */
-      callbackResults?: components['schemas']['CompressCallbackResult'][];
-      /** @description Total snapshot execution time in milliseconds */
-      snapshotDurationMs: number;
     };
     /** @description Metadata about behavior execution requirements including timing, resources, and interrupt conditions */
     ExecutionMetadata: {
@@ -22282,49 +17885,6 @@ export interface components {
       /** @description Has this party fulfilled their deposit requirement */
       fulfilled: boolean;
     };
-    /** @description Input for defining expected deposits from a party */
-    ExpectedDepositInput: {
-      /**
-       * Format: uuid
-       * @description Party who should deposit
-       */
-      partyId: string;
-      /** @description Type of depositing party */
-      partyType: components['schemas']['EntityType'];
-      /** @description Expected assets */
-      expectedAssets: components['schemas']['EscrowAssetInput'][];
-      /** @description Is this deposit optional */
-      optional?: boolean | null;
-      /**
-       * Format: date-time
-       * @description Specific deadline for this deposit
-       */
-      depositDeadline?: string | null;
-    };
-    /** @description Result of recording an experience, including any personality evolution */
-    ExperienceResult: {
-      /** @description Whether any traits changed as a result of this experience */
-      personalityEvolved: boolean;
-      /** @description Traits that evolved (empty array if no change) */
-      changedTraits: components['schemas']['TraitValue'][];
-      /** @description New personality version if evolved (null if no change) */
-      newVersion?: number | null;
-    };
-    /**
-     * @description Categories of significant experiences that may cause personality evolution.
-     *     Each type has predefined trait impact tendencies.
-     * @enum {string}
-     */
-    ExperienceType:
-      | 'Trauma'
-      | 'Betrayal'
-      | 'Loss'
-      | 'Victory'
-      | 'Friendship'
-      | 'Redemption'
-      | 'Corruption'
-      | 'Enlightenment'
-      | 'Sacrifice';
     /**
      * @description How currency expiration is determined
      * @enum {string}
@@ -22359,24 +17919,6 @@ export interface components {
        */
       sizeBytes: number;
     };
-    /**
-     * @description Complete faction membership data for archive storage and storyline SDK consumption.
-     *     Inherits base archive properties from ResourceArchiveBase.
-     *     The characterId field equals resourceId for convenience.
-     */
-    FactionArchive: {
-      /**
-       * Format: uuid
-       * @description Character this data belongs to (equals resourceId)
-       */
-      characterId: string;
-      /** @description Whether any faction memberships exist */
-      hasMemberships: boolean;
-      /** @description Number of membership records in archive */
-      membershipCount: number;
-      /** @description Faction membership records (null if hasMemberships is false) */
-      memberships?: components['schemas']['FactionMemberResponse'][] | null;
-    } & components['schemas']['ResourceArchiveBase'];
     /** @description Faction membership record linking a character to a faction with a role */
     FactionMemberResponse: {
       /**
@@ -22446,6 +17988,13 @@ export interface components {
       status: components['schemas']['FactionStatus'];
       /** @description Current seed growth phase (denormalized from lib-seed for convenience) */
       currentPhase?: string | null;
+      /**
+       * Format: date-time
+       * @description When this faction was deprecated (null if not deprecated)
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation (null if not deprecated) */
+      deprecationReason?: string | null;
       /** @description Current number of members in this faction */
       memberCount: number;
       /**
@@ -22502,15 +18051,6 @@ export interface components {
       spouses: components['schemas']['FamilyMember'][];
       /** @description Previous incarnations (if reincarnation tracked) */
       pastLives: components['schemas']['PastLifeReference'][];
-    };
-    /** @description Result from a contract finalizer API call */
-    FinalizerResult: {
-      /** @description Finalizer endpoint */
-      endpoint: string;
-      /** @description Whether it succeeded */
-      success: boolean;
-      /** @description Error message if failed */
-      error?: string | null;
     };
     /** @description Request to find asset usage */
     FindAssetUsageRequest: {
@@ -22572,29 +18112,6 @@ export interface components {
       hasSpace: boolean;
       /** @description Potential placements */
       candidates: components['schemas']['SpaceCandidate'][];
-    };
-    /** @description Follower record linking a character to a deity */
-    FollowerResponse: {
-      /**
-       * Format: uuid
-       * @description Follower character ID
-       */
-      characterId: string;
-      /**
-       * Format: uuid
-       * @description Deity being followed
-       */
-      deityId: string;
-      /**
-       * Format: date-time
-       * @description When the follower relationship was created
-       */
-      registeredAt: string;
-      /**
-       * Format: uuid
-       * @description Underlying relationship record ID from lib-relationship
-       */
-      relationshipId: string;
     };
     /** @description A musical form structure template */
     FormTemplate: {
@@ -22912,24 +18429,6 @@ export interface components {
       /** @description Analysis of the progression */
       analysis?: components['schemas']['ProgressionAnalysis'];
     };
-    /** @description Request to get subscriptions for an account */
-    GetAccountSubscriptionsRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the account to get subscriptions for
-       */
-      accountId: string;
-      /**
-       * @description If true, include cancelled subscriptions
-       * @default false
-       */
-      includeInactive: boolean;
-      /**
-       * @description If true, include expired subscriptions
-       * @default false
-       */
-      includeExpired: boolean;
-    };
     /** @description Request to get achievement progress */
     GetAchievementProgressRequest: {
       /**
@@ -22968,35 +18467,6 @@ export interface components {
        */
       typeId: string;
     };
-    /** @description Request to retrieve a compressed archive */
-    GetArchiveRequest: {
-      /** @description Type of resource */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource
-       */
-      resourceId: string;
-      /**
-       * Format: uuid
-       * @description Specific version (latest if not specified)
-       */
-      archiveId?: string | null;
-    };
-    /** @description Response containing archive data */
-    GetArchiveResponse: {
-      /** @description Type of resource */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource
-       */
-      resourceId: string;
-      /** @description True if archive exists */
-      found: boolean;
-      /** @description The archive data (null if not found) */
-      archive?: components['schemas']['ResourceArchive'];
-    };
     /** @description Request to get an area content config */
     GetAreaContentConfigRequest: {
       /** @description Area code to look up */
@@ -23015,21 +18485,6 @@ export interface components {
       assetId: string;
       /** @description Version ID to retrieve (null for latest version) */
       version?: string | null;
-    };
-    /** @description Request payload for getting a character's backstory */
-    GetBackstoryRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the character to get backstory for
-       */
-      characterId: string;
-      /** @description Filter by element types (null for all) */
-      elementTypes?: components['schemas']['BackstoryElementType'][] | null;
-      /**
-       * Format: float
-       * @description Filter by minimum strength
-       */
-      minimumStrength?: number | null;
     };
     /** @description Request to get a specific currency balance */
     GetBalanceRequest: {
@@ -23077,14 +18532,6 @@ export interface components {
       earnCapInfo?: components['schemas']['EarnCapInfo'];
       /** @description Autogain status (null if autogain not enabled) */
       autogainInfo?: components['schemas']['AutogainInfo'];
-    };
-    /** @description Request to get a blessing by ID */
-    GetBlessingRequest: {
-      /**
-       * Format: uuid
-       * @description Blessing to retrieve
-       */
-      blessingId: string;
     };
     /** @description Request to get a board instance by ID */
     GetBoardRequest: {
@@ -23140,21 +18587,6 @@ export interface components {
       bundleId: string;
       /** @description Desired download format (bannou or zip) */
       format?: components['schemas']['BundleFormat'];
-    };
-    /** @description Request to get a cached compiled behavior */
-    GetCachedBehaviorRequest: {
-      /** @description Unique identifier for the cached behavior */
-      behaviorId: string;
-    };
-    /** @description Request to get a calendar template by game service and template code */
-    GetCalendarRequest: {
-      /**
-       * Format: uuid
-       * @description Game service the calendar belongs to
-       */
-      gameServiceId: string;
-      /** @description Calendar template code */
-      templateCode: string;
     };
     /** @description Request to get the capability manifest. */
     GetCapabilityManifestRequest: {
@@ -23240,14 +18672,6 @@ export interface components {
        * @description Collection instance identifier
        */
       collectionId: string;
-    };
-    /** @description Request payload for retrieving combat preferences */
-    GetCombatPreferencesRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the character to get combat preferences for
-       */
-      characterId: string;
     };
     /** @description Request to get completion statistics */
     GetCompletionStatsRequest: {
@@ -23360,16 +18784,6 @@ export interface components {
        */
       locationId: string;
     };
-    /** @description Request to get a currency definition */
-    GetCurrencyDefinitionRequest: {
-      /**
-       * Format: uuid
-       * @description Definition ID (provide this or code)
-       */
-      definitionId?: string | null;
-      /** @description Currency code (provide this or definitionId) */
-      code?: string | null;
-    };
     /** @description Request to get a map definition */
     GetDefinitionRequest: {
       /**
@@ -23377,24 +18791,6 @@ export interface components {
        * @description Definition ID to retrieve
        */
       definitionId: string;
-    };
-    /** @description Request to retrieve a deity by code within a game service */
-    GetDeityByCodeRequest: {
-      /**
-       * Format: uuid
-       * @description Game service to search within
-       */
-      gameServiceId: string;
-      /** @description Deity code to look up */
-      code: string;
-    };
-    /** @description Request to retrieve a deity by ID */
-    GetDeityRequest: {
-      /**
-       * Format: uuid
-       * @description Unique identifier of the deity to retrieve
-       */
-      deityId: string;
     };
     /** @description Request to get deposit status for a party */
     GetDepositStatusRequest: {
@@ -23427,70 +18823,6 @@ export interface components {
        */
       depositDeadline?: string | null;
     };
-    /** @description Request to get a deity's divinity balance */
-    GetDivinityBalanceRequest: {
-      /**
-       * Format: uuid
-       * @description Deity whose balance to retrieve
-       */
-      deityId: string;
-    };
-    /** @description Request to get divinity transaction history */
-    GetDivinityHistoryRequest: {
-      /**
-       * Format: uuid
-       * @description Deity whose history to retrieve
-       */
-      deityId: string;
-      /**
-       * @description Page number for pagination
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of results per page
-       * @default 50
-       */
-      pageSize: number;
-    };
-    /** @description Request to retrieve a specific document by ID or slug */
-    GetDocumentRequest: {
-      /** @description Documentation namespace containing the document */
-      namespace: string;
-      /**
-       * Format: uuid
-       * @description Unique identifier of the document to retrieve (null if using slug)
-       */
-      documentId?: string | null;
-      /** @description URL-friendly slug of the document to retrieve (null if using documentId) */
-      slug?: string | null;
-      /**
-       * Format: uuid
-       * @description Optional session ID for tracking document views (null if not tracking)
-       */
-      sessionId?: string | null;
-      /** @description How deep to fetch related documents (null for no related documents) */
-      includeRelated?: components['schemas']['RelatedDepth'];
-      /**
-       * @description Whether to include full document content
-       * @default false
-       */
-      includeContent: boolean;
-      /**
-       * @description Whether to render markdown content as HTML
-       * @default false
-       */
-      renderHtml: boolean;
-    };
-    /** @description Response containing the requested document and optional related documents */
-    GetDocumentResponse: {
-      /** @description The requested document */
-      document: components['schemas']['Document'];
-      /** @description List of related documents based on includeRelated depth (null if not requested) */
-      relatedDocuments?: components['schemas']['DocumentSummary'][] | null;
-      /** @description Format of the content field in the response (null if content not included) */
-      contentFormat?: components['schemas']['ContentFormat'];
-    };
     /** @description Request to get unified effects for an entity */
     GetEffectsRequest: {
       /**
@@ -23522,43 +18854,6 @@ export interface components {
       /** @description All active effects with source attribution */
       effects: components['schemas']['StatusEffectSummary'][];
     };
-    /** @description Request to compute elapsed game-time between two real timestamps */
-    GetElapsedGameTimeRequest: {
-      /**
-       * Format: uuid
-       * @description Realm to compute elapsed time for
-       */
-      realmId: string;
-      /**
-       * Format: date-time
-       * @description Start real-world UTC timestamp
-       */
-      fromRealTime: string;
-      /**
-       * Format: date-time
-       * @description End real-world UTC timestamp
-       */
-      toRealTime: string;
-    };
-    /** @description Elapsed game-time as raw seconds and decomposed calendar units */
-    GetElapsedGameTimeResponse: {
-      /**
-       * Format: int64
-       * @description Total game-seconds elapsed between the two real timestamps
-       */
-      totalGameSeconds: number;
-      /** @description Decomposed game days component */
-      gameDays: number;
-      /** @description Decomposed game hours component (remainder after days) */
-      gameHours: number;
-      /** @description Decomposed game minutes component (remainder after hours) */
-      gameMinutes: number;
-    };
-    /** @description Request to retrieve an encounter type by code */
-    GetEncounterTypeRequest: {
-      /** @description Unique code of the encounter type */
-      code: string;
-    };
     /**
      * @description Request payload for retrieving a character with optional related data.
      *     Each include flag fetches data from its respective service (zero overhead if not requested).
@@ -23574,36 +18869,6 @@ export interface components {
        * @default false
        */
       includeFamilyTree: boolean;
-    };
-    /** @description Request to query an entity's current location */
-    GetEntityLocationRequest: {
-      /** @description Type of entity (opaque string - character, actor, npc, player, etc.) */
-      entityType: string;
-      /**
-       * Format: uuid
-       * @description ID of the entity to look up
-       */
-      entityId: string;
-    };
-    /** @description Result of querying an entity's current location. All fields are null if no active presence exists. */
-    GetEntityLocationResponse: {
-      /**
-       * Format: uuid
-       * @description ID of the location the entity is currently at (null if no active presence)
-       */
-      locationId?: string | null;
-      /**
-       * Format: uuid
-       * @description ID of the realm the location belongs to
-       */
-      realmId?: string | null;
-      /**
-       * Format: date-time
-       * @description When the presence was last reported
-       */
-      reportedAt?: string | null;
-      /** @description Identifier of the last reporter */
-      reportedBy?: string | null;
     };
     /** @description Request to get an entity's rank */
     GetEntityRankRequest: {
@@ -23642,26 +18907,6 @@ export interface components {
     GetEscrowResponse: {
       /** @description Escrow agreement details */
       escrow: components['schemas']['EscrowAgreement'];
-    };
-    /** @description Request payload for getting participants of an event */
-    GetEventParticipantsRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the historical event
-       */
-      eventId: string;
-      /** @description Filter by participation role */
-      role?: components['schemas']['ParticipationRole'];
-      /**
-       * @description Page number for pagination (1-based)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of results per page
-       * @default 20
-       */
-      pageSize: number;
     };
     /** @description Request to get exchange rate between currencies */
     GetExchangeRateRequest: {
@@ -23719,24 +18964,6 @@ export interface components {
        */
       factionId: string;
     };
-    /** @description Request to get followers of a deity */
-    GetFollowersRequest: {
-      /**
-       * Format: uuid
-       * @description Deity whose followers to list
-       */
-      deityId: string;
-      /**
-       * @description Page number for pagination
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of results per page
-       * @default 50
-       */
-      pageSize: number;
-    };
     /** @description Request to get a specific game session */
     GetGameSessionRequest: {
       /**
@@ -23753,52 +18980,6 @@ export interface components {
        */
       sessionId: string;
     };
-    /** @description Request to get global supply stats */
-    GetGlobalSupplyRequest: {
-      /**
-       * Format: uuid
-       * @description Currency to query
-       */
-      currencyDefinitionId: string;
-    };
-    /** @description Global supply statistics */
-    GetGlobalSupplyResponse: {
-      /**
-       * Format: double
-       * @description Sum of all positive balances
-       */
-      totalSupply: number;
-      /**
-       * Format: double
-       * @description Total in wallets
-       */
-      inCirculation: number;
-      /**
-       * Format: double
-       * @description Locked in escrow
-       */
-      inEscrow: number;
-      /**
-       * Format: double
-       * @description All-time faucet total
-       */
-      totalMinted: number;
-      /**
-       * Format: double
-       * @description All-time sink total
-       */
-      totalBurned: number;
-      /**
-       * Format: double
-       * @description Global supply cap (null if none)
-       */
-      supplyCap?: number | null;
-      /**
-       * Format: double
-       * @description Remaining supply before cap
-       */
-      supplyCapRemaining?: number | null;
-    };
     /** @description Request to get the current growth phase. */
     GetGrowthPhaseRequest: {
       /**
@@ -23814,14 +18995,6 @@ export interface components {
        * @description The seed whose growth to retrieve.
        */
       seedId: string;
-    };
-    /** @description Request to get hold details */
-    GetHoldRequest: {
-      /**
-       * Format: uuid
-       * @description Hold ID
-       */
-      holdId: string;
     };
     /** @description Request to get an item instance */
     GetItemInstanceRequest: {
@@ -23928,75 +19101,6 @@ export interface components {
       /** @description License code to look up */
       code: string;
     };
-    /** @description Request to retrieve the full ancestry chain of a location up to the root */
-    GetLocationAncestorsRequest: {
-      /**
-       * Format: uuid
-       * @description The location to get ancestors for
-       */
-      locationId: string;
-    };
-    /** @description Request to retrieve a location by its code within a specific realm */
-    GetLocationByCodeRequest: {
-      /** @description Unique code for the location within the realm */
-      code: string;
-      /**
-       * Format: uuid
-       * @description Realm ID to scope the code lookup
-       */
-      realmId: string;
-    };
-    /** @description Request to get realm context for a location's compression archive */
-    GetLocationCompressContextRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the location being compressed (used to resolve realm)
-       */
-      locationId: string;
-    };
-    /** @description Request to get location base data for compression archive */
-    GetLocationCompressDataRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the location to compress
-       */
-      locationId: string;
-    };
-    /** @description Request to retrieve all descendants of a location (children, grandchildren, etc.) */
-    GetLocationDescendantsRequest: {
-      /**
-       * Format: uuid
-       * @description The location to get descendants for
-       */
-      locationId: string;
-      /** @description Optional filter by location type */
-      locationType?: components['schemas']['LocationType'] | null;
-      /** @description Maximum depth of descendants to return (null = all) */
-      maxDepth?: number | null;
-      /**
-       * @description Whether to include deprecated locations in the response
-       * @default false
-       */
-      includeDeprecated: boolean;
-      /**
-       * @description Page number for pagination (1-indexed)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of results per page
-       * @default 20
-       */
-      pageSize: number;
-    };
-    /** @description Request to retrieve a location by its unique identifier */
-    GetLocationRequest: {
-      /**
-       * Format: uuid
-       * @description Unique identifier of the location
-       */
-      locationId: string;
-    };
     /** @description Request to get matchmaking statistics */
     GetMatchmakingStatsRequest: {
       /** @description Filter by specific queue (null for all queues) */
@@ -24037,6 +19141,11 @@ export interface components {
       /** @description Transit mode code to look up */
       code: string;
     };
+    /** @description Request to get statistics for a documentation namespace */
+    GetNamespaceStatsRequest: {
+      /** @description Documentation namespace to get statistics for */
+      namespace: string;
+    };
     /** @description Request to get detailed progress for a specific objective */
     GetObjectiveProgressRequest: {
       /**
@@ -24076,76 +19185,6 @@ export interface components {
        * @description Realm for new container
        */
       realmId?: string | null;
-    };
-    /** @description Request to get or create a wallet */
-    GetOrCreateWalletRequest: {
-      /**
-       * Format: uuid
-       * @description Owner entity ID
-       */
-      ownerId: string;
-      /** @description Type of owner entity */
-      ownerType: components['schemas']['EntityType'];
-      /**
-       * Format: uuid
-       * @description Realm ID for realm-scoped wallets
-       */
-      realmId?: string | null;
-    };
-    /** @description Result of get-or-create operation */
-    GetOrCreateWalletResponse: {
-      /** @description Wallet details */
-      wallet: components['schemas']['WalletResponse'];
-      /** @description All non-zero balances */
-      balances: components['schemas']['BalanceSummary'][];
-      /** @description Whether a new wallet was created */
-      created: boolean;
-    };
-    /** @description Request payload for getting a character's event participation */
-    GetParticipationRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the character to get participation for
-       */
-      characterId: string;
-      /** @description Filter by event category */
-      eventCategory?: components['schemas']['EventCategory'];
-      /**
-       * Format: float
-       * @description Filter by minimum significance
-       */
-      minimumSignificance?: number | null;
-      /**
-       * @description Page number for pagination (1-based)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of results per page
-       * @default 20
-       */
-      pageSize: number;
-    };
-    /** @description Request payload for retrieving a character's personality */
-    GetPersonalityRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the character to get personality for
-       */
-      characterId: string;
-    };
-    /** @description Request to get a character's perspective on an encounter */
-    GetPerspectiveRequest: {
-      /**
-       * Format: uuid
-       * @description Encounter to get perspective for
-       */
-      encounterId: string;
-      /**
-       * Format: uuid
-       * @description Character whose perspective to retrieve
-       */
-      characterId: string;
     };
     /** @description Request to get deployment phase configuration */
     GetPhaseConfigRequest: Record<string, never>;
@@ -24234,19 +19273,6 @@ export interface components {
        */
       realmId: string;
     };
-    /** @description Request to retrieve a realm by its unique code identifier */
-    GetRealmByCodeRequest: {
-      /** @description Unique code for the realm (e.g., "REALM_1", "REALM_2") */
-      code: string;
-    };
-    /** @description Request to get realm worldstate configuration */
-    GetRealmConfigRequest: {
-      /**
-       * Format: uuid
-       * @description Realm to get configuration for
-       */
-      realmId: string;
-    };
     /** @description Request payload for getting participants of an event */
     GetRealmEventParticipantsRequest: {
       /**
@@ -24306,27 +19332,6 @@ export interface components {
        * @default 20
        */
       pageSize: number;
-    };
-    /** @description Request to retrieve a specific realm by its unique identifier */
-    GetRealmRequest: {
-      /**
-       * Format: uuid
-       * @description Unique identifier of the realm
-       */
-      realmId: string;
-    };
-    /** @description Request to get the current game time for a realm by its code string */
-    GetRealmTimeByCodeRequest: {
-      /** @description Realm code string (resolved to realm ID via IRealmClient) */
-      realmCode: string;
-    };
-    /** @description Request to get the current game time for a realm */
-    GetRealmTimeRequest: {
-      /**
-       * Format: uuid
-       * @description Realm to get the current game time for
-       */
-      realmId: string;
     };
     /** @description Request to retrieve a specific relationship by its ID */
     GetRelationshipRequest: {
@@ -24542,29 +19547,6 @@ export interface components {
        */
       includeArchived: boolean;
     };
-    /** @description Request to get aggregate sentiment toward another character */
-    GetSentimentRequest: {
-      /**
-       * Format: uuid
-       * @description Character whose sentiment to query
-       */
-      characterId: string;
-      /**
-       * Format: uuid
-       * @description Target character to measure sentiment toward
-       */
-      targetCharacterId: string;
-    };
-    /** @description Request to get a service by ID or stub name (provide either one) */
-    GetServiceRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the service to retrieve (null if using stubName)
-       */
-      serviceId?: string | null;
-      /** @description Stub name of the service to retrieve (null if using serviceId) */
-      stubName?: string | null;
-    };
     /** @description Request to get shared garden state for bonded players */
     GetSharedGardenRequest: {
       /**
@@ -24586,45 +19568,6 @@ export interface components {
       ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
-    };
-    /** @description Request to retrieve a snapshot */
-    GetSnapshotRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the snapshot to retrieve
-       */
-      snapshotId: string;
-      /**
-       * @description Optional filter for which entries to return from the snapshot.
-       *     Only entries with matching source types are returned.
-       *     If omitted or empty, all entries are returned.
-       */
-      filterSourceTypes?: string[] | null;
-    };
-    /** @description Response containing snapshot data */
-    GetSnapshotResponse: {
-      /**
-       * Format: uuid
-       * @description ID of the snapshot
-       */
-      snapshotId: string;
-      /** @description True if snapshot exists (hasn't expired) */
-      found: boolean;
-      /** @description The snapshot data (null if not found/expired) */
-      snapshot?: components['schemas']['ResourceSnapshot'];
-    };
-    /** @description Request to retrieve a species by its unique code identifier */
-    GetSpeciesByCodeRequest: {
-      /** @description Unique code for the species (e.g., "HUMAN", "ELF", "DWARF") */
-      code: string;
-    };
-    /** @description Request to retrieve a single species by its unique identifier */
-    GetSpeciesRequest: {
-      /**
-       * Format: uuid
-       * @description Unique identifier of the species
-       */
-      speciesId: string;
     };
     /** @description Request for service status (currently empty, reserved for future filters) */
     GetStatusRequest: Record<string, never>;
@@ -24652,14 +19595,6 @@ export interface components {
       styleId?: string | null;
       /** @description Style name to retrieve (alternative to ID) */
       styleName?: string | null;
-    };
-    /** @description Request to get a specific subscription */
-    GetSubscriptionRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the subscription to retrieve
-       */
-      subscriptionId: string;
     };
     /** @description Request to get a template by code */
     GetTemplateByCodeRequest: {
@@ -24736,29 +19671,6 @@ export interface components {
       /** @description Total matching transactions */
       totalCount: number;
     };
-    /** @description Request to get a transaction by ID */
-    GetTransactionRequest: {
-      /**
-       * Format: uuid
-       * @description Transaction ID
-       */
-      transactionId: string;
-    };
-    /** @description Request to get transactions by reference */
-    GetTransactionsByReferenceRequest: {
-      /** @description Reference type */
-      referenceType: string;
-      /**
-       * Format: uuid
-       * @description Reference ID
-       */
-      referenceId: string;
-    };
-    /** @description Transactions for a reference */
-    GetTransactionsByReferenceResponse: {
-      /** @description Matching transactions */
-      transactions: components['schemas']['CurrencyTransactionRecord'][];
-    };
     /** @description Request to get validation rules */
     GetValidationRulesRequest: {
       /** @description Game ID */
@@ -24774,26 +19686,6 @@ export interface components {
       sceneType: components['schemas']['SceneType'];
       /** @description Registered rules (empty if none) */
       rules?: components['schemas']['ValidationRule'][];
-    };
-    /** @description Request to get a wallet */
-    GetWalletRequest: {
-      /**
-       * Format: uuid
-       * @description Wallet ID (provide this or ownerId+ownerType)
-       */
-      walletId?: string | null;
-      /**
-       * Format: uuid
-       * @description Owner ID (requires ownerType)
-       */
-      ownerId?: string | null;
-      /** @description Owner type (requires ownerId) */
-      ownerType?: components['schemas']['EntityType'];
-      /**
-       * Format: uuid
-       * @description Realm ID (required if using ownerId lookup)
-       */
-      realmId?: string | null;
     };
     /** @description Goal definition for GOAP planning with conditions and priority */
     GoapGoal: {
@@ -24820,98 +19712,6 @@ export interface components {
       preconditions?: {
         [key: string]: string;
       } | null;
-    };
-    /** @description Request to generate a GOAP plan to achieve a goal from current world state */
-    GoapPlanRequest: {
-      /**
-       * Format: uuid
-       * @description Unique identifier for the agent requesting the plan
-       */
-      agentId?: string | null;
-      /** @description The goal to achieve through planning */
-      goal: components['schemas']['GoapGoal'];
-      /**
-       * @description Planner-owned dynamic world state bag for GOAP A* search.
-       *     Keys are arbitrary world state variable names, values are current state.
-       *     No Bannou service reads specific keys by convention (T29 compliant).
-       * @example {
-       *       "hunger": 0.8,
-       *       "gold": 50,
-       *       "location": "home"
-       *     }
-       */
-      worldState: {
-        [key: string]: unknown;
-      };
-      /** @description ID of compiled behavior containing GOAP actions */
-      behaviorId: string;
-      /** @description Options controlling the planning process */
-      options?: components['schemas']['GoapPlanningOptions'];
-    };
-    /** @description Response containing the generated GOAP plan. If no plan could be found, plan is null and failureReason explains why. */
-    GoapPlanResponse: {
-      /** @description The generated plan if successful */
-      plan?: components['schemas']['GoapPlanResult'];
-      /** @description Time spent planning in milliseconds. Null when planner did not run. */
-      planningTimeMs?: number | null;
-      /** @description Number of nodes expanded during A* search. Null when planner did not run. */
-      nodesExpanded?: number | null;
-      /**
-       * @description Reason for planning failure if unsuccessful
-       * @example No plan found - goal unreachable
-       */
-      failureReason?: string | null;
-    };
-    /** @description Result of GOAP planning containing the ordered sequence of actions to achieve a goal */
-    GoapPlanResult: {
-      /** @description ID of the goal this plan achieves */
-      goalId: string;
-      /** @description Ordered sequence of actions to execute */
-      actions: components['schemas']['PlannedActionResponse'][];
-      /**
-       * Format: float
-       * @description Total cost of all actions in the plan
-       */
-      totalCost: number;
-    };
-    /** @description Options controlling the GOAP planning process including depth and timeout limits */
-    GoapPlanningOptions: {
-      /**
-       * @description Maximum plan depth (number of actions)
-       * @default 10
-       */
-      maxDepth: number;
-      /**
-       * @description Maximum nodes to expand during search
-       * @default 1000
-       */
-      maxNodes: number;
-      /**
-       * @description Planning timeout in milliseconds
-       * @default 100
-       */
-      timeoutMs: number;
-    };
-    /** @description Request to grant a blessing from a deity to an entity */
-    GrantBlessingRequest: {
-      /**
-       * Format: uuid
-       * @description Deity granting the blessing
-       */
-      deityId: string;
-      /**
-       * Format: uuid
-       * @description Entity receiving the blessing
-       */
-      entityId: string;
-      /** @description Type of entity receiving the blessing (e.g., character, account, deity) */
-      entityType: components['schemas']['EntityType'];
-      /** @description Tier of the blessing (determines cost and storage mechanism) */
-      tier: components['schemas']['BlessingTier'];
-      /** @description Item template code for the blessing effect */
-      itemTemplateCode: string;
-      /** @description Why the deity is granting this blessing */
-      reason: string;
     };
     /** @description Request to grant/unlock an entry in a collection */
     GrantEntryRequest: {
@@ -25045,16 +19845,6 @@ export interface components {
      * @enum {string}
      */
     GroupRole: 'Frontline' | 'Support' | 'Flanker' | 'Leader' | 'Solo';
-    /** @description A single domain-amount pair for batch growth recording. */
-    GrowthEntry: {
-      /** @description Dot-separated domain path. */
-      domain: string;
-      /**
-       * Format: float
-       * @description Growth amount to add.
-       */
-      amount: number;
-    };
     /** @description Defines a growth phase with its threshold. */
     GrowthPhaseDefinition: {
       /** @description Machine-readable phase identifier (e.g., "nascent", "awakening"). */
@@ -25205,26 +19995,6 @@ export interface components {
       /** @description Per-item results */
       results: components['schemas']['HasItemResult'][];
     };
-    /** @description Request to check if two characters have met */
-    HasMetRequest: {
-      /**
-       * Format: uuid
-       * @description First character
-       */
-      characterIdA: string;
-      /**
-       * Format: uuid
-       * @description Second character
-       */
-      characterIdB: string;
-    };
-    /** @description Response for has-met check */
-    HasMetResponse: {
-      /** @description Whether the characters have any recorded encounters */
-      hasMet: boolean;
-      /** @description Total number of encounters between them */
-      encounterCount: number;
-    };
     /** @description Request to check if an entity has a specific status */
     HasStatusRequest: {
       /**
@@ -25249,25 +20019,6 @@ export interface components {
       /** @description Current stack count if found (null if not present) */
       stackCount?: number | null;
     };
-    /** @description Information about a hazard in range. Core properties are schema-defined; additionalProperties allows game-specific hazard data. No Bannou plugin reads specific extension keys by convention. */
-    HazardInfo: {
-      /** @description Type of hazard (fire, poison, radiation, deep_water, etc.) */
-      hazardType: string;
-      /**
-       * Format: float
-       * @description Distance to hazard edge
-       */
-      distance: number;
-      /**
-       * Format: float
-       * @description Hazard severity (0-1)
-       */
-      severity: number;
-      /** @description Direction to hazard center */
-      direction?: string | null;
-    } & {
-      [key: string]: unknown;
-    };
     /** @description Request to extend checkout lock */
     HeartbeatRequest: {
       /**
@@ -25289,51 +20040,6 @@ export interface components {
       newExpiresAt: string;
       /** @description Number of extensions remaining */
       extensionsRemaining?: number;
-    };
-    /** @description Record of a character's participation in a historical event */
-    HistoricalParticipation: {
-      /**
-       * Format: uuid
-       * @description Unique ID for this participation record
-       */
-      participationId: string;
-      /**
-       * Format: uuid
-       * @description ID of the character who participated
-       */
-      characterId: string;
-      /**
-       * Format: uuid
-       * @description ID of the historical event
-       */
-      eventId: string;
-      /** @description Name of the event (for display and summarization) */
-      eventName: string;
-      /** @description Category of the historical event */
-      eventCategory: components['schemas']['EventCategory'];
-      /** @description How the character participated */
-      role: components['schemas']['ParticipationRole'];
-      /**
-       * Format: date-time
-       * @description In-game date when the event occurred
-       */
-      eventDate: string;
-      /**
-       * Format: float
-       * @description How significant this event was for the character (0.0 to 1.0).
-       *     Affects behavior system weighting of this memory.
-       * @default 0.5
-       */
-      significance: number;
-      /** @description Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention. */
-      metadata?: {
-        [key: string]: unknown;
-      } | null;
-      /**
-       * Format: date-time
-       * @description When this record was created
-       */
-      createdAt: string;
     };
     /** @description Request for scene version history */
     HistoryRequest: {
@@ -25360,86 +20066,61 @@ export interface components {
       /** @description Version history entries */
       versions: components['schemas']['VersionInfo'][];
     };
-    /** @description Generated text summaries for character compression */
-    HistorySummaryResponse: {
-      /**
-       * @description Key backstory elements as text summaries.
-       *     e.g., ["Trained by Knights Guild", "Born in the Northlands"]
-       */
-      keyBackstoryPoints: string[];
-      /**
-       * @description Major historical events as text summaries.
-       *     e.g., ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
-       */
-      majorLifeEvents: string[];
-    };
-    /** @description Authorization hold record */
-    HoldRecord: {
-      /**
-       * Format: uuid
-       * @description Unique hold identifier
-       */
-      holdId: string;
-      /**
-       * Format: uuid
-       * @description Wallet with held funds
-       */
-      walletId: string;
-      /**
-       * Format: uuid
-       * @description Currency held
-       */
-      currencyDefinitionId: string;
-      /**
-       * Format: double
-       * @description Amount reserved
-       */
-      amount: number;
-      /** @description Current hold status */
-      status: components['schemas']['HoldStatus'];
-      /**
-       * Format: date-time
-       * @description When hold was created
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @description When hold auto-releases
-       */
-      expiresAt: string;
-      /** @description Reference type */
-      referenceType?: string | null;
-      /**
-       * Format: uuid
-       * @description Reference ID
-       */
-      referenceId?: string | null;
-      /**
-       * Format: double
-       * @description Amount actually captured (may differ from held amount)
-       */
-      capturedAmount?: number | null;
-      /**
-       * Format: date-time
-       * @description When hold was captured/released/expired
-       */
-      completedAt?: string | null;
-    };
-    /** @description Hold details */
-    HoldResponse: {
-      /** @description Hold record */
-      hold: components['schemas']['HoldRecord'];
-    };
-    /**
-     * @description Current status of an authorization hold
-     * @enum {string}
-     */
-    HoldStatus: 'Active' | 'Captured' | 'Released' | 'Expired';
     /**
      * @description HTTP method for endpoint invocation
      * @enum {string}
      */
     HttpMethodType: 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch';
+    /** @description A single document to import with required fields */
+    ImportDocument: {
+      /** @description URL-friendly unique identifier for the document */
+      slug: string;
+      /** @description Display title of the document */
+      title: string;
+      /** @description Category for organizing the document */
+      category: components['schemas']['DocumentCategory'];
+      /** @description Markdown content of the document (max 500KB) */
+      content: string;
+      /** @description Brief text summary of the document (null if not provided) */
+      summary?: string | null;
+      /** @description Concise summary optimized for voice AI (null if not provided) */
+      voiceSummary?: string | null;
+      /** @description Tags for filtering and search (null to skip tagging) */
+      tags?: string[] | null;
+      /** @description Client-provided custom metadata. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Request to import multiple documents into a namespace */
+    ImportDocumentationRequest: {
+      /** @description Documentation namespace to import into */
+      namespace: string;
+      /** @description List of documents to import */
+      documents: components['schemas']['ImportDocument'][];
+      /** @description How to handle documents with existing slugs */
+      onConflict?: components['schemas']['ConflictResolution'];
+    };
+    /** @description Response reporting import results with counts and failure details */
+    ImportDocumentationResponse: {
+      /** @description The namespace documents were imported into */
+      namespace: string;
+      /** @description Number of new documents created */
+      created: number;
+      /** @description Number of existing documents updated */
+      updated: number;
+      /** @description Number of documents skipped due to conflicts */
+      skipped: number;
+      /** @description Details of documents that failed to import */
+      failed: components['schemas']['ImportFailure'][];
+    };
+    /** @description Details of a document that failed to import */
+    ImportFailure: {
+      /** @description Slug of the document that failed to import */
+      slug: string;
+      /** @description Error message explaining the failure */
+      error: string;
+    };
     /** @description Request to initialize a clock for a realm */
     InitializeRealmClockRequest: {
       /**
@@ -25500,18 +20181,6 @@ export interface components {
        * @description The seed being invited to bond.
        */
       targetSeedId: string;
-    };
-    /** @description Request to inject a perception event into an actor's queue */
-    InjectPerceptionRequest: {
-      /** @description Target actor to inject perception into */
-      actorId: string;
-      /** @description Perception data to inject */
-      perception: components['schemas']['PerceptionData'];
-    };
-    /** @description Response confirming perception injection */
-    InjectPerceptionResponse: {
-      /** @description Current depth of the perception queue */
-      queueDepth: number;
     };
     /** @description Request to interact with a POI */
     InteractWithPoiRequest: {
@@ -25910,6 +20579,50 @@ export interface components {
       /** @description Requested role (defaults to Member if not specified) */
       role?: components['schemas']['ChatParticipantRole'] | null;
     };
+    /** @description Request to join a voice room */
+    JoinVoiceRoomRequest: {
+      /**
+       * Format: uuid
+       * @description Voice room ID to join
+       */
+      roomId: string;
+      /**
+       * Format: uuid
+       * @description WebSocket session ID (unique participant identifier)
+       */
+      sessionId: string;
+      /** @description Participant's SIP endpoint details */
+      sipEndpoint: components['schemas']['SipEndpoint'];
+      /** @description Display name for UI */
+      displayName?: string | null;
+      /** @description Room password (required if room is password-protected) */
+      password?: string | null;
+    };
+    /** @description Response after joining a voice room */
+    JoinVoiceRoomResponse: {
+      /**
+       * Format: uuid
+       * @description Voice room ID
+       */
+      roomId: string;
+      /** @description Current voice tier */
+      tier: components['schemas']['VoiceTier'];
+      /** @description Codec to use */
+      codec: components['schemas']['VoiceCodec'];
+      /** @description Current peers to connect to (P2P mode only) */
+      peers: components['schemas']['VoicePeer'][];
+      /** @description RTP server URI (scaled mode only) */
+      rtpServerUri?: string | null;
+      /** @description STUN server URIs for NAT traversal */
+      stunServers: string[];
+      /**
+       * @description True if room is about to upgrade to scaled tier
+       * @default false
+       */
+      tierUpgradePending: boolean;
+      /** @description Current broadcast consent state */
+      broadcastState: components['schemas']['BroadcastConsentState'];
+    };
     /** @description An incident that occurred during a journey leg */
     JourneyIncident: {
       /** @description Type of incident (e.g., "bandit_attack", "storm_delay", "detour") */
@@ -26180,6 +20893,19 @@ export interface components {
        */
       roomId: string;
     };
+    /** @description Request to leave a voice room */
+    LeaveVoiceRoomRequest: {
+      /**
+       * Format: uuid
+       * @description Voice room ID to leave
+       */
+      roomId: string;
+      /**
+       * Format: uuid
+       * @description WebSocket session ID of the leaving participant
+       */
+      sessionId: string;
+    };
     /** @description License definition with all fields */
     LicenseDefinitionResponse: {
       /**
@@ -26335,57 +21061,6 @@ export interface components {
       /** @description Available quest definitions */
       available: components['schemas']['QuestDefinitionResponse'][];
     };
-    /** @description Request to list blessings granted by a deity */
-    ListBlessingsByDeityRequest: {
-      /**
-       * Format: uuid
-       * @description Deity whose granted blessings to list
-       */
-      deityId: string;
-      /** @description Optional tier filter */
-      tier?: components['schemas']['BlessingTier'];
-      /**
-       * @description Page number for pagination
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of results per page
-       * @default 50
-       */
-      pageSize: number;
-    };
-    /** @description Request to list blessings for an entity */
-    ListBlessingsByEntityRequest: {
-      /**
-       * Format: uuid
-       * @description Entity whose blessings to list
-       */
-      entityId: string;
-      /** @description Type of entity (e.g., character, account, deity) */
-      entityType: components['schemas']['EntityType'];
-      /**
-       * @description Page number for pagination
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of results per page
-       * @default 50
-       */
-      pageSize: number;
-    };
-    /** @description Paginated list of blessings */
-    ListBlessingsResponse: {
-      /** @description Blessings in the current page */
-      blessings: components['schemas']['BlessingSummary'][];
-      /** @description Total number of matching blessings */
-      totalCount: number;
-      /** @description Current page number */
-      page: number;
-      /** @description Number of results per page */
-      pageSize: number;
-    };
     /** @description Request to list board templates with cursor-based pagination */
     ListBoardTemplatesRequest: {
       /**
@@ -26453,19 +21128,6 @@ export interface components {
       /** @description Total number of versions */
       totalCount: number;
     };
-    /** @description Request to list all calendar templates for a game service */
-    ListCalendarsRequest: {
-      /**
-       * Format: uuid
-       * @description Game service to list calendars for
-       */
-      gameServiceId: string;
-    };
-    /** @description List of calendar templates for a game service */
-    ListCalendarsResponse: {
-      /** @description Calendar templates for the game service */
-      templates: components['schemas']['CalendarTemplateResponse'][];
-    };
     /** @description Request payload for listing characters with filtering and pagination */
     ListCharactersRequest: {
       /**
@@ -26506,20 +21168,6 @@ export interface components {
       /** @description List of registered clause types */
       clauseTypes: components['schemas']['ClauseTypeSummary'][];
     };
-    /** @description Request to list registered cleanup callbacks */
-    ListCleanupCallbacksRequest: {
-      /** @description Filter by resource type (list all if not specified) */
-      resourceType?: string | null;
-      /** @description Filter by source type (requires resourceType) */
-      sourceType?: string | null;
-    };
-    /** @description List of registered cleanup callbacks */
-    ListCleanupCallbacksResponse: {
-      /** @description Registered callbacks matching filter */
-      callbacks: components['schemas']['CleanupCallbackSummary'][];
-      /** @description Total number of callbacks returned */
-      totalCount: number;
-    };
     /** @description Request to list collections for an owner */
     ListCollectionsRequest: {
       /**
@@ -26539,20 +21187,6 @@ export interface components {
     ListCollectionsResponse: {
       /** @description Collection instances for this owner */
       collections: components['schemas']['CollectionResponse'][];
-    };
-    /** @description Request to list registered compression callbacks */
-    ListCompressCallbacksRequest: {
-      /** @description Filter by resource type (list all if not specified) */
-      resourceType?: string | null;
-      /** @description Filter by source type (requires resourceType) */
-      sourceType?: string | null;
-    };
-    /** @description List of registered compression callbacks */
-    ListCompressCallbacksResponse: {
-      /** @description Registered callbacks matching filter */
-      callbacks: components['schemas']['CompressCallbackSummary'][];
-      /** @description Total number of callbacks returned */
-      totalCount: number;
     };
     /** @description Request to list containers for an owner */
     ListContainersRequest: {
@@ -26608,28 +21242,6 @@ export interface components {
       /** @description Whether more results exist beyond this page. */
       hasMore: boolean;
     };
-    /** @description Request to list currency definitions */
-    ListCurrencyDefinitionsRequest: {
-      /**
-       * Format: uuid
-       * @description Filter by realm availability
-       */
-      realmId?: string | null;
-      /** @description Filter by scope */
-      scope?: components['schemas']['CurrencyScope'];
-      /**
-       * @description Include inactive definitions
-       * @default false
-       */
-      includeInactive: boolean;
-      /** @description Filter by base currency flag */
-      isBaseCurrency?: boolean | null;
-    };
-    /** @description List of currency definitions */
-    ListCurrencyDefinitionsResponse: {
-      /** @description Currency definitions matching filter */
-      definitions: components['schemas']['CurrencyDefinitionResponse'][];
-    };
     /** @description Request to list map definitions */
     ListDefinitionsRequest: {
       /** @description Filter by name (partial match) */
@@ -26656,39 +21268,6 @@ export interface components {
       /** @description Results limit used */
       limit?: number;
     };
-    /** @description Request to list deities with optional filters */
-    ListDeitiesRequest: {
-      /**
-       * Format: uuid
-       * @description Game service to list deities for
-       */
-      gameServiceId: string;
-      /** @description Filter by domain code (returns deities with this domain in their influences) */
-      domainCode?: string | null;
-      /** @description Filter by deity status */
-      status?: components['schemas']['DeityStatus'];
-      /**
-       * @description Page number for pagination
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of results per page
-       * @default 50
-       */
-      pageSize: number;
-    };
-    /** @description Paginated list of deities */
-    ListDeitiesResponse: {
-      /** @description Deities in the current page */
-      deities: components['schemas']['DeityResponse'][];
-      /** @description Total number of matching deities */
-      totalCount: number;
-      /** @description Current page number */
-      page: number;
-      /** @description Number of results per page */
-      pageSize: number;
-    };
     /** @description Request to list connections an entity has discovered */
     ListDiscoveriesRequest: {
       /**
@@ -26706,115 +21285,6 @@ export interface components {
     ListDiscoveriesResponse: {
       /** @description IDs of connections this entity has discovered */
       connectionIds: string[];
-    };
-    /** @description Request to list documents with optional filtering and pagination */
-    ListDocumentsRequest: {
-      /** @description Documentation namespace to list documents from */
-      namespace: string;
-      /** @description Filter to a specific category (null for all categories) */
-      category?: components['schemas']['DocumentCategory'];
-      /** @description Filter by tags (null to skip tag filtering) */
-      tags?: string[] | null;
-      /** @description Whether documents must match all tags or any tag */
-      tagsMatch?: components['schemas']['TagMatchMode'];
-      /**
-       * Format: date-time
-       * @description Filter to documents created after this timestamp (null to skip)
-       */
-      createdAfter?: string | null;
-      /**
-       * Format: date-time
-       * @description Filter to documents created before this timestamp (null to skip)
-       */
-      createdBefore?: string | null;
-      /**
-       * Format: date-time
-       * @description Filter to documents updated after this timestamp (null to skip)
-       */
-      updatedAfter?: string | null;
-      /**
-       * Format: date-time
-       * @description Filter to documents updated before this timestamp (null to skip)
-       */
-      updatedBefore?: string | null;
-      /**
-       * @description Return only document titles without summaries
-       * @default false
-       */
-      titlesOnly: boolean;
-      /**
-       * @description Page number for pagination
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of documents per page
-       * @default 20
-       */
-      pageSize: number;
-      /** @description Field to sort results by */
-      sortBy?: components['schemas']['ListSortField'];
-      /** @description Sort order direction */
-      sortOrder?: components['schemas']['SortOrder'];
-    };
-    /** @description Response containing a paginated list of documents */
-    ListDocumentsResponse: {
-      /** @description List of documents in the namespace */
-      documents: components['schemas']['DocumentSummary'][];
-      /** @description Total number of documents matching filters */
-      totalCount?: number;
-      /** @description Total number of pages available */
-      totalPages?: number;
-    };
-    /** @description Request to list encounter types with optional filtering */
-    ListEncounterTypesRequest: {
-      /**
-       * @description Include soft-deleted types
-       * @default false
-       */
-      includeInactive: boolean;
-      /**
-       * @description Only return built-in types
-       * @default false
-       */
-      builtInOnly: boolean;
-      /**
-       * @description Only return custom types
-       * @default false
-       */
-      customOnly: boolean;
-    };
-    /** @description Request to list entities at a specific location */
-    ListEntitiesAtLocationRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the location to query
-       */
-      locationId: string;
-      /** @description Optional filter by entity type (opaque string) */
-      entityType?: string | null;
-      /**
-       * @description Page number (1-indexed)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of entities per page
-       * @default 50
-       */
-      pageSize: number;
-    };
-    /** @description Result of listing entities at a location */
-    ListEntitiesAtLocationResponse: {
-      /** @description Entities currently present at the location */
-      entities: components['schemas']['EntityPresenceEntry'][];
-      /** @description Total number of entities matching the query */
-      totalCount: number;
-      /**
-       * Format: uuid
-       * @description ID of the queried location
-       */
-      locationId: string;
     };
     /** @description Request to list entry templates with filtering and pagination */
     ListEntryTemplatesRequest: {
@@ -26912,6 +21382,11 @@ export interface components {
       isTopLevelOnly: boolean;
       /** @description Filter by realm baseline status */
       isRealmBaseline?: boolean | null;
+      /**
+       * @description Whether to include deprecated factions in results
+       * @default false
+       */
+      includeDeprecated: boolean;
       /** @description Pagination cursor from a previous response */
       cursor?: string | null;
       /**
@@ -26928,17 +21403,6 @@ export interface components {
       nextCursor?: string | null;
       /** @description Whether more pages are available */
       hasMore: boolean;
-    };
-    /** @description Paginated list of deity followers */
-    ListFollowersResponse: {
-      /** @description Followers in the current page */
-      followers: components['schemas']['FollowerResponse'][];
-      /** @description Total number of followers */
-      totalCount: number;
-      /** @description Current page number */
-      page: number;
-      /** @description Number of results per page */
-      pageSize: number;
     };
     /** @description Request to list item templates */
     ListItemTemplatesRequest: {
@@ -27068,81 +21532,6 @@ export interface components {
       /** @description All license definitions for this board template */
       definitions: components['schemas']['LicenseDefinitionResponse'][];
     };
-    /** @description Request to list all child locations of a specified parent location */
-    ListLocationsByParentRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the parent location
-       */
-      parentLocationId: string;
-      /** @description Optional filter by location type */
-      locationType?: components['schemas']['LocationType'] | null;
-      /**
-       * @description Whether to include deprecated locations in the response
-       * @default false
-       */
-      includeDeprecated: boolean;
-      /**
-       * @description Page number for pagination (1-indexed)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of results per page
-       * @default 20
-       */
-      pageSize: number;
-    };
-    /** @description Request to list all locations within a specific realm with optional filtering */
-    ListLocationsByRealmRequest: {
-      /**
-       * Format: uuid
-       * @description Realm ID to query
-       */
-      realmId: string;
-      /** @description Optional type filter */
-      locationType?: components['schemas']['LocationType'] | null;
-      /**
-       * @description Whether to include deprecated locations in the response
-       * @default false
-       */
-      includeDeprecated: boolean;
-      /**
-       * @description Page number for pagination (1-indexed)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of results per page
-       * @default 20
-       */
-      pageSize: number;
-    };
-    /** @description Request to list locations within a realm with optional type and deprecation filtering */
-    ListLocationsRequest: {
-      /**
-       * Format: uuid
-       * @description Realm ID to query (required - locations are partitioned by realm)
-       */
-      realmId: string;
-      /** @description Filter by location type */
-      locationType?: components['schemas']['LocationType'] | null;
-      /**
-       * @description Whether to include deprecated locations in the response
-       * @default false
-       */
-      includeDeprecated: boolean;
-      /**
-       * @description Page number for pagination (1-indexed)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of results per page
-       * @default 20
-       */
-      pageSize: number;
-    };
     /** @description Request to list members of a faction */
     ListMembersRequest: {
       /**
@@ -27184,11 +21573,6 @@ export interface components {
     };
     /** @description All faction memberships for a character */
     ListMembershipsByCharacterResponse: {
-      /**
-       * Format: uuid
-       * @description Character these memberships belong to
-       */
-      characterId: string;
       /** @description All faction memberships for the character */
       memberships: components['schemas']['CharacterMembershipEntry'][];
     };
@@ -27365,84 +21749,6 @@ export interface components {
       /** @description List of available queues */
       queues: components['schemas']['QueueSummary'][];
     };
-    /** @description Request to list active realm clocks with optional filtering */
-    ListRealmClocksRequest: {
-      /**
-       * Format: uuid
-       * @description Filter by game service ID (null returns all)
-       */
-      gameServiceId?: string | null;
-      /**
-       * @description Page number (0-indexed)
-       * @default 0
-       */
-      page: number;
-      /**
-       * @description Items per page
-       * @default 100
-       */
-      pageSize: number;
-    };
-    /** @description Paginated list of active realm clocks */
-    ListRealmClocksResponse: {
-      /** @description Realm clock summaries for the current page */
-      items: components['schemas']['RealmClockSummary'][];
-      /** @description Total matching realm clocks */
-      totalCount: number;
-    };
-    /** @description Request to list realms with optional filtering and pagination */
-    ListRealmsRequest: {
-      /** @description Filter by category (e.g., "MAIN", "SPECIAL", "TEST") */
-      category?: string | null;
-      /** @description Filter by active status */
-      isActive?: boolean | null;
-      /**
-       * @description Whether to include deprecated realms in the response
-       * @default false
-       */
-      includeDeprecated: boolean;
-      /**
-       * @description Page number for pagination (1-indexed)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of realms to return per page
-       * @default 20
-       */
-      pageSize: number;
-    };
-    /** @description Request to list all references to a resource */
-    ListReferencesRequest: {
-      /** @description Type of resource to list references for (opaque identifier) */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource to list references for
-       */
-      resourceId: string;
-      /** @description Optional filter by source type (opaque identifier) */
-      filterSourceType?: string | null;
-      /**
-       * @description Maximum references to return
-       * @default 100
-       */
-      limit: number;
-    };
-    /** @description Response containing list of references to a resource */
-    ListReferencesResponse: {
-      /** @description Type of resource listed */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource listed
-       */
-      resourceId: string;
-      /** @description List of references */
-      references: components['schemas']['ResourceReference'][];
-      /** @description Total reference count (may exceed returned list if limit applied) */
-      totalCount: number;
-    };
     /** @description Request to list relationship types with optional filtering by category, hierarchy, and deprecation status */
     ListRelationshipTypesRequest: {
       /** @description Filter by category (e.g., "FAMILY", "SOCIAL", "ECONOMIC") (null to include all) */
@@ -27605,31 +21911,6 @@ export interface components {
       /** @description Items per page */
       pageSize: number;
     };
-    /** @description Request to list all top-level locations (without parents) in a realm */
-    ListRootLocationsRequest: {
-      /**
-       * Format: uuid
-       * @description Realm ID to get root locations for
-       */
-      realmId: string;
-      /** @description Optional filter by location type */
-      locationType?: components['schemas']['LocationType'] | null;
-      /**
-       * @description Whether to include deprecated locations in the response
-       * @default false
-       */
-      includeDeprecated: boolean;
-      /**
-       * @description Page number for pagination (1-indexed)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of results per page
-       * @default 20
-       */
-      pageSize: number;
-    };
     /** @description Request to list scenario definitions */
     ListScenarioDefinitionsRequest: {
       /**
@@ -27764,31 +22045,6 @@ export interface components {
       /** @description Total matching seeds across all pages. */
       totalCount: number;
     };
-    /** @description Request to list all game services with optional pagination */
-    ListServicesRequest: {
-      /**
-       * @description If true, only return active services
-       * @default false
-       */
-      activeOnly: boolean;
-      /**
-       * @description Number of services to skip for pagination (offset)
-       * @default 0
-       */
-      skip: number;
-      /**
-       * @description Maximum number of services to return (limit)
-       * @default 50
-       */
-      take: number;
-    };
-    /** @description Response containing list of game services */
-    ListServicesResponse: {
-      /** @description List of game services matching the request criteria */
-      services: components['schemas']['ServiceInfo'][];
-      /** @description Total number of services matching the filter */
-      totalCount: number;
-    };
     /** @description Request to list all save slots belonging to a specific owner */
     ListSlotsRequest: {
       /** @description Game identifier for namespace isolation */
@@ -27814,59 +22070,6 @@ export interface components {
       slots: components['schemas']['SlotResponse'][];
       /** @description Total number of slots for owner */
       totalCount?: number;
-    };
-    /**
-     * @description Fields available for sorting document lists
-     * @default UpdatedAt
-     * @enum {string}
-     */
-    ListSortField: 'CreatedAt' | 'UpdatedAt' | 'Title';
-    /** @description Request to list species available within a specific realm */
-    ListSpeciesByRealmRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the realm to filter by
-       */
-      realmId: string;
-      /** @description Filter by playable status */
-      isPlayable?: boolean | null;
-      /**
-       * @description Whether to include deprecated species in results
-       * @default false
-       */
-      includeDeprecated: boolean;
-      /**
-       * @description Page number for pagination (1-based)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of items per page
-       * @default 20
-       */
-      pageSize: number;
-    };
-    /** @description Request to list species with optional filtering and pagination */
-    ListSpeciesRequest: {
-      /** @description Filter by category (e.g., "HUMANOID", "BEAST", "MAGICAL") */
-      category?: string | null;
-      /** @description Filter by playable status */
-      isPlayable?: boolean | null;
-      /**
-       * @description Whether to include deprecated species in the response
-       * @default false
-       */
-      includeDeprecated: boolean;
-      /**
-       * @description Page number for pagination (1-based)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of items per page
-       * @default 20
-       */
-      pageSize: number;
     };
     /** @description Request to list status templates with filtering and pagination */
     ListStatusTemplatesRequest: {
@@ -28017,6 +22220,30 @@ export interface components {
       /** @description Whether more pages are available */
       hasMore: boolean;
     };
+    /** @description Request to list deleted documents in the trashcan */
+    ListTrashcanRequest: {
+      /** @description Documentation namespace to list trashcan from */
+      namespace: string;
+      /**
+       * @description Page number for pagination
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Number of items per page
+       * @default 20
+       */
+      pageSize: number;
+    };
+    /** @description Response containing deleted documents awaiting permanent deletion */
+    ListTrashcanResponse: {
+      /** @description The namespace the trashcan belongs to */
+      namespace: string;
+      /** @description List of deleted documents in trashcan */
+      items: components['schemas']['TrashcanItem'][];
+      /** @description Total number of items in trashcan */
+      totalCount?: number;
+    };
     /** @description Request to list unlocked achievements */
     ListUnlockedAchievementsRequest: {
       /**
@@ -28131,109 +22358,6 @@ export interface components {
       metadata?: {
         [key: string]: string;
       };
-    };
-    /**
-     * @description Core location data for archive storage and content flywheel consumption.
-     *     Inherits base archive properties from ResourceArchiveBase.
-     *     The locationId field equals resourceId for convenience.
-     *     Includes one level of parent context to avoid hierarchy walking during archive queries.
-     */
-    LocationBaseArchive: {
-      /**
-       * Format: uuid
-       * @description Unique identifier for the location (equals resourceId)
-       */
-      locationId: string;
-      /** @description Display name of the location */
-      name: string;
-      /** @description Unique code identifier for the location */
-      code: string;
-      /** @description Human-readable description of the location */
-      description?: string | null;
-      /** @description Category of location (Region, City, Building, Room, etc.) */
-      locationType: components['schemas']['LocationType'];
-      /**
-       * Format: uuid
-       * @description Realm this location belongs to
-       */
-      realmId: string;
-      /**
-       * Format: uuid
-       * @description Parent location ID (null for root locations)
-       */
-      parentLocationId?: string | null;
-      /** @description Depth in the location hierarchy (0 for root) */
-      depth: number;
-      /** @description Parent location name (one level of context, null if root) */
-      parentName?: string | null;
-      /** @description Parent location code (one level of context, null if root) */
-      parentCode?: string | null;
-      /** @description Parent location type (one level of context, null if root) */
-      parentLocationType?: components['schemas']['LocationType'] | null;
-      /** @description Number of immediate child locations */
-      childrenCount: number;
-      /** @description Codes of immediate child locations (null if no children) */
-      childrenCodes?: string[] | null;
-      /** @description Spatial bounding box of the location */
-      bounds?: components['schemas']['BoundingBox3D'] | null;
-      /** @description Precision level of the spatial bounds */
-      boundsPrecision?: components['schemas']['BoundsPrecision'] | null;
-      /** @description Coordinate system used for spatial data */
-      coordinateMode?: components['schemas']['CoordinateMode'] | null;
-      /** @description Local coordinate origin point */
-      localOrigin?: components['schemas']['Position3D'] | null;
-      /**
-       * Format: date-time
-       * @description Real-world creation timestamp
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @description Real-world last update timestamp
-       */
-      updatedAt?: string | null;
-      /**
-       * Format: date-time
-       * @description When the location was deprecated
-       */
-      deprecatedAt?: string | null;
-      /** @description Reason for deprecation */
-      deprecationReason?: string | null;
-    } & components['schemas']['ResourceArchiveBase'];
-    /** @description Request to check if a location exists and is active */
-    LocationExistsRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the location to validate
-       */
-      locationId: string;
-    };
-    /** @description Response indicating whether a location exists and its active status */
-    LocationExistsResponse: {
-      /** @description Whether the location exists */
-      exists: boolean;
-      /** @description Whether the location is active (false if deprecated or not found) */
-      isActive: boolean;
-      /**
-       * Format: uuid
-       * @description The realm ID if location found
-       */
-      realmId?: string | null;
-    };
-    /** @description Paginated list of locations with metadata for navigation */
-    LocationListResponse: {
-      /** @description List of locations matching the query */
-      locations: components['schemas']['LocationResponse'][];
-      /** @description Total number of locations matching the query (across all pages) */
-      totalCount: number;
-      /** @description Current page number (1-indexed) */
-      page: number;
-      /** @description Number of results per page */
-      pageSize: number;
-      /** @description Whether there are more pages after the current page */
-      hasNextPage: boolean;
-      /** @description Whether there are pages before the current page */
-      hasPreviousPage: boolean;
     };
     /** @description Complete location data returned from API operations */
     LocationResponse: {
@@ -28579,6 +22703,35 @@ export interface components {
        */
       averageNoteDuration?: number | null;
     };
+    /** @description Request to migrate all relationships from a deprecated source type to a target type */
+    MergeRelationshipTypeRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the deprecated type to merge from (must be deprecated)
+       */
+      sourceTypeId: string;
+      /**
+       * Format: uuid
+       * @description ID of the type to merge into (can be VOID for effective deletion)
+       */
+      targetTypeId: string;
+      /**
+       * @description If true, hard-delete the source type after successful merge
+       * @default false
+       */
+      deleteAfterMerge: boolean;
+    };
+    /** @description Response summarizing the results of a merge operation including the number of relationships migrated and any failures */
+    MergeRelationshipTypeResponse: {
+      /** @description Number of relationships successfully updated to use the target type */
+      relationshipsMigrated: number;
+      /** @description Number of relationships that failed to migrate */
+      relationshipsFailed: number;
+      /** @description Whether the source type was hard-deleted after merge */
+      sourceDeleted: boolean;
+      /** @description Details of individual migration failures (limited to first 100), null when no failures */
+      migrationErrors?: components['schemas']['MigrationError'][] | null;
+    };
     /** @description Request to merge stacks */
     MergeStacksRequest: {
       /**
@@ -28789,6 +22942,16 @@ export interface components {
       migrationPath?: string[];
       /** @description Non-fatal migration warnings */
       warnings?: string[];
+    };
+    /** @description Details of a single relationship that failed to migrate */
+    MigrationError: {
+      /**
+       * Format: uuid
+       * @description ID of the relationship that failed to migrate
+       */
+      relationshipId: string;
+      /** @description Error message explaining why the migration failed */
+      error: string;
     };
     /**
      * @description Behavior when optional milestone deadline passes
@@ -29089,6 +23252,24 @@ export interface components {
       /** @description Mute duration in minutes (null for permanent) */
       durationMinutes?: number | null;
     };
+    /** @description Response containing namespace statistics and document counts */
+    NamespaceStatsResponse: {
+      /** @description The namespace statistics are for */
+      namespace: string;
+      /** @description Total number of documents in the namespace */
+      documentCount: number;
+      /** @description Document count per category (null if not computed) */
+      categoryCounts?: components['schemas']['CategoryCount'][] | null;
+      /** @description Number of documents in the trashcan */
+      trashcanCount?: number;
+      /** @description Total size of all document content in bytes */
+      totalContentSizeBytes?: number;
+      /**
+       * Format: date-time
+       * @description Timestamp of most recent document update (null if no documents exist)
+       */
+      lastUpdated?: string | null;
+    };
     /** @description Narrative effect on the emotional arc */
     NarrativeEffect: {
       /**
@@ -29143,27 +23324,6 @@ export interface components {
       target: 'Self' | 'Blank';
       /** @description Nested child navigation items for dropdowns */
       children?: components['schemas']['NavigationItem'][];
-    };
-    /** @description Information about a nearby object perceived by the character. Core properties are schema-defined; additionalProperties allows game-specific object data. No Bannou plugin reads specific extension keys by convention. */
-    NearbyObject: {
-      /**
-       * Format: uuid
-       * @description Unique identifier of the object
-       */
-      objectId: string;
-      /** @description Type of object (boulder_cluster, tree, building, etc.) */
-      objectType: string;
-      /**
-       * Format: float
-       * @description Distance from character in game units
-       */
-      distance: number;
-      /** @description Relative direction (north, south, east, west, above, below, etc.) */
-      direction: string;
-      /** @description Optional absolute position */
-      position?: components['schemas']['Position3D'] | null;
-    } & {
-      [key: string]: unknown;
     };
     /** @description A single news article or announcement entry */
     NewsItem: {
@@ -29394,14 +23554,6 @@ export interface components {
       /** @description Violation history records (null if hasViolations=false) */
       violations?: components['schemas']['ViolationRecord'][] | null;
     } & components['schemas']['ResourceArchiveBase'];
-    /**
-     * @description Action to take when the referenced resource is deleted.
-     *     Cascade: Delete dependent entities when resource is deleted
-     *     Restrict: Block resource deletion if references exist
-     *     Detach: Set reference to null when resource is deleted
-     * @enum {string}
-     */
-    OnDeleteAction: 'Cascade' | 'Restrict' | 'Detach';
     /** @description Full content and metadata for a CMS-managed page */
     PageContent: {
       /** @description URL-friendly identifier for the page */
@@ -29515,34 +23667,6 @@ export interface components {
       /** @description Current room participants */
       participants: components['schemas']['ParticipantInfo'][];
     };
-    /** @description Paginated list of participation records */
-    ParticipationListResponse: {
-      /** @description List of participation records */
-      participations: components['schemas']['HistoricalParticipation'][];
-      /** @description Total number of matching records */
-      totalCount: number;
-      /** @description Current page number (1-based) */
-      page: number;
-      /** @description Number of results per page */
-      pageSize: number;
-      /** @description Whether there are more results after this page */
-      hasNextPage: boolean;
-      /** @description Whether there are results before this page */
-      hasPreviousPage: boolean;
-    };
-    /**
-     * @description How the character participated in the historical event
-     * @enum {string}
-     */
-    ParticipationRole:
-      | 'Leader'
-      | 'Combatant'
-      | 'Victim'
-      | 'Witness'
-      | 'Beneficiary'
-      | 'Conspirator'
-      | 'Hero'
-      | 'Survivor';
     /** @description Public summary of a bond partner's seed. */
     PartnerSummary: {
       /**
@@ -29681,62 +23805,6 @@ export interface components {
       role: string;
     };
     /**
-     * @description Data representing a perception event for an actor.
-     *
-     *     Spatial context can be provided in two ways (hybrid approach):
-     *     1. Typed: Use the optional spatialContext field for structured spatial data
-     *     2. Schema-less: Use perceptionType="spatial" with data containing spatial info
-     *
-     *     The typed approach is recommended when game server has structured spatial data.
-     *     The schema-less approach allows flexibility for game-specific spatial formats.
-     */
-    PerceptionData: {
-      /**
-       * @description Perception type. Common values: visual, auditory, tactile, olfactory,
-       *     proprioceptive, spatial. Use "spatial" for schema-less spatial data in 'data' field.
-       */
-      perceptionType: string;
-      /** @description ID of the entity causing this perception */
-      sourceId: string;
-      /** @description Type of source (character, npc, object, environment, coordinator, scheduled, message) */
-      sourceType?: components['schemas']['PerceptionSourceType'] | null;
-      /** @description Game-specific perception payload passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention. Different perception types carry different data structures defined by the game. */
-      data?: {
-        [key: string]: unknown;
-      } | null;
-      /**
-       * Format: float
-       * @description How urgent this perception is (0-1)
-       * @default 0.5
-       */
-      urgency: number;
-      /**
-       * Format: uuid
-       * @description Current location ID of the entity sending this perception. Used by ActorRunner to track the actor's current location for location-aware variable providers. Updated on each perception event that carries this field.
-       */
-      locationId?: string | null;
-      /**
-       * @description Optional typed spatial context from game server's local spatial state.
-       *     Provides structured information about terrain, nearby objects, hazards, etc.
-       *     Alternative to using perceptionType="spatial" with schema-less data.
-       */
-      spatialContext?: components['schemas']['SpatialContext'] | null;
-    };
-    /**
-     * @description Type of source generating a perception event
-     * @enum {string}
-     */
-    PerceptionSourceType:
-      | 'Character'
-      | 'Npc'
-      | 'Object'
-      | 'Environment'
-      | 'Coordinator'
-      | 'Scheduled'
-      | 'Message'
-      | 'Service'
-      | 'System';
-    /**
      * @description Whether room messages are stored in Redis (TTL) or MySQL (durable)
      * @enum {string}
      */
@@ -29768,39 +23836,6 @@ export interface components {
        * @description When this personality was last modified
        */
       updatedAt?: string | null;
-    };
-    /** @description Input for a single participant's perspective */
-    PerspectiveInput: {
-      /**
-       * Format: uuid
-       * @description Character this perspective belongs to
-       */
-      characterId: string;
-      /** @description Character's emotional response to the encounter */
-      emotionalImpact: components['schemas']['EmotionalImpact'];
-      /**
-       * Format: float
-       * @description Intensity of emotional impact (0.0-1.0). Defaults based on emotionalImpact if not provided.
-       */
-      impactIntensity?: number | null;
-      /**
-       * Format: float
-       * @description Opinion change toward other participants
-       */
-      sentimentShift?: number | null;
-      /**
-       * Format: float
-       * @description Initial memory strength
-       * @default 1
-       */
-      memoryStrength: number;
-      /** @description How this character remembers the encounter */
-      rememberedAs?: string | null;
-    };
-    /** @description Response containing a perspective */
-    PerspectiveResponse: {
-      /** @description The character's perspective on the encounter */
-      perspective: components['schemas']['EncounterPerspectiveModel'];
     };
     /** @description Current deployment phase configuration */
     PhaseConfigResponse: {
@@ -29946,18 +23981,6 @@ export interface components {
        * @description When plan expires from cache
        */
       expiresAt?: string | null;
-    };
-    /** @description Single action within a GOAP plan with position and cost information */
-    PlannedActionResponse: {
-      /** @description ID of the action (flow name) */
-      actionId: string;
-      /** @description Position in the plan sequence */
-      index: number;
-      /**
-       * Format: float
-       * @description Cost of this action
-       */
-      cost: number;
     };
     /**
      * @description GOAP planning urgency level affecting search parameters.
@@ -30215,6 +24238,18 @@ export interface components {
       /** @description Available authentication providers */
       providers: components['schemas']['ProviderInfo'][];
     };
+    /** @description Request to permanently delete documents from the trashcan */
+    PurgeTrashcanRequest: {
+      /** @description Documentation namespace to purge trashcan from */
+      namespace: string;
+      /** @description Specific document IDs to purge (null purges all trashcan items) */
+      documentIds?: string[] | null;
+    };
+    /** @description Response confirming permanent deletion of trashcan items */
+    PurgeTrashcanResponse: {
+      /** @description Number of documents permanently deleted */
+      purgedCount: number;
+    };
     /**
      * @description How quantities are tracked for this item type
      * @enum {string}
@@ -30259,36 +24294,6 @@ export interface components {
     QueryActiveContractsResponse: {
       /** @description Active contracts */
       contracts: components['schemas']['ContractSummary'][];
-    };
-    /** @description Request to query encounters between two characters */
-    QueryBetweenRequest: {
-      /**
-       * Format: uuid
-       * @description First character
-       */
-      characterIdA: string;
-      /**
-       * Format: uuid
-       * @description Second character
-       */
-      characterIdB: string;
-      /** @description Filter by encounter type */
-      encounterTypeCode?: string | null;
-      /**
-       * Format: float
-       * @description Filter by minimum memory strength (for either character)
-       */
-      minimumMemoryStrength?: number | null;
-      /**
-       * @description Page number (1-based)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Results per page
-       * @default 20
-       */
-      pageSize: number;
     };
     /** @description Query map data within bounds */
     QueryBoundsRequest: {
@@ -30409,68 +24414,6 @@ export interface components {
       /** @description Page offset used */
       offset: number;
     };
-    /** @description Request to query encounters by character */
-    QueryByCharacterRequest: {
-      /**
-       * Format: uuid
-       * @description Character to query encounters for
-       */
-      characterId: string;
-      /** @description Filter by encounter type */
-      encounterTypeCode?: string | null;
-      /** @description Filter by outcome */
-      outcome?: components['schemas']['EncounterOutcome'];
-      /**
-       * Format: float
-       * @description Filter by minimum memory strength
-       */
-      minimumMemoryStrength?: number | null;
-      /**
-       * Format: date-time
-       * @description Filter encounters after this time
-       */
-      fromTimestamp?: string | null;
-      /**
-       * Format: date-time
-       * @description Filter encounters before this time
-       */
-      toTimestamp?: string | null;
-      /**
-       * @description Page number (1-based)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Results per page
-       * @default 20
-       */
-      pageSize: number;
-    };
-    /** @description Request to query recent encounters at a location */
-    QueryByLocationRequest: {
-      /**
-       * Format: uuid
-       * @description Location to query
-       */
-      locationId: string;
-      /** @description Filter by encounter type */
-      encounterTypeCode?: string | null;
-      /**
-       * Format: date-time
-       * @description Filter encounters after this time
-       */
-      fromTimestamp?: string | null;
-      /**
-       * @description Page number (1-based)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Results per page
-       * @default 20
-       */
-      pageSize: number;
-    };
     /** @description Request to query connections with optional filters */
     QueryConnectionsRequest: {
       /**
@@ -30555,54 +24498,6 @@ export interface components {
       nextCursor?: string | null;
       /** @description Whether more results exist beyond this page. */
       hasMore: boolean;
-    };
-    /** @description Request to search documentation using natural language queries */
-    QueryDocumentationRequest: {
-      /** @description Documentation namespace to search within */
-      namespace: string;
-      /** @description Natural language query to search for */
-      query: string;
-      /**
-       * Format: uuid
-       * @description Optional session ID for conversational context (null if not tracking)
-       */
-      sessionId?: string | null;
-      /** @description Filter results to a specific category (null for all categories) */
-      category?: components['schemas']['DocumentCategory'];
-      /**
-       * @description Maximum number of results to return
-       * @default 5
-       */
-      maxResults: number;
-      /**
-       * @description Whether to include full document content in results
-       * @default false
-       */
-      includeContent: boolean;
-      /**
-       * @description Maximum length of summaries in characters
-       * @default 300
-       */
-      maxSummaryLength: number;
-      /**
-       * Format: float
-       * @description Minimum relevance score threshold for results
-       * @default 0.3
-       */
-      minRelevanceScore: number;
-    };
-    /** @description Response containing search results and voice-friendly summaries */
-    QueryDocumentationResponse: {
-      /** @description List of matching documents */
-      results: components['schemas']['DocumentResult'][];
-      /** @description Total number of matching documents (null if count unavailable) */
-      totalResults?: number | null;
-      /** @description Concise spoken summary for voice AI (null if not generated) */
-      voiceSummary?: string | null;
-      /** @description Suggested follow-up queries (null if none available) */
-      suggestedFollowups?: string[] | null;
-      /** @description User-friendly message when no results found (null when results exist) */
-      noResultsMessage?: string | null;
     };
     /** @description Request to query unlocked entries */
     QueryEntriesRequest: {
@@ -30734,28 +24629,6 @@ export interface components {
       status?: components['schemas']['JourneyStatus'] | null;
       /**
        * @description Page number (1-indexed)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Number of results per page
-       * @default 20
-       */
-      pageSize: number;
-    };
-    /** @description Request to find all locations containing a spatial position */
-    QueryLocationsByPositionRequest: {
-      /** @description Position to query in world coordinates */
-      position: components['schemas']['Position3D'];
-      /**
-       * Format: uuid
-       * @description Realm to search within
-       */
-      realmId: string;
-      /** @description Maximum hierarchy depth to search (null for all depths) */
-      maxDepth?: number | null;
-      /**
-       * @description Page number for pagination (1-indexed)
        * @default 1
        */
       page: number;
@@ -30936,26 +24809,6 @@ export interface components {
       /** @description Whether more pages are available */
       hasMore: boolean;
     };
-    /**
-     * @description Complete quest data for archive storage and storyline SDK consumption.
-     *     Inherits base archive properties from ResourceArchiveBase.
-     *     The characterId field equals resourceId for convenience.
-     */
-    QuestArchive: {
-      /**
-       * Format: uuid
-       * @description Character this data belongs to (equals resourceId)
-       */
-      characterId: string;
-      /** @description Summary of currently active quests */
-      activeQuests: components['schemas']['ActiveQuestSummary'][];
-      /** @description Total count of completed quests */
-      completedQuests: number;
-      /** @description Breakdown of completed quests by category (main, side, bounty, etc.) */
-      questCategories: {
-        [key: string]: number;
-      };
-    } & components['schemas']['ResourceArchiveBase'];
     /**
      * @description Category of quest for organization
      * @enum {string}
@@ -31260,30 +25113,6 @@ export interface components {
       /** @description Whether all parties have reaffirmed */
       allReaffirmed: boolean;
     };
-    /** @description Summary information for an active realm clock */
-    RealmClockSummary: {
-      /**
-       * Format: uuid
-       * @description Realm identifier
-       */
-      realmId: string;
-      /** @description Calendar template code in use */
-      calendarTemplateCode: string;
-      /**
-       * Format: float
-       * @description Current game-seconds per real-second
-       */
-      currentTimeRatio: number;
-      /** @description Current season code */
-      currentSeason: string;
-      /** @description Current game year */
-      currentYear: number;
-      /**
-       * Format: date-time
-       * @description Real-world UTC timestamp of last clock advancement
-       */
-      lastAdvancedAt: string;
-    };
     /** @description Realm worldstate configuration */
     RealmConfigResponse: {
       /**
@@ -31340,26 +25169,6 @@ export interface components {
       | 'BENEFICIARY'
       | 'INSTIGATOR'
       | 'NEUTRAL_PARTY';
-    /** @description Request to check if a realm exists and is available for use */
-    RealmExistsRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the realm to validate
-       */
-      realmId: string;
-    };
-    /** @description Response indicating whether a realm exists and its active status */
-    RealmExistsResponse: {
-      /** @description Whether the realm exists */
-      exists: boolean;
-      /** @description Whether the realm is active (false if deprecated or not found) */
-      isActive: boolean;
-      /**
-       * Format: uuid
-       * @description The realm ID if found
-       */
-      realmId?: string | null;
-    };
     /** @description Record of a realm's participation in a historical event */
     RealmHistoricalParticipation: {
       /**
@@ -31405,40 +25214,6 @@ export interface components {
        */
       createdAt: string;
     };
-    /** @description Paginated list of realms with metadata for navigation */
-    RealmListResponse: {
-      /** @description List of realms matching the query criteria */
-      realms: components['schemas']['RealmResponse'][];
-      /** @description Total number of realms matching the query (before pagination) */
-      totalCount: number;
-      /** @description Current page number (1-indexed) */
-      page: number;
-      /** @description Number of realms per page */
-      pageSize: number;
-      /** @description Whether there are more realms available on the next page */
-      hasNextPage: boolean;
-      /** @description Whether there are realms available on the previous page */
-      hasPreviousPage: boolean;
-    };
-    /**
-     * @description Realm context included in location compression archives.
-     *     Provides realm identity and description for content flywheel consumption
-     *     without requiring realm lookups during archive processing.
-     *     Inherits base archive properties from ResourceArchiveBase.
-     */
-    RealmLocationArchiveContext: {
-      /**
-       * Format: uuid
-       * @description Unique identifier of the realm
-       */
-      realmId: string;
-      /** @description Display name of the realm */
-      realmName: string;
-      /** @description Unique code identifier for the realm */
-      realmCode: string;
-      /** @description Detailed description of the realm and its characteristics */
-      realmDescription?: string | null;
-    } & components['schemas']['ResourceArchiveBase'];
     /** @description A machine-readable lore element for behavior system consumption */
     RealmLoreElement: {
       /** @description Category of this lore element */
@@ -31517,162 +25292,28 @@ export interface components {
       /** @description Whether there are results before this page */
       hasPreviousPage?: boolean;
     };
-    /** @description Complete realm information returned from API operations */
-    RealmResponse: {
+    /** @description Request to recover a deleted document from the trashcan */
+    RecoverDocumentRequest: {
+      /** @description Documentation namespace containing the trashcan */
+      namespace: string;
       /**
        * Format: uuid
-       * @description Unique identifier of the realm
+       * @description Unique identifier of the document to recover
        */
-      realmId: string;
-      /** @description Unique code for the realm (e.g., "REALM_1", "REALM_2") */
-      code: string;
-      /** @description Display name for the realm */
-      name: string;
+      documentId: string;
+    };
+    /** @description Response confirming document recovery with timestamp */
+    RecoverDocumentResponse: {
       /**
        * Format: uuid
-       * @description ID of the game service this realm belongs to
+       * @description Unique identifier of the recovered document
        */
-      gameServiceId: string;
-      /** @description Detailed description of the realm */
-      description?: string | null;
-      /** @description Category for grouping realms */
-      category?: string | null;
-      /** @description Whether the realm is currently active for gameplay */
-      isActive: boolean;
-      /** @description Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source. */
-      isSystemType: boolean;
-      /** @description Whether this realm is deprecated and cannot be used for new entities */
-      isDeprecated: boolean;
+      documentId: string;
       /**
        * Format: date-time
-       * @description Timestamp when this realm was deprecated
+       * @description Timestamp when the document was recovered
        */
-      deprecatedAt?: string | null;
-      /** @description Optional reason for deprecation */
-      deprecationReason?: string | null;
-      /** @description Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
-      metadata?: {
-        [key: string]: unknown;
-      } | null;
-      /**
-       * Format: date-time
-       * @description Timestamp when the realm was created
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @description Timestamp when the realm was last updated
-       */
-      updatedAt: string;
-    };
-    /** @description Request to check if multiple realms exist and are available for use */
-    RealmsExistBatchRequest: {
-      /** @description List of realm IDs to validate (max 100) */
-      realmIds: string[];
-    };
-    /** @description Batch validation results for multiple realms */
-    RealmsExistBatchResponse: {
-      /** @description Validation result for each requested realm ID (in same order as request) */
-      results: components['schemas']['RealmExistsResponse'][];
-      /** @description True if all requested realms exist */
-      allExist: boolean;
-      /** @description True if all requested realms exist AND are active (not deprecated) */
-      allActive: boolean;
-      /** @description List of realm IDs that do not exist (empty if all exist) */
-      invalidRealmIds: string[];
-      /** @description List of realm IDs that exist but are deprecated (empty if none deprecated) */
-      deprecatedRealmIds: string[];
-    };
-    /** @description Request to record a new encounter */
-    RecordEncounterRequest: {
-      /**
-       * Format: date-time
-       * @description In-game time of the encounter
-       */
-      timestamp: string;
-      /**
-       * Format: uuid
-       * @description Realm where the encounter occurred
-       */
-      realmId: string;
-      /**
-       * Format: uuid
-       * @description Specific location (optional)
-       */
-      locationId?: string | null;
-      /** @description Type code (must be an active type) */
-      encounterTypeCode: string;
-      /** @description What triggered the encounter */
-      context?: string | null;
-      /** @description Outcome of the encounter being recorded */
-      outcome: components['schemas']['EncounterOutcome'];
-      /** @description Character IDs involved (minimum 2, server enforces MaxParticipantsPerEncounter config limit) */
-      participantIds: string[];
-      /** @description Optional perspectives (auto-generated if not provided) */
-      perspectives?: components['schemas']['PerspectiveInput'][] | null;
-      /** @description Client-provided encounter-specific data. No Bannou plugin reads specific keys from this field by convention. */
-      metadata?: {
-        [key: string]: unknown;
-      } | null;
-    };
-    /** @description Request payload for recording an experience that may evolve personality */
-    RecordExperienceRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the character who had the experience
-       */
-      characterId: string;
-      /** @description Category of significant experience */
-      experienceType: components['schemas']['ExperienceType'];
-      /**
-       * Format: float
-       * @description How significant the experience was (0.0 to 1.0).
-       *     Higher intensity = higher probability of trait evolution.
-       *     Typical values: 0.3 (minor), 0.5 (moderate), 0.8 (major), 1.0 (life-changing)
-       */
-      intensity: number;
-      /**
-       * @description Optional context for logging and debugging.
-       *     Not used in evolution calculations.
-       *     No Bannou plugin reads specific keys from this field by convention.
-       */
-      contextData?: {
-        [key: string]: unknown;
-      } | null;
-    };
-    /** @description Request to record growth across multiple domains atomically. */
-    RecordGrowthBatchRequest: {
-      /**
-       * Format: uuid
-       * @description The seed to record growth for.
-       */
-      seedId: string;
-      /** @description Domain-amount pairs to record. */
-      entries: components['schemas']['GrowthEntry'][];
-      /** @description Identifier of the contributing service. */
-      source: string;
-    };
-    /** @description Request to record growth in a specific domain. */
-    RecordGrowthRequest: {
-      /**
-       * Format: uuid
-       * @description The seed to record growth for.
-       */
-      seedId: string;
-      /** @description Dot-separated domain path (e.g., "combat.melee.sword"). New domains are created automatically on first contribution. */
-      domain: string;
-      /**
-       * Format: float
-       * @description Amount of growth to add.
-       */
-      amount: number;
-      /** @description Identifier of the contributing service (e.g., "character-encounter"). */
-      source: string;
-      /**
-       * Format: uuid
-       * @description Optional reference to the originating event.
-       */
-      sourceEventId?: string | null;
+      recoveredAt: string;
     };
     /** @description Information about a reference */
     ReferenceInfo: {
@@ -31693,24 +25334,6 @@ export interface components {
       /** @description Name of the referencing node */
       nodeName?: string;
     };
-    /** @description Request to refresh memory strength */
-    RefreshMemoryRequest: {
-      /**
-       * Format: uuid
-       * @description Encounter to refresh memory for
-       */
-      encounterId: string;
-      /**
-       * Format: uuid
-       * @description Character whose memory to refresh
-       */
-      characterId: string;
-      /**
-       * Format: float
-       * @description Amount to boost memory strength (capped at 1.0). Falls back to configured MemoryRefreshBoost if not provided.
-       */
-      strengthBoost?: number | null;
-    };
     /** @description Request to obtain a new access token using a valid refresh token */
     RefreshRequest: {
       /** @description Refresh token issued during authentication to obtain a new access token */
@@ -31722,54 +25345,6 @@ export interface components {
      * @enum {string}
      */
     RefundMode: 'Immediate' | 'ServiceOnly' | 'PartyRequired';
-    /** @description Request to trigger escrow refund to depositors */
-    RefundRequest: {
-      /**
-       * Format: uuid
-       * @description Escrow ID
-       */
-      escrowId: string;
-      /** @description For initiator_trusted mode */
-      initiatorServiceId?: string | null;
-      /** @description Reason for refund */
-      reason?: string | null;
-      /** @description Idempotency key */
-      idempotencyKey: string;
-    };
-    /** @description Response from refunding escrow assets to depositors */
-    RefundResponse: {
-      /** @description Refunded escrow agreement */
-      escrow: components['schemas']['EscrowAgreement'];
-      /** @description Refund results per depositor */
-      refunds: components['schemas']['RefundResult'][];
-    };
-    /** @description Result of refunding assets to a single depositor */
-    RefundResult: {
-      /**
-       * Format: uuid
-       * @description Depositor party ID
-       */
-      depositorPartyId: string;
-      /** @description Assets refunded (null if failed) */
-      assets?: components['schemas']['EscrowAssetBundle'];
-      /** @description Whether refund succeeded */
-      success: boolean;
-      /** @description Error message if failed */
-      error?: string | null;
-    };
-    /** @description Request to register a character as a deity follower */
-    RegisterFollowerRequest: {
-      /**
-       * Format: uuid
-       * @description Deity to follow
-       */
-      deityId: string;
-      /**
-       * Format: uuid
-       * @description Character becoming a follower
-       */
-      characterId: string;
-    };
     /** @description Request to register a new transit mode */
     RegisterModeRequest: {
       /** @description Unique mode code (e.g., "walking", "horseback", "wagon") */
@@ -31817,34 +25392,6 @@ export interface components {
       realmRestrictions?: string[] | null;
       /** @description Freeform classification tags */
       tags?: string[] | null;
-    };
-    /** @description Request to register a reference to a resource */
-    RegisterReferenceRequest: {
-      /** @description Type of resource being referenced (opaque identifier, e.g., "character", "realm") */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource being referenced
-       */
-      resourceId: string;
-      /** @description Type of entity holding the reference (opaque identifier, e.g., "actor", "scene") */
-      sourceType: string;
-      /** @description ID of the entity holding the reference (opaque string, supports non-Guid IDs) */
-      sourceId: string;
-    };
-    /** @description Response after registering a reference */
-    RegisterReferenceResponse: {
-      /** @description Type of resource referenced */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource referenced
-       */
-      resourceId: string;
-      /** @description Reference count after registration */
-      newRefCount: number;
-      /** @description True if this exact reference was already registered */
-      alreadyRegistered: boolean;
     };
     /** @description Request to register a new user account */
     RegisterRequest: {
@@ -31984,15 +25531,6 @@ export interface components {
       /** @description Mappings from collection types to growth domains. When a collection entry is unlocked for an entity that owns seeds of this type, the entry's tags are matched against these mappings to determine growth contributions. Null means this seed type does not respond to collection unlocks. */
       collectionGrowthMappings?: components['schemas']['CollectionGrowthMapping'][] | null;
     };
-    /**
-     * @description How deep to traverse related document links:
-     *     - none: No related documents included
-     *     - direct: Only directly linked documents (depth 1)
-     *     - extended: Related documents + their related documents (depth 2)
-     * @default Direct
-     * @enum {string}
-     */
-    RelatedDepth: 'None' | 'Direct' | 'Extended';
     /** @description Paginated list of relationships with metadata for navigation */
     RelationshipListResponse: {
       /** @description List of relationships matching the query */
@@ -32157,36 +25695,6 @@ export interface components {
        */
       destinationContainerId?: string | null;
     };
-    /** @description Input for specifying how assets should be allocated on release */
-    ReleaseAllocationInput: {
-      /**
-       * Format: uuid
-       * @description Recipient party ID
-       */
-      recipientPartyId: string;
-      /** @description Recipient party type */
-      recipientPartyType: components['schemas']['EntityType'];
-      /** @description Assets to allocate */
-      assets: components['schemas']['EscrowAssetInput'][];
-      /**
-       * Format: uuid
-       * @description Destination wallet
-       */
-      destinationWalletId?: string | null;
-      /**
-       * Format: uuid
-       * @description Destination container
-       */
-      destinationContainerId?: string | null;
-    };
-    /** @description Request to release a hold */
-    ReleaseHoldRequest: {
-      /**
-       * Format: uuid
-       * @description Hold ID to release
-       */
-      holdId: string;
-    };
     /**
      * @description Controls how release confirmation is handled:
      *     - immediate: Finalizing → Released (skip Releasing state entirely).
@@ -32199,43 +25707,6 @@ export interface components {
      * @enum {string}
      */
     ReleaseMode: 'Immediate' | 'ServiceOnly' | 'PartyRequired' | 'ServiceAndParty';
-    /** @description Request to trigger escrow release to recipients */
-    ReleaseRequest: {
-      /**
-       * Format: uuid
-       * @description Escrow ID
-       */
-      escrowId: string;
-      /** @description For initiator_trusted mode */
-      initiatorServiceId?: string | null;
-      /** @description Optional notes */
-      notes?: string | null;
-      /** @description Idempotency key */
-      idempotencyKey: string;
-    };
-    /** @description Response from releasing escrow assets to recipients */
-    ReleaseResponse: {
-      /** @description Released escrow agreement */
-      escrow: components['schemas']['EscrowAgreement'];
-      /** @description Results of contract finalizer APIs */
-      finalizerResults: components['schemas']['FinalizerResult'][];
-      /** @description Release results per recipient */
-      releases: components['schemas']['ReleaseResult'][];
-    };
-    /** @description Result of releasing assets to a single recipient */
-    ReleaseResult: {
-      /**
-       * Format: uuid
-       * @description Recipient party ID
-       */
-      recipientPartyId: string;
-      /** @description Assets released (null if failed) */
-      assets?: components['schemas']['EscrowAssetBundle'];
-      /** @description Whether release succeeded */
-      success: boolean;
-      /** @description Error message if failed */
-      error?: string | null;
-    };
     /** @description Request to release a territory claim */
     ReleaseTerritoryRequest: {
       /**
@@ -32273,22 +25744,6 @@ export interface components {
        */
       sourceId: string;
     };
-    /** @description Request to remove item from container */
-    RemoveItemRequest: {
-      /**
-       * Format: uuid
-       * @description Item instance ID to remove
-       */
-      instanceId: string;
-    };
-    /** @description Response after removing item. HTTP 200 confirms removal. */
-    RemoveItemResponse: {
-      /**
-       * Format: uuid
-       * @description Container the item was removed from
-       */
-      previousContainerId: string;
-    };
     /** @description Request to remove a license definition from a board template */
     RemoveLicenseDefinitionRequest: {
       /**
@@ -32298,6 +25753,14 @@ export interface components {
       boardTemplateId: string;
       /** @description License code to remove */
       code: string;
+    };
+    /** @description Request to remove a location's parent, making it a root location */
+    RemoveLocationParentRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the location to make a root location
+       */
+      locationId: string;
     };
     /** @description Request to remove a character from a faction */
     RemoveMemberRequest: {
@@ -32343,18 +25806,6 @@ export interface components {
       /** @description New slot name */
       newSlotName: string;
     };
-    /**
-     * @description Reason for GOAP plan validation result
-     * @enum {string}
-     */
-    ReplanReason:
-      | 'None'
-      | 'PreconditionInvalidated'
-      | 'ActionFailed'
-      | 'BetterGoalAvailable'
-      | 'PlanCompleted'
-      | 'GoalAlreadySatisfied'
-      | 'SuboptimalPlan';
     /** @description Request to report a breach */
     ReportBreachRequest: {
       /**
@@ -32375,46 +25826,6 @@ export interface components {
       breachedTermOrMilestone?: string | null;
       /** @description Breach description */
       description?: string | null;
-    };
-    /** @description Request to report an entity's presence at a location */
-    ReportEntityPositionRequest: {
-      /** @description Type of entity (opaque string - character, actor, npc, player, etc.) */
-      entityType: string;
-      /**
-       * Format: uuid
-       * @description ID of the entity being reported
-       */
-      entityId: string;
-      /**
-       * Format: uuid
-       * @description ID of the location the entity is at
-       */
-      locationId: string;
-      /**
-       * Format: uuid
-       * @description Caller hint for the entity's previous location (optimization to skip GET on refresh)
-       */
-      previousLocationId?: string | null;
-      /**
-       * Format: uuid
-       * @description ID of the realm the location belongs to (included in arrival events if provided)
-       */
-      realmId?: string | null;
-      /** @description Identifier of the reporter (service name or session ID) */
-      reportedBy?: string | null;
-    };
-    /** @description Result of reporting entity presence. HTTP 200 confirms the position was recorded. */
-    ReportEntityPositionResponse: {
-      /**
-       * Format: uuid
-       * @description Location ID the entity arrived at (only set when location changed)
-       */
-      arrivedAt?: string | null;
-      /**
-       * Format: uuid
-       * @description Location ID the entity departed from (only set when location changed)
-       */
-      departedFrom?: string | null;
     };
     /** @description Request to report progress on a quest objective */
     ReportProgressRequest: {
@@ -32559,36 +25970,6 @@ export interface components {
       /** @description Asset IDs that couldn't be found (null if all resolved) */
       unresolved?: string[] | null;
     };
-    /** @description Request for arbiter to resolve a disputed escrow */
-    ResolveRequest: {
-      /**
-       * Format: uuid
-       * @description Escrow ID
-       */
-      escrowId: string;
-      /**
-       * Format: uuid
-       * @description Arbiter ID
-       */
-      arbiterId: string;
-      /** @description Arbiter type */
-      arbiterType: components['schemas']['EntityType'];
-      /** @description Resolution decision for the dispute */
-      resolution: components['schemas']['EscrowResolution'];
-      /** @description For split resolution */
-      splitAllocations?: components['schemas']['SplitAllocation'][] | null;
-      /** @description Resolution notes */
-      notes?: string | null;
-      /** @description Idempotency key */
-      idempotencyKey: string;
-    };
-    /** @description Response from arbiter resolving a disputed escrow */
-    ResolveResponse: {
-      /** @description Resolved escrow agreement */
-      escrow: components['schemas']['EscrowAgreement'];
-      /** @description Transfer results */
-      transfers: components['schemas']['TransferResult'][];
-    };
     /** @description A standalone asset selected for download */
     ResolvedAsset: {
       /** @description Asset identifier */
@@ -32658,32 +26039,6 @@ export interface components {
       /** @description Depth level of this reference */
       depth?: number;
     };
-    /** @description Bundled compressed archive */
-    ResourceArchive: {
-      /**
-       * Format: uuid
-       * @description Unique identifier for this archive
-       */
-      archiveId: string;
-      /** @description Type of resource archived */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource archived
-       */
-      resourceId: string;
-      /** @description Archive version (increments on re-compression) */
-      version: number;
-      /** @description Data entries from each compression callback */
-      entries: components['schemas']['ArchiveBundleEntry'][];
-      /**
-       * Format: date-time
-       * @description When this archive was created
-       */
-      createdAt: string;
-      /** @description Whether original source data was deleted after archival */
-      sourceDataDeleted: boolean;
-    };
     /**
      * @description Base schema for all resource archives that can be stored in
      *     the resource service's archive bundles and consumed by the
@@ -32711,47 +26066,6 @@ export interface components {
       /** @description Child archives from dependent resources (populated by lib-resource compression) */
       nestedArchives?: components['schemas']['ResourceArchiveBase'][];
     };
-    /** @description A reference from a source entity to a resource */
-    ResourceReference: {
-      /** @description Type of entity holding the reference (opaque identifier) */
-      sourceType: string;
-      /** @description ID of the entity holding the reference (opaque string, supports non-Guid IDs) */
-      sourceId: string;
-      /**
-       * Format: date-time
-       * @description When this reference was registered
-       */
-      registeredAt: string;
-    };
-    /** @description Ephemeral snapshot of a living resource */
-    ResourceSnapshot: {
-      /**
-       * Format: uuid
-       * @description Unique identifier for this snapshot
-       */
-      snapshotId: string;
-      /** @description Type of resource snapshotted */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource snapshotted
-       */
-      resourceId: string;
-      /** @description Label for snapshot purpose (e.g., "storyline_seed") */
-      snapshotType: string;
-      /** @description Data entries from each compression callback (same format as archives) */
-      entries: components['schemas']['ArchiveBundleEntry'][];
-      /**
-       * Format: date-time
-       * @description When this snapshot was created
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @description When this snapshot will expire
-       */
-      expiresAt: string;
-    };
     /** @description Validation rules for API responses with three-outcome model (success, permanent failure, transient failure) */
     ResponseValidation: {
       /** @description Conditions that must ALL pass for success; if any fail, checks permanent failure conditions */
@@ -32760,6 +26074,25 @@ export interface components {
       permanentFailureConditions?: components['schemas']['ValidationCondition'][];
       /** @description HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504) */
       transientFailureStatusCodes?: number[];
+    };
+    /** @description Request to restore documents from an archive */
+    RestoreArchiveRequest: {
+      /**
+       * Format: uuid
+       * @description Unique identifier of the archive to restore
+       */
+      archiveId: string;
+      /** @description Namespace to restore to (null restores to original namespace) */
+      targetNamespace?: string | null;
+    };
+    /** @description Response containing restore operation results */
+    RestoreArchiveResponse: {
+      /** @description Namespace documents were restored to */
+      namespace: string;
+      /** @description Number of documents restored from archive */
+      documentsRestored: number;
+      /** @description Number of existing documents deleted before restore */
+      previousDocumentsDeleted?: number;
     };
     /** @description Request to restore a soft-deleted bundle */
     RestoreBundleRequest: {
@@ -32802,16 +26135,6 @@ export interface components {
     RevealDiscoveryResponse: {
       /** @description The discovery record */
       discovery: components['schemas']['DiscoveryRecord'];
-    };
-    /** @description Request to revoke an active blessing */
-    RevokeBlessingRequest: {
-      /**
-       * Format: uuid
-       * @description Blessing to revoke
-       */
-      blessingId: string;
-      /** @description Why the blessing is being revoked */
-      reason: string;
     };
     /** @description Reward granted when a quest is completed */
     RewardDefinition: {
@@ -33684,46 +27007,6 @@ export interface components {
        */
       createdAt: string;
     };
-    /** @description Request to search documentation using keyword matching */
-    SearchDocumentationRequest: {
-      /** @description Documentation namespace to search within */
-      namespace: string;
-      /** @description Keyword or phrase to search for */
-      searchTerm: string;
-      /**
-       * Format: uuid
-       * @description Optional session ID for tracking searches (null if not tracking)
-       */
-      sessionId?: string | null;
-      /** @description Filter results to a specific category (null for all categories) */
-      category?: components['schemas']['DocumentCategory'];
-      /**
-       * @description Maximum number of results to return
-       * @default 10
-       */
-      maxResults: number;
-      /** @description Fields to search within (null for default fields) */
-      searchIn?: components['schemas']['SearchField'][] | null;
-      /** @description How to sort the search results */
-      sortBy?: components['schemas']['SearchSortBy'];
-      /**
-       * @description Whether to include full document content in results
-       * @default false
-       */
-      includeContent: boolean;
-    };
-    /** @description Response containing keyword search results */
-    SearchDocumentationResponse: {
-      /** @description List of matching documents */
-      results: components['schemas']['DocumentResult'][];
-      /** @description Total number of matching documents (null if count unavailable) */
-      totalResults?: number | null;
-    };
-    /**
-     * @description Fields that can be searched within documents
-     * @enum {string}
-     */
-    SearchField: 'Title' | 'Content' | 'Tags' | 'Summary';
     /**
      * @description Where the search match was found
      * @enum {string}
@@ -33786,12 +27069,6 @@ export interface components {
       /** @description Total matches */
       total: number;
     };
-    /**
-     * @description How to sort search results
-     * @default Relevance
-     * @enum {string}
-     */
-    SearchSortBy: 'Relevance' | 'Recency' | 'Alphabetical';
     /** @description A season within a calendar template year */
     SeasonDefinition: {
       /** @description Season identifier code (e.g., "winter", "spring", "summer", "autumn") */
@@ -33936,6 +27213,54 @@ export interface components {
       created: number;
       /** @description Number of templates skipped (duplicates) */
       skipped: number;
+    };
+    /** @description Location data for seeding operations, using codes instead of IDs for references */
+    SeedLocation: {
+      /** @description Unique code for the location within realm */
+      code: string;
+      /** @description Display name */
+      name: string;
+      /** @description Description */
+      description?: string | null;
+      /** @description Code of the realm (resolved during seeding) */
+      realmCode: string;
+      /** @description Type classification for this location */
+      locationType: components['schemas']['LocationType'];
+      /** @description Code of the parent location (resolved during seeding) */
+      parentLocationCode?: string | null;
+      /** @description Optional spatial extent in world coordinates */
+      bounds?: components['schemas']['BoundingBox3D'] | null;
+      /** @description Precision level of spatial bounds (defaults to none) */
+      boundsPrecision?: components['schemas']['BoundsPrecision'] | null;
+      /** @description How this location's coordinate system relates to its parent (defaults to inherit) */
+      coordinateMode?: components['schemas']['CoordinateMode'] | null;
+      /** @description Origin point for local or inherited coordinate systems */
+      localOrigin?: components['schemas']['Position3D'] | null;
+      /** @description Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Request to seed multiple locations from configuration data */
+    SeedLocationsRequest: {
+      /** @description List of locations to seed (processed in dependency order) */
+      locations: components['schemas']['SeedLocation'][];
+      /**
+       * @description Whether to update locations that already exist
+       * @default false
+       */
+      updateExisting: boolean;
+    };
+    /** @description Summary of a seed operation including counts of created, updated, and skipped locations */
+    SeedLocationsResponse: {
+      /** @description Number of new locations created */
+      created: number;
+      /** @description Number of existing locations updated */
+      updated: number;
+      /** @description Number of locations skipped (already exist, updateExisting=false) */
+      skipped: number;
+      /** @description List of error messages for locations that failed to seed */
+      errors: string[];
     };
     /** @description Full seed entity response. */
     SeedResponse: {
@@ -34088,23 +27413,6 @@ export interface components {
       /** @description Area code to select content for */
       areaCode: string;
     };
-    /** @description Request to send multiple messages to a room atomically */
-    SendMessageBatchRequest: {
-      /**
-       * Format: uuid
-       * @description Room ID to send messages to
-       */
-      roomId: string;
-      /** @description Messages to send atomically */
-      messages: components['schemas']['BatchMessageEntry'][];
-    };
-    /** @description Result of a batch message send operation with per-message failure tracking */
-    SendMessageBatchResponse: {
-      /** @description Number of messages successfully sent */
-      messageCount: number;
-      /** @description Details of messages that failed to send (empty array when all succeeded) */
-      failed: components['schemas']['BatchMessageFailure'][];
-    };
     /** @description Message content discriminated by the room message format. Exactly one content field group must be set, matching the room type format. */
     SendMessageContent: {
       /** @description Text content (for Text format rooms) */
@@ -34158,56 +27466,6 @@ export interface components {
       | 'Amused'
       | 'Bored'
       | 'Hostile';
-    /** @description Response containing aggregate sentiment */
-    SentimentResponse: {
-      /**
-       * Format: uuid
-       * @description Character whose sentiment was queried
-       */
-      characterId: string;
-      /**
-       * Format: uuid
-       * @description Target of the sentiment
-       */
-      targetCharacterId: string;
-      /**
-       * Format: float
-       * @description Aggregate sentiment (-1.0 = hostile, +1.0 = friendly)
-       */
-      sentiment: number;
-      /** @description Number of encounters factored in */
-      encounterCount: number;
-      /** @description Most common emotional impact across encounters */
-      dominantEmotion?: components['schemas']['EmotionalImpact'];
-    };
-    /** @description Information about a game service */
-    ServiceInfo: {
-      /**
-       * Format: uuid
-       * @description Unique identifier for the service
-       */
-      serviceId: string;
-      /** @description URL-safe identifier (e.g., "my-game") */
-      stubName: string;
-      /** @description Human-readable name (e.g., "My Game Online") */
-      displayName: string;
-      /** @description Optional description */
-      description?: string | null;
-      /** @description Whether the service is currently active */
-      isActive: boolean;
-      /** @description Whether GameSession auto-creates lobby sessions and publishes join shortcuts for this game service on player connect */
-      autoLobbyEnabled: boolean;
-      /**
-       * Format: date-time
-       * @description When the service was created
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @description When the service was last updated
-       */
-      updatedAt?: string | null;
-    };
     /**
      * @description Game service stub name for created sessions. Use the game service's stubName property (e.g., "my-game"). Use "generic" for non-game-specific sessions.
      * @default generic
@@ -34277,6 +27535,44 @@ export interface components {
       /** @description Default entry code to use when no matches are found */
       defaultEntryCode: string;
     };
+    /** @description Request payload for creating or updating combat preferences */
+    SetCombatPreferencesRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the character to set combat preferences for
+       */
+      characterId: string;
+      /** @description The combat preferences to set */
+      preferences: components['schemas']['CombatPreferences'];
+    };
+    /** @description Request to set or change a location's parent in the hierarchy */
+    SetLocationParentRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the location to update
+       */
+      locationId: string;
+      /**
+       * Format: uuid
+       * @description ID of the new parent location (must be in same realm)
+       */
+      parentLocationId: string;
+    };
+    /** @description Request payload for creating or updating a character's personality */
+    SetPersonalityRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the character to set personality for
+       */
+      characterId: string;
+      /**
+       * @description Initial trait values. All 8 trait axes should be provided.
+       *     Missing axes will default to 0.0 (neutral).
+       */
+      traits: components['schemas']['TraitValue'][];
+      /** @description Optional archetype code for behavior optimization */
+      archetypeHint?: string | null;
+    };
     /** @description Request to set template values on a contract */
     SetTemplateValuesRequest: {
       /**
@@ -34338,6 +27634,17 @@ export interface components {
       participants: components['schemas']['BondedPlayerGardenState'][];
       /** @description POIs visible to all bond participants */
       sharedPois: components['schemas']['PoiSummary'][];
+    };
+    /** @description SIP/WebRTC endpoint details for a participant */
+    SipEndpoint: {
+      /** @description SDP offer for WebRTC negotiation */
+      sdpOffer: string;
+      /** @description ICE candidates for NAT traversal */
+      iceCandidates?: string[] | null;
+      /** @description Public IP address if known */
+      publicIp?: string | null;
+      /** @description UDP port for RTP */
+      port?: number | null;
     };
     /** @description Global website configuration including branding, languages, and integrations */
     SiteSettings: {
@@ -34480,114 +27787,6 @@ export interface components {
        */
       existingStackInstanceId?: string | null;
     };
-    /** @description Spatial context derived from game server's authoritative spatial state. Included in perception events to give NPC actors awareness of their environment. Core properties are schema-defined; additionalProperties allows game-specific spatial extensions. No Bannou plugin reads specific extension keys by convention. */
-    SpatialContext: {
-      /** @description Terrain type at character position (grass, stone, water, etc.) */
-      terrainType?: string | null;
-      /**
-       * Format: float
-       * @description Elevation at character position
-       */
-      elevation?: number | null;
-      /** @description Objects within perception radius */
-      nearbyObjects?: components['schemas']['NearbyObject'][] | null;
-      /** @description Active hazards within detection range */
-      hazardsInRange?: components['schemas']['HazardInfo'][] | null;
-      /** @description Directions the character can move (for navigation awareness) */
-      pathableDirections?: string[] | null;
-      /** @description Whether cover is available within close range */
-      coverNearby?: boolean | null;
-      /** @description Whether character is currently indoors/under roof */
-      indoors?: boolean | null;
-    } & {
-      [key: string]: unknown;
-    };
-    /** @description Request to spawn a new actor from a template */
-    SpawnActorRequest: {
-      /**
-       * Format: uuid
-       * @description Template to instantiate from
-       */
-      templateId: string;
-      /** @description Optional custom actor ID (auto-generated if not provided) */
-      actorId?: string | null;
-      /** @description Game-specific configuration overrides merged with template defaults. No Bannou plugin reads specific keys from this field by convention. */
-      configurationOverrides?: {
-        [key: string]: unknown;
-      } | null;
-      /** @description Initial actor state snapshot. Deserialized internally to ActorStateSnapshot. No Bannou plugin reads specific keys from this field by convention. */
-      initialState?: {
-        [key: string]: unknown;
-      } | null;
-      /**
-       * Format: uuid
-       * @description Optional character ID for NPC brain actors
-       */
-      characterId?: string | null;
-      /**
-       * Format: uuid
-       * @description Realm the actor operates in. Optional on request -- when not provided and characterId is set, the service looks up the character's realm automatically. Required for non-character actors that operate in a specific realm.
-       */
-      realmId?: string | null;
-    };
-    /** @description Paginated list of species with total count for pagination */
-    SpeciesListResponse: {
-      /** @description List of species matching the query */
-      species: components['schemas']['SpeciesResponse'][];
-      /** @description Total number of species matching the query (for pagination) */
-      totalCount: number;
-    };
-    /** @description Complete species data including all attributes and realm associations */
-    SpeciesResponse: {
-      /**
-       * Format: uuid
-       * @description Unique identifier of the species
-       */
-      speciesId: string;
-      /** @description Unique code for the species (e.g., "HUMAN", "ELF") */
-      code: string;
-      /** @description Display name for the species */
-      name: string;
-      /** @description Description of the species */
-      description?: string | null;
-      /** @description Category for grouping (e.g., "HUMANOID", "BEAST", "MAGICAL") */
-      category?: string | null;
-      /** @description Whether players can create characters of this species */
-      isPlayable: boolean;
-      /** @description Whether this species is deprecated and cannot be used for new characters */
-      isDeprecated: boolean;
-      /**
-       * Format: date-time
-       * @description Timestamp when this species was deprecated
-       */
-      deprecatedAt?: string | null;
-      /** @description Optional reason for deprecation */
-      deprecationReason?: string | null;
-      /** @description Base lifespan in game years */
-      baseLifespan?: number | null;
-      /** @description Age at which the species reaches maturity */
-      maturityAge?: number | null;
-      /** @description Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention. */
-      traitModifiers?: {
-        [key: string]: unknown;
-      } | null;
-      /** @description Realms where this species is available */
-      realmIds?: string[];
-      /** @description Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
-      metadata?: {
-        [key: string]: unknown;
-      } | null;
-      /**
-       * Format: date-time
-       * @description Timestamp when the species was created
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @description Timestamp when the species was last updated
-       */
-      updatedAt: string;
-    };
     /**
      * @description The 10 Story Grid Life Value spectrums.
      *     These are bipolar axes for emotional progression.
@@ -34604,18 +27803,6 @@ export interface components {
       | 'SuccessFailure'
       | 'AltruismSelfishness'
       | 'WisdomIgnorance';
-    /** @description Allocation of assets to a party in a split resolution */
-    SplitAllocation: {
-      /**
-       * Format: uuid
-       * @description Party ID
-       */
-      partyId: string;
-      /** @description Type of entity (Account, Character, etc.) */
-      partyType: components['schemas']['EntityType'];
-      /** @description Assets allocated to this party */
-      assets: components['schemas']['EscrowAssetInput'][];
-    };
     /** @description Request to split a stack */
     SplitStackRequest: {
       /**
@@ -34663,26 +27850,6 @@ export interface components {
      * @enum {string}
      */
     StackBehavior: 'RefreshDuration' | 'Independent' | 'IncreaseIntensity' | 'Replace' | 'Ignore';
-    /** @description Request to start an encounter managed by an Event Brain actor */
-    StartEncounterRequest: {
-      /** @description ID of the Event Brain actor that will manage this encounter */
-      actorId: string;
-      /**
-       * Format: uuid
-       * @description Unique identifier for this encounter
-       */
-      encounterId: string;
-      /** @description Type of encounter (e.g., "combat", "conversation", "choreography") */
-      encounterType: string;
-      /** @description Character IDs of participants in the encounter */
-      participants: string[];
-      /** @description Game-specific encounter initialization data passed to ABML behavior scope. No Bannou plugin reads specific keys from this field by convention. */
-      initialData?: {
-        [key: string]: unknown;
-      } | null;
-    };
-    /** @description Empty response. HTTP 200 confirms the encounter was started. */
-    StartEncounterResponse: Record<string, never>;
     /** @description Request to start a regional watcher */
     StartWatcherRequest: {
       /**
@@ -34906,21 +28073,6 @@ export interface components {
       ticket: string;
       /** @description Information about the client device (optional) */
       deviceInfo?: components['schemas']['DeviceInfo'];
-    };
-    /** @description Request to stop a running actor */
-    StopActorRequest: {
-      /** @description ID of the actor to stop */
-      actorId: string;
-      /**
-       * @description If true, allows behavior to complete current iteration
-       * @default true
-       */
-      graceful: boolean;
-    };
-    /** @description Response confirming actor stop operation */
-    StopActorResponse: {
-      /** @description Final status of the actor after stopping */
-      finalStatus: components['schemas']['ActorStatus'];
     };
     /** @description Request to stop broadcasting from a voice room */
     StopBroadcastConsentRequest: {
@@ -35149,51 +28301,6 @@ export interface components {
        */
       updatedAt?: string | null;
     };
-    /** @description Response containing list of subscriptions */
-    SubscriptionListResponse: {
-      /** @description List of subscriptions matching the filter criteria */
-      subscriptions: components['schemas']['SubscriptionInfo'][];
-    };
-    /** @description Request to get related topic suggestions based on a source */
-    SuggestRelatedRequest: {
-      /** @description Documentation namespace for suggestions */
-      namespace: string;
-      /** @description Type of source to base suggestions on */
-      suggestionSource: components['schemas']['SuggestionSource'];
-      /** @description The value for the suggestion source (document ID, slug, topic, or category; null if source is context-based) */
-      sourceValue?: string | null;
-      /**
-       * Format: uuid
-       * @description Optional session ID for personalized suggestions (null if not tracking)
-       */
-      sessionId?: string | null;
-      /**
-       * @description Maximum number of suggestions to return
-       * @default 5
-       */
-      maxSuggestions: number;
-      /**
-       * @description Exclude documents viewed in current session
-       * @default true
-       */
-      excludeRecentlyViewed: boolean;
-    };
-    /** @description Response containing suggested related topics for conversational flow */
-    SuggestRelatedResponse: {
-      /** @description The namespace suggestions are from */
-      namespace: string;
-      /** @description List of suggested related topics */
-      suggestions: components['schemas']['TopicSuggestion'][];
-      /** @description Voice-friendly prompt for presenting suggestions (null if not generated) */
-      voicePrompt?: string | null;
-      /** @description Whether suggestions were influenced by session history */
-      sessionInfluenced?: boolean;
-    };
-    /**
-     * @description Source type for generating related topic suggestions
-     * @enum {string}
-     */
-    SuggestionSource: 'DocumentId' | 'Slug' | 'Topic' | 'Category';
     /** @description Information about a repository sync operation */
     SyncInfo: {
       /**
@@ -35264,12 +28371,6 @@ export interface components {
      * @enum {string}
      */
     SyncTrigger: 'Manual' | 'Scheduled';
-    /**
-     * @description Whether documents must match all specified tags or any tag
-     * @default All
-     * @enum {string}
-     */
-    TagMatchMode: 'All' | 'Any';
     /**
      * @description Current lifecycle status of a scenario template
      * @enum {string}
@@ -35371,11 +28472,6 @@ export interface components {
      * @enum {string}
      */
     TerritoryClaimStatus: 'Active' | 'Contested' | 'Released';
-    /**
-     * @description Territory validation mode for constraint checking
-     * @enum {string}
-     */
-    TerritoryMode: 'exclusive' | 'inclusive';
     /** @description Request to dry-run scenario trigger */
     TestScenarioRequest: {
       /**
@@ -35463,22 +28559,6 @@ export interface components {
       /** @description Beat unit (4 = quarter, 8 = eighth) */
       denominator: number;
     };
-    /** @description A suggested related topic with relevance context */
-    TopicSuggestion: {
-      /**
-       * Format: uuid
-       * @description Unique identifier of the suggested document
-       */
-      documentId: string;
-      /** @description URL-friendly slug of the suggested document (null if unavailable) */
-      slug?: string | null;
-      /** @description Title of the suggested document */
-      title: string;
-      /** @description Category of the suggested document (null if uncategorized) */
-      category?: components['schemas']['DocumentCategory'];
-      /** @description Explanation of why this document is relevant (null if not computed) */
-      relevanceReason?: string | null;
-    };
     /**
      * @description Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.
      *     Based on psychological research (Big Five + game-relevant extensions).
@@ -35522,11 +28602,6 @@ export interface components {
        * @default 0
        */
       changeCount: number;
-    };
-    /** @description Transaction details */
-    TransactionResponse: {
-      /** @description Transaction record */
-      transaction: components['schemas']['CurrencyTransactionRecord'];
     };
     /**
      * @description Classification of the currency transaction
@@ -35603,115 +28678,18 @@ export interface components {
        */
       toEntityId: string;
     };
-    /** @description Request to transfer currency between wallets */
-    TransferCurrencyRequest: {
+    /** @description Request to transfer a location from its current realm to a different realm */
+    TransferLocationToRealmRequest: {
       /**
        * Format: uuid
-       * @description Source wallet ID
+       * @description ID of the location to transfer
        */
-      sourceWalletId: string;
+      locationId: string;
       /**
        * Format: uuid
-       * @description Target wallet ID
+       * @description ID of the target realm to transfer the location to
        */
-      targetWalletId: string;
-      /**
-       * Format: uuid
-       * @description Currency to transfer
-       */
-      currencyDefinitionId: string;
-      /**
-       * Format: double
-       * @description Amount to transfer (must be positive)
-       */
-      amount: number;
-      /** @description Must be a transfer type (transfer, trade, gift) */
-      transactionType: components['schemas']['TransactionType'];
-      /** @description What triggered this transfer */
-      referenceType?: string | null;
-      /**
-       * Format: uuid
-       * @description Reference entity ID
-       */
-      referenceId?: string | null;
-      /** @description Unique key to prevent duplicate processing */
-      idempotencyKey: string;
-      /** @description Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention. */
-      metadata?: {
-        [key: string]: unknown;
-      } | null;
-    };
-    /** @description Result of transfer operation */
-    TransferCurrencyResponse: {
-      /** @description Created transaction record */
-      transaction: components['schemas']['CurrencyTransactionRecord'];
-      /**
-       * Format: double
-       * @description Source wallet balance after transfer
-       */
-      sourceNewBalance: number;
-      /**
-       * Format: double
-       * @description Target wallet balance after transfer
-       */
-      targetNewBalance: number;
-      /** @description Whether target wallet cap was applied */
-      targetCapApplied: boolean;
-      /**
-       * Format: double
-       * @description Amount lost due to target wallet cap
-       */
-      targetCapAmountLost?: number | null;
-    };
-    /** @description Request to transfer item ownership */
-    TransferItemRequest: {
-      /**
-       * Format: uuid
-       * @description Item instance ID
-       */
-      instanceId: string;
-      /**
-       * Format: uuid
-       * @description Target container ID
-       */
-      targetContainerId: string;
-      /**
-       * Format: double
-       * @description Quantity to transfer (all if null)
-       */
-      quantity?: number | null;
-    };
-    /** @description Response after transfer. HTTP 200 confirms transfer. */
-    TransferItemResponse: {
-      /**
-       * Format: uuid
-       * @description Transferred item ID (for partial transfers, this is the new split item)
-       */
-      instanceId: string;
-      /**
-       * Format: uuid
-       * @description Container the item was transferred from
-       */
-      sourceContainerId: string;
-      /**
-       * Format: double
-       * @description Amount transferred
-       */
-      quantityTransferred: number;
-    };
-    /** @description Result of transferring assets to a party during resolution */
-    TransferResult: {
-      /**
-       * Format: uuid
-       * @description Party ID
-       */
-      partyId: string;
-      /** @description Assets transferred (null if failed) */
-      assets?: components['schemas']['EscrowAssetBundle'];
-      /** @description Whether transfer succeeded */
-      success: boolean;
-      /** @description Error message if failed */
-      error?: string | null;
+      targetRealmId: string;
     };
     /** @description Position, rotation, and scale in 3D space */
     Transform: {
@@ -36073,6 +29051,30 @@ export interface components {
       /** @description Rank within results (1 = best option by sort criteria) */
       rank: number;
     };
+    /** @description A deleted document in the trashcan with expiration information */
+    TrashcanItem: {
+      /**
+       * Format: uuid
+       * @description Unique identifier of the deleted document
+       */
+      documentId: string;
+      /** @description URL-friendly slug of the deleted document (null if slug was reused) */
+      slug?: string | null;
+      /** @description Title of the deleted document */
+      title: string;
+      /** @description Category of the deleted document (null if uncategorized) */
+      category?: components['schemas']['DocumentCategory'];
+      /**
+       * Format: date-time
+       * @description Timestamp when the document was deleted
+       */
+      deletedAt: string;
+      /**
+       * Format: date-time
+       * @description Timestamp when the document will be permanently deleted
+       */
+      expiresAt: string;
+    };
     /** @description A condition that must be met for scenario triggering */
     TriggerCondition: {
       /** @description Type of condition to evaluate */
@@ -36143,24 +29145,6 @@ export interface components {
      * @enum {string}
      */
     TriggerMode: 'Proximity' | 'Interaction' | 'Prompted' | 'Forced';
-    /** @description Request to trigger a time sync event for an entity's sessions */
-    TriggerTimeSyncRequest: {
-      /**
-       * Format: uuid
-       * @description Realm to sync time for
-       */
-      realmId: string;
-      /**
-       * Format: uuid
-       * @description Entity whose sessions should receive the sync (typically a character or account)
-       */
-      entityId: string;
-    };
-    /** @description Result of a time sync trigger */
-    TriggerTimeSyncResponse: {
-      /** @description Number of sessions that received the time sync event */
-      sessionsNotified: number;
-    };
     /** @description A style-specific tune type definition */
     TuneType: {
       /** @description Tune type name (e.g., "reel", "jig") */
@@ -36187,6 +29171,23 @@ export interface components {
        */
       targetSessionId: string;
     };
+    /** @description Request to remove a repository binding from a namespace */
+    UnbindRepositoryRequest: {
+      /** @description Documentation namespace to unbind */
+      namespace: string;
+      /**
+       * @description Also delete all documents from the namespace
+       * @default false
+       */
+      deleteDocuments: boolean;
+    };
+    /** @description Response confirming repository unbinding with cleanup details */
+    UnbindRepositoryResponse: {
+      /** @description Namespace that was unbound */
+      namespace: string;
+      /** @description Number of documents deleted (0 if deleteDocuments was false) */
+      documentsDeleted: number;
+    };
     /** @description Request to reactivate a deprecated faction */
     UndeprecateFactionRequest: {
       /**
@@ -36195,10 +29196,26 @@ export interface components {
        */
       factionId: string;
     };
+    /** @description Request to restore a deprecated location back to active status */
+    UndeprecateLocationRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the location to restore
+       */
+      locationId: string;
+    };
     /** @description Request to reverse deprecation of a transit mode */
     UndeprecateModeRequest: {
       /** @description Mode code to undeprecate */
       code: string;
+    };
+    /** @description Request to restore a deprecated relationship type back to active status */
+    UndeprecateRelationshipTypeRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the relationship type to restore
+       */
+      relationshipTypeId: string;
     };
     /** @description Request to restore a deprecated seed type to active status. */
     UndeprecateSeedTypeRequest: {
@@ -36352,52 +29369,6 @@ export interface components {
       slotName: string;
       /** @description Version to unpin */
       versionNumber: number;
-    };
-    /** @description Request to unregister a character as a deity follower */
-    UnregisterFollowerRequest: {
-      /**
-       * Format: uuid
-       * @description Deity to unfollow
-       */
-      deityId: string;
-      /**
-       * Format: uuid
-       * @description Character to remove as follower
-       */
-      characterId: string;
-    };
-    /** @description Request to unregister a reference to a resource */
-    UnregisterReferenceRequest: {
-      /** @description Type of resource being dereferenced (opaque identifier) */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource being dereferenced
-       */
-      resourceId: string;
-      /** @description Type of entity releasing the reference (opaque identifier) */
-      sourceType: string;
-      /** @description ID of the entity releasing the reference (opaque string, supports non-Guid IDs) */
-      sourceId: string;
-    };
-    /** @description Response after unregistering a reference */
-    UnregisterReferenceResponse: {
-      /** @description Type of resource dereferenced */
-      resourceType: string;
-      /**
-       * Format: uuid
-       * @description ID of the resource dereferenced
-       */
-      resourceId: string;
-      /** @description Reference count after unregistration */
-      newRefCount: number;
-      /** @description True if this reference existed before unregistration */
-      wasRegistered: boolean;
-      /**
-       * Format: date-time
-       * @description When grace period started (null if refCount > 0)
-       */
-      gracePeriodStartedAt?: string | null;
     };
     /** @description A scene reference that could not be resolved */
     UnresolvedReference: {
@@ -36662,6 +29633,73 @@ export interface components {
         [key: string]: unknown;
       };
     };
+    /** @description Request to update mutable fields of a currency definition */
+    UpdateCurrencyDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description Definition ID to update
+       */
+      definitionId: string;
+      /** @description New currency name */
+      name?: string | null;
+      /** @description New description */
+      description?: string | null;
+      /** @description New transferable flag */
+      transferable?: boolean | null;
+      /** @description New tradeable flag */
+      tradeable?: boolean | null;
+      /** @description New allowNegative flag */
+      allowNegative?: boolean | null;
+      /**
+       * Format: double
+       * @description New wallet cap
+       */
+      perWalletCap?: number | null;
+      /** @description New overflow behavior */
+      capOverflowBehavior?: components['schemas']['CapOverflowBehavior'];
+      /**
+       * Format: double
+       * @description New daily earn cap
+       */
+      dailyEarnCap?: number | null;
+      /**
+       * Format: double
+       * @description New weekly earn cap
+       */
+      weeklyEarnCap?: number | null;
+      /** @description New earn cap reset time (e.g. "14:00:00" for 2pm UTC) */
+      earnCapResetTime?: string | null;
+      /** @description Enable/disable autogain */
+      autogainEnabled?: boolean | null;
+      /** @description New autogain mode */
+      autogainMode?: components['schemas']['AutogainMode'];
+      /**
+       * Format: double
+       * @description New autogain amount
+       */
+      autogainAmount?: number | null;
+      /** @description New autogain interval */
+      autogainInterval?: string | null;
+      /**
+       * Format: double
+       * @description New autogain cap
+       */
+      autogainCap?: number | null;
+      /**
+       * Format: double
+       * @description New exchange rate to base
+       */
+      exchangeRateToBase?: number | null;
+      /**
+       * Format: uuid
+       * @description New icon asset ID
+       */
+      iconAssetId?: string | null;
+      /** @description New display format */
+      displayFormat?: string | null;
+      /** @description Active status */
+      isActive?: boolean | null;
+    };
     /** @description Request to update a map definition */
     UpdateDefinitionRequest: {
       /**
@@ -36682,39 +29720,61 @@ export interface components {
         [key: string]: unknown;
       } | null;
     };
-    /** @description Request to update deity properties (partial update, only non-null fields applied) */
-    UpdateDeityRequest: {
+    /** @description Request to update an existing document's fields */
+    UpdateDocumentRequest: {
+      /** @description Documentation namespace containing the document */
+      namespace: string;
       /**
        * Format: uuid
-       * @description Deity to update
+       * @description Unique identifier of the document to update
        */
-      deityId: string;
-      /** @description Updated display name */
-      displayName?: string | null;
-      /** @description Updated description */
+      documentId: string;
+      /** @description New URL-friendly slug for the document (null to keep unchanged) */
+      slug?: string | null;
+      /** @description New display title for the document (null to keep unchanged) */
+      title?: string | null;
+      /** @description New category for the document (null to keep unchanged) */
+      category?: components['schemas']['DocumentCategory'];
+      /** @description New markdown content for the document (null to keep unchanged) */
+      content?: string | null;
+      /** @description New text summary for the document (null to keep unchanged) */
+      summary?: string | null;
+      /** @description New voice-optimized summary for the document (null to keep unchanged) */
+      voiceSummary?: string | null;
+      /** @description New set of tags for the document (null to keep unchanged) */
+      tags?: string[] | null;
+      /** @description New set of related document IDs (null to keep unchanged) */
+      relatedDocuments?: string[] | null;
+      /** @description Updated client-provided custom metadata (null to keep unchanged). No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Response confirming document update with timestamp */
+    UpdateDocumentResponse: {
+      /**
+       * Format: uuid
+       * @description Unique identifier of the updated document
+       */
+      documentId: string;
+      /**
+       * Format: date-time
+       * @description Timestamp when the document was updated
+       */
+      updatedAt: string;
+    };
+    /** @description Request to update an encounter type */
+    UpdateEncounterTypeRequest: {
+      /** @description Code of the type to update */
+      code: string;
+      /** @description New display name */
+      name?: string | null;
+      /** @description New description */
       description?: string | null;
-      /** @description Updated domain influences (replaces entire list) */
-      domains?: components['schemas']['DomainInfluence'][] | null;
-      /** @description Updated personality traits */
-      personalityTraits?: components['schemas']['DeityPersonalityTraits'] | null;
-      /** @description Updated maximum attention slots */
-      maxAttentionSlots?: number | null;
-    };
-    /** @description Request to update the phase of an active encounter */
-    UpdateEncounterPhaseRequest: {
-      /** @description ID of the Event Brain actor managing the encounter */
-      actorId: string;
-      /** @description New phase name for the encounter */
-      phase: string;
-    };
-    /** @description Response after updating encounter phase */
-    UpdateEncounterPhaseResponse: {
-      /** @description ID of the actor managing the encounter */
-      actorId: string;
-      /** @description Previous phase name */
-      previousPhase?: string | null;
-      /** @description Current phase name after update */
-      currentPhase: string;
+      /** @description New suggested emotional response */
+      defaultEmotionalImpact?: components['schemas']['EmotionalImpact'];
+      /** @description New display ordering */
+      sortOrder?: number | null;
     };
     /** @description Request to update metadata for an unlocked entry */
     UpdateEntryMetadataRequest: {
@@ -36769,6 +29829,29 @@ export interface components {
       loopPoint?: string | null;
       /** @description Updated composer name */
       composer?: string | null;
+    };
+    /** @description Request to update exchange rate */
+    UpdateExchangeRateRequest: {
+      /**
+       * Format: uuid
+       * @description Currency to update
+       */
+      currencyDefinitionId: string;
+      /**
+       * Format: double
+       * @description New exchange rate to base currency (must be positive)
+       */
+      exchangeRateToBase: number;
+    };
+    /** @description Result of exchange rate update */
+    UpdateExchangeRateResponse: {
+      /** @description Updated currency definition */
+      definition: components['schemas']['CurrencyDefinitionResponse'];
+      /**
+       * Format: double
+       * @description Previous exchange rate
+       */
+      previousRate: number;
     };
     /** @description Request to update a faction */
     UpdateFactionRequest: {
@@ -36898,6 +29981,32 @@ export interface components {
         [key: string]: unknown;
       } | null;
     };
+    /** @description Request to update an existing location's properties */
+    UpdateLocationRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the location to update
+       */
+      locationId: string;
+      /** @description Display name for the location */
+      name?: string | null;
+      /** @description Description of the location */
+      description?: string | null;
+      /** @description Type of location */
+      locationType?: components['schemas']['LocationType'] | null;
+      /** @description Optional spatial extent in world coordinates */
+      bounds?: components['schemas']['BoundingBox3D'] | null;
+      /** @description Precision level of spatial bounds */
+      boundsPrecision?: components['schemas']['BoundsPrecision'] | null;
+      /** @description How this location's coordinate system relates to its parent */
+      coordinateMode?: components['schemas']['CoordinateMode'] | null;
+      /** @description Origin point for local or inherited coordinate systems */
+      localOrigin?: components['schemas']['Position3D'] | null;
+      /** @description Updated client-provided location metadata. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
     /** @description Request to update a member's role */
     UpdateMemberRoleRequest: {
       /**
@@ -36912,20 +30021,6 @@ export interface components {
       characterId: string;
       /** @description New role to assign */
       role: components['schemas']['FactionMemberRole'];
-    };
-    /** @description Request to update MFA settings for an account */
-    UpdateMfaRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the account to update
-       */
-      accountId: string;
-      /** @description Whether to enable or disable MFA */
-      mfaEnabled: boolean;
-      /** @description Encrypted TOTP secret (set when enabling, null when disabling) */
-      mfaSecret?: string | null;
-      /** @description BCrypt-hashed recovery codes (set when enabling, null when disabling) */
-      mfaRecoveryCodes?: string[] | null;
     };
     /**
      * @description How to handle score updates
@@ -36999,43 +30094,6 @@ export interface components {
       /** @description New description (null to keep current) */
       description?: string | null;
     };
-    /** @description Request to update an account password */
-    UpdatePasswordRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the account to update
-       */
-      accountId: string;
-      /** @description New pre-hashed password from Auth service */
-      passwordHash: string;
-    };
-    /** @description Request to update a character's perspective */
-    UpdatePerspectiveRequest: {
-      /**
-       * Format: uuid
-       * @description Encounter to update perspective for
-       */
-      encounterId: string;
-      /**
-       * Format: uuid
-       * @description Character whose perspective to update
-       */
-      characterId: string;
-      /** @description New emotional impact */
-      emotionalImpact?: components['schemas']['EmotionalImpact'];
-      /**
-       * Format: float
-       * @description New impact intensity (0.0-1.0)
-       */
-      impactIntensity?: number | null;
-      /**
-       * Format: float
-       * @description New sentiment shift
-       */
-      sentimentShift?: number | null;
-      /** @description New memory description */
-      rememberedAs?: string | null;
-    };
     /** @description Request to update deployment phase configuration (non-null fields applied) */
     UpdatePhaseConfigRequest: {
       /** @description New deployment phase */
@@ -37102,6 +30160,33 @@ export interface components {
       downtimePolicy?: components['schemas']['DowntimePolicy'] | null;
       /** @description New calendar template code (validated for existence, null = no change) */
       calendarTemplateCode?: string | null;
+    };
+    /** @description Request to update an existing relationship type's properties such as name, description, category, or hierarchy */
+    UpdateRelationshipTypeRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the relationship type to update
+       */
+      relationshipTypeId: string;
+      /** @description Display name for the relationship type */
+      name?: string | null;
+      /** @description Description of the relationship type */
+      description?: string | null;
+      /** @description Category for grouping */
+      category?: string | null;
+      /**
+       * Format: uuid
+       * @description Parent type ID for hierarchy
+       */
+      parentTypeId?: string | null;
+      /** @description Code of the inverse relationship */
+      inverseTypeCode?: string | null;
+      /** @description Whether the relationship is bidirectional */
+      isBidirectional?: boolean | null;
+      /** @description Updated client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
     };
     /** @description Request to update repository binding configuration */
     UpdateRepositoryBindingRequest: {
@@ -37319,16 +30404,6 @@ export interface components {
       /** @description Updated content references */
       content?: components['schemas']['ScenarioContent'];
     };
-    /** @description Request to update email verification status */
-    UpdateVerificationRequest: {
-      /**
-       * Format: uuid
-       * @description ID of the account to update
-       */
-      accountId: string;
-      /** @description New email verification status */
-      emailVerified: boolean;
-    };
     /** @description Request to initiate an asset upload and receive a pre-signed URL */
     UploadRequest: {
       /** @description Type of owner initiating this upload */
@@ -37517,36 +30592,6 @@ export interface components {
       /** @description Validation warnings */
       warnings: string[];
     };
-    /** @description Request to validate an existing GOAP plan against current world state */
-    ValidateGoapPlanRequest: {
-      /** @description The plan to validate */
-      plan: components['schemas']['GoapPlanResult'];
-      /** @description Index of the action currently being executed */
-      currentActionIndex: number;
-      /**
-       * @description Planner-owned dynamic world state bag for plan validation.
-       *     Keys are arbitrary world state variable names, values are current state.
-       *     No Bannou service reads specific keys by convention (T29 compliant).
-       */
-      worldState: {
-        [key: string]: unknown;
-      };
-      /** @description All active goals for priority checking */
-      activeGoals?: components['schemas']['GoapGoal'][] | null;
-    };
-    /** @description Response indicating whether a GOAP plan is still valid and suggested next action */
-    ValidateGoapPlanResponse: {
-      /** @description Whether the plan is still valid */
-      isValid: boolean;
-      /** @description Reason for the validation result */
-      reason: components['schemas']['ReplanReason'];
-      /** @description Suggested action based on validation */
-      suggestedAction: components['schemas']['ValidationSuggestion'];
-      /** @description Index where plan became invalid. Null when plan is valid. */
-      invalidatedAtIndex?: number | null;
-      /** @description Additional details about the validation result. Null when no additional context is needed. */
-      message?: string | null;
-    };
     /** @description Request to validate MIDI-JSON structure */
     ValidateMidiJsonRequest: {
       /** @description MIDI-JSON structure to validate */
@@ -37575,30 +30620,6 @@ export interface components {
        * @default true
        */
       applyGameRules: boolean;
-    };
-    /** @description Request to validate a location against territory boundaries */
-    ValidateTerritoryRequest: {
-      /**
-       * Format: uuid
-       * @description The location to validate
-       */
-      locationId: string;
-      /** @description Territory boundary location IDs */
-      territoryLocationIds: string[];
-      /** @description Validation mode (exclusive or inclusive). Defaults to exclusive. */
-      territoryMode?: components['schemas']['TerritoryMode'] | null;
-    };
-    /** @description Territory validation result */
-    ValidateTerritoryResponse: {
-      /** @description True if location passes territory validation */
-      isValid: boolean;
-      /** @description Human-readable reason if validation failed */
-      violationReason?: string | null;
-      /**
-       * Format: uuid
-       * @description The territory location that matched (for inclusive) or conflicted (for exclusive)
-       */
-      matchedTerritoryId?: string | null;
     };
     /** @description Response from token validation containing associated account details. HTTP 200 confirms the token is valid; 401 indicates invalid or expired. */
     ValidateTokenResponse: {
@@ -37755,11 +30776,6 @@ export interface components {
      * @enum {string}
      */
     ValidationSeverity: 'Error' | 'Warning';
-    /**
-     * @description Suggested action based on GOAP plan validation
-     * @enum {string}
-     */
-    ValidationSuggestion: 'Continue' | 'Replan' | 'Abort';
     /** @description Validation rules applied to messages in rooms of this type */
     ValidatorConfig: {
       /** @description Maximum message length in characters for text and custom formats */
@@ -37808,36 +30824,6 @@ export interface components {
        * @description Z coordinate
        */
       z: number;
-    };
-    /** @description Request to verify a condition for conditional escrow */
-    VerifyConditionRequest: {
-      /**
-       * Format: uuid
-       * @description Escrow ID
-       */
-      escrowId: string;
-      /** @description Whether the condition was met */
-      conditionMet: boolean;
-      /**
-       * Format: uuid
-       * @description Verifier entity ID
-       */
-      verifierId: string;
-      /** @description Verifier entity type */
-      verifierType: components['schemas']['EntityType'];
-      /** @description Caller-provided proof/evidence data for condition verification. No Bannou plugin reads specific keys from this field by convention. */
-      verificationData?: {
-        [key: string]: unknown;
-      } | null;
-      /** @description Idempotency key */
-      idempotencyKey: string;
-    };
-    /** @description Response from verifying a condition on an escrow */
-    VerifyConditionResponse: {
-      /** @description Updated escrow agreement */
-      escrow: components['schemas']['EscrowAgreement'];
-      /** @description Whether this triggered release/refund */
-      triggered: boolean;
     };
     /** @description Request to verify data integrity of a save version via hash comparison */
     VerifyIntegrityRequest: {
@@ -37976,6 +30962,11 @@ export interface components {
        */
       timestamp: string;
     };
+    /**
+     * @description Audio codec for voice communication
+     * @enum {string}
+     */
+    VoiceCodec: 'Opus' | 'G711' | 'G722';
     /** @description Request to apply voice leading to a chord sequence */
     VoiceLeadRequest: {
       /** @description Chord symbols to voice */
@@ -38047,6 +31038,25 @@ export interface components {
       | 'LargeLeap'
       | 'UnresolvedLeap'
       | 'DoubledLeadingTone';
+    /** @description Peer endpoint details for P2P connection */
+    VoicePeer: {
+      /**
+       * Format: uuid
+       * @description WebSocket session ID for this peer (ephemeral identifier)
+       */
+      sessionId: string;
+      /** @description Display name */
+      displayName?: string | null;
+      /** @description Peer's SIP endpoint for direct connection */
+      sipEndpoint: components['schemas']['SipEndpoint'];
+    };
+    /**
+     * @description Voice communication tier:
+     *     - P2P: Direct peer-to-peer connections (up to 6 participants)
+     *     - Scaled: RTP server-mediated communication (unlimited participants)
+     * @enum {string}
+     */
+    VoiceTier: 'P2P' | 'Scaled';
     /** @description A chord with specific voice pitches */
     VoicedChord: {
       /** @description Original chord symbol */
@@ -38059,59 +31069,6 @@ export interface components {
      * @enum {string}
      */
     VolumeShape: 'Box' | 'Sphere' | 'Capsule' | 'Cylinder';
-    /** @description Wallet details */
-    WalletResponse: {
-      /**
-       * Format: uuid
-       * @description Unique wallet identifier
-       */
-      walletId: string;
-      /**
-       * Format: uuid
-       * @description Owner entity ID
-       */
-      ownerId: string;
-      /** @description Owner type */
-      ownerType: components['schemas']['EntityType'];
-      /**
-       * Format: uuid
-       * @description Realm ID
-       */
-      realmId?: string | null;
-      /** @description Current wallet status */
-      status: components['schemas']['WalletStatus'];
-      /** @description Reason wallet was frozen */
-      frozenReason?: string | null;
-      /**
-       * Format: date-time
-       * @description When wallet was frozen
-       */
-      frozenAt?: string | null;
-      /** @description Who froze the wallet */
-      frozenBy?: string | null;
-      /**
-       * Format: date-time
-       * @description Creation timestamp
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @description Last transaction timestamp
-       */
-      lastActivityAt?: string | null;
-    };
-    /**
-     * @description Current status of a wallet
-     * @enum {string}
-     */
-    WalletStatus: 'Active' | 'Frozen' | 'Closed';
-    /** @description Wallet with all non-zero balances */
-    WalletWithBalancesResponse: {
-      /** @description Wallet details */
-      wallet: components['schemas']['WalletResponse'];
-      /** @description All non-zero balances in this wallet */
-      balances: components['schemas']['BalanceSummary'][];
-    };
     /** @description Information about an active regional watcher */
     WatcherInfo: {
       /**
@@ -38176,100 +31133,6 @@ export interface operations {
         content: {
           'application/json': components['schemas']['AccountResponse'];
         };
-      };
-      /** @description Account not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  account_updatePasswordHash: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdatePasswordRequest'];
-      };
-    };
-    responses: {
-      /** @description Password hash updated successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Account not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  account_updateMfa: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateMfaRequest'];
-      };
-    };
-    responses: {
-      /** @description MFA settings updated successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Account not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Concurrent modification detected */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  account_updateVerificationStatus: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateVerificationRequest'];
-      };
-    };
-    responses: {
-      /** @description Verification status updated successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
       };
       /** @description Account not found */
       404: {
@@ -38513,198 +31376,6 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['DeleteActorTemplateResponse'];
-        };
-      };
-    };
-  };
-  actor_SpawnActor: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SpawnActorRequest'];
-      };
-    };
-    responses: {
-      /** @description Actor spawned successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ActorInstanceResponse'];
-        };
-      };
-    };
-  };
-  actor_StopActor: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['StopActorRequest'];
-      };
-    };
-    responses: {
-      /** @description Actor stopped successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['StopActorResponse'];
-        };
-      };
-    };
-  };
-  actor_BindActorCharacter: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['BindActorCharacterRequest'];
-      };
-    };
-    responses: {
-      /** @description Actor bound to character successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ActorInstanceResponse'];
-        };
-      };
-    };
-  };
-  actor_CleanupByCharacter: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CleanupByCharacterRequest'];
-      };
-    };
-    responses: {
-      /** @description Cleanup completed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CleanupByCharacterResponse'];
-        };
-      };
-    };
-  };
-  actor_InjectPerception: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['InjectPerceptionRequest'];
-      };
-    };
-    responses: {
-      /** @description Perception injected successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['InjectPerceptionResponse'];
-        };
-      };
-    };
-  };
-  actor_StartEncounter: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['StartEncounterRequest'];
-      };
-    };
-    responses: {
-      /** @description Encounter started successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['StartEncounterResponse'];
-        };
-      };
-    };
-  };
-  actor_UpdateEncounterPhase: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateEncounterPhaseRequest'];
-      };
-    };
-    responses: {
-      /** @description Encounter phase updated successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['UpdateEncounterPhaseResponse'];
-        };
-      };
-    };
-  };
-  actor_EndEncounter: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['EndEncounterRequest'];
-      };
-    };
-    responses: {
-      /** @description Encounter ended successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['EndEncounterResponse'];
         };
       };
     };
@@ -40010,128 +32681,6 @@ export interface operations {
       };
     };
   };
-  behavior_GetCachedBehavior: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetCachedBehaviorRequest'];
-      };
-    };
-    responses: {
-      /** @description Cached behavior retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CachedBehaviorResponse'];
-        };
-      };
-      /** @description Behavior not found in cache */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  behavior_InvalidateCachedBehavior: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['InvalidateCacheRequest'];
-      };
-    };
-    responses: {
-      /** @description Cache invalidated successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Behavior not found in cache */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  behavior_GenerateGoapPlan: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GoapPlanRequest'];
-      };
-    };
-    responses: {
-      /** @description Plan generated successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GoapPlanResponse'];
-        };
-      };
-      /** @description Invalid request or planning failed */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  behavior_ValidateGoapPlan: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ValidateGoapPlanRequest'];
-      };
-    };
-    responses: {
-      /** @description Plan validation completed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ValidateGoapPlanResponse'];
-        };
-      };
-      /** @description Invalid request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
   character_getCharacter: {
     parameters: {
       query?: never;
@@ -40273,7 +32822,7 @@ export interface operations {
       };
     };
   };
-  character_getCompressData: {
+  characterEncounter_createEncounterType: {
     parameters: {
       query?: never;
       header?: never;
@@ -40282,49 +32831,11 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['GetCompressDataRequest'];
+        'application/json': components['schemas']['CreateEncounterTypeRequest'];
       };
     };
     responses: {
-      /** @description Character base data returned */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CharacterBaseArchive'];
-        };
-      };
-      /** @description Character is not dead (cannot compress alive characters) */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Character not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  characterEncounter_getEncounterType: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetEncounterTypeRequest'];
-      };
-    };
-    responses: {
-      /** @description Encounter type retrieved successfully */
+      /** @description Encounter type created successfully */
       200: {
         headers: {
           [name: string]: unknown;
@@ -40332,6 +32843,51 @@ export interface operations {
         content: {
           'application/json': components['schemas']['EncounterTypeResponse'];
         };
+      };
+      /** @description Invalid encounter type data */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Encounter type with this code already exists */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterEncounter_updateEncounterType: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateEncounterTypeRequest'];
+      };
+    };
+    responses: {
+      /** @description Encounter type updated successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EncounterTypeResponse'];
+        };
+      };
+      /** @description Invalid update data */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Encounter type not found */
       404: {
@@ -40342,7 +32898,7 @@ export interface operations {
       };
     };
   };
-  characterEncounter_listEncounterTypes: {
+  characterEncounter_deleteEncounterType: {
     parameters: {
       query?: never;
       header?: never;
@@ -40351,58 +32907,32 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['ListEncounterTypesRequest'];
+        'application/json': components['schemas']['DeleteEncounterTypeRequest'];
       };
     };
     responses: {
-      /** @description Encounter types retrieved successfully */
+      /** @description Encounter type deleted successfully */
       200: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['EncounterTypeListResponse'];
-        };
+        content?: never;
       };
-    };
-  };
-  characterEncounter_recordEncounter: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RecordEncounterRequest'];
-      };
-    };
-    responses: {
-      /** @description Encounter recorded successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['EncounterResponse'];
-        };
-      };
-      /** @description Invalid encounter data (requires at least 2 participants) */
+      /** @description Cannot delete built-in type */
       400: {
         headers: {
           [name: string]: unknown;
         };
         content?: never;
       };
-      /** @description One or more characters not found */
+      /** @description Encounter type not found */
       404: {
         headers: {
           [name: string]: unknown;
         };
         content?: never;
       };
-      /** @description Duplicate encounter (same participants, timestamp, and type) */
+      /** @description Cannot delete - type is in use by encounters */
       409: {
         headers: {
           [name: string]: unknown;
@@ -40411,7 +32941,7 @@ export interface operations {
       };
     };
   };
-  characterEncounter_queryByCharacter: {
+  characterPersonality_setPersonality: {
     parameters: {
       query?: never;
       header?: never;
@@ -40420,389 +32950,11 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['QueryByCharacterRequest'];
+        'application/json': components['schemas']['SetPersonalityRequest'];
       };
     };
     responses: {
-      /** @description Encounters retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['EncounterListResponse'];
-        };
-      };
-    };
-  };
-  characterEncounter_queryBetween: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['QueryBetweenRequest'];
-      };
-    };
-    responses: {
-      /** @description Encounters retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['EncounterListResponse'];
-        };
-      };
-    };
-  };
-  characterEncounter_queryByLocation: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['QueryByLocationRequest'];
-      };
-    };
-    responses: {
-      /** @description Encounters retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['EncounterListResponse'];
-        };
-      };
-    };
-  };
-  characterEncounter_hasMet: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['HasMetRequest'];
-      };
-    };
-    responses: {
-      /** @description Check completed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HasMetResponse'];
-        };
-      };
-    };
-  };
-  characterEncounter_getSentiment: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetSentimentRequest'];
-      };
-    };
-    responses: {
-      /** @description Sentiment calculated */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['SentimentResponse'];
-        };
-      };
-    };
-  };
-  characterEncounter_batchGetSentiment: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['BatchGetSentimentRequest'];
-      };
-    };
-    responses: {
-      /** @description Sentiments calculated */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['BatchSentimentResponse'];
-        };
-      };
-    };
-  };
-  characterEncounter_getPerspective: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetPerspectiveRequest'];
-      };
-    };
-    responses: {
-      /** @description Perspective retrieved */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PerspectiveResponse'];
-        };
-      };
-      /** @description Perspective not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  characterEncounter_updatePerspective: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdatePerspectiveRequest'];
-      };
-    };
-    responses: {
-      /** @description Perspective updated */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PerspectiveResponse'];
-        };
-      };
-      /** @description Perspective not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  characterEncounter_refreshMemory: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RefreshMemoryRequest'];
-      };
-    };
-    responses: {
-      /** @description Memory refreshed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PerspectiveResponse'];
-        };
-      };
-      /** @description Perspective not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  characterEncounter_getCompressData: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetCompressDataRequest'];
-      };
-    };
-    responses: {
-      /** @description Compressed data returned */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CharacterEncounterArchive'];
-        };
-      };
-      /** @description No encounter data for character */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  characterHistory_getParticipation: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetParticipationRequest'];
-      };
-    };
-    responses: {
-      /** @description Participation records retrieved */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ParticipationListResponse'];
-        };
-      };
-    };
-  };
-  characterHistory_getEventParticipants: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetEventParticipantsRequest'];
-      };
-    };
-    responses: {
-      /** @description Participants retrieved */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ParticipationListResponse'];
-        };
-      };
-    };
-  };
-  characterHistory_getBackstory: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetBackstoryRequest'];
-      };
-    };
-    responses: {
-      /** @description Backstory retrieved */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['BackstoryResponse'];
-        };
-      };
-      /** @description No backstory defined for this character */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  characterHistory_getCompressData: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetCompressDataRequest'];
-      };
-    };
-    responses: {
-      /** @description Compressed data returned */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CharacterHistoryArchive'];
-        };
-      };
-      /** @description No history data for character */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  characterPersonality_getPersonality: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetPersonalityRequest'];
-      };
-    };
-    responses: {
-      /** @description Personality retrieved successfully */
+      /** @description Personality saved successfully */
       200: {
         headers: {
           [name: string]: unknown;
@@ -40811,8 +32963,8 @@ export interface operations {
           'application/json': components['schemas']['PersonalityResponse'];
         };
       };
-      /** @description No personality defined for this character */
-      404: {
+      /** @description Invalid personality data */
+      400: {
         headers: {
           [name: string]: unknown;
         };
@@ -40820,7 +32972,7 @@ export interface operations {
       };
     };
   };
-  characterPersonality_recordExperience: {
+  characterPersonality_setCombatPreferences: {
     parameters: {
       query?: never;
       header?: never;
@@ -40829,66 +32981,11 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['RecordExperienceRequest'];
+        'application/json': components['schemas']['SetCombatPreferencesRequest'];
       };
     };
     responses: {
-      /** @description Experience recorded and evaluated */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ExperienceResult'];
-        };
-      };
-      /** @description Character personality not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  characterPersonality_batchGetPersonalities: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['BatchGetPersonalitiesRequest'];
-      };
-    };
-    responses: {
-      /** @description Personalities retrieved */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['BatchPersonalityResponse'];
-        };
-      };
-    };
-  };
-  characterPersonality_getCombatPreferences: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetCombatPreferencesRequest'];
-      };
-    };
-    responses: {
-      /** @description Combat preferences retrieved successfully */
+      /** @description Combat preferences saved successfully */
       200: {
         headers: {
           [name: string]: unknown;
@@ -40897,98 +32994,12 @@ export interface operations {
           'application/json': components['schemas']['CombatPreferencesResponse'];
         };
       };
-      /** @description No combat preferences defined for this character */
-      404: {
+      /** @description Invalid combat preferences data */
+      400: {
         headers: {
           [name: string]: unknown;
         };
         content?: never;
-      };
-    };
-  };
-  characterPersonality_evolveCombatPreferences: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['EvolveCombatRequest'];
-      };
-    };
-    responses: {
-      /** @description Combat experience recorded and evaluated */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CombatEvolutionResult'];
-        };
-      };
-      /** @description Character combat preferences not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  characterPersonality_getCompressData: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetCompressDataRequest'];
-      };
-    };
-    responses: {
-      /** @description Compressed data returned */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CharacterPersonalityArchive'];
-        };
-      };
-      /** @description No personality data for character */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  characterPersonality_cleanupByCharacter: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CleanupByCharacterRequest'];
-      };
-    };
-    responses: {
-      /** @description Cleanup completed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CleanupByCharacterResponse'];
-        };
       };
     };
   };
@@ -41496,30 +33507,6 @@ export interface operations {
       };
     };
   };
-  chat_SendMessageBatch: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SendMessageBatchRequest'];
-      };
-    };
-    responses: {
-      /** @description Messages sent */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['SendMessageBatchResponse'];
-        };
-      };
-    };
-  };
   chat_GetMessageHistory: {
     parameters: {
       query?: never;
@@ -41636,78 +33623,6 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['SearchMessagesResponse'];
-        };
-      };
-    };
-  };
-  chat_AdminListRooms: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['AdminListRoomsRequest'];
-      };
-    };
-    responses: {
-      /** @description Rooms returned */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ListRoomsResponse'];
-        };
-      };
-    };
-  };
-  chat_AdminGetStats: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['AdminGetStatsRequest'];
-      };
-    };
-    responses: {
-      /** @description Statistics returned */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['AdminStatsResponse'];
-        };
-      };
-    };
-  };
-  chat_AdminForceCleanup: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['AdminForceCleanupRequest'];
-      };
-    };
-    responses: {
-      /** @description Cleanup executed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['AdminCleanupResponse'];
         };
       };
     };
@@ -42367,30 +34282,6 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
-      };
-    };
-  };
-  collection_cleanupByCharacter: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CleanupByCharacterRequest'];
-      };
-    };
-    responses: {
-      /** @description Cleanup completed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CleanupByCharacterResponse'];
-        };
       };
     };
   };
@@ -43367,7 +35258,7 @@ export interface operations {
       };
     };
   };
-  currency_getCurrencyDefinition: {
+  currency_updateCurrencyDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -43376,11 +35267,11 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['GetCurrencyDefinitionRequest'];
+        'application/json': components['schemas']['UpdateCurrencyDefinitionRequest'];
       };
     };
     responses: {
-      /** @description Currency definition retrieved successfully */
+      /** @description Currency definition updated successfully */
       200: {
         headers: {
           [name: string]: unknown;
@@ -43389,7 +35280,7 @@ export interface operations {
           'application/json': components['schemas']['CurrencyDefinitionResponse'];
         };
       };
-      /** @description Neither definitionId nor code provided */
+      /** @description Attempted to change immutable field */
       400: {
         headers: {
           [name: string]: unknown;
@@ -43402,116 +35293,6 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
-      };
-    };
-  };
-  currency_listCurrencyDefinitions: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListCurrencyDefinitionsRequest'];
-      };
-    };
-    responses: {
-      /** @description Currency definitions retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ListCurrencyDefinitionsResponse'];
-        };
-      };
-    };
-  };
-  currency_createWallet: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateWalletRequest'];
-      };
-    };
-    responses: {
-      /** @description Wallet created successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['WalletResponse'];
-        };
-      };
-      /** @description Wallet already exists for this owner/realm */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  currency_getWallet: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetWalletRequest'];
-      };
-    };
-    responses: {
-      /** @description Wallet retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['WalletWithBalancesResponse'];
-        };
-      };
-      /** @description Wallet not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  currency_getOrCreateWallet: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetOrCreateWalletRequest'];
-      };
-    };
-    responses: {
-      /** @description Wallet retrieved or created successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GetOrCreateWalletResponse'];
-        };
       };
     };
   };
@@ -43570,196 +35351,6 @@ export interface operations {
       };
     };
   };
-  currency_creditCurrency: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreditCurrencyRequest'];
-      };
-    };
-    responses: {
-      /** @description Currency credited successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CreditCurrencyResponse'];
-        };
-      };
-      /** @description Invalid transaction type or amount */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Wallet or currency not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Idempotency key already used */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Earn cap or supply cap exceeded */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  currency_debitCurrency: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['DebitCurrencyRequest'];
-      };
-    };
-    responses: {
-      /** @description Currency debited successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DebitCurrencyResponse'];
-        };
-      };
-      /** @description Invalid transaction type or amount */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Wallet or currency not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Insufficient funds */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  currency_transferCurrency: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['TransferCurrencyRequest'];
-      };
-    };
-    responses: {
-      /** @description Transfer completed successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['TransferCurrencyResponse'];
-        };
-      };
-      /** @description Invalid request or currency not transferable */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Wallet or currency not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Insufficient funds or cross-realm not allowed */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  currency_batchCreditCurrency: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['BatchCreditRequest'];
-      };
-    };
-    responses: {
-      /** @description Batch credit processed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['BatchCreditResponse'];
-        };
-      };
-    };
-  };
-  currency_batchDebitCurrency: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['BatchDebitRequest'];
-      };
-    };
-    responses: {
-      /** @description Batch debit processed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['BatchDebitResponse'];
-        };
-      };
-    };
-  };
   currency_calculateConversion: {
     parameters: {
       query?: never;
@@ -43790,44 +35381,6 @@ export interface operations {
         content?: never;
       };
       /** @description No base currency or missing exchange rate */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  currency_executeConversion: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ExecuteConversionRequest'];
-      };
-    };
-    responses: {
-      /** @description Conversion executed successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ExecuteConversionResponse'];
-        };
-      };
-      /** @description Wallet or currency not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Insufficient funds or missing exchange rate */
       422: {
         headers: {
           [name: string]: unknown;
@@ -43874,7 +35427,7 @@ export interface operations {
       };
     };
   };
-  currency_getTransaction: {
+  currency_updateExchangeRate: {
     parameters: {
       query?: never;
       header?: never;
@@ -43883,20 +35436,27 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['GetTransactionRequest'];
+        'application/json': components['schemas']['UpdateExchangeRateRequest'];
       };
     };
     responses: {
-      /** @description Transaction retrieved */
+      /** @description Exchange rate updated */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['TransactionResponse'];
+          'application/json': components['schemas']['UpdateExchangeRateResponse'];
         };
       };
-      /** @description Transaction not found */
+      /** @description Cannot set rate on base currency */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Currency not found */
       404: {
         headers: {
           [name: string]: unknown;
@@ -43936,7 +35496,7 @@ export interface operations {
       };
     };
   };
-  currency_getTransactionsByReference: {
+  documentation_createDocument: {
     parameters: {
       query?: never;
       header?: never;
@@ -43945,327 +35505,20 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['GetTransactionsByReferenceRequest'];
+        'application/json': components['schemas']['CreateDocumentRequest'];
       };
     };
     responses: {
-      /** @description Transactions retrieved */
+      /** @description Document created */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['GetTransactionsByReferenceResponse'];
+          'application/json': components['schemas']['CreateDocumentResponse'];
         };
       };
-    };
-  };
-  currency_getGlobalSupply: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetGlobalSupplyRequest'];
-      };
-    };
-    responses: {
-      /** @description Supply statistics retrieved */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GetGlobalSupplyResponse'];
-        };
-      };
-      /** @description Currency not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  currency_escrowDeposit: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['EscrowDepositRequest'];
-      };
-    };
-    responses: {
-      /** @description Escrow deposit processed (wallet debited) */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['EscrowDepositResponse'];
-        };
-      };
-      /** @description Wallet or currency not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Insufficient funds or wallet frozen */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  currency_escrowRelease: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['EscrowReleaseRequest'];
-      };
-    };
-    responses: {
-      /** @description Escrow release processed (recipient credited) */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['EscrowReleaseResponse'];
-        };
-      };
-      /** @description Wallet or currency not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  currency_escrowRefund: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['EscrowRefundRequest'];
-      };
-    };
-    responses: {
-      /** @description Escrow refund processed (depositor credited) */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['EscrowRefundResponse'];
-        };
-      };
-      /** @description Wallet or currency not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  currency_createHold: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateHoldRequest'];
-      };
-    };
-    responses: {
-      /** @description Hold created successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HoldResponse'];
-        };
-      };
-      /** @description Wallet or currency not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Insufficient effective balance for hold */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  currency_captureHold: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CaptureHoldRequest'];
-      };
-    };
-    responses: {
-      /** @description Hold captured successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CaptureHoldResponse'];
-        };
-      };
-      /** @description Hold is not in active status or capture amount exceeds hold */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Hold not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  currency_releaseHold: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ReleaseHoldRequest'];
-      };
-    };
-    responses: {
-      /** @description Hold released successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HoldResponse'];
-        };
-      };
-      /** @description Hold is not in active status */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Hold not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  currency_getHold: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetHoldRequest'];
-      };
-    };
-    responses: {
-      /** @description Hold retrieved */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HoldResponse'];
-        };
-      };
-      /** @description Hold not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_createDeity: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateDeityRequest'];
-      };
-    };
-    responses: {
-      /** @description Deity created successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DeityResponse'];
-        };
-      };
-      /** @description Game service not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Deity with this code already exists for this game service */
+      /** @description Document with same slug already exists */
       409: {
         headers: {
           [name: string]: unknown;
@@ -44274,7 +35527,7 @@ export interface operations {
       };
     };
   };
-  divine_getDeity: {
+  documentation_updateDocument: {
     parameters: {
       query?: never;
       header?: never;
@@ -44283,719 +35536,17 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['GetDeityRequest'];
+        'application/json': components['schemas']['UpdateDocumentRequest'];
       };
     };
     responses: {
-      /** @description Deity found */
+      /** @description Document updated */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['DeityResponse'];
-        };
-      };
-      /** @description Deity not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_getDeityByCode: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetDeityByCodeRequest'];
-      };
-    };
-    responses: {
-      /** @description Deity found */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DeityResponse'];
-        };
-      };
-      /** @description Deity not found for this game service and code */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_listDeities: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListDeitiesRequest'];
-      };
-    };
-    responses: {
-      /** @description Deities listed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ListDeitiesResponse'];
-        };
-      };
-    };
-  };
-  divine_updateDeity: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateDeityRequest'];
-      };
-    };
-    responses: {
-      /** @description Deity updated */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DeityResponse'];
-        };
-      };
-      /** @description Deity not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Concurrent modification conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_activateDeity: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ActivateDeityRequest'];
-      };
-    };
-    responses: {
-      /** @description Deity activated */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DeityResponse'];
-        };
-      };
-      /** @description Deity is already active */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Deity not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_deactivateDeity: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['DeactivateDeityRequest'];
-      };
-    };
-    responses: {
-      /** @description Deity deactivated */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DeityResponse'];
-        };
-      };
-      /** @description Deity is already dormant or archived */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Deity not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_deleteDeity: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['DeleteDeityRequest'];
-      };
-    };
-    responses: {
-      /** @description Deity deleted */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Deity not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_getDivinityBalance: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetDivinityBalanceRequest'];
-      };
-    };
-    responses: {
-      /** @description Balance retrieved */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DivinityBalanceResponse'];
-        };
-      };
-      /** @description Deity not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_creditDivinity: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreditDivinityRequest'];
-      };
-    };
-    responses: {
-      /** @description Divinity credited */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DivinityBalanceResponse'];
-        };
-      };
-      /** @description Deity not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_debitDivinity: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['DebitDivinityRequest'];
-      };
-    };
-    responses: {
-      /** @description Divinity debited */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DivinityBalanceResponse'];
-        };
-      };
-      /** @description Insufficient divinity balance */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Deity not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_getDivinityHistory: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetDivinityHistoryRequest'];
-      };
-    };
-    responses: {
-      /** @description History retrieved */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DivinityHistoryResponse'];
-        };
-      };
-      /** @description Deity not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_grantBlessing: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GrantBlessingRequest'];
-      };
-    };
-    responses: {
-      /** @description Blessing granted */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['BlessingResponse'];
-        };
-      };
-      /** @description Deity is not active or insufficient divinity */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Deity or target entity not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Entity has reached maximum active blessings */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_revokeBlessing: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RevokeBlessingRequest'];
-      };
-    };
-    responses: {
-      /** @description Blessing revoked */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['BlessingResponse'];
-        };
-      };
-      /** @description Blessing is already revoked */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Blessing not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_listBlessingsByEntity: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListBlessingsByEntityRequest'];
-      };
-    };
-    responses: {
-      /** @description Blessings listed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ListBlessingsResponse'];
-        };
-      };
-    };
-  };
-  divine_listBlessingsByDeity: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListBlessingsByDeityRequest'];
-      };
-    };
-    responses: {
-      /** @description Blessings listed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ListBlessingsResponse'];
-        };
-      };
-    };
-  };
-  divine_getBlessing: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetBlessingRequest'];
-      };
-    };
-    responses: {
-      /** @description Blessing found */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['BlessingResponse'];
-        };
-      };
-      /** @description Blessing not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_registerFollower: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RegisterFollowerRequest'];
-      };
-    };
-    responses: {
-      /** @description Follower registered */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['FollowerResponse'];
-        };
-      };
-      /** @description Deity or character not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Character is already a follower of this deity */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_unregisterFollower: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UnregisterFollowerRequest'];
-      };
-    };
-    responses: {
-      /** @description Follower unregistered */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Deity, character, or follower relationship not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_getFollowers: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetFollowersRequest'];
-      };
-    };
-    responses: {
-      /** @description Followers listed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ListFollowersResponse'];
-        };
-      };
-      /** @description Deity not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_cleanupByCharacter: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CleanupByCharacterRequest'];
-      };
-    };
-    responses: {
-      /** @description Cleanup completed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  divine_cleanupByGameService: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CleanupByGameServiceRequest'];
-      };
-    };
-    responses: {
-      /** @description Cleanup completed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  documentation_queryDocumentation: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['QueryDocumentationRequest'];
-      };
-    };
-    responses: {
-      /** @description Search results with voice-friendly summaries */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['QueryDocumentationResponse'];
-        };
-      };
-      /** @description Invalid request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  documentation_getDocument: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetDocumentRequest'];
-      };
-    };
-    responses: {
-      /** @description Document content */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GetDocumentResponse'];
+          'application/json': components['schemas']['UpdateDocumentResponse'];
         };
       };
       /** @description Document not found */
@@ -45007,7 +35558,7 @@ export interface operations {
       };
     };
   };
-  documentation_searchDocumentation: {
+  documentation_deleteDocument: {
     parameters: {
       query?: never;
       header?: never;
@@ -45016,22 +35567,91 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['SearchDocumentationRequest'];
+        'application/json': components['schemas']['DeleteDocumentRequest'];
       };
     };
     responses: {
-      /** @description Matching documents */
+      /** @description Document moved to trashcan */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['SearchDocumentationResponse'];
+          'application/json': components['schemas']['DeleteDocumentResponse'];
+        };
+      };
+      /** @description Document not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  documentation_recoverDocument: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RecoverDocumentRequest'];
+      };
+    };
+    responses: {
+      /** @description Document recovered */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RecoverDocumentResponse'];
+        };
+      };
+      /** @description Trashcan entry not found or expired */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict with existing document */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  documentation_bulkUpdateDocuments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BulkUpdateRequest'];
+      };
+    };
+    responses: {
+      /** @description Bulk update results */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BulkUpdateResponse'];
         };
       };
     };
   };
-  documentation_listDocuments: {
+  documentation_bulkDeleteDocuments: {
     parameters: {
       query?: never;
       header?: never;
@@ -45040,22 +35660,22 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['ListDocumentsRequest'];
+        'application/json': components['schemas']['BulkDeleteRequest'];
       };
     };
     responses: {
-      /** @description Document list */
+      /** @description Bulk delete results */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ListDocumentsResponse'];
+          'application/json': components['schemas']['BulkDeleteResponse'];
         };
       };
     };
   };
-  documentation_suggestRelatedTopics: {
+  documentation_importDocumentation: {
     parameters: {
       query?: never;
       header?: never;
@@ -45064,17 +35684,89 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['SuggestRelatedRequest'];
+        'application/json': components['schemas']['ImportDocumentationRequest'];
       };
     };
     responses: {
-      /** @description Related topics */
+      /** @description Import results (may include partial failures) */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['SuggestRelatedResponse'];
+          'application/json': components['schemas']['ImportDocumentationResponse'];
+        };
+      };
+    };
+  };
+  documentation_listTrashcan: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListTrashcanRequest'];
+      };
+    };
+    responses: {
+      /** @description Trashcan contents */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListTrashcanResponse'];
+        };
+      };
+    };
+  };
+  documentation_purgeTrashcan: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PurgeTrashcanRequest'];
+      };
+    };
+    responses: {
+      /** @description Purge results */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PurgeTrashcanResponse'];
+        };
+      };
+    };
+  };
+  documentation_getNamespaceStats: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetNamespaceStatsRequest'];
+      };
+    };
+    responses: {
+      /** @description Namespace statistics */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NamespaceStatsResponse'];
         };
       };
     };
@@ -45110,6 +35802,37 @@ export interface operations {
       };
       /** @description Namespace already bound to a repository */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  documentation_unbindRepository: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UnbindRepositoryRequest'];
+      };
+    };
+    responses: {
+      /** @description Repository binding removed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UnbindRepositoryResponse'];
+        };
+      };
+      /** @description No binding found for namespace */
+      404: {
         headers: {
           [name: string]: unknown;
         };
@@ -45296,7 +36019,7 @@ export interface operations {
       };
     };
   };
-  escrow_createEscrow: {
+  documentation_restoreDocumentationArchive: {
     parameters: {
       query?: never;
       header?: never;
@@ -45305,21 +36028,52 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['CreateEscrowRequest'];
+        'application/json': components['schemas']['RestoreArchiveRequest'];
       };
     };
     responses: {
-      /** @description Escrow created successfully */
+      /** @description Archive restored */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['CreateEscrowResponse'];
+          'application/json': components['schemas']['RestoreArchiveResponse'];
         };
       };
-      /** @description Invalid request */
-      400: {
+      /** @description Archive not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  documentation_deleteDocumentationArchive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteArchiveRequest'];
+      };
+    };
+    responses: {
+      /** @description Archive deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeleteArchiveResponse'];
+        };
+      };
+      /** @description Archive not found */
+      404: {
         headers: {
           [name: string]: unknown;
         };
@@ -45516,99 +36270,6 @@ export interface operations {
       };
     };
   };
-  escrow_release: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ReleaseRequest'];
-      };
-    };
-    responses: {
-      /** @description Release result */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ReleaseResponse'];
-        };
-      };
-      /** @description Release failed */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  escrow_refund: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RefundRequest'];
-      };
-    };
-    responses: {
-      /** @description Refund result */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RefundResponse'];
-        };
-      };
-      /** @description Refund failed */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  escrow_cancel: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CancelRequest'];
-      };
-    };
-    responses: {
-      /** @description Cancel result */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CancelResponse'];
-        };
-      };
-      /** @description Cancel failed */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
   escrow_dispute: {
     parameters: {
       query?: never;
@@ -45709,68 +36370,6 @@ export interface operations {
       };
       /** @description Escrow not found */
       404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  escrow_resolve: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ResolveRequest'];
-      };
-    };
-    responses: {
-      /** @description Resolution result */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ResolveResponse'];
-        };
-      };
-      /** @description Resolution failed */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  escrow_verifyCondition: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['VerifyConditionRequest'];
-      };
-    };
-    responses: {
-      /** @description Verification result */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['VerifyConditionResponse'];
-        };
-      };
-      /** @description Verification failed */
-      400: {
         headers: {
           [name: string]: unknown;
         };
@@ -46007,7 +36606,7 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Faction is already deprecated or dissolved */
+      /** @description Faction is dissolved (cannot deprecate) */
       409: {
         headers: {
           [name: string]: unknown;
@@ -46045,7 +36644,7 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Faction is not in deprecated status */
+      /** @description Faction is dissolved (cannot undeprecate) */
       409: {
         headers: {
           [name: string]: unknown;
@@ -46571,164 +37170,6 @@ export interface operations {
         };
       };
       /** @description Faction not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  faction_cleanupByCharacter: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CleanupByCharacterRequest'];
-      };
-    };
-    responses: {
-      /** @description Cleanup completed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CleanupByCharacterResponse'];
-        };
-      };
-    };
-  };
-  faction_cleanupByRealm: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CleanupByRealmRequest'];
-      };
-    };
-    responses: {
-      /** @description Cleanup completed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CleanupByRealmResponse'];
-        };
-      };
-    };
-  };
-  faction_cleanupByLocation: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CleanupByLocationRequest'];
-      };
-    };
-    responses: {
-      /** @description Cleanup completed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CleanupByLocationResponse'];
-        };
-      };
-    };
-  };
-  faction_getCompressData: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetCompressDataRequest'];
-      };
-    };
-    responses: {
-      /** @description Compressed data returned */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['FactionArchive'];
-        };
-      };
-      /** @description No faction data for character */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  gameService_listServices: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListServicesRequest'];
-      };
-    };
-    responses: {
-      /** @description Services retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ListServicesResponse'];
-        };
-      };
-    };
-  };
-  gameService_getService: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetServiceRequest'];
-      };
-    };
-    responses: {
-      /** @description Service retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ServiceInfo'];
-        };
-      };
-      /** @description Service not found */
       404: {
         headers: {
           [name: string]: unknown;
@@ -47799,75 +38240,6 @@ export interface operations {
       };
     };
   };
-  inventory_addItemToContainer: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['AddItemRequest'];
-      };
-    };
-    responses: {
-      /** @description Item added successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['AddItemResponse'];
-        };
-      };
-      /** @description Constraint violation (full, overweight, wrong category) */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Container or item not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  inventory_removeItemFromContainer: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RemoveItemRequest'];
-      };
-    };
-    responses: {
-      /** @description Item removed successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RemoveItemResponse'];
-        };
-      };
-      /** @description Item not found in specified container */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
   inventory_moveItem: {
     parameters: {
       query?: never;
@@ -47891,44 +38263,6 @@ export interface operations {
         };
       };
       /** @description Constraint violation at destination */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Item or container not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  inventory_transferItem: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['TransferItemRequest'];
-      };
-    };
-    responses: {
-      /** @description Item transferred successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['TransferItemResponse'];
-        };
-      };
-      /** @description Item is bound or not tradeable */
       400: {
         headers: {
           [name: string]: unknown;
@@ -49501,7 +39835,7 @@ export interface operations {
       };
     };
   };
-  location_getLocation: {
+  location_createLocation: {
     parameters: {
       query?: never;
       header?: never;
@@ -49510,11 +39844,11 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['GetLocationRequest'];
+        'application/json': components['schemas']['CreateLocationRequest'];
       };
     };
     responses: {
-      /** @description Location retrieved successfully */
+      /** @description Location created successfully */
       200: {
         headers: {
           [name: string]: unknown;
@@ -49523,8 +39857,15 @@ export interface operations {
           'application/json': components['schemas']['LocationResponse'];
         };
       };
-      /** @description Location not found */
-      404: {
+      /** @description Invalid location data or parent realm mismatch */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Location with this code already exists in this realm */
+      409: {
         headers: {
           [name: string]: unknown;
         };
@@ -49532,7 +39873,7 @@ export interface operations {
       };
     };
   };
-  location_getLocationByCode: {
+  location_updateLocation: {
     parameters: {
       query?: never;
       header?: never;
@@ -49541,11 +39882,11 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['GetLocationByCodeRequest'];
+        'application/json': components['schemas']['UpdateLocationRequest'];
       };
     };
     responses: {
-      /** @description Location retrieved successfully */
+      /** @description Location updated successfully */
       200: {
         headers: {
           [name: string]: unknown;
@@ -49554,385 +39895,7 @@ export interface operations {
           'application/json': components['schemas']['LocationResponse'];
         };
       };
-      /** @description Location not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  location_listLocations: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListLocationsRequest'];
-      };
-    };
-    responses: {
-      /** @description Locations retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LocationListResponse'];
-        };
-      };
-    };
-  };
-  location_listLocationsByRealm: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListLocationsByRealmRequest'];
-      };
-    };
-    responses: {
-      /** @description Locations retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LocationListResponse'];
-        };
-      };
-    };
-  };
-  location_listLocationsByParent: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListLocationsByParentRequest'];
-      };
-    };
-    responses: {
-      /** @description Child locations retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LocationListResponse'];
-        };
-      };
-      /** @description Parent location not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  location_listRootLocations: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListRootLocationsRequest'];
-      };
-    };
-    responses: {
-      /** @description Root locations retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LocationListResponse'];
-        };
-      };
-    };
-  };
-  location_getLocationAncestors: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetLocationAncestorsRequest'];
-      };
-    };
-    responses: {
-      /** @description Ancestors retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LocationListResponse'];
-        };
-      };
-      /** @description Location not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  location_validateTerritory: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ValidateTerritoryRequest'];
-      };
-    };
-    responses: {
-      /** @description Territory validation result */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ValidateTerritoryResponse'];
-        };
-      };
-      /** @description Location not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  location_getLocationDescendants: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetLocationDescendantsRequest'];
-      };
-    };
-    responses: {
-      /** @description Descendants retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LocationListResponse'];
-        };
-      };
-      /** @description Location not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  location_locationExists: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['LocationExistsRequest'];
-      };
-    };
-    responses: {
-      /** @description Validation result */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LocationExistsResponse'];
-        };
-      };
-    };
-  };
-  location_queryLocationsByPosition: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['QueryLocationsByPositionRequest'];
-      };
-    };
-    responses: {
-      /** @description Locations containing the position */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LocationListResponse'];
-        };
-      };
-    };
-  };
-  location_reportEntityPosition: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ReportEntityPositionRequest'];
-      };
-    };
-    responses: {
-      /** @description Position reported successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ReportEntityPositionResponse'];
-        };
-      };
-      /** @description Location not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  location_getEntityLocation: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetEntityLocationRequest'];
-      };
-    };
-    responses: {
-      /** @description Entity location query result */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GetEntityLocationResponse'];
-        };
-      };
-    };
-  };
-  location_listEntitiesAtLocation: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListEntitiesAtLocationRequest'];
-      };
-    };
-    responses: {
-      /** @description Entity list for the location */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ListEntitiesAtLocationResponse'];
-        };
-      };
-    };
-  };
-  location_clearEntityPosition: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ClearEntityPositionRequest'];
-      };
-    };
-    responses: {
-      /** @description Entity position cleared */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ClearEntityPositionResponse'];
-        };
-      };
-    };
-  };
-  location_getLocationCompressData: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetLocationCompressDataRequest'];
-      };
-    };
-    responses: {
-      /** @description Location base data returned */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LocationBaseArchive'];
-        };
-      };
-      /** @description Location is not deprecated (cannot compress active locations) */
+      /** @description Invalid update data */
       400: {
         headers: {
           [name: string]: unknown;
@@ -49941,6 +39904,256 @@ export interface operations {
       };
       /** @description Location not found */
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  location_setLocationParent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetLocationParentRequest'];
+      };
+    };
+    responses: {
+      /** @description Parent updated successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LocationResponse'];
+        };
+      };
+      /** @description Invalid parent (different realm or circular reference) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Location or parent not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  location_removeLocationParent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RemoveLocationParentRequest'];
+      };
+    };
+    responses: {
+      /** @description Parent removed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LocationResponse'];
+        };
+      };
+      /** @description Location not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  location_deleteLocation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteLocationRequest'];
+      };
+    };
+    responses: {
+      /** @description Location deleted successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Location not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Cannot delete - location has children or is in use */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  location_transferLocationToRealm: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TransferLocationToRealmRequest'];
+      };
+    };
+    responses: {
+      /** @description Location transferred successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LocationResponse'];
+        };
+      };
+      /** @description Location or target realm not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Target realm already has a location with the same code */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  location_deprecateLocation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateLocationRequest'];
+      };
+    };
+    responses: {
+      /** @description Location deprecated successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LocationResponse'];
+        };
+      };
+      /** @description Location not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Location is already deprecated */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  location_undeprecateLocation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UndeprecateLocationRequest'];
+      };
+    };
+    responses: {
+      /** @description Location restored successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LocationResponse'];
+        };
+      };
+      /** @description Location is not deprecated */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Location not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  location_seedLocations: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SeedLocationsRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed operation completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedLocationsResponse'];
+        };
+      };
+      /** @description Invalid seed data */
+      400: {
         headers: {
           [name: string]: unknown;
         };
@@ -51387,202 +41600,6 @@ export interface operations {
       };
     };
   };
-  quest_getCompressData: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetCompressDataRequest'];
-      };
-    };
-    responses: {
-      /** @description Compressed data returned */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['QuestArchive'];
-        };
-      };
-      /** @description No quest data for character */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  realm_getRealm: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetRealmRequest'];
-      };
-    };
-    responses: {
-      /** @description Realm retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RealmResponse'];
-        };
-      };
-      /** @description Realm not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  realm_getRealmByCode: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetRealmByCodeRequest'];
-      };
-    };
-    responses: {
-      /** @description Realm retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RealmResponse'];
-        };
-      };
-      /** @description Realm not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  realm_listRealms: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListRealmsRequest'];
-      };
-    };
-    responses: {
-      /** @description Realms retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RealmListResponse'];
-        };
-      };
-    };
-  };
-  realm_realmExists: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RealmExistsRequest'];
-      };
-    };
-    responses: {
-      /** @description Validation result */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RealmExistsResponse'];
-        };
-      };
-    };
-  };
-  realm_realmsExistBatch: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RealmsExistBatchRequest'];
-      };
-    };
-    responses: {
-      /** @description Validation results for all requested realms */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RealmsExistBatchResponse'];
-        };
-      };
-    };
-  };
-  realm_getLocationCompressContext: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetLocationCompressContextRequest'];
-      };
-    };
-    responses: {
-      /** @description Realm context for location archive returned */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RealmLocationArchiveContext'];
-        };
-      };
-      /** @description Location or realm not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
   realmHistory_getRealmParticipation: {
     parameters: {
       query?: never;
@@ -51761,30 +41778,6 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['RelationshipListResponse'];
-        };
-      };
-    };
-  };
-  relationship_cleanupByEntity: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CleanupByEntityRequest'];
-      };
-    };
-    responses: {
-      /** @description Cleanup completed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CleanupByEntityResponse'];
         };
       };
     };
@@ -51968,7 +41961,7 @@ export interface operations {
       };
     };
   };
-  resource_registerReference: {
+  relationship_createRelationshipType: {
     parameters: {
       query?: never;
       header?: never;
@@ -51977,22 +41970,36 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['RegisterReferenceRequest'];
+        'application/json': components['schemas']['CreateRelationshipTypeRequest'];
       };
     };
     responses: {
-      /** @description Reference registered */
+      /** @description Relationship type created successfully */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['RegisterReferenceResponse'];
+          'application/json': components['schemas']['RelationshipTypeResponse'];
         };
+      };
+      /** @description Invalid relationship type data */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Relationship type with this code already exists */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
-  resource_unregisterReference: {
+  relationship_updateRelationshipType: {
     parameters: {
       query?: never;
       header?: never;
@@ -52001,22 +42008,36 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['UnregisterReferenceRequest'];
+        'application/json': components['schemas']['UpdateRelationshipTypeRequest'];
       };
     };
     responses: {
-      /** @description Reference unregistered */
+      /** @description Relationship type updated successfully */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['UnregisterReferenceResponse'];
+          'application/json': components['schemas']['RelationshipTypeResponse'];
         };
+      };
+      /** @description Invalid update data */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Relationship type not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
-  resource_checkReferences: {
+  relationship_deleteRelationshipType: {
     parameters: {
       query?: never;
       header?: never;
@@ -52025,22 +42046,34 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['CheckReferencesRequest'];
+        'application/json': components['schemas']['DeleteRelationshipTypeRequest'];
       };
     };
     responses: {
-      /** @description Reference status */
+      /** @description Relationship type deleted successfully */
       200: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['CheckReferencesResponse'];
+        content?: never;
+      };
+      /** @description Relationship type not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
         };
+        content?: never;
+      };
+      /** @description Cannot delete - type is in use by relationships or has child types */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
-  resource_listReferences: {
+  relationship_deprecateRelationshipType: {
     parameters: {
       query?: never;
       header?: never;
@@ -52049,22 +42082,29 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['ListReferencesRequest'];
+        'application/json': components['schemas']['DeprecateRelationshipTypeRequest'];
       };
     };
     responses: {
-      /** @description List of references */
+      /** @description Relationship type deprecated successfully */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ListReferencesResponse'];
+          'application/json': components['schemas']['RelationshipTypeResponse'];
         };
+      };
+      /** @description Relationship type not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
-  resource_executeCleanup: {
+  relationship_undeprecateRelationshipType: {
     parameters: {
       query?: never;
       header?: never;
@@ -52073,22 +42113,29 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['ExecuteCleanupRequest'];
+        'application/json': components['schemas']['UndeprecateRelationshipTypeRequest'];
       };
     };
     responses: {
-      /** @description Cleanup executed or rejected */
+      /** @description Relationship type restored successfully */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ExecuteCleanupResponse'];
+          'application/json': components['schemas']['RelationshipTypeResponse'];
         };
+      };
+      /** @description Relationship type not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
-  resource_listCleanupCallbacks: {
+  relationship_mergeRelationshipType: {
     parameters: {
       query?: never;
       header?: never;
@@ -52097,138 +42144,39 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['ListCleanupCallbacksRequest'];
+        'application/json': components['schemas']['MergeRelationshipTypeRequest'];
       };
     };
     responses: {
-      /** @description List of registered callbacks */
+      /** @description Merge completed successfully */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ListCleanupCallbacksResponse'];
+          'application/json': components['schemas']['MergeRelationshipTypeResponse'];
         };
       };
-    };
-  };
-  resource_executeCompress: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ExecuteCompressRequest'];
-      };
-    };
-    responses: {
-      /** @description Compression result */
-      200: {
+      /** @description Source type must be deprecated before merging */
+      400: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ExecuteCompressResponse'];
-        };
+        content?: never;
       };
-    };
-  };
-  resource_listCompressCallbacks: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListCompressCallbacksRequest'];
-      };
-    };
-    responses: {
-      /** @description Callback list */
-      200: {
+      /** @description Source or target relationship type not found */
+      404: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['ListCompressCallbacksResponse'];
-        };
+        content?: never;
       };
-    };
-  };
-  resource_getArchive: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetArchiveRequest'];
-      };
-    };
-    responses: {
-      /** @description Archive data */
-      200: {
+      /** @description Cannot merge into a deprecated type */
+      409: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['GetArchiveResponse'];
-        };
-      };
-    };
-  };
-  resource_executeSnapshot: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ExecuteSnapshotRequest'];
-      };
-    };
-    responses: {
-      /** @description Snapshot result with snapshot ID and data */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ExecuteSnapshotResponse'];
-        };
-      };
-    };
-  };
-  resource_getSnapshot: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetSnapshotRequest'];
-      };
-    };
-    responses: {
-      /** @description Snapshot data */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GetSnapshotResponse'];
-        };
+        content?: never;
       };
     };
   };
@@ -53658,54 +43606,6 @@ export interface operations {
       };
     };
   };
-  seed_RecordGrowth: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RecordGrowthRequest'];
-      };
-    };
-    responses: {
-      /** @description Growth recorded */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GrowthResponse'];
-        };
-      };
-    };
-  };
-  seed_RecordGrowthBatch: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RecordGrowthBatchRequest'];
-      };
-    };
-    responses: {
-      /** @description Growth recorded */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GrowthResponse'];
-        };
-      };
-    };
-  };
   seed_GetGrowthPhase: {
     parameters: {
       query?: never;
@@ -54072,123 +43972,6 @@ export interface operations {
         content: {
           'application/json': components['schemas']['BondPartnersResponse'];
         };
-      };
-    };
-  };
-  species_getSpecies: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetSpeciesRequest'];
-      };
-    };
-    responses: {
-      /** @description Species retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['SpeciesResponse'];
-        };
-      };
-      /** @description Species not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  species_getSpeciesByCode: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetSpeciesByCodeRequest'];
-      };
-    };
-    responses: {
-      /** @description Species retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['SpeciesResponse'];
-        };
-      };
-      /** @description Species not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  species_listSpecies: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListSpeciesRequest'];
-      };
-    };
-    responses: {
-      /** @description Species retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['SpeciesListResponse'];
-        };
-      };
-    };
-  };
-  species_listSpeciesByRealm: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListSpeciesByRealmRequest'];
-      };
-    };
-    responses: {
-      /** @description Species retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['SpeciesListResponse'];
-        };
-      };
-      /** @description Realm not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
       };
     };
   };
@@ -55008,61 +44791,6 @@ export interface operations {
         };
       };
       /** @description No storyline data for character */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  subscription_getAccountSubscriptions: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetAccountSubscriptionsRequest'];
-      };
-    };
-    responses: {
-      /** @description Subscriptions retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['SubscriptionListResponse'];
-        };
-      };
-    };
-  };
-  subscription_getSubscription: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetSubscriptionRequest'];
-      };
-    };
-    responses: {
-      /** @description Subscription retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['SubscriptionInfo'];
-        };
-      };
-      /** @description Subscription not found */
       404: {
         headers: {
           [name: string]: unknown;
@@ -56105,6 +45833,80 @@ export interface operations {
       };
     };
   };
+  voice_joinVoiceRoom: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['JoinVoiceRoomRequest'];
+      };
+    };
+    responses: {
+      /** @description Successfully joined voice room */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JoinVoiceRoomResponse'];
+        };
+      };
+      /** @description Voice room not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Room full or already joined */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Voice tier unavailable (P2P full, scaled tier disabled) */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  voice_leaveVoiceRoom: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LeaveVoiceRoomRequest'];
+      };
+    };
+    responses: {
+      /** @description Successfully left voice room */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Voice room or participant not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   voice_answerPeer: {
     parameters: {
       query?: never;
@@ -56611,154 +46413,6 @@ export interface operations {
       };
     };
   };
-  worldstate_getRealmTime: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetRealmTimeRequest'];
-      };
-    };
-    responses: {
-      /** @description Current game time snapshot for the realm */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GameTimeSnapshot'];
-        };
-      };
-      /** @description No clock initialized for this realm */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  worldstate_getRealmTimeByCode: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetRealmTimeByCodeRequest'];
-      };
-    };
-    responses: {
-      /** @description Current game time snapshot for the realm */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GameTimeSnapshot'];
-        };
-      };
-      /** @description Realm code not found or no clock initialized */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  worldstate_batchGetRealmTimes: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['BatchGetRealmTimesRequest'];
-      };
-    };
-    responses: {
-      /** @description Game time snapshots for the requested realms */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['BatchGetRealmTimesResponse'];
-        };
-      };
-    };
-  };
-  worldstate_getElapsedGameTime: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetElapsedGameTimeRequest'];
-      };
-    };
-    responses: {
-      /** @description Elapsed game time as raw seconds and decomposed calendar units */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GetElapsedGameTimeResponse'];
-        };
-      };
-      /** @description No clock initialized for this realm */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  worldstate_triggerTimeSync: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['TriggerTimeSyncRequest'];
-      };
-    };
-    responses: {
-      /** @description Time sync triggered successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['TriggerTimeSyncResponse'];
-        };
-      };
-      /** @description No clock initialized for this realm */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
   worldstate_initializeRealmClock: {
     parameters: {
       query?: never;
@@ -56918,61 +46572,6 @@ export interface operations {
       };
     };
   };
-  worldstate_getCalendar: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetCalendarRequest'];
-      };
-    };
-    responses: {
-      /** @description Calendar template found */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CalendarTemplateResponse'];
-        };
-      };
-      /** @description Calendar template not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  worldstate_listCalendars: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListCalendarsRequest'];
-      };
-    };
-    responses: {
-      /** @description Calendar templates listed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ListCalendarsResponse'];
-        };
-      };
-    };
-  };
   worldstate_updateCalendar: {
     parameters: {
       query?: never;
@@ -57049,37 +46648,6 @@ export interface operations {
       };
     };
   };
-  worldstate_getRealmConfig: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GetRealmConfigRequest'];
-      };
-    };
-    responses: {
-      /** @description Realm configuration found */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RealmConfigResponse'];
-        };
-      };
-      /** @description No clock initialized for this realm */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
   worldstate_updateRealmConfig: {
     parameters: {
       query?: never;
@@ -57108,30 +46676,6 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
-      };
-    };
-  };
-  worldstate_listRealmClocks: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ListRealmClocksRequest'];
-      };
-    };
-    responses: {
-      /** @description Realm clocks listed */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ListRealmClocksResponse'];
-        };
       };
     };
   };

@@ -47,21 +47,6 @@ public static class RelationshipPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/relationship/create",
-            Method = ServiceEndpointMethod.Post,
-            Description = "createRelationship",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/relationship/get",
             Method = ServiceEndpointMethod.Post,
             Description = "getRelationship",
@@ -115,51 +100,6 @@ public static class RelationshipPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/relationship/update",
-            Method = ServiceEndpointMethod.Post,
-            Description = "updateRelationship",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/relationship/end",
-            Method = ServiceEndpointMethod.Post,
-            Description = "endRelationship",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/relationship/cleanup-by-entity",
-            Method = ServiceEndpointMethod.Post,
-            Description = "cleanupByEntity",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -264,7 +204,7 @@ public static class RelationshipPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -279,7 +219,7 @@ public static class RelationshipPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -294,7 +234,7 @@ public static class RelationshipPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -309,7 +249,7 @@ public static class RelationshipPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -324,7 +264,7 @@ public static class RelationshipPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -339,22 +279,7 @@ public static class RelationshipPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/relationship-type/seed",
-            Method = ServiceEndpointMethod.Post,
-            Description = "seedRelationshipTypes",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }

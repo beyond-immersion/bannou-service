@@ -25,44 +25,6 @@ export class SubscriptionProxy {
   }
 
   /**
-   * Get subscriptions for an account
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async subscriptionGetAccountSubscriptionsAsync(
-    request: Schemas['GetAccountSubscriptionsRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['SubscriptionListResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetAccountSubscriptionsRequest'],
-      Schemas['SubscriptionListResponse']
-    >('/subscription/account/list', request, channel, timeout);
-  }
-
-  /**
-   * Get a specific subscription by ID
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async subscriptionGetSubscriptionAsync(
-    request: Schemas['GetSubscriptionRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['SubscriptionInfo']>> {
-    return this.client.invokeAsync<Schemas['GetSubscriptionRequest'], Schemas['SubscriptionInfo']>(
-      '/subscription/get',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
    * Cancel a subscription
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).

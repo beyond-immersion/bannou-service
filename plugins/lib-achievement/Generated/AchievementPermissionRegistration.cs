@@ -150,21 +150,6 @@ public static class AchievementPermissionRegistration
             }
         });
 
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/achievement/cleanup-by-character",
-            Method = ServiceEndpointMethod.Post,
-            Description = "cleanupByCharacter",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
         return endpoints;
     }
 

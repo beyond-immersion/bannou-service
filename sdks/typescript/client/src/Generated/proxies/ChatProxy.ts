@@ -435,24 +435,6 @@ export class ChatProxy {
   }
 
   /**
-   * Send multiple messages
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async chatSendMessageBatchAsync(
-    request: Schemas['SendMessageBatchRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['SendMessageBatchResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['SendMessageBatchRequest'],
-      Schemas['SendMessageBatchResponse']
-    >('/chat/message/send-batch', request, channel, timeout);
-  }
-
-  /**
    * Get message history
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -546,63 +528,5 @@ export class ChatProxy {
       Schemas['SearchMessagesRequest'],
       Schemas['SearchMessagesResponse']
     >('/chat/message/search', request, channel, timeout);
-  }
-
-  /**
-   * List all rooms system-wide
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async chatAdminListRoomsAsync(
-    request: Schemas['AdminListRoomsRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['ListRoomsResponse']>> {
-    return this.client.invokeAsync<Schemas['AdminListRoomsRequest'], Schemas['ListRoomsResponse']>(
-      '/chat/admin/rooms',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Room and message statistics
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async chatAdminGetStatsAsync(
-    request: Schemas['AdminGetStatsRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['AdminStatsResponse']>> {
-    return this.client.invokeAsync<Schemas['AdminGetStatsRequest'], Schemas['AdminStatsResponse']>(
-      '/chat/admin/stats',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Force cleanup of idle rooms
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async chatAdminForceCleanupAsync(
-    request: Schemas['AdminForceCleanupRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['AdminCleanupResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['AdminForceCleanupRequest'],
-      Schemas['AdminCleanupResponse']
-    >('/chat/admin/cleanup', request, channel, timeout);
   }
 }

@@ -138,7 +138,7 @@ public partial class StateController
     "$ref": "#/$defs/SaveStateRequest",
     "$defs": {
         "SaveStateRequest": {
-            "description": "Request to save a state value to a state store with optional TTL and consistency settings",
+            "description": "Request to save a state value to a state store with optional TTL and optimistic concurrency",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -164,15 +164,22 @@ public partial class StateController
                     "additionalProperties": true,
                     "description": "Value to store"
                 },
+                "etag": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Expected ETag for optimistic concurrency - save fails with 409 Conflict if mismatch"
+                },
                 "options": {
                     "nullable": true,
                     "$ref": "#/$defs/StateOptions",
-                    "description": "Optional settings for the save operation including TTL and consistency"
+                    "description": "Optional settings for the save operation including TTL"
                 }
             }
         },
         "StateOptions": {
-            "description": "Configuration options for state save operations including TTL, consistency level, and optimistic concurrency",
+            "description": "Configuration options for state save operations including TTL",
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -182,13 +189,6 @@ public partial class StateController
                     "maximum": 31536000,
                     "nullable": true,
                     "description": "TTL in seconds (Redis only). Maximum 1 year (31536000 seconds)."
-                },
-                "etag": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100,
-                    "nullable": true,
-                    "description": "Optimistic concurrency check - save fails if ETag mismatch"
                 }
             }
         }
@@ -841,7 +841,7 @@ public partial class StateController
             }
         },
         "StateOptions": {
-            "description": "Configuration options for state save operations including TTL, consistency level, and optimistic concurrency",
+            "description": "Configuration options for state save operations including TTL",
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -851,13 +851,6 @@ public partial class StateController
                     "maximum": 31536000,
                     "nullable": true,
                     "description": "TTL in seconds (Redis only). Maximum 1 year (31536000 seconds)."
-                },
-                "etag": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100,
-                    "nullable": true,
-                    "description": "Optimistic concurrency check - save fails if ETag mismatch"
                 }
             }
         }

@@ -530,8 +530,7 @@ paths:
       summary: Send multiple messages
       description: Sends multiple messages to a room atomically. Intended for bulk sentiment pushes from higher-layer 
         services.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -675,7 +674,7 @@ paths:
       description: Returns all rooms across the system for administrative purposes. Supports filtering by status and 
         type.
       x-permissions:
-      - role: developer
+      - role: admin
       requestBody:
         required: true
         content:
@@ -696,7 +695,7 @@ paths:
       summary: Room and message statistics
       description: Returns system-wide chat statistics for monitoring and debugging.
       x-permissions:
-      - role: developer
+      - role: admin
       requestBody:
         required: true
         content:
@@ -717,7 +716,7 @@ paths:
       summary: Force cleanup of idle rooms
       description: Triggers an immediate idle room cleanup cycle, bypassing the normal interval.
       x-permissions:
-      - role: developer
+      - role: admin
       requestBody:
         required: true
         content:

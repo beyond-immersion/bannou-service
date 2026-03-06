@@ -25,244 +25,55 @@ export class CharacterEncounterProxy {
   }
 
   /**
-   * Get encounter type by code
+   * Create new encounter type
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async characterEncounterGetEncounterTypeAsync(
-    request: Schemas['GetEncounterTypeRequest'],
+  async characterEncounterCreateEncounterTypeAsync(
+    request: Schemas['CreateEncounterTypeRequest'],
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['EncounterTypeResponse']>> {
     return this.client.invokeAsync<
-      Schemas['GetEncounterTypeRequest'],
+      Schemas['CreateEncounterTypeRequest'],
       Schemas['EncounterTypeResponse']
-    >('/character-encounter/type/get', request, channel, timeout);
+    >('/character-encounter/type/create', request, channel, timeout);
   }
 
   /**
-   * List all encounter types
+   * Update encounter type
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async characterEncounterListEncounterTypesAsync(
-    request: Schemas['ListEncounterTypesRequest'],
+  async characterEncounterUpdateEncounterTypeAsync(
+    request: Schemas['UpdateEncounterTypeRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['EncounterTypeListResponse']>> {
+  ): Promise<ApiResponse<Schemas['EncounterTypeResponse']>> {
     return this.client.invokeAsync<
-      Schemas['ListEncounterTypesRequest'],
-      Schemas['EncounterTypeListResponse']
-    >('/character-encounter/type/list', request, channel, timeout);
+      Schemas['UpdateEncounterTypeRequest'],
+      Schemas['EncounterTypeResponse']
+    >('/character-encounter/type/update', request, channel, timeout);
   }
 
   /**
-   * Record new encounter with perspectives
+   * Delete encounter type
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
+   * @returns Promise that completes when the event is sent.
    */
-  async characterEncounterRecordEncounterAsync(
-    request: Schemas['RecordEncounterRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['EncounterResponse']>> {
-    return this.client.invokeAsync<Schemas['RecordEncounterRequest'], Schemas['EncounterResponse']>(
-      '/character-encounter/record',
+  async characterEncounterDeleteEncounterTypeEventAsync(
+    request: Schemas['DeleteEncounterTypeRequest'],
+    channel: number = 0
+  ): Promise<void> {
+    return this.client.sendEventAsync<Schemas['DeleteEncounterTypeRequest']>(
+      '/character-encounter/type/delete',
       request,
-      channel,
-      timeout
+      channel
     );
-  }
-
-  /**
-   * Get character's encounters (paginated)
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async characterEncounterQueryByCharacterAsync(
-    request: Schemas['QueryByCharacterRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['EncounterListResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['QueryByCharacterRequest'],
-      Schemas['EncounterListResponse']
-    >('/character-encounter/query/by-character', request, channel, timeout);
-  }
-
-  /**
-   * Get encounters between two characters
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async characterEncounterQueryBetweenAsync(
-    request: Schemas['QueryBetweenRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['EncounterListResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['QueryBetweenRequest'],
-      Schemas['EncounterListResponse']
-    >('/character-encounter/query/between', request, channel, timeout);
-  }
-
-  /**
-   * Recent encounters at location
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async characterEncounterQueryByLocationAsync(
-    request: Schemas['QueryByLocationRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['EncounterListResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['QueryByLocationRequest'],
-      Schemas['EncounterListResponse']
-    >('/character-encounter/query/by-location', request, channel, timeout);
-  }
-
-  /**
-   * Quick check if two characters have met
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async characterEncounterHasMetAsync(
-    request: Schemas['HasMetRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['HasMetResponse']>> {
-    return this.client.invokeAsync<Schemas['HasMetRequest'], Schemas['HasMetResponse']>(
-      '/character-encounter/has-met',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Aggregate sentiment toward another character
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async characterEncounterGetSentimentAsync(
-    request: Schemas['GetSentimentRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['SentimentResponse']>> {
-    return this.client.invokeAsync<Schemas['GetSentimentRequest'], Schemas['SentimentResponse']>(
-      '/character-encounter/get-sentiment',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Bulk sentiment for multiple targets
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async characterEncounterBatchGetSentimentAsync(
-    request: Schemas['BatchGetSentimentRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['BatchSentimentResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['BatchGetSentimentRequest'],
-      Schemas['BatchSentimentResponse']
-    >('/character-encounter/batch-get', request, channel, timeout);
-  }
-
-  /**
-   * Get character's view of encounter
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async characterEncounterGetPerspectiveAsync(
-    request: Schemas['GetPerspectiveRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['PerspectiveResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetPerspectiveRequest'],
-      Schemas['PerspectiveResponse']
-    >('/character-encounter/get-perspective', request, channel, timeout);
-  }
-
-  /**
-   * Update perspective (reflection)
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async characterEncounterUpdatePerspectiveAsync(
-    request: Schemas['UpdatePerspectiveRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['PerspectiveResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdatePerspectiveRequest'],
-      Schemas['PerspectiveResponse']
-    >('/character-encounter/update-perspective', request, channel, timeout);
-  }
-
-  /**
-   * Strengthen memory (referenced)
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async characterEncounterRefreshMemoryAsync(
-    request: Schemas['RefreshMemoryRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['PerspectiveResponse']>> {
-    return this.client.invokeAsync<Schemas['RefreshMemoryRequest'], Schemas['PerspectiveResponse']>(
-      '/character-encounter/refresh-memory',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Get encounter data for compression
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async characterEncounterGetCompressDataAsync(
-    request: Schemas['GetCompressDataRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['CharacterEncounterArchive']>> {
-    return this.client.invokeAsync<
-      Schemas['GetCompressDataRequest'],
-      Schemas['CharacterEncounterArchive']
-    >('/character-encounter/get-compress-data', request, channel, timeout);
   }
 }

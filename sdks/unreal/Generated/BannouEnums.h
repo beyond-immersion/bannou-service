@@ -36,19 +36,6 @@ enum class EActorSize : uint8
     Huge UMETA(DisplayName = "Huge"),
 };
 
-/** Current actor lifecycle state */
-UENUM(BlueprintType)
-enum class EActorStatus : uint8
-{
-    Pending UMETA(DisplayName = "Pending"),
-    Starting UMETA(DisplayName = "Starting"),
-    Running UMETA(DisplayName = "Running"),
-    Paused UMETA(DisplayName = "Paused"),
-    Stopping UMETA(DisplayName = "Stopping"),
-    Stopped UMETA(DisplayName = "Stopped"),
-    Error UMETA(DisplayName = "Error"),
-};
-
 /** Grid traversal adjacency mode for a board template.
 - four_way: Orthogonal only (up, down, left, right)
 - eight_way: Orthogonal + diagonal (all 8 surrounding cells)
@@ -156,23 +143,6 @@ enum class EAutogainMode : uint8
     Compound UMETA(DisplayName = "Compound"),
 };
 
-/** Types of backstory elements. Each type represents a different aspect
-of the character's background that influences behavior.
- */
-UENUM(BlueprintType)
-enum class EBackstoryElementType : uint8
-{
-    Origin UMETA(DisplayName = "Origin"),
-    Occupation UMETA(DisplayName = "Occupation"),
-    Training UMETA(DisplayName = "Training"),
-    Trauma UMETA(DisplayName = "Trauma"),
-    Achievement UMETA(DisplayName = "Achievement"),
-    Secret UMETA(DisplayName = "Secret"),
-    Goal UMETA(DisplayName = "Goal"),
-    Fear UMETA(DisplayName = "Fear"),
-    Belief UMETA(DisplayName = "Belief"),
-};
-
 /** Category for organizing behaviors */
 UENUM(BlueprintType)
 enum class EBehaviorCategory : uint8
@@ -194,24 +164,6 @@ enum class EBindingStatus : uint8
     Synced UMETA(DisplayName = "Synced"),
     Error UMETA(DisplayName = "Error"),
     Disabled UMETA(DisplayName = "Disabled"),
-};
-
-/** Current status of a granted blessing */
-UENUM(BlueprintType)
-enum class EBlessingStatus : uint8
-{
-    Active UMETA(DisplayName = "Active"),
-    Revoked UMETA(DisplayName = "Revoked"),
-};
-
-/** Tier of a blessing determining its power, cost, and storage mechanism */
-UENUM(BlueprintType)
-enum class EBlessingTier : uint8
-{
-    Minor UMETA(DisplayName = "Minor"),
-    Standard UMETA(DisplayName = "Standard"),
-    Greater UMETA(DisplayName = "Greater"),
-    Supreme UMETA(DisplayName = "Supreme"),
 };
 
 /** Lifecycle status of a seed bond. */
@@ -391,35 +343,6 @@ enum class EClauseCategory : uint8
     Both UMETA(DisplayName = "Both"),
 };
 
-/** Policy for cleanup callback execution.
-BestEffort: Proceed with deletion even if some callbacks fail
-AllRequired: Abort deletion if any callback fails
- */
-UENUM(BlueprintType)
-enum class ECleanupPolicy : uint8
-{
-    BestEffort UMETA(DisplayName = "BestEffort"),
-    AllRequired UMETA(DisplayName = "AllRequired"),
-};
-
-/** Categories of combat experiences that may cause preference evolution.
-Each type affects different aspects of combat behavior.
- */
-UENUM(BlueprintType)
-enum class ECombatExperienceType : uint8
-{
-    DecisiveVictory UMETA(DisplayName = "DecisiveVictory"),
-    NarrowVictory UMETA(DisplayName = "NarrowVictory"),
-    Defeat UMETA(DisplayName = "Defeat"),
-    NearDeath UMETA(DisplayName = "NearDeath"),
-    AllySaved UMETA(DisplayName = "AllySaved"),
-    AllyLost UMETA(DisplayName = "AllyLost"),
-    SuccessfulRetreat UMETA(DisplayName = "SuccessfulRetreat"),
-    FailedRetreat UMETA(DisplayName = "FailedRetreat"),
-    AmbushSuccess UMETA(DisplayName = "AmbushSuccess"),
-    AmbushSurvived UMETA(DisplayName = "AmbushSurvived"),
-};
-
 /** Overall approach to combat situations. Affects target selection,
 ability usage, and engagement decisions.
  */
@@ -445,17 +368,6 @@ enum class EComparisonOperator : uint8
     Lte UMETA(DisplayName = "Lte"),
 };
 
-/** Policy for compression callback execution.
-BestEffort: Create archive even if some callbacks fail (partial archive)
-AllRequired: Abort compression if any callback fails
- */
-UENUM(BlueprintType)
-enum class ECompressionPolicy : uint8
-{
-    BestEffort UMETA(DisplayName = "BestEffort"),
-    AllRequired UMETA(DisplayName = "AllRequired"),
-};
-
 /** Compression algorithm for bundles */
 UENUM(BlueprintType)
 enum class ECompressionType : uint8
@@ -463,6 +375,15 @@ enum class ECompressionType : uint8
     Lz4 UMETA(DisplayName = "Lz4"),
     Lzma UMETA(DisplayName = "Lzma"),
     None UMETA(DisplayName = "None"),
+};
+
+/** How to handle documents with existing slugs during import */
+UENUM(BlueprintType)
+enum class EConflictResolution : uint8
+{
+    Skip UMETA(DisplayName = "Skip"),
+    Update UMETA(DisplayName = "Update"),
+    Fail UMETA(DisplayName = "Fail"),
 };
 
 /** Operational status of a transit connection */
@@ -528,15 +449,6 @@ enum class EContainerOwnerType : uint8
     Escrow UMETA(DisplayName = "Escrow"),
     Mail UMETA(DisplayName = "Mail"),
     Other UMETA(DisplayName = "Other"),
-};
-
-/** Format of the content field in a document response */
-UENUM(BlueprintType)
-enum class EContentFormat : uint8
-{
-    Markdown UMETA(DisplayName = "Markdown"),
-    Html UMETA(DisplayName = "Html"),
-    None UMETA(DisplayName = "None"),
 };
 
 /** Type of contract binding on an item instance.
@@ -607,15 +519,6 @@ enum class ECurrencyScope : uint8
     Global UMETA(DisplayName = "Global"),
     RealmSpecific UMETA(DisplayName = "RealmSpecific"),
     MultiRealm UMETA(DisplayName = "MultiRealm"),
-};
-
-/** Lifecycle status of a deity entity */
-UENUM(BlueprintType)
-enum class EDeityStatus : uint8
-{
-    Active UMETA(DisplayName = "Active"),
-    Dormant UMETA(DisplayName = "Dormant"),
-    Archived UMETA(DisplayName = "Archived"),
 };
 
 /** Result of a deletion operation:
@@ -739,17 +642,6 @@ enum class EEmotionalImpact : uint8
     Indifference UMETA(DisplayName = "Indifference"),
     Guilt UMETA(DisplayName = "Guilt"),
     Pride UMETA(DisplayName = "Pride"),
-};
-
-/** Overall outcome of an encounter */
-UENUM(BlueprintType)
-enum class EEncounterOutcome : uint8
-{
-    Positive UMETA(DisplayName = "Positive"),
-    Negative UMETA(DisplayName = "Negative"),
-    Neutral UMETA(DisplayName = "Neutral"),
-    Memorable UMETA(DisplayName = "Memorable"),
-    Transformative UMETA(DisplayName = "Transformative"),
 };
 
 /** How contract breaches are handled */
@@ -906,36 +798,6 @@ enum class EEscrowType : uint8
     Auction UMETA(DisplayName = "Auction"),
 };
 
-/** Categories of historical events that characters can participate in */
-UENUM(BlueprintType)
-enum class EEventCategory : uint8
-{
-    War UMETA(DisplayName = "War"),
-    NaturalDisaster UMETA(DisplayName = "NaturalDisaster"),
-    Political UMETA(DisplayName = "Political"),
-    Economic UMETA(DisplayName = "Economic"),
-    Religious UMETA(DisplayName = "Religious"),
-    Cultural UMETA(DisplayName = "Cultural"),
-    Personal UMETA(DisplayName = "Personal"),
-};
-
-/** Categories of significant experiences that may cause personality evolution.
-Each type has predefined trait impact tendencies.
- */
-UENUM(BlueprintType)
-enum class EExperienceType : uint8
-{
-    Trauma UMETA(DisplayName = "Trauma"),
-    Betrayal UMETA(DisplayName = "Betrayal"),
-    Loss UMETA(DisplayName = "Loss"),
-    Victory UMETA(DisplayName = "Victory"),
-    Friendship UMETA(DisplayName = "Friendship"),
-    Redemption UMETA(DisplayName = "Redemption"),
-    Corruption UMETA(DisplayName = "Corruption"),
-    Enlightenment UMETA(DisplayName = "Enlightenment"),
-    Sacrifice UMETA(DisplayName = "Sacrifice"),
-};
-
 /** How currency expiration is determined */
 UENUM(BlueprintType)
 enum class EExpirationPolicy : uint8
@@ -990,16 +852,6 @@ enum class EGroupRole : uint8
     Flanker UMETA(DisplayName = "Flanker"),
     Leader UMETA(DisplayName = "Leader"),
     Solo UMETA(DisplayName = "Solo"),
-};
-
-/** Current status of an authorization hold */
-UENUM(BlueprintType)
-enum class EHoldStatus : uint8
-{
-    Active UMETA(DisplayName = "Active"),
-    Captured UMETA(DisplayName = "Captured"),
-    Released UMETA(DisplayName = "Released"),
-    Expired UMETA(DisplayName = "Expired"),
 };
 
 /** HTTP method for endpoint invocation */
@@ -1118,15 +970,6 @@ enum class ELicenseStatus : uint8
     Locked UMETA(DisplayName = "Locked"),
     Unlockable UMETA(DisplayName = "Unlockable"),
     Unlocked UMETA(DisplayName = "Unlocked"),
-};
-
-/** Fields available for sorting document lists */
-UENUM(BlueprintType)
-enum class EListSortField : uint8
-{
-    CreatedAt UMETA(DisplayName = "CreatedAt"),
-    UpdatedAt UMETA(DisplayName = "UpdatedAt"),
-    Title UMETA(DisplayName = "Title"),
 };
 
 /** Type classification for locations */
@@ -1349,33 +1192,6 @@ enum class EObjectiveType : uint8
     Custom UMETA(DisplayName = "Custom"),
 };
 
-/** Action to take when the referenced resource is deleted.
-Cascade: Delete dependent entities when resource is deleted
-Restrict: Block resource deletion if references exist
-Detach: Set reference to null when resource is deleted
- */
-UENUM(BlueprintType)
-enum class EOnDeleteAction : uint8
-{
-    Cascade UMETA(DisplayName = "Cascade"),
-    Restrict UMETA(DisplayName = "Restrict"),
-    Detach UMETA(DisplayName = "Detach"),
-};
-
-/** How the character participated in the historical event */
-UENUM(BlueprintType)
-enum class EParticipationRole : uint8
-{
-    Leader UMETA(DisplayName = "Leader"),
-    Combatant UMETA(DisplayName = "Combatant"),
-    Victim UMETA(DisplayName = "Victim"),
-    Witness UMETA(DisplayName = "Witness"),
-    Beneficiary UMETA(DisplayName = "Beneficiary"),
-    Conspirator UMETA(DisplayName = "Conspirator"),
-    Hero UMETA(DisplayName = "Hero"),
-    Survivor UMETA(DisplayName = "Survivor"),
-};
-
 /** Method for aggregating party member skills */
 UENUM(BlueprintType)
 enum class EPartySkillAggregation : uint8
@@ -1392,21 +1208,6 @@ enum class EPaymentSchedule : uint8
     OneTime UMETA(DisplayName = "OneTime"),
     Recurring UMETA(DisplayName = "Recurring"),
     MilestoneBased UMETA(DisplayName = "MilestoneBased"),
-};
-
-/** Type of source generating a perception event */
-UENUM(BlueprintType)
-enum class EPerceptionSourceType : uint8
-{
-    Character UMETA(DisplayName = "Character"),
-    Npc UMETA(DisplayName = "Npc"),
-    Object UMETA(DisplayName = "Object"),
-    Environment UMETA(DisplayName = "Environment"),
-    Coordinator UMETA(DisplayName = "Coordinator"),
-    Scheduled UMETA(DisplayName = "Scheduled"),
-    Message UMETA(DisplayName = "Message"),
-    Service UMETA(DisplayName = "Service"),
-    System UMETA(DisplayName = "System"),
 };
 
 /** Whether room messages are stored in Redis (TTL) or MySQL (durable) */
@@ -1651,19 +1452,6 @@ enum class ERefundMode : uint8
     PartyRequired UMETA(DisplayName = "PartyRequired"),
 };
 
-/** How deep to traverse related document links:
-- none: No related documents included
-- direct: Only directly linked documents (depth 1)
-- extended: Related documents + their related documents (depth 2)
- */
-UENUM(BlueprintType)
-enum class ERelatedDepth : uint8
-{
-    None UMETA(DisplayName = "None"),
-    Direct UMETA(DisplayName = "Direct"),
-    Extended UMETA(DisplayName = "Extended"),
-};
-
 /** Controls how release confirmation is handled:
 - immediate: Finalizing → Released (skip Releasing state entirely).
   ⚠️ WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).
@@ -1680,19 +1468,6 @@ enum class EReleaseMode : uint8
     ServiceOnly UMETA(DisplayName = "ServiceOnly"),
     PartyRequired UMETA(DisplayName = "PartyRequired"),
     ServiceAndParty UMETA(DisplayName = "ServiceAndParty"),
-};
-
-/** Reason for GOAP plan validation result */
-UENUM(BlueprintType)
-enum class EReplanReason : uint8
-{
-    None UMETA(DisplayName = "None"),
-    PreconditionInvalidated UMETA(DisplayName = "PreconditionInvalidated"),
-    ActionFailed UMETA(DisplayName = "ActionFailed"),
-    BetterGoalAvailable UMETA(DisplayName = "BetterGoalAvailable"),
-    PlanCompleted UMETA(DisplayName = "PlanCompleted"),
-    GoalAlreadySatisfied UMETA(DisplayName = "GoalAlreadySatisfied"),
-    SuboptimalPlan UMETA(DisplayName = "SuboptimalPlan"),
 };
 
 /** Type of reward granted on quest completion */
@@ -1798,16 +1573,6 @@ enum class ESceneType : uint8
     Other UMETA(DisplayName = "Other"),
 };
 
-/** Fields that can be searched within documents */
-UENUM(BlueprintType)
-enum class ESearchField : uint8
-{
-    Title UMETA(DisplayName = "Title"),
-    Content UMETA(DisplayName = "Content"),
-    Tags UMETA(DisplayName = "Tags"),
-    Summary UMETA(DisplayName = "Summary"),
-};
-
 /** Where the search match was found */
 UENUM(BlueprintType)
 enum class ESearchMatchType : uint8
@@ -1816,15 +1581,6 @@ enum class ESearchMatchType : uint8
     Description UMETA(DisplayName = "Description"),
     Tag UMETA(DisplayName = "Tag"),
     NodeName UMETA(DisplayName = "NodeName"),
-};
-
-/** How to sort search results */
-UENUM(BlueprintType)
-enum class ESearchSortBy : uint8
-{
-    Relevance UMETA(DisplayName = "Relevance"),
-    Recency UMETA(DisplayName = "Recency"),
-    Alphabetical UMETA(DisplayName = "Alphabetical"),
 };
 
 /** Lifecycle status of a seed. */
@@ -1985,16 +1741,6 @@ enum class EStorylineGoal : uint8
     Peace UMETA(DisplayName = "Peace"),
 };
 
-/** Source type for generating related topic suggestions */
-UENUM(BlueprintType)
-enum class ESuggestionSource : uint8
-{
-    DocumentId UMETA(DisplayName = "DocumentId"),
-    Slug UMETA(DisplayName = "Slug"),
-    Topic UMETA(DisplayName = "Topic"),
-    Category UMETA(DisplayName = "Category"),
-};
-
 /** Status of platform synchronization */
 UENUM(BlueprintType)
 enum class ESyncStatus : uint8
@@ -2011,14 +1757,6 @@ enum class ESyncTrigger : uint8
 {
     Manual UMETA(DisplayName = "Manual"),
     Scheduled UMETA(DisplayName = "Scheduled"),
-};
-
-/** Whether documents must match all specified tags or any tag */
-UENUM(BlueprintType)
-enum class ETagMatchMode : uint8
-{
-    All UMETA(DisplayName = "All"),
-    Any UMETA(DisplayName = "Any"),
 };
 
 /** Current lifecycle status of a scenario template */
@@ -2047,14 +1785,6 @@ enum class ETerritoryClaimStatus : uint8
     Active UMETA(DisplayName = "Active"),
     Contested UMETA(DisplayName = "Contested"),
     Released UMETA(DisplayName = "Released"),
-};
-
-/** Territory validation mode for constraint checking */
-UENUM(BlueprintType)
-enum class ETerritoryMode : uint8
-{
-    Exclusive UMETA(DisplayName = "exclusive"),
-    Inclusive UMETA(DisplayName = "inclusive"),
 };
 
 /** Current status of a matchmaking ticket */
@@ -2242,13 +1972,13 @@ enum class EValidationSeverity : uint8
     Warning UMETA(DisplayName = "Warning"),
 };
 
-/** Suggested action based on GOAP plan validation */
+/** Audio codec for voice communication */
 UENUM(BlueprintType)
-enum class EValidationSuggestion : uint8
+enum class EVoiceCodec : uint8
 {
-    Continue UMETA(DisplayName = "Continue"),
-    Replan UMETA(DisplayName = "Replan"),
-    Abort UMETA(DisplayName = "Abort"),
+    Opus UMETA(DisplayName = "Opus"),
+    G711 UMETA(DisplayName = "G711"),
+    G722 UMETA(DisplayName = "G722"),
 };
 
 /** Type of voice leading rule violation */
@@ -2264,6 +1994,17 @@ enum class EVoiceLeadingViolationType : uint8
     DoubledLeadingTone UMETA(DisplayName = "DoubledLeadingTone"),
 };
 
+/** Voice communication tier:
+- P2P: Direct peer-to-peer connections (up to 6 participants)
+- Scaled: RTP server-mediated communication (unlimited participants)
+ */
+UENUM(BlueprintType)
+enum class EVoiceTier : uint8
+{
+    P2P UMETA(DisplayName = "P2P"),
+    Scaled UMETA(DisplayName = "Scaled"),
+};
+
 /** Shape of a volume node for spatial bounds */
 UENUM(BlueprintType)
 enum class EVolumeShape : uint8
@@ -2272,15 +2013,6 @@ enum class EVolumeShape : uint8
     Sphere UMETA(DisplayName = "Sphere"),
     Capsule UMETA(DisplayName = "Capsule"),
     Cylinder UMETA(DisplayName = "Cylinder"),
-};
-
-/** Current status of a wallet */
-UENUM(BlueprintType)
-enum class EWalletStatus : uint8
-{
-    Active UMETA(DisplayName = "Active"),
-    Frozen UMETA(DisplayName = "Frozen"),
-    Closed UMETA(DisplayName = "Closed"),
 };
 
 /** How container weight propagates to parent */

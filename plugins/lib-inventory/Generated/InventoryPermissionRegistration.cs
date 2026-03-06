@@ -137,36 +137,6 @@ public static class InventoryPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/inventory/add",
-            Method = ServiceEndpointMethod.Post,
-            Description = "addItemToContainer",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/inventory/remove",
-            Method = ServiceEndpointMethod.Post,
-            Description = "removeItemFromContainer",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/inventory/move",
             Method = ServiceEndpointMethod.Post,
             Description = "moveItem",
@@ -175,21 +145,6 @@ public static class InventoryPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/inventory/transfer",
-            Method = ServiceEndpointMethod.Post,
-            Description = "transferItem",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }

@@ -80,9 +80,7 @@ paths:
           description: Invalid request (missing fields, invalid entity types)
         '409':
           description: Relationship already exists between these entities with this type
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateRelationshipRequest\"\
         ,\n    \"$defs\": {\n        \"CreateRelationshipRequest\": {\n            \"description\": \"Request to create a
         new relationship between two entities\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -506,9 +504,7 @@ paths:
                 $ref: '#/components/schemas/RelationshipResponse'
         '404':
           description: Relationship not found
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateRelationshipRequest\"\
         ,\n    \"$defs\": {\n        \"UpdateRelationshipRequest\": {\n            \"description\": \"Request to update the
         metadata or type of an existing relationship\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -576,9 +572,7 @@ paths:
           description: Relationship ended successfully
         '404':
           description: Relationship not found
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EndRelationshipRequest\"\
         ,\n    \"$defs\": {\n        \"EndRelationshipRequest\": {\n            \"description\": \"Request to end an existing
         relationship with an optional timestamp and reason\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -622,9 +616,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CleanupByEntityResponse'
-      x-permissions:
-      - role: developer
-        states: {}
+      x-permissions: []
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByEntityRequest\"\
         ,\n    \"$defs\": {\n        \"CleanupByEntityRequest\": {\n            \"description\": \"Request to end all relationships
         referencing a deleted entity during cascading resource cleanup\",\n            \"type\": \"object\",\n           \
@@ -1125,8 +1117,7 @@ paths:
       tags:
       - Relationship Type Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -1223,8 +1214,7 @@ paths:
       tags:
       - Relationship Type Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -1322,8 +1312,7 @@ paths:
       tags:
       - Relationship Type Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -1364,8 +1353,7 @@ paths:
       tags:
       - Relationship Type Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -1448,8 +1436,7 @@ paths:
       tags:
       - Relationship Type Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -1538,8 +1525,7 @@ paths:
       tags:
       - Relationship Type Admin
       x-permissions:
-      - role: admin
-        states: {}
+      - role: developer
       requestBody:
         required: true
         content:
@@ -1610,9 +1596,7 @@ paths:
       operationId: seedRelationshipTypes
       tags:
       - Relationship Type Admin
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

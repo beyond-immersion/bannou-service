@@ -64,7 +64,6 @@ paths:
           description: Code already exists for this gameId
       x-permissions:
       - role: developer
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateItemTemplateRequest\"\
         ,\n    \"$defs\": {\n        \"CreateItemTemplateRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to create a new item template\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -330,7 +329,6 @@ paths:
           description: Item template not found
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetItemTemplateRequest\"\
         ,\n    \"$defs\": {\n        \"GetItemTemplateRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to get an item template\",\n            \"additionalProperties\": false,\n            \"properties\":
@@ -487,7 +485,6 @@ paths:
                 $ref: '#/components/schemas/ListItemTemplatesResponse'
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListItemTemplatesRequest\"\
         ,\n    \"$defs\": {\n        \"ListItemTemplatesRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to list item templates\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
@@ -682,7 +679,6 @@ paths:
           description: Item template not found
       x-permissions:
       - role: developer
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateItemTemplateRequest\"\
         ,\n    \"$defs\": {\n        \"UpdateItemTemplateRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to update mutable fields of an item template\",\n            \"additionalProperties\": false,\n      \
@@ -907,7 +903,6 @@ paths:
           description: Template already deprecated
       x-permissions:
       - role: admin
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateItemTemplateRequest\"\
         ,\n    \"$defs\": {\n        \"DeprecateItemTemplateRequest\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Request to deprecate an item template\",\n            \"additionalProperties\": false,\n        \
@@ -1072,7 +1067,6 @@ paths:
           description: Template is deprecated
       x-permissions:
       - role: developer
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateItemInstanceRequest\"\
         ,\n    \"$defs\": {\n        \"CreateItemInstanceRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to create a new item instance\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1209,7 +1203,6 @@ paths:
           description: Item instance not found
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetItemInstanceRequest\"\
         ,\n    \"$defs\": {\n        \"GetItemInstanceRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to get an item instance\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -1307,7 +1300,6 @@ paths:
           description: Item is corrupted/mirrored and cannot be modified
       x-permissions:
       - role: developer
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ModifyItemInstanceRequest\"\
         ,\n    \"$defs\": {\n        \"ModifyItemInstanceRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to modify item instance state\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1430,7 +1422,6 @@ paths:
           description: Item already bound
       x-permissions:
       - role: developer
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BindItemInstanceRequest\"\
         ,\n    \"$defs\": {\n        \"BindItemInstanceRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to bind an item to a character\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1534,7 +1525,6 @@ paths:
           description: Item instance not found
       x-permissions:
       - role: admin
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UnbindItemInstanceRequest\"\
         ,\n    \"$defs\": {\n        \"UnbindItemInstanceRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to unbind an item from a character\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1636,7 +1626,6 @@ paths:
           description: Item is bound and cannot be destroyed
       x-permissions:
       - role: developer
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DestroyItemInstanceRequest\"\
         ,\n    \"$defs\": {\n        \"DestroyItemInstanceRequest\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Request to destroy an item instance\",\n            \"additionalProperties\": false,\n          \
@@ -1692,7 +1681,6 @@ paths:
           description: Item use failed (contract prebound APIs failed)
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UseItemRequest\"\
         ,\n    \"$defs\": {\n        \"UseItemRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to use an item instance by executing its behavior contract\",\n            \"additionalProperties\": false,\n\
@@ -1769,7 +1757,6 @@ paths:
           description: Step execution failed (CanUse validation or milestone completion)
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UseItemStepRequest\"\
         ,\n    \"$defs\": {\n        \"UseItemStepRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to complete a step of a multi-step item use\",\n            \"additionalProperties\": false,\n       \
@@ -1837,7 +1824,6 @@ paths:
                 $ref: '#/components/schemas/ListItemsResponse'
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListItemsByContainerRequest\"\
         ,\n    \"$defs\": {\n        \"ListItemsByContainerRequest\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Request to list items in a container\",\n            \"additionalProperties\": false,\n         \
@@ -1939,7 +1925,6 @@ paths:
                 $ref: '#/components/schemas/ListItemsResponse'
       x-permissions:
       - role: admin
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListItemsByTemplateRequest\"\
         ,\n    \"$defs\": {\n        \"ListItemsByTemplateRequest\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Request to list instances of a template\",\n            \"additionalProperties\": false,\n      \
@@ -2045,7 +2030,6 @@ paths:
                 $ref: '#/components/schemas/BatchGetItemInstancesResponse'
       x-permissions:
       - role: user
-        states: {}
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BatchGetItemInstancesRequest\"\
         ,\n    \"$defs\": {\n        \"BatchGetItemInstancesRequest\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Request to get multiple item instances\",\n            \"additionalProperties\": false,\n       \

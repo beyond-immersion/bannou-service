@@ -41,8 +41,7 @@ paths:
       description: Returns full GameTimeSnapshot for a realm. Reads from Redis cache (hot path).
       tags:
       - Worldstate
-      x-permissions:
-      - role: user
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -120,8 +119,7 @@ paths:
         IRealmClient, then delegates to GetRealmTime.
       tags:
       - Worldstate
-      x-permissions:
-      - role: user
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -201,8 +199,7 @@ paths:
         realms.
       tags:
       - Worldstate
-      x-permissions:
-      - role: user
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -289,8 +286,7 @@ paths:
         ratio history segments. Critical for lazy evaluation patterns.
       tags:
       - Worldstate
-      x-permissions:
-      - role: user
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -343,8 +339,7 @@ paths:
         sessions. Primary caller is Agency (L4) on realm entry for immediate client time sync.
       tags:
       - Worldstate
-      x-permissions:
-      - role: user
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -791,8 +786,7 @@ paths:
       description: Returns a calendar template by game service ID and template code.
       tags:
       - Worldstate
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -899,8 +893,7 @@ paths:
       description: Returns all calendar templates registered for a game service.
       tags:
       - Worldstate
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1229,8 +1222,7 @@ paths:
         policy, epoch, and active status.
       tags:
       - Worldstate
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1352,8 +1344,7 @@ paths:
         filter.
       tags:
       - Worldstate
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:

@@ -171,9 +171,7 @@ paths:
       description: |
         Retrieves all historical event participation records for a character.
         Supports filtering by event category and minimum significance.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -271,9 +269,7 @@ paths:
       description: |
         Retrieves all characters who participated in a specific historical event.
         Useful for generating event summaries or finding related characters.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -368,9 +364,7 @@ paths:
       description: |
         Removes a specific participation record. Used during character compression
         or to correct erroneous records.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -404,9 +398,7 @@ paths:
         Retrieves structured backstory elements for a character. These elements
         are machine-readable key-value pairs used by the behavior system for
         decision-making, not narrative text for players.
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -489,9 +481,7 @@ paths:
       description: |
         Creates or updates backstory elements for a character. Can either replace
         all existing elements or merge with them based on the replaceExisting flag.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -593,9 +583,7 @@ paths:
       description: |
         Adds a single backstory element to a character's existing backstory.
         If an element with the same type and key exists, it will be updated.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -693,9 +681,7 @@ paths:
       description: |
         Removes all backstory elements for a character. Used during character
         compression or deletion.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -727,9 +713,7 @@ paths:
       description: |
         Removes all history data (participation records and backstory) for a
         character. Used during character compression after summarization.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -823,8 +807,7 @@ paths:
       description: |
         Called by Resource service during character compression.
         Returns historical participations, backstory elements, and text summaries for archival.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -959,9 +942,7 @@ paths:
       description: |
         Called by Resource service during character decompression.
         Restores historical participations and backstory elements from archive data.
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

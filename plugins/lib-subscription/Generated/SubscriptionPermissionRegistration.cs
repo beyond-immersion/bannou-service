@@ -47,66 +47,6 @@ public static class SubscriptionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/subscription/account/list",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getAccountSubscriptions",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/subscription/get",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getSubscription",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/subscription/create",
-            Method = ServiceEndpointMethod.Post,
-            Description = "createSubscription",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/subscription/update",
-            Method = ServiceEndpointMethod.Post,
-            Description = "updateSubscription",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/subscription/cancel",
             Method = ServiceEndpointMethod.Post,
             Description = "cancelSubscription",
@@ -115,21 +55,6 @@ public static class SubscriptionPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/subscription/renew",
-            Method = ServiceEndpointMethod.Post,
-            Description = "renewSubscription",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }

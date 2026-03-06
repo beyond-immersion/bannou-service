@@ -154,6 +154,18 @@ public partial class FactionController
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
                 },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this faction was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1024,
+                    "description": "Reason for deprecation (null if not deprecated)"
+                },
                 "memberCount": {
                     "type": "integer",
                     "minimum": 0,
@@ -344,6 +356,18 @@ public partial class FactionController
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this faction was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1024,
+                    "description": "Reason for deprecation (null if not deprecated)"
                 },
                 "memberCount": {
                     "type": "integer",
@@ -543,6 +567,18 @@ public partial class FactionController
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
                 },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this faction was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1024,
+                    "description": "Reason for deprecation (null if not deprecated)"
+                },
                 "memberCount": {
                     "type": "integer",
                     "minimum": 0,
@@ -671,6 +707,11 @@ public partial class FactionController
                     "type": "boolean",
                     "nullable": true,
                     "description": "Filter by realm baseline status"
+                },
+                "includeDeprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to include deprecated factions in results"
                 },
                 "cursor": {
                     "type": "string",
@@ -808,6 +849,18 @@ public partial class FactionController
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this faction was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1024,
+                    "description": "Reason for deprecation (null if not deprecated)"
                 },
                 "memberCount": {
                     "type": "integer",
@@ -1020,6 +1073,18 @@ public partial class FactionController
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
                 },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this faction was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1024,
+                    "description": "Reason for deprecation (null if not deprecated)"
+                },
                 "memberCount": {
                     "type": "integer",
                     "minimum": 0,
@@ -1116,13 +1181,20 @@ public partial class FactionController
             "description": "Request to deprecate a faction",
             "additionalProperties": false,
             "required": [
-                "factionId"
+                "factionId",
+                "deprecationReason"
             ],
             "properties": {
                 "factionId": {
                     "type": "string",
                     "format": "uuid",
                     "description": "ID of the faction to deprecate"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024,
+                    "description": "Reason for deprecation (audit context for Category A entities)"
                 }
             }
         }
@@ -1210,6 +1282,18 @@ public partial class FactionController
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this faction was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1024,
+                    "description": "Reason for deprecation (null if not deprecated)"
                 },
                 "memberCount": {
                     "type": "integer",
@@ -1401,6 +1485,18 @@ public partial class FactionController
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this faction was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1024,
+                    "description": "Reason for deprecation (null if not deprecated)"
                 },
                 "memberCount": {
                     "type": "integer",
@@ -1857,6 +1953,18 @@ public partial class FactionController
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
                 },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this faction was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1024,
+                    "description": "Reason for deprecation (null if not deprecated)"
+                },
                 "memberCount": {
                     "type": "integer",
                     "minimum": 0,
@@ -2047,6 +2155,18 @@ public partial class FactionController
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this faction was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1024,
+                    "description": "Reason for deprecation (null if not deprecated)"
                 },
                 "memberCount": {
                     "type": "integer",
@@ -2615,15 +2735,9 @@ public partial class FactionController
             "description": "All faction memberships for a character",
             "additionalProperties": false,
             "required": [
-                "characterId",
                 "memberships"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character these memberships belong to"
-                },
                 "memberships": {
                     "type": "array",
                     "items": {
@@ -2652,10 +2766,14 @@ public partial class FactionController
                 },
                 "factionName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Display name of the faction"
                 },
                 "factionCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Unique code of the faction"
                 },
                 "role": {
@@ -2937,21 +3055,9 @@ public partial class FactionController
             "description": "Result of a membership check",
             "additionalProperties": false,
             "required": [
-                "factionId",
-                "characterId",
                 "isMember"
             ],
             "properties": {
-                "factionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Faction that was checked"
-                },
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character that was checked"
-                },
                 "isMember": {
                     "type": "boolean",
                     "description": "Whether the character is a member"
@@ -3598,6 +3704,18 @@ public partial class FactionController
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this faction was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1024,
+                    "description": "Reason for deprecation (null if not deprecated)"
                 },
                 "memberCount": {
                     "type": "integer",
@@ -4470,8 +4588,6 @@ public partial class FactionController
             "description": "Resolved applicable norms for a character with hierarchy merge results",
             "additionalProperties": false,
             "required": [
-                "characterId",
-                "realmId",
                 "applicableNorms",
                 "mergedNormMap",
                 "membershipFactionCount",
@@ -4479,22 +4595,6 @@ public partial class FactionController
                 "realmBaselineResolved"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character norms were resolved for"
-                },
-                "realmId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Realm used for baseline resolution"
-                },
-                "locationId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Location used for territory resolution (null if not provided)"
-                },
                 "applicableNorms": {
                     "type": "array",
                     "items": {
@@ -4551,6 +4651,8 @@ public partial class FactionController
                 },
                 "factionName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Display name of the owning faction"
                 },
                 "violationType": {
@@ -4744,18 +4846,13 @@ public partial class FactionController
             "description": "Result of character faction data cleanup",
             "additionalProperties": false,
             "required": [
-                "membershipsRemoved",
-                "success"
+                "membershipsRemoved"
             ],
             "properties": {
                 "membershipsRemoved": {
                     "type": "integer",
                     "minimum": 0,
                     "description": "Number of faction memberships removed"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether cleanup completed successfully"
                 }
             }
         }
@@ -4856,8 +4953,7 @@ public partial class FactionController
                 "factionsRemoved",
                 "membershipsRemoved",
                 "territoryClaimsRemoved",
-                "normsRemoved",
-                "success"
+                "normsRemoved"
             ],
             "properties": {
                 "factionsRemoved": {
@@ -4879,10 +4975,6 @@ public partial class FactionController
                     "type": "integer",
                     "minimum": 0,
                     "description": "Number of norm definitions removed"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether cleanup completed successfully"
                 }
             }
         }
@@ -4980,18 +5072,13 @@ public partial class FactionController
             "description": "Result of location territory claim cleanup",
             "additionalProperties": false,
             "required": [
-                "claimsRemoved",
-                "success"
+                "claimsRemoved"
             ],
             "properties": {
                 "claimsRemoved": {
                     "type": "integer",
                     "minimum": 0,
                     "description": "Number of territory claims removed"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether cleanup completed successfully"
                 }
             }
         }
@@ -5253,6 +5340,7 @@ public partial class FactionController
                 },
                 "data": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Base64-encoded gzipped FactionArchive JSON"
                 }
             }
@@ -5271,23 +5359,13 @@ public partial class FactionController
             "description": "Result of restoration from archive",
             "additionalProperties": false,
             "required": [
-                "characterId",
-                "membershipsRestored",
-                "success"
+                "membershipsRestoredCount"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character data was restored for"
-                },
-                "membershipsRestored": {
-                    "type": "boolean",
-                    "description": "Whether faction memberships were restored"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether the restoration completed successfully"
+                "membershipsRestoredCount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of faction memberships restored from archive"
                 }
             }
         }

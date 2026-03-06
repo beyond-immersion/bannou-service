@@ -69,8 +69,8 @@ public static class GameSessionPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"game-session", "in_game"} }
                 },
             }
         });
@@ -84,8 +84,8 @@ public static class GameSessionPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"game-session", "in_game"} }
                 },
             }
         });
@@ -144,8 +144,8 @@ public static class GameSessionPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"game-session", "in_game"} }
                 },
             }
         });

@@ -185,46 +185,6 @@ export class SeedProxy {
   }
 
   /**
-   * Record growth in a domain
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async seedRecordGrowthAsync(
-    request: Schemas['RecordGrowthRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['GrowthResponse']>> {
-    return this.client.invokeAsync<Schemas['RecordGrowthRequest'], Schemas['GrowthResponse']>(
-      '/seed/growth/record',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Record growth across multiple domains atomically
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async seedRecordGrowthBatchAsync(
-    request: Schemas['RecordGrowthBatchRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['GrowthResponse']>> {
-    return this.client.invokeAsync<Schemas['RecordGrowthBatchRequest'], Schemas['GrowthResponse']>(
-      '/seed/growth/record-batch',
-      request,
-      channel,
-      timeout
-    );
-  }
-
-  /**
    * Get current growth phase
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).

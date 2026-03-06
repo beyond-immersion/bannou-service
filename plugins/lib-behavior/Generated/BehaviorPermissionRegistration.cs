@@ -75,66 +75,6 @@ public static class BehaviorPermissionRegistration
             }
         });
 
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/cache/get",
-            Method = ServiceEndpointMethod.Post,
-            Description = "GetCachedBehavior",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/cache/invalidate",
-            Method = ServiceEndpointMethod.Post,
-            Description = "InvalidateCachedBehavior",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/goap/plan",
-            Method = ServiceEndpointMethod.Post,
-            Description = "GenerateGoapPlan",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/goap/validate-plan",
-            Method = ServiceEndpointMethod.Post,
-            Description = "ValidateGoapPlan",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
         return endpoints;
     }
 

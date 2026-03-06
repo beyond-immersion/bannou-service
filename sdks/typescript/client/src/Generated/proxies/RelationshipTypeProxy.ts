@@ -131,4 +131,111 @@ export class RelationshipTypeProxy {
       Schemas['RelationshipTypeListResponse']
     >('/relationship-type/get-ancestors', request, channel, timeout);
   }
+
+  /**
+   * Create new relationship type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async relationshipCreateRelationshipTypeAsync(
+    request: Schemas['CreateRelationshipTypeRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['RelationshipTypeResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['CreateRelationshipTypeRequest'],
+      Schemas['RelationshipTypeResponse']
+    >('/relationship-type/create', request, channel, timeout);
+  }
+
+  /**
+   * Update relationship type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async relationshipUpdateRelationshipTypeAsync(
+    request: Schemas['UpdateRelationshipTypeRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['RelationshipTypeResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['UpdateRelationshipTypeRequest'],
+      Schemas['RelationshipTypeResponse']
+    >('/relationship-type/update', request, channel, timeout);
+  }
+
+  /**
+   * Delete relationship type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async relationshipDeleteRelationshipTypeEventAsync(
+    request: Schemas['DeleteRelationshipTypeRequest'],
+    channel: number = 0
+  ): Promise<void> {
+    return this.client.sendEventAsync<Schemas['DeleteRelationshipTypeRequest']>(
+      '/relationship-type/delete',
+      request,
+      channel
+    );
+  }
+
+  /**
+   * Deprecate a relationship type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async relationshipDeprecateRelationshipTypeAsync(
+    request: Schemas['DeprecateRelationshipTypeRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['RelationshipTypeResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['DeprecateRelationshipTypeRequest'],
+      Schemas['RelationshipTypeResponse']
+    >('/relationship-type/deprecate', request, channel, timeout);
+  }
+
+  /**
+   * Restore a deprecated relationship type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async relationshipUndeprecateRelationshipTypeAsync(
+    request: Schemas['UndeprecateRelationshipTypeRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['RelationshipTypeResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['UndeprecateRelationshipTypeRequest'],
+      Schemas['RelationshipTypeResponse']
+    >('/relationship-type/undeprecate', request, channel, timeout);
+  }
+
+  /**
+   * Merge a deprecated type into another type
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async relationshipMergeRelationshipTypeAsync(
+    request: Schemas['MergeRelationshipTypeRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['MergeRelationshipTypeResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['MergeRelationshipTypeRequest'],
+      Schemas['MergeRelationshipTypeResponse']
+    >('/relationship-type/merge', request, channel, timeout);
+  }
 }

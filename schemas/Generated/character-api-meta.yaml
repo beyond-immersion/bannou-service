@@ -51,7 +51,6 @@ paths:
       - Character Management
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -125,7 +124,6 @@ paths:
       - Character Management
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -185,7 +183,6 @@ paths:
       - Character Management
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -259,7 +256,6 @@ paths:
       - Character Management
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -290,7 +286,6 @@ paths:
       - Character Management
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -380,7 +375,6 @@ paths:
       - Character Lookup
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -489,7 +483,6 @@ paths:
       - Character Compression
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -562,7 +555,6 @@ paths:
       - Character Compression
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -633,7 +625,6 @@ paths:
       - Character Compression
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -688,7 +679,6 @@ paths:
       - Character Lookup
       x-permissions:
       - role: user
-        states: {}
       requestBody:
         required: true
         content:
@@ -778,7 +768,6 @@ paths:
       - Character Management
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -848,8 +837,7 @@ paths:
         Called by Resource service during compression.
         Returns core character data (name, dates, family summary).
         Returns BadRequest if character is alive - only dead characters can be compressed.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:

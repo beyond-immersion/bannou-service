@@ -47,81 +47,6 @@ public static class DocumentationPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/documentation/query",
-            Method = ServiceEndpointMethod.Post,
-            Description = "queryDocumentation",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "anonymous",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/documentation/get",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getDocument",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "anonymous",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/documentation/search",
-            Method = ServiceEndpointMethod.Post,
-            Description = "searchDocumentation",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "anonymous",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/documentation/list",
-            Method = ServiceEndpointMethod.Post,
-            Description = "listDocuments",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "anonymous",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/documentation/suggest",
-            Method = ServiceEndpointMethod.Post,
-            Description = "suggestRelatedTopics",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "anonymous",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/documentation/create",
             Method = ServiceEndpointMethod.Post,
             Description = "createDocument",
@@ -129,7 +54,7 @@ public static class DocumentationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -144,7 +69,7 @@ public static class DocumentationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -159,7 +84,7 @@ public static class DocumentationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -174,7 +99,7 @@ public static class DocumentationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -189,7 +114,7 @@ public static class DocumentationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -204,7 +129,7 @@ public static class DocumentationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -219,7 +144,7 @@ public static class DocumentationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -234,7 +159,7 @@ public static class DocumentationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -249,7 +174,7 @@ public static class DocumentationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -264,7 +189,7 @@ public static class DocumentationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -294,7 +219,7 @@ public static class DocumentationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -399,7 +324,7 @@ public static class DocumentationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -414,7 +339,7 @@ public static class DocumentationPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
+                    Role = "developer",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }

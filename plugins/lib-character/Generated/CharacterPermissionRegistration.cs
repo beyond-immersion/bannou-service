@@ -210,21 +210,6 @@ public static class CharacterPermissionRegistration
             }
         });
 
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/character/get-compress-data",
-            Method = ServiceEndpointMethod.Post,
-            Description = "getCompressData",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
         return endpoints;
     }
 

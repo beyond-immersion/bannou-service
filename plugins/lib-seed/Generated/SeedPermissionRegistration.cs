@@ -167,36 +167,6 @@ public static class SeedPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/seed/growth/record",
-            Method = ServiceEndpointMethod.Post,
-            Description = "RecordGrowth",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/seed/growth/record-batch",
-            Method = ServiceEndpointMethod.Post,
-            Description = "RecordGrowthBatch",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/seed/growth/get-phase",
             Method = ServiceEndpointMethod.Post,
             Description = "GetGrowthPhase",

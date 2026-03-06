@@ -25,37 +25,91 @@ export class DocumentationProxy {
   }
 
   /**
-   * Natural language documentation search
+   * Create new documentation entry
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async documentationQueryDocumentationAsync(
-    request: Schemas['QueryDocumentationRequest'],
+  async documentationCreateDocumentAsync(
+    request: Schemas['CreateDocumentRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['QueryDocumentationResponse']>> {
+  ): Promise<ApiResponse<Schemas['CreateDocumentResponse']>> {
     return this.client.invokeAsync<
-      Schemas['QueryDocumentationRequest'],
-      Schemas['QueryDocumentationResponse']
-    >('/documentation/query', request, channel, timeout);
+      Schemas['CreateDocumentRequest'],
+      Schemas['CreateDocumentResponse']
+    >('/documentation/create', request, channel, timeout);
   }
 
   /**
-   * Get specific document by ID or slug
+   * Update existing documentation entry
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async documentationGetDocumentAsync(
-    request: Schemas['GetDocumentRequest'],
+  async documentationUpdateDocumentAsync(
+    request: Schemas['UpdateDocumentRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['GetDocumentResponse']>> {
-    return this.client.invokeAsync<Schemas['GetDocumentRequest'], Schemas['GetDocumentResponse']>(
-      '/documentation/get',
+  ): Promise<ApiResponse<Schemas['UpdateDocumentResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['UpdateDocumentRequest'],
+      Schemas['UpdateDocumentResponse']
+    >('/documentation/update', request, channel, timeout);
+  }
+
+  /**
+   * Soft-delete documentation entry to trashcan
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async documentationDeleteDocumentAsync(
+    request: Schemas['DeleteDocumentRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['DeleteDocumentResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['DeleteDocumentRequest'],
+      Schemas['DeleteDocumentResponse']
+    >('/documentation/delete', request, channel, timeout);
+  }
+
+  /**
+   * Recover document from trashcan
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async documentationRecoverDocumentAsync(
+    request: Schemas['RecoverDocumentRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['RecoverDocumentResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['RecoverDocumentRequest'],
+      Schemas['RecoverDocumentResponse']
+    >('/documentation/recover', request, channel, timeout);
+  }
+
+  /**
+   * Bulk update document metadata
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async documentationBulkUpdateDocumentsAsync(
+    request: Schemas['BulkUpdateRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['BulkUpdateResponse']>> {
+    return this.client.invokeAsync<Schemas['BulkUpdateRequest'], Schemas['BulkUpdateResponse']>(
+      '/documentation/bulk-update',
       request,
       channel,
       timeout
@@ -63,57 +117,97 @@ export class DocumentationProxy {
   }
 
   /**
-   * Full-text keyword search
+   * Bulk soft-delete documents to trashcan
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async documentationSearchDocumentationAsync(
-    request: Schemas['SearchDocumentationRequest'],
+  async documentationBulkDeleteDocumentsAsync(
+    request: Schemas['BulkDeleteRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['SearchDocumentationResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['SearchDocumentationRequest'],
-      Schemas['SearchDocumentationResponse']
-    >('/documentation/search', request, channel, timeout);
+  ): Promise<ApiResponse<Schemas['BulkDeleteResponse']>> {
+    return this.client.invokeAsync<Schemas['BulkDeleteRequest'], Schemas['BulkDeleteResponse']>(
+      '/documentation/bulk-delete',
+      request,
+      channel,
+      timeout
+    );
   }
 
   /**
-   * List documents by category
+   * Bulk import documentation from structured source
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async documentationListDocumentsAsync(
-    request: Schemas['ListDocumentsRequest'],
+  async documentationImportDocumentationAsync(
+    request: Schemas['ImportDocumentationRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['ListDocumentsResponse']>> {
+  ): Promise<ApiResponse<Schemas['ImportDocumentationResponse']>> {
     return this.client.invokeAsync<
-      Schemas['ListDocumentsRequest'],
-      Schemas['ListDocumentsResponse']
-    >('/documentation/list', request, channel, timeout);
+      Schemas['ImportDocumentationRequest'],
+      Schemas['ImportDocumentationResponse']
+    >('/documentation/import', request, channel, timeout);
   }
 
   /**
-   * Get related topics and follow-up suggestions
+   * List documents in the trashcan
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async documentationSuggestRelatedTopicsAsync(
-    request: Schemas['SuggestRelatedRequest'],
+  async documentationListTrashcanAsync(
+    request: Schemas['ListTrashcanRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['SuggestRelatedResponse']>> {
+  ): Promise<ApiResponse<Schemas['ListTrashcanResponse']>> {
+    return this.client.invokeAsync<Schemas['ListTrashcanRequest'], Schemas['ListTrashcanResponse']>(
+      '/documentation/trashcan',
+      request,
+      channel,
+      timeout
+    );
+  }
+
+  /**
+   * Permanently delete trashcan items
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async documentationPurgeTrashcanAsync(
+    request: Schemas['PurgeTrashcanRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['PurgeTrashcanResponse']>> {
     return this.client.invokeAsync<
-      Schemas['SuggestRelatedRequest'],
-      Schemas['SuggestRelatedResponse']
-    >('/documentation/suggest', request, channel, timeout);
+      Schemas['PurgeTrashcanRequest'],
+      Schemas['PurgeTrashcanResponse']
+    >('/documentation/purge', request, channel, timeout);
+  }
+
+  /**
+   * Get namespace documentation statistics
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async documentationGetNamespaceStatsAsync(
+    request: Schemas['GetNamespaceStatsRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['NamespaceStatsResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['GetNamespaceStatsRequest'],
+      Schemas['NamespaceStatsResponse']
+    >('/documentation/stats', request, channel, timeout);
   }
 
   /**
@@ -132,6 +226,24 @@ export class DocumentationProxy {
       Schemas['BindRepositoryRequest'],
       Schemas['BindRepositoryResponse']
     >('/documentation/repo/bind', request, channel, timeout);
+  }
+
+  /**
+   * Remove repository binding from namespace
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async documentationUnbindRepositoryAsync(
+    request: Schemas['UnbindRepositoryRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['UnbindRepositoryResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['UnbindRepositoryRequest'],
+      Schemas['UnbindRepositoryResponse']
+    >('/documentation/repo/unbind', request, channel, timeout);
   }
 
   /**
@@ -242,5 +354,41 @@ export class DocumentationProxy {
       channel,
       timeout
     );
+  }
+
+  /**
+   * Restore documentation from archive
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async documentationRestoreDocumentationArchiveAsync(
+    request: Schemas['RestoreArchiveRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['RestoreArchiveResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['RestoreArchiveRequest'],
+      Schemas['RestoreArchiveResponse']
+    >('/documentation/repo/archive/restore', request, channel, timeout);
+  }
+
+  /**
+   * Delete documentation archive
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async documentationDeleteDocumentationArchiveAsync(
+    request: Schemas['DeleteArchiveRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['DeleteArchiveResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['DeleteArchiveRequest'],
+      Schemas['DeleteArchiveResponse']
+    >('/documentation/repo/archive/delete', request, channel, timeout);
   }
 }

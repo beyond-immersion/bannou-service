@@ -221,8 +221,7 @@ paths:
         Records growth in a specific domain for a seed. Primarily called
         internally by consuming services after processing game events.
         Triggers capability manifest recomputation if thresholds are crossed.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -245,8 +244,7 @@ paths:
         Records growth across multiple domains in a single atomic operation.
         Useful when a single game event contributes to multiple domains
         simultaneously.
-      x-permissions:
-      - role: developer
+      x-permissions: []
       requestBody:
         required: true
         content:
