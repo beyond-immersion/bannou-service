@@ -88,6 +88,19 @@ x-service-configuration:
       description: TTL in seconds for progress data in Redis (0 = no expiry, progress persists indefinitely)
       default: 0
       env: ACHIEVEMENT_PROGRESS_TTL_SECONDS
+    # Sync History Configuration
+    SyncHistoryTtlSeconds:
+      type: integer
+      minimum: 0
+      description: TTL in seconds for sync history data in Redis, applied at record creation (0 = no expiry, sync history persists indefinitely)
+      default: 0
+      env: ACHIEVEMENT_SYNC_HISTORY_TTL_SECONDS
+    SyncStatusRetryAttempts:
+      type: integer
+      minimum: 1
+      description: Maximum retry attempts for ETag conflicts when updating sync status records
+      default: 3
+      env: ACHIEVEMENT_SYNC_STATUS_RETRY_ATTEMPTS
     # Progress Milestone Configuration
     ProgressMilestonePercents:
       type: array

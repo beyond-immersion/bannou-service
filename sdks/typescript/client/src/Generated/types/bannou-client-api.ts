@@ -1479,6 +1479,30 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/character-encounter/record': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Record new encounter with perspectives
+     * @description Records a new encounter between two or more characters. Creates the shared
+     *     encounter record and individual perspectives for each participant.
+     *
+     *     Perspectives can be provided in the request or will be auto-generated with
+     *     default values if not specified.
+     */
+    post: operations['characterEncounter_recordEncounter'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/character-encounter/query/by-character': {
     parameters: {
       query?: never;
@@ -1584,6 +1608,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/character-encounter/batch-get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Bulk sentiment for multiple targets
+     * @description Calculates sentiment toward multiple target characters in a single call.
+     *     Efficient for behavior system queries that check multiple NPCs.
+     */
+    post: operations['characterEncounter_batchGetSentiment'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/character-encounter/get-perspective': {
     parameters: {
       query?: never;
@@ -1599,6 +1644,48 @@ export interface paths {
      *     Includes emotional impact, sentiment shift, and memory strength.
      */
     post: operations['characterEncounter_getPerspective'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-encounter/update-perspective': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update perspective (reflection)
+     * @description Updates a character's perspective on an encounter. Used when a character
+     *     reflects on past events or gains new information about an encounter.
+     */
+    post: operations['characterEncounter_updatePerspective'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-encounter/refresh-memory': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Strengthen memory (referenced)
+     * @description Strengthens a character's memory of an encounter. Called when the encounter
+     *     is referenced in dialogue, thought, or action. Counteracts memory decay.
+     */
+    post: operations['characterEncounter_refreshMemory'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1732,6 +1819,58 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/character-personality/evolve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Record an experience that may evolve personality
+     * @description Records a significant experience for a character. The system evaluates whether
+     *     the experience causes trait evolution based on:
+     *     - Experience type and its typical trait impacts
+     *     - Experience intensity (higher = more likely to cause change)
+     *     - Current trait values and resistance
+     *     - Random factor for rarity (most experiences don't cause changes)
+     *
+     *     This endpoint is typically called by the behavior service when significant
+     *     events occur during gameplay.
+     */
+    post: operations['characterPersonality_recordExperience'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-personality/batch-get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get personalities for multiple characters
+     * @description Bulk load personalities for multiple characters. Used by the behavior service
+     *     for efficient region initialization. Characters without personalities are
+     *     returned in the notFound array.
+     *
+     *     Maximum 100 characters per request.
+     */
+    post: operations['characterPersonality_batchGetPersonalities'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/character-personality/get-combat': {
     parameters: {
       query?: never;
@@ -1748,6 +1887,30 @@ export interface paths {
      *     style, positioning, and retreat conditions.
      */
     post: operations['characterPersonality_getCombatPreferences'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-personality/evolve-combat': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Record combat experience that may evolve preferences
+     * @description Records a significant combat experience that may cause preference evolution.
+     *     Similar to personality evolution, but focused on combat-specific traits.
+     *
+     *     Combat experiences can shift style (e.g., repeated losses may make a
+     *     character more defensive), adjust risk tolerance, or change retreat thresholds.
+     */
+    post: operations['characterPersonality_evolveCombatPreferences'];
     delete?: never;
     options?: never;
     head?: never;
@@ -14324,7 +14487,7 @@ export interface components {
        */
       relatedEntityId?: string | null;
       /** @description Type of the related entity (if any) */
-      relatedEntityType?: string | null;
+      relatedEntityType?: components['schemas']['EntityType'];
     };
     /**
      * @description Types of backstory elements. Each type represents a different aspect
@@ -14343,18 +14506,13 @@ export interface components {
       | 'Belief';
     /** @description Complete backstory data for a character */
     BackstoryResponse: {
-      /**
-       * Format: uuid
-       * @description ID of the character this backstory belongs to
-       */
-      characterId: string;
       /** @description All backstory elements for this character */
       elements: components['schemas']['BackstoryElement'][];
       /**
        * Format: date-time
        * @description When this backstory was first created
        */
-      createdAt?: string | null;
+      createdAt: string;
       /**
        * Format: date-time
        * @description When this backstory was last modified
@@ -14606,6 +14764,11 @@ export interface components {
       /** @description Instance IDs that were not found */
       notFound: string[];
     };
+    /** @description Request payload for bulk loading personalities */
+    BatchGetPersonalitiesRequest: {
+      /** @description IDs of characters to get personalities for (max 100) */
+      characterIds: string[];
+    };
     /** @description Request to get current game time for multiple realms */
     BatchGetRealmTimesRequest: {
       /** @description Realm IDs to get current game time for */
@@ -14617,6 +14780,16 @@ export interface components {
       snapshots: components['schemas']['GameTimeSnapshot'][];
       /** @description Realm IDs from the request that had no initialized clock */
       notFoundRealmIds: string[];
+    };
+    /** @description Request to get sentiment toward multiple characters */
+    BatchGetSentimentRequest: {
+      /**
+       * Format: uuid
+       * @description Character whose sentiment to query
+       */
+      characterId: string;
+      /** @description Target characters to measure sentiment toward */
+      targetCharacterIds: string[];
     };
     /** @description Individual message entry in a batch send operation */
     BatchMessageEntry: {
@@ -14639,12 +14812,29 @@ export interface components {
       /** @description Human-readable error reason */
       error: string;
     };
+    /** @description Response containing personalities for multiple characters */
+    BatchPersonalityResponse: {
+      /** @description Successfully retrieved personalities */
+      personalities: components['schemas']['PersonalityResponse'][];
+      /** @description Character IDs that have no personality defined */
+      notFound: string[];
+    };
+    /** @description Response containing sentiment toward multiple targets */
+    BatchSentimentResponse: {
+      /** @description Sentiment toward each target */
+      sentiments: components['schemas']['SentimentResponse'][];
+    };
+    /**
+     * @description Category for organizing behaviors
+     * @enum {string}
+     */
+    BehaviorCategory: 'Base' | 'Cultural' | 'Professional' | 'Personal' | 'Situational' | 'Ambient';
     /** @description Compiled behavior tree data with bytecode or download reference */
     BehaviorTreeData: {
       /** @description Base64-encoded compiled bytecode for the behavior tree */
       bytecode?: string | null;
       /** @description Size of the bytecode in bytes */
-      bytecodeSize?: number;
+      bytecodeSize: number;
       /** @description URL to download the compiled behavior asset */
       downloadUrl?: string | null;
     };
@@ -15511,13 +15701,6 @@ export interface components {
       behaviorId: string;
       /** @description The compiled behavior data retrieved from cache */
       compiledBehavior: components['schemas']['CompiledBehavior'];
-      /**
-       * Format: date-time
-       * @description When the behavior was cached
-       */
-      cacheTimestamp?: string | null;
-      /** @description Whether this was a cache hit or miss */
-      cacheHit?: boolean;
     };
     /** @description Information about a cadence */
     CadenceInfo: {
@@ -15938,55 +16121,6 @@ export interface components {
        */
       updatedAt?: string | null;
     } & components['schemas']['ResourceArchiveBase'];
-    /** @description Context information about a character for behavior resolution */
-    CharacterContext: {
-      /**
-       * @description Unique identifier for the NPC
-       * @example npc_12345
-       */
-      npcId?: string | null;
-      /**
-       * @description Cultural background identifier
-       * @example european_medieval
-       */
-      culture?: string | null;
-      /**
-       * @description Character profession identifier
-       * @example blacksmith
-       */
-      profession?: string | null;
-      /**
-       * @description Character statistics and attributes
-       * @example {
-       *       "energy": 0.8,
-       *       "health": 1,
-       *       "hunger": 0.3
-       *     }
-       */
-      stats?: {
-        [key: string]: number;
-      } | null;
-      /**
-       * @description Character skill levels
-       * @example {
-       *       "blacksmithing": 85,
-       *       "trading": 42
-       *     }
-       */
-      skills?: {
-        [key: string]: number;
-      } | null;
-      /** @description Current location information for the character */
-      location?: components['schemas']['Location'];
-      /** @description Relationship values with other characters */
-      relationships?: {
-        [key: string]: number;
-      } | null;
-      /** @description Relevant world state information */
-      worldState?: {
-        [key: string]: unknown;
-      } | null;
-    };
     /**
      * @description Complete encounter data for archive storage and storyline SDK consumption.
      *     Inherits base archive properties from ResourceArchiveBase.
@@ -16025,8 +16159,8 @@ export interface components {
       characterId: string;
       /** @description Whether historical participations exist */
       hasParticipations: boolean;
-      /** @description Historical event participations (empty if hasParticipations=false) */
-      participations?: components['schemas']['HistoricalParticipation'][];
+      /** @description Historical event participations (null if hasParticipations=false) */
+      participations?: components['schemas']['HistoricalParticipation'][] | null;
       /** @description Whether backstory elements exist */
       hasBackstory: boolean;
       /** @description Backstory data (null if hasBackstory=false) */
@@ -16545,20 +16679,18 @@ export interface components {
       /** @description Whether this is a built-in type */
       isBuiltIn: boolean;
     };
-    /** @description Request to cleanup actors referencing a deleted character */
+    /** @description Request to delete all achievement progress for a character */
     CleanupByCharacterRequest: {
       /**
        * Format: uuid
-       * @description ID of the character that was deleted
+       * @description Character whose achievement progress should be deleted
        */
       characterId: string;
     };
-    /** @description Response from character cleanup operation */
+    /** @description Response from cleanup-by-character operation */
     CleanupByCharacterResponse: {
-      /** @description Number of actors that were stopped and cleaned up */
-      actorsCleanedUp: number;
-      /** @description IDs of actors that were cleaned up */
-      actorIds: string[];
+      /** @description Number of progress records deleted across all game services */
+      progressRecordsDeleted: number;
     };
     /** @description Request to end all relationships referencing a deleted entity during cascading resource cleanup */
     CleanupByEntityRequest: {
@@ -16921,6 +17053,33 @@ export interface components {
      *     but any string code is valid.
      */
     CollectionType: string;
+    /** @description Result of recording a combat experience */
+    CombatEvolutionResult: {
+      /** @description Whether any preferences changed as a result */
+      preferencesEvolved: boolean;
+      /** @description Previous preferences (null if no change) */
+      previousPreferences?: components['schemas']['CombatPreferences'];
+      /** @description New preferences after evolution (null if no change) */
+      newPreferences?: components['schemas']['CombatPreferences'];
+      /** @description New version number if evolved (null if no change) */
+      newVersion?: number | null;
+    };
+    /**
+     * @description Categories of combat experiences that may cause preference evolution.
+     *     Each type affects different aspects of combat behavior.
+     * @enum {string}
+     */
+    CombatExperienceType:
+      | 'DecisiveVictory'
+      | 'NarrowVictory'
+      | 'Defeat'
+      | 'NearDeath'
+      | 'AllySaved'
+      | 'AllyLost'
+      | 'SuccessfulRetreat'
+      | 'FailedRetreat'
+      | 'AmbushSuccess'
+      | 'AmbushSurvived';
     /**
      * @description Combat behavior preferences that influence tactical decisions.
      *     These values affect GOAP action selection, retreat conditions,
@@ -17061,17 +17220,9 @@ export interface components {
       /**
        * @description Category for organizing behaviors (e.g., profession, cultural, situational).
        *     Used for filtering and grouping in bundles.
-       * @example professional
-       * @enum {string|null}
+       * @example Professional
        */
-      behaviorCategory?:
-        | 'base'
-        | 'cultural'
-        | 'professional'
-        | 'personal'
-        | 'situational'
-        | 'ambient'
-        | null;
+      behaviorCategory?: components['schemas']['BehaviorCategory'];
       /**
        * @description Optional bundle identifier for grouping related behaviors.
        *     When specified, the compiled behavior will be added to a bundle with this ID.
@@ -17080,8 +17231,6 @@ export interface components {
        * @example blacksmith-behaviors-v1
        */
       bundleId?: string | null;
-      /** @description Character context for context variable resolution during compilation */
-      characterContext?: components['schemas']['CharacterContext'];
       /** @description Options controlling the compilation process */
       compilationOptions?: components['schemas']['CompilationOptions'];
     };
@@ -17100,15 +17249,11 @@ export interface components {
       /** @description The compiled behavior data including behavior tree and metadata */
       compiledBehavior?: components['schemas']['CompiledBehavior'];
       /** @description Time taken to compile the behavior in milliseconds */
-      compilationTimeMs?: number;
+      compilationTimeMs: number;
       /** @description Asset service ID where the compiled bytecode is stored. Null only when caching is explicitly disabled. */
       assetId?: string | null;
-      /** @description Bundle ID if the behavior was added to a bundle. Null if not bundled. */
-      bundleId?: string | null;
       /** @description True if this replaced an existing behavior with the same content hash */
-      isUpdate?: boolean;
-      /** @description Non-fatal warnings during compilation */
-      warnings?: string[] | null;
+      isUpdate: boolean;
     };
     /** @description Compiled behavior containing behavior tree, context schema, and GOAP integration data */
     CompiledBehavior: {
@@ -17466,8 +17611,6 @@ export interface components {
     ConsentResponse: {
       /** @description Updated escrow agreement */
       escrow: components['schemas']['EscrowAgreement'];
-      /** @description Whether consent was recorded */
-      consentRecorded: boolean;
       /** @description Whether this consent triggered completion */
       triggered: boolean;
       /** @description New escrow status after consent */
@@ -17722,7 +17865,13 @@ export interface components {
       /** @description Themes that matched the area configuration */
       matchedThemes: string[];
     };
-    /** @description Schema defining required context variables for behavior execution */
+    /**
+     * @description Schema defining required context variables for behavior execution.
+     *     Structure is compiler-generated from ABML context declarations.
+     *     Keys are variable names, values describe expected types and sources.
+     *     No Bannou service reads specific keys by convention (T29 compliant) —
+     *     this schema is consumed by the ActorRunner interpreter at runtime.
+     */
     ContextSchemaData: {
       [key: string]: unknown;
     };
@@ -18064,15 +18213,6 @@ export interface components {
      * @enum {string}
      */
     CoordinateMode: 'inherit' | 'local' | 'portal';
-    /** @description 3D spatial coordinates representing a position in the game world */
-    Coordinates: {
-      /** @description X coordinate position */
-      x?: number;
-      /** @description Y coordinate position */
-      y?: number;
-      /** @description Z coordinate position */
-      z?: number;
-    };
     /** @description Request to copy save data from one slot to another, optionally across different entities or games. */
     CopySaveRequest: {
       /** @description Game identifier of the source save */
@@ -18700,7 +18840,7 @@ export interface components {
        * @description Contract governing this escrow
        */
       boundContractId?: string | null;
-      /** @description Number of consents required (-1 for all) */
+      /** @description Number of consents required (null = all consent-required parties) */
       requiredConsentsForRelease?: number | null;
       /**
        * Format: date-time
@@ -21345,8 +21485,8 @@ export interface components {
       consents: components['schemas']['EscrowConsent'][];
       /** @description Current escrow status */
       status: components['schemas']['EscrowStatus'];
-      /** @description How many parties must consent for release (-1 = all required) */
-      requiredConsentsForRelease: number;
+      /** @description How many parties must consent for release (null = all consent-required parties) */
+      requiredConsentsForRelease?: number | null;
       /**
        * Format: date-time
        * @description When the escrow was last validated
@@ -21850,6 +21990,30 @@ export interface components {
       | 'Religious'
       | 'Cultural'
       | 'Personal';
+    /** @description Request payload for recording combat experience that may evolve preferences */
+    EvolveCombatRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the character who had the combat experience
+       */
+      characterId: string;
+      /** @description Category of combat experience */
+      experienceType: components['schemas']['CombatExperienceType'];
+      /**
+       * Format: float
+       * @description How significant the combat experience was (0.0 to 1.0).
+       *     Higher intensity = higher probability of preference evolution.
+       */
+      intensity: number;
+      /**
+       * @description Optional context for logging and debugging (e.g., enemy type,
+       *     ally count, location). Not used in evolution calculations.
+       *     No Bannou plugin reads specific keys from this field by convention.
+       */
+      contextData?: {
+        [key: string]: unknown;
+      } | null;
+    };
     /** @description Request to execute cleanup for a resource */
     ExecuteCleanupRequest: {
       /** @description Type of resource to clean up (opaque identifier) */
@@ -22137,6 +22301,30 @@ export interface components {
        */
       depositDeadline?: string | null;
     };
+    /** @description Result of recording an experience, including any personality evolution */
+    ExperienceResult: {
+      /** @description Whether any traits changed as a result of this experience */
+      personalityEvolved: boolean;
+      /** @description Traits that evolved (empty array if no change) */
+      changedTraits: components['schemas']['TraitValue'][];
+      /** @description New personality version if evolved (null if no change) */
+      newVersion?: number | null;
+    };
+    /**
+     * @description Categories of significant experiences that may cause personality evolution.
+     *     Each type has predefined trait impact tendencies.
+     * @enum {string}
+     */
+    ExperienceType:
+      | 'Trauma'
+      | 'Betrayal'
+      | 'Loss'
+      | 'Victory'
+      | 'Friendship'
+      | 'Redemption'
+      | 'Corruption'
+      | 'Enlightenment'
+      | 'Sacrifice';
     /**
      * @description How currency expiration is determined
      * @enum {string}
@@ -24635,12 +24823,17 @@ export interface components {
     };
     /** @description Request to generate a GOAP plan to achieve a goal from current world state */
     GoapPlanRequest: {
-      /** @description Unique identifier for the agent requesting the plan */
+      /**
+       * Format: uuid
+       * @description Unique identifier for the agent requesting the plan
+       */
       agentId?: string | null;
       /** @description The goal to achieve through planning */
       goal: components['schemas']['GoapGoal'];
       /**
-       * @description Current world state as key-value pairs
+       * @description Planner-owned dynamic world state bag for GOAP A* search.
+       *     Keys are arbitrary world state variable names, values are current state.
+       *     No Bannou service reads specific keys by convention (T29 compliant).
        * @example {
        *       "hunger": 0.8,
        *       "gold": 50,
@@ -24659,10 +24852,10 @@ export interface components {
     GoapPlanResponse: {
       /** @description The generated plan if successful */
       plan?: components['schemas']['GoapPlanResult'];
-      /** @description Time spent planning in milliseconds */
-      planningTimeMs?: number;
-      /** @description Number of nodes expanded during A* search */
-      nodesExpanded?: number;
+      /** @description Time spent planning in milliseconds. Null when planner did not run. */
+      planningTimeMs?: number | null;
+      /** @description Number of nodes expanded during A* search. Null when planner did not run. */
+      nodesExpanded?: number | null;
       /**
        * @description Reason for planning failure if unsuccessful
        * @example No plan found - goal unreachable
@@ -25169,11 +25362,6 @@ export interface components {
     };
     /** @description Generated text summaries for character compression */
     HistorySummaryResponse: {
-      /**
-       * Format: uuid
-       * @description ID of the character summarized
-       */
-      characterId: string;
       /**
        * @description Key backstory elements as text summaries.
        *     e.g., ["Trained by Knights Guild", "Born in the Northlands"]
@@ -27944,15 +28132,6 @@ export interface components {
         [key: string]: string;
       };
     };
-    /** @description Character location information including current position, region, and 3D coordinates */
-    Location: {
-      /** @description Current location name or identifier */
-      current?: string | null;
-      /** @description Region or zone the character is in */
-      region?: string | null;
-      /** @description 3D spatial coordinates of the character's position in the game world */
-      coordinates?: components['schemas']['Coordinates'];
-    };
     /**
      * @description Core location data for archive storage and content flywheel consumption.
      *     Inherits base archive properties from ResourceArchiveBase.
@@ -29347,9 +29526,9 @@ export interface components {
       /** @description Number of results per page */
       pageSize: number;
       /** @description Whether there are more results after this page */
-      hasNextPage?: boolean;
+      hasNextPage: boolean;
       /** @description Whether there are results before this page */
-      hasPreviousPage?: boolean;
+      hasPreviousPage: boolean;
     };
     /**
      * @description How the character participated in the historical event
@@ -29589,6 +29768,34 @@ export interface components {
        * @description When this personality was last modified
        */
       updatedAt?: string | null;
+    };
+    /** @description Input for a single participant's perspective */
+    PerspectiveInput: {
+      /**
+       * Format: uuid
+       * @description Character this perspective belongs to
+       */
+      characterId: string;
+      /** @description Character's emotional response to the encounter */
+      emotionalImpact: components['schemas']['EmotionalImpact'];
+      /**
+       * Format: float
+       * @description Intensity of emotional impact (0.0-1.0). Defaults based on emotionalImpact if not provided.
+       */
+      impactIntensity?: number | null;
+      /**
+       * Format: float
+       * @description Opinion change toward other participants
+       */
+      sentimentShift?: number | null;
+      /**
+       * Format: float
+       * @description Initial memory strength
+       * @default 1
+       */
+      memoryStrength: number;
+      /** @description How this character remembers the encounter */
+      rememberedAs?: string | null;
     };
     /** @description Response containing a perspective */
     PerspectiveResponse: {
@@ -31376,6 +31583,63 @@ export interface components {
       /** @description List of realm IDs that exist but are deprecated (empty if none deprecated) */
       deprecatedRealmIds: string[];
     };
+    /** @description Request to record a new encounter */
+    RecordEncounterRequest: {
+      /**
+       * Format: date-time
+       * @description In-game time of the encounter
+       */
+      timestamp: string;
+      /**
+       * Format: uuid
+       * @description Realm where the encounter occurred
+       */
+      realmId: string;
+      /**
+       * Format: uuid
+       * @description Specific location (optional)
+       */
+      locationId?: string | null;
+      /** @description Type code (must be an active type) */
+      encounterTypeCode: string;
+      /** @description What triggered the encounter */
+      context?: string | null;
+      /** @description Outcome of the encounter being recorded */
+      outcome: components['schemas']['EncounterOutcome'];
+      /** @description Character IDs involved (minimum 2, server enforces MaxParticipantsPerEncounter config limit) */
+      participantIds: string[];
+      /** @description Optional perspectives (auto-generated if not provided) */
+      perspectives?: components['schemas']['PerspectiveInput'][] | null;
+      /** @description Client-provided encounter-specific data. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Request payload for recording an experience that may evolve personality */
+    RecordExperienceRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the character who had the experience
+       */
+      characterId: string;
+      /** @description Category of significant experience */
+      experienceType: components['schemas']['ExperienceType'];
+      /**
+       * Format: float
+       * @description How significant the experience was (0.0 to 1.0).
+       *     Higher intensity = higher probability of trait evolution.
+       *     Typical values: 0.3 (minor), 0.5 (moderate), 0.8 (major), 1.0 (life-changing)
+       */
+      intensity: number;
+      /**
+       * @description Optional context for logging and debugging.
+       *     Not used in evolution calculations.
+       *     No Bannou plugin reads specific keys from this field by convention.
+       */
+      contextData?: {
+        [key: string]: unknown;
+      } | null;
+    };
     /** @description Request to record growth across multiple domains atomically. */
     RecordGrowthBatchRequest: {
       /**
@@ -31428,6 +31692,24 @@ export interface components {
       nodeRefId: string;
       /** @description Name of the referencing node */
       nodeName?: string;
+    };
+    /** @description Request to refresh memory strength */
+    RefreshMemoryRequest: {
+      /**
+       * Format: uuid
+       * @description Encounter to refresh memory for
+       */
+      encounterId: string;
+      /**
+       * Format: uuid
+       * @description Character whose memory to refresh
+       */
+      characterId: string;
+      /**
+       * Format: float
+       * @description Amount to boost memory strength (capped at 1.0). Falls back to configured MemoryRefreshBoost if not provided.
+       */
+      strengthBoost?: number | null;
     };
     /** @description Request to obtain a new access token using a valid refresh token */
     RefreshRequest: {
@@ -32061,6 +32343,18 @@ export interface components {
       /** @description New slot name */
       newSlotName: string;
     };
+    /**
+     * @description Reason for GOAP plan validation result
+     * @enum {string}
+     */
+    ReplanReason:
+      | 'None'
+      | 'PreconditionInvalidated'
+      | 'ActionFailed'
+      | 'BetterGoalAvailable'
+      | 'PlanCompleted'
+      | 'GoalAlreadySatisfied'
+      | 'SuboptimalPlan';
     /** @description Request to report a breach */
     ReportBreachRequest: {
       /**
@@ -36715,6 +37009,33 @@ export interface components {
       /** @description New pre-hashed password from Auth service */
       passwordHash: string;
     };
+    /** @description Request to update a character's perspective */
+    UpdatePerspectiveRequest: {
+      /**
+       * Format: uuid
+       * @description Encounter to update perspective for
+       */
+      encounterId: string;
+      /**
+       * Format: uuid
+       * @description Character whose perspective to update
+       */
+      characterId: string;
+      /** @description New emotional impact */
+      emotionalImpact?: components['schemas']['EmotionalImpact'];
+      /**
+       * Format: float
+       * @description New impact intensity (0.0-1.0)
+       */
+      impactIntensity?: number | null;
+      /**
+       * Format: float
+       * @description New sentiment shift
+       */
+      sentimentShift?: number | null;
+      /** @description New memory description */
+      rememberedAs?: string | null;
+    };
     /** @description Request to update deployment phase configuration (non-null fields applied) */
     UpdatePhaseConfigRequest: {
       /** @description New deployment phase */
@@ -37202,7 +37523,11 @@ export interface components {
       plan: components['schemas']['GoapPlanResult'];
       /** @description Index of the action currently being executed */
       currentActionIndex: number;
-      /** @description Current world state */
+      /**
+       * @description Planner-owned dynamic world state bag for plan validation.
+       *     Keys are arbitrary world state variable names, values are current state.
+       *     No Bannou service reads specific keys by convention (T29 compliant).
+       */
       worldState: {
         [key: string]: unknown;
       };
@@ -37213,25 +37538,12 @@ export interface components {
     ValidateGoapPlanResponse: {
       /** @description Whether the plan is still valid */
       isValid: boolean;
-      /**
-       * @description Reason for the validation result
-       * @enum {string}
-       */
-      reason:
-        | 'None'
-        | 'PreconditionInvalidated'
-        | 'ActionFailed'
-        | 'BetterGoalAvailable'
-        | 'PlanCompleted'
-        | 'GoalAlreadySatisfied'
-        | 'SuboptimalPlan';
-      /**
-       * @description Suggested action based on validation
-       * @enum {string}
-       */
-      suggestedAction: 'Continue' | 'Replan' | 'Abort';
-      /** @description Index where plan became invalid (if applicable) */
-      invalidatedAtIndex?: number;
+      /** @description Reason for the validation result */
+      reason: components['schemas']['ReplanReason'];
+      /** @description Suggested action based on validation */
+      suggestedAction: components['schemas']['ValidationSuggestion'];
+      /** @description Index where plan became invalid. Null when plan is valid. */
+      invalidatedAtIndex?: number | null;
       /** @description Additional details about the validation result. Null when no additional context is needed. */
       message?: string | null;
     };
@@ -37338,23 +37650,25 @@ export interface components {
       | 'JsonPathContains';
     /** @description Detailed validation error with type, location, and message information */
     ValidationError: {
-      /**
-       * @description Type of validation error
-       * @enum {string}
-       */
-      type: 'syntax' | 'semantic' | 'schema' | 'context' | 'service_dependency';
+      /** @description Type of validation error */
+      type: components['schemas']['ValidationErrorType'];
       /** @description Human-readable error message */
       message: string;
-      /** @description Line number where the error occurred (if applicable) */
-      lineNumber?: number;
-      /** @description Column number where the error occurred (if applicable) */
-      columnNumber?: number;
+      /** @description Line number where the error occurred. Null if not applicable. */
+      lineNumber?: number | null;
+      /** @description Column number where the error occurred. Null if not applicable. */
+      columnNumber?: number | null;
       /**
        * @description YAML path to the problematic element
        * @example behaviors.morning_startup.actions[0]
        */
       yamlPath?: string | null;
     };
+    /**
+     * @description Type of ABML validation error
+     * @enum {string}
+     */
+    ValidationErrorType: 'Syntax' | 'Semantic' | 'Schema' | 'Context' | 'ServiceDependency';
     /** @description Records a validation check failure */
     ValidationFailure: {
       /**
@@ -37441,6 +37755,11 @@ export interface components {
      * @enum {string}
      */
     ValidationSeverity: 'Error' | 'Warning';
+    /**
+     * @description Suggested action based on GOAP plan validation
+     * @enum {string}
+     */
+    ValidationSuggestion: 'Continue' | 'Replan' | 'Abort';
     /** @description Validation rules applied to messages in rooms of this type */
     ValidatorConfig: {
       /** @description Maximum message length in characters for text and custom formats */
@@ -40047,6 +40366,51 @@ export interface operations {
       };
     };
   };
+  characterEncounter_recordEncounter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RecordEncounterRequest'];
+      };
+    };
+    responses: {
+      /** @description Encounter recorded successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EncounterResponse'];
+        };
+      };
+      /** @description Invalid encounter data (requires at least 2 participants) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description One or more characters not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Duplicate encounter (same participants, timestamp, and type) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   characterEncounter_queryByCharacter: {
     parameters: {
       query?: never;
@@ -40167,6 +40531,30 @@ export interface operations {
       };
     };
   };
+  characterEncounter_batchGetSentiment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BatchGetSentimentRequest'];
+      };
+    };
+    responses: {
+      /** @description Sentiments calculated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BatchSentimentResponse'];
+        };
+      };
+    };
+  };
   characterEncounter_getPerspective: {
     parameters: {
       query?: never;
@@ -40181,6 +40569,68 @@ export interface operations {
     };
     responses: {
       /** @description Perspective retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerspectiveResponse'];
+        };
+      };
+      /** @description Perspective not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterEncounter_updatePerspective: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdatePerspectiveRequest'];
+      };
+    };
+    responses: {
+      /** @description Perspective updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerspectiveResponse'];
+        };
+      };
+      /** @description Perspective not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterEncounter_refreshMemory: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RefreshMemoryRequest'];
+      };
+    };
+    responses: {
+      /** @description Memory refreshed */
       200: {
         headers: {
           [name: string]: unknown;
@@ -40370,6 +40820,61 @@ export interface operations {
       };
     };
   };
+  characterPersonality_recordExperience: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RecordExperienceRequest'];
+      };
+    };
+    responses: {
+      /** @description Experience recorded and evaluated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExperienceResult'];
+        };
+      };
+      /** @description Character personality not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterPersonality_batchGetPersonalities: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BatchGetPersonalitiesRequest'];
+      };
+    };
+    responses: {
+      /** @description Personalities retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BatchPersonalityResponse'];
+        };
+      };
+    };
+  };
   characterPersonality_getCombatPreferences: {
     parameters: {
       query?: never;
@@ -40393,6 +40898,37 @@ export interface operations {
         };
       };
       /** @description No combat preferences defined for this character */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterPersonality_evolveCombatPreferences: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EvolveCombatRequest'];
+      };
+    };
+    responses: {
+      /** @description Combat experience recorded and evaluated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CombatEvolutionResult'];
+        };
+      };
+      /** @description Character combat preferences not found */
       404: {
         headers: {
           [name: string]: unknown;

@@ -20,6 +20,15 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  # Resource reference tracking (see SCHEMA-RULES.md "x-references")
+  x-references:
+    - target: character
+      sourceType: achievement-progress
+      field: entityId
+      onDelete: cascade
+      cleanup:
+        endpoint: /achievement/cleanup-by-character
+        payloadTemplate: '{"characterId": "{{resourceId}}"}'
 servers:
   - url: http://localhost:5012
     description: Bannou service endpoint (internal only)
@@ -312,6 +321,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PlatformSyncStatusResponse'
+
+  # ============================================================================
+  # Resource Cleanup (lib-resource callbacks)
+  # ============================================================================
+
+  /achievement/cleanup-by-character:
+    post:
+      summary: Delete all achievement progress for a character
+      operationId: cleanupByCharacter
+      tags:
+      - Resource Cleanup
+      description: |
+        Deletes all achievement progress records for a specific character across all game services.
+        Called by lib-resource during character deletion cleanup. This is a hard delete.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Progress records deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
 
 components:
   schemas:
@@ -1168,7 +1207,6 @@ components:
       - platform
       - isLinked
       - syncedCount
-      - pendingCount
       - failedCount
       properties:
         platform:
@@ -1186,7 +1224,8 @@ components:
           description: Achievements successfully synced
         pendingCount:
           type: integer
-          description: Achievements pending sync
+          nullable: true
+          description: Achievements pending sync (null when retry queue is not active)
         failedCount:
           type: integer
           description: Achievements that failed to sync
@@ -1199,3 +1238,31 @@ components:
           type: string
           nullable: true
           description: Most recent sync error
+
+    # ============================================
+    # Resource Cleanup Models
+    # ============================================
+
+    CleanupByCharacterRequest:
+      type: object
+      description: Request to delete all achievement progress for a character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose achievement progress should be deleted
+
+    CleanupByCharacterResponse:
+      type: object
+      description: Response from cleanup-by-character operation
+      additionalProperties: false
+      required:
+      - progressRecordsDeleted
+      properties:
+        progressRecordsDeleted:
+          type: integer
+          minimum: 0
+          description: Number of progress records deleted across all game services

@@ -148,6 +148,8 @@ public partial class CharacterHistoryController
                 },
                 "eventName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Name of the event (for display and summarization)"
                 },
                 "eventCategory": {
@@ -347,7 +349,9 @@ public partial class CharacterHistoryController
                 "participations",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "participations": {
@@ -411,6 +415,8 @@ public partial class CharacterHistoryController
                 },
                 "eventName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Name of the event (for display and summarization)"
                 },
                 "eventCategory": {
@@ -603,7 +609,9 @@ public partial class CharacterHistoryController
                 "participations",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "participations": {
@@ -667,6 +675,8 @@ public partial class CharacterHistoryController
                 },
                 "eventName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Name of the event (for display and summarization)"
                 },
                 "eventCategory": {
@@ -939,15 +949,10 @@ public partial class CharacterHistoryController
             "description": "Complete backstory data for a character",
             "additionalProperties": false,
             "required": [
-                "characterId",
-                "elements"
+                "elements",
+                "createdAt"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the character this backstory belongs to"
-                },
                 "elements": {
                     "type": "array",
                     "items": {
@@ -958,7 +963,6 @@ public partial class CharacterHistoryController
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
-                    "nullable": true,
                     "description": "When this backstory was first created"
                 },
                 "updatedAt": {
@@ -1010,7 +1014,7 @@ public partial class CharacterHistoryController
                     "description": "Optional related entity (location, organization, character)"
                 },
                 "relatedEntityType": {
-                    "type": "string",
+                    "type": "object",
                     "nullable": true,
                     "description": "Type of the related entity (if any)"
                 }
@@ -1166,7 +1170,7 @@ public partial class CharacterHistoryController
                     "description": "Optional related entity (location, organization, character)"
                 },
                 "relatedEntityType": {
-                    "type": "string",
+                    "type": "object",
                     "nullable": true,
                     "description": "Type of the related entity (if any)"
                 }
@@ -1201,15 +1205,10 @@ public partial class CharacterHistoryController
             "description": "Complete backstory data for a character",
             "additionalProperties": false,
             "required": [
-                "characterId",
-                "elements"
+                "elements",
+                "createdAt"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the character this backstory belongs to"
-                },
                 "elements": {
                     "type": "array",
                     "items": {
@@ -1220,7 +1219,6 @@ public partial class CharacterHistoryController
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
-                    "nullable": true,
                     "description": "When this backstory was first created"
                 },
                 "updatedAt": {
@@ -1272,7 +1270,7 @@ public partial class CharacterHistoryController
                     "description": "Optional related entity (location, organization, character)"
                 },
                 "relatedEntityType": {
-                    "type": "string",
+                    "type": "object",
                     "nullable": true,
                     "description": "Type of the related entity (if any)"
                 }
@@ -1419,7 +1417,7 @@ public partial class CharacterHistoryController
                     "description": "Optional related entity (location, organization, character)"
                 },
                 "relatedEntityType": {
-                    "type": "string",
+                    "type": "object",
                     "nullable": true,
                     "description": "Type of the related entity (if any)"
                 }
@@ -1454,15 +1452,10 @@ public partial class CharacterHistoryController
             "description": "Complete backstory data for a character",
             "additionalProperties": false,
             "required": [
-                "characterId",
-                "elements"
+                "elements",
+                "createdAt"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the character this backstory belongs to"
-                },
                 "elements": {
                     "type": "array",
                     "items": {
@@ -1473,7 +1466,6 @@ public partial class CharacterHistoryController
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
-                    "nullable": true,
                     "description": "When this backstory was first created"
                 },
                 "updatedAt": {
@@ -1525,7 +1517,7 @@ public partial class CharacterHistoryController
                     "description": "Optional related entity (location, organization, character)"
                 },
                 "relatedEntityType": {
-                    "type": "string",
+                    "type": "object",
                     "nullable": true,
                     "description": "Type of the related entity (if any)"
                 }
@@ -1724,16 +1716,10 @@ public partial class CharacterHistoryController
             "description": "Result of deleting all history data",
             "additionalProperties": false,
             "required": [
-                "characterId",
                 "participationsDeleted",
                 "backstoryDeleted"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the character whose history was deleted"
-                },
                 "participationsDeleted": {
                     "type": "integer",
                     "description": "Number of participation records deleted"
@@ -1852,16 +1838,10 @@ public partial class CharacterHistoryController
             "description": "Generated text summaries for character compression",
             "additionalProperties": false,
             "required": [
-                "characterId",
                 "keyBackstoryPoints",
                 "majorLifeEvents"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the character summarized"
-                },
                 "keyBackstoryPoints": {
                     "type": "array",
                     "items": {
@@ -1874,7 +1854,7 @@ public partial class CharacterHistoryController
                     "items": {
                         "type": "string"
                     },
-                    "description": "Major historical events as text summaries.\ ne.g., [\"Fought in the Battle of Stormgate (Hero)\", \"Survived the Great Flood\"]\n"
+                    "description": "Major historical events as text summaries.\ne.g., [\"Fought in the Battle of Stormgate (Hero)\", \"Survived the Great Flood\"]\n"
                 }
             }
         }
@@ -1994,10 +1974,11 @@ public partial class CharacterHistoryController
                 },
                 "participations": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/HistoricalParticipation"
                     },
-                    "description": "Historical event participations (empty if hasParticipations=false)"
+                    "description": "Historical event participations (null if hasParticipations=false)"
                 },
                 "hasBackstory": {
                     "type": "boolean",
@@ -2047,6 +2028,8 @@ public partial class CharacterHistoryController
                 },
                 "eventName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Name of the event (for display and summarization)"
                 },
                 "eventCategory": {
@@ -2115,15 +2098,10 @@ public partial class CharacterHistoryController
             "description": "Complete backstory data for a character",
             "additionalProperties": false,
             "required": [
-                "characterId",
-                "elements"
+                "elements",
+                "createdAt"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the character this backstory belongs to"
-                },
                 "elements": {
                     "type": "array",
                     "items": {
@@ -2134,7 +2112,6 @@ public partial class CharacterHistoryController
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
-                    "nullable": true,
                     "description": "When this backstory was first created"
                 },
                 "updatedAt": {
@@ -2186,7 +2163,7 @@ public partial class CharacterHistoryController
                     "description": "Optional related entity (location, organization, character)"
                 },
                 "relatedEntityType": {
-                    "type": "string",
+                    "type": "object",
                     "nullable": true,
                     "description": "Type of the related entity (if any)"
                 }
@@ -2212,16 +2189,10 @@ public partial class CharacterHistoryController
             "description": "Generated text summaries for character compression",
             "additionalProperties": false,
             "required": [
-                "characterId",
                 "keyBackstoryPoints",
                 "majorLifeEvents"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the character summarized"
-                },
                 "keyBackstoryPoints": {
                     "type": "array",
                     "items": {
@@ -2234,7 +2205,7 @@ public partial class CharacterHistoryController
                     "items": {
                         "type": "string"
                     },
-                    "description": "Major historical events as text summaries.\ ne.g., [\"Fought in the Battle of Stormgate (Hero)\", \"Survived the Great Flood\"]\n"
+                    "description": "Major historical events as text summaries.\ne.g., [\"Fought in the Battle of Stormgate (Hero)\", \"Survived the Great Flood\"]\n"
                 }
             }
         }
@@ -2319,6 +2290,7 @@ public partial class CharacterHistoryController
                 },
                 "data": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Base64-encoded gzipped CharacterHistoryArchive JSON"
                 }
             }
@@ -2337,17 +2309,10 @@ public partial class CharacterHistoryController
             "description": "Result of restoration from archive",
             "additionalProperties": false,
             "required": [
-                "characterId",
                 "participationsRestored",
-                "backstoryRestored",
-                "success"
+                "backstoryRestored"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character data was restored for"
-                },
                 "participationsRestored": {
                     "type": "integer",
                     "description": "Number of participation records restored"
@@ -2355,15 +2320,6 @@ public partial class CharacterHistoryController
                 "backstoryRestored": {
                     "type": "boolean",
                     "description": "Whether backstory was restored"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether restoration completed successfully"
-                },
-                "errorMessage": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Error details if restoration failed"
                 }
             }
         }

@@ -229,6 +229,9 @@ namespace Bannou
         /** List all encounter types */
         constexpr const TCHAR* CharacterEncounterListEncounterTypes = TEXT("POST:/character-encounter/type/list");
 
+        /** Record new encounter with perspectives */
+        constexpr const TCHAR* CharacterEncounterRecordEncounter = TEXT("POST:/character-encounter/record");
+
         /** Get character's encounters (paginated) */
         constexpr const TCHAR* CharacterEncounterQueryByCharacter = TEXT("POST:/character-encounter/query/by-character");
 
@@ -244,8 +247,17 @@ namespace Bannou
         /** Aggregate sentiment toward another character */
         constexpr const TCHAR* CharacterEncounterGetSentiment = TEXT("POST:/character-encounter/get-sentiment");
 
+        /** Bulk sentiment for multiple targets */
+        constexpr const TCHAR* CharacterEncounterBatchGetSentiment = TEXT("POST:/character-encounter/batch-get");
+
         /** Get character's view of encounter */
         constexpr const TCHAR* CharacterEncounterGetPerspective = TEXT("POST:/character-encounter/get-perspective");
+
+        /** Update perspective (reflection) */
+        constexpr const TCHAR* CharacterEncounterUpdatePerspective = TEXT("POST:/character-encounter/update-perspective");
+
+        /** Strengthen memory (referenced) */
+        constexpr const TCHAR* CharacterEncounterRefreshMemory = TEXT("POST:/character-encounter/refresh-memory");
 
         /** Get encounter data for compression */
         constexpr const TCHAR* CharacterEncounterGetCompressData = TEXT("POST:/character-encounter/get-compress-data");
@@ -267,8 +279,17 @@ namespace Bannou
         /** Get personality for a character */
         constexpr const TCHAR* CharacterPersonalityGetPersonality = TEXT("POST:/character-personality/get");
 
+        /** Record an experience that may evolve personality */
+        constexpr const TCHAR* CharacterPersonalityRecordExperience = TEXT("POST:/character-personality/evolve");
+
+        /** Get personalities for multiple characters */
+        constexpr const TCHAR* CharacterPersonalityBatchGetPersonalities = TEXT("POST:/character-personality/batch-get");
+
         /** Get combat preferences for a character */
         constexpr const TCHAR* CharacterPersonalityGetCombatPreferences = TEXT("POST:/character-personality/get-combat");
+
+        /** Record combat experience that may evolve preferences */
+        constexpr const TCHAR* CharacterPersonalityEvolveCombatPreferences = TEXT("POST:/character-personality/evolve-combat");
 
         /** Get personality data for compression */
         constexpr const TCHAR* CharacterPersonalityGetCompressData = TEXT("POST:/character-personality/get-compress-data");
@@ -2504,6 +2525,14 @@ namespace Bannou
                 TEXT("FEncounterTypeListResponse"),
                 TEXT("List all encounter types")
             });
+            Registry.Add(TEXT("CharacterEncounterRecordEncounter"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-encounter/record"),
+                TEXT("character-encounter"),
+                TEXT("FRecordEncounterRequest"),
+                TEXT("FEncounterResponse"),
+                TEXT("Record new encounter with perspectives")
+            });
             Registry.Add(TEXT("CharacterEncounterQueryByCharacter"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/character-encounter/query/by-character"),
@@ -2544,6 +2573,14 @@ namespace Bannou
                 TEXT("FSentimentResponse"),
                 TEXT("Aggregate sentiment toward another character")
             });
+            Registry.Add(TEXT("CharacterEncounterBatchGetSentiment"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-encounter/batch-get"),
+                TEXT("character-encounter"),
+                TEXT("FBatchGetSentimentRequest"),
+                TEXT("FBatchSentimentResponse"),
+                TEXT("Bulk sentiment for multiple targets")
+            });
             Registry.Add(TEXT("CharacterEncounterGetPerspective"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/character-encounter/get-perspective"),
@@ -2551,6 +2588,22 @@ namespace Bannou
                 TEXT("FGetPerspectiveRequest"),
                 TEXT("FPerspectiveResponse"),
                 TEXT("Get character's view of encounter")
+            });
+            Registry.Add(TEXT("CharacterEncounterUpdatePerspective"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-encounter/update-perspective"),
+                TEXT("character-encounter"),
+                TEXT("FUpdatePerspectiveRequest"),
+                TEXT("FPerspectiveResponse"),
+                TEXT("Update perspective (reflection)")
+            });
+            Registry.Add(TEXT("CharacterEncounterRefreshMemory"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-encounter/refresh-memory"),
+                TEXT("character-encounter"),
+                TEXT("FRefreshMemoryRequest"),
+                TEXT("FPerspectiveResponse"),
+                TEXT("Strengthen memory (referenced)")
             });
             Registry.Add(TEXT("CharacterEncounterGetCompressData"), FEndpointInfo{
                 TEXT("POST"),
@@ -2600,6 +2653,22 @@ namespace Bannou
                 TEXT("FPersonalityResponse"),
                 TEXT("Get personality for a character")
             });
+            Registry.Add(TEXT("CharacterPersonalityRecordExperience"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-personality/evolve"),
+                TEXT("character-personality"),
+                TEXT("FRecordExperienceRequest"),
+                TEXT("FExperienceResult"),
+                TEXT("Record an experience that may evolve personality")
+            });
+            Registry.Add(TEXT("CharacterPersonalityBatchGetPersonalities"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-personality/batch-get"),
+                TEXT("character-personality"),
+                TEXT("FBatchGetPersonalitiesRequest"),
+                TEXT("FBatchPersonalityResponse"),
+                TEXT("Get personalities for multiple characters")
+            });
             Registry.Add(TEXT("CharacterPersonalityGetCombatPreferences"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/character-personality/get-combat"),
@@ -2607,6 +2676,14 @@ namespace Bannou
                 TEXT("FGetCombatPreferencesRequest"),
                 TEXT("FCombatPreferencesResponse"),
                 TEXT("Get combat preferences for a character")
+            });
+            Registry.Add(TEXT("CharacterPersonalityEvolveCombatPreferences"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-personality/evolve-combat"),
+                TEXT("character-personality"),
+                TEXT("FEvolveCombatRequest"),
+                TEXT("FCombatEvolutionResult"),
+                TEXT("Record combat experience that may evolve preferences")
             });
             Registry.Add(TEXT("CharacterPersonalityGetCompressData"), FEndpointInfo{
                 TEXT("POST"),

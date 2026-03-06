@@ -115,14 +115,14 @@ Dungeon core created
     │
     │   [Seed reaches Stirring phase (growth ≥ 10.0)]
     │
-    ├── dungeon.phase.changed event triggers actor spawn
+    ├── dungeon.phase-changed event triggers actor spawn
     │   Actor runs as EVENT BRAIN (no character)
     │   creature_base cognition template
     │   ${personality.*} = null, instinct-driven behavior
     │
     │   [Seed reaches Awakened phase (growth ≥ 50.0)]
     │
-    ├── dungeon.phase.changed handler:
+    ├── dungeon.phase-changed handler:
     │   1. Create Character in dungeon system realm
     │   2. Seed personality traits from dungeon personality type
     │   3. POST /actor/bind-character (actorId, dungeonCharacterId)
@@ -467,6 +467,8 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 | lib-character (`ICharacterClient`) | Validating character existence for willing bond formation; creating dungeon character in system realm at Awakened phase for dynamic binding (L2) |
 | lib-game-service (`IGameServiceClient`) | Validating game service existence for dungeon scoping (L2) |
 | lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration (L1) |
+| lib-item (`IItemClient`) | Memory item creation (data crystals, memory fragments), loot generation (L2) |
+| lib-inventory (`IInventoryClient`) | Trap/treasure container management within dungeon rooms (L2) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
@@ -475,8 +477,6 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 | lib-mapping (`IMappingClient`) | Domain boundary registration, room connectivity queries, spatial affordance queries | Dungeon operates without spatial awareness; room-based features disabled |
 | lib-scene (`ISceneClient`) | Memory manifestation as visual decorations (paintings, environmental effects) | Memory manifestation limited to item-based forms only |
 | lib-save-load (`ISaveLoadClient`) | Persistent dungeon construction state (room layout, trap placement, structural data) | Dungeon layout resets on actor restart; volatile-only operation |
-| lib-item (`IItemClient`) | Memory item creation (data crystals, memory fragments), loot generation | Memory items and loot spawning disabled |
-| lib-inventory (`IInventoryClient`) | Trap/treasure container management within dungeon rooms | Container-based loot management disabled |
 | lib-puppetmaster (`IPuppetmasterClient`) | Starting/stopping dungeon core actors on creation/deactivation | Dungeon actors must be managed manually via Actor APIs |
 | lib-gardener (`IGardenerClient`) | Creating dungeon garden instances for bonded masters | Master experience orchestration disabled; bond provides seed growth only |
 | lib-analytics (`IAnalyticsClient`) | Event significance scoring for memory capture thresholds | Memory capture uses local significance calculation only |
@@ -512,6 +512,8 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 
 ### Inhabitant Store
 **Store**: `dungeon-inhabitants` (Backend: Redis, prefix: `dungeon:inhab`)
+
+**Durability note**: Inhabitants are intentionally volatile. Dungeon creatures are "pneuma echoes" (manifestations of the dungeon's mana and genetic library), not persistent game entities. On Redis restart, the dungeon core actor reconstructs inhabitants from its seed capabilities and mana reserves. This is analogous to how NPC spawners repopulate areas — the dungeon IS the spawner.
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
@@ -556,6 +558,7 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 | `manifestationType` (on DungeonMemoryModel) | C (System State) | Service-specific enum | Finite set of memory manifestation forms (item, scene decoration, environmental effect); system-owned, determines which service handles manifestation |
 | `entityType` (on bond master reference) | A (Entity Reference) | `EntityType` enum | Bond master can be account, character, or actor -- all first-class Bannou entities. Determines Pattern A (account) vs Pattern B (character) vs Corrupted (actor) |
 | `eventType` (on DungeonMemoryModel) | B (Content Code) | Opaque string | Memory event type codes (combat, exploration, death, ritual); game-configurable classification for significance scoring and manifestation selection |
+| `status` (on DungeonCoreModel) | C (System State) | Service-specific enum (`DungeonStatus`) | Finite set of dungeon lifecycle states (Active, Dormant); system-owned, determines whether actor is running and bonds can form |
 
 ---
 
@@ -563,26 +566,28 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 
 ### Published Events
 
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `dungeon.created` | `DungeonCreatedEvent` | Dungeon core entity created (lifecycle) |
-| `dungeon.updated` | `DungeonUpdatedEvent` | Dungeon core entity updated (lifecycle) |
-| `dungeon.deleted` | `DungeonDeletedEvent` | Dungeon core entity deleted (lifecycle) |
-| `dungeon.bond.formed` | `DungeonBondFormedEvent` | Character or monster bonds with dungeon core |
-| `dungeon.bond.dissolved` | `DungeonBondDissolvedEvent` | Bond terminated (master death, contract breach, voluntary) |
-| `dungeon.inhabitant.spawned` | `DungeonInhabitantSpawnedEvent` | Monster spawned within dungeon domain |
-| `dungeon.inhabitant.killed` | `DungeonInhabitantKilledEvent` | Monster killed within dungeon domain |
-| `dungeon.memory.captured` | `DungeonMemoryCapturedEvent` | Significant event stored as dungeon memory |
-| `dungeon.memory.manifested` | `DungeonMemoryManifestedEvent` | Memory crystallized into physical form (item, painting, environmental) |
-| `dungeon.trap.triggered` | `DungeonTrapTriggeredEvent` | Trap activated within dungeon domain |
-| `dungeon.layout.changed` | `DungeonLayoutChangedEvent` | Passage sealed/unsealed or structural shift occurred |
-| `dungeon.phase.changed` | `DungeonPhaseChangedEvent` | Dungeon core seed transitioned to new growth phase |
+Dungeon is a multi-entity service. Lifecycle events for the primary entity (dungeon core) use `x-lifecycle` with `topic_prefix: dungeon` in `dungeon-events.yaml`. Non-lifecycle events for sub-entities (bond, inhabitant, memory) use Pattern C (`{service}.{entity}.{action}`). Events without a corresponding API entity group use Pattern A (`{service}.{action}`). All events must be declared in `x-event-publications`.
 
-### Consumed Events
+| Topic | Event Type | Trigger | Pattern |
+|-------|-----------|---------|---------|
+| `dungeon.created` | `DungeonCreatedEvent` | Dungeon core entity created | x-lifecycle |
+| `dungeon.updated` | `DungeonUpdatedEvent` | Dungeon core entity updated | x-lifecycle |
+| `dungeon.deleted` | `DungeonDeletedEvent` | Dungeon core entity deleted | x-lifecycle |
+| `dungeon.bond.formed` | `DungeonBondFormedEvent` | Character or monster bonds with dungeon core | Pattern C |
+| `dungeon.bond.dissolved` | `DungeonBondDissolvedEvent` | Bond terminated (master death, contract breach, voluntary) | Pattern C |
+| `dungeon.inhabitant.spawned` | `DungeonInhabitantSpawnedEvent` | Monster spawned within dungeon domain | Pattern C |
+| `dungeon.inhabitant.killed` | `DungeonInhabitantKilledEvent` | Monster killed within dungeon domain | Pattern C |
+| `dungeon.memory.captured` | `DungeonMemoryCapturedEvent` | Significant event stored as dungeon memory | Pattern C |
+| `dungeon.memory.manifested` | `DungeonMemoryManifestedEvent` | Memory crystallized into physical form (item, painting, environmental) | Pattern C |
+| `dungeon.trap-triggered` | `DungeonTrapTriggeredEvent` | Trap activated within dungeon domain | Pattern A |
+| `dungeon.layout-changed` | `DungeonLayoutChangedEvent` | Passage sealed/unsealed or structural shift occurred | Pattern A |
+| `dungeon.phase-changed` | `DungeonPhaseChangedEvent` | Dungeon core seed transitioned to new growth phase | Pattern A |
+
+### Consumed Events (via `x-event-subscriptions`)
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `seed.phase.changed` | `HandleSeedPhaseChangedAsync` | For `dungeon_core` seeds: update cached phase, publish `dungeon.phase.changed`, re-evaluate available actions. **At Stirring phase**: start dungeon core actor via Puppetmaster (event brain, no character). **At Awakened phase**: create Character in dungeon system realm, call `/actor/bind-character` to transition running actor to character brain mode with full variable providers, store characterId on DungeonCoreModel. For `dungeon_master` seeds: advance bond contract milestones. |
+| `seed.phase.changed` | `HandleSeedPhaseChangedAsync` | Acquires `core:{dungeonId}` distributed lock for mutation safety. For `dungeon_core` seeds: update cached phase, publish `dungeon.phase-changed`, re-evaluate available actions. **At Stirring phase**: start dungeon core actor via Puppetmaster (event brain, no character). **At Awakened phase**: create Character in dungeon system realm, call `/actor/bind-character` to transition running actor to character brain mode with full variable providers, store characterId on DungeonCoreModel. For `dungeon_master` seeds: advance bond contract milestones. **Note**: `ISeedEvolutionListener` also fires for seed events; the DI listener updates cached manifests (fast local path), while the event subscription is the distributed guarantee. Handlers must be idempotent — check `characterId` on DungeonCoreModel before creating duplicate characters at Awakened phase (lock + idempotency check prevents race in multi-node deployments). |
 | `seed.capability.updated` | `HandleSeedCapabilityUpdatedAsync` | Invalidate cached capability manifests for affected dungeon or master |
 | `contract.terminated` | `HandleContractTerminatedAsync` | Clean up bond record when dungeon-master contract ends; archive master seed if configured |
 
@@ -592,6 +597,7 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 |----------------|-------------|-----------|-----------------|
 | character | dungeon | CASCADE | `/dungeon/cleanup-by-character` |
 | realm | dungeon | CASCADE | `/dungeon/cleanup-by-realm` |
+| game-service | dungeon | CASCADE | `/dungeon/cleanup-by-game-service` |
 
 ### DI Listener Patterns
 
@@ -619,6 +625,9 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 | `DungeonGardenTypeCode` | `DUNGEON_GARDEN_TYPE_CODE` | `dungeon` | Garden type code registered with Gardener for master experience |
 | `DistributedLockTimeoutSeconds` | `DUNGEON_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for distributed lock acquisition |
 | `MasterSeedArchiveOnDissolve` | `DUNGEON_MASTER_SEED_ARCHIVE_ON_DISSOLVE` | `true` | Whether to archive (true) or delete (false) master seeds on bond dissolution |
+| `GrowthContributionDebounceMs` | `DUNGEON_GROWTH_CONTRIBUTION_DEBOUNCE_MS` | `5000` | Debounce interval (ms) for batching seed growth contributions to avoid overwhelming lib-seed |
+
+**Schema notes**: All integer properties (`MaxInhabitantsPerDungeon`, `MaxMemoriesPerDungeon`, `CapabilityCacheTtlSeconds`, `DistributedLockTimeoutSeconds`, `GrowthContributionDebounceMs`) must include `minimum: 1` validation. Floating-point properties (`MemorySignificanceThreshold`, `MemoryManifestationThreshold`, `SpawnCostMultiplier`, `DefaultDomainRadius`) must use `format: double` with appropriate `minimum`/`maximum` constraints (e.g., thresholds: `minimum: 0.0, maximum: 1.0`; multiplier: `minimum: 0.0`; radius: `minimum: 1.0`).
 
 ---
 
@@ -627,6 +636,7 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 | Service | Role |
 |---------|------|
 | `ILogger<DungeonService>` | Structured logging |
+| `ITelemetryProvider` | Telemetry span creation for all async methods (T30) |
 | `DungeonServiceConfiguration` | Typed configuration access |
 | `IStateStoreFactory` | State store access (creates 6 stores) |
 | `IMessageBus` | Event publishing |
@@ -638,7 +648,9 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 | `ICharacterClient` | Character validation for willing bonds (L2) |
 | `IGameServiceClient` | Game service validation (L2) |
 | `IResourceClient` | Reference tracking, cleanup callbacks (L1) |
-| `IServiceProvider` | Runtime resolution of soft L4 dependencies |
+| `IItemClient` | Memory item creation, loot generation (L2) |
+| `IInventoryClient` | Trap/treasure container management (L2) |
+| `IServiceProvider` | Runtime resolution of soft L3/L4 dependencies |
 
 ### Variable Provider Factories
 
@@ -670,14 +682,14 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 
 All endpoints require `developer` role.
 
-- **Create** (`/dungeon/create`): Validates game service existence. Provisions mana currency wallet via `ICurrencyClient`, `dungeon_core` seed via `ISeedClient`. Personality type stored in seed metadata. Optionally starts dungeon core actor via `IPuppetmasterClient` (soft). Optionally persists initial layout via `ISaveLoadClient` (soft). Saves under both ID and code lookup keys.
+- **Create** (`/dungeon/create`): Validates game service existence. Provisions mana currency wallet via `ICurrencyClient`, `dungeon_core` seed via `ISeedClient`. Personality type stored on `DungeonCoreModel` (Dungeon's own MySQL store -- not in seed metadata, per FOUNDATION TENETS on metadata bag contracts). Optionally starts dungeon core actor via `IPuppetmasterClient` (soft). Optionally persists initial layout via `ISaveLoadClient` (soft). Saves under both ID and code lookup keys.
 - **Get** (`/dungeon/get`): Load from MySQL by dungeonId. Enriches with cached capability manifest if available.
 - **GetByCode** (`/dungeon/get-by-code`): JSON query by gameServiceId + code.
 - **List** (`/dungeon/list`): Paged JSON query with required gameServiceId filter, optional status, personality type, and growth phase filters.
 - **Update** (`/dungeon/update`): Acquires distributed lock. Partial update. Publishes lifecycle updated event.
-- **Activate** (`/dungeon/activate`): Lock, set status Active. Start dungeon core actor via Puppetmaster (soft). Publishes activation event.
-- **Deactivate** (`/dungeon/deactivate`): Lock, set status Dormant. Stop actor via Puppetmaster (soft). Dissolve active bond if any. Publishes dormancy event.
-- **Delete** (`/dungeon/delete`): Lock. Deactivate if active. Dissolve bond. Remove inhabitants. Delete memories. Coordinate cleanup via lib-resource. Delete record. Publishes lifecycle deleted event.
+- **Activate** (`/dungeon/activate`): Lock, set status Active. Start dungeon core actor via Puppetmaster (soft). Publishes `dungeon.updated` lifecycle event with `changedFields: ["status"]`.
+- **Deactivate** (`/dungeon/deactivate`): Lock, set status Dormant. Stop actor via Puppetmaster (soft). Dissolve active bond if any. Publishes `dungeon.updated` lifecycle event with `changedFields: ["status"]`.
+- **Delete** (`/dungeon/delete`): Lock. Deactivate if active. Dissolve bond. Remove inhabitants. Delete memories. Delete `dungeon_core` seed via `ISeedClient`. Destroy mana wallet via `ICurrencyClient`. Coordinate cleanup via lib-resource. Delete record. Publishes lifecycle deleted event.
 
 ### Bond Management (4 endpoints)
 
@@ -701,22 +713,25 @@ All endpoints require `developer` role.
 
 All endpoints require `developer` role.
 
-- **CaptureMemory** (`/dungeon/memory/capture`): Calculates significance score from event properties. If above `MemorySignificanceThreshold`: stores memory, records seed growth to `memory_depth.capture`. If master present: records growth to master's `perception.emotional`. If above `MemoryManifestationThreshold` and `manifest_memory` capability unlocked: queues for manifestation. Publishes `dungeon.memory.captured`.
-- **ManifestMemory** (`/dungeon/memory/manifest`): Validates `manifest_memory` capability. Manifests as item (via `IItemClient`), scene decoration (via `ISceneClient`), or environmental effect (via `IMappingClient`) based on manifestation type. Records seed growth to `memory_depth.manifestation`. If master guided: records growth to master's `coordination.manifestation`. Publishes `dungeon.memory.manifested`.
+- **CaptureMemory** (`/dungeon/memory/capture`): Acquires `memory:{dungeonId}` distributed lock. Calculates significance score from event properties. If above `MemorySignificanceThreshold`: stores memory, records seed growth to `memory_depth.capture`. If master present: records growth to master's `perception.emotional`. If above `MemoryManifestationThreshold` and `manifest_memory` capability unlocked: queues for manifestation. Publishes `dungeon.memory.captured`.
+- **ManifestMemory** (`/dungeon/memory/manifest`): Acquires `memory:{dungeonId}` distributed lock. Validates `manifest_memory` capability. Manifests as item (via `IItemClient`), scene decoration (via `ISceneClient`), or environmental effect (via `IMappingClient`) based on manifestation type. Records seed growth to `memory_depth.manifestation`. If master guided: records growth to master's `coordination.manifestation`. Publishes `dungeon.memory.manifested`.
 - **ListMemories** (`/dungeon/memory/list`): Paged query with optional significance, event type, and manifestation status filters.
 - **GetMemory** (`/dungeon/memory/get`): Load by memoryId.
 
 ### Domain Management (2 endpoints)
 
+All endpoints require `developer` role.
+
 - **GetVitals** (`/dungeon/vitals`): Returns volatile dungeon state -- core integrity, current mana, mana generation rate, threat level, inhabitant summary, active bond summary.
 - **GetDomainInfo** (`/dungeon/domain`): Returns domain boundaries, room count, extension core locations, active trap count. Queries Mapping (soft) for spatial details.
 
-### Cleanup Endpoints (2 endpoints)
+### Cleanup Endpoints (3 endpoints)
 
-Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
+All endpoints use `x-permissions: []` (service-to-service only, called by lib-resource). Resource-managed cleanup per FOUNDATION TENETS:
 
 - **CleanupByCharacter** (`/dungeon/cleanup-by-character`): Dissolves any bond where the character is the master. Removes character-specific memories.
 - **CleanupByRealm** (`/dungeon/cleanup-by-realm`): Deactivates and deletes all dungeons in the realm. Cascades bond dissolution, inhabitant removal, memory deletion.
+- **CleanupByGameService** (`/dungeon/cleanup-by-game-service`): Deactivates and deletes all dungeons scoped to the game service. Cascades bond dissolution, inhabitant removal, memory deletion.
 
 ---
 
@@ -911,9 +926,19 @@ Dungeon core identity is owned here. Dungeon behavior starts as Actor event brai
 
 ---
 
+## Deprecation Lifecycle (T31)
+
+Dungeon cores have no external references — no other service stores dungeon core IDs (the "Dependents" section confirms no current consumers). Per the T31 decision tree, dungeon cores fall into the "No references at all" category: **immediate hard delete** is correct. No deprecation lifecycle is needed.
+
+If future dependents (combat systems, Storyline) store dungeon core IDs, this classification must be revised to Category A (Deprecate-Before-Delete). The deep dive's "Dependents" section tracks this.
+
+Bond dissolution is NOT deprecation — it is an operational state change (contract termination). Inhabitants are volatile Redis data deleted immediately. Memories are owned by the dungeon and deleted with it.
+
+---
+
 ## Stubs & Unimplemented Features
 
-**Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned:
+**Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The total endpoint count is **25** (8 core + 4 bond + 4 inhabitant + 4 memory + 2 domain + 3 cleanup). The following phases are planned:
 
 ### Phase 0: Seed Foundation (Prerequisite)
 - Register `dungeon_core` seed type with growth phases, domains, and capability rules
@@ -1014,13 +1039,13 @@ Dungeon core identity is owned here. Dungeon behavior starts as Actor event brai
 
 5. **No seed-to-seed bonds**: The dungeon_core and dungeon_master seeds are NOT bonded via the seed bond system (BondCardinality: 0). The Contract is the relationship mechanism. Seeds grow independently in parallel, connected by the Contract. This is deliberate -- the dungeon can outgrow its master (Ancient dungeon with Bonded master) or vice versa (Transcendent master of a Stirring dungeon), creating interesting asymmetric dynamics. Cross-pollination between dungeon_master and guardian seeds happens at the spirit/account level, not through seed bonds.
 
-6. **Dungeon personality stored in seed metadata**: Personality type is a permanent characteristic stored in the `dungeon_core` seed's metadata at creation time, not in the dungeon core record. This follows the established pattern of seeds carrying permanent entity characteristics.
+6. **Physical form is cross-service, not owned by lib-dungeon**: lib-dungeon owns identity, bond, inhabitants, and memories. Physical layout (rooms, corridors) is owned by Mapping + Save-Load. Visual appearance is owned by Scene. lib-dungeon orchestrates but does not store spatial or visual data directly.
 
-7. **Physical form is cross-service, not owned by lib-dungeon**: lib-dungeon owns identity, bond, inhabitants, and memories. Physical layout (rooms, corridors) is owned by Mapping + Save-Load. Visual appearance is owned by Scene. lib-dungeon orchestrates but does not store spatial or visual data directly.
+7. **Pattern B is always the default**: Bond formation always creates a character-owned dungeon_master seed (Pattern B). Promotion to Pattern A (account-owned) happens externally through the household split mechanic. lib-dungeon does not need to know which pattern is active -- it interacts with the dungeon_master seed regardless of owner type. The distinction matters to Gardener (Pattern A creates a dungeon garden), the UX capability manifest system (Pattern A has full dungeon UX, Pattern B has transient UX), and the cross-pollination system (Pattern A has persistent cross-pollination, Pattern B has transient).
 
-8. **Pattern B is always the default**: Bond formation always creates a character-owned dungeon_master seed (Pattern B). Promotion to Pattern A (account-owned) happens externally through the household split mechanic. lib-dungeon does not need to know which pattern is active -- it interacts with the dungeon_master seed regardless of owner type. The distinction matters to Gardener (Pattern A creates a dungeon garden), the UX capability manifest system (Pattern A has full dungeon UX, Pattern B has transient UX), and the cross-pollination system (Pattern A has persistent cross-pollination, Pattern B has transient).
+8. **lib-dungeon is pattern-agnostic**: lib-dungeon itself does not implement or enforce the Pattern A vs. Pattern B distinction. It creates bonds, manages seeds, and orchestrates dungeon mechanics identically in both cases. The pattern distinction is an emergent property of which entity owns the dungeon_master seed (account vs. character) and how the broader system (Gardener, Permission, household management) responds to that ownership.
 
-9. **lib-dungeon is pattern-agnostic**: lib-dungeon itself does not implement or enforce the Pattern A vs. Pattern B distinction. It creates bonds, manages seeds, and orchestrates dungeon mechanics identically in both cases. The pattern distinction is an emergent property of which entity owns the dungeon_master seed (account vs. character) and how the broader system (Gardener, Permission, household management) responds to that ownership.
+9. **Personality type stored on DungeonCoreModel, not seed metadata**: Personality type is a dungeon domain concept stored in Dungeon's own MySQL store. Per FOUNDATION TENETS on metadata bag contracts, cross-service data conventions via `additionalProperties: true` fields are forbidden. Dungeon owns its own identity data.
 
 ### Design Considerations (Requires Planning)
 
@@ -1028,9 +1053,9 @@ Dungeon core identity is owned here. Dungeon behavior starts as Actor event brai
 
 2. **Dungeon garden type design (Pattern A only)**: The dungeon-as-garden concept requires: a registered garden type in Gardener, entity association rules for the dungeon context, ABML action handlers for Gardener APIs (analogous to Puppetmaster's `spawn_watcher:`, `watch:` handlers), and a gardener behavior document for the dungeon core actor. Pattern B does not use a dungeon garden -- the dungeon influence is routed through the character's Actor perception pipeline. This is a cross-service design effort.
 
-3. **Actor type registration**: The dungeon core actor template (event_brain, category: dungeon_core, domain: "dungeon") needs to be registered in the Actor system. This includes the cognition template (`creature_base`), event subscriptions, and capability references. Design decisions: is `creature_base` an existing template or does it need creation?
+3. ~~**Actor type registration**~~: **RESOLVED** (2026-03-06). The `creature_base` cognition template exists in `CognitionTemplateRegistry` (implemented via [#422](https://github.com/beyond-immersion/bannou-service/issues/422)). The dungeon core actor template (event_brain, category: dungeon_core, domain: "dungeon") will use this existing template. No design decisions remain.
 
-4. **Growth contribution debouncing**: Dungeons generate many growth events per tick (every monster kill, every trap trigger). Growth contributions to lib-seed need debouncing (configurable, planning doc suggests 5000ms default) to avoid overwhelming the seed service with individual growth API calls.
+4. **Growth contribution debouncing**: Dungeons generate many growth events per tick (every monster kill, every trap trigger). Growth contributions to lib-seed need debouncing (`GrowthContributionDebounceMs` config property, default 5000ms) to avoid overwhelming the seed service with individual growth API calls.
 
 5. **Memory-to-archive pipeline**: Dungeon memories should feed into the Content Flywheel -- when a dungeon is destroyed or goes dormant, its accumulated memories become generative input for Storyline. This requires design decisions about the compression/archive format and the handoff to lib-resource.
 
@@ -1060,4 +1085,45 @@ Dungeon core identity is owned here. Dungeon behavior starts as Actor event brai
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase.*
+### Blocking Dependencies
+
+| Issue | Title | Impact | Blocks |
+|-------|-------|--------|--------|
+| [#436](https://github.com/beyond-immersion/bannou-service/issues/436) | Household split mechanic | Pattern A prerequisite | Phase 6-7 |
+| [#437](https://github.com/beyond-immersion/bannou-service/issues/437) | Seed owner type promotion | Pattern A prerequisite | Phase 6-7 |
+| [#362](https://github.com/beyond-immersion/bannou-service/issues/362) | Seed bond dissolution endpoint | Bond dissolution flow | Phase 2 |
+
+### Related Issues
+
+| Issue | Title | Relevance |
+|-------|-------|-----------|
+| [#354](https://github.com/beyond-immersion/bannou-service/issues/354) | Cross-seed-type growth transfer | Dungeon/guardian cross-pollination (Extension #4) |
+| [#191](https://github.com/beyond-immersion/bannou-service/issues/191) | Session-bound actor support | Pattern A/B session awareness (Phase 6-7) |
+| [#386](https://github.com/beyond-immersion/bannou-service/issues/386) | Bond communication via Chat | Master-core communication design |
+| [#408](https://github.com/beyond-immersion/bannou-service/issues/408) | emit_impulse ABML action | Game engine notification for dungeon mutations |
+| [#497](https://github.com/beyond-immersion/bannou-service/issues/497) | Seed client events via Entity Session Registry | Dungeon seed push notifications |
+| [#545](https://github.com/beyond-immersion/bannou-service/issues/545) | Game-time migration for background workers | Seed decay/mana timing accuracy |
+| [#366](https://github.com/beyond-immersion/bannou-service/issues/366) | Archived seed cleanup strategy | Master seed archival on dissolution |
+
+### Resolved
+
+- ~~Design Consideration #3 (creature_base template)~~: Resolved by [#422](https://github.com/beyond-immersion/bannou-service/issues/422) — `creature_base` exists in `CognitionTemplateRegistry`
+- ~~Design Consideration #6 (Entity Session Registry)~~: Infrastructure exists via [#426](https://github.com/beyond-immersion/bannou-service/issues/426) — specific dungeon registration still needs design
+- ~~#365 (Push seed capability updates)~~: Superseded by [#497](https://github.com/beyond-immersion/bannou-service/issues/497)
+
+### Missing Issues (Need Creation)
+
+| Design Consideration | Description | Priority |
+|---------------------|-------------|----------|
+| #1 — Mana economy model | Currency wallet vs virtual actor state for mana | High (Phase 1) |
+| #10 — Dungeon system realm provisioning | Global vs per-game-service realm, species registration | High (Phase 1) |
+| #11 — Character creation timing | Multi-service orchestration failure handling at Awakened phase | High (Phase 1.5) |
+| #2 — Dungeon garden type design | Gardener registration, ABML action handlers, entity associations | Medium (Phase 6) |
+| #4 — Growth contribution debouncing | Seed growth batching to avoid overwhelming lib-seed | Medium (Phase 3) |
+| #5 — Memory-to-archive pipeline | Dungeon memory compression for Content Flywheel | Medium (Phase 4) |
+| #9 — Pattern B transient UX routing | Dynamic UX capability manifest on character switch | Medium (Phase 7) |
+
+### Audit History
+
+- **2026-03-06**: L4 production readiness audit. Fixed: T29 violation (personalityType moved from seed metadata to DungeonCoreModel), T4 violation (IItemClient/IInventoryClient moved to hard dependencies), T16 event topics (3 Pattern A corrections), missing DungeonStatus enum, missing game-service cleanup target, missing ITelemetryProvider in DI table, missing domain management permissions, config validation constraints, growth debounce config property, T31 deprecation classification, inhabitant store durability note, Design Consideration #3 marked resolved.
+- **2026-03-06**: Re-audit. Fixed: T5 (Activate/Deactivate now publish `dungeon.updated` with changedFields, not custom events), T9 (distributed lock on HandleSeedPhaseChangedAsync, CaptureMemory, ManifestMemory), T28 (dungeon_core seed + mana wallet deletion in Delete flow), T13 (cleanup endpoints x-permissions: []).

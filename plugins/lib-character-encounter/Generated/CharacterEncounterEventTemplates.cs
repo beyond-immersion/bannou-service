@@ -28,7 +28,7 @@ public static class CharacterEncounterEventTemplates
     ""timestamp"": ""{{timestamp}}"",
     ""encounterId"": ""{{encounterId}}"",
     ""encounterTypeCode"": ""{{encounterTypeCode}}"",
-    ""outcome"": ""{{outcome}}"",
+    ""outcome"": {{outcome}},
     ""realmId"": ""{{realmId}}"",
     ""locationId"": {{locationId}},
     ""participantIds"": {{participantIds}},
@@ -36,6 +36,23 @@ public static class CharacterEncounterEventTemplates
     ""encounterTimestamp"": ""{{encounterTimestamp}}""
 }",
         Description: "Published when a new encounter is recorded between characters");
+
+    /// <summary>Published when a character's memory of an encounter fades below threshold.</summary>
+    public static readonly EventTemplate EncounterMemoryFaded = new(
+        Name: "encounter_memory_faded",
+        Topic: "encounter.memory.faded",
+        EventType: typeof(EncounterMemoryFadedEvent),
+        PayloadTemplate: @"{
+    ""eventId"": ""{{eventId}}"",
+    ""timestamp"": ""{{timestamp}}"",
+    ""encounterId"": ""{{encounterId}}"",
+    ""characterId"": ""{{characterId}}"",
+    ""perspectiveId"": ""{{perspectiveId}}"",
+    ""previousStrength"": {{previousStrength}},
+    ""newStrength"": {{newStrength}},
+    ""fadeThreshold"": {{fadeThreshold}}
+}",
+        Description: "Published when a character's memory of an encounter fades below threshold");
 
     /// <summary>Published when a character's memory of an encounter is strengthened.</summary>
     public static readonly EventTemplate EncounterMemoryRefreshed = new(
@@ -61,6 +78,7 @@ public static class CharacterEncounterEventTemplates
     public static void RegisterAll(IEventTemplateRegistry registry)
     {
         registry.Register(EncounterRecorded);
+        registry.Register(EncounterMemoryFaded);
         registry.Register(EncounterMemoryRefreshed);
     }
 }

@@ -57,20 +57,6 @@ x-service-layer: GameFeatures
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
-x-lifecycle:
-  entity: Personality
-  response_model: PersonalityResponse
-  id_field: characterId
-  events:
-    created:
-      topic: character-personality.created
-      description: Published when personality is created for a character
-    updated:
-      topic: character-personality.updated
-      description: Published when personality traits are modified
-    deleted:
-      topic: character-personality.deleted
-      description: Published when personality is removed from a character
 paths:
   /character-personality/get:
     post:
@@ -136,13 +122,13 @@ paths:
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
         description\": \"When this trait last evolved (null if never changed since creation)\"\n                },\n     \
         \           \"changeCount\": {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n\
-        \                    \"description\": \"Number of times this trait has evolved\"\n                }\n            }\n\
-        \        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n            \"description\": \"Core personality
-        trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on psychological research (Big Five + game-relevant
-        extensions).\\n\",\n            \"enum\": [\n                \"Openness\",\n                \"Conscientiousness\"\
-        ,\n                \"Extraversion\",\n                \"Agreeableness\",\n                \"Neuroticism\",\n     \
-        \           \"Honesty\",\n                \"Aggression\",\n                \"Loyalty\"\n            ]\n        }\n\
-        \    }\n}"
+        \                    \"minimum\": 0,\n                    \"description\": \"Number of times this trait has evolved\"\
+        \n                }\n            }\n        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on
+        psychological research (Big Five + game-relevant extensions).\\n\",\n            \"enum\": [\n                \"Openness\"\
+        ,\n                \"Conscientiousness\",\n                \"Extraversion\",\n                \"Agreeableness\",\n\
+        \                \"Neuroticism\",\n                \"Honesty\",\n                \"Aggression\",\n               \
+        \ \"Loyalty\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get personality for a character\",\n    \"description\": \"Retrieves the
         personality profile for a character. Returns 404 if no\\npersonality has been defined for this character.\\n\",\n\
         \    \"tags\": [\n        \"Personality Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -197,13 +183,13 @@ paths:
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
         description\": \"When this trait last evolved (null if never changed since creation)\"\n                },\n     \
         \           \"changeCount\": {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n\
-        \                    \"description\": \"Number of times this trait has evolved\"\n                }\n            }\n\
-        \        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n            \"description\": \"Core personality
-        trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on psychological research (Big Five + game-relevant
-        extensions).\\n\",\n            \"enum\": [\n                \"Openness\",\n                \"Conscientiousness\"\
-        ,\n                \"Extraversion\",\n                \"Agreeableness\",\n                \"Neuroticism\",\n     \
-        \           \"Honesty\",\n                \"Aggression\",\n                \"Loyalty\"\n            ]\n        }\n\
-        \    }\n}"
+        \                    \"minimum\": 0,\n                    \"description\": \"Number of times this trait has evolved\"\
+        \n                }\n            }\n        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on
+        psychological research (Big Five + game-relevant extensions).\\n\",\n            \"enum\": [\n                \"Openness\"\
+        ,\n                \"Conscientiousness\",\n                \"Extraversion\",\n                \"Agreeableness\",\n\
+        \                \"Neuroticism\",\n                \"Honesty\",\n                \"Aggression\",\n               \
+        \ \"Loyalty\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PersonalityResponse\"\
         ,\n    \"$defs\": {\n        \"PersonalityResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Complete personality profile for behavior system consumption\",\n            \"additionalProperties\": false,\n\
@@ -234,13 +220,13 @@ paths:
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
         description\": \"When this trait last evolved (null if never changed since creation)\"\n                },\n     \
         \           \"changeCount\": {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n\
-        \                    \"description\": \"Number of times this trait has evolved\"\n                }\n            }\n\
-        \        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n            \"description\": \"Core personality
-        trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on psychological research (Big Five + game-relevant
-        extensions).\\n\",\n            \"enum\": [\n                \"Openness\",\n                \"Conscientiousness\"\
-        ,\n                \"Extraversion\",\n                \"Agreeableness\",\n                \"Neuroticism\",\n     \
-        \           \"Honesty\",\n                \"Aggression\",\n                \"Loyalty\"\n            ]\n        }\n\
-        \    }\n}"
+        \                    \"minimum\": 0,\n                    \"description\": \"Number of times this trait has evolved\"\
+        \n                }\n            }\n        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on
+        psychological research (Big Five + game-relevant extensions).\\n\",\n            \"enum\": [\n                \"Openness\"\
+        ,\n                \"Conscientiousness\",\n                \"Extraversion\",\n                \"Agreeableness\",\n\
+        \                \"Neuroticism\",\n                \"Honesty\",\n                \"Aggression\",\n               \
+        \ \"Loyalty\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create or update personality for a character\",\n    \"description\": \"\
         Creates or replaces the personality profile for a character. If a personality\\nalready exists, it will be completely
         replaced (not merged).\\n\",\n    \"tags\": [\n        \"Personality Management\"\n    ],\n    \"deprecated\": false,\n\
@@ -261,7 +247,9 @@ paths:
 
         This endpoint is typically called by the behavior service when significant
         events occur during gameplay.
-      x-permissions: []
+      x-permissions:
+      - role: developer
+        states: {}
       requestBody:
         required: true
         content:
@@ -301,36 +289,32 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExperienceResult\"\
         ,\n    \"$defs\": {\n        \"ExperienceResult\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of recording an experience, including any personality evolution\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"characterId\",\n                \"experienceRecorded\",\n\
-        \                \"personalityEvolved\"\n            ],\n            \"properties\": {\n                \"characterId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Character who had the experience\"\n                },\n                \"experienceRecorded\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether the experience was recorded
-        successfully\"\n                },\n                \"personalityEvolved\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether any traits changed as a result of this experience\"\n          \
-        \      },\n                \"changedTraits\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"$ref\": \"#/$defs/TraitValue\"\n                    },\n                   \
-        \ \"description\": \"Traits that evolved (empty array if no change)\"\n                },\n                \"newVersion\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New personality version if evolved (null if no change)\"\n                }\n            }\n        },\n     \
-        \   \"TraitValue\": {\n            \"type\": \"object\",\n            \"description\": \"A single personality trait
-        with its current value and evolution history\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"axis\",\n                \"value\"\n            ],\n            \"properties\": {\n       \
-        \         \"axis\": {\n                    \"$ref\": \"#/$defs/TraitAxis\",\n                    \"description\":
-        \"The personality axis this value represents\"\n                },\n                \"value\": {\n               \
-        \     \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": -1.0,\n\
-        \                    \"maximum\": 1.0,\n                    \"description\": \"Current trait value on the spectrum
-        (-1.0 to +1.0)\"\n                },\n                \"lastChangedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When this trait last evolved (null if never changed since creation)\"\n                },\n     \
-        \           \"changeCount\": {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n\
-        \                    \"description\": \"Number of times this trait has evolved\"\n                }\n            }\n\
-        \        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n            \"description\": \"Core personality
-        trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on psychological research (Big Five + game-relevant
-        extensions).\\n\",\n            \"enum\": [\n                \"Openness\",\n                \"Conscientiousness\"\
-        ,\n                \"Extraversion\",\n                \"Agreeableness\",\n                \"Neuroticism\",\n     \
-        \           \"Honesty\",\n                \"Aggression\",\n                \"Loyalty\"\n            ]\n        }\n\
-        \    }\n}"
+        : false,\n            \"required\": [\n                \"personalityEvolved\",\n                \"changedTraits\"\n\
+        \            ],\n            \"properties\": {\n                \"personalityEvolved\": {\n                    \"\
+        type\": \"boolean\",\n                    \"description\": \"Whether any traits changed as a result of this experience\"\
+        \n                },\n                \"changedTraits\": {\n                    \"type\": \"array\",\n           \
+        \         \"items\": {\n                        \"$ref\": \"#/$defs/TraitValue\"\n                    },\n       \
+        \             \"description\": \"Traits that evolved (empty array if no change)\"\n                },\n          \
+        \      \"newVersion\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n  \
+        \                  \"description\": \"New personality version if evolved (null if no change)\"\n                }\n\
+        \            }\n        },\n        \"TraitValue\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A single personality trait with its current value and evolution history\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"axis\",\n                \"value\"\n            ],\n    \
+        \        \"properties\": {\n                \"axis\": {\n                    \"$ref\": \"#/$defs/TraitAxis\",\n  \
+        \                  \"description\": \"The personality axis this value represents\"\n                },\n         \
+        \       \"value\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n    \
+        \                \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"\
+        Current trait value on the spectrum (-1.0 to +1.0)\"\n                },\n                \"lastChangedAt\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When this trait last evolved (null if never changed since
+        creation)\"\n                },\n                \"changeCount\": {\n                    \"type\": \"integer\",\n\
+        \                    \"default\": 0,\n                    \"minimum\": 0,\n                    \"description\": \"\
+        Number of times this trait has evolved\"\n                }\n            }\n        },\n        \"TraitAxis\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Core personality trait axes. Each represents a
+        spectrum from -1.0 to +1.0.\\nBased on psychological research (Big Five + game-relevant extensions).\\n\",\n     \
+        \       \"enum\": [\n                \"Openness\",\n                \"Conscientiousness\",\n                \"Extraversion\"\
+        ,\n                \"Agreeableness\",\n                \"Neuroticism\",\n                \"Honesty\",\n          \
+        \      \"Aggression\",\n                \"Loyalty\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Record an experience that may evolve personality\",\n    \"description\"\
         : \"Records a significant experience for a character. The system evaluates whether\\nthe experience causes trait evolution
         based on:\\n- Experience type and its typical trait impacts\\n- Experience intensity (higher = more likely to cause
@@ -350,7 +334,9 @@ paths:
         returned in the notFound array.
 
         Maximum 100 characters per request.
-      x-permissions: []
+      x-permissions:
+      - role: developer
+        states: {}
       requestBody:
         required: true
         content:
@@ -411,13 +397,13 @@ paths:
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
         description\": \"When this trait last evolved (null if never changed since creation)\"\n                },\n     \
         \           \"changeCount\": {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n\
-        \                    \"description\": \"Number of times this trait has evolved\"\n                }\n            }\n\
-        \        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n            \"description\": \"Core personality
-        trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on psychological research (Big Five + game-relevant
-        extensions).\\n\",\n            \"enum\": [\n                \"Openness\",\n                \"Conscientiousness\"\
-        ,\n                \"Extraversion\",\n                \"Agreeableness\",\n                \"Neuroticism\",\n     \
-        \           \"Honesty\",\n                \"Aggression\",\n                \"Loyalty\"\n            ]\n        }\n\
-        \    }\n}"
+        \                    \"minimum\": 0,\n                    \"description\": \"Number of times this trait has evolved\"\
+        \n                }\n            }\n        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on
+        psychological research (Big Five + game-relevant extensions).\\n\",\n            \"enum\": [\n                \"Openness\"\
+        ,\n                \"Conscientiousness\",\n                \"Extraversion\",\n                \"Agreeableness\",\n\
+        \                \"Neuroticism\",\n                \"Honesty\",\n                \"Aggression\",\n               \
+        \ \"Loyalty\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get personalities for multiple characters\",\n    \"description\": \"Bulk
         load personalities for multiple characters. Used by the behavior service\\nfor efficient region initialization. Characters
         without personalities are\\nreturned in the notFound array.\\n\\nMaximum 100 characters per request.\\n\",\n    \"\
@@ -668,7 +654,9 @@ paths:
 
         Combat experiences can shift style (e.g., repeated losses may make a
         character more defensive), adjust risk tolerance, or change retreat thresholds.
-      x-permissions: []
+      x-permissions:
+      - role: developer
+        states: {}
       requestBody:
         required: true
         content:
@@ -709,50 +697,45 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CombatEvolutionResult\"\
         ,\n    \"$defs\": {\n        \"CombatEvolutionResult\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of recording a combat experience\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"characterId\",\n                \"experienceRecorded\",\n                \"preferencesEvolved\"\
-        \n            ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character who had
-        the combat experience\"\n                },\n                \"experienceRecorded\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether the experience was recorded successfully\"\n      \
-        \          },\n                \"preferencesEvolved\": {\n                    \"type\": \"boolean\",\n           \
-        \         \"description\": \"Whether any preferences changed as a result\"\n                },\n                \"\
-        previousPreferences\": {\n                    \"$ref\": \"#/$defs/CombatPreferences\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Previous preferences (null if no change)\"\n                },\n \
-        \               \"newPreferences\": {\n                    \"$ref\": \"#/$defs/CombatPreferences\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"New preferences after evolution (null if no change)\"\
-        \n                },\n                \"newVersion\": {\n                    \"type\": \"integer\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"New version number if evolved (null if no change)\"\
-        \n                }\n            }\n        },\n        \"CombatPreferences\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"Combat behavior preferences that influence tactical decisions.\\nThese values affect
-        GOAP action selection, retreat conditions,\\nand group coordination behavior.\\n\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"style\",\n                \"preferredRange\",\n         \
-        \       \"groupRole\",\n                \"riskTolerance\",\n                \"retreatThreshold\",\n              \
-        \  \"protectAllies\"\n            ],\n            \"properties\": {\n                \"style\": {\n              \
-        \      \"$ref\": \"#/$defs/CombatStyle\",\n                    \"description\": \"Overall combat approach\"\n    \
-        \            },\n                \"preferredRange\": {\n                    \"$ref\": \"#/$defs/PreferredRange\",\n\
-        \                    \"description\": \"Preferred engagement distance\"\n                },\n                \"groupRole\"\
-        : {\n                    \"$ref\": \"#/$defs/GroupRole\",\n                    \"description\": \"Role when fighting
-        in groups\"\n                },\n                \"riskTolerance\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
-        : 1.0,\n                    \"description\": \"Willingness to take dangerous actions (0.0 = very cautious, 1.0 = reckless).\\
-        nAffects ability selection and target prioritization.\\n\"\n                },\n                \"retreatThreshold\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Health percentage at
-        which retreat is considered (0.0 = fight to death,\\n0.5 = retreat at half health, 1.0 = retreat at any damage).\\\
-        n\"\n                },\n                \"protectAllies\": {\n                    \"type\": \"boolean\",\n      \
-        \              \"description\": \"Whether to prioritize ally protection over self-preservation.\\nAffects target selection
-        and positioning decisions.\\n\"\n                }\n            }\n        },\n        \"CombatStyle\": {\n      \
-        \      \"type\": \"string\",\n            \"description\": \"Overall approach to combat situations. Affects target
-        selection,\\nability usage, and engagement decisions.\\n\",\n            \"enum\": [\n                \"Defensive\"\
-        ,\n                \"Balanced\",\n                \"Aggressive\",\n                \"Berserker\",\n              \
-        \  \"Tactical\"\n            ]\n        },\n        \"PreferredRange\": {\n            \"type\": \"string\",\n   \
-        \         \"description\": \"Preferred engagement distance. Influences positioning and\\nability selection in combat.\\\
-        n\",\n            \"enum\": [\n                \"Melee\",\n                \"Close\",\n                \"Medium\"\
-        ,\n                \"Ranged\"\n            ]\n        },\n        \"GroupRole\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Preferred role when fighting in groups. Affects positioning,\\ntarget priority,
-        and coordination behavior.\\n\",\n            \"enum\": [\n                \"Frontline\",\n                \"Support\"\
-        ,\n                \"Flanker\",\n                \"Leader\",\n                \"Solo\"\n            ]\n        }\n\
-        \    }\n}"
+        : [\n                \"preferencesEvolved\"\n            ],\n            \"properties\": {\n                \"preferencesEvolved\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether any preferences changed
+        as a result\"\n                },\n                \"previousPreferences\": {\n                    \"$ref\": \"#/$defs/CombatPreferences\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Previous preferences (null if no
+        change)\"\n                },\n                \"newPreferences\": {\n                    \"$ref\": \"#/$defs/CombatPreferences\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"New preferences after evolution
+        (null if no change)\"\n                },\n                \"newVersion\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"New version number if evolved (null
+        if no change)\"\n                }\n            }\n        },\n        \"CombatPreferences\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Combat behavior preferences that influence tactical decisions.\\nThese
+        values affect GOAP action selection, retreat conditions,\\nand group coordination behavior.\\n\",\n            \"\
+        additionalProperties\": false,\n            \"required\": [\n                \"style\",\n                \"preferredRange\"\
+        ,\n                \"groupRole\",\n                \"riskTolerance\",\n                \"retreatThreshold\",\n   \
+        \             \"protectAllies\"\n            ],\n            \"properties\": {\n                \"style\": {\n   \
+        \                 \"$ref\": \"#/$defs/CombatStyle\",\n                    \"description\": \"Overall combat approach\"\
+        \n                },\n                \"preferredRange\": {\n                    \"$ref\": \"#/$defs/PreferredRange\"\
+        ,\n                    \"description\": \"Preferred engagement distance\"\n                },\n                \"\
+        groupRole\": {\n                    \"$ref\": \"#/$defs/GroupRole\",\n                    \"description\": \"Role
+        when fighting in groups\"\n                },\n                \"riskTolerance\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n               \
+        \     \"maximum\": 1.0,\n                    \"description\": \"Willingness to take dangerous actions (0.0 = very
+        cautious, 1.0 = reckless).\\nAffects ability selection and target prioritization.\\n\"\n                },\n     \
+        \           \"retreatThreshold\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\"\
+        : \"Health percentage at which retreat is considered (0.0 = fight to death,\\n0.5 = retreat at half health, 1.0 =
+        retreat at any damage).\\n\"\n                },\n                \"protectAllies\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether to prioritize ally protection over self-preservation.\\
+        nAffects target selection and positioning decisions.\\n\"\n                }\n            }\n        },\n        \"\
+        CombatStyle\": {\n            \"type\": \"string\",\n            \"description\": \"Overall approach to combat situations.
+        Affects target selection,\\nability usage, and engagement decisions.\\n\",\n            \"enum\": [\n            \
+        \    \"Defensive\",\n                \"Balanced\",\n                \"Aggressive\",\n                \"Berserker\"\
+        ,\n                \"Tactical\"\n            ]\n        },\n        \"PreferredRange\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Preferred engagement distance. Influences positioning and\\nability selection
+        in combat.\\n\",\n            \"enum\": [\n                \"Melee\",\n                \"Close\",\n              \
+        \  \"Medium\",\n                \"Ranged\"\n            ]\n        },\n        \"GroupRole\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Preferred role when fighting in groups. Affects positioning,\\ntarget
+        priority, and coordination behavior.\\n\",\n            \"enum\": [\n                \"Frontline\",\n            \
+        \    \"Support\",\n                \"Flanker\",\n                \"Leader\",\n                \"Solo\"\n         \
+        \   ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Record combat experience that may evolve preferences\",\n    \"description\"\
         : \"Records a significant combat experience that may cause preference evolution.\\nSimilar to personality evolution,
         but focused on combat-specific traits.\\n\\nCombat experiences can shift style (e.g., repeated losses may make a\\
@@ -872,43 +855,43 @@ paths:
         \                   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
         nullable\": true,\n                    \"description\": \"When this trait last evolved (null if never changed since
         creation)\"\n                },\n                \"changeCount\": {\n                    \"type\": \"integer\",\n\
-        \                    \"default\": 0,\n                    \"description\": \"Number of times this trait has evolved\"\
-        \n                }\n            }\n        },\n        \"TraitAxis\": {\n            \"type\": \"string\",\n    \
-        \        \"description\": \"Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.\\nBased on
-        psychological research (Big Five + game-relevant extensions).\\n\",\n            \"enum\": [\n                \"Openness\"\
-        ,\n                \"Conscientiousness\",\n                \"Extraversion\",\n                \"Agreeableness\",\n\
-        \                \"Neuroticism\",\n                \"Honesty\",\n                \"Aggression\",\n               \
-        \ \"Loyalty\"\n            ]\n        },\n        \"CombatPreferencesResponse\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"Combat preferences profile for behavior system consumption\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"characterId\",\n                \"preferences\",\n      \
-        \          \"version\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n          \
-        \      \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"Character these preferences belong to\"\n                },\n            \
-        \    \"preferences\": {\n                    \"$ref\": \"#/$defs/CombatPreferences\",\n                    \"description\"\
-        : \"The combat preferences values\"\n                },\n                \"version\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Preferences version number (increments on each evolution)\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When these preferences were first created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        When these preferences were last modified\"\n                }\n            }\n        },\n        \"CombatPreferences\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Combat behavior preferences that influence
-        tactical decisions.\\nThese values affect GOAP action selection, retreat conditions,\\nand group coordination behavior.\\\
-        n\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"style\",\n    \
-        \            \"preferredRange\",\n                \"groupRole\",\n                \"riskTolerance\",\n           \
-        \     \"retreatThreshold\",\n                \"protectAllies\"\n            ],\n            \"properties\": {\n  \
-        \              \"style\": {\n                    \"$ref\": \"#/$defs/CombatStyle\",\n                    \"description\"\
-        : \"Overall combat approach\"\n                },\n                \"preferredRange\": {\n                    \"$ref\"\
-        : \"#/$defs/PreferredRange\",\n                    \"description\": \"Preferred engagement distance\"\n          \
-        \      },\n                \"groupRole\": {\n                    \"$ref\": \"#/$defs/GroupRole\",\n              \
-        \      \"description\": \"Role when fighting in groups\"\n                },\n                \"riskTolerance\": {\n\
-        \                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\"\
-        : 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Willingness to take dangerous
-        actions (0.0 = very cautious, 1.0 = reckless).\\nAffects ability selection and target prioritization.\\n\"\n     \
-        \           },\n                \"retreatThreshold\": {\n                    \"type\": \"number\",\n             \
-        \       \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n   \
-        \                 \"description\": \"Health percentage at which retreat is considered (0.0 = fight to death,\\n0.5
-        = retreat at half health, 1.0 = retreat at any damage).\\n\"\n                },\n                \"protectAllies\"\
+        \                    \"default\": 0,\n                    \"minimum\": 0,\n                    \"description\": \"\
+        Number of times this trait has evolved\"\n                }\n            }\n        },\n        \"TraitAxis\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Core personality trait axes. Each represents a
+        spectrum from -1.0 to +1.0.\\nBased on psychological research (Big Five + game-relevant extensions).\\n\",\n     \
+        \       \"enum\": [\n                \"Openness\",\n                \"Conscientiousness\",\n                \"Extraversion\"\
+        ,\n                \"Agreeableness\",\n                \"Neuroticism\",\n                \"Honesty\",\n          \
+        \      \"Aggression\",\n                \"Loyalty\"\n            ]\n        },\n        \"CombatPreferencesResponse\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Combat preferences profile for behavior system
+        consumption\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\"\
+        ,\n                \"preferences\",\n                \"version\",\n                \"createdAt\"\n            ],\n\
+        \            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\",\n  \
+        \                  \"format\": \"uuid\",\n                    \"description\": \"Character these preferences belong
+        to\"\n                },\n                \"preferences\": {\n                    \"$ref\": \"#/$defs/CombatPreferences\"\
+        ,\n                    \"description\": \"The combat preferences values\"\n                },\n                \"\
+        version\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Preferences version
+        number (increments on each evolution)\"\n                },\n                \"createdAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When these preferences were first created\"\n                },\n                \"updatedAt\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"When these preferences were last modified\"\n                }\n         \
+        \   }\n        },\n        \"CombatPreferences\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Combat behavior preferences that influence tactical decisions.\\nThese values affect GOAP action selection, retreat
+        conditions,\\nand group coordination behavior.\\n\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"style\",\n                \"preferredRange\",\n                \"groupRole\",\n \
+        \               \"riskTolerance\",\n                \"retreatThreshold\",\n                \"protectAllies\"\n   \
+        \         ],\n            \"properties\": {\n                \"style\": {\n                    \"$ref\": \"#/$defs/CombatStyle\"\
+        ,\n                    \"description\": \"Overall combat approach\"\n                },\n                \"preferredRange\"\
+        : {\n                    \"$ref\": \"#/$defs/PreferredRange\",\n                    \"description\": \"Preferred engagement
+        distance\"\n                },\n                \"groupRole\": {\n                    \"$ref\": \"#/$defs/GroupRole\"\
+        ,\n                    \"description\": \"Role when fighting in groups\"\n                },\n                \"riskTolerance\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Willingness to take
+        dangerous actions (0.0 = very cautious, 1.0 = reckless).\\nAffects ability selection and target prioritization.\\\
+        n\"\n                },\n                \"retreatThreshold\": {\n                    \"type\": \"number\",\n    \
+        \                \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"Health percentage at which retreat is considered (0.0 = fight to death,\\\
+        n0.5 = retreat at half health, 1.0 = retreat at any damage).\\n\"\n                },\n                \"protectAllies\"\
         : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether to prioritize ally
         protection over self-preservation.\\nAffects target selection and positioning decisions.\\n\"\n                }\n\
         \            }\n        },\n        \"CombatStyle\": {\n            \"type\": \"string\",\n            \"description\"\
@@ -964,17 +947,12 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RestoreFromArchiveResponse\"\
         ,\n    \"$defs\": {\n        \"RestoreFromArchiveResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Result of restoration from archive\",\n            \"additionalProperties\": false,\n           \
-        \ \"required\": [\n                \"characterId\",\n                \"personalityRestored\",\n                \"\
-        combatPreferencesRestored\",\n                \"success\"\n            ],\n            \"properties\": {\n       \
-        \         \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Character data was restored for\"\n                },\n                \"\
-        personalityRestored\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        personality traits were restored\"\n                },\n                \"combatPreferencesRestored\": {\n       \
-        \             \"type\": \"boolean\",\n                    \"description\": \"Whether combat preferences were restored\"\
-        \n                },\n                \"success\": {\n                    \"type\": \"boolean\",\n               \
-        \     \"description\": \"Whether restoration completed successfully\"\n                },\n                \"errorMessage\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Error details if restoration failed\"\n                }\n            }\n        }\n    }\n}"
+        \ \"required\": [\n                \"personalityRestored\",\n                \"combatPreferencesRestored\"\n     \
+        \       ],\n            \"properties\": {\n                \"personalityRestored\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether personality traits were restored\"\n              \
+        \  },\n                \"combatPreferencesRestored\": {\n                    \"type\": \"boolean\",\n            \
+        \        \"description\": \"Whether combat preferences were restored\"\n                }\n            }\n       \
+        \ }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Restore personality data from archive\",\n    \"description\": \"Called
         by Resource service during character decompression.\\nRestores personality traits and combat preferences from archive
         data.\\n\",\n    \"tags\": [\n        \"Compression\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -1015,14 +993,12 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByCharacterResponse\"\
         ,\n    \"$defs\": {\n        \"CleanupByCharacterResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Response from character cleanup operation\",\n            \"additionalProperties\": false,\n    \
-        \        \"required\": [\n                \"personalityDeleted\",\n                \"combatPreferencesDeleted\",\n\
-        \                \"success\"\n            ],\n            \"properties\": {\n                \"personalityDeleted\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether personality traits
-        were found and deleted\"\n                },\n                \"combatPreferencesDeleted\": {\n                  \
-        \  \"type\": \"boolean\",\n                    \"description\": \"Whether combat preferences were found and deleted\"\
-        \n                },\n                \"success\": {\n                    \"type\": \"boolean\",\n               \
-        \     \"description\": \"Whether cleanup completed successfully\"\n                }\n            }\n        }\n \
-        \   }\n}"
+        \        \"required\": [\n                \"personalityDeleted\",\n                \"combatPreferencesDeleted\"\n\
+        \            ],\n            \"properties\": {\n                \"personalityDeleted\": {\n                    \"\
+        type\": \"boolean\",\n                    \"description\": \"Whether personality traits were found and deleted\"\n\
+        \                },\n                \"combatPreferencesDeleted\": {\n                    \"type\": \"boolean\",\n\
+        \                    \"description\": \"Whether combat preferences were found and deleted\"\n                }\n \
+        \           }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Cleanup all personality data for a deleted character\",\n    \"description\"\
         : \"Called by lib-resource cleanup coordination when a character is deleted.\\nRemoves BOTH personality traits AND
         combat preferences for the specified character.\\nThis endpoint is designed for internal service-to-service calls
@@ -1132,6 +1108,7 @@ components:
         changeCount:
           type: integer
           default: 0
+          minimum: 0
           description: Number of times this trait has evolved
     PersonalityResponse:
       type: object
@@ -1176,17 +1153,9 @@ components:
       description: Result of recording an experience, including any personality evolution
       additionalProperties: false
       required:
-      - characterId
-      - experienceRecorded
       - personalityEvolved
+      - changedTraits
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character who had the experience
-        experienceRecorded:
-          type: boolean
-          description: Whether the experience was recorded successfully
         personalityEvolved:
           type: boolean
           description: Whether any traits changed as a result of this experience
@@ -1402,17 +1371,8 @@ components:
       description: Result of recording a combat experience
       additionalProperties: false
       required:
-      - characterId
-      - experienceRecorded
       - preferencesEvolved
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character who had the combat experience
-        experienceRecorded:
-          type: boolean
-          description: Whether the experience was recorded successfully
         preferencesEvolved:
           type: boolean
           description: Whether any preferences changed as a result
@@ -1504,7 +1464,6 @@ components:
       required:
       - personalityDeleted
       - combatPreferencesDeleted
-      - success
       properties:
         personalityDeleted:
           type: boolean
@@ -1512,9 +1471,6 @@ components:
         combatPreferencesDeleted:
           type: boolean
           description: Whether combat preferences were found and deleted
-        success:
-          type: boolean
-          description: Whether cleanup completed successfully
     GetCompressDataRequest:
       type: object
       description: Request to get personality data for compression
@@ -1579,25 +1535,12 @@ components:
       description: Result of restoration from archive
       additionalProperties: false
       required:
-      - characterId
       - personalityRestored
       - combatPreferencesRestored
-      - success
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character data was restored for
         personalityRestored:
           type: boolean
           description: Whether personality traits were restored
         combatPreferencesRestored:
           type: boolean
           description: Whether combat preferences were restored
-        success:
-          type: boolean
-          description: Whether restoration completed successfully
-        errorMessage:
-          type: string
-          nullable: true
-          description: Error details if restoration failed

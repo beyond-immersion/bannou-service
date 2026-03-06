@@ -32,19 +32,19 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published to deity.created when a deity is created
+/// Published to divine.deity.created when a deity is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeityCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: deity.created
+    /// Event type identifier: divine.deity.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "deity.created";
+    public override string EventName { get; set; } = "divine.deity.created";
 
     /// <summary>
     /// Unique identifier for the deity
@@ -158,19 +158,19 @@ public partial class DeityCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to deity.updated when a deity is updated
+/// Published to divine.deity.updated when a deity is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeityUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: deity.updated
+    /// Event type identifier: divine.deity.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "deity.updated";
+    public override string EventName { get; set; } = "divine.deity.updated";
 
     /// <summary>
     /// Unique identifier for the deity
@@ -292,19 +292,19 @@ public partial class DeityUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to deity.deleted when a deity is deleted
+/// Published to divine.deity.deleted when a deity is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeityDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: deity.deleted
+    /// Event type identifier: divine.deity.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "deity.deleted";
+    public override string EventName { get; set; } = "divine.deity.deleted";
 
     /// <summary>
     /// Unique identifier for the deity

@@ -84,4 +84,9 @@ public partial interface IAchievementService : IBannouService
         /// </summary>
         Task<(StatusCodes, PlatformSyncStatusResponse?)> GetPlatformSyncStatusAsync(GetPlatformSyncStatusRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// CleanupByCharacter operation
+        /// </summary>
+        Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

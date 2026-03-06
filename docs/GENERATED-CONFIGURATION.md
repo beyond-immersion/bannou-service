@@ -39,8 +39,10 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACHIEVEMENT_RARITY_THRESHOLD_EARNED_COUNT` | int | `100` | Minimum earned count for an achievement to be considered com... |
 | `ACHIEVEMENT_STEAM_API_KEY` | string | **REQUIRED** | Steam Web API key for achievement sync (optional - Steam syn... |
 | `ACHIEVEMENT_STEAM_APP_ID` | string | **REQUIRED** | Steam App ID for achievement mapping (optional - Steam sync ... |
+| `ACHIEVEMENT_SYNC_HISTORY_TTL_SECONDS` | int | `0` | TTL in seconds for sync history data in Redis, applied at re... |
 | `ACHIEVEMENT_SYNC_RETRY_ATTEMPTS` | int | `3` | Number of retry attempts for failed platform syncs |
 | `ACHIEVEMENT_SYNC_RETRY_DELAY_SECONDS` | int | `60` | Delay between sync retry attempts in seconds |
+| `ACHIEVEMENT_SYNC_STATUS_RETRY_ATTEMPTS` | int | `3` | Maximum retry attempts for ETag conflicts when updating sync... |
 | `ACHIEVEMENT_XBOX_CLIENT_ID` | string | **REQUIRED** | Xbox Live client ID (optional - not implemented) |
 | `ACHIEVEMENT_XBOX_CLIENT_SECRET` | string | **REQUIRED** | Xbox Live client secret (optional - not implemented) |
 
@@ -312,11 +314,14 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `CHARACTER_ENCOUNTER_ALLY_SENTIMENT_THRESHOLD` | double | `0.5` | Sentiment threshold above which characters are considered al... |
 | `CHARACTER_ENCOUNTER_CACHE_MAX_RESULTS_PER_QUERY` | int | `50` | Maximum encounter results loaded per cache query for Actor b... |
 | `CHARACTER_ENCOUNTER_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for the in-memory encounter data cache used b... |
 | `CHARACTER_ENCOUNTER_DEFAULT_MEMORY_STRENGTH` | double | `1.0` | Default initial memory strength for new perspectives (0.0-1.... |
 | `CHARACTER_ENCOUNTER_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for query results |
 | `CHARACTER_ENCOUNTER_DUPLICATE_TIMESTAMP_TOLERANCE_MINUTES` | int | `5` | Time window in minutes for duplicate encounter detection. En... |
+| `CHARACTER_ENCOUNTER_ETAG_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts for ETag-based optimistic concurrency... |
+| `CHARACTER_ENCOUNTER_GRUDGE_SENTIMENT_THRESHOLD` | double | `-0.5` | Sentiment threshold below which characters are considered gr... |
 | `CHARACTER_ENCOUNTER_MAX_BATCH_SIZE` | int | `100` | Maximum items in bulk operations (batch-get, etc.) |
 | `CHARACTER_ENCOUNTER_MAX_PAGE_SIZE` | int | `100` | Maximum allowed page size for query results |
 | `CHARACTER_ENCOUNTER_MAX_PARTICIPANTS_PER_ENCOUNTER` | int | `20` | Maximum participants allowed per encounter (caps O(N^2) pair... |
@@ -324,7 +329,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_ENCOUNTER_MAX_PER_PAIR` | int | `100` | Maximum encounters stored per character pair before oldest a... |
 | `CHARACTER_ENCOUNTER_MEMORY_DECAY_ENABLED` | bool | `true` | Enable time-based memory decay for encounter perspectives |
 | `CHARACTER_ENCOUNTER_MEMORY_DECAY_INTERVAL_HOURS` | int | `24` | Hours between decay checks (used for calculating decay amoun... |
-| `CHARACTER_ENCOUNTER_MEMORY_DECAY_MODE` | string | `lazy` | Memory decay mode - 'lazy' applies decay on access, 'schedul... |
+| `CHARACTER_ENCOUNTER_MEMORY_DECAY_MODE` | string | `Lazy` | Memory decay mode - 'lazy' applies decay on access, 'schedul... |
 | `CHARACTER_ENCOUNTER_MEMORY_DECAY_RATE` | double | `0.05` | Memory strength reduction per decay interval (0.0-1.0) |
 | `CHARACTER_ENCOUNTER_MEMORY_FADE_THRESHOLD` | double | `0.1` | Memory strength below which encounters are considered forgot... |
 | `CHARACTER_ENCOUNTER_MEMORY_REFRESH_BOOST` | double | `0.2` | Default memory strength boost when refreshing (0.0-1.0) |
@@ -343,6 +348,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_SECONDS` | int | `600` | TTL in seconds for backstory cache entries. Backstory data i... |
 | `CHARACTER_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS` | int | `15` | Timeout in seconds for distributed locks during index and ba... |
 | `CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS` | int | `100` | Maximum number of backstory elements allowed per character. ... |
+| `CHARACTER_HISTORY_MAX_COMPRESS_BACKSTORY_POINTS` | int | `10` | Maximum number of backstory points to include in compression... |
+| `CHARACTER_HISTORY_MAX_COMPRESS_LIFE_EVENTS` | int | `10` | Maximum number of life events to include in compression arch... |
 
 ### Character Personality
 
@@ -546,17 +553,19 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `ESCROW_CONFIRMATION_STARTUP_DELAY_SECONDS` | int | `15` | Delay in seconds before the confirmation timeout background ... |
 | `ESCROW_CONFIRMATION_TIMEOUT_BATCH_SIZE` | int | `100` | Maximum escrows to process per timeout check cycle |
-| `ESCROW_CONFIRMATION_TIMEOUT_BEHAVIOR` | string | `auto_confirm` | What happens on confirmation timeout (auto_confirm/dispute/r... |
+| `ESCROW_CONFIRMATION_TIMEOUT_BEHAVIOR` | string | `AutoConfirm` | What happens on confirmation timeout (AutoConfirm/Dispute/Re... |
 | `ESCROW_CONFIRMATION_TIMEOUT_CHECK_INTERVAL_SECONDS` | int | `30` | How often the background service checks for expired confirma... |
 | `ESCROW_CONFIRMATION_TIMEOUT_SECONDS` | int | `300` | Timeout for party confirmations in seconds (default 5 minute... |
 | `ESCROW_DEFAULT_LIST_LIMIT` | int | `50` | Default limit for listing escrows when not specified |
-| `ESCROW_DEFAULT_REFUND_MODE` | string | `immediate` | Default refund confirmation mode when not specified in reque... |
-| `ESCROW_DEFAULT_RELEASE_MODE` | string | `service_only` | Default release confirmation mode when not specified in requ... |
+| `ESCROW_DEFAULT_REFUND_MODE` | string | `Immediate` | Default refund confirmation mode when not specified in reque... |
+| `ESCROW_DEFAULT_RELEASE_MODE` | string | `ServiceOnly` | Default release confirmation mode when not specified in requ... |
 | `ESCROW_DEFAULT_TIMEOUT` | string | `P7D` | Default escrow expiration if not specified (ISO 8601 duratio... |
 | `ESCROW_EXPIRATION_BATCH_SIZE` | int | `100` | Batch size for expiration processing |
 | `ESCROW_EXPIRATION_CHECK_INTERVAL` | string | `PT1M` | How often to check for expired escrows (ISO 8601 duration) |
 | `ESCROW_EXPIRATION_GRACE_PERIOD` | string | `PT1H` | Grace period after expiration before auto-refund (ISO 8601 d... |
+| `ESCROW_EXPIRATION_STARTUP_DELAY_SECONDS` | int | `20` | Delay in seconds before the expiration background service st... |
 | `ESCROW_IDEMPOTENCY_TTL_HOURS` | int | `24` | TTL in hours for idempotency key storage |
 | `ESCROW_MAX_ASSETS_PER_DEPOSIT` | int | `50` | Maximum asset lines per deposit |
 | `ESCROW_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency operations |
@@ -1269,9 +1278,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 973
+- **Total properties**: 982
 - **Required (no default)**: 59
-- **Optional (has default)**: 914
+- **Optional (has default)**: 923
 
 ## Environment Variable Naming Convention
 

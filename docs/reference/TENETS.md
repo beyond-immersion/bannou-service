@@ -195,7 +195,7 @@ Tenets are organized into categories based on when they're needed:
 | **T4** | Infrastructure Libs Pattern | MUST use lib-state, lib-messaging, lib-mesh; direct DB/queue access forbidden; L0/L1/L2 dependencies are hard (fail at startup) |
 | **T5** | Event-Driven Architecture | All state changes publish typed events; no anonymous objects |
 | **T6** | Service Implementation Pattern | Partial class structure with standardized dependencies |
-| **T13** | X-Permissions Usage | All endpoints declare x-permissions; enforced for WebSocket clients |
+| **T13** | X-Permissions Usage | All endpoints declare x-permissions; `[]` = service-only (no WebSocket); `role: anonymous` = pre-auth public |
 | **T15** | Browser-Facing Endpoints | GET/path-params only for OAuth, Website, WebSocket upgrade (exceptional) |
 | **T18** | Licensing Requirements | MIT/BSD/Apache only; GPL forbidden for linked code |
 | **T27** | Cross-Service Communication Discipline | Direct API for higher→lower; DI interfaces for lower↔higher; events for broadcast only; inverted subscriptions forbidden |
@@ -281,7 +281,7 @@ Tenets are organized into categories based on when they're needed:
 | Storing `IStateStoreFactory` as a field when only used in constructor | T4, T6 | Use constructor parameter directly; do not store as field |
 | BackgroundService passing `IStateStoreFactory` to sub-methods | T6 | Resolve stores once per scope, pass `IStateStore<T>` references |
 | BackgroundService calling `GetStore<T>()` per sub-method | T6 | Acquire all stores once at scope creation, pass as parameters |
-| Missing x-permissions on endpoint | T13 | Add to schema (even if empty array) |
+| Missing x-permissions on endpoint | T13 | Add to schema; use `[]` for service-to-service only, `role: anonymous` for pre-auth public |
 | GPL library in NuGet package | T18 | Use MIT/BSD alternative |
 | Missing event consumer registration | T3 | Add RegisterEventConsumers call |
 | Adding top-level try-catch to service endpoint methods | T7 | Generated controller already provides catch-all boundary with logging, error events, and 500 response; do not duplicate |
@@ -359,6 +359,8 @@ Tenets are organized into categories based on when they're needed:
 | Reading metadata keys from another service's response by convention | T29 | Query the service that owns the domain concept via API |
 | Storing higher-layer domain data in lower-layer metadata bags | T29 | Higher-layer service owns binding table, references lower-layer entity by ID |
 | Documentation specifying "put X in service Y's metadata" | T29 | X belongs in the schema of the service that owns concept X |
+| Compression callback for game-mechanical state (proficiency, rankings, known recipes) | T29 | Use Seed/Collection/License primitives; those L2 services handle their own archival |
+| Reading archive data to gate API operations (authorization via archive) | T29 | Archives are for behavioral self-knowledge (GOAP, narrative), not operational authority |
 | Publishing event to lower-layer's topic instead of calling API | T27 | Use generated client directly (hierarchy permits the call) |
 | Lower-layer subscribing to higher-layer events | T27 | Use DI Provider/Listener interface in `bannou-service/Providers/` |
 | Publishing registration events at startup | T27 | Use DI Provider interface discovered via `IEnumerable<T>` |

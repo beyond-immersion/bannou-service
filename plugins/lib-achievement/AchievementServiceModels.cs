@@ -121,3 +121,22 @@ internal class AchievementProgressData
     public bool IsUnlocked { get; set; }
     public DateTimeOffset? UnlockedAt { get; set; }
 }
+
+/// <summary>
+/// Internal storage model for per-entity per-platform sync tracking.
+/// Key pattern: {gameServiceId}:{entityId}:{platform}
+/// </summary>
+internal class PlatformSyncTrackingData
+{
+    /// <summary>Number of achievements successfully synced to this platform.</summary>
+    public int SyncedCount { get; set; }
+
+    /// <summary>Number of achievements that failed to sync.</summary>
+    public int FailedCount { get; set; }
+
+    /// <summary>Timestamp of the last successful sync operation.</summary>
+    public DateTimeOffset? LastSyncAt { get; set; }
+
+    /// <summary>Most recent sync error message, null if last sync was successful.</summary>
+    public string? LastError { get; set; }
+}

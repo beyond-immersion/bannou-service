@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,6 +48,8 @@ public partial class AchievementService : IAchievementService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly IEntitySessionRegistry _entitySessionRegistry;
+    private readonly IResourceClient _resourceClient;
+    private readonly IStateStore<PlatformSyncTrackingData> _syncStore;
 
     // State store key prefixes
     private const string DEFINITION_INDEX_PREFIX = "achievement-definitions";
@@ -64,11 +67,13 @@ public partial class AchievementService : IAchievementService
         IEnumerable<IPlatformAchievementSync> platformSyncs,
         IDistributedLockProvider lockProvider,
         ITelemetryProvider telemetryProvider,
-        IEntitySessionRegistry entitySessionRegistry)
+        IEntitySessionRegistry entitySessionRegistry,
+        IResourceClient resourceClient)
     {
         _messageBus = messageBus;
         _definitionStore = stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
         _progressStore = stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
+        _syncStore = stateStoreFactory.GetStore<PlatformSyncTrackingData>(StateStoreDefinitions.AchievementSync);
         _logger = logger;
         _configuration = configuration;
         _platformSyncs = platformSyncs;
@@ -76,6 +81,7 @@ public partial class AchievementService : IAchievementService
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
         _entitySessionRegistry = entitySessionRegistry;
+        _resourceClient = resourceClient;
 
         RegisterEventConsumers(eventConsumer);
     }
@@ -100,6 +106,13 @@ public partial class AchievementService : IAchievementService
     /// </summary>
     private static string GetEntityProgressKey(Guid gameServiceId, EntityType entityType, Guid entityId)
         => $"{gameServiceId}:{entityType}:{entityId}";
+
+    /// <summary>
+    /// Generates the key for platform sync tracking.
+    /// Format: gameServiceId:entityId:platform
+    /// </summary>
+    private static string GetSyncTrackingKey(Guid gameServiceId, Guid entityId, Platform platform)
+        => $"{gameServiceId}:{entityId}:{platform}";
 
     /// <summary>
     /// Implementation of CreateAchievementDefinition operation.
@@ -517,7 +530,9 @@ public partial class AchievementService : IAchievementService
         }
 
         // Re-read under lock
-        var entityProgress = await _progressStore.GetAsync(progressKey, cancellationToken) ?? new EntityProgressData
+        var existingProgress = await _progressStore.GetAsync(progressKey, cancellationToken);
+        var isFirstProgressForEntity = existingProgress == null;
+        var entityProgress = existingProgress ?? new EntityProgressData
         {
             EntityId = body.EntityId,
             EntityType = body.EntityType,
@@ -575,6 +590,14 @@ public partial class AchievementService : IAchievementService
         await _progressStore.SaveAsync(progressKey, entityProgress,
             _configuration.ProgressTtlSeconds > 0 ? new StateOptions { Ttl = _configuration.ProgressTtlSeconds } : null,
             cancellationToken);
+
+        // Register character reference with lib-resource on first progress creation.
+        // Only for permanent records — TTL-based progress self-expires and needs no cleanup coordination.
+        if (isFirstProgressForEntity && body.EntityType == EntityType.Character
+            && _configuration.ProgressTtlSeconds == 0)
+        {
+            await RegisterCharacterReferenceAsync(progressKey, body.EntityId, cancellationToken);
+        }
 
         // Publish progress event
         var progressEvent = new AchievementProgressUpdatedEvent
@@ -709,7 +732,9 @@ public partial class AchievementService : IAchievementService
         }
 
         // Re-read under lock
-        var progress = await _progressStore.GetAsync(key, cancellationToken) ?? new EntityProgressData
+        var existingUnlockProgress = await _progressStore.GetAsync(key, cancellationToken);
+        var isFirstProgressForUnlock = existingUnlockProgress == null;
+        var progress = existingUnlockProgress ?? new EntityProgressData
         {
             EntityId = body.EntityId,
             EntityType = body.EntityType,
@@ -743,6 +768,14 @@ public partial class AchievementService : IAchievementService
         await _progressStore.SaveAsync(key, progress,
             _configuration.ProgressTtlSeconds > 0 ? new StateOptions { Ttl = _configuration.ProgressTtlSeconds } : null,
             cancellationToken);
+
+        // Register character reference with lib-resource on first progress creation.
+        // Only for permanent records — TTL-based progress self-expires and needs no cleanup coordination.
+        if (isFirstProgressForUnlock && body.EntityType == EntityType.Character
+            && _configuration.ProgressTtlSeconds == 0)
+        {
+            await RegisterCharacterReferenceAsync(key, body.EntityId, cancellationToken);
+        }
 
         // Publish unlock event
         await PublishUnlockEventAsync(body.GameServiceId, definition, body.EntityId, body.EntityType, progress.TotalPoints, cancellationToken);
@@ -1002,6 +1035,7 @@ public partial class AchievementService : IAchievementService
                 platformAchievementId,
                 result,
                 cancellationToken);
+            await RecordSyncOutcomeAsync(body.GameServiceId, body.EntityId, body.Platform, result.Success, result.ErrorMessage, cancellationToken);
 
             if (result.Success)
             {
@@ -1059,16 +1093,19 @@ public partial class AchievementService : IAchievementService
             var isLinked = await syncProvider.IsLinkedAsync(body.EntityId, cancellationToken);
             var externalId = isLinked ? await syncProvider.GetExternalIdAsync(body.EntityId, cancellationToken) : null;
 
+            var syncKey = GetSyncTrackingKey(body.GameServiceId, body.EntityId, syncProvider.Platform);
+            var syncTracking = await _syncStore.GetAsync(syncKey, cancellationToken);
+
             platforms.Add(new PlatformStatus
             {
                 Platform = syncProvider.Platform,
                 IsLinked = isLinked,
                 ExternalId = externalId,
-                SyncedCount = 0, // Would need to track this per-entity
-                PendingCount = 0,
-                FailedCount = 0,
-                LastSyncAt = null,
-                LastError = null
+                SyncedCount = syncTracking?.SyncedCount ?? 0,
+                PendingCount = null,
+                FailedCount = syncTracking?.FailedCount ?? 0,
+                LastSyncAt = syncTracking?.LastSyncAt,
+                LastError = syncTracking?.LastError
             });
         }
 
@@ -1077,6 +1114,48 @@ public partial class AchievementService : IAchievementService
             EntityId = body.EntityId,
             EntityType = body.EntityType,
             Platforms = platforms
+        });
+    }
+
+    /// <summary>
+    /// Deletes all achievement progress records for a character across all game services.
+    /// Called by lib-resource during character deletion cleanup.
+    /// </summary>
+    public async Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.CleanupByCharacter");
+
+        _logger.LogInformation("Cleaning up achievement progress for character {CharacterId}", body.CharacterId);
+
+        var progressRecordsDeleted = 0;
+
+        // Get all game services that have achievement definitions
+        var gameServiceIds = await _definitionStore.GetSetAsync<string>(GAME_SERVICE_INDEX_KEY, cancellationToken);
+
+        foreach (var gameServiceIdStr in gameServiceIds)
+        {
+            if (!Guid.TryParse(gameServiceIdStr, out var gameServiceId))
+            {
+                _logger.LogError("Invalid game service ID in achievement index: {Value}", gameServiceIdStr);
+                continue;
+            }
+
+            // Progress key: {gameServiceId}:{entityType}:{entityId}
+            var progressKey = GetEntityProgressKey(gameServiceId, EntityType.Character, body.CharacterId);
+            var existing = await _progressStore.GetAsync(progressKey, cancellationToken);
+            if (existing != null)
+            {
+                await _progressStore.DeleteAsync(progressKey, cancellationToken);
+                progressRecordsDeleted++;
+            }
+        }
+
+        _logger.LogInformation("Deleted {Count} achievement progress records for character {CharacterId}",
+            progressRecordsDeleted, body.CharacterId);
+
+        return (StatusCodes.OK, new CleanupByCharacterResponse
+        {
+            ProgressRecordsDeleted = progressRecordsDeleted
         });
     }
 
@@ -1122,6 +1201,67 @@ public partial class AchievementService : IAchievementService
         _logger.LogWarning(
             "EarnedCount increment failed after {MaxAttempts} attempts for {DefKey} due to concurrent modifications",
             maxAttempts, defKey);
+    }
+
+    /// <summary>
+    /// Records a platform sync outcome (success or failure) to the sync tracking store.
+    /// Uses ETag-based optimistic concurrency with configurable retry.
+    /// </summary>
+    private async Task RecordSyncOutcomeAsync(
+        Guid gameServiceId,
+        Guid entityId,
+        Platform platform,
+        bool success,
+        string? errorMessage,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.RecordSyncOutcomeAsync");
+        var key = GetSyncTrackingKey(gameServiceId, entityId, platform);
+        var maxAttempts = Math.Max(1, _configuration.SyncStatusRetryAttempts);
+
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            var (existing, etag) = await _syncStore.GetWithETagAsync(key, cancellationToken);
+            var tracking = existing ?? new PlatformSyncTrackingData();
+
+            if (success)
+            {
+                tracking.SyncedCount++;
+                tracking.LastSyncAt = DateTimeOffset.UtcNow;
+                tracking.LastError = null;
+            }
+            else
+            {
+                tracking.FailedCount++;
+                tracking.LastError = errorMessage;
+            }
+
+            if (existing == null)
+            {
+                await _syncStore.SaveAsync(key, tracking,
+                    _configuration.SyncHistoryTtlSeconds > 0
+                        ? new StateOptions { Ttl = _configuration.SyncHistoryTtlSeconds }
+                        : null,
+                    cancellationToken);
+                return;
+            }
+
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            var savedEtag = await _syncStore.TrySaveAsync(key, tracking, etag ?? string.Empty, cancellationToken);
+            if (savedEtag != null)
+            {
+                return;
+            }
+
+            _logger.LogDebug(
+                "Sync tracking update conflict on {Key}, attempt {Attempt}/{MaxAttempts}",
+                key, attempt, maxAttempts);
+        }
+
+        _logger.LogWarning(
+            "Sync tracking update failed after {MaxAttempts} attempts for {GameServiceId}:{EntityId}:{Platform}",
+            maxAttempts, gameServiceId, entityId, platform);
     }
 
     /// <summary>
@@ -1224,6 +1364,7 @@ public partial class AchievementService : IAchievementService
                 platformAchievementId: null,
                 new PlatformSyncResult { Success = false, ErrorMessage = providerMissingMessage },
                 cancellationToken);
+            await RecordSyncOutcomeAsync(gameServiceId, entityId, platform, false, providerMissingMessage, cancellationToken);
             return SyncStatus.Failed;
         }
 
@@ -1272,6 +1413,7 @@ public partial class AchievementService : IAchievementService
                 platformAchievementId: null,
                 new PlatformSyncResult { Success = false, ErrorMessage = missingIdMessage },
                 cancellationToken);
+            await RecordSyncOutcomeAsync(gameServiceId, entityId, platform, false, missingIdMessage, cancellationToken);
             return SyncStatus.Failed;
         }
 
@@ -1315,6 +1457,7 @@ public partial class AchievementService : IAchievementService
             platformAchievementId,
             result,
             cancellationToken);
+        await RecordSyncOutcomeAsync(gameServiceId, entityId, platform, result.Success, result.ErrorMessage, cancellationToken);
 
         return result.Success ? SyncStatus.Synced : SyncStatus.Failed;
     }

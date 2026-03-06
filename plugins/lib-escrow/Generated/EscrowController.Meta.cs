@@ -87,7 +87,7 @@ public partial class EscrowController
                 "requiredConsentsForRelease": {
                     "type": "integer",
                     "nullable": true,
-                    "description": "Number of consents required (-1 for all)"
+                    "description": "Number of consents required (null = all consent-required parties)"
                 },
                 "expiresAt": {
                     "type": "string",
@@ -400,7 +400,7 @@ public partial class EscrowController
         },
         "ReleaseMode": {
             "type": "string",
-            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \ u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\ n- party_required: Wait for all parties to call /confirm-release.\n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\ n- party_required: Wait for all parties to call /confirm-release.\n- service_and_party: Wait for both service completion AND party confirmation.\n",
             "enum": [
                 "Immediate",
                 "ServiceOnly",
@@ -459,7 +459,6 @@ public partial class EscrowController
                 "deposits",
                 "consents",
                 "status",
-                "requiredConsentsForRelease",
                 "createdAt",
                 "createdBy",
                 "createdByType",
@@ -547,7 +546,8 @@ public partial class EscrowController
                 },
                 "requiredConsentsForRelease": {
                     "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
+                    "nullable": true,
+                    "description": "How many parties must consent for release (null = all consent-required parties)"
                 },
                 "lastValidatedAt": {
                     "type": "string",
@@ -644,7 +644,7 @@ public partial class EscrowController
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\ n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "TwoParty",
                 "MultiParty",
@@ -1101,7 +1101,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "PendingDeposits",
                 "PartiallyFunded",
@@ -1343,7 +1343,6 @@ public partial class EscrowController
                 "deposits",
                 "consents",
                 "status",
-                "requiredConsentsForRelease",
                 "createdAt",
                 "createdBy",
                 "createdByType",
@@ -1431,7 +1430,8 @@ public partial class EscrowController
                 },
                 "requiredConsentsForRelease": {
                     "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
+                    "nullable": true,
+                    "description": "How many parties must consent for release (null = all consent-required parties)"
                 },
                 "lastValidatedAt": {
                     "type": "string",
@@ -1528,7 +1528,7 @@ public partial class EscrowController
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\ n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "TwoParty",
                 "MultiParty",
@@ -1985,7 +1985,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "PendingDeposits",
                 "PartiallyFunded",
@@ -2279,7 +2279,6 @@ public partial class EscrowController
                 "deposits",
                 "consents",
                 "status",
-                "requiredConsentsForRelease",
                 "createdAt",
                 "createdBy",
                 "createdByType",
@@ -2367,7 +2366,8 @@ public partial class EscrowController
                 },
                 "requiredConsentsForRelease": {
                     "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
+                    "nullable": true,
+                    "description": "How many parties must consent for release (null = all consent-required parties)"
                 },
                 "lastValidatedAt": {
                     "type": "string",
@@ -2464,7 +2464,7 @@ public partial class EscrowController
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\ n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "TwoParty",
                 "MultiParty",
@@ -2921,7 +2921,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "PendingDeposits",
                 "PartiallyFunded",
@@ -3449,7 +3449,6 @@ public partial class EscrowController
                 "deposits",
                 "consents",
                 "status",
-                "requiredConsentsForRelease",
                 "createdAt",
                 "createdBy",
                 "createdByType",
@@ -3537,7 +3536,8 @@ public partial class EscrowController
                 },
                 "requiredConsentsForRelease": {
                     "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
+                    "nullable": true,
+                    "description": "How many parties must consent for release (null = all consent-required parties)"
                 },
                 "lastValidatedAt": {
                     "type": "string",
@@ -3634,7 +3634,7 @@ public partial class EscrowController
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\ n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "TwoParty",
                 "MultiParty",
@@ -4091,7 +4091,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "PendingDeposits",
                 "PartiallyFunded",
@@ -4877,7 +4877,6 @@ public partial class EscrowController
             "description": "Response from recording party consent",
             "required": [
                 "escrow",
-                "consentRecorded",
                 "triggered",
                 "newStatus"
             ],
@@ -4885,10 +4884,6 @@ public partial class EscrowController
                 "escrow": {
                     "$ref": "#/$defs/EscrowAgreement",
                     "description": "Updated escrow agreement"
-                },
-                "consentRecorded": {
-                    "type": "boolean",
-                    "description": "Whether consent was recorded"
                 },
                 "triggered": {
                     "type": "boolean",
@@ -4912,7 +4907,6 @@ public partial class EscrowController
                 "deposits",
                 "consents",
                 "status",
-                "requiredConsentsForRelease",
                 "createdAt",
                 "createdBy",
                 "createdByType",
@@ -5000,7 +4994,8 @@ public partial class EscrowController
                 },
                 "requiredConsentsForRelease": {
                     "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
+                    "nullable": true,
+                    "description": "How many parties must consent for release (null = all consent-required parties)"
                 },
                 "lastValidatedAt": {
                     "type": "string",
@@ -5097,7 +5092,7 @@ public partial class EscrowController
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\ n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "TwoParty",
                 "MultiParty",
@@ -5554,7 +5549,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "PendingDeposits",
                 "PartiallyFunded",
@@ -5977,7 +5972,6 @@ public partial class EscrowController
                 "deposits",
                 "consents",
                 "status",
-                "requiredConsentsForRelease",
                 "createdAt",
                 "createdBy",
                 "createdByType",
@@ -6065,7 +6059,8 @@ public partial class EscrowController
                 },
                 "requiredConsentsForRelease": {
                     "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
+                    "nullable": true,
+                    "description": "How many parties must consent for release (null = all consent-required parties)"
                 },
                 "lastValidatedAt": {
                     "type": "string",
@@ -6162,7 +6157,7 @@ public partial class EscrowController
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\ n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "TwoParty",
                 "MultiParty",
@@ -6619,7 +6614,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "PendingDeposits",
                 "PartiallyFunded",
@@ -6912,7 +6907,6 @@ public partial class EscrowController
                 "deposits",
                 "consents",
                 "status",
-                "requiredConsentsForRelease",
                 "createdAt",
                 "createdBy",
                 "createdByType",
@@ -7000,7 +6994,8 @@ public partial class EscrowController
                 },
                 "requiredConsentsForRelease": {
                     "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
+                    "nullable": true,
+                    "description": "How many parties must consent for release (null = all consent-required parties)"
                 },
                 "lastValidatedAt": {
                     "type": "string",
@@ -7097,7 +7092,7 @@ public partial class EscrowController
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\ n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "TwoParty",
                 "MultiParty",
@@ -7554,7 +7549,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "PendingDeposits",
                 "PartiallyFunded",
@@ -7819,7 +7814,6 @@ public partial class EscrowController
                 "deposits",
                 "consents",
                 "status",
-                "requiredConsentsForRelease",
                 "createdAt",
                 "createdBy",
                 "createdByType",
@@ -7907,7 +7901,8 @@ public partial class EscrowController
                 },
                 "requiredConsentsForRelease": {
                     "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
+                    "nullable": true,
+                    "description": "How many parties must consent for release (null = all consent-required parties)"
                 },
                 "lastValidatedAt": {
                     "type": "string",
@@ -8004,7 +7999,7 @@ public partial class EscrowController
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\ n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "TwoParty",
                 "MultiParty",
@@ -8461,7 +8456,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "PendingDeposits",
                 "PartiallyFunded",
@@ -8734,7 +8729,6 @@ public partial class EscrowController
                 "deposits",
                 "consents",
                 "status",
-                "requiredConsentsForRelease",
                 "createdAt",
                 "createdBy",
                 "createdByType",
@@ -8822,7 +8816,8 @@ public partial class EscrowController
                 },
                 "requiredConsentsForRelease": {
                     "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
+                    "nullable": true,
+                    "description": "How many parties must consent for release (null = all consent-required parties)"
                 },
                 "lastValidatedAt": {
                     "type": "string",
@@ -8919,7 +8914,7 @@ public partial class EscrowController
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\ n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "TwoParty",
                 "MultiParty",
@@ -9376,7 +9371,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "PendingDeposits",
                 "PartiallyFunded",
@@ -10084,7 +10079,6 @@ public partial class EscrowController
                 "deposits",
                 "consents",
                 "status",
-                "requiredConsentsForRelease",
                 "createdAt",
                 "createdBy",
                 "createdByType",
@@ -10172,7 +10166,8 @@ public partial class EscrowController
                 },
                 "requiredConsentsForRelease": {
                     "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
+                    "nullable": true,
+                    "description": "How many parties must consent for release (null = all consent-required parties)"
                 },
                 "lastValidatedAt": {
                     "type": "string",
@@ -10269,7 +10264,7 @@ public partial class EscrowController
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\ n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "TwoParty",
                 "MultiParty",
@@ -10726,7 +10721,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "PendingDeposits",
                 "PartiallyFunded",
@@ -11005,7 +11000,6 @@ public partial class EscrowController
                 "deposits",
                 "consents",
                 "status",
-                "requiredConsentsForRelease",
                 "createdAt",
                 "createdBy",
                 "createdByType",
@@ -11093,7 +11087,8 @@ public partial class EscrowController
                 },
                 "requiredConsentsForRelease": {
                     "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
+                    "nullable": true,
+                    "description": "How many parties must consent for release (null = all consent-required parties)"
                 },
                 "lastValidatedAt": {
                     "type": "string",
@@ -11190,7 +11185,7 @@ public partial class EscrowController
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\ n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "TwoParty",
                 "MultiParty",
@@ -11647,7 +11642,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "PendingDeposits",
                 "PartiallyFunded",
@@ -11945,7 +11940,6 @@ public partial class EscrowController
                 "deposits",
                 "consents",
                 "status",
-                "requiredConsentsForRelease",
                 "createdAt",
                 "createdBy",
                 "createdByType",
@@ -12033,7 +12027,8 @@ public partial class EscrowController
                 },
                 "requiredConsentsForRelease": {
                     "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
+                    "nullable": true,
+                    "description": "How many parties must consent for release (null = all consent-required parties)"
                 },
                 "lastValidatedAt": {
                     "type": "string",
@@ -12130,7 +12125,7 @@ public partial class EscrowController
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\ n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "TwoParty",
                 "MultiParty",
@@ -12764,7 +12759,6 @@ public partial class EscrowController
                 "deposits",
                 "consents",
                 "status",
-                "requiredConsentsForRelease",
                 "createdAt",
                 "createdBy",
                 "createdByType",
@@ -12852,7 +12846,8 @@ public partial class EscrowController
                 },
                 "requiredConsentsForRelease": {
                     "type": "integer",
-                    "description": "How many parties must consent for release (-1 = all required)"
+                    "nullable": true,
+                    "description": "How many parties must consent for release (null = all consent-required parties)"
                 },
                 "lastValidatedAt": {
                     "type": "string",
@@ -12949,7 +12944,7 @@ public partial class EscrowController
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\ n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "TwoParty",
                 "MultiParty",
@@ -13406,7 +13401,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "PendingDeposits",
                 "PartiallyFunded",
@@ -13626,15 +13621,7 @@ public partial class EscrowController
         "RegisterHandlerResponse": {
             "type": "object",
             "description": "Response from registering an asset handler",
-            "required": [
-                "registered"
-            ],
-            "properties": {
-                "registered": {
-                    "type": "boolean",
-                    "description": "Whether registration succeeded"
-                }
-            }
+            "properties": {}
         }
     }
 }
@@ -13864,15 +13851,7 @@ public partial class EscrowController
         "DeregisterHandlerResponse": {
             "type": "object",
             "description": "Response from deregistering an asset handler",
-            "required": [
-                "deregistered"
-            ],
-            "properties": {
-                "deregistered": {
-                    "type": "boolean",
-                    "description": "Whether deregistration succeeded"
-                }
-            }
+            "properties": {}
         }
     }
 }

@@ -73,6 +73,7 @@ public class EscrowServiceConfiguration : BaseServiceConfiguration
     /// Token length in bytes (before encoding)
     /// Environment variable: ESCROW_TOKEN_LENGTH
     /// </summary>
+    [ConfigRange(Minimum = 8)]
     public int TokenLength { get; set; } = 32;
 
     /// <summary>
@@ -85,6 +86,7 @@ public class EscrowServiceConfiguration : BaseServiceConfiguration
     /// Batch size for expiration processing
     /// Environment variable: ESCROW_EXPIRATION_BATCH_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int ExpirationBatchSize { get; set; } = 100;
 
     /// <summary>
@@ -97,36 +99,42 @@ public class EscrowServiceConfiguration : BaseServiceConfiguration
     /// Maximum parties per escrow
     /// Environment variable: ESCROW_MAX_PARTIES
     /// </summary>
+    [ConfigRange(Minimum = 2)]
     public int MaxParties { get; set; } = 10;
 
     /// <summary>
     /// Maximum asset lines per deposit
     /// Environment variable: ESCROW_MAX_ASSETS_PER_DEPOSIT
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxAssetsPerDeposit { get; set; } = 50;
 
     /// <summary>
     /// Maximum concurrent pending escrows per party
     /// Environment variable: ESCROW_MAX_PENDING_PER_PARTY
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxPendingPerParty { get; set; } = 100;
 
     /// <summary>
     /// TTL in hours for idempotency key storage
     /// Environment variable: ESCROW_IDEMPOTENCY_TTL_HOURS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int IdempotencyTtlHours { get; set; } = 24;
 
     /// <summary>
     /// Maximum retry attempts for optimistic concurrency operations
     /// Environment variable: ESCROW_MAX_CONCURRENCY_RETRIES
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxConcurrencyRetries { get; set; } = 3;
 
     /// <summary>
     /// Default limit for listing escrows when not specified
     /// Environment variable: ESCROW_DEFAULT_LIST_LIMIT
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int DefaultListLimit { get; set; } = 50;
 
     /// <summary>
@@ -145,24 +153,41 @@ public class EscrowServiceConfiguration : BaseServiceConfiguration
     /// Timeout for party confirmations in seconds (default 5 minutes)
     /// Environment variable: ESCROW_CONFIRMATION_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 10)]
     public int ConfirmationTimeoutSeconds { get; set; } = 300;
 
     /// <summary>
-    /// What happens on confirmation timeout (auto_confirm/dispute/refund)
+    /// What happens on confirmation timeout (AutoConfirm/Dispute/Refund)
     /// Environment variable: ESCROW_CONFIRMATION_TIMEOUT_BEHAVIOR
     /// </summary>
-    public string ConfirmationTimeoutBehavior { get; set; } = "auto_confirm";
+    public ConfirmationTimeoutBehavior ConfirmationTimeoutBehavior { get; set; } = ConfirmationTimeoutBehavior.AutoConfirm;
 
     /// <summary>
     /// How often the background service checks for expired confirmations
     /// Environment variable: ESCROW_CONFIRMATION_TIMEOUT_CHECK_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 5)]
     public int ConfirmationTimeoutCheckIntervalSeconds { get; set; } = 30;
 
     /// <summary>
     /// Maximum escrows to process per timeout check cycle
     /// Environment variable: ESCROW_CONFIRMATION_TIMEOUT_BATCH_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int ConfirmationTimeoutBatchSize { get; set; } = 100;
+
+    /// <summary>
+    /// Delay in seconds before the expiration background service starts processing
+    /// Environment variable: ESCROW_EXPIRATION_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0)]
+    public int ExpirationStartupDelaySeconds { get; set; } = 20;
+
+    /// <summary>
+    /// Delay in seconds before the confirmation timeout background service starts processing
+    /// Environment variable: ESCROW_CONFIRMATION_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0)]
+    public int ConfirmationStartupDelaySeconds { get; set; } = 15;
 
 }

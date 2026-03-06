@@ -35,29 +35,49 @@ Every feeling has the same structure regardless of target entity type:
 FeelingEntry:
   feelingId:       Guid          # Unique identifier
   characterId:     Guid          # Who feels this
-  targetType:      string        # "character", "location", "faction", "organization", "guardian"
-  targetId:        string        # Entity ID (Guid as string, or "self" for guardian)
+  targetType:      EntityType    # $ref: EntityType (Character, Location, Faction, Organization, etc.)
+  targetId:        Guid          # Entity ID of the target (e.g., characterId, locationId, factionId)
   axis:            string        # Emotional axis (opaque string, e.g., "trust", "fear", "warmth")
-  effectiveValue:  float         # Computed: clamp(baseValue + modifier, -1.0, 1.0)
-  baseValue:       float         # Computed from source services
-  modifier:        float         # Persistent emotional residue
-  modifierDecayRate: float       # How fast the modifier decays toward 0 (per day)
+  effectiveValue:  float         # Computed: clamp(baseValue + modifier, -1.0, 1.0) — range [-1.0, 1.0]
+  baseValue:       float         # Computed from source services — range [-1.0, 1.0]
+  modifier:        float         # Persistent emotional residue — range [-1.0, 1.0]
+  modifierDecayRate: float       # How fast the modifier decays toward 0 (per day) — range [0.0, 1.0]
   lastSynthesizedAt: DateTime    # When base was last recomputed from sources
   lastModifiedAt:    DateTime    # When modifier was last changed
-  sourceBreakdown:   object      # Debug: which sources contributed what to base
+  sourceBreakdown: SynthesisBreakdown  # Typed breakdown of source contributions to base value
 ```
+
+### SynthesisBreakdown Model
+
+Typed breakdown of source contributions to a feeling's base value (per FOUNDATION TENETS — no metadata bag contracts):
+
+```
+SynthesisBreakdown:
+  encounterContribution:    float   # Weighted encounter sentiment signal — range [-1.0, 1.0]
+  hearsayContribution:      float   # Weighted hearsay belief signal — range [-1.0, 1.0]
+  relationshipContribution: float   # Weighted relationship type signal — range [-1.0, 1.0]
+  personalityContribution:  float   # Weighted personality bias signal — range [-1.0, 1.0]
+  encounterWeight:          float   # Effective weight used (after redistribution) — range [0.0, 1.0]
+  hearsayWeight:            float   # Effective weight used — range [0.0, 1.0]
+  relationshipWeight:       float   # Effective weight used — range [0.0, 1.0]
+  personalityWeight:        float   # Effective weight used — range [0.0, 1.0]
+```
+
+Each contribution field stores the signal value from that source BEFORE weighting. The effective weights reflect redistribution when sources are unavailable (e.g., if hearsay is missing, its weight redistributes to other sources proportionally). `base = sum(contribution_i * weight_i)`.
 
 ### Feeling Axes by Target Type
 
 Axes are opaque strings (not enums), following the same extensibility pattern as violation type codes, collection type codes, and seed type codes. These are conventions, not constraints:
 
-| Target Type | Common Axes | Value Meaning |
-|-------------|-------------|---------------|
-| **character** | `trust`, `fear`, `warmth`, `respect`, `resentment`, `admiration`, `jealousy` | -1.0 (opposite) to +1.0 (strong) |
-| **location** | `comfort`, `dread`, `nostalgia`, `curiosity`, `belonging` | -1.0 to +1.0 |
-| **faction** | `loyalty`, `fear`, `respect`, `resentment`, `belonging` | -1.0 to +1.0 |
-| **organization** | `loyalty`, `pride`, `resentment`, `trust` | -1.0 to +1.0 |
-| **guardian** | `trust`, `resentment`, `familiarity`, `gratitude`, `defiance` | -1.0 to +1.0 |
+| Target Type (EntityType) | Common Axes | Value Meaning |
+|--------------------------|-------------|---------------|
+| **Character** | `trust`, `fear`, `warmth`, `respect`, `resentment`, `admiration`, `jealousy` | -1.0 (opposite) to +1.0 (strong) |
+| **Character** (guardian spirit) | `trust`, `resentment`, `familiarity`, `gratitude`, `defiance` | -1.0 to +1.0 |
+| **Location** | `comfort`, `dread`, `nostalgia`, `curiosity`, `belonging` | -1.0 to +1.0 |
+| **Faction** | `loyalty`, `fear`, `respect`, `resentment`, `belonging` | -1.0 to +1.0 |
+| **Organization** | `loyalty`, `pride`, `resentment`, `trust` | -1.0 to +1.0 |
+
+**Guardian spirit feelings**: The guardian spirit is a Character entity in the NEXIUS system realm (per the actor-bound entity pattern). Feelings about the guardian spirit use `targetType: Character` and `targetId: <guardian spirit's characterId>`. The guardian-specific axes (trust, resentment, familiarity, gratitude, defiance) are distinguished by axis codes, not by target type. The service identifies guardian spirit targets by checking whether the target character exists in the NEXIUS system realm.
 
 ### Base Value Synthesis
 
@@ -98,7 +118,7 @@ decayedModifier = modifier * (1.0 - modifierDecayRate * daysSinceLastReinforceme
 
 ### Guardian Spirit Feelings
 
-The guardian spirit target type (`targetType: "guardian"`, `targetId: "self"`) models the character's relationship with the player. Unlike other target types, guardian feelings have unique source signals:
+Guardian spirit feelings use `targetType: Character` with `targetId` set to the guardian spirit's characterId (a Character entity in the NEXIUS system realm). This models the character's relationship with the player's guardian spirit. Unlike feelings toward other characters, guardian feelings have unique source signals:
 
 | Axis | Source Signals |
 |------|---------------|
@@ -138,10 +158,10 @@ DriveEntry:
   characterId:     Guid          # Who has this drive
   driveCode:       string        # Opaque string (e.g., "master_craft", "protect_family", "gain_wealth")
   category:        string        # "mastery", "social", "survival", "identity", "exploration"
-  intensity:       float         # 0.0 (dormant) to 1.0 (consuming obsession)
-  satisfaction:    float         # 0.0 (unfulfilled) to 1.0 (fully satisfied)
-  frustration:     float         # 0.0 (no obstacles) to 1.0 (blocked at every turn)
-  originType:      string        # How this drive formed: "personality", "experience", "backstory", "circumstance"
+  intensity:       float         # 0.0 (dormant) to 1.0 (consuming obsession) — range [0.0, 1.0]
+  satisfaction:    float         # 0.0 (unfulfilled) to 1.0 (fully satisfied) — range [0.0, 1.0]
+  frustration:     float         # 0.0 (no obstacles) to 1.0 (blocked at every turn) — range [0.0, 1.0]
+  originType:      DriveOriginType  # How this drive formed: Personality, Experience, Backstory, Circumstance
   originEventId:   Guid?         # The event/experience that catalyzed this drive (null for personality-innate)
   acquiredAt:      DateTime      # When the drive formed
   lastProgressAt:  DateTime?     # When satisfaction last increased
@@ -314,6 +334,24 @@ Long-term: Consistent aligned guidance
     it consistently leads to outcomes aligned with who they are
 ```
 
+### Guilt as Composite Feeling (GH #410)
+
+[GH #410](https://github.com/beyond-immersion/bannou-service/issues/410) asks whether guilt should be a new emotion dimension or a composite. **Disposition models guilt as a composite feeling, not a separate axis.** When a character commits a knowing violation (reported by lib-obligation's `report-violation` endpoint), the violation handler applies modifier shifts across existing axes:
+
+- **resentment** toward self (targetType: Character, targetId: own characterId): positive shift proportional to violation severity
+- **trust** toward self: negative shift (self-doubt from broken oath)
+- **respect** toward the wronged party (if applicable): positive shift (recognizing what was violated)
+- **fear** toward the norm-enforcing faction (if applicable): positive shift (fear of consequences)
+
+The composite feeling pattern means guilt is detectable in ABML via:
+```yaml
+- when: "${disposition.character.SELF.resentment > 0.4 && disposition.character.SELF.trust < -0.2}"
+  then:
+    - call: seek_redemption  # Guilt-driven behavior
+```
+
+This avoids adding a dedicated "guilt" axis while still providing mechanically distinct guilty behavior. The `obligation.violation.reported` consumed event triggers these modifier shifts (see Consumed Events). Personality traits modulate the magnitude: high conscientiousness → stronger guilt modifiers, low conscientiousness → weaker.
+
 ### Spirit Alignment Computation
 
 The spirit alignment signal is computed by comparing the spirit's recent nudge directions (tracked by the Actor service as input events) against the character's personality profile:
@@ -455,6 +493,7 @@ weight their personal experience higher.
 | lib-messaging (`IEventConsumer`) | Subscribing to encounter, personality evolution, relationship, and obligation events for feeling updates |
 | lib-character (`ICharacterClient`) | Validating character existence, querying character location and status (L2) |
 | lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration, compression callback registration (L1) |
+| lib-relationship (`IRelationshipClient`) | Querying relationship types for relationship component of base value synthesis (L2) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
@@ -463,8 +502,7 @@ weight their personal experience higher.
 | lib-character-encounter (`ICharacterEncounterClient`) | Querying encounter sentiment for base value synthesis of character feelings | Encounter component of base value is 0.0; feelings rely on hearsay + relationship + personality only |
 | lib-character-personality (`ICharacterPersonalityClient`) | Querying personality traits for personality bias in base synthesis and drive formation checks | All characters have neutral personality bias; drives never form from personality-innate path |
 | lib-character-history (`ICharacterHistoryClient`) | Querying backstory elements for drive seeding from backstory | No backstory-seeded drives |
-| lib-hearsay (`IHearsayClient`) | Querying belief manifests for hearsay component of base value synthesis | Hearsay component of base value is 0.0; feelings rely on encounters + relationship + personality only |
-| lib-relationship (`IRelationshipClient`) | Querying relationship types for relationship component of base value synthesis | Relationship component of base value is 0.0 |
+| lib-hearsay (`IHearsayClient`) | Querying belief manifests for hearsay component of base value synthesis | Hearsay component of base value is 0.0; feelings rely on encounters + personality only |
 | lib-faction (`IFactionClient`) | Querying faction membership for faction-targeted feelings and circumstance-derived drives | No faction feelings synthesized; no circumstance-derived drives from faction context |
 | lib-obligation (`IObligationClient`) | Querying violation history for drive formation (e.g., repeated violations catalyze `redeem_past` drive) | No violation-catalyzed drives |
 
@@ -526,11 +564,12 @@ weight their personal experience higher.
 
 | Field | Category | Type | Rationale |
 |-------|----------|------|-----------|
-| `targetType` (on FeelingEntry) | A (Entity Reference) | `EntityType` enum (service-scoped subset) | Valid values are first-class Bannou entities ("character", "location", "faction", "organization") plus the special "guardian" target for the player-spirit relationship. Uses `EntityType` enum but with a service-specific subset; "guardian" is a pseudo-entity representing the player |
+| `targetType` (on FeelingEntry) | A (Entity Reference) | `$ref: EntityType` | Valid values are all Bannou entity types (Character, Location, Faction, Organization, etc.). Guardian spirits ARE Characters in the NEXIUS system realm — no special target type needed. Per T14 test 4: all valid values are Bannou entity types → use `$ref: EntityType`. |
+| `targetId` (on FeelingEntry) | — | `Guid` | Entity ID of the target. For guardian spirit feelings, this is the spirit's characterId in the NEXIUS system realm. Always a proper Guid, never a sentinel value (per T26). |
 | `axis` (on FeelingEntry) | B (Content Code) | Opaque string | Emotional axis codes ("trust", "fear", "warmth", "respect", "resentment", etc.); game-configurable per target type, extensible without schema changes |
 | `driveCode` (on DriveEntry) | B (Content Code) | Opaque string | Drive type codes ("master_craft", "protect_family", "gain_wealth"); emergent from gameplay, extensible without schema changes |
 | `category` (on DriveEntry) | B (Content Code) | Opaque string | Drive category codes ("mastery", "social", "survival", "identity", "exploration"); game-configurable grouping for GOAP priority mapping |
-| `originType` (on DriveEntry) | C (System State) | Service-specific enum | Finite set of drive formation mechanisms ("personality", "experience", "backstory", "circumstance"); system-owned classification of how drives form |
+| `originType` (on DriveEntry) | C (System State) | `DriveOriginType` enum | Finite set of drive formation mechanisms: `Personality`, `Experience`, `Backstory`, `Circumstance` (PascalCase per SCHEMA-RULES). System-owned classification of how drives form. |
 
 ---
 
@@ -541,7 +580,7 @@ weight their personal experience higher.
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `disposition.feeling.changed` | `DispositionFeelingChangedEvent` | Feeling effective value changed significantly (above threshold). Includes axis, old/new value, source. |
-| `disposition.feeling.shock` | `DispositionFeelingShockEvent` | Shock event caused large immediate modifier shift. Includes cause event, modifier delta. |
+| `disposition.feeling.shocked` | `DispositionFeelingShockedEvent` | Shock event caused large immediate modifier shift. Includes cause event, modifier delta. |
 | `disposition.feeling.decayed` | `DispositionFeelingDecayedEvent` | Modifier decayed below threshold via time-based decay (batch event from decay worker). |
 | `disposition.drive.formed` | `DispositionDriveFormedEvent` | New drive emerged for a character. Includes drive code, category, origin type, initial intensity. |
 | `disposition.drive.intensified` | `DispositionDriveIntensifiedEvent` | Drive intensity increased. Includes old/new intensity, cause. |
@@ -550,6 +589,23 @@ weight their personal experience higher.
 | `disposition.drive.abandoned` | `DispositionDriveAbandonedEvent` | Drive intensity dropped below minimum threshold and was removed. Includes drive code, final state. |
 | `disposition.drive.fulfilled` | `DispositionDriveFulfilledEvent` | Drive satisfaction reached fulfillment threshold. Includes drive code, total duration. |
 | `disposition.guardian.shifted` | `DispositionGuardianShiftedEvent` | Guardian spirit feeling changed. Includes axis, old/new value. Published separately for client event forwarding. |
+
+All feeling and drive events carry `characterId`. Per SCHEMA-RULES, events schema should declare `x-resource-mapping: { characterId: character }` on character-scoped event models so lib-resource can correlate events with resource lifecycle.
+
+### Event Publications (x-event-publications per SCHEMA-RULES)
+
+| Endpoint | Published Events |
+|----------|-----------------|
+| `/disposition/feeling/record` | `disposition.feeling.changed` |
+| `/disposition/feeling/record-shock` | `disposition.feeling.shocked` |
+| `/disposition/feeling/resynthesize` | `disposition.feeling.changed` |
+| `/disposition/drive/seed` | `disposition.drive.formed` |
+| `/disposition/drive/record-progress` | `disposition.drive.satisfied`, `disposition.drive.fulfilled` |
+| `/disposition/drive/record-frustration` | `disposition.drive.frustrated`, `disposition.drive.abandoned` |
+| `/disposition/guardian/record-action` | `disposition.guardian.shifted` |
+| Background: ModifierDecayWorker | `disposition.feeling.decayed` |
+| Background: SynthesisWorker | `disposition.feeling.changed` |
+| Background: DriveEvaluationWorker | `disposition.drive.formed`, `disposition.drive.intensified`, `disposition.drive.satisfied`, `disposition.drive.frustrated`, `disposition.drive.abandoned`, `disposition.drive.fulfilled` |
 
 ### Consumed Events
 
@@ -562,8 +618,9 @@ weight their personal experience higher.
 | `relationship.deleted` | `HandleRelationshipDeletedAsync` | Triggers feeling resynthesis (relationship component removed from base). Does NOT remove feelings -- emotional residue persists after bonds break. |
 | `obligation.violation.reported` | `HandleViolationReportedAsync` | If the violation was against another character, shifts feelings (resentment toward self, guilt modifier). If witnessed, witnesses gain negative feelings toward violator. Checks for `redeem_past` drive formation. |
 | `character-history.backstory.created` | `HandleBackstoryCreatedAsync` | Checks drive formation from backstory elements (GOAL elements → identity/mastery drives, TRAUMA elements → survival/social drives). |
-| `hearsay.belief.acquired` | `HandleBeliefAcquiredAsync` | Triggers feeling resynthesis for affected character-target pairs (new hearsay changes the base signal). |
-| `hearsay.belief.corrected` | `HandleBeliefCorrectedAsync` | Triggers feeling resynthesis (corrected belief changes hearsay signal, may cause feeling swing). |
+| `seed.phase.changed` | `HandleSeedPhaseChangedAsync` | When a guardian spirit seed changes phase, updates guardian spirit feelings (familiarity increase, trust shift based on phase milestone). Only processes seeds with owner type matching the character. Per GH #497. |
+| `hearsay.belief.acquired` | `HandleBeliefAcquiredAsync` | Triggers feeling resynthesis for affected character-target pairs (new hearsay changes the base signal). **Phase 4+** — deferred until lib-hearsay is implemented. |
+| `hearsay.belief.corrected` | `HandleBeliefCorrectedAsync` | Triggers feeling resynthesis (corrected belief changes hearsay signal, may cause feeling swing). **Phase 4+** — deferred until lib-hearsay is implemented. |
 
 ### Resource Cleanup (FOUNDATION TENETS)
 
@@ -576,7 +633,7 @@ weight their personal experience higher.
 
 | Resource Type | Source Type | Priority | Compress Endpoint | Decompress Endpoint |
 |--------------|-------------|----------|-------------------|---------------------|
-| character | disposition | 40 | `/disposition/get-compress-data` | `/disposition/restore-from-archive` |
+| character | disposition | 20 | `/disposition/get-compress-data` | `/disposition/restore-from-archive` |
 
 Archives feeling and drive state for character compression. On restore, drives are restored as-is (they represent the character's aspirations). Feelings modifiers are restored at reduced strength (simulating "emotional distance"), and base values are resynthesized from current source data.
 
@@ -624,7 +681,8 @@ Archives feeling and drive state for character compression. On restore, drives a
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
 | `ICharacterClient` | Character existence validation and status queries (L2) |
 | `IResourceClient` | Reference tracking, cleanup callbacks, compression callbacks (L1) |
-| `IServiceProvider` | Runtime resolution of soft L4 dependencies (Encounter, Personality, History, Hearsay, Relationship, Faction, Obligation) |
+| `IRelationshipClient` | Querying relationship types for base value synthesis (L2) |
+| `IServiceProvider` | Runtime resolution of soft L4 dependencies (Encounter, Personality, History, Hearsay, Faction, Obligation) |
 
 ### Background Workers
 
@@ -638,11 +696,35 @@ Archives feeling and drive state for character compression. On restore, drives a
 
 ## API Endpoints (Implementation Notes)
 
+### Endpoint Permissions (x-permissions per T13)
+
+All endpoints MUST declare `x-permissions` in the schema. Disposition is internal-only (never internet-facing):
+
+| Endpoint | x-permissions | Notes |
+|----------|--------------|-------|
+| `/disposition/feeling/record` | `[]` | Internal service-to-service |
+| `/disposition/feeling/record-shock` | `[developer]` | Administrative — formative emotional events |
+| `/disposition/feeling/query` | `[]` | Internal service-to-service |
+| `/disposition/feeling/get-manifest` | `[]` | Internal service-to-service |
+| `/disposition/feeling/query-about` | `[]` | Internal service-to-service |
+| `/disposition/feeling/resynthesize` | `[developer]` | Administrative — force resynthesis |
+| `/disposition/drive/seed` | `[developer]` | Administrative — manual drive creation |
+| `/disposition/drive/query` | `[]` | Internal service-to-service |
+| `/disposition/drive/record-progress` | `[]` | Internal service-to-service |
+| `/disposition/drive/record-frustration` | `[]` | Internal service-to-service |
+| `/disposition/drive/find-by-drive` | `[]` | Internal service-to-service |
+| `/disposition/guardian/record-action` | `[]` | Internal — called by Actor service |
+| `/disposition/guardian/get-relationship` | `[]` | Internal service-to-service |
+| `/disposition/cleanup-by-character` | `[]` | Internal — called by lib-resource |
+| `/disposition/cleanup-by-realm` | `[]` | Internal — called by lib-resource |
+| `/disposition/get-compress-data` | `[]` | Internal — called by lib-resource |
+| `/disposition/restore-from-archive` | `[]` | Internal — called by lib-resource |
+
 ### Feeling Management (6 endpoints)
 
 - **RecordFeeling** (`/disposition/feeling/record`): Creates or updates a feeling modifier for a character toward a target. If a feeling with matching `characterId + targetType + targetId + axis` exists, adjusts the modifier. Otherwise creates new feeling entry with the provided modifier and synthesizes the base from available sources. Validates character existence. Acquires distributed lock. Invalidates cache. Publishes `feeling.changed` event if effective value change exceeds threshold.
 
-- **RecordShock** (`/disposition/feeling/record-shock`): Records a shock event that causes immediate, large modifier shifts across multiple axes simultaneously. Used for formative emotional experiences (betrayal, rescue, witnessing heroism). Accepts a list of axis-modifier pairs and applies them atomically. Publishes `feeling.shock` event. Requires `developer` role.
+- **RecordShock** (`/disposition/feeling/record-shock`): Records a shock event that causes immediate, large modifier shifts across multiple axes simultaneously. Used for formative emotional experiences (betrayal, rescue, witnessing heroism). Accepts a list of axis-modifier pairs and applies them atomically. Publishes `feeling.shocked` event. Requires `developer` role.
 
 - **QueryFeelings** (`/disposition/feeling/query`): Paginated query of a character's feelings. Filters by target type, target ID, axis, minimum effective value, and time range. Returns feelings sorted by absolute effective value descending (strongest feelings first).
 

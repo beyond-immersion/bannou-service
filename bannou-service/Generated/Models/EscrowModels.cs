@@ -529,10 +529,10 @@ public partial class EscrowAgreement
     public EscrowStatus Status { get; set; } = default!;
 
     /// <summary>
-    /// How many parties must consent for release (-1 = all required)
+    /// How many parties must consent for release (null = all consent-required parties)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requiredConsentsForRelease")]
-    public int RequiredConsentsForRelease { get; set; } = default!;
+    public int? RequiredConsentsForRelease { get; set; } = default!;
 
     /// <summary>
     /// When the escrow was last validated
@@ -1466,7 +1466,7 @@ public partial class CreateEscrowRequest
     public System.Guid? BoundContractId { get; set; } = default!;
 
     /// <summary>
-    /// Number of consents required (-1 for all)
+    /// Number of consents required (null = all consent-required parties)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requiredConsentsForRelease")]
     public int? RequiredConsentsForRelease { get; set; } = default!;
@@ -2640,12 +2640,6 @@ public partial class ConsentResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public EscrowAgreement Escrow { get; set; } = new EscrowAgreement();
-
-    /// <summary>
-    /// Whether consent was recorded
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("consentRecorded")]
-    public bool ConsentRecorded { get; set; } = default!;
 
     /// <summary>
     /// Whether this consent triggered completion
@@ -4004,12 +3998,6 @@ public partial class RegisterHandlerRequest
 public partial class RegisterHandlerResponse
 {
 
-    /// <summary>
-    /// Whether registration succeeded
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("registered")]
-    public bool Registered { get; set; } = default!;
-
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     /// <summary>
@@ -4109,12 +4097,6 @@ public partial class DeregisterHandlerRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeregisterHandlerResponse
 {
-
-    /// <summary>
-    /// Whether deregistration succeeded
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deregistered")]
-    public bool Deregistered { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

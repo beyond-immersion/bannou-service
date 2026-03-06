@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Achievement.Sync;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -35,6 +36,8 @@ public class AchievementServiceTests
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
+    private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<IStateStore<PlatformSyncTrackingData>> _mockSyncStore;
 
     public AchievementServiceTests()
     {
@@ -48,6 +51,8 @@ public class AchievementServiceTests
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
+        _mockResourceClient = new Mock<IResourceClient>();
+        _mockSyncStore = new Mock<IStateStore<PlatformSyncTrackingData>>();
 
         var mockLockResponse = new Mock<ILockResponse>();
         mockLockResponse.Setup(l => l.Success).Returns(true);
@@ -87,6 +92,9 @@ public class AchievementServiceTests
         _mockStateStoreFactory
             .Setup(f => f.GetStore<EntityProgressData>(It.IsAny<string>()))
             .Returns(_mockProgressStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<PlatformSyncTrackingData>(It.IsAny<string>()))
+            .Returns(_mockSyncStore.Object);
 
         // Default TryPublishErrorAsync to prevent exceptions during error handling
         _mockMessageBus
@@ -116,7 +124,8 @@ public class AchievementServiceTests
             _platformSyncs,
             _mockLockProvider.Object,
             _mockTelemetryProvider.Object,
-            _mockEntitySessionRegistry.Object);
+            _mockEntitySessionRegistry.Object,
+            _mockResourceClient.Object);
     }
 
     #region Constructor Validation
@@ -143,6 +152,8 @@ public class AchievementServiceTests
         Assert.Equal(0, config.ProgressTtlSeconds);
         Assert.Equal(60, config.RarityCalculationIntervalMinutes);
         Assert.Equal(5.0, config.RareThresholdPercent);
+        Assert.Equal(0, config.SyncHistoryTtlSeconds);
+        Assert.Equal(3, config.SyncStatusRetryAttempts);
     }
 
     [Fact]
@@ -565,6 +576,146 @@ public class AchievementServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    #endregion
+
+    #region GetPlatformSyncStatus Sync History Tests
+
+    [Fact]
+    public async Task GetPlatformSyncStatusAsync_NoSyncHistory_ReturnsZeroCounts()
+    {
+        // Arrange
+        var service = CreateService();
+        var gameServiceId = Guid.NewGuid();
+        var entityId = Guid.NewGuid();
+
+        var mockSync = new Mock<IPlatformAchievementSync>();
+        mockSync.Setup(s => s.Platform).Returns(Platform.Steam);
+        mockSync.Setup(s => s.IsConfigured).Returns(true);
+        mockSync.Setup(s => s.IsLinkedAsync(entityId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        mockSync.Setup(s => s.GetExternalIdAsync(entityId, It.IsAny<CancellationToken>())).ReturnsAsync("steam-123");
+        _platformSyncs.Add(mockSync.Object);
+
+        _mockSyncStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((PlatformSyncTrackingData?)null);
+
+        var request = new GetPlatformSyncStatusRequest
+        {
+            GameServiceId = gameServiceId,
+            EntityId = entityId,
+            EntityType = EntityType.Account
+        };
+
+        // Act
+        var (status, response) = await service.GetPlatformSyncStatusAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Platforms);
+        var platform = response.Platforms.First();
+        Assert.Equal(Platform.Steam, platform.Platform);
+        Assert.True(platform.IsLinked);
+        Assert.Equal(0, platform.SyncedCount);
+        Assert.Null(platform.PendingCount);
+        Assert.Equal(0, platform.FailedCount);
+        Assert.Null(platform.LastSyncAt);
+        Assert.Null(platform.LastError);
+    }
+
+    [Fact]
+    public async Task GetPlatformSyncStatusAsync_WithSyncHistory_ReturnsActualCounts()
+    {
+        // Arrange
+        var service = CreateService();
+        var gameServiceId = Guid.NewGuid();
+        var entityId = Guid.NewGuid();
+        var lastSync = DateTimeOffset.UtcNow.AddMinutes(-5);
+
+        var mockSync = new Mock<IPlatformAchievementSync>();
+        mockSync.Setup(s => s.Platform).Returns(Platform.Steam);
+        mockSync.Setup(s => s.IsConfigured).Returns(true);
+        mockSync.Setup(s => s.IsLinkedAsync(entityId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        mockSync.Setup(s => s.GetExternalIdAsync(entityId, It.IsAny<CancellationToken>())).ReturnsAsync("steam-123");
+        _platformSyncs.Add(mockSync.Object);
+
+        _mockSyncStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PlatformSyncTrackingData
+            {
+                SyncedCount = 5,
+                FailedCount = 2,
+                LastSyncAt = lastSync,
+                LastError = null
+            });
+
+        var request = new GetPlatformSyncStatusRequest
+        {
+            GameServiceId = gameServiceId,
+            EntityId = entityId,
+            EntityType = EntityType.Account
+        };
+
+        // Act
+        var (status, response) = await service.GetPlatformSyncStatusAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Platforms);
+        var platform = response.Platforms.First();
+        Assert.Equal(5, platform.SyncedCount);
+        Assert.Null(platform.PendingCount);
+        Assert.Equal(2, platform.FailedCount);
+        Assert.Equal(lastSync, platform.LastSyncAt);
+        Assert.Null(platform.LastError);
+    }
+
+    [Fact]
+    public async Task GetPlatformSyncStatusAsync_WithSyncError_ReturnsLastError()
+    {
+        // Arrange
+        var service = CreateService();
+        var gameServiceId = Guid.NewGuid();
+        var entityId = Guid.NewGuid();
+
+        var mockSync = new Mock<IPlatformAchievementSync>();
+        mockSync.Setup(s => s.Platform).Returns(Platform.Xbox);
+        mockSync.Setup(s => s.IsConfigured).Returns(true);
+        mockSync.Setup(s => s.IsLinkedAsync(entityId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _platformSyncs.Add(mockSync.Object);
+
+        _mockSyncStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PlatformSyncTrackingData
+            {
+                SyncedCount = 1,
+                FailedCount = 3,
+                LastSyncAt = null,
+                LastError = "Xbox API timeout"
+            });
+
+        var request = new GetPlatformSyncStatusRequest
+        {
+            GameServiceId = gameServiceId,
+            EntityId = entityId,
+            EntityType = EntityType.Account
+        };
+
+        // Act
+        var (status, response) = await service.GetPlatformSyncStatusAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Platforms);
+        var platform = response.Platforms.First();
+        Assert.False(platform.IsLinked);
+        Assert.Equal(1, platform.SyncedCount);
+        Assert.Equal(3, platform.FailedCount);
+        Assert.Equal("Xbox API timeout", platform.LastError);
     }
 
     #endregion

@@ -2838,15 +2838,9 @@ public partial class CharacterEncounterController
             "description": "Response containing sentiment toward multiple targets",
             "additionalProperties": false,
             "required": [
-                "characterId",
                 "sentiments"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character whose sentiment was queried"
-                },
                 "sentiments": {
                     "type": "array",
                     "items": {
@@ -3692,17 +3686,12 @@ public partial class CharacterEncounterController
             "description": "Response from delete operation",
             "additionalProperties": false,
             "required": [
-                "encounterId",
                 "perspectivesDeleted"
             ],
             "properties": {
-                "encounterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Deleted encounter ID"
-                },
                 "perspectivesDeleted": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Number of perspectives deleted"
                 }
             }
@@ -3801,22 +3790,18 @@ public partial class CharacterEncounterController
             "description": "Response from delete-by-character operation",
             "additionalProperties": false,
             "required": [
-                "characterId",
                 "encountersDeleted",
                 "perspectivesDeleted"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character whose data was deleted"
-                },
                 "encountersDeleted": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Number of encounters deleted"
                 },
                 "perspectivesDeleted": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Number of perspectives deleted"
                 }
             }
@@ -3919,21 +3904,18 @@ public partial class CharacterEncounterController
             "additionalProperties": false,
             "required": [
                 "perspectivesProcessed",
-                "memoriesFaded",
-                "dryRun"
+                "memoriesFaded"
             ],
             "properties": {
                 "perspectivesProcessed": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Number of perspectives processed"
                 },
                 "memoriesFaded": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Number of memories that fell below threshold"
-                },
-                "dryRun": {
-                    "type": "boolean",
-                    "description": "Whether this was a preview run"
                 }
             }
         }
@@ -4380,36 +4362,22 @@ public partial class CharacterEncounterController
     "$defs": {
         "RestoreFromArchiveResponse": {
             "type": "object",
-            "description": "Result of restoration from archive",
+            "description": "Result of restoration from archive. HTTP 200 confirms success.",
             "additionalProperties": false,
             "required": [
-                "characterId",
                 "encountersRestored",
-                "perspectivesRestored",
-                "success"
+                "perspectivesRestored"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character data was restored for"
-                },
                 "encountersRestored": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Number of encounters restored"
                 },
                 "perspectivesRestored": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Number of perspectives restored"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether restoration completed successfully"
-                },
-                "errorMessage": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Error details if restoration failed"
                 }
             }
         }

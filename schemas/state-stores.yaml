@@ -321,6 +321,12 @@ x-state-stores:
     service: Achievement
     purpose: Distributed locks for achievement progress updates
 
+  achievement-sync:
+    backend: redis
+    prefix: "ach:sync"
+    service: Achievement
+    purpose: Per-entity per-platform sync tracking
+
   # ============================================================================
   # Save-Load Stores
   # ============================================================================

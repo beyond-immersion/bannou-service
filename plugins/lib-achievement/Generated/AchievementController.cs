@@ -173,6 +173,19 @@ public interface IAchievementController : BeyondImmersion.BannouService.Controll
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PlatformSyncStatusResponse>> GetPlatformSyncStatusAsync(GetPlatformSyncStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Delete all achievement progress for a character
+    /// </summary>
+
+    /// <remarks>
+    /// Deletes all achievement progress records for a specific character across all game services.
+    /// <br/>Called by lib-resource during character deletion cleanup. This is a hard delete.
+    /// </remarks>
+
+    /// <returns>Progress records deleted successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacterAsync(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -755,6 +768,55 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:achievement/platform/status",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Delete all achievement progress for a character
+    /// </summary>
+    /// <remarks>
+    /// Deletes all achievement progress records for a specific character across all game services.
+    /// <br/>Called by lib-resource during character deletion cleanup. This is a hard delete.
+    /// </remarks>
+    /// <returns>Progress records deleted successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("achievement/cleanup-by-character")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.achievement",
+            "AchievementController.CleanupByCharacter",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "achievement/cleanup-by-character");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CleanupByCharacterAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AchievementController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:achievement/cleanup-by-character");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AchievementController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:achievement/cleanup-by-character");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "achievement",
+                "CleanupByCharacter",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:achievement/cleanup-by-character",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

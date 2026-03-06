@@ -173,6 +173,18 @@ enum class EBackstoryElementType : uint8
     Belief UMETA(DisplayName = "Belief"),
 };
 
+/** Category for organizing behaviors */
+UENUM(BlueprintType)
+enum class EBehaviorCategory : uint8
+{
+    Base UMETA(DisplayName = "Base"),
+    Cultural UMETA(DisplayName = "Cultural"),
+    Professional UMETA(DisplayName = "Professional"),
+    Personal UMETA(DisplayName = "Personal"),
+    Situational UMETA(DisplayName = "Situational"),
+    Ambient UMETA(DisplayName = "Ambient"),
+};
+
 /** Status of a repository binding */
 UENUM(BlueprintType)
 enum class EBindingStatus : uint8
@@ -388,6 +400,24 @@ enum class ECleanupPolicy : uint8
 {
     BestEffort UMETA(DisplayName = "BestEffort"),
     AllRequired UMETA(DisplayName = "AllRequired"),
+};
+
+/** Categories of combat experiences that may cause preference evolution.
+Each type affects different aspects of combat behavior.
+ */
+UENUM(BlueprintType)
+enum class ECombatExperienceType : uint8
+{
+    DecisiveVictory UMETA(DisplayName = "DecisiveVictory"),
+    NarrowVictory UMETA(DisplayName = "NarrowVictory"),
+    Defeat UMETA(DisplayName = "Defeat"),
+    NearDeath UMETA(DisplayName = "NearDeath"),
+    AllySaved UMETA(DisplayName = "AllySaved"),
+    AllyLost UMETA(DisplayName = "AllyLost"),
+    SuccessfulRetreat UMETA(DisplayName = "SuccessfulRetreat"),
+    FailedRetreat UMETA(DisplayName = "FailedRetreat"),
+    AmbushSuccess UMETA(DisplayName = "AmbushSuccess"),
+    AmbushSurvived UMETA(DisplayName = "AmbushSurvived"),
 };
 
 /** Overall approach to combat situations. Affects target selection,
@@ -887,6 +917,23 @@ enum class EEventCategory : uint8
     Religious UMETA(DisplayName = "Religious"),
     Cultural UMETA(DisplayName = "Cultural"),
     Personal UMETA(DisplayName = "Personal"),
+};
+
+/** Categories of significant experiences that may cause personality evolution.
+Each type has predefined trait impact tendencies.
+ */
+UENUM(BlueprintType)
+enum class EExperienceType : uint8
+{
+    Trauma UMETA(DisplayName = "Trauma"),
+    Betrayal UMETA(DisplayName = "Betrayal"),
+    Loss UMETA(DisplayName = "Loss"),
+    Victory UMETA(DisplayName = "Victory"),
+    Friendship UMETA(DisplayName = "Friendship"),
+    Redemption UMETA(DisplayName = "Redemption"),
+    Corruption UMETA(DisplayName = "Corruption"),
+    Enlightenment UMETA(DisplayName = "Enlightenment"),
+    Sacrifice UMETA(DisplayName = "Sacrifice"),
 };
 
 /** How currency expiration is determined */
@@ -1635,6 +1682,19 @@ enum class EReleaseMode : uint8
     ServiceAndParty UMETA(DisplayName = "ServiceAndParty"),
 };
 
+/** Reason for GOAP plan validation result */
+UENUM(BlueprintType)
+enum class EReplanReason : uint8
+{
+    None UMETA(DisplayName = "None"),
+    PreconditionInvalidated UMETA(DisplayName = "PreconditionInvalidated"),
+    ActionFailed UMETA(DisplayName = "ActionFailed"),
+    BetterGoalAvailable UMETA(DisplayName = "BetterGoalAvailable"),
+    PlanCompleted UMETA(DisplayName = "PlanCompleted"),
+    GoalAlreadySatisfied UMETA(DisplayName = "GoalAlreadySatisfied"),
+    SuboptimalPlan UMETA(DisplayName = "SuboptimalPlan"),
+};
+
 /** Type of reward granted on quest completion */
 UENUM(BlueprintType)
 enum class ERewardType : uint8
@@ -2137,6 +2197,17 @@ enum class EValidationConditionType : uint8
     JsonPathContains UMETA(DisplayName = "JsonPathContains"),
 };
 
+/** Type of ABML validation error */
+UENUM(BlueprintType)
+enum class EValidationErrorType : uint8
+{
+    Syntax UMETA(DisplayName = "Syntax"),
+    Semantic UMETA(DisplayName = "Semantic"),
+    Schema UMETA(DisplayName = "Schema"),
+    Context UMETA(DisplayName = "Context"),
+    ServiceDependency UMETA(DisplayName = "ServiceDependency"),
+};
+
 /** Type of validation failure detected.
 - asset_missing: Asset no longer exists in escrow custody
 - asset_mutated: Asset properties changed (e.g., item durability)
@@ -2169,6 +2240,15 @@ enum class EValidationSeverity : uint8
 {
     Error UMETA(DisplayName = "Error"),
     Warning UMETA(DisplayName = "Warning"),
+};
+
+/** Suggested action based on GOAP plan validation */
+UENUM(BlueprintType)
+enum class EValidationSuggestion : uint8
+{
+    Continue UMETA(DisplayName = "Continue"),
+    Replan UMETA(DisplayName = "Replan"),
+    Abort UMETA(DisplayName = "Abort"),
 };
 
 /** Type of voice leading rule violation */
@@ -2220,20 +2300,6 @@ enum class EWeightPrecision : uint8
     Decimal1 UMETA(DisplayName = "Decimal1"),
     Decimal2 UMETA(DisplayName = "Decimal2"),
     Decimal3 UMETA(DisplayName = "Decimal3"),
-};
-
-/** Category for organizing behaviors (e.g., profession, cultural, situational).
-Used for filtering and grouping in bundles.
- */
-UENUM(BlueprintType)
-enum class EBehaviorCategory : uint8
-{
-    Base UMETA(DisplayName = "base"),
-    Cultural UMETA(DisplayName = "cultural"),
-    Professional UMETA(DisplayName = "professional"),
-    Personal UMETA(DisplayName = "personal"),
-    Situational UMETA(DisplayName = "situational"),
-    Ambient UMETA(DisplayName = "ambient"),
 };
 
 /** Cadence type for ending */
@@ -2351,19 +2417,6 @@ enum class EQuality : uint8
     Sus4 UMETA(DisplayName = "sus4"),
 };
 
-/** Reason for the validation result */
-UENUM(BlueprintType)
-enum class EReason : uint8
-{
-    None UMETA(DisplayName = "None"),
-    PreconditionInvalidated UMETA(DisplayName = "PreconditionInvalidated"),
-    ActionFailed UMETA(DisplayName = "ActionFailed"),
-    BetterGoalAvailable UMETA(DisplayName = "BetterGoalAvailable"),
-    PlanCompleted UMETA(DisplayName = "PlanCompleted"),
-    GoalAlreadySatisfied UMETA(DisplayName = "GoalAlreadySatisfied"),
-    SuboptimalPlan UMETA(DisplayName = "SuboptimalPlan"),
-};
-
 /** Risk severity */
 UENUM(BlueprintType)
 enum class ESeverity : uint8
@@ -2414,15 +2467,6 @@ enum class EStrength : uint8
 {
     Perfect UMETA(DisplayName = "perfect"),
     Imperfect UMETA(DisplayName = "imperfect"),
-};
-
-/** Suggested action based on validation */
-UENUM(BlueprintType)
-enum class ESuggestedAction : uint8
-{
-    Continue UMETA(DisplayName = "Continue"),
-    Replan UMETA(DisplayName = "Replan"),
-    Abort UMETA(DisplayName = "Abort"),
 };
 
 /** Link target attribute for opening behavior */

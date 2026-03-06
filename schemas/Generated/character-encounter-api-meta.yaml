@@ -429,7 +429,9 @@ paths:
 
         Perspectives can be provided in the request or will be auto-generated with
         default values if not specified.
-      x-permissions: []
+      x-permissions:
+      - role: user
+        states: {}
       requestBody:
         required: true
         content:
@@ -1114,7 +1116,9 @@ paths:
       description: |
         Calculates sentiment toward multiple target characters in a single call.
         Efficient for behavior system queries that check multiple NPCs.
-      x-permissions: []
+      x-permissions:
+      - role: user
+        states: {}
       requestBody:
         required: true
         content:
@@ -1142,18 +1146,16 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BatchSentimentResponse\"\
         ,\n    \"$defs\": {\n        \"BatchSentimentResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response containing sentiment toward multiple targets\",\n            \"additionalProperties\": false,\n     \
-        \       \"required\": [\n                \"characterId\",\n                \"sentiments\"\n            ],\n      \
-        \      \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\",\n        \
-        \            \"format\": \"uuid\",\n                    \"description\": \"Character whose sentiment was queried\"\
-        \n                },\n                \"sentiments\": {\n                    \"type\": \"array\",\n              \
-        \      \"items\": {\n                        \"$ref\": \"#/$defs/SentimentResponse\"\n                    },\n   \
-        \                 \"description\": \"Sentiment toward each target\"\n                }\n            }\n        },\n\
-        \        \"SentimentResponse\": {\n            \"type\": \"object\",\n            \"description\": \"Response containing
-        aggregate sentiment\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
-        \  \"characterId\",\n                \"targetCharacterId\",\n                \"sentiment\",\n                \"encounterCount\"\
-        \n            ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character whose sentiment
-        was queried\"\n                },\n                \"targetCharacterId\": {\n                    \"type\": \"string\"\
+        \       \"required\": [\n                \"sentiments\"\n            ],\n            \"properties\": {\n         \
+        \       \"sentiments\": {\n                    \"type\": \"array\",\n                    \"items\": {\n          \
+        \              \"$ref\": \"#/$defs/SentimentResponse\"\n                    },\n                    \"description\"\
+        : \"Sentiment toward each target\"\n                }\n            }\n        },\n        \"SentimentResponse\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"Response containing aggregate sentiment\",\n  \
+        \          \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\",\n     \
+        \           \"targetCharacterId\",\n                \"sentiment\",\n                \"encounterCount\"\n         \
+        \   ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Character whose sentiment was
+        queried\"\n                },\n                \"targetCharacterId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Target of the sentiment\"\n \
         \               },\n                \"sentiment\": {\n                    \"type\": \"number\",\n                \
         \    \"format\": \"float\",\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n     \
@@ -1263,7 +1265,9 @@ paths:
       description: |
         Updates a character's perspective on an encounter. Used when a character
         reflects on past events or gains new information about an encounter.
-      x-permissions: []
+      x-permissions:
+      - role: user
+        states: {}
       requestBody:
         required: true
         content:
@@ -1358,7 +1362,9 @@ paths:
       description: |
         Strengthens a character's memory of an encounter. Called when the encounter
         is referenced in dialogue, thought, or action. Counteracts memory decay.
-      x-permissions: []
+      x-permissions:
+      - role: user
+        states: {}
       requestBody:
         required: true
         content:
@@ -1469,11 +1475,9 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteEncounterResponse\"\
         ,\n    \"$defs\": {\n        \"DeleteEncounterResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response from delete operation\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"encounterId\",\n                \"perspectivesDeleted\"\n            ],\n            \"properties\"\
-        : {\n                \"encounterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Deleted encounter ID\"\n                },\n                \"\
-        perspectivesDeleted\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
-        of perspectives deleted\"\n                }\n            }\n        }\n    }\n}"
+        \                \"perspectivesDeleted\"\n            ],\n            \"properties\": {\n                \"perspectivesDeleted\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Number of perspectives deleted\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Delete encounter and perspectives\",\n    \"description\": \"Deletes an
         encounter record and all associated perspectives.\\nThis is a hard delete and cannot be undone.\\n\",\n    \"tags\"\
         : [\n        \"Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteEncounter\"\n}"
@@ -1512,13 +1516,12 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteByCharacterResponse\"\
         ,\n    \"$defs\": {\n        \"DeleteByCharacterResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response from delete-by-character operation\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"characterId\",\n                \"encountersDeleted\",\n                \"perspectivesDeleted\"\
-        \n            ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character whose data
-        was deleted\"\n                },\n                \"encountersDeleted\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Number of encounters deleted\"\n                },\n                \"perspectivesDeleted\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of perspectives deleted\"\
-        \n                }\n            }\n        }\n    }\n}"
+        : [\n                \"encountersDeleted\",\n                \"perspectivesDeleted\"\n            ],\n           \
+        \ \"properties\": {\n                \"encountersDeleted\": {\n                    \"type\": \"integer\",\n      \
+        \              \"minimum\": 0,\n                    \"description\": \"Number of encounters deleted\"\n          \
+        \      },\n                \"perspectivesDeleted\": {\n                    \"type\": \"integer\",\n              \
+        \      \"minimum\": 0,\n                    \"description\": \"Number of perspectives deleted\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Delete all encounters for a character\",\n    \"description\": \"Deletes
         all encounter records and perspectives involving a specific character.\\nUsed during character deletion or compression.
         This is a hard delete.\\n\",\n    \"tags\": [\n        \"Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -1560,13 +1563,12 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DecayMemoriesResponse\"\
         ,\n    \"$defs\": {\n        \"DecayMemoriesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response from decay processing\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"perspectivesProcessed\",\n                \"memoriesFaded\",\n                \"dryRun\"\n    \
-        \        ],\n            \"properties\": {\n                \"perspectivesProcessed\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Number of perspectives processed\"\n                },\n  \
-        \              \"memoriesFaded\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Number of memories that fell below threshold\"\n                },\n                \"dryRun\": {\n          \
-        \          \"type\": \"boolean\",\n                    \"description\": \"Whether this was a preview run\"\n     \
-        \           }\n            }\n        }\n    }\n}"
+        \                \"perspectivesProcessed\",\n                \"memoriesFaded\"\n            ],\n            \"properties\"\
+        : {\n                \"perspectivesProcessed\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"minimum\": 0,\n                    \"description\": \"Number of perspectives processed\"\n                },\n\
+        \                \"memoriesFaded\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Number of memories that fell below threshold\"\n                }\n \
+        \           }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Trigger memory decay (maintenance)\",\n    \"description\": \"Manually
         triggers memory decay processing for all or specific characters.\\nNormally decay is applied lazily on access, but
         this can be used for\\nmaintenance or testing purposes.\\n\",\n    \"tags\": [\n        \"Admin\"\n    ],\n    \"\
@@ -1741,18 +1743,13 @@ paths:
         gzipped CharacterEncounterArchive JSON\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RestoreFromArchiveResponse\"\
         ,\n    \"$defs\": {\n        \"RestoreFromArchiveResponse\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Result of restoration from archive\",\n            \"additionalProperties\": false,\n           \
-        \ \"required\": [\n                \"characterId\",\n                \"encountersRestored\",\n                \"perspectivesRestored\"\
-        ,\n                \"success\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Character data was restored for\"\n                },\n                \"encountersRestored\": {\n           \
-        \         \"type\": \"integer\",\n                    \"description\": \"Number of encounters restored\"\n       \
-        \         },\n                \"perspectivesRestored\": {\n                    \"type\": \"integer\",\n          \
-        \          \"description\": \"Number of perspectives restored\"\n                },\n                \"success\":
-        {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether restoration completed
-        successfully\"\n                },\n                \"errorMessage\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Error details if restoration failed\"\
-        \n                }\n            }\n        }\n    }\n}"
+        description\": \"Result of restoration from archive. HTTP 200 confirms success.\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"encountersRestored\",\n                \"perspectivesRestored\"\
+        \n            ],\n            \"properties\": {\n                \"encountersRestored\": {\n                    \"\
+        type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Number of encounters
+        restored\"\n                },\n                \"perspectivesRestored\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Number of perspectives restored\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Restore encounter data from archive\",\n    \"description\": \"Called by
         Resource service during character decompression.\\nRestores encounters and perspectives from archive data.\\n\",\n\
         \    \"tags\": [\n        \"Compression\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"restoreFromArchive\"\
@@ -2623,13 +2620,8 @@ components:
       description: Response containing sentiment toward multiple targets
       additionalProperties: false
       required:
-      - characterId
       - sentiments
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character whose sentiment was queried
         sentiments:
           type: array
           items:
@@ -2651,34 +2643,27 @@ components:
       description: Response from delete operation
       additionalProperties: false
       required:
-      - encounterId
       - perspectivesDeleted
       properties:
-        encounterId:
-          type: string
-          format: uuid
-          description: Deleted encounter ID
         perspectivesDeleted:
           type: integer
+          minimum: 0
           description: Number of perspectives deleted
     DeleteByCharacterResponse:
       type: object
       description: Response from delete-by-character operation
       additionalProperties: false
       required:
-      - characterId
       - encountersDeleted
       - perspectivesDeleted
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character whose data was deleted
         encountersDeleted:
           type: integer
+          minimum: 0
           description: Number of encounters deleted
         perspectivesDeleted:
           type: integer
+          minimum: 0
           description: Number of perspectives deleted
     DecayMemoriesResponse:
       type: object
@@ -2687,17 +2672,15 @@ components:
       required:
       - perspectivesProcessed
       - memoriesFaded
-      - dryRun
       properties:
         perspectivesProcessed:
           type: integer
+          minimum: 0
           description: Number of perspectives processed
         memoriesFaded:
           type: integer
+          minimum: 0
           description: Number of memories that fell below threshold
-        dryRun:
-          type: boolean
-          description: Whether this was a preview run
     GetCompressDataRequest:
       type: object
       description: Request to get encounter data for compression
@@ -2765,28 +2748,17 @@ components:
           description: Base64-encoded gzipped CharacterEncounterArchive JSON
     RestoreFromArchiveResponse:
       type: object
-      description: Result of restoration from archive
+      description: Result of restoration from archive. HTTP 200 confirms success.
       additionalProperties: false
       required:
-      - characterId
       - encountersRestored
       - perspectivesRestored
-      - success
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character data was restored for
         encountersRestored:
           type: integer
+          minimum: 0
           description: Number of encounters restored
         perspectivesRestored:
           type: integer
+          minimum: 0
           description: Number of perspectives restored
-        success:
-          type: boolean
-          description: Whether restoration completed successfully
-        errorMessage:
-          type: string
-          nullable: true
-          description: Error details if restoration failed

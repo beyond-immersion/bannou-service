@@ -3,7 +3,7 @@
 > **Plugin**: lib-craft (not yet created)
 > **Schema**: `schemas/craft-api.yaml` (not yet created)
 > **Version**: N/A (Pre-Implementation)
-> **State Store**: craft-recipe-store (MySQL), craft-recipe-cache (Redis), craft-session-store (MySQL), craft-proficiency-store (MySQL), craft-station-registry (MySQL), craft-discovery-store (MySQL), craft-lock (Redis) — all planned
+> **State Store**: craft-recipe-store (MySQL), craft-recipe-cache (Redis), craft-session-store (MySQL), craft-station-registry (MySQL), craft-discovery-store (MySQL), craft-lock (Redis) — all planned
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: [Economy System Guide](../guides/ECONOMY-SYSTEM.md)
@@ -98,13 +98,19 @@ RecipeDefinition:
   targetRequirements:
     validItemClasses: [string]?   # Item template categories the recipe can target
     minimumItemLevel: int?
-    requiredStates: object?       # e.g., {"isIdentified": true, "isCorrupted": false}
+    requiredItemStates:           # Typed predicates replacing object? (T29 compliance)
+      - field: ItemStateField     # Service-specific enum: IsIdentified, IsCorrupted, IsMirrored, IsFractured
+        expected: bool            # Required state value
     requiredAffixSlotType: string? # For "add specific affix type" recipes
 
   # Affix operation (modification recipes only, requires lib-affix)
-  affixOperation: string?         # "apply_random", "remove_random", "reroll_all",
-                                  # "reroll_values", "corrupt", "fracture", "apply_specific"
-  affixOperationParams: object?   # Operation-specific params (weight modifiers, guaranteed mod code, etc.)
+  affixOperation: AffixOperationType?  # Service-specific enum (Category C):
+                                       # ApplyRandom, RemoveRandom, RerollAll,
+                                       # RerollValues, Corrupt, Fracture, ApplySpecific
+  affixOperationConfig:                # Typed config per operation (T29 compliance)
+    weightModifiers: Dictionary<string, decimal>?  # For ApplyRandom: tag → weight multiplier
+    slotType: string?                  # For ApplyRandom/ApplySpecific: target slot type
+    guaranteedAffixCode: string?       # For ApplySpecific: exact affix code to apply
 
   # Steps (ordered)
   steps:
@@ -150,8 +156,7 @@ RecipeDefinition:
   discoveryHints: [string]?       # Hints for discovery system (e.g., ["combine_fire_reagent_with_weapon"])
   prerequisiteRecipeCodes: [string]? # Must know these recipes before this one can be discovered
 
-  # Metadata
-  isActive: bool
+  # Deprecation (T31 Category B — templates persist forever, no delete, no undeprecate)
   isDeprecated: bool
   deprecatedAt: DateTimeOffset?
   deprecationReason: string?
@@ -161,7 +166,7 @@ RecipeDefinition:
 
 1. **Recipe types are opaque strings**, not enums. "production", "modification", "extraction" are conventions. A game might add "transmutation", "ritual", "assembly" as types with custom handling.
 
-2. **Affix operations are specified declaratively**: Modification recipes declare which lib-affix operation to invoke and with what parameters. lib-craft translates this into the appropriate lib-affix API calls. The recipe doesn't contain affix logic -- it references an operation by name.
+2. **Affix operations use a typed enum** (`AffixOperationType`): Modification recipes declare which lib-affix operation to invoke using a Category C service-specific enum, with typed configuration parameters (`AffixOperationConfig`). This replaces the previous `object?` approach that violated T29.
 
 3. **Steps are ordered milestones** that map directly to Contract milestones. Starting a crafting session creates a Contract instance whose milestones mirror the recipe's steps.
 
@@ -267,9 +272,11 @@ Example: "Chaos Reforge" (PoE's Chaos Orb equivalent)
   inputs:
     - {itemTemplateCode: "chaos_reagent", quantity: 1}
   targetRequirements:
-    requiredStates: {"isCorrupted": false, "isMirrored": false}
-  affixOperation: "reroll_all"
-  affixOperationParams: {}
+    requiredItemStates:
+      - {field: IsCorrupted, expected: false}
+      - {field: IsMirrored, expected: false}
+  affixOperation: RerollAll
+  affixOperationConfig: {}
   steps:
     - {code: "apply", skillCheck: false}
   proficiencyRequirements: []
@@ -281,10 +288,12 @@ Example: "Inscribe Fire Logos" (Arcadia enchanting)
     - {itemTemplateCode: "fire_reagent", quantity: 2}
     - {itemTemplateCode: "inscription_ink", quantity: 1}
   targetRequirements:
-    requiredStates: {"isCorrupted": false, "isIdentified": true}
+    requiredItemStates:
+      - {field: IsCorrupted, expected: false}
+      - {field: IsIdentified, expected: true}
     requiredAffixSlotType: "suffix"
-  affixOperation: "apply_random"
-  affixOperationParams:
+  affixOperation: ApplyRandom
+  affixOperationConfig:
     weightModifiers: {"fire": 5.0, "cold": 0.0, "lightning": 0.0}
     slotType: "suffix"
   steps:
@@ -353,8 +362,8 @@ StationDefinition:
   gameServiceId: Guid
   stationType: string            # "forge", "enchanting_table", "alchemy_bench", "loom"
   locationId: Guid?              # Physical location (null = portable/anywhere)
-  ownerId: Guid?                 # Entity that owns/maintains this station
-  ownerType: string?
+  ownerId: Guid?                 # Entity that owns/maintains this station (null = unowned)
+  ownerType: EntityType?         # Must be non-null when ownerId is set; null when unowned
   quality: decimal               # Station quality (0-1), affects crafting output
   isActive: bool
 ```
@@ -492,15 +501,6 @@ Paginated queries by gameServiceId + optional filters (recipeType, domain, categ
 
 Sessions are cleaned up on completion, cancellation, or expiration.
 
-### Proficiency Store
-**Store**: `craft-proficiency-store` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `prof:{entityId}:{entityType}:{domain}` | `ProficiencyModel` | Proficiency state per entity per domain |
-
-**Note**: If lib-seed integration is active, proficiency data is delegated to seed state. This store serves as a fallback when lib-seed is unavailable.
-
 ### Station Registry
 **Store**: `craft-station-registry` (Backend: MySQL)
 
@@ -538,9 +538,9 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 | `category` | B (Content Code) | Opaque string | Broad recipe classification ("weapons", "potions", "enchantments"); game-defined for filtering |
 | `stationType` | B (Content Code) | Opaque string | Station type codes ("forge", "enchanting_table", "alchemy_bench", "loom"); game-configurable |
 | `toolCategory` | B (Content Code) | Opaque string | Tool category codes ("hammer", "inscription_tools"); game-configurable |
-| `affixOperation` | B (Content Code) | Opaque string | Affix operation codes ("apply_random", "remove_random", "reroll_all", "corrupt", etc.); maps to lib-affix operations |
-| `quantityCurve` (on extraction outputs) | C (System State) | Service-specific enum | Finite set of curve shapes ("linear", "bell", "exponential_decay"); system-owned computation modes |
-| `ownerType` (on StationDefinition) | A (Entity Reference) | `EntityType` enum | Station owners are first-class Bannou entities (characters, guilds, etc.) |
+| `affixOperation` | C (System State) | `AffixOperationType` enum | Finite set of lib-affix API operations (ApplyRandom, RemoveRandom, RerollAll, RerollValues, Corrupt, Fracture, ApplySpecific); not game-configurable |
+| `itemStateField` (on requiredItemStates) | C (System State) | `ItemStateField` enum | Finite set of item state predicates (IsIdentified, IsCorrupted, IsMirrored, IsFractured); system-owned |
+| `ownerType` (on StationDefinition) | A (Entity Reference) | `EntityType` enum (nullable) | Station owners are first-class Bannou entities (characters, guilds, etc.); null when unowned |
 | `entityType` (on session/proficiency keys) | A (Entity Reference) | `EntityType` enum | Crafting sessions and proficiency are polymorphically owned by Bannou entities |
 
 ---
@@ -551,16 +551,16 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `craft-recipe.created` | `CraftRecipeCreatedEvent` | Recipe definition created (lifecycle) |
-| `craft-recipe.updated` | `CraftRecipeUpdatedEvent` | Recipe definition updated (lifecycle); deprecation is signaled via `changedFields` containing `isDeprecated`, `deprecatedAt`, `deprecationReason` |
-| `craft-session.started` | `CraftSessionStartedEvent` | Crafting session started |
-| `craft-session.step-completed` | `CraftStepCompletedEvent` | A recipe step completed (includes quality contribution) |
-| `craft-session.completed` | `CraftSessionCompletedEvent` | Session completed successfully (includes output items, quality score) |
-| `craft-session.failed` | `CraftSessionFailedEvent` | Session failed (material returned or consumed depending on step) |
-| `craft-session.cancelled` | `CraftSessionCancelledEvent` | Session cancelled by entity (materials returned) |
-| `craft-proficiency.gained` | `CraftProficiencyGainedEvent` | Entity gained crafting experience |
-| `craft-proficiency.leveled` | `CraftProficiencyLeveledEvent` | Entity reached a new proficiency level |
-| `craft-recipe.discovered` | `CraftRecipeDiscoveredEvent` | Entity discovered a new recipe |
+| `craft.recipe.created` | `CraftRecipeCreatedEvent` | Recipe definition created (x-lifecycle auto-generated) |
+| `craft.recipe.updated` | `CraftRecipeUpdatedEvent` | Recipe definition updated (x-lifecycle auto-generated); deprecation is signaled via `changedFields` containing `isDeprecated`, `deprecatedAt`, `deprecationReason` |
+| `craft.session.started` | `CraftSessionStartedEvent` | Crafting session started |
+| `craft.session.step-completed` | `CraftSessionStepCompletedEvent` | A recipe step completed (includes quality contribution) |
+| `craft.session.completed` | `CraftSessionCompletedEvent` | Session completed successfully (includes output items, quality score) |
+| `craft.session.failed` | `CraftSessionFailedEvent` | Session failed (material returned or consumed depending on step) |
+| `craft.session.cancelled` | `CraftSessionCancelledEvent` | Session cancelled by entity (materials returned) |
+| `craft.proficiency.gained` | `CraftProficiencyGainedEvent` | Entity gained crafting experience |
+| `craft.proficiency.leveled` | `CraftProficiencyLeveledEvent` | Entity reached a new proficiency level |
+| `craft.recipe.discovered` | `CraftRecipeDiscoveredEvent` | Entity discovered a new recipe |
 
 ### Consumed Events
 
@@ -574,6 +574,7 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 |----------------|-------------|-----------|-----------------|
 | game-service | craft | CASCADE | `/craft/cleanup-by-game-service` |
 | character | craft | CASCADE | `/craft/cleanup-by-entity` |
+| location | craft | CASCADE | `/craft/cleanup-by-location` |
 
 ---
 
@@ -591,8 +592,6 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 | `MaxRecipesPerGameService` | `CRAFT_MAX_RECIPES_PER_GAME_SERVICE` | `10000` | Safety limit for recipe count per game service |
 | `LockTimeoutSeconds` | `CRAFT_LOCK_TIMEOUT_SECONDS` | `30` | Distributed lock timeout |
 | `StationExclusivity` | `CRAFT_STATION_EXCLUSIVITY` | `false` | Whether stations are locked to one session at a time |
-| `ProficiencySource` | `CRAFT_PROFICIENCY_SOURCE` | `seed` | Proficiency backing: "seed" (lib-seed) or "local" (internal store) |
-| `MaxProficiencyLevel` | `CRAFT_MAX_PROFICIENCY_LEVEL` | `100` | Maximum proficiency level per domain |
 | `ExperienceScalingFactor` | `CRAFT_EXPERIENCE_SCALING_FACTOR` | `1.0` | Global experience multiplier |
 
 ---
@@ -603,7 +602,7 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 |---------|------|
 | `ILogger<CraftService>` | Structured logging |
 | `CraftServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access (creates 7 stores) |
+| `IStateStoreFactory` | State store access (creates 6 stores) |
 | `IMessageBus` | Event publishing |
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
 | `IItemClient` | Item creation/destruction, metadata reads (L2 hard) |
@@ -619,7 +618,7 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 
 | Factory | Namespace | Data Source | Registration |
 |---------|-----------|-------------|--------------|
-| `CraftDecisionProviderFactory` | `${craft.*}` | Reads entity's proficiency (via seed or local), known recipes, nearby stations, inventory materials | `IVariableProviderFactory` (DI singleton) |
+| `CraftDecisionProviderFactory` | `${craft.*}` | Reads entity's proficiency (via lib-seed), known recipes, nearby stations, inventory materials | `IVariableProviderFactory` (DI singleton) |
 
 ---
 
@@ -629,39 +628,43 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 
 All endpoints require `developer` role.
 
-- **CreateRecipe** (`/craft/recipe/create`): Validates game service existence. Validates code uniqueness. Validates step structure (at least one step, valid step codes). Validates input references (item template codes exist). Validates output references. Enforces `MaxRecipesPerGameService`. Saves to MySQL. Populates cache. Publishes `craft-recipe.created`.
+- **CreateRecipe** (`/craft/recipe/create`): Validates game service existence. Validates code uniqueness. Validates step structure (at least one step, valid step codes). Validates input references (item template codes exist). Validates output references. Enforces `MaxRecipesPerGameService`. Saves to MySQL. Populates cache. Publishes `craft.recipe.created`.
 
 - **GetRecipe** (`/craft/recipe/get`): Cache read-through (Redis -> MySQL -> populate cache). Supports lookup by recipeId or by gameServiceId + code.
 
 - **ListRecipes** (`/craft/recipe/list`): Paged JSON query with required gameServiceId filter. Optional filters: recipeType, domain, category, tags (any match), proficiency requirements range, `includeDeprecated: boolean (default: false)`. Sorted by domain then category.
 
-- **UpdateRecipe** (`/craft/recipe/update`): Acquires distributed lock. Partial update. **Cannot change**: code, gameServiceId, recipeType (identity-level). Invalidates caches. Publishes `craft-recipe.updated`.
+- **UpdateRecipe** (`/craft/recipe/update`): Acquires distributed lock. Partial update. **Cannot change**: code, gameServiceId, recipeType (identity-level). Invalidates caches. Publishes `craft.recipe.updated`.
 
-- **DeprecateRecipe** (`/craft/recipe/deprecate`): Sets `isDeprecated: true`, `deprecatedAt: DateTimeOffset.UtcNow`, and `deprecationReason` from request. Idempotent: returns OK if already deprecated. Active sessions using this recipe continue to completion. Invalidates caches. Publishes `craft-recipe.updated` with `changedFields` containing deprecation fields.
+- **DeprecateRecipe** (`/craft/recipe/deprecate`): Sets `isDeprecated: true`, `deprecatedAt: DateTimeOffset.UtcNow`, and `deprecationReason` from request. Idempotent: returns OK if already deprecated. Active sessions using this recipe continue to completion. No undeprecate endpoint exists (Category B — one-way). Invalidates caches. Publishes `craft.recipe.updated` with `changedFields` containing deprecation fields.
 
 - **SeedRecipes** (`/craft/recipe/seed`): Bulk creation, skipping existing codes (idempotent). Validates game service once. Returns created/skipped counts.
 
-- **ListDomains** (`/craft/recipe/list-domains`): Returns distinct proficiency domains for a game service with recipe counts per domain.
+- **ListDomains** (`/craft/recipe/list-domains`): Returns distinct proficiency domains for a game service with recipe counts per domain. Supports `includeDeprecated: boolean (default: false)` for whether deprecated recipes count toward domain totals.
 
 ### Session Management (5 endpoints)
 
-- **StartSession** (`/craft/session/start`): The core session creation. Validates: entity knows the recipe, meets proficiency requirements, has required materials, has required currency, station available (if needed), tool available (if needed). For modification: validates target item meets requirements. Creates Contract instance with milestones matching recipe steps. Records material reservations. Returns sessionId + first step info.
+`x-permissions: []` (internal-only, called by NPC actors and game engine).
 
-- **AdvanceSession** (`/craft/session/advance`): Advances to the next step. Acquires session lock. Validates: step sequence correct, station still available, tool still held. If step has `skillCheck`: computes quality contribution for this step. If step has `consumeOnStep`: consumes specified materials now. Completes the Contract milestone for this step. If final step: triggers session completion via Contract prebound API. Returns step result.
+- **StartSession** (`/craft/session/start`): The core session creation. **Rejects with BadRequest if recipe is deprecated** (T31 Category B instance creation guard). Validates: entity knows the recipe, meets proficiency requirements, has required materials, has required currency, station available (if needed), tool available (if needed). For modification: validates target item meets requirements. Creates Contract instance with milestones matching recipe steps. Records material reservations. Returns sessionId + first step info.
 
-- **CancelSession** (`/craft/session/cancel`): Cancels an active session. Returns unconsumed materials to entity's inventory. Releases currency holds. Terminates the backing Contract. Publishes `craft-session.cancelled`.
+- **AdvanceSession** (`/craft/session/advance`): Advances to the next step. Acquires session lock. Validates: step sequence correct, station still available, tool still held. If step has `skillCheck`: computes quality contribution for this step. If step has `consumeOnStep`: consumes specified materials now. Completes the Contract milestone for this step. If final step: triggers session completion via Contract prebound API. Returns step result (quality contribution, next step code).
 
-- **GetSession** (`/craft/session/get`): Returns current session state: recipe info, current step, accumulated quality, remaining steps, elapsed time.
+- **CancelSession** (`/craft/session/cancel`): Cancels an active session. Returns unconsumed materials to entity's inventory. Releases currency holds. Terminates the backing Contract. Publishes `craft.session.cancelled`.
+
+- **GetSession** (`/craft/session/get`): Returns current session state: recipe info, current step, accumulated quality, elapsed time.
 
 - **ListSessions** (`/craft/session/list`): Lists active sessions for an entity. Returns summary info for each.
 
 ### Proficiency (4 endpoints)
 
-- **GetProficiency** (`/craft/proficiency/get`): Returns proficiency state for an entity in a specific domain. If `ProficiencySource` is "seed", reads from lib-seed. Otherwise reads from local store.
+`x-permissions: []` for Get/List (internal queries). `developer` role for Grant/Set (admin operations).
 
-- **ListProficiencies** (`/craft/proficiency/list`): Returns all proficiency domains and levels for an entity.
+- **GetProficiency** (`/craft/proficiency/get`): Returns proficiency state for an entity in a specific domain. Reads from lib-seed (L2, guaranteed available).
 
-- **GrantExperience** (`/craft/proficiency/grant`): Manually grants experience (for quest rewards, training, etc.). Validates domain exists. If using seeds, records growth via lib-seed. Publishes `craft-proficiency.gained` and optionally `craft-proficiency.leveled`.
+- **ListProficiencies** (`/craft/proficiency/list`): Returns all proficiency domains and levels for an entity via lib-seed.
+
+- **GrantExperience** (`/craft/proficiency/grant`): Manually grants experience (for quest rewards, training, etc.). Validates domain exists. Records growth via lib-seed. Publishes `craft.proficiency.gained` and optionally `craft.proficiency.leveled`.
 
 - **SetProficiency** (`/craft/proficiency/set`): Admin endpoint. Directly sets proficiency level. Requires `developer` role.
 
@@ -669,7 +672,7 @@ All endpoints require `developer` role.
 
 All endpoints require `developer` role.
 
-- **RegisterStation** (`/craft/station/register`): Creates a station definition at a location. Validates location exists (if lib-location available). Updates location and type indexes.
+- **RegisterStation** (`/craft/station/register`): Creates a station definition at a location. Validates location exists via `ILocationClient` (L2, hard dependency). Updates location and type indexes.
 
 - **GetStation** (`/craft/station/get`): Returns station definition.
 
@@ -679,7 +682,9 @@ All endpoints require `developer` role.
 
 ### Discovery (3 endpoints)
 
-- **AttemptDiscovery** (`/craft/discovery/attempt`): Entity provides materials + station type. lib-craft hashes the combination and checks against discoverable recipes' hints. If match: recipe added to known set, materials partially consumed, publishes `craft-recipe.discovered`. If no match: materials partially consumed (configurable rate), returns failure with optional hint progression.
+`x-permissions: []` (internal-only, called by game engine and NPC actors).
+
+- **AttemptDiscovery** (`/craft/discovery/attempt`): Entity provides materials + station type. lib-craft hashes the combination and checks against discoverable recipes' hints. If match: recipe added to known set, materials partially consumed, publishes `craft.recipe.discovered`. If no match: materials partially consumed (configurable rate), returns failure with optional hint progression.
 
 - **ListKnownRecipes** (`/craft/discovery/list-known`): Returns all recipe codes known by an entity for a game service. Includes proficiency eligibility (can they actually craft each one?).
 
@@ -687,17 +692,23 @@ All endpoints require `developer` role.
 
 ### Query (3 endpoints)
 
+`x-permissions: []` (internal-only, used by NPC GOAP and game engine).
+
 - **CanCraft** (`/craft/query/can-craft`): Checks if an entity can craft a specific recipe. Returns detailed breakdown: proficiency met?, materials available?, station nearby?, tool available?, currency sufficient? Used by UI and NPC GOAP.
 
 - **EstimateCraftQuality** (`/craft/query/estimate-quality`): Given entity + recipe + specific materials + tool, estimates the output quality score without executing. Used for UI preview and NPC decision-making.
 
 - **GetRecipeOutputPreview** (`/craft/query/output-preview`): Returns what a recipe would produce at various quality levels. Used for UI tooltips.
 
-### Cleanup (2 endpoints)
+### Cleanup (3 endpoints)
+
+`x-permissions: []` (internal-only, called by lib-resource cleanup callbacks).
 
 - **CleanupByGameService** (`/craft/cleanup-by-game-service`): Deletes all recipes, sessions, stations, and discovery data for a game service. Called by lib-resource on game service deletion.
 
-- **CleanupByEntity** (`/craft/cleanup-by-entity`): Cancels active sessions, clears discovery data, clears proficiency data for an entity. Called by lib-resource on character deletion.
+- **CleanupByEntity** (`/craft/cleanup-by-entity`): Cancels active sessions, clears discovery data for an entity. Called by lib-resource on character deletion.
+
+- **CleanupByLocation** (`/craft/cleanup-by-location`): Deactivates all stations at a location. Called by lib-resource on location deletion.
 
 ---
 
@@ -822,7 +833,7 @@ Crafting Session Lifecycle (Production)
        |     Place in entity's inventory
        |     Grant blacksmithing XP: 50
        |
-       +-- Publish craft-session.completed
+       +-- Publish craft.session.completed
        +-- Return: {outputItems: [iron_sword], quality: 0.765}
 ```
 
@@ -933,7 +944,7 @@ Crafting Session Lifecycle (Production)
 
 3. **Real-time step durations**: Steps with `durationSeconds` need a timer mechanism. Options: (a) Contract timer milestones, (b) client-side timer with server validation, (c) background service polling. Contract timer milestones are the cleanest architectural fit.
 
-4. **Proficiency seed type registration**: If using lib-seed for proficiency, who registers the seed types? lib-craft should register `proficiency:{domain}` seed types on startup for each domain it discovers in recipe definitions. This means seed type registration happens after recipe seeding.
+4. **Proficiency seed type registration**: lib-craft registers `proficiency:{domain}` seed types on startup for each domain it discovers in recipe definitions. This means seed type registration happens after recipe seeding.
 
 5. **Cross-entity crafting**: Can entity A start a session and entity B advance a step? (e.g., an apprentice assists a master). The current model assumes single-entity sessions. Multi-entity crafting could use Contract's multi-party model.
 
@@ -941,10 +952,13 @@ Crafting Session Lifecycle (Production)
 
 7. **Offline NPC crafting**: When an NPC's actor is running and they're crafting, step advancement happens through GOAP actions. But what about when the NPC's actor is suspended? Options: (a) sessions pause when actor suspends, (b) sessions auto-complete on a timer, (c) sessions are represented as Contract timer milestones that progress independently of the actor.
 
-8. **ProficiencySource "local" fallback vs hierarchy guarantee**: The `ProficiencySource` configuration offers "seed" (lib-seed) or "local" (internal store) options. However, lib-seed is L2 GameFoundation — guaranteed available when lib-craft (L4) runs per the service hierarchy. The "local" fallback is unnecessary from a deployment perspective since lib-seed will always be running. Consider whether the local proficiency store adds legitimate design value (e.g., games that prefer a simpler proficiency model without seed growth semantics) or whether it creates dead code and orphans the `craft-proficiency-store` when `ProficiencySource` defaults to "seed".
-
 ---
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. See [Economy System Guide](../guides/ECONOMY-SYSTEM.md) for the cross-cutting economy architecture.*
+*Pre-implementation phase. See [Economy System Guide](../guides/ECONOMY-SYSTEM.md) for the cross-cutting economy architecture.*
+
+**Predecessor**: [#285](https://github.com/beyond-immersion/bannou-service/issues/285) (World Events and Crafting as Contract-Orchestrated Systems) — crafting portion superseded by this deep dive. World Events portion is a separate concern.
+
+**Audit History**:
+- **2026-03-06**: L4 audit pass. Fixed: Pattern B→C event topics (all 10), T29 violations (`requiredStates: object?` → typed predicates, `affixOperationParams: object?` → typed config), `affixOperation` reclassified Category B→C (service-specific enum), T31 Category B explicitly designated with deprecation guard on StartSession, `isActive` removed (use deprecation lifecycle), `ProficiencySource` local fallback removed (lib-seed guaranteed), `craft-proficiency-store` removed, `ownerType` typed to `EntityType?`, x-permissions added to all endpoint groups, location cleanup target added, `CraftStepCompletedEvent` → `CraftSessionStepCompletedEvent`. T29 "Archive Shape" tenet added to FOUNDATION.md to prevent future agents from suggesting compression callbacks for game-mechanical operational state.

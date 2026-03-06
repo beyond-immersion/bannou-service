@@ -551,8 +551,6 @@ components:
       - eventId
       - timestamp
       - escrowId
-      - disputedBy
-      - disputedByType
       - reason
       - disputedAt
       properties:
@@ -571,10 +569,13 @@ components:
         disputedBy:
           type: string
           format: uuid
-          description: Party who raised the dispute
+          nullable: true
+          description: Party who raised the dispute (null for system-initiated disputes)
         disputedByType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
-          description: Type of the disputing party
+          allOf:
+            - $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Type of the disputing party (null for system-initiated disputes)
         reason:
           type: string
           description: Reason for dispute

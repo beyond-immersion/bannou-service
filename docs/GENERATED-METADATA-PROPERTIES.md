@@ -29,9 +29,9 @@ Compliant properties include one of these phrases in their description:
 
 | Metric | Count |
 |--------|-------|
-| Total metadata bag properties | 168 |
+| Total metadata bag properties | 167 |
 | Compliant (has marker) | 149 |
-| Non-compliant (missing marker) | 19 |
+| Non-compliant (missing marker) | 18 |
 | Compliance rate | 89% |
 
 ## Properties by Service
@@ -264,9 +264,8 @@ Compliant properties include one of these phrases in their description:
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `CharacterContext` | `worldState` | `behavior-api.yaml` | **N** | Relevant world state information |
-| `GoapPlanRequest` | `worldState` | `behavior-api.yaml` | **N** | Current world state as key-value pairs |
-| `ValidateGoapPlanRequest` | `worldState` | `behavior-api.yaml` | **N** | Current world state |
+| `GoapPlanRequest` | `worldState` | `behavior-api.yaml` | **N** | Planner-owned dynamic world state bag for GOAP A* search. Keys are arbitrary ... |
+| `ValidateGoapPlanRequest` | `worldState` | `behavior-api.yaml` | **N** | Planner-owned dynamic world state bag for plan validation. Keys are arbitrary... |
 
 #### Character Encounter
 
@@ -447,9 +446,8 @@ or is it being misused as a cross-service data contract?
 | Service | Schema Type | Property | Schema File | Description |
 |---------|-------------|----------|-------------|-------------|
 | Asset | `AssetProcessingJobDispatchedEvent` | `processingOptions` | `asset-events.yaml` | Content-type-specific processing options (opaque pass-through to processor) |
-| Behavior | `CharacterContext` | `worldState` | `behavior-api.yaml` | Relevant world state information |
-| Behavior | `GoapPlanRequest` | `worldState` | `behavior-api.yaml` | Current world state as key-value pairs |
-| Behavior | `ValidateGoapPlanRequest` | `worldState` | `behavior-api.yaml` | Current world state |
+| Behavior | `GoapPlanRequest` | `worldState` | `behavior-api.yaml` | Planner-owned dynamic world state bag for GOAP A* search. Keys are arbitrary ... |
+| Behavior | `ValidateGoapPlanRequest` | `worldState` | `behavior-api.yaml` | Planner-owned dynamic world state bag for plan validation. Keys are arbitrary... |
 | Common | `ServiceErrorEvent` | `details` | `common-events.yaml` | Redacted structured context (exclude PII/secrets) |
 | Common | `GoalState` | `goalParameters` | `common-events.yaml` | Parameters for the primary goal (e.g., target entity, location) |
 | Common | `MemoryUpdate` | `memoryValue` | `common-events.yaml` | Memory value (entity ID, context, intensity, etc.) |

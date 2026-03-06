@@ -120,6 +120,7 @@ public partial class CharacterPersonalityController
                 "changeCount": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Number of times this trait has evolved"
                 }
             }
@@ -261,6 +262,7 @@ public partial class CharacterPersonalityController
                 "changeCount": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Number of times this trait has evolved"
                 }
             }
@@ -362,6 +364,7 @@ public partial class CharacterPersonalityController
                 "changeCount": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Number of times this trait has evolved"
                 }
             }
@@ -508,20 +511,10 @@ public partial class CharacterPersonalityController
             "description": "Result of recording an experience, including any personality evolution",
             "additionalProperties": false,
             "required": [
-                "characterId",
-                "experienceRecorded",
-                "personalityEvolved"
+                "personalityEvolved",
+                "changedTraits"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character who had the experience"
-                },
-                "experienceRecorded": {
-                    "type": "boolean",
-                    "description": "Whether the experience was recorded successfully"
-                },
                 "personalityEvolved": {
                     "type": "boolean",
                     "description": "Whether any traits changed as a result of this experience"
@@ -569,6 +562,7 @@ public partial class CharacterPersonalityController
                 "changeCount": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Number of times this trait has evolved"
                 }
             }
@@ -781,6 +775,7 @@ public partial class CharacterPersonalityController
                 "changeCount": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Number of times this trait has evolved"
                 }
             }
@@ -1500,20 +1495,9 @@ public partial class CharacterPersonalityController
             "description": "Result of recording a combat experience",
             "additionalProperties": false,
             "required": [
-                "characterId",
-                "experienceRecorded",
                 "preferencesEvolved"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character who had the combat experience"
-                },
-                "experienceRecorded": {
-                    "type": "boolean",
-                    "description": "Whether the experience was recorded successfully"
-                },
                 "preferencesEvolved": {
                     "type": "boolean",
                     "description": "Whether any preferences changed as a result"
@@ -1565,7 +1549,7 @@ public partial class CharacterPersonalityController
                     "format": "float",
                     "minimum": 0.0,
                     "maximum": 1.0,
-                    "description": "Willingness to take dangerous actions (0.0 = very cautious, 1.0 = reckless).\ nAffects ability selection and target prioritization.\n"
+                    "description": "Willingness to take dangerous actions (0.0 = very cautious, 1.0 = reckless).\nAffects ability selection and target prioritization.\n"
                 },
                 "retreatThreshold": {
                     "type": "number",
@@ -1576,7 +1560,7 @@ public partial class CharacterPersonalityController
                 },
                 "protectAllies": {
                     "type": "boolean",
-                    "description": "Whether to prioritize ally protection over self-preservation.\nAffects target selection and positioning decisions.\n"
+                    "description": "Whether to prioritize ally protection over self-preservation.\ nAffects target selection and positioning decisions.\n"
                 }
             }
         },
@@ -1900,6 +1884,7 @@ public partial class CharacterPersonalityController
                 "changeCount": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Number of times this trait has evolved"
                 }
             }
@@ -2131,17 +2116,10 @@ public partial class CharacterPersonalityController
             "description": "Result of restoration from archive",
             "additionalProperties": false,
             "required": [
-                "characterId",
                 "personalityRestored",
-                "combatPreferencesRestored",
-                "success"
+                "combatPreferencesRestored"
             ],
             "properties": {
-                "characterId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Character data was restored for"
-                },
                 "personalityRestored": {
                     "type": "boolean",
                     "description": "Whether personality traits were restored"
@@ -2149,15 +2127,6 @@ public partial class CharacterPersonalityController
                 "combatPreferencesRestored": {
                     "type": "boolean",
                     "description": "Whether combat preferences were restored"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether restoration completed successfully"
-                },
-                "errorMessage": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Error details if restoration failed"
                 }
             }
         }
@@ -2256,8 +2225,7 @@ public partial class CharacterPersonalityController
             "additionalProperties": false,
             "required": [
                 "personalityDeleted",
-                "combatPreferencesDeleted",
-                "success"
+                "combatPreferencesDeleted"
             ],
             "properties": {
                 "personalityDeleted": {
@@ -2267,10 +2235,6 @@ public partial class CharacterPersonalityController
                 "combatPreferencesDeleted": {
                     "type": "boolean",
                     "description": "Whether combat preferences were found and deleted"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether cleanup completed successfully"
                 }
             }
         }

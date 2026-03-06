@@ -12,7 +12,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to deity.created when a deity is created
+      description: Published to divine.deity.created when a deity is created
       required:
       - eventName
       - eventId
@@ -31,8 +31,8 @@ components:
       properties:
         eventName:
           type: string
-          default: deity.created
-          description: 'Event type identifier: deity.created'
+          default: divine.deity.created
+          description: 'Event type identifier: divine.deity.created'
         deityId: &id001
           type: string
           format: uuid
@@ -97,7 +97,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to deity.updated when a deity is updated
+      description: Published to divine.deity.updated when a deity is updated
       required:
       - eventName
       - eventId
@@ -117,8 +117,8 @@ components:
       properties:
         eventName:
           type: string
-          default: deity.updated
-          description: 'Event type identifier: deity.updated'
+          default: divine.deity.updated
+          description: 'Event type identifier: divine.deity.updated'
         deityId: *id001
         gameServiceId: *id002
         code: *id003
@@ -144,7 +144,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to deity.deleted when a deity is deleted
+      description: Published to divine.deity.deleted when a deity is deleted
       required:
       - eventName
       - eventId
@@ -163,8 +163,8 @@ components:
       properties:
         eventName:
           type: string
-          default: deity.deleted
-          description: 'Event type identifier: deity.deleted'
+          default: divine.deity.deleted
+          description: 'Event type identifier: divine.deity.deleted'
         deityId: *id001
         gameServiceId: *id002
         code: *id003

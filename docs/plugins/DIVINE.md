@@ -277,9 +277,9 @@ Paginated queries by entityId+entityType or deityId+tier use `IJsonQueryableStat
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `deity.created` | `DeityCreatedEvent` | Deity entity created (lifecycle) |
-| `deity.updated` | `DeityUpdatedEvent` | Deity entity updated (lifecycle) |
-| `deity.deleted` | `DeityDeletedEvent` | Deity entity deleted (lifecycle) |
+| `divine.deity.created` | `DeityCreatedEvent` | Deity entity created (lifecycle) |
+| `divine.deity.updated` | `DeityUpdatedEvent` | Deity entity updated (lifecycle) |
+| `divine.deity.deleted` | `DeityDeletedEvent` | Deity entity deleted (lifecycle) |
 | `divine.blessing.granted` | `DivineBlessingGrantedEvent` | A god granted a blessing to an entity |
 | `divine.blessing.revoked` | `DivineBlessingRevokedEvent` | A blessing was revoked |
 | `divine.divinity.credited` | `DivineDivinityCreditedEvent` | Divinity was earned (mortal action in domain, manual credit) |
@@ -515,4 +515,9 @@ All 22 endpoints are currently stubbed (return `NotImplemented`). The following 
 
 ## Work Tracking
 
-*No active work items. All endpoints are stubbed pending implementation per `docs/plans/DIVINE.md`.*
+**L4 audit completed (2026-03-06)**:
+- Schema: Custom events converted to flat structure (inline eventId/timestamp), `topic_prefix: divine` added for Pattern C lifecycle topics (`divine.deity.created/updated/deleted`)
+- Code: Constructor rebuilt with all 9 hard dependencies, constructor-cached state stores, IEventConsumer wired, internal data models defined (5 models with proper C# types), event handler async/telemetry compliant, structured logging on all stubs
+- Skeleton is now tenet-compliant; all 22 endpoints remain stubbed pending implementation per `docs/plans/DIVINE.md`
+- External blockers: #383/#388 (Puppetmaster watcher-actor integration) needed for god-actors
+- Upstream dependency: #415 (Status EntityType.Character hardcoding) blocks entity-agnostic blessings

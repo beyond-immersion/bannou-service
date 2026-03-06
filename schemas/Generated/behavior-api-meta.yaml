@@ -96,86 +96,46 @@ paths:
         ,\n    \"$defs\": {\n        \"CompileBehaviorRequest\": {\n            \"description\": \"Request to compile an ABML
         behavior definition into executable behavior trees\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"abmlContent\"\n            ],\n            \"properties\"\
-        : {\n                \"abmlContent\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Raw ABML YAML content to compile\",\n                    \"example\": \"version: \\\"1.0.0\\\"\\nmetadata:\\n\
-        \  id: \\\"example_behavior\\\"\\n  category: \\\"basic\\\"\\nbehaviors:\\n  example:\\n    triggers:\\n      - condition:
-        \\\"true\\\"\\n    actions:\\n      - log:\\n          message: \\\"Hello World\\\"\\n\"\n                },\n   \
-        \             \"behaviorName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Optional human-readable name for the behavior.\\nIf not provided, extracted
-        from ABML metadata.id or generated from content hash.\\n\",\n                    \"example\": \"blacksmith_daily_routine\"\
-        \n                },\n                \"behaviorCategory\": {\n                    \"type\": \"string\",\n       \
-        \             \"description\": \"Category for organizing behaviors (e.g., profession, cultural, situational).\\nUsed
-        for filtering and grouping in bundles.\\n\",\n                    \"enum\": [\n                        \"base\",\n\
-        \                        \"cultural\",\n                        \"professional\",\n                        \"personal\"\
-        ,\n                        \"situational\",\n                        \"ambient\"\n                    ],\n       \
-        \             \"nullable\": true,\n                    \"example\": \"professional\"\n                },\n       \
-        \         \"bundleId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Optional bundle identifier for grouping related behaviors.\\nWhen specified,
-        the compiled behavior will be added to a bundle with this ID.\\nClients can then download entire bundles for efficient
-        bulk loading.\\nIf the bundle doesn't exist, it will be created.\\n\",\n                    \"example\": \"blacksmith-behaviors-v1\"\
-        \n                },\n                \"characterContext\": {\n                    \"$ref\": \"#/$defs/CharacterContext\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Character context for context variable
-        resolution during compilation\"\n                },\n                \"compilationOptions\": {\n                 \
-        \   \"$ref\": \"#/$defs/CompilationOptions\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Options controlling the compilation process\"\n                }\n            }\n        },\n        \"CharacterContext\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Context information about a character for behavior resolution\",\n            \"properties\": {\n            \
-        \    \"npcId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n          \
-        \          \"description\": \"Unique identifier for the NPC\",\n                    \"example\": \"npc_12345\"\n \
-        \               },\n                \"culture\": {\n                    \"type\": \"string\",\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Cultural background identifier\",\n               \
-        \     \"example\": \"european_medieval\"\n                },\n                \"profession\": {\n                \
-        \    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Character
-        profession identifier\",\n                    \"example\": \"blacksmith\"\n                },\n                \"\
-        stats\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n         \
-        \               \"type\": \"number\"\n                    },\n                    \"nullable\": true,\n          \
-        \          \"description\": \"Character statistics and attributes\",\n                    \"example\": {\n       \
-        \                 \"energy\": 0.8,\n                        \"health\": 1.0,\n                        \"hunger\":
-        0.3\n                    }\n                },\n                \"skills\": {\n                    \"type\": \"object\"\
-        ,\n                    \"additionalProperties\": {\n                        \"type\": \"number\"\n               \
-        \     },\n                    \"nullable\": true,\n                    \"description\": \"Character skill levels\"\
-        ,\n                    \"example\": {\n                        \"blacksmithing\": 85,\n                        \"\
-        trading\": 42\n                    }\n                },\n                \"location\": {\n                    \"\
-        $ref\": \"#/$defs/Location\",\n                    \"nullable\": true,\n                    \"description\": \"Current
-        location information for the character\"\n                },\n                \"relationships\": {\n             \
-        \       \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\":
-        \"number\"\n                    },\n                    \"nullable\": true,\n                    \"description\":
-        \"Relationship values with other characters\"\n                },\n                \"worldState\": {\n           \
-        \         \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Relevant world state information\"\n                }\n          \
-        \  }\n        },\n        \"Location\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Character location information including current position, region, and 3D
-        coordinates\",\n            \"properties\": {\n                \"current\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Current location name or identifier\"\
-        \n                },\n                \"region\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Region or zone the character is in\"\n           \
-        \     },\n                \"coordinates\": {\n                    \"$ref\": \"#/$defs/Coordinates\",\n           \
-        \         \"nullable\": true,\n                    \"description\": \"3D spatial coordinates of the character's position
-        in the game world\"\n                }\n            }\n        },\n        \"Coordinates\": {\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"3D spatial coordinates
-        representing a position in the game world\",\n            \"properties\": {\n                \"x\": {\n          \
-        \          \"type\": \"number\",\n                    \"description\": \"X coordinate position\"\n               \
-        \ },\n                \"y\": {\n                    \"type\": \"number\",\n                    \"description\": \"\
-        Y coordinate position\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n\
-        \                    \"description\": \"Z coordinate position\"\n                }\n            }\n        },\n  \
-        \      \"CompilationOptions\": {\n            \"description\": \"Options controlling the ABML compilation process
-        including optimizations and caching\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"properties\": {\n                \"enableOptimizations\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": true,\n                    \"description\": \"Enable behavior tree optimizations\"\
-        \n                },\n                \"cacheCompiledResult\": {\n                    \"type\": \"boolean\",\n   \
-        \                 \"default\": true,\n                    \"description\": \"Cache the compiled behavior for reuse\"\
-        \n                },\n                \"strictValidation\": {\n                    \"type\": \"boolean\",\n      \
-        \              \"default\": false,\n                    \"description\": \"Enable strict validation mode\"\n     \
-        \           },\n                \"culturalAdaptations\": {\n                    \"type\": \"boolean\",\n         \
-        \           \"default\": true,\n                    \"description\": \"Apply cultural adaptations during compilation\"\
+        : {\n                \"abmlContent\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"description\": \"Raw ABML YAML content to compile\",\n                    \"example\"\
+        : \"version: \\\"1.0.0\\\"\\nmetadata:\\n  id: \\\"example_behavior\\\"\\n  category: \\\"basic\\\"\\nbehaviors:\\\
+        n  example:\\n    triggers:\\n      - condition: \\\"true\\\"\\n    actions:\\n      - log:\\n          message: \\\
+        \"Hello World\\\"\\n\"\n                },\n                \"behaviorName\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Optional human-readable
+        name for the behavior.\\nIf not provided, extracted from ABML metadata.id or generated from content hash.\\n\",\n\
+        \                    \"example\": \"blacksmith_daily_routine\"\n                },\n                \"behaviorCategory\"\
+        : {\n                    \"$ref\": \"#/$defs/BehaviorCategory\",\n                    \"description\": \"Category
+        for organizing behaviors (e.g., profession, cultural, situational).\\nUsed for filtering and grouping in bundles.\\\
+        n\",\n                    \"nullable\": true,\n                    \"example\": \"Professional\"\n               \
+        \ },\n                \"bundleId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Optional bundle identifier for grouping related behaviors.\\nWhen
+        specified, the compiled behavior will be added to a bundle with this ID.\\nClients can then download entire bundles
+        for efficient bulk loading.\\nIf the bundle doesn't exist, it will be created.\\n\",\n                    \"example\"\
+        : \"blacksmith-behaviors-v1\"\n                },\n                \"compilationOptions\": {\n                   \
+        \ \"$ref\": \"#/$defs/CompilationOptions\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Options controlling the compilation process\"\n                }\n            }\n        },\n        \"BehaviorCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Category for organizing behaviors\",\n    \
+        \        \"enum\": [\n                \"Base\",\n                \"Cultural\",\n                \"Professional\",\n\
+        \                \"Personal\",\n                \"Situational\",\n                \"Ambient\"\n            ]\n   \
+        \     },\n        \"CompilationOptions\": {\n            \"description\": \"Options controlling the ABML compilation
+        process including optimizations and caching\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"enableOptimizations\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Enable behavior tree
+        optimizations\"\n                },\n                \"cacheCompiledResult\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": true,\n                    \"description\": \"Cache the compiled behavior
+        for reuse\"\n                },\n                \"strictValidation\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"Enable strict validation mode\"\
+        \n                },\n                \"culturalAdaptations\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"default\": true,\n                    \"description\": \"Apply cultural adaptations during compilation\"\
         \n                },\n                \"goapIntegration\": {\n                    \"type\": \"boolean\",\n       \
         \             \"default\": true,\n                    \"description\": \"Generate GOAP goals from behaviors\"\n  \
         \              }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CompileBehaviorResponse\"\
         ,\n    \"$defs\": {\n        \"CompileBehaviorResponse\": {\n            \"description\": \"Response containing the
         results of an ABML behavior compilation\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"behaviorId\"\n            ],\n            \"properties\"\
-        : {\n                \"behaviorId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : false,\n            \"required\": [\n                \"behaviorId\",\n                \"compilationTimeMs\",\n \
+        \               \"isUpdate\"\n            ],\n            \"properties\": {\n                \"behaviorId\": {\n \
+        \                   \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\"\
         : \"Unique identifier for the compiled behavior (content-addressable hash)\",\n                    \"example\": \"\
         behavior-a1b2c3d4e5f6g7h8\"\n                },\n                \"behaviorName\": {\n                    \"type\"\
         : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable name
@@ -183,69 +143,69 @@ paths:
         \      \"compiledBehavior\": {\n                    \"$ref\": \"#/$defs/CompiledBehavior\",\n                    \"\
         nullable\": true,\n                    \"description\": \"The compiled behavior data including behavior tree and metadata\"\
         \n                },\n                \"compilationTimeMs\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Time taken to compile the behavior in milliseconds\"\n                },\n    \
-        \            \"assetId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Asset service ID where the compiled bytecode is stored. Null only when caching
-        is explicitly disabled.\"\n                },\n                \"bundleId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Bundle ID if the behavior was added
-        to a bundle. Null if not bundled.\"\n                },\n                \"isUpdate\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"True if this replaced an existing behavior with the same content
-        hash\"\n                },\n                \"warnings\": {\n                    \"type\": \"array\",\n          \
-        \          \"items\": {\n                        \"type\": \"string\"\n                    },\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Non-fatal warnings during compilation\"\n         \
-        \       }\n            }\n        },\n        \"CompiledBehavior\": {\n            \"description\": \"Compiled behavior
-        containing behavior tree, context schema, and GOAP integration data\",\n            \"type\": \"object\",\n      \
-        \      \"additionalProperties\": false,\n            \"required\": [\n                \"behaviorTree\",\n        \
-        \        \"contextSchema\"\n            ],\n            \"properties\": {\n                \"behaviorTree\": {\n \
-        \                   \"$ref\": \"#/$defs/BehaviorTreeData\",\n                    \"description\": \"Compiled behavior
-        tree data with bytecode or download reference\"\n                },\n                \"contextSchema\": {\n      \
-        \              \"$ref\": \"#/$defs/ContextSchemaData\",\n                    \"description\": \"Schema defining required
-        context variables for execution\"\n                },\n                \"serviceDependencies\": {\n              \
-        \      \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n    \
-        \                },\n                    \"nullable\": true,\n                    \"description\": \"List of required
-        services for this behavior\"\n                },\n                \"goapGoals\": {\n                    \"type\":
-        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GoapGoal\"\n           \
-        \         },\n                    \"nullable\": true,\n                    \"description\": \"GOAP goals extracted
-        from the behavior\"\n                },\n                \"executionMetadata\": {\n                    \"$ref\": \"\
-        #/$defs/ExecutionMetadata\",\n                    \"nullable\": true,\n                    \"description\": \"Metadata
-        for behavior execution including performance hints and resource requirements\"\n                }\n            }\n\
-        \        },\n        \"BehaviorTreeData\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Compiled behavior tree data with bytecode or download reference\",\n    \
-        \        \"properties\": {\n                \"bytecode\": {\n                    \"type\": \"string\",\n         \
-        \           \"nullable\": true,\n                    \"description\": \"Base64-encoded compiled bytecode for the behavior
-        tree\"\n                },\n                \"bytecodeSize\": {\n                    \"type\": \"integer\",\n    \
-        \                \"description\": \"Size of the bytecode in bytes\"\n                },\n                \"downloadUrl\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"URL to download the compiled behavior asset\"\n                }\n            }\n        },\n        \"ContextSchemaData\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Schema defining required context variables
-        for behavior execution\",\n            \"additionalProperties\": true\n        },\n        \"GoapGoal\": {\n     \
-        \       \"description\": \"Goal definition for GOAP planning with conditions and priority\",\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"name\"\
-        ,\n                \"conditions\",\n                \"priority\"\n            ],\n            \"properties\": {\n\
-        \                \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Name
-        of the goal\",\n                    \"example\": \"satisfy_hunger\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Human-readable description of the goal\"\n                },\n                \"conditions\": {\n            \
-        \        \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\"\
-        : \"string\"\n                    },\n                    \"description\": \"World state conditions that satisfy this
-        goal (literal conditions)\",\n                    \"example\": {\n                        \"hunger\": \"<= 0.3\",\n\
-        \                        \"gold\": \">= 50\"\n                    }\n                },\n                \"priority\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\"\
-        : 100,\n                    \"description\": \"Priority of this goal relative to others\"\n                },\n  \
-        \              \"preconditions\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"World state conditions required to pursue this goal\"\n                }\n\
-        \            }\n        },\n        \"ExecutionMetadata\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Metadata about behavior execution requirements including timing, resources,
-        and interrupt conditions\",\n            \"properties\": {\n                \"estimatedDuration\": {\n           \
-        \         \"type\": \"integer\",\n                    \"description\": \"Estimated execution time in seconds\"\n \
-        \               },\n                \"resourceRequirements\": {\n                    \"type\": \"object\",\n     \
-        \               \"additionalProperties\": {\n                        \"type\": \"number\"\n                    },\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Resource requirements for behavior
-        execution\"\n                },\n                \"interruptConditions\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Conditions that can interrupt behavior
-        execution\"\n                }\n            }\n        }\n    }\n}"
+        \               \"minimum\": 0,\n                    \"description\": \"Time taken to compile the behavior in milliseconds\"\
+        \n                },\n                \"assetId\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Asset service ID where the compiled bytecode is stored.
+        Null only when caching is explicitly disabled.\"\n                },\n                \"isUpdate\": {\n          \
+        \          \"type\": \"boolean\",\n                    \"description\": \"True if this replaced an existing behavior
+        with the same content hash\"\n                }\n            }\n        },\n        \"CompiledBehavior\": {\n    \
+        \        \"description\": \"Compiled behavior containing behavior tree, context schema, and GOAP integration data\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"behaviorTree\",\n                \"contextSchema\"\n            ],\n            \"properties\"\
+        : {\n                \"behaviorTree\": {\n                    \"$ref\": \"#/$defs/BehaviorTreeData\",\n          \
+        \          \"description\": \"Compiled behavior tree data with bytecode or download reference\"\n                },\n\
+        \                \"contextSchema\": {\n                    \"$ref\": \"#/$defs/ContextSchemaData\",\n            \
+        \        \"description\": \"Schema defining required context variables for execution\"\n                },\n     \
+        \           \"serviceDependencies\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"List of required services for this behavior\"\n                },\n       \
+        \         \"goapGoals\": {\n                    \"type\": \"array\",\n                    \"items\": {\n         \
+        \               \"$ref\": \"#/$defs/GoapGoal\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"GOAP goals extracted from the behavior\"\n                },\n           \
+        \     \"executionMetadata\": {\n                    \"$ref\": \"#/$defs/ExecutionMetadata\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Metadata for behavior execution including performance
+        hints and resource requirements\"\n                }\n            }\n        },\n        \"BehaviorTreeData\": {\n\
+        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
+        Compiled behavior tree data with bytecode or download reference\",\n            \"required\": [\n                \"\
+        bytecodeSize\"\n            ],\n            \"properties\": {\n                \"bytecode\": {\n                 \
+        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Base64-encoded
+        compiled bytecode for the behavior tree\"\n                },\n                \"bytecodeSize\": {\n             \
+        \       \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Size of
+        the bytecode in bytes\"\n                },\n                \"downloadUrl\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"URL to download the compiled
+        behavior asset\"\n                }\n            }\n        },\n        \"ContextSchemaData\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Schema defining required context variables for behavior execution.\\
+        nStructure is compiler-generated from ABML context declarations.\\nKeys are variable names, values describe expected
+        types and sources.\\nNo Bannou service reads specific keys by convention (T29 compliant) \\u2014\\nthis schema is
+        consumed by the ActorRunner interpreter at runtime.\\n\",\n            \"additionalProperties\": true\n        },\n\
+        \        \"GoapGoal\": {\n            \"description\": \"Goal definition for GOAP planning with conditions and priority\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"name\",\n                \"conditions\",\n                \"priority\"\n            ],\n      \
+        \      \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"Name of the goal\",\n                    \"example\": \"satisfy_hunger\"\n              \
+        \  },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Human-readable description of the goal\"\n                },\n   \
+        \             \"conditions\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        World state conditions that satisfy this goal (literal conditions)\",\n                    \"example\": {\n      \
+        \                  \"hunger\": \"<= 0.3\",\n                        \"gold\": \">= 50\"\n                    }\n \
+        \               },\n                \"priority\": {\n                    \"type\": \"integer\",\n                \
+        \    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"description\": \"Priority of this
+        goal relative to others\"\n                },\n                \"preconditions\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n   \
+        \                 },\n                    \"nullable\": true,\n                    \"description\": \"World state
+        conditions required to pursue this goal\"\n                }\n            }\n        },\n        \"ExecutionMetadata\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Metadata about behavior execution requirements including timing, resources, and interrupt conditions\",\n    \
+        \        \"properties\": {\n                \"estimatedDuration\": {\n                    \"type\": \"integer\",\n\
+        \                    \"description\": \"Estimated execution time in seconds\"\n                },\n              \
+        \  \"resourceRequirements\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"number\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Resource requirements for behavior execution\"\n                },\n     \
+        \           \"interruptConditions\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Conditions that can interrupt behavior execution\"\n                }\n   \
+        \         }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Compile ABML behavior definition\",\n    \"description\": \"Compiles a
         YAML-based ABML behavior definition into executable behavior trees.\\nHandles stackable behavior sets, cultural adaptations,
         and context variable resolution.\\n\",\n    \"tags\": [\n        \"ABML\"\n    ],\n    \"deprecated\": false,\n  \
@@ -283,10 +243,11 @@ paths:
         ,\n    \"$defs\": {\n        \"ValidateAbmlRequest\": {\n            \"description\": \"Request to validate ABML YAML
         content against schema and semantic rules\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"abmlContent\"\n            ],\n            \"properties\"\
-        : {\n                \"abmlContent\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Raw ABML YAML content to validate\"\n                },\n                \"strictMode\": {\n                 \
-        \   \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Enable
-        strict validation mode with enhanced checking\"\n                }\n            }\n        }\n    }\n}"
+        : {\n                \"abmlContent\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"description\": \"Raw ABML YAML content to validate\"\n                },\n           \
+        \     \"strictMode\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n   \
+        \                 \"description\": \"Enable strict validation mode with enhanced checking\"\n                }\n \
+        \           }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ValidateAbmlResponse\"\
         ,\n    \"$defs\": {\n        \"ValidateAbmlResponse\": {\n            \"description\": \"Response containing the results
         of ABML validation including errors and warnings\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -304,18 +265,20 @@ paths:
         description\": \"Detailed validation error with type, location, and message information\",\n            \"type\":
         \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\",\n\
         \                \"message\"\n            ],\n            \"properties\": {\n                \"type\": {\n       \
-        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"syntax\",\n      \
-        \                  \"semantic\",\n                        \"schema\",\n                        \"context\",\n    \
-        \                    \"service_dependency\"\n                    ],\n                    \"description\": \"Type of
-        validation error\"\n                },\n                \"message\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Human-readable error message\"\n                },\n                \"lineNumber\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Line number where the error
-        occurred (if applicable)\"\n                },\n                \"columnNumber\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Column number where the error occurred (if applicable)\"\n\
-        \                },\n                \"yamlPath\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"YAML path to the problematic element\",\n       \
-        \             \"example\": \"behaviors.morning_startup.actions[0]\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        \             \"$ref\": \"#/$defs/ValidationErrorType\",\n                    \"description\": \"Type of validation
+        error\"\n                },\n                \"message\": {\n                    \"type\": \"string\",\n         \
+        \           \"description\": \"Human-readable error message\"\n                },\n                \"lineNumber\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"Line number where the error occurred. Null if not applicable.\"\n   \
+        \             },\n                \"columnNumber\": {\n                    \"type\": \"integer\",\n              \
+        \      \"nullable\": true,\n                    \"minimum\": 1,\n                    \"description\": \"Column number
+        where the error occurred. Null if not applicable.\"\n                },\n                \"yamlPath\": {\n       \
+        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"YAML path to the problematic element\",\n                    \"example\": \"behaviors.morning_startup.actions[0]\"\
+        \n                }\n            }\n        },\n        \"ValidationErrorType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of ABML validation error\",\n            \"enum\": [\n                \"Syntax\"\
+        ,\n                \"Semantic\",\n                \"Schema\",\n                \"Context\",\n                \"ServiceDependency\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Validate ABML definition\",\n    \"description\": \"Validates ABML YAML
         against schema and checks for semantic correctness.\\nIncludes context variable validation and service dependency
         checking.\\n\",\n    \"tags\": [\n        \"Validation\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -351,26 +314,22 @@ paths:
         ,\n    \"$defs\": {\n        \"GetCachedBehaviorRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Request to get a cached compiled behavior\",\n            \"required\": [\n\
         \                \"behaviorId\"\n            ],\n            \"properties\": {\n                \"behaviorId\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for the cached
-        behavior\"\n                }\n            }\n        }\n    }\n}"
+        \                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\"\
+        : \"Unique identifier for the cached behavior\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CachedBehaviorResponse\"\
         ,\n    \"$defs\": {\n        \"CachedBehaviorResponse\": {\n            \"description\": \"Response containing a previously
         compiled behavior retrieved from cache\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"behaviorId\",\n                \"compiledBehavior\"\n   \
         \         ],\n            \"properties\": {\n                \"behaviorId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique identifier for the cached behavior\"\n                },\n      \
-        \          \"compiledBehavior\": {\n                    \"$ref\": \"#/$defs/CompiledBehavior\",\n                \
-        \    \"description\": \"The compiled behavior data retrieved from cache\"\n                },\n                \"\
-        cacheTimestamp\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n \
-        \                   \"nullable\": true,\n                    \"description\": \"When the behavior was cached\"\n \
-        \               },\n                \"cacheHit\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"description\": \"Whether this was a cache hit or miss\"\n                }\n            }\n        },\n   \
-        \     \"CompiledBehavior\": {\n            \"description\": \"Compiled behavior containing behavior tree, context
-        schema, and GOAP integration data\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"behaviorTree\",\n                \"contextSchema\"\n            ],\n\
-        \            \"properties\": {\n                \"behaviorTree\": {\n                    \"$ref\": \"#/$defs/BehaviorTreeData\"\
-        ,\n                    \"description\": \"Compiled behavior tree data with bytecode or download reference\"\n    \
-        \            },\n                \"contextSchema\": {\n                    \"$ref\": \"#/$defs/ContextSchemaData\"\
+        ,\n                    \"minLength\": 1,\n                    \"description\": \"Unique identifier for the cached
+        behavior\"\n                },\n                \"compiledBehavior\": {\n                    \"$ref\": \"#/$defs/CompiledBehavior\"\
+        ,\n                    \"description\": \"The compiled behavior data retrieved from cache\"\n                }\n \
+        \           }\n        },\n        \"CompiledBehavior\": {\n            \"description\": \"Compiled behavior containing
+        behavior tree, context schema, and GOAP integration data\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"behaviorTree\",\n                \"contextSchema\"\n    \
+        \        ],\n            \"properties\": {\n                \"behaviorTree\": {\n                    \"$ref\": \"\
+        #/$defs/BehaviorTreeData\",\n                    \"description\": \"Compiled behavior tree data with bytecode or download
+        reference\"\n                },\n                \"contextSchema\": {\n                    \"$ref\": \"#/$defs/ContextSchemaData\"\
         ,\n                    \"description\": \"Schema defining required context variables for execution\"\n           \
         \     },\n                \"serviceDependencies\": {\n                    \"type\": \"array\",\n                 \
         \   \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
@@ -382,42 +341,46 @@ paths:
         \ \"nullable\": true,\n                    \"description\": \"Metadata for behavior execution including performance
         hints and resource requirements\"\n                }\n            }\n        },\n        \"BehaviorTreeData\": {\n\
         \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        Compiled behavior tree data with bytecode or download reference\",\n            \"properties\": {\n              \
-        \  \"bytecode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"Base64-encoded compiled bytecode for the behavior tree\"\n                },\n    \
-        \            \"bytecodeSize\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Size of the bytecode in bytes\"\n                },\n                \"downloadUrl\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"URL to download
-        the compiled behavior asset\"\n                }\n            }\n        },\n        \"ContextSchemaData\": {\n  \
-        \          \"type\": \"object\",\n            \"description\": \"Schema defining required context variables for behavior
-        execution\",\n            \"additionalProperties\": true\n        },\n        \"GoapGoal\": {\n            \"description\"\
-        : \"Goal definition for GOAP planning with conditions and priority\",\n            \"type\": \"object\",\n       \
-        \     \"additionalProperties\": false,\n            \"required\": [\n                \"name\",\n                \"\
-        conditions\",\n                \"priority\"\n            ],\n            \"properties\": {\n                \"name\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Name of the goal\",\n     \
-        \               \"example\": \"satisfy_hunger\"\n                },\n                \"description\": {\n        \
-        \            \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Human-readable description of the goal\"\n                },\n                \"conditions\": {\n              \
-        \      \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"description\": \"World state conditions that satisfy this
-        goal (literal conditions)\",\n                    \"example\": {\n                        \"hunger\": \"<= 0.3\",\n\
-        \                        \"gold\": \">= 50\"\n                    }\n                },\n                \"priority\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\"\
-        : 100,\n                    \"description\": \"Priority of this goal relative to others\"\n                },\n  \
-        \              \"preconditions\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"World state conditions required to pursue this goal\"\n                }\n\
-        \            }\n        },\n        \"ExecutionMetadata\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Metadata about behavior execution requirements including timing, resources,
-        and interrupt conditions\",\n            \"properties\": {\n                \"estimatedDuration\": {\n           \
-        \         \"type\": \"integer\",\n                    \"description\": \"Estimated execution time in seconds\"\n \
-        \               },\n                \"resourceRequirements\": {\n                    \"type\": \"object\",\n     \
-        \               \"additionalProperties\": {\n                        \"type\": \"number\"\n                    },\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Resource requirements for behavior
-        execution\"\n                },\n                \"interruptConditions\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Conditions that can interrupt behavior
-        execution\"\n                }\n            }\n        }\n    }\n}"
+        Compiled behavior tree data with bytecode or download reference\",\n            \"required\": [\n                \"\
+        bytecodeSize\"\n            ],\n            \"properties\": {\n                \"bytecode\": {\n                 \
+        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Base64-encoded
+        compiled bytecode for the behavior tree\"\n                },\n                \"bytecodeSize\": {\n             \
+        \       \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Size of
+        the bytecode in bytes\"\n                },\n                \"downloadUrl\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"URL to download the compiled
+        behavior asset\"\n                }\n            }\n        },\n        \"ContextSchemaData\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Schema defining required context variables for behavior execution.\\
+        nStructure is compiler-generated from ABML context declarations.\\nKeys are variable names, values describe expected
+        types and sources.\\nNo Bannou service reads specific keys by convention (T29 compliant) \\u2014\\nthis schema is
+        consumed by the ActorRunner interpreter at runtime.\\n\",\n            \"additionalProperties\": true\n        },\n\
+        \        \"GoapGoal\": {\n            \"description\": \"Goal definition for GOAP planning with conditions and priority\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"name\",\n                \"conditions\",\n                \"priority\"\n            ],\n      \
+        \      \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"Name of the goal\",\n                    \"example\": \"satisfy_hunger\"\n              \
+        \  },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Human-readable description of the goal\"\n                },\n   \
+        \             \"conditions\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        World state conditions that satisfy this goal (literal conditions)\",\n                    \"example\": {\n      \
+        \                  \"hunger\": \"<= 0.3\",\n                        \"gold\": \">= 50\"\n                    }\n \
+        \               },\n                \"priority\": {\n                    \"type\": \"integer\",\n                \
+        \    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"description\": \"Priority of this
+        goal relative to others\"\n                },\n                \"preconditions\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n   \
+        \                 },\n                    \"nullable\": true,\n                    \"description\": \"World state
+        conditions required to pursue this goal\"\n                }\n            }\n        },\n        \"ExecutionMetadata\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Metadata about behavior execution requirements including timing, resources, and interrupt conditions\",\n    \
+        \        \"properties\": {\n                \"estimatedDuration\": {\n                    \"type\": \"integer\",\n\
+        \                    \"description\": \"Estimated execution time in seconds\"\n                },\n              \
+        \  \"resourceRequirements\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"number\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Resource requirements for behavior execution\"\n                },\n     \
+        \           \"interruptConditions\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Conditions that can interrupt behavior execution\"\n                }\n   \
+        \         }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get cached compiled behavior\",\n    \"description\": \"Retrieves a previously
         compiled behavior from the cache.\\nUsed for performance optimization in high-frequency behavior execution.\\n\",\n\
         \    \"tags\": [\n        \"Cache\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"GetCachedBehavior\"\
@@ -449,8 +412,9 @@ paths:
         ,\n    \"$defs\": {\n        \"InvalidateCacheRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Request to invalidate a cached behavior\",\n            \"required\": [\n\
         \                \"behaviorId\"\n            ],\n            \"properties\": {\n                \"behaviorId\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for the cached
-        behavior to invalidate\"\n                }\n            }\n        }\n    }\n}"
+        \                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\"\
+        : \"Unique identifier for the cached behavior to invalidate\"\n                }\n            }\n        }\n    }\n\
+        }"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Invalidate cached behavior\",\n    \"description\": \"Removes a behavior
         from the cache, forcing recompilation on next access.\\nUsed when behavior definitions are updated.\\n\",\n    \"\
@@ -488,72 +452,78 @@ paths:
         to achieve a goal from current world state\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"goal\",\n                \"worldState\",\n              \
         \  \"behaviorId\"\n            ],\n            \"properties\": {\n                \"agentId\": {\n               \
-        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Unique
-        identifier for the agent requesting the plan\"\n                },\n                \"goal\": {\n                \
-        \    \"$ref\": \"#/$defs/GoapGoal\",\n                    \"description\": \"The goal to achieve through planning\"\
-        \n                },\n                \"worldState\": {\n                    \"type\": \"object\",\n             \
-        \       \"additionalProperties\": true,\n                    \"description\": \"Current world state as key-value pairs\"\
-        ,\n                    \"example\": {\n                        \"hunger\": 0.8,\n                        \"gold\"\
-        : 50,\n                        \"location\": \"home\"\n                    }\n                },\n               \
-        \ \"behaviorId\": {\n                    \"type\": \"string\",\n                    \"description\": \"ID of compiled
-        behavior containing GOAP actions\"\n                },\n                \"options\": {\n                    \"$ref\"\
-        : \"#/$defs/GoapPlanningOptions\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Options controlling the planning process\"\n                }\n            }\n        },\n        \"GoapGoal\":
-        {\n            \"description\": \"Goal definition for GOAP planning with conditions and priority\",\n            \"\
-        type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"\
-        name\",\n                \"conditions\",\n                \"priority\"\n            ],\n            \"properties\"\
-        : {\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\":
-        \"Name of the goal\",\n                    \"example\": \"satisfy_hunger\"\n                },\n                \"\
-        description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Human-readable description of the goal\"\n                },\n                \"conditions\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"string\"\n                    },\n                    \"description\": \"World state conditions
-        that satisfy this goal (literal conditions)\",\n                    \"example\": {\n                        \"hunger\"\
-        : \"<= 0.3\",\n                        \"gold\": \">= 50\"\n                    }\n                },\n          \
-        \      \"priority\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n        \
-        \            \"maximum\": 100,\n                    \"description\": \"Priority of this goal relative to others\"\n\
-        \                },\n                \"preconditions\": {\n                    \"type\": \"object\",\n           \
-        \         \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n    \
-        \                \"nullable\": true,\n                    \"description\": \"World state conditions required to pursue
-        this goal\"\n                }\n            }\n        },\n        \"GoapPlanningOptions\": {\n            \"description\"\
-        : \"Options controlling the GOAP planning process including depth and timeout limits\",\n            \"type\": \"\
-        object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"maxDepth\"\
-        : {\n                    \"type\": \"integer\",\n                    \"default\": 10,\n                    \"description\"\
-        : \"Maximum plan depth (number of actions)\"\n                },\n                \"maxNodes\": {\n              \
-        \      \"type\": \"integer\",\n                    \"default\": 1000,\n                    \"description\": \"Maximum
-        nodes to expand during search\"\n                },\n                \"timeoutMs\": {\n                    \"type\"\
-        : \"integer\",\n                    \"default\": 100,\n                    \"description\": \"Planning timeout in
-        milliseconds\"\n                }\n            }\n        }\n    }\n}"
+        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Unique identifier for the agent requesting the plan\"\n                },\n\
+        \                \"goal\": {\n                    \"$ref\": \"#/$defs/GoapGoal\",\n                    \"description\"\
+        : \"The goal to achieve through planning\"\n                },\n                \"worldState\": {\n              \
+        \      \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"description\"\
+        : \"Planner-owned dynamic world state bag for GOAP A* search.\\nKeys are arbitrary world state variable names, values
+        are current state.\\nNo Bannou service reads specific keys by convention (T29 compliant).\\n\",\n                \
+        \    \"example\": {\n                        \"hunger\": 0.8,\n                        \"gold\": 50,\n           \
+        \             \"location\": \"home\"\n                    }\n                },\n                \"behaviorId\": {\n\
+        \                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\"\
+        : \"ID of compiled behavior containing GOAP actions\"\n                },\n                \"options\": {\n      \
+        \              \"$ref\": \"#/$defs/GoapPlanningOptions\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Options controlling the planning process\"\n                }\n            }\n        },\n\
+        \        \"GoapGoal\": {\n            \"description\": \"Goal definition for GOAP planning with conditions and priority\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"name\",\n                \"conditions\",\n                \"priority\"\n            ],\n      \
+        \      \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"Name of the goal\",\n                    \"example\": \"satisfy_hunger\"\n              \
+        \  },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Human-readable description of the goal\"\n                },\n   \
+        \             \"conditions\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        World state conditions that satisfy this goal (literal conditions)\",\n                    \"example\": {\n      \
+        \                  \"hunger\": \"<= 0.3\",\n                        \"gold\": \">= 50\"\n                    }\n \
+        \               },\n                \"priority\": {\n                    \"type\": \"integer\",\n                \
+        \    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"description\": \"Priority of this
+        goal relative to others\"\n                },\n                \"preconditions\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n   \
+        \                 },\n                    \"nullable\": true,\n                    \"description\": \"World state
+        conditions required to pursue this goal\"\n                }\n            }\n        },\n        \"GoapPlanningOptions\"\
+        : {\n            \"description\": \"Options controlling the GOAP planning process including depth and timeout limits\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
+        \                \"maxDepth\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
+        \                    \"default\": 10,\n                    \"description\": \"Maximum plan depth (number of actions)\"\
+        \n                },\n                \"maxNodes\": {\n                    \"type\": \"integer\",\n              \
+        \      \"minimum\": 1,\n                    \"default\": 1000,\n                    \"description\": \"Maximum nodes
+        to expand during search\"\n                },\n                \"timeoutMs\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 1,\n                    \"default\": 100,\n                    \"description\"\
+        : \"Planning timeout in milliseconds\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GoapPlanResponse\"\
         ,\n    \"$defs\": {\n        \"GoapPlanResponse\": {\n            \"description\": \"Response containing the generated
         GOAP plan. If no plan could be found, plan is null and failureReason explains why.\",\n            \"type\": \"object\"\
         ,\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"plan\": {\n    \
         \                \"$ref\": \"#/$defs/GoapPlanResult\",\n                    \"nullable\": true,\n                \
         \    \"description\": \"The generated plan if successful\"\n                },\n                \"planningTimeMs\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Time spent planning in milliseconds\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Time spent planning in milliseconds. Null when planner did not run.\"\
         \n                },\n                \"nodesExpanded\": {\n                    \"type\": \"integer\",\n         \
-        \           \"description\": \"Number of nodes expanded during A* search\"\n                },\n                \"\
-        failureReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"Reason for planning failure if unsuccessful\",\n                    \"example\": \"\
-        No plan found - goal unreachable\"\n                }\n            }\n        },\n        \"GoapPlanResult\": {\n\
-        \            \"description\": \"Result of GOAP planning containing the ordered sequence of actions to achieve a goal\"\
-        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"goalId\",\n                \"actions\",\n                \"totalCost\"\n            ],\n      \
-        \      \"properties\": {\n                \"goalId\": {\n                    \"type\": \"string\",\n             \
-        \       \"description\": \"ID of the goal this plan achieves\"\n                },\n                \"actions\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/PlannedActionResponse\"\n                    },\n                    \"description\": \"Ordered sequence of
-        actions to execute\"\n                },\n                \"totalCost\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"description\": \"Total cost of all actions in
-        the plan\"\n                }\n            }\n        },\n        \"PlannedActionResponse\": {\n            \"description\"\
-        : \"Single action within a GOAP plan with position and cost information\",\n            \"type\": \"object\",\n  \
-        \          \"additionalProperties\": false,\n            \"required\": [\n                \"actionId\",\n        \
-        \        \"index\",\n                \"cost\"\n            ],\n            \"properties\": {\n                \"actionId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the action (flow name)\"\
-        \n                },\n                \"index\": {\n                    \"type\": \"integer\",\n                 \
-        \   \"description\": \"Position in the plan sequence\"\n                },\n                \"cost\": {\n        \
-        \            \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
-        : \"Cost of this action\"\n                }\n            }\n        }\n    }\n}"
+        \           \"minimum\": 0,\n                    \"nullable\": true,\n                    \"description\": \"Number
+        of nodes expanded during A* search. Null when planner did not run.\"\n                },\n                \"failureReason\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for planning failure if unsuccessful\",\n                    \"example\": \"No plan found - goal unreachable\"\
+        \n                }\n            }\n        },\n        \"GoapPlanResult\": {\n            \"description\": \"Result
+        of GOAP planning containing the ordered sequence of actions to achieve a goal\",\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"goalId\",\n      \
+        \          \"actions\",\n                \"totalCost\"\n            ],\n            \"properties\": {\n          \
+        \      \"goalId\": {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the
+        goal this plan achieves\"\n                },\n                \"actions\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PlannedActionResponse\"\n       \
+        \             },\n                    \"description\": \"Ordered sequence of actions to execute\"\n              \
+        \  },\n                \"totalCost\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"minimum\": 0,\n                    \"description\": \"Total cost of all actions
+        in the plan\"\n                }\n            }\n        },\n        \"PlannedActionResponse\": {\n            \"\
+        description\": \"Single action within a GOAP plan with position and cost information\",\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"actionId\"\
+        ,\n                \"index\",\n                \"cost\"\n            ],\n            \"properties\": {\n         \
+        \       \"actionId\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n      \
+        \              \"description\": \"ID of the action (flow name)\"\n                },\n                \"index\": {\n\
+        \                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Position in the plan sequence\"\n                },\n                \"cost\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n                 \
+        \   \"description\": \"Cost of this action\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Generate GOAP plan\",\n    \"description\": \"Generates a GOAP plan to
         achieve a goal from the current world state.\\nUses A* search to find the optimal sequence of actions.\\n\",\n   \
         \ \"tags\": [\n        \"GOAP\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"GenerateGoapPlan\"\n}"
@@ -591,11 +561,13 @@ paths:
         \          \"worldState\"\n            ],\n            \"properties\": {\n                \"plan\": {\n          \
         \          \"$ref\": \"#/$defs/GoapPlanResult\",\n                    \"description\": \"The plan to validate\"\n\
         \                },\n                \"currentActionIndex\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Index of the action currently being executed\"\n                },\n          \
-        \      \"worldState\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"description\": \"Current world state\"\n                },\n                \"activeGoals\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/GoapGoal\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        \               \"minimum\": 0,\n                    \"description\": \"Index of the action currently being executed\"\
+        \n                },\n                \"worldState\": {\n                    \"type\": \"object\",\n             \
+        \       \"additionalProperties\": true,\n                    \"description\": \"Planner-owned dynamic world state
+        bag for plan validation.\\nKeys are arbitrary world state variable names, values are current state.\\nNo Bannou service
+        reads specific keys by convention (T29 compliant).\\n\"\n                },\n                \"activeGoals\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/GoapGoal\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
         : \"All active goals for priority checking\"\n                }\n            }\n        },\n        \"GoapPlanResult\"\
         : {\n            \"description\": \"Result of GOAP planning containing the ordered sequence of actions to achieve
         a goal\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -605,52 +577,55 @@ paths:
         : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
         : \"#/$defs/PlannedActionResponse\"\n                    },\n                    \"description\": \"Ordered sequence
         of actions to execute\"\n                },\n                \"totalCost\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"description\": \"Total cost of all actions in
-        the plan\"\n                }\n            }\n        },\n        \"PlannedActionResponse\": {\n            \"description\"\
-        : \"Single action within a GOAP plan with position and cost information\",\n            \"type\": \"object\",\n  \
-        \          \"additionalProperties\": false,\n            \"required\": [\n                \"actionId\",\n        \
-        \        \"index\",\n                \"cost\"\n            ],\n            \"properties\": {\n                \"actionId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the action (flow name)\"\
-        \n                },\n                \"index\": {\n                    \"type\": \"integer\",\n                 \
-        \   \"description\": \"Position in the plan sequence\"\n                },\n                \"cost\": {\n        \
-        \            \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
-        : \"Cost of this action\"\n                }\n            }\n        },\n        \"GoapGoal\": {\n            \"description\"\
-        : \"Goal definition for GOAP planning with conditions and priority\",\n            \"type\": \"object\",\n       \
-        \     \"additionalProperties\": false,\n            \"required\": [\n                \"name\",\n                \"\
-        conditions\",\n                \"priority\"\n            ],\n            \"properties\": {\n                \"name\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Name of the goal\",\n     \
-        \               \"example\": \"satisfy_hunger\"\n                },\n                \"description\": {\n        \
-        \            \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Human-readable description of the goal\"\n                },\n                \"conditions\": {\n              \
-        \      \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"description\": \"World state conditions that satisfy this
-        goal (literal conditions)\",\n                    \"example\": {\n                        \"hunger\": \"<= 0.3\",\n\
-        \                        \"gold\": \">= 50\"\n                    }\n                },\n                \"priority\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\"\
-        : 100,\n                    \"description\": \"Priority of this goal relative to others\"\n                },\n  \
-        \              \"preconditions\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"World state conditions required to pursue this goal\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Total cost of all actions in the plan\"\n                }\n            }\n        },\n        \"PlannedActionResponse\"\
+        : {\n            \"description\": \"Single action within a GOAP plan with position and cost information\",\n     \
+        \       \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
+        \         \"actionId\",\n                \"index\",\n                \"cost\"\n            ],\n            \"properties\"\
+        : {\n                \"actionId\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"description\": \"ID of the action (flow name)\"\n                },\n                \"\
+        index\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"\
+        description\": \"Position in the plan sequence\"\n                },\n                \"cost\": {\n              \
+        \      \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n  \
+        \                  \"description\": \"Cost of this action\"\n                }\n            }\n        },\n      \
+        \  \"GoapGoal\": {\n            \"description\": \"Goal definition for GOAP planning with conditions and priority\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"name\",\n                \"conditions\",\n                \"priority\"\n            ],\n      \
+        \      \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"Name of the goal\",\n                    \"example\": \"satisfy_hunger\"\n              \
+        \  },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Human-readable description of the goal\"\n                },\n   \
+        \             \"conditions\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        World state conditions that satisfy this goal (literal conditions)\",\n                    \"example\": {\n      \
+        \                  \"hunger\": \"<= 0.3\",\n                        \"gold\": \">= 50\"\n                    }\n \
+        \               },\n                \"priority\": {\n                    \"type\": \"integer\",\n                \
+        \    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"description\": \"Priority of this
+        goal relative to others\"\n                },\n                \"preconditions\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n   \
+        \                 },\n                    \"nullable\": true,\n                    \"description\": \"World state
+        conditions required to pursue this goal\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ValidateGoapPlanResponse\"\
         ,\n    \"$defs\": {\n        \"ValidateGoapPlanResponse\": {\n            \"description\": \"Response indicating whether
         a GOAP plan is still valid and suggested next action\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"isValid\",\n                \"reason\",\n               \
         \ \"suggestedAction\"\n            ],\n            \"properties\": {\n                \"isValid\": {\n           \
         \         \"type\": \"boolean\",\n                    \"description\": \"Whether the plan is still valid\"\n     \
-        \           },\n                \"reason\": {\n                    \"type\": \"string\",\n                    \"enum\"\
-        : [\n                        \"None\",\n                        \"PreconditionInvalidated\",\n                   \
-        \     \"ActionFailed\",\n                        \"BetterGoalAvailable\",\n                        \"PlanCompleted\"\
-        ,\n                        \"GoalAlreadySatisfied\",\n                        \"SuboptimalPlan\"\n               \
-        \     ],\n                    \"description\": \"Reason for the validation result\"\n                },\n        \
-        \        \"suggestedAction\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n    \
-        \                    \"Continue\",\n                        \"Replan\",\n                        \"Abort\"\n     \
-        \               ],\n                    \"description\": \"Suggested action based on validation\"\n              \
-        \  },\n                \"invalidatedAtIndex\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"description\": \"Index where plan became invalid (if applicable)\"\n                },\n                \"message\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional details about the validation result. Null when no additional context is needed.\"\n               \
-        \ }\n            }\n        }\n    }\n}"
+        \           },\n                \"reason\": {\n                    \"$ref\": \"#/$defs/ReplanReason\",\n         \
+        \           \"description\": \"Reason for the validation result\"\n                },\n                \"suggestedAction\"\
+        : {\n                    \"$ref\": \"#/$defs/ValidationSuggestion\",\n                    \"description\": \"Suggested
+        action based on validation\"\n                },\n                \"invalidatedAtIndex\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Index where
+        plan became invalid. Null when plan is valid.\"\n                },\n                \"message\": {\n            \
+        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Additional
+        details about the validation result. Null when no additional context is needed.\"\n                }\n           \
+        \ }\n        },\n        \"ReplanReason\": {\n            \"type\": \"string\",\n            \"description\": \"Reason
+        for GOAP plan validation result\",\n            \"enum\": [\n                \"None\",\n                \"PreconditionInvalidated\"\
+        ,\n                \"ActionFailed\",\n                \"BetterGoalAvailable\",\n                \"PlanCompleted\"\
+        ,\n                \"GoalAlreadySatisfied\",\n                \"SuboptimalPlan\"\n            ]\n        },\n    \
+        \    \"ValidationSuggestion\": {\n            \"type\": \"string\",\n            \"description\": \"Suggested action
+        based on GOAP plan validation\",\n            \"enum\": [\n                \"Continue\",\n                \"Replan\"\
+        ,\n                \"Abort\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Validate existing GOAP plan\",\n    \"description\": \"Validates an existing
         GOAP plan against the current world state.\\nReturns whether the plan is still valid or needs replanning.\\n\",\n\
         \    \"tags\": [\n        \"GOAP\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"ValidateGoapPlan\"\n\
@@ -666,6 +641,7 @@ components:
       properties:
         behaviorId:
           type: string
+          minLength: 1
           description: Unique identifier for the cached behavior
     InvalidateCacheRequest:
       type: object
@@ -676,6 +652,7 @@ components:
       properties:
         behaviorId:
           type: string
+          minLength: 1
           description: Unique identifier for the cached behavior to invalidate
     CompileBehaviorRequest:
       description: Request to compile an ABML behavior definition into executable behavior trees
@@ -686,6 +663,7 @@ components:
       properties:
         abmlContent:
           type: string
+          minLength: 1
           description: Raw ABML YAML content to compile
           example: |
             version: "1.0.0"
@@ -707,19 +685,12 @@ components:
             If not provided, extracted from ABML metadata.id or generated from content hash.
           example: "blacksmith_daily_routine"
         behaviorCategory:
-          type: string
+          $ref: '#/components/schemas/BehaviorCategory'
           description: |
             Category for organizing behaviors (e.g., profession, cultural, situational).
             Used for filtering and grouping in bundles.
-          enum:
-          - base
-          - cultural
-          - professional
-          - personal
-          - situational
-          - ambient
           nullable: true
-          example: "professional"
+          example: "Professional"
         bundleId:
           type: string
           nullable: true
@@ -729,10 +700,6 @@ components:
             Clients can then download entire bundles for efficient bulk loading.
             If the bundle doesn't exist, it will be created.
           example: "blacksmith-behaviors-v1"
-        characterContext:
-          $ref: '#/components/schemas/CharacterContext'
-          nullable: true
-          description: Character context for context variable resolution during compilation
         compilationOptions:
           $ref: '#/components/schemas/CompilationOptions'
           nullable: true
@@ -746,6 +713,7 @@ components:
       properties:
         abmlContent:
           type: string
+          minLength: 1
           description: Raw ABML YAML content to validate
         strictMode:
           type: boolean
@@ -757,9 +725,12 @@ components:
       additionalProperties: false
       required:
       - behaviorId
+      - compilationTimeMs
+      - isUpdate
       properties:
         behaviorId:
           type: string
+          minLength: 1
           description: Unique identifier for the compiled behavior (content-addressable hash)
           example: "behavior-a1b2c3d4e5f6g7h8"
         behaviorName:
@@ -773,25 +744,16 @@ components:
           description: The compiled behavior data including behavior tree and metadata
         compilationTimeMs:
           type: integer
+          minimum: 0
           description: Time taken to compile the behavior in milliseconds
         assetId:
           type: string
           nullable: true
           description: Asset service ID where the compiled bytecode is stored. Null only when caching is explicitly 
             disabled.
-        bundleId:
-          type: string
-          nullable: true
-          description: Bundle ID if the behavior was added to a bundle. Null if not bundled.
         isUpdate:
           type: boolean
           description: True if this replaced an existing behavior with the same content hash
-        warnings:
-          type: array
-          items:
-            type: string
-          nullable: true
-          description: Non-fatal warnings during compilation
     ValidateAbmlResponse:
       description: Response containing the results of ABML validation including errors and warnings
       type: object
@@ -828,76 +790,17 @@ components:
       properties:
         behaviorId:
           type: string
+          minLength: 1
           description: Unique identifier for the cached behavior
         compiledBehavior:
           $ref: '#/components/schemas/CompiledBehavior'
           description: The compiled behavior data retrieved from cache
-        cacheTimestamp:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the behavior was cached
-        cacheHit:
-          type: boolean
-          description: Whether this was a cache hit or miss
-    CharacterContext:
-      type: object
-      additionalProperties: false
-      description: Context information about a character for behavior resolution
-      properties:
-        npcId:
-          type: string
-          nullable: true
-          description: Unique identifier for the NPC
-          example: "npc_12345"
-        culture:
-          type: string
-          nullable: true
-          description: Cultural background identifier
-          example: "european_medieval"
-        profession:
-          type: string
-          nullable: true
-          description: Character profession identifier
-          example: "blacksmith"
-        stats:
-          type: object
-          additionalProperties:
-            type: number
-          nullable: true
-          description: Character statistics and attributes
-          example:
-            energy: 0.8
-            health: 1.0
-            hunger: 0.3
-        skills:
-          type: object
-          additionalProperties:
-            type: number
-          nullable: true
-          description: Character skill levels
-          example:
-            blacksmithing: 85
-            trading: 42
-        location:
-          $ref: '#/components/schemas/Location'
-          nullable: true
-          description: Current location information for the character
-        relationships:
-          type: object
-          additionalProperties:
-            type: number
-          nullable: true
-          description: Relationship values with other characters
-        worldState:
-          type: object
-          additionalProperties: true
-          nullable: true
-          description: Relevant world state information
     BehaviorTreeData:
       type: object
       additionalProperties: false
       description: Compiled behavior tree data with bytecode or download reference
+      required:
+      - bytecodeSize
       properties:
         bytecode:
           type: string
@@ -905,6 +808,7 @@ components:
           description: Base64-encoded compiled bytecode for the behavior tree
         bytecodeSize:
           type: integer
+          minimum: 0
           description: Size of the bytecode in bytes
         downloadUrl:
           type: string
@@ -912,7 +816,12 @@ components:
           description: URL to download the compiled behavior asset
     ContextSchemaData:
       type: object
-      description: Schema defining required context variables for behavior execution
+      description: |
+        Schema defining required context variables for behavior execution.
+        Structure is compiler-generated from ABML context declarations.
+        Keys are variable names, values describe expected types and sources.
+        No Bannou service reads specific keys by convention (T29 compliant) —
+        this schema is consumed by the ActorRunner interpreter at runtime.
       additionalProperties: true
     CompiledBehavior:
       description: Compiled behavior containing behavior tree, context schema, and GOAP integration data
@@ -944,37 +853,6 @@ components:
           $ref: '#/components/schemas/ExecutionMetadata'
           nullable: true
           description: Metadata for behavior execution including performance hints and resource requirements
-    Location:
-      type: object
-      additionalProperties: false
-      description: Character location information including current position, region, and 3D coordinates
-      properties:
-        current:
-          type: string
-          nullable: true
-          description: Current location name or identifier
-        region:
-          type: string
-          nullable: true
-          description: Region or zone the character is in
-        coordinates:
-          $ref: '#/components/schemas/Coordinates'
-          nullable: true
-          description: 3D spatial coordinates of the character's position in the game world
-    Coordinates:
-      type: object
-      additionalProperties: false
-      description: 3D spatial coordinates representing a position in the game world
-      properties:
-        x:
-          type: number
-          description: X coordinate position
-        y:
-          type: number
-          description: Y coordinate position
-        z:
-          type: number
-          description: Z coordinate position
     ExecutionMetadata:
       type: object
       additionalProperties: false
@@ -1042,6 +920,7 @@ components:
       properties:
         agentId:
           type: string
+          format: uuid
           nullable: true
           description: Unique identifier for the agent requesting the plan
         goal:
@@ -1050,13 +929,17 @@ components:
         worldState:
           type: object
           additionalProperties: true
-          description: Current world state as key-value pairs
+          description: |
+            Planner-owned dynamic world state bag for GOAP A* search.
+            Keys are arbitrary world state variable names, values are current state.
+            No Bannou service reads specific keys by convention (T29 compliant).
           example:
             hunger: 0.8
             gold: 50
             location: "home"
         behaviorId:
           type: string
+          minLength: 1
           description: ID of compiled behavior containing GOAP actions
         options:
           $ref: '#/components/schemas/GoapPlanningOptions'
@@ -1074,10 +957,14 @@ components:
           description: The generated plan if successful
         planningTimeMs:
           type: integer
-          description: Time spent planning in milliseconds
+          minimum: 0
+          nullable: true
+          description: Time spent planning in milliseconds. Null when planner did not run.
         nodesExpanded:
           type: integer
-          description: Number of nodes expanded during A* search
+          minimum: 0
+          nullable: true
+          description: Number of nodes expanded during A* search. Null when planner did not run.
         failureReason:
           type: string
           nullable: true
@@ -1103,6 +990,7 @@ components:
         totalCost:
           type: number
           format: float
+          minimum: 0
           description: Total cost of all actions in the plan
     PlannedActionResponse:
       description: Single action within a GOAP plan with position and cost information
@@ -1115,13 +1003,16 @@ components:
       properties:
         actionId:
           type: string
+          minLength: 1
           description: ID of the action (flow name)
         index:
           type: integer
+          minimum: 0
           description: Position in the plan sequence
         cost:
           type: number
           format: float
+          minimum: 0
           description: Cost of this action
     ValidateGoapPlanRequest:
       description: Request to validate an existing GOAP plan against current world state
@@ -1137,11 +1028,15 @@ components:
           description: The plan to validate
         currentActionIndex:
           type: integer
+          minimum: 0
           description: Index of the action currently being executed
         worldState:
           type: object
           additionalProperties: true
-          description: Current world state
+          description: |
+            Planner-owned dynamic world state bag for plan validation.
+            Keys are arbitrary world state variable names, values are current state.
+            No Bannou service reads specific keys by convention (T29 compliant).
         activeGoals:
           type: array
           items:
@@ -1161,26 +1056,15 @@ components:
           type: boolean
           description: Whether the plan is still valid
         reason:
-          type: string
-          enum:
-          - None
-          - PreconditionInvalidated
-          - ActionFailed
-          - BetterGoalAvailable
-          - PlanCompleted
-          - GoalAlreadySatisfied
-          - SuboptimalPlan
+          $ref: '#/components/schemas/ReplanReason'
           description: Reason for the validation result
         suggestedAction:
-          type: string
-          enum:
-          - Continue
-          - Replan
-          - Abort
+          $ref: '#/components/schemas/ValidationSuggestion'
           description: Suggested action based on validation
         invalidatedAtIndex:
           type: integer
-          description: Index where plan became invalid (if applicable)
+          nullable: true
+          description: Index where plan became invalid. Null when plan is valid.
         message:
           type: string
           nullable: true
@@ -1192,14 +1076,17 @@ components:
       properties:
         maxDepth:
           type: integer
+          minimum: 1
           default: 10
           description: Maximum plan depth (number of actions)
         maxNodes:
           type: integer
+          minimum: 1
           default: 1000
           description: Maximum nodes to expand during search
         timeoutMs:
           type: integer
+          minimum: 1
           default: 100
           description: Planning timeout in milliseconds
     CompilationOptions:
@@ -1236,28 +1123,63 @@ components:
       - message
       properties:
         type:
-          type: string
-          enum:
-          - syntax
-          - semantic
-          - schema
-          - context
-          - service_dependency
+          $ref: '#/components/schemas/ValidationErrorType'
           description: Type of validation error
         message:
           type: string
           description: Human-readable error message
         lineNumber:
           type: integer
-          description: Line number where the error occurred (if applicable)
+          nullable: true
+          minimum: 1
+          description: Line number where the error occurred. Null if not applicable.
         columnNumber:
           type: integer
-          description: Column number where the error occurred (if applicable)
+          nullable: true
+          minimum: 1
+          description: Column number where the error occurred. Null if not applicable.
         yamlPath:
           type: string
           nullable: true
           description: YAML path to the problematic element
           example: "behaviors.morning_startup.actions[0]"
+    BehaviorCategory:
+      type: string
+      description: Category for organizing behaviors
+      enum:
+      - Base
+      - Cultural
+      - Professional
+      - Personal
+      - Situational
+      - Ambient
+    ReplanReason:
+      type: string
+      description: Reason for GOAP plan validation result
+      enum:
+      - None
+      - PreconditionInvalidated
+      - ActionFailed
+      - BetterGoalAvailable
+      - PlanCompleted
+      - GoalAlreadySatisfied
+      - SuboptimalPlan
+    ValidationSuggestion:
+      type: string
+      description: Suggested action based on GOAP plan validation
+      enum:
+      - Continue
+      - Replan
+      - Abort
+    ValidationErrorType:
+      type: string
+      description: Type of ABML validation error
+      enum:
+      - Syntax
+      - Semantic
+      - Schema
+      - Context
+      - ServiceDependency
 tags:
 - name: ABML
   description: Core ABML compilation and management operations

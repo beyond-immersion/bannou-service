@@ -313,7 +313,7 @@ When a plugin manually implements methods that are normally auto-generated (e.g.
 IF Configuration.SecureWebsocket
   CALL base.RegisterServicePermissionsAsync()   // standard matrix
 ELSE
-  // Register empty matrix — all endpoints accessible without WebSocket auth
+  // Register empty matrix — no endpoints exposed to WebSocket (service-to-service only)
   CALL PermissionClient.Register(emptyMatrix)
 ```
 

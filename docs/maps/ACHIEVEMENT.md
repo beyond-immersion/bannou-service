@@ -13,7 +13,7 @@
 |-------|-------|
 | Plugin | lib-achievement |
 | Layer | L4 GameFeatures |
-| Endpoints | 11 |
+| Endpoints | 12 |
 | State Stores | achievement-definition (Redis), achievement-progress (Redis), achievement-lock (Redis) |
 | Events Published | 5 (achievement.definition.created, achievement.definition.updated, achievement.progress.unlocked, achievement.progress.updated, achievement.platform.synced) |
 | Events Consumed | 3 (analytics.score.updated, analytics.milestone.reached, leaderboard.rank.changed) |
@@ -56,12 +56,13 @@
 | lib-messaging (IEventConsumer) | L0 | Hard | Subscribing to analytics and leaderboard events for auto-unlock |
 | lib-telemetry (ITelemetryProvider) | L0 | Hard | Span instrumentation on async helpers and event handlers |
 | lib-connect (IEntitySessionRegistry) | L1 | Hard | Push client events (unlock, progress milestone) to entity WebSocket sessions |
+| lib-resource (IResourceClient) | L1 | Hard | Reference tracking for character entities; cleanup callback registration |
 | lib-account (IAccountClient) | L1 | Hard | SteamAchievementSync queries account auth methods for Steam external IDs |
 
 **Notes**:
 - `IAccountClient` is injected into `SteamAchievementSync` (not directly into `AchievementService`). DI resolution fails at startup if missing.
-- Achievement is a **leaf service** — no other Bannou service calls `IAchievementClient` or subscribes to its events.
-- No lib-resource integration — definitions follow Category B deprecation (never deleted).
+- Achievement participates in Quest's prerequisite system via `AchievementPrerequisiteProviderFactory` (`IPrerequisiteProviderFactory`), discovered by Quest via DI collection.
+- Achievement registers `x-references` targeting `character` with sourceType `achievement-progress`. Cleanup endpoint `/achievement/cleanup-by-character` deletes progress across all game services when a character is deleted.
 - `IEnumerable<IPlatformAchievementSync>` is an achievement-internal collection pattern (Internal, Steam, Xbox stub, PlayStation stub), not a `bannou-service/Providers/` interface.
 
 ---
@@ -102,10 +103,13 @@
 | `IEntitySessionRegistry` | Client event push to entity WebSocket sessions |
 | `IEnumerable<IPlatformAchievementSync>` | Platform sync providers (Internal, Steam, Xbox stub, PlayStation stub) |
 | `RarityCalculationService` | Background worker for periodic rarity recalculation |
+| `AchievementPrerequisiteProviderFactory` | `IPrerequisiteProviderFactory` singleton — enables Quest (L2) to validate achievement-based prerequisites via DI collection |
 
 ---
 
 ## Method Index
+
+> **Roles column**: `[]` = service-to-service only (not exposed via WebSocket). See SCHEMA-RULES.md § x-permissions.
 
 | Method | Route | Roles | Mutates | Publishes |
 |--------|-------|-------|---------|-----------|
@@ -120,6 +124,7 @@
 | ListUnlockedAchievements | POST /achievement/list-unlocked | [user] | - | - |
 | SyncPlatformAchievements | POST /achievement/platform/sync | [admin] | - | achievement.platform.synced |
 | GetPlatformSyncStatus | POST /achievement/platform/status | [] | - | - |
+| CleanupByCharacter | POST /achievement/cleanup-by-character | [admin] | progress | - |
 
 ---
 
@@ -335,6 +340,20 @@ FOREACH syncProvider in _platformSyncs
   // SyncedCount, PendingCount, FailedCount are all hardcoded 0
   // LastSyncAt, LastError are null (per-entity sync history not tracked)
 RETURN (200, PlatformSyncStatusResponse { entityId, entityType, platforms })
+```
+
+### CleanupByCharacter
+POST /achievement/cleanup-by-character | Roles: [admin]
+
+```
+// Called by lib-resource during character deletion cleanup
+READ _definitionStore (set):achievement-game-services
+FOREACH gameServiceId in set
+  READ _progressStore:{gameServiceId}:Character:{characterId}
+  IF exists
+    DELETE _progressStore:{gameServiceId}:Character:{characterId}
+    progressRecordsDeleted++
+RETURN (200, CleanupByCharacterResponse { progressRecordsDeleted })
 ```
 
 ---

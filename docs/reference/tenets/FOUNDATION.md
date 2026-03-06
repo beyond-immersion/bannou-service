@@ -353,28 +353,46 @@ private async Task ProcessBatchAsync(IStateStoreFactory factory, CancellationTok
 
 ## Tenet 13: X-Permissions Usage (DOCUMENTED)
 
-**Rule**: All endpoints MUST declare x-permissions in schema, even if empty.
+**Rule**: All endpoints MUST declare x-permissions in schema.
 
-- Applies to **WebSocket client connections only** (NOT service-to-service calls)
-- Enforced by Connect service when routing client requests
-- Endpoints without x-permissions are **not exposed** to WebSocket clients
+### How the Permission System Works
+
+The Permission service builds a **per-session allowlist** from registered permission matrices. The code generator (`generate-permissions.sh`) extracts `x-permissions` entries from each schema and produces a `BuildPermissionMatrix()` method. **Only endpoints with at least one role entry are included in the matrix.** When a WebSocket client connects, the Permission service compiles the matrix against the session's role and states, producing an allowlist of permitted endpoints. Connect generates client-salted GUIDs only for allowed endpoints — if an endpoint is not in the allowlist, the client has no GUID for it and cannot call it.
+
+- Applies to **WebSocket client connections only** (NOT service-to-service calls via lib-mesh)
+- Enforced by Connect service: no GUID = no access
+- `x-permissions: []` (empty array) = **excluded from permission matrix entirely = no WebSocket access**
+- `x-permissions` omitted entirely = also excluded = no WebSocket access
+- Service-to-service calls via lib-mesh bypass the permission system completely
+
+### Role Hierarchy and Values
 
 **Role hierarchy**: `anonymous` → `user` → `developer` → `admin` (higher includes lower). Client must have the highest role specified AND all states specified.
 
 ```yaml
-# Example: User role + must be in lobby
+# Authenticated + must be in lobby
 x-permissions:
   - role: user
     states:
       game-session: in_lobby  # Requires BOTH user role AND in_lobby state
+
+# Pre-authentication public (rare — used by auth/login, server status)
+x-permissions:
+  - role: anonymous
+
+# Service-to-service only — NOT exposed to WebSocket clients
+x-permissions: []
 ```
 
-| Role | Use When | Examples |
-|------|----------|----------|
-| `admin` | Destructive or sensitive operations | Orchestrator, account deletion |
-| `developer` | Creating/managing resources | Character creation, realm management |
-| `user` | Requires authentication | Most gameplay endpoints |
-| `anonymous` | Intentionally public (rare) | Server status |
+| Value | Meaning | WebSocket Access |
+|-------|---------|------------------|
+| `role: admin` | Admin-only operations | Admin sessions only |
+| `role: developer` | Resource management | Developer and admin sessions |
+| `role: user` | Authenticated operations | Any authenticated session |
+| `role: anonymous` | Pre-auth public (rare) | All connected clients |
+| `[]` (empty array) | **Service-to-service only** | **No WebSocket access** |
+
+**Common mistake**: `x-permissions: []` does NOT mean "anonymous" or "public." It means the endpoint is completely invisible to WebSocket clients. If you want an endpoint accessible without authentication, use `role: anonymous`.
 
 ---
 
@@ -763,11 +781,40 @@ When Service B needs data associated with Service A's entities, Service B MUST o
 | Two L4 services share data about L2 entities | Both read from L2's metadata bag | One L4 service owns the data, the other queries it via API |
 | L4 needs to tag L2 entities | Add tag to L2's metadata by convention | L4 maintains its own tag-to-entity mapping |
 
+### The Archive Shape of T29 (Compression Callbacks)
+
+Compression archives (`x-compression-callback`) are another form of cross-service data bag. The same T29 anti-pattern applies: if Service A puts domain-specific data into an entity archive and Service B (or Service A for a different entity instance) reads that data to make API-level decisions, the archive format is a cross-service data contract.
+
+**Legitimate archive use**: Existing compression callbacks (character-personality, character-history, character-encounter, disposition, hearsay, faction, quest, obligation, storyline, character-lifecycle) contribute **entity identity and narrative data** consumed by:
+- **Behavior expressions**: `${personality.mercy}`, `${encounters.last_hostile_days}`, `${backstory.origin}` — an actor KNOWING about itself for GOAP decisions
+- **Narrative generation**: Storyline composing content from archives for the content flywheel
+
+This data is **behavioral self-knowledge** — it does not gate API operations, does not authorize actions, and does not determine what a service allows. A god-actor reading `${personality.mercy}` to weight an intervention decision is behavior; no service reads archive data to decide whether to permit an API call.
+
+**The forbidden pattern**: A game-mechanical service (crafting, leaderboard, matchmaking, analytics) puts operational state into entity archives (proficiency levels, known recipes, rankings, statistics), and then the same or another service reads that archive data as **authority** — "this entity can do X because the archive says they had capability Y." This is a metadata bag contract in archive form: the archive format becomes a dependency between services, with convention-based key access, no type safety, and invisible coupling.
+
+**Why this is specifically T29**: The archive is just a bigger bag. Instead of reading `metadata["biomeCode"]` from a Location response, the service reads `archive["craft"]["proficiency"]["blacksmithing"]` from a compressed archive. Same pattern, same failures: no schema enforcement, invisible coupling, convention drift, untestable in isolation.
+
+**The correct pattern for capability tracking**: Services that need persistent capability data MUST own it through proper Bannou primitives:
+
+| Need | Correct Primitive | How It Works |
+|------|-------------------|--------------|
+| Progressive skill/growth | **Seed** (L2) | Service defines its own seed type (e.g., `proficiency:blacksmithing`). Seed handles its own archival. |
+| Milestone unlocks | **Collection** (L2) | Service defines its own collection type. Seed evolution listener grants collection items at growth thresholds. Collection handles its own archival. |
+| Explicit skill gates | **License** (L4) | Service defines board templates. License board entries ARE the authority. |
+| Runtime capability queries | **Variable Provider** | `${craft.can_craft.*}` reads from Seed/Collection at runtime via proper APIs. No archive involved. |
+
+The service OWNS the template definitions (seed types, collection types, license boards) even though the instance data lives in L2 primitives. When the entity is archived, each L2 primitive archives its own data through its own compression callback. The game-mechanical service never needs an archive endpoint because it stores no per-entity character identity data — it stores templates (recipes, station definitions) that are not character-specific.
+
+**The test**: "Is this archive data consumed for behavioral self-knowledge (GOAP weighting, narrative flavor), or for operational authority (gating API calls, determining what operations are permitted)?" If the latter — **violation**. Use Seed/Collection/License instead.
+
 ### Detection & Enforcement
 
 **Schema-level**: Any schema property with `additionalProperties: true` must be documented as client-only metadata. Code review must verify no plugin reads metadata keys from another service's entities by convention.
 
 **Code-level**: If you see `JsonElement` navigation on another service's metadata field, or dictionary key lookups on response metadata, this is a violation. The consuming service should own its own data.
+
+**Archive-level**: If a service registers an `x-compression-callback` for game-mechanical operational state (proficiency levels, rankings, statistics, known recipes) rather than entity identity/narrative data, this is a violation. The mechanical state should be tracked through Seed, Collection, or License primitives whose L2 services handle their own archival.
 
 **The test**: "If I renamed or removed this metadata key, would any Bannou plugin break?" If yes — **violation**. That data must be in a schema.
 
@@ -898,7 +945,7 @@ ownerId:
 | Anonymous event objects | T5 | Define typed event in schema |
 | Manually defining lifecycle events | T5 | Use `x-lifecycle` in events schema |
 | Service class missing `partial` | T6 | Add `partial` keyword |
-| Missing x-permissions on endpoint | T13 | Add to schema (even if empty array) |
+| Missing x-permissions on endpoint | T13 | Add to schema; use `[]` for service-to-service only, `role: anonymous` for pre-auth public |
 | Designing browser-facing without justification | T15 | Use POST-only WebSocket pattern |
 | GPL library in NuGet package | T18 | Use MIT/BSD alternative |
 | Publishing event to lower-layer's topic instead of calling API | T27 | Use generated client directly (hierarchy permits the call) |

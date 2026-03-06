@@ -1,6 +1,6 @@
 # Plugin Production Readiness Status
 
-> **Last Updated**: 2026-03-05
+> **Last Updated**: 2026-03-06
 > **Scope**: All Bannou service plugins
 
 ---
@@ -84,10 +84,10 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Character History](#character-history-status) | L4 | 95% | 0 | Feature-complete. Participations, backstory, summarization, compression. Hardened: T8 filler removed, EntityType enum, enriched events, expanded tests. |
 | [Character Lifecycle](#character-lifecycle-status) | L4 | 0% | 0 | Pre-implementation. Spec audited: event topics, type classifications, state stores, deprecation lifecycle, T28/T32 compliance, polygamy support all corrected. No schema, no code. |
 | [Character Personality](#character-personality-status) | L4 | 95% | 0 | Hardened. x-lifecycle, T8 filler removal, T13 permissions, T25 type safety, config validation, null safety. Both variable providers work. |
-| [Divine](#divine-status) | L4 | 25% | 0 | Aspirational. All 22 endpoints return NotImplemented. Detailed plan exists, zero code. |
+| [Divine](#divine-status) | L4 | 25% | 0 | L4-audited (2026-03-06): Schema flat events, topic_prefix, constructor dependencies, store caching, event consumer, internal models, telemetry spans, structured logging. Skeleton tenet-compliant. All 22 endpoints still stubbed. 3 design decisions, 2 external blockers (#383/#388). |
 | [Escrow](#escrow-status) | L4 | 70% | 1 | 13-state FSM works. Validation placeholder, custom handlers inert, status index broken. |
-| [Environment](#environment-status) | L4 | 0% | 0 | Pre-implementation. Weather simulation, temperature modeling, and ecological resource availability spec. No schema, no code. |
-| [Ethology](#ethology-status) | L4 | 0% | 0 | Pre-implementation. Species-level behavioral archetype registry and nature resolution spec. No schema, no code. |
+| [Environment](#environment-status) | L4 | 0% | 0 | L4-audited 3x (2026-03-06): Pre-implementation spec hardened. 3 audit passes fixed: T28 cleanup, T16 topics, T31 Category A, T25 types, T13 permissions, T21 thresholds, T26 sentinel values, binding/realm-config endpoints added to API section, IEventConsumer, cleanup completeness, cross-reference consistency. No schema, no code. |
+| [Ethology](#ethology-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): T28 cleanup (location/species event subs→lib-resource x-references), T31 Category A deprecation (undeprecate+delete endpoints), T13 x-permissions (nature query/cleanup→[]), T25 PascalCase enums (ActivityPattern, DietType, SocialStructure, OverrideScopeType), T5 x-lifecycle adoption, T30 ITelemetryProvider, IRealmClient/IResourceClient added, variable-providers.yaml registration, T29 speciesCode metadata concern (#308). 6 design considerations remain. No schema, no code. |
 | [Faction](#faction-status) | L4 | 80% | 0 | All 31 endpoints done. Seed-based growth, norms, territory. Obligation integration missing. |
 | [Gardener](#gardener-status) | L4 | 62% | 0 | Void garden works. Broader garden concept unimplemented. No client events, no divine actors. |
 | [Leaderboard](#leaderboard-status) | L4 | 78% | 0 | Redis Sorted Set rankings work. IncludeArchived stub, batch UpdateMode ignored. |
@@ -105,9 +105,10 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Storyline](#storyline-status) | L4 | 55% | 0 | SDK wrapper works for MVP. 3/15 endpoints done. No iterative composition or event integration. |
 | [Affix](#affix-status) | L4 | 0% | 0 | Pre-implementation. Spec L4-audited: Pattern C topics, Category B deprecation, T31 instance guard, typed spawnTagModifiers, hard IInventoryClient, orphan reconciliation worker, x-permissions on all groups. No schema, no code. |
 | [Arbitration](#arbitration-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-05): 6 critical spec violations found and fixed in-document, schema creation guidance added, work tracking with 6 related GH issues, 4 resource cleanup targets. 8 design considerations remain. 2 unmet prerequisites (Faction sovereignty, Obligation multi-channel). No schema, no code. |
-| [Craft](#craft-status) | L4 | 0% | 0 | Pre-implementation. Recipe-based crafting orchestration spec. No schema, no code. |
-| [Disposition](#disposition-status) | L4 | 0% | 0 | Pre-implementation. Emotional synthesis and aspirational drive spec. No schema, no code. |
-| [Dungeon](#dungeon-status) | L4 | 0% | 0 | Pre-implementation. Dungeon-as-actor lifecycle orchestration spec. No schema, no code. |
+| [Craft](#craft-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): Pattern C topics, T29 typed models (requiredStates, affixOperationConfig), Category C affixOperation enum, T31 Category B with deprecation guard, isActive removed, local proficiency fallback removed, x-permissions all groups, location cleanup target. 7 design considerations remain. No schema, no code. |
+| [Director](#director-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): T32 accountId→sessionId, T16 PascalCase enums, x-lifecycle adoption, T8 metrics removal (→Analytics), T31 phase events collapsed to `*.updated`, cleanup endpoint reduced. 8 design considerations remain. No schema, no code. |
+| [Disposition](#disposition-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): targetType→$ref:EntityType, targetId→Guid (no "self" sentinel), IRelationshipClient→hard dep, typed SynthesisBreakdown (T29), DriveOriginType PascalCase enum, T16 past-tense topics, x-permissions all 17 endpoints, x-event-publications, x-resource-mapping, compression priority 40→20, guilt-as-composite-feeling (GH#410), seed.phase.changed subscription (GH#497), hearsay deferred to Phase 4+. No schema, no code. |
+| [Dungeon](#dungeon-status) | L4 | 0% | 0 | Pre-implementation. L4-audited (2026-03-06): T29 personalityType→DungeonCoreModel (not seed metadata), T4 IItemClient/IInventoryClient→hard deps, T16 Pattern A topics (trap-triggered, layout-changed, phase-changed), DungeonStatus enum added, game-service cleanup target, ITelemetryProvider in DI, domain management permissions, config validation constraints, GrowthContributionDebounceMs config, T31 no-deprecation classification, inhabitant durability note, DC#3 resolved (#422). 10 design considerations remain, 7 missing GH issues. No schema, no code. |
 | [Hearsay](#hearsay-status) | L4 | 0% | 0 | Pre-implementation. Social information propagation and belief formation spec. No schema, no code. |
 | [Loot](#loot-status) | L4 | 0% | 0 | Pre-implementation. Loot table management and generation spec. No schema, no code. |
 | [Market](#market-status) | L4 | 0% | 0 | Pre-implementation. Marketplace orchestration (auctions + NPC vendors) spec. No schema, no code. |
@@ -1460,11 +1461,11 @@ gh issue list --search "Character Personality:" --state open
 
 ### Production Readiness: 25%
 
-All 22 endpoints return `NotImplemented`. The deep dive is aspirational -- it thoroughly documents the intended architecture, composability model, dependencies, state stores, events, configuration (18 properties), and background workers, but zero business logic exists. The schema and plugin skeleton are in place with a detailed implementation plan at `docs/plans/DIVINE.md`, but no functional code has been written.
+L4-audited (2026-03-06). Skeleton is now tenet-compliant: schema events use flat structure with inline eventId/timestamp (S1/S2 fixed), `topic_prefix: divine` added for Pattern C lifecycle topics (S3 fixed), constructor has all 9 hard dependencies + IEventConsumer + constructor-cached state stores (C1-C3 fixed), internal data models defined (DeityModel, BlessingModel, AttentionSlotModel, DivinityEventModel) with proper types (C4 fixed), event handler uses async/await with telemetry span (C5/STD-2 fixed), structured logging on all 22 stub methods (STD-6 fixed). All 22 endpoints still return `NotImplemented`. Detailed implementation plan at `docs/plans/DIVINE.md`. 3 design decisions need human input (domain-to-analytics mapping, blessing template registration strategy, entity validation strategy). 2 external blockers: Puppetmaster watcher-actor integration (#383/#388) needed for god-actors. Critical upstream dependency: Status service EntityType.Character hardcoding (#415) blocks entity-agnostic blessings.
 
 ### Bug Count: 0
 
-No known bugs.
+No known bugs (skeleton-only; bugs will emerge during implementation).
 
 ### Top 3 Bugs
 
@@ -1475,7 +1476,7 @@ No known bugs.
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
 | 1 | **Implement deity CRUD operations** | All 8 deity management endpoints are stubbed. This is the foundational work that everything else depends on. | No issue |
-| 2 | **Implement blessing orchestration** | All 5 blessing endpoints including dual-tier storage mechanism (Collection for permanent, Status for temporary) are stubbed. Primary consumer-facing feature. | No issue |
+| 2 | **Implement blessing orchestration** | All 5 blessing endpoints including dual-tier storage mechanism (Collection for permanent, Status for temporary) are stubbed. Primary consumer-facing feature. Blocked on #415 (Status EntityType.Character hardcoding) for entity-agnostic blessings. | [#415](https://github.com/beyond-immersion/bannou-service/issues/415) |
 | 3 | **Variable Provider Factory for ABML** | `IDivineVariableProviderFactory` providing `${divine.*}` to Actor (L2) is listed as a potential extension. Required for NPC behavior to react to divine influence. | No issue |
 
 ### GH Issues
@@ -1514,6 +1515,38 @@ No implementation exists to have bugs.
 
 ```bash
 gh issue list --search "Disposition:" --state open
+```
+
+---
+
+## Director {#director-status}
+
+**Layer**: L4 GameFeatures | **Deep Dive**: [DIRECTOR.md](plugins/DIRECTOR.md)
+
+### Production Readiness: 0%
+
+Entirely pre-implementation. L4-audited (2026-03-06). Human-in-the-loop orchestration service for developer-driven event coordination, actor observation, and player audience management. Three control tiers: Observe (tap actor perception/cognitive state), Steer (inject perceptions, GOAP priority overrides, action gates), Drive (replace actor cognition with human commands via same IActionHandler pipeline). Directed events coordinate multi-actor productions with player targeting through existing Gardener/Hearsay/Quest mechanisms. Audit fixes applied: T32 accountId→webSocketSessionId throughout (identity boundary compliance), T16 PascalCase for all 5 enums, x-lifecycle adoption for DirectorSession and DirectedEvent CRUD events, T31 phase transition events collapsed to `director.event.updated` with `changedFields`, T8 metrics data removed from responses (→Analytics events), cleanup endpoint reduced from 2 to 1 (no account cleanup needed with session-based identity), config worker intervals added. 24 planned endpoints across 7 groups, 9 published events (6 x-lifecycle + 3 custom), 3 consumed events, 6 state stores, 17 configuration properties, 2 background workers, and a 7-phase implementation plan.
+
+### Bug Count: 0
+
+No implementation exists to have bugs.
+
+### Top 3 Bugs
+
+*(None -- pre-implementation)*
+
+### Top 3 Enhancements
+
+| # | Enhancement | Description | Issue |
+|---|-------------|-------------|-------|
+| 1 | **Phase 1 - Schema & Generation** | Create `director-api.yaml` (24 endpoints), `director-events.yaml` (9 published, 3 consumed), `director-configuration.yaml` (17 properties), `director-client-events.yaml` (tap data relay, approval requests). Generate service code. | No issue |
+| 2 | **Phase 2 - Director Session & Actor Observation** | Implement session lifecycle (start/get/end), actor tap/untap with RabbitMQ relay, tap data delivery via IClientEventPublisher, session timeout background worker. | No issue |
+| 3 | **Phase 3 - Actor Steering** | Implement perception injection wrapper, `DirectorOverrideProviderFactory` as standard `IVariableProviderFactory`, GOAP override store, action gate mechanism with approval flow. | No issue |
+
+### GH Issues
+
+```bash
+gh issue list --search "Director:" --state open
 ```
 
 ---
@@ -1558,7 +1591,9 @@ gh issue list --search "Escrow:" --state open
 
 ### Production Readiness: 0%
 
-Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for an environmental state service providing weather simulation, temperature modeling, atmospheric conditions, and ecological resource availability. Consumes temporal data from Worldstate (L2) -- season, time of day, calendar boundaries -- and translates it into environmental conditions that affect NPC behavior, production, trade, loot, and player experience. Uses deterministic weather: given realm + location + game-day + season, weather is hash-computed consistently across all nodes and restarts without per-instance storage. Supports divine weather manipulation via time-bounded overrides (storm gods, nature deities). Climate templates define per-biome seasonal patterns (temperature curves, weather distributions, precipitation). Three-layer condition resolution: climate template baseline + weather event overrides + deterministic location noise. Fills phantom references across the codebase: `${world.weather.temperature}` in ABML, `TtlWeatherEffects` in Mapping, seasonal availability in economy/trade, environmental overrides in Ethology. Specifies 20 planned endpoints, 5 state stores, 6+ published events, 3+ consumed events, 1 background worker, 1 variable provider namespace (`${environment.*}`), and a 7-phase implementation plan (Phase 0 requires Worldstate as hard prerequisite). No endpoints, no generated code, no service implementation exists.
+L4-audited (2026-03-06). Pre-implementation spec hardened for tenet compliance. Not listed in GENERATED-SERVICE-DETAILS.md (no schema/code yet). A detailed architectural specification for an environmental state service providing weather simulation, temperature modeling, atmospheric conditions, and ecological resource availability. Consumes temporal data from Worldstate (L2) and translates it into environmental conditions for NPC behavior, production, trade, loot, and player experience. Uses deterministic hash-based weather computation. Specifies 22 planned endpoints (was 20, +2 for undeprecate/delete per T31 Category A), 5 state stores, 6+ published events, 3+ consumed events, 2 background workers, 1 variable provider namespace (`${environment.*}`), and a 7-phase implementation plan.
+
+**Audit findings fixed**: T28 violation (removed `location.deleted` event subscription, use lib-resource cleanup only), T16 violations (lifecycle topics → Pattern C with `topic_prefix`, `conditions-changed` → `conditions.changed`), T31 violation (climate templates declared Category A with undeprecate/delete endpoints, deprecation-guarded binding creation), T25 violations (all `DateTime` → `DateTimeOffset`), T13 violations (cleanup/binding/config endpoints → `[{ role: developer }]`), T21 violations (added `DroughtThreshold`, `AbundanceThreshold`, `WindChillFactor` config properties), model improvements (`heatThreshold` field, `DefaultBiomeCode` validation constraints), schema compliance notes (`additionalProperties: false`, named `$ref` types), informational notes (ITelemetryProvider, ITransitCostModifierProvider creation, variable-providers.yaml registration, client events T17 structure), Worldstate time dependency tracking (#532/#534/#543).
 
 ### Bug Count: 0
 
@@ -1590,7 +1625,7 @@ gh issue list --search "Environment:" --state open
 
 ### Production Readiness: 0%
 
-Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for a species-level behavioral archetype registry and nature resolution service -- the missing middle ground between "every wolf is identical" (hardcoded ABML context defaults) and "full character cognitive stack" (8+ variable providers with per-entity persistent state). Provides three-layer nature resolution: species archetype (base behavioral template), environmental overrides (realm/location modifications), and deterministic individual noise (hash-based per-entity variation without per-entity storage). Supports 100,000+ creatures without per-entity state entries. Delegates to Character-Lifecycle's Heritage Engine when the entity is a character with genetic data, making `${nature.*}` a universal behavioral baseline that Heritage refines. Specifies 18 planned endpoints, 4 state stores, 4+ published events, 2+ consumed events, 1 background worker (cache warmup), 1 variable provider namespace (`${nature.*}`), and a 6-phase implementation plan (Phase 0 requires only existing Species service and Actor's IVariableProviderFactory pattern). No endpoints, no generated code, no service implementation exists.
+Pre-implementation. L4-audited (2026-03-06): deep dive specification hardened through 3 parallel audit agents (schema rules, all tenets, GitHub issues). 19 findings applied: T28 cleanup pattern corrected (replaced `location.deleted`/`species.deleted`/`location.deprecated` event subscriptions with 3 lib-resource `x-references` cleanup endpoints), T31 Category A deprecation lifecycle (added `undeprecate` + `delete` endpoints, `includeDeprecated` on list, cross-service deprecation checks on register/create-override), T13 x-permissions explicitly declared (nature query + cleanup endpoints `[]` service-to-service only), T25 PascalCase enums (`ActivityPattern`, `DietType`, `SocialStructure`, `OverrideScopeType`), T5 `x-lifecycle` with `topic_prefix: ethology` adoption (manual event definitions removed), T30 `ITelemetryProvider` added to DI, `IRealmClient`/`IResourceClient` added as hard dependencies, `variable-providers.yaml` registration noted, T9 per-archetype distributed locking on seed endpoint, override deactivation/activation events collapsed to `ethology.override.updated` with `changedFields`. T29 concern documented for `speciesCode` metadata bag risk on actor templates (GH #308). 22 planned endpoints (10 archetype + 6 override + 3 nature query + 3 cleanup), 4 state stores, 6 x-lifecycle events, 1 consumed event (informational only), 1 background worker, 1 variable provider (`${nature.*}`). 6 design considerations remain. No schema, no generated code, no service implementation exists.
 
 ### Bug Count: 0
 
@@ -1604,8 +1639,8 @@ No implementation exists to have bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Phase 1 - Archetype Definitions** | Create schemas, generate code, implement archetype CRUD with species-code binding, bulk seed endpoint for world initialization, species event handlers, and resource cleanup. | No issue |
-| 2 | **Phase 2 - Nature Resolution** | Implement three-layer resolution algorithm (archetype + overrides + deterministic noise via MurmurHash3), `NatureProviderFactory` as `IVariableProviderFactory`, Redis caching, and ResolveNature/CompareNatures endpoints. | No issue |
+| 1 | **Phase 1 - Archetype Definitions** | Create schemas (`x-lifecycle`, `x-references`, PascalCase enums, `x-permissions`), generate code, implement archetype CRUD with Category A deprecation lifecycle (deprecate/undeprecate/delete), bulk seed with per-archetype locking, species.deprecated informational handler, 3 lib-resource cleanup endpoints. | No issue |
+| 2 | **Phase 2 - Nature Resolution** | Implement three-layer resolution algorithm (archetype + overrides + deterministic noise via MurmurHash3), `NatureProviderFactory` as `IVariableProviderFactory`, Redis caching, ResolveNature/ResolveNatureBatch/CompareNatures endpoints. | No issue |
 | 3 | **Phase 4 - Character Delegation** | Implement Heritage-aware resolution: when entity is a character with Heritage data, use phenotype values for mapped axes (skipping noise), falling back to species archetype for unmapped axes. Graceful degradation when Character-Lifecycle unavailable. | No issue |
 
 ### GH Issues
@@ -2254,7 +2289,7 @@ gh issue list --search "Broadcast:" --state open
 
 ### Production Readiness: 0%
 
-Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for a recipe-based crafting orchestration service covering production (material-to-item), modification (lib-affix operations), and extraction (item destruction for components), with Contract-backed multi-step sessions, seed-integrated proficiency tracking, station/tool validation, quality formulas, and recipe discovery. No endpoints, no generated code, no service implementation exists.
+Pre-implementation. L4-audited (2026-03-06). Detailed architectural specification for recipe-based crafting orchestration: production (material-to-item), modification (lib-affix operations via typed `AffixOperationType` enum), and extraction (item destruction for components). Contract-backed multi-step sessions, seed-integrated proficiency tracking (lib-seed only, no local fallback), station/tool validation, quality formulas, and recipe discovery. 28 endpoints across 7 groups, 6 state stores, variable provider factory (`${craft.*}`), 3 resource cleanup targets (game-service, character, location). Audit fixes: Pattern C event topics (10 topics), T29 typed models replacing `object?` fields, Category C enum for affix operations, T31 Category B with deprecation guard, `isActive` removed, local proficiency fallback removed, x-permissions on all groups. 7 design considerations remain (quality-to-affix mapping, concurrent modification, real-time durations, seed type registration, cross-entity crafting, material quality propagation, offline NPC crafting). New T29 "Archive Shape" sub-tenet added to FOUNDATION.md. No schema, no generated code, no service implementation exists.
 
 ### Bug Count: 0
 
@@ -2316,7 +2351,7 @@ gh issue list --search "Common:" --state open
 
 ### Production Readiness: 0%
 
-Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. An exceptionally detailed architectural specification for a dungeon lifecycle orchestration service implementing the "dungeon-as-actor" vision -- living dungeon entities with dual mastery patterns (full split vs bonded role), seed-based progressive growth, mana economy via Currency, Contract-backed master bonds, memory capture/manifestation, and integration with Actor, Puppetmaster, Gardener, Mapping, Scene, and Save-Load. No endpoints, no generated code, no service implementation exists.
+Pre-implementation architectural specification. L4-audited (2026-03-06). 25 endpoints planned (8 core + 4 bond + 4 inhabitant + 4 memory + 2 domain + 3 cleanup). Dungeon-as-actor lifecycle orchestration: living dungeon entities with dual mastery patterns (full split vs bonded role), seed-based progressive growth (`dungeon_core` + `dungeon_master`), mana economy via Currency, Contract-backed master bonds, dynamic character binding (3-stage cognitive progression: Dormant → Event Brain → Character Brain), memory capture/manifestation, and integration with Actor, Puppetmaster, Gardener, Mapping, Scene, Save-Load, Item, Inventory. Audit fixes applied: T29 (personalityType → DungeonCoreModel, not seed metadata), T4 (IItemClient/IInventoryClient → hard deps), T16 (3 event topics corrected to Pattern A), DungeonStatus enum added, game-service cleanup target added, ITelemetryProvider in DI, domain management permissions, config validation constraints, GrowthContributionDebounceMs config property, T31 no-deprecation classification, inhabitant store durability note, Design Consideration #3 resolved (#422 creature_base exists). 3 blocking dependencies (#436 household split, #437 seed promotion, #362 bond dissolution — Pattern A only for first two). 10 design considerations remain (3 resolved), 7 missing GH issues need creation. No schema, no generated code, no implementation.
 
 ### Bug Count: 0
 
@@ -2330,9 +2365,9 @@ No implementation exists to have bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Phase 1 - Core Infrastructure** | Create schemas, generate code, implement dungeon core CRUD with Seed/Currency/Actor provisioning and variable provider factories. | No issue |
-| 2 | **Phase 2 - Dungeon Master Bond** | Implement Contract-backed bond formation flow with master seed creation and perception injection via character Actor. | No issue |
-| 3 | **Phase 4 - Memory System** | Implement memory capture with significance scoring and physical manifestation (items, scene decorations, environmental effects) gated by seed capability. | No issue |
+| 1 | **Phase 1 - Core Infrastructure** | Create schemas, generate code, implement dungeon core CRUD with Seed/Currency/Actor provisioning and variable provider factories. Requires design decisions on mana economy model and system realm provisioning. | No issue |
+| 2 | **Phase 1.5 - Cognitive Progression** | Implement `HandleSeedPhaseChangedAsync` for Stirring (actor spawn) and Awakened (character creation + dynamic binding) transitions. Requires character creation timing design. | No issue |
+| 3 | **Phase 2 - Dungeon Master Bond** | Implement Contract-backed bond formation flow with master seed creation and perception injection via character Actor. Blocked by [#362](https://github.com/beyond-immersion/bannou-service/issues/362). | [#362](https://github.com/beyond-immersion/bannou-service/issues/362) |
 
 ### GH Issues
 

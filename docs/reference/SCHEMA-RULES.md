@@ -128,20 +128,35 @@ Bannou uses custom OpenAPI extensions to drive code generation.
 
 ### x-permissions (Required on ALL API Endpoints)
 
-Declares role and state requirements for WebSocket client access. **All endpoints MUST have x-permissions, even if empty.**
+Declares role and state requirements for WebSocket client access. **All endpoints MUST have x-permissions.**
+
+**How it works**: The Permission service builds a per-session allowlist from registered permission matrices. Only endpoints with at least one role entry appear in the matrix. Endpoints with `x-permissions: []` are **excluded from the matrix entirely** — they receive no session GUID, do not appear in the client's capability manifest, and are unreachable via WebSocket. They are accessible only via lib-mesh (service-to-service).
 
 ```yaml
 paths:
   /account/get:
     post:
       x-permissions:
-        - role: user
-  /health:
+        - role: user          # Requires authentication via WebSocket
+  /auth/login:
     post:
-      x-permissions: []  # Explicitly public (rare)
+      x-permissions:
+        - role: anonymous     # Accessible to all WebSocket clients (pre-auth)
+  /achievement/progress/update:
+    post:
+      x-permissions: []       # NOT exposed via WebSocket — service-to-service only
 ```
 
-**Role hierarchy**: `anonymous` → `user` → `developer` → `admin`
+| Value | Meaning | WebSocket Access |
+|-------|---------|------------------|
+| `x-permissions: [{role: admin}]` | Admin-only | Admin WebSocket sessions only |
+| `x-permissions: [{role: developer}]` | Developer+ | Developer and admin sessions |
+| `x-permissions: [{role: user}]` | Authenticated | Any authenticated session |
+| `x-permissions: [{role: anonymous}]` | Pre-auth public | All connected clients (rare) |
+| `x-permissions: []` | Service-to-service only | **No WebSocket access** |
+| *(omitted entirely)* | Not in WebSocket API | **No WebSocket access** |
+
+**Role hierarchy**: `anonymous` → `user` → `developer` → `admin` (higher includes lower)
 
 **With state requirements**: Add `states: { game-session: in_lobby }` to require both role AND state.
 
@@ -375,6 +390,8 @@ info:
 | 0 | Base entity data (e.g., character core fields) |
 | 10-30 | Extension data (personality, history, encounters) |
 | 50-100 | Optional/derived data (quests, storylines) |
+
+**Eligibility (T29 — mandatory)**: Compression callbacks are for **entity identity and narrative data** consumed by behavior expressions and narrative generation (the content flywheel). They MUST NOT be used for game-mechanical operational state (proficiency levels, known recipes, rankings, statistics, inventory snapshots). If a service needs persistent capability tracking, it MUST own that state through Seed (growth), Collection (milestone unlocks), or License (explicit gates) — those L2 primitives handle their own archival through their own compression callbacks. See T29 "The Archive Shape of T29" in `FOUNDATION.md` for full rationale.
 
 **Validation**: Generator validates that `compressEndpoint` and `decompressEndpoint` (if specified) exist in the schema's paths.
 

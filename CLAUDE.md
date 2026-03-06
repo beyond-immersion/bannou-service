@@ -69,7 +69,7 @@ This is NOT a reference to claude-code's issues or any other repository.
 
 **Incident log** (add new incidents here):
 1. T16 three-part event topics: Grepped actor/asset/puppetmaster, found same pattern, dismissed as "established." Result: topic naming violations in 3+ services blessed as correct.
-2. T13 x-permissions on L4 write endpoints: Grepped character-personality and character-history, found same `[]`, dismissed as "established pattern for internal L4 services." Result: security gap in 3+ services blessed as correct.
+2. ~~T13 x-permissions on L4 write endpoints~~: **RETRACTED** (2026-03-06) — Original finding was based on a documentation error in SCHEMA-RULES.md that described `x-permissions: []` as "Explicitly public (rare)." Investigation of issue #580 revealed `[]` actually means "not exposed to WebSocket clients" (service-to-service only). The `[]` on L4 write endpoints was correct all along — those endpoints are called by event handlers via lib-mesh, not by WebSocket clients. The documentation error has been fixed in SCHEMA-RULES.md, FOUNDATION.md T13, and TENETS.md.
 
 ---
 

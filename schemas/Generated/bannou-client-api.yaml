@@ -2011,6 +2011,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EncounterTypeListResponse'
+  /character-encounter/record:
+    post:
+      summary: Record new encounter with perspectives
+      operationId: characterEncounter_recordEncounter
+      tags:
+      - Recording
+      description: |
+        Records a new encounter between two or more characters. Creates the shared
+        encounter record and individual perspectives for each participant.
+
+        Perspectives can be provided in the request or will be auto-generated with
+        default values if not specified.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordEncounterRequest'
+      responses:
+        '200':
+          description: Encounter recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterResponse'
+        '400':
+          description: Invalid encounter data (requires at least 2 participants)
+        '404':
+          description: One or more characters not found
+        '409':
+          description: Duplicate encounter (same participants, timestamp, and 
+            type)
   /character-encounter/query/by-character:
     post:
       summary: Get character's encounters (paginated)
@@ -2136,6 +2171,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SentimentResponse'
+  /character-encounter/batch-get:
+    post:
+      summary: Bulk sentiment for multiple targets
+      operationId: characterEncounter_batchGetSentiment
+      tags:
+      - Queries
+      description: |
+        Calculates sentiment toward multiple target characters in a single call.
+        Efficient for behavior system queries that check multiple NPCs.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchGetSentimentRequest'
+      responses:
+        '200':
+          description: Sentiments calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchSentimentResponse'
   /character-encounter/get-perspective:
     post:
       summary: Get character's view of encounter
@@ -2157,6 +2217,60 @@ paths:
       responses:
         '200':
           description: Perspective retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerspectiveResponse'
+        '404':
+          description: Perspective not found
+  /character-encounter/update-perspective:
+    post:
+      summary: Update perspective (reflection)
+      operationId: characterEncounter_updatePerspective
+      tags:
+      - Perspectives
+      description: |
+        Updates a character's perspective on an encounter. Used when a character
+        reflects on past events or gains new information about an encounter.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePerspectiveRequest'
+      responses:
+        '200':
+          description: Perspective updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerspectiveResponse'
+        '404':
+          description: Perspective not found
+  /character-encounter/refresh-memory:
+    post:
+      summary: Strengthen memory (referenced)
+      operationId: characterEncounter_refreshMemory
+      tags:
+      - Perspectives
+      description: |
+        Strengthens a character's memory of an encounter. Called when the encounter
+        is referenced in dialogue, thought, or action. Counteracts memory decay.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshMemoryRequest'
+      responses:
+        '200':
+          description: Memory refreshed
           content:
             application/json:
               schema:
@@ -2320,6 +2434,68 @@ paths:
                 $ref: '#/components/schemas/PersonalityResponse'
         '404':
           description: No personality defined for this character
+  /character-personality/evolve:
+    post:
+      summary: Record an experience that may evolve personality
+      operationId: characterPersonality_recordExperience
+      tags:
+      - Personality Evolution
+      description: |
+        Records a significant experience for a character. The system evaluates whether
+        the experience causes trait evolution based on:
+        - Experience type and its typical trait impacts
+        - Experience intensity (higher = more likely to cause change)
+        - Current trait values and resistance
+        - Random factor for rarity (most experiences don't cause changes)
+
+        This endpoint is typically called by the behavior service when significant
+        events occur during gameplay.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordExperienceRequest'
+      responses:
+        '200':
+          description: Experience recorded and evaluated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperienceResult'
+        '404':
+          description: Character personality not found
+  /character-personality/batch-get:
+    post:
+      summary: Get personalities for multiple characters
+      operationId: characterPersonality_batchGetPersonalities
+      tags:
+      - Personality Management
+      description: |
+        Bulk load personalities for multiple characters. Used by the behavior service
+        for efficient region initialization. Characters without personalities are
+        returned in the notFound array.
+
+        Maximum 100 characters per request.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchGetPersonalitiesRequest'
+      responses:
+        '200':
+          description: Personalities retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchPersonalityResponse'
   /character-personality/get-combat:
     post:
       summary: Get combat preferences for a character
@@ -2348,6 +2524,36 @@ paths:
                 $ref: '#/components/schemas/CombatPreferencesResponse'
         '404':
           description: No combat preferences defined for this character
+  /character-personality/evolve-combat:
+    post:
+      summary: Record combat experience that may evolve preferences
+      operationId: characterPersonality_evolveCombatPreferences
+      tags:
+      - Combat Preferences
+      description: |
+        Records a significant combat experience that may cause preference evolution.
+        Similar to personality evolution, but focused on combat-specific traits.
+
+        Combat experiences can shift style (e.g., repeated losses may make a
+        character more defensive), adjust risk tolerance, or change retreat thresholds.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvolveCombatRequest'
+      responses:
+        '200':
+          description: Combat experience recorded and evaluated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatEvolutionResult'
+        '404':
+          description: Character combat preferences not found
   /character-personality/get-compress-data:
     post:
       summary: Get personality data for compression
@@ -18640,7 +18846,7 @@ components:
           description: Optional related entity (location, organization, 
             character)
         relatedEntityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           nullable: true
           description: Type of the related entity (if any)
     BackstoryElementType:
@@ -18663,13 +18869,9 @@ components:
       description: Complete backstory data for a character
       additionalProperties: false
       required:
-      - characterId
       - elements
+      - createdAt
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character this backstory belongs to
         elements:
           type: array
           items:
@@ -18678,7 +18880,6 @@ components:
         createdAt:
           type: string
           format: date-time
-          nullable: true
           description: When this backstory was first created
         updatedAt:
           type: string
@@ -19096,6 +19297,21 @@ components:
             type: string
             format: uuid
           description: Instance IDs that were not found
+    BatchGetPersonalitiesRequest:
+      type: object
+      description: Request payload for bulk loading personalities
+      additionalProperties: false
+      required:
+      - characterIds
+      properties:
+        characterIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: IDs of characters to get personalities for (max 100)
     BatchGetRealmTimesRequest:
       type: object
       additionalProperties: false
@@ -19131,6 +19347,26 @@ components:
             type: string
             format: uuid
           description: Realm IDs from the request that had no initialized clock
+    BatchGetSentimentRequest:
+      type: object
+      description: Request to get sentiment toward multiple characters
+      additionalProperties: false
+      required:
+      - characterId
+      - targetCharacterIds
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose sentiment to query
+        targetCharacterIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: Target characters to measure sentiment toward
     BatchMessageEntry:
       type: object
       additionalProperties: false
@@ -19170,11 +19406,54 @@ components:
         error:
           type: string
           description: Human-readable error reason
+    BatchPersonalityResponse:
+      type: object
+      description: Response containing personalities for multiple characters
+      additionalProperties: false
+      required:
+      - personalities
+      - notFound
+      properties:
+        personalities:
+          type: array
+          items:
+            $ref: '#/components/schemas/PersonalityResponse'
+          description: Successfully retrieved personalities
+        notFound:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Character IDs that have no personality defined
+    BatchSentimentResponse:
+      type: object
+      description: Response containing sentiment toward multiple targets
+      additionalProperties: false
+      required:
+      - sentiments
+      properties:
+        sentiments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SentimentResponse'
+          description: Sentiment toward each target
+    BehaviorCategory:
+      type: string
+      description: Category for organizing behaviors
+      enum:
+      - Base
+      - Cultural
+      - Professional
+      - Personal
+      - Situational
+      - Ambient
     BehaviorTreeData:
       type: object
       additionalProperties: false
       description: Compiled behavior tree data with bytecode or download 
         reference
+      required:
+      - bytecodeSize
       properties:
         bytecode:
           type: string
@@ -19182,6 +19461,7 @@ components:
           description: Base64-encoded compiled bytecode for the behavior tree
         bytecodeSize:
           type: integer
+          minimum: 0
           description: Size of the bytecode in bytes
         downloadUrl:
           type: string
@@ -20491,18 +20771,11 @@ components:
       properties:
         behaviorId:
           type: string
+          minLength: 1
           description: Unique identifier for the cached behavior
         compiledBehavior:
           $ref: '#/components/schemas/CompiledBehavior'
           description: The compiled behavior data retrieved from cache
-        cacheTimestamp:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the behavior was cached
-        cacheHit:
-          type: boolean
-          description: Whether this was a cache hit or miss
     CadenceInfo:
       description: Information about a cadence
       type: object
@@ -21139,60 +21412,6 @@ components:
           format: date-time
           nullable: true
           description: Real-world last update timestamp
-    CharacterContext:
-      type: object
-      additionalProperties: false
-      description: Context information about a character for behavior resolution
-      properties:
-        npcId:
-          type: string
-          nullable: true
-          description: Unique identifier for the NPC
-          example: "npc_12345"
-        culture:
-          type: string
-          nullable: true
-          description: Cultural background identifier
-          example: "european_medieval"
-        profession:
-          type: string
-          nullable: true
-          description: Character profession identifier
-          example: "blacksmith"
-        stats:
-          type: object
-          additionalProperties:
-            type: number
-          nullable: true
-          description: Character statistics and attributes
-          example:
-            energy: 0.8
-            health: 1.0
-            hunger: 0.3
-        skills:
-          type: object
-          additionalProperties:
-            type: number
-          nullable: true
-          description: Character skill levels
-          example:
-            blacksmithing: 85
-            trading: 42
-        location:
-          $ref: '#/components/schemas/Location'
-          nullable: true
-          description: Current location information for the character
-        relationships:
-          type: object
-          additionalProperties:
-            type: number
-          nullable: true
-          description: Relationship values with other characters
-        worldState:
-          type: object
-          additionalProperties: true
-          nullable: true
-          description: Relevant world state information
     CharacterEncounterArchive:
       type: object
       x-archive-type: true
@@ -21257,9 +21476,10 @@ components:
           description: Whether historical participations exist
         participations:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/HistoricalParticipation'
-          description: Historical event participations (empty if 
+          description: Historical event participations (null if 
             hasParticipations=false)
         hasBackstory:
           type: boolean
@@ -22098,31 +22318,27 @@ components:
           description: Whether this is a built-in type
     CleanupByCharacterRequest:
       type: object
+      description: Request to delete all achievement progress for a character
       additionalProperties: false
-      description: Request to cleanup actors referencing a deleted character
       required:
       - characterId
       properties:
         characterId:
           type: string
           format: uuid
-          description: ID of the character that was deleted
+          description: Character whose achievement progress should be deleted
     CleanupByCharacterResponse:
       type: object
+      description: Response from cleanup-by-character operation
       additionalProperties: false
-      description: Response from character cleanup operation
       required:
-      - actorsCleanedUp
-      - actorIds
+      - progressRecordsDeleted
       properties:
-        actorsCleanedUp:
+        progressRecordsDeleted:
           type: integer
-          description: Number of actors that were stopped and cleaned up
-        actorIds:
-          type: array
-          items:
-            type: string
-          description: IDs of actors that were cleaned up
+          minimum: 0
+          description: Number of progress records deleted across all game 
+            services
     CleanupByEntityRequest:
       description: Request to end all relationships referencing a deleted entity
         during cascading resource cleanup
@@ -22712,6 +22928,44 @@ components:
         registered without schema changes. Common conventions include
         voice_gallery, scene_archive, music_library, bestiary, recipe_book,
         but any string code is valid.
+    CombatEvolutionResult:
+      type: object
+      description: Result of recording a combat experience
+      additionalProperties: false
+      required:
+      - preferencesEvolved
+      properties:
+        preferencesEvolved:
+          type: boolean
+          description: Whether any preferences changed as a result
+        previousPreferences:
+          $ref: '#/components/schemas/CombatPreferences'
+          nullable: true
+          description: Previous preferences (null if no change)
+        newPreferences:
+          $ref: '#/components/schemas/CombatPreferences'
+          nullable: true
+          description: New preferences after evolution (null if no change)
+        newVersion:
+          type: integer
+          nullable: true
+          description: New version number if evolved (null if no change)
+    CombatExperienceType:
+      type: string
+      description: |
+        Categories of combat experiences that may cause preference evolution.
+        Each type affects different aspects of combat behavior.
+      enum:
+      - DecisiveVictory
+      - NarrowVictory
+      - Defeat
+      - NearDeath
+      - AllySaved
+      - AllyLost
+      - SuccessfulRetreat
+      - FailedRetreat
+      - AmbushSuccess
+      - AmbushSurvived
     CombatPreferences:
       type: object
       description: |
@@ -22882,6 +23136,7 @@ components:
       properties:
         abmlContent:
           type: string
+          minLength: 1
           description: Raw ABML YAML content to compile
           example: |
             version: "1.0.0"
@@ -22903,19 +23158,12 @@ components:
             If not provided, extracted from ABML metadata.id or generated from content hash.
           example: "blacksmith_daily_routine"
         behaviorCategory:
-          type: string
+          $ref: '#/components/schemas/BehaviorCategory'
           description: |
             Category for organizing behaviors (e.g., profession, cultural, situational).
             Used for filtering and grouping in bundles.
-          enum:
-          - base
-          - cultural
-          - professional
-          - personal
-          - situational
-          - ambient
           nullable: true
-          example: "professional"
+          example: "Professional"
         bundleId:
           type: string
           nullable: true
@@ -22925,11 +23173,6 @@ components:
             Clients can then download entire bundles for efficient bulk loading.
             If the bundle doesn't exist, it will be created.
           example: "blacksmith-behaviors-v1"
-        characterContext:
-          $ref: '#/components/schemas/CharacterContext'
-          nullable: true
-          description: Character context for context variable resolution during 
-            compilation
         compilationOptions:
           $ref: '#/components/schemas/CompilationOptions'
           nullable: true
@@ -22941,9 +23184,12 @@ components:
       additionalProperties: false
       required:
       - behaviorId
+      - compilationTimeMs
+      - isUpdate
       properties:
         behaviorId:
           type: string
+          minLength: 1
           description: Unique identifier for the compiled behavior 
             (content-addressable hash)
           example: "behavior-a1b2c3d4e5f6g7h8"
@@ -22959,27 +23205,17 @@ components:
             metadata
         compilationTimeMs:
           type: integer
+          minimum: 0
           description: Time taken to compile the behavior in milliseconds
         assetId:
           type: string
           nullable: true
           description: Asset service ID where the compiled bytecode is stored. 
             Null only when caching is explicitly disabled.
-        bundleId:
-          type: string
-          nullable: true
-          description: Bundle ID if the behavior was added to a bundle. Null if 
-            not bundled.
         isUpdate:
           type: boolean
           description: True if this replaced an existing behavior with the same 
             content hash
-        warnings:
-          type: array
-          items:
-            type: string
-          nullable: true
-          description: Non-fatal warnings during compilation
     CompiledBehavior:
       description: Compiled behavior containing behavior tree, context schema, 
         and GOAP integration data
@@ -23594,16 +23830,12 @@ components:
       description: Response from recording party consent
       required:
       - escrow
-      - consentRecorded
       - triggered
       - newStatus
       properties:
         escrow:
           $ref: '#/components/schemas/EscrowAgreement'
           description: Updated escrow agreement
-        consentRecorded:
-          type: boolean
-          description: Whether consent was recorded
         triggered:
           type: boolean
           description: Whether this consent triggered completion
@@ -23985,8 +24217,12 @@ components:
           description: Themes that matched the area configuration
     ContextSchemaData:
       type: object
-      description: Schema defining required context variables for behavior 
-        execution
+      description: |
+        Schema defining required context variables for behavior execution.
+        Structure is compiler-generated from ABML context declarations.
+        Keys are variable names, values describe expected types and sources.
+        No Bannou service reads specific keys by convention (T29 compliant) —
+        this schema is consumed by the ActorRunner interpreter at runtime.
       additionalProperties: true
     ContractBindingType:
       type: string
@@ -24541,21 +24777,6 @@ components:
       - inherit
       - local
       - portal
-    Coordinates:
-      type: object
-      additionalProperties: false
-      description: 3D spatial coordinates representing a position in the game 
-        world
-      properties:
-        x:
-          type: number
-          description: X coordinate position
-        y:
-          type: number
-          description: Y coordinate position
-        z:
-          type: number
-          description: Z coordinate position
     CopySaveRequest:
       description: Request to copy save data from one slot to another, 
         optionally across different entities or games.
@@ -25618,7 +25839,8 @@ components:
         requiredConsentsForRelease:
           type: integer
           nullable: true
-          description: Number of consents required (-1 for all)
+          description: Number of consents required (null = all consent-required 
+            parties)
         expiresAt:
           type: string
           format: date-time
@@ -29672,7 +29894,6 @@ components:
       - deposits
       - consents
       - status
-      - requiredConsentsForRelease
       - createdAt
       - createdBy
       - createdByType
@@ -29738,8 +29959,9 @@ components:
           description: Current escrow status
         requiredConsentsForRelease:
           type: integer
-          description: How many parties must consent for release (-1 = all 
-            required)
+          nullable: true
+          description: How many parties must consent for release (null = all 
+            consent-required parties)
         lastValidatedAt:
           type: string
           format: date-time
@@ -30431,6 +30653,39 @@ components:
       - Religious
       - Cultural
       - Personal
+    EvolveCombatRequest:
+      type: object
+      description: Request payload for recording combat experience that may 
+        evolve preferences
+      additionalProperties: false
+      required:
+      - characterId
+      - experienceType
+      - intensity
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character who had the combat experience
+        experienceType:
+          $ref: '#/components/schemas/CombatExperienceType'
+          description: Category of combat experience
+        intensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: |
+            How significant the combat experience was (0.0 to 1.0).
+            Higher intensity = higher probability of preference evolution.
+        contextData:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: |
+            Optional context for logging and debugging (e.g., enemy type,
+            ally count, location). Not used in evolution calculations.
+            No Bannou plugin reads specific keys from this field by convention.
     ExecuteCleanupRequest:
       type: object
       additionalProperties: false
@@ -30867,6 +31122,42 @@ components:
           format: date-time
           nullable: true
           description: Specific deadline for this deposit
+    ExperienceResult:
+      type: object
+      description: Result of recording an experience, including any personality 
+        evolution
+      additionalProperties: false
+      required:
+      - personalityEvolved
+      - changedTraits
+      properties:
+        personalityEvolved:
+          type: boolean
+          description: Whether any traits changed as a result of this experience
+        changedTraits:
+          type: array
+          items:
+            $ref: '#/components/schemas/TraitValue'
+          description: Traits that evolved (empty array if no change)
+        newVersion:
+          type: integer
+          nullable: true
+          description: New personality version if evolved (null if no change)
+    ExperienceType:
+      type: string
+      description: |
+        Categories of significant experiences that may cause personality evolution.
+        Each type has predefined trait impact tendencies.
+      enum:
+      - Trauma
+      - Betrayal
+      - Loss
+      - Victory
+      - Friendship
+      - Redemption
+      - Corruption
+      - Enlightenment
+      - Sacrifice
     ExpirationPolicy:
       type: string
       description: How currency expiration is determined
@@ -32175,6 +32466,7 @@ components:
       properties:
         behaviorId:
           type: string
+          minLength: 1
           description: Unique identifier for the cached behavior
     GetCalendarRequest:
       type: object
@@ -34636,6 +34928,7 @@ components:
       properties:
         agentId:
           type: string
+          format: uuid
           nullable: true
           description: Unique identifier for the agent requesting the plan
         goal:
@@ -34644,13 +34937,17 @@ components:
         worldState:
           type: object
           additionalProperties: true
-          description: Current world state as key-value pairs
+          description: |
+            Planner-owned dynamic world state bag for GOAP A* search.
+            Keys are arbitrary world state variable names, values are current state.
+            No Bannou service reads specific keys by convention (T29 compliant).
           example:
             hunger: 0.8
             gold: 50
             location: "home"
         behaviorId:
           type: string
+          minLength: 1
           description: ID of compiled behavior containing GOAP actions
         options:
           $ref: '#/components/schemas/GoapPlanningOptions'
@@ -34668,10 +34965,16 @@ components:
           description: The generated plan if successful
         planningTimeMs:
           type: integer
-          description: Time spent planning in milliseconds
+          minimum: 0
+          nullable: true
+          description: Time spent planning in milliseconds. Null when planner 
+            did not run.
         nodesExpanded:
           type: integer
-          description: Number of nodes expanded during A* search
+          minimum: 0
+          nullable: true
+          description: Number of nodes expanded during A* search. Null when 
+            planner did not run.
         failureReason:
           type: string
           nullable: true
@@ -34698,6 +35001,7 @@ components:
         totalCost:
           type: number
           format: float
+          minimum: 0
           description: Total cost of all actions in the plan
     GoapPlanningOptions:
       description: Options controlling the GOAP planning process including depth
@@ -34707,14 +35011,17 @@ components:
       properties:
         maxDepth:
           type: integer
+          minimum: 1
           default: 10
           description: Maximum plan depth (number of actions)
         maxNodes:
           type: integer
+          minimum: 1
           default: 1000
           description: Maximum nodes to expand during search
         timeoutMs:
           type: integer
+          minimum: 1
           default: 100
           description: Planning timeout in milliseconds
     GrantBlessingRequest:
@@ -35354,6 +35661,8 @@ components:
           description: ID of the historical event
         eventName:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Name of the event (for display and summarization)
         eventCategory:
           $ref: '#/components/schemas/EventCategory'
@@ -35423,14 +35732,9 @@ components:
       description: Generated text summaries for character compression
       additionalProperties: false
       required:
-      - characterId
       - keyBackstoryPoints
       - majorLifeEvents
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character summarized
         keyBackstoryPoints:
           type: array
           items:
@@ -35740,6 +36044,7 @@ components:
       properties:
         behaviorId:
           type: string
+          minLength: 1
           description: Unique identifier for the cached behavior to invalidate
     InvalidateCacheResponse:
       type: object
@@ -39709,25 +40014,6 @@ components:
           additionalProperties:
             type: string
           description: Custom metadata
-    Location:
-      type: object
-      additionalProperties: false
-      description: Character location information including current position, 
-        region, and 3D coordinates
-      properties:
-        current:
-          type: string
-          nullable: true
-          description: Current location name or identifier
-        region:
-          type: string
-          nullable: true
-          description: Region or zone the character is in
-        coordinates:
-          $ref: '#/components/schemas/Coordinates'
-          nullable: true
-          description: 3D spatial coordinates of the character's position in the
-            game world
     LocationBaseArchive:
       type: object
       x-archive-type: true
@@ -41945,6 +42231,8 @@ components:
       - totalCount
       - page
       - pageSize
+      - hasNextPage
+      - hasPreviousPage
       properties:
         participations:
           type: array
@@ -42327,6 +42615,49 @@ components:
           format: date-time
           nullable: true
           description: When this personality was last modified
+    PerspectiveInput:
+      type: object
+      description: Input for a single participant's perspective
+      additionalProperties: false
+      required:
+      - characterId
+      - emotionalImpact
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this perspective belongs to
+        emotionalImpact:
+          allOf:
+          - $ref: '#/components/schemas/EmotionalImpact'
+          description: Character's emotional response to the encounter
+        impactIntensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: Intensity of emotional impact (0.0-1.0). Defaults based 
+            on emotionalImpact if not provided.
+        sentimentShift:
+          type: number
+          format: float
+          minimum: -1.0
+          maximum: 1.0
+          nullable: true
+          description: Opinion change toward other participants
+        memoryStrength:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 1.0
+          description: Initial memory strength
+        rememberedAs:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: How this character remembers the encounter
     PerspectiveResponse:
       type: object
       description: Response containing a perspective
@@ -42575,13 +42906,16 @@ components:
       properties:
         actionId:
           type: string
+          minLength: 1
           description: ID of the action (flow name)
         index:
           type: integer
+          minimum: 0
           description: Position in the plan sequence
         cost:
           type: number
           format: float
+          minimum: 0
           description: Cost of this action
     PlanningUrgency:
       type: string
@@ -45137,6 +45471,98 @@ components:
             format: uuid
           description: List of realm IDs that exist but are deprecated (empty if
             none deprecated)
+    RecordEncounterRequest:
+      type: object
+      description: Request to record a new encounter
+      additionalProperties: false
+      required:
+      - timestamp
+      - realmId
+      - encounterTypeCode
+      - outcome
+      - participantIds
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: In-game time of the encounter
+        realmId:
+          type: string
+          format: uuid
+          description: Realm where the encounter occurred
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Specific location (optional)
+        encounterTypeCode:
+          type: string
+          description: Type code (must be an active type)
+        context:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: What triggered the encounter
+        outcome:
+          allOf:
+          - $ref: '#/components/schemas/EncounterOutcome'
+          description: Outcome of the encounter being recorded
+        participantIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          maxItems: 100
+          description: Character IDs involved (minimum 2, server enforces 
+            MaxParticipantsPerEncounter config limit)
+        perspectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/PerspectiveInput'
+          nullable: true
+          description: Optional perspectives (auto-generated if not provided)
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Client-provided encounter-specific data.
+            No Bannou plugin reads specific keys from this field by convention.
+    RecordExperienceRequest:
+      type: object
+      description: Request payload for recording an experience that may evolve 
+        personality
+      additionalProperties: false
+      required:
+      - characterId
+      - experienceType
+      - intensity
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character who had the experience
+        experienceType:
+          $ref: '#/components/schemas/ExperienceType'
+          description: Category of significant experience
+        intensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: |
+            How significant the experience was (0.0 to 1.0).
+            Higher intensity = higher probability of trait evolution.
+            Typical values: 0.3 (minor), 0.5 (moderate), 0.8 (major), 1.0 (life-changing)
+        contextData:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: |
+            Optional context for logging and debugging.
+            Not used in evolution calculations.
+            No Bannou plugin reads specific keys from this field by convention.
     RecordGrowthBatchRequest:
       type: object
       additionalProperties: false
@@ -45222,6 +45648,30 @@ components:
         nodeName:
           type: string
           description: Name of the referencing node
+    RefreshMemoryRequest:
+      type: object
+      description: Request to refresh memory strength
+      additionalProperties: false
+      required:
+      - encounterId
+      - characterId
+      properties:
+        encounterId:
+          type: string
+          format: uuid
+          description: Encounter to refresh memory for
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose memory to refresh
+        strengthBoost:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: Amount to boost memory strength (capped at 1.0). Falls 
+            back to configured MemoryRefreshBoost if not provided.
     RefreshRequest:
       description: Request to obtain a new access token using a valid refresh 
         token
@@ -46268,6 +46718,17 @@ components:
           maxLength: 64
           pattern: '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'
           description: New slot name
+    ReplanReason:
+      type: string
+      description: Reason for GOAP plan validation result
+      enum:
+      - None
+      - PreconditionInvalidated
+      - ActionFailed
+      - BetterGoalAvailable
+      - PlanCompleted
+      - GoalAlreadySatisfied
+      - SuboptimalPlan
     ReportBreachRequest:
       type: object
       description: Request to report a breach
@@ -51304,6 +51765,7 @@ components:
         changeCount:
           type: integer
           default: 0
+          minimum: 0
           description: Number of times this trait has evolved
     TransactionResponse:
       type: object
@@ -53780,6 +54242,45 @@ components:
           type: string
           maxLength: 255
           description: New pre-hashed password from Auth service
+    UpdatePerspectiveRequest:
+      type: object
+      description: Request to update a character's perspective
+      additionalProperties: false
+      required:
+      - encounterId
+      - characterId
+      properties:
+        encounterId:
+          type: string
+          format: uuid
+          description: Encounter to update perspective for
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose perspective to update
+        emotionalImpact:
+          $ref: '#/components/schemas/EmotionalImpact'
+          nullable: true
+          description: New emotional impact
+        impactIntensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: New impact intensity (0.0-1.0)
+        sentimentShift:
+          type: number
+          format: float
+          minimum: -1.0
+          maximum: 1.0
+          nullable: true
+          description: New sentiment shift
+        rememberedAs:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: New memory description
     UpdatePhaseConfigRequest:
       type: object
       description: Request to update deployment phase configuration (non-null 
@@ -54567,6 +55068,7 @@ components:
       properties:
         abmlContent:
           type: string
+          minLength: 1
           description: Raw ABML YAML content to validate
         strictMode:
           type: boolean
@@ -54658,11 +55160,15 @@ components:
           description: The plan to validate
         currentActionIndex:
           type: integer
+          minimum: 0
           description: Index of the action currently being executed
         worldState:
           type: object
           additionalProperties: true
-          description: Current world state
+          description: |
+            Planner-owned dynamic world state bag for plan validation.
+            Keys are arbitrary world state variable names, values are current state.
+            No Bannou service reads specific keys by convention (T29 compliant).
         activeGoals:
           type: array
           items:
@@ -54683,26 +55189,15 @@ components:
           type: boolean
           description: Whether the plan is still valid
         reason:
-          type: string
-          enum:
-          - None
-          - PreconditionInvalidated
-          - ActionFailed
-          - BetterGoalAvailable
-          - PlanCompleted
-          - GoalAlreadySatisfied
-          - SuboptimalPlan
+          $ref: '#/components/schemas/ReplanReason'
           description: Reason for the validation result
         suggestedAction:
-          type: string
-          enum:
-          - Continue
-          - Replan
-          - Abort
+          $ref: '#/components/schemas/ValidationSuggestion'
           description: Suggested action based on validation
         invalidatedAtIndex:
           type: integer
-          description: Index where plan became invalid (if applicable)
+          nullable: true
+          description: Index where plan became invalid. Null when plan is valid.
         message:
           type: string
           nullable: true
@@ -54892,28 +55387,37 @@ components:
       - message
       properties:
         type:
-          type: string
-          enum:
-          - syntax
-          - semantic
-          - schema
-          - context
-          - service_dependency
+          $ref: '#/components/schemas/ValidationErrorType'
           description: Type of validation error
         message:
           type: string
           description: Human-readable error message
         lineNumber:
           type: integer
-          description: Line number where the error occurred (if applicable)
+          nullable: true
+          minimum: 1
+          description: Line number where the error occurred. Null if not 
+            applicable.
         columnNumber:
           type: integer
-          description: Column number where the error occurred (if applicable)
+          nullable: true
+          minimum: 1
+          description: Column number where the error occurred. Null if not 
+            applicable.
         yamlPath:
           type: string
           nullable: true
           description: YAML path to the problematic element
           example: "behaviors.morning_startup.actions[0]"
+    ValidationErrorType:
+      type: string
+      description: Type of ABML validation error
+      enum:
+      - Syntax
+      - Semantic
+      - Schema
+      - Context
+      - ServiceDependency
     ValidationFailure:
       type: object
       description: Records a validation check failure
@@ -55055,6 +55559,13 @@ components:
       enum:
       - Error
       - Warning
+    ValidationSuggestion:
+      type: string
+      description: Suggested action based on GOAP plan validation
+      enum:
+      - Continue
+      - Replan
+      - Abort
     ValidatorConfig:
       type: object
       additionalProperties: false

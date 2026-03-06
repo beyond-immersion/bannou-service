@@ -32,6 +32,7 @@ public partial class BehaviorController
             "properties": {
                 "abmlContent": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Raw ABML YAML content to compile",
                     "example": "version: \"1.0.0\"\nmetadata:\n  id: \"example_behavior\"\n  category: \"basic\"\nbehaviors:\n  example:\n    triggers:\n      - condition: \"true\"\n    actions:\n      - log:\n          message: \"Hello World\"\n"
                 },
@@ -42,29 +43,16 @@ public partial class BehaviorController
                     "example": "blacksmith_daily_routine"
                 },
                 "behaviorCategory": {
-                    "type": "string",
+                    "$ref": "#/$defs/BehaviorCategory",
                     "description": "Category for organizing behaviors (e.g., profession, cultural, situational).\nUsed for filtering and grouping in bundles.\n",
-                    "enum": [
-                        "base",
-                        "cultural",
-                        "professional",
-                        "personal",
-                        "situational",
-                        "ambient"
-                    ],
                     "nullable": true,
-                    "example": "professional"
+                    "example": "Professional"
                 },
                 "bundleId": {
                     "type": "string",
                     "nullable": true,
                     "description": "Optional bundle identifier for grouping related behaviors.\nWhen specified, the compiled behavior will be added to a bundle with this ID.\nClients can then download entire bundles for efficient bulk loading.\nIf the bundle doesn't exist, it will be created.\n",
                     "example": "blacksmith-behaviors-v1"
-                },
-                "characterContext": {
-                    "$ref": "#/$defs/CharacterContext",
-                    "nullable": true,
-                    "description": "Character context for context variable resolution during compilation"
                 },
                 "compilationOptions": {
                     "$ref": "#/$defs/CompilationOptions",
@@ -73,115 +61,17 @@ public partial class BehaviorController
                 }
             }
         },
-        "CharacterContext": {
-            "type": "object",
-            "additionalProperties": false,
-            "description": "Context information about a character for behavior resolution",
-            "properties": {
-                "npcId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Unique identifier for the NPC",
-                    "example": "npc_12345"
-                },
-                "culture": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Cultural background identifier",
-                    "example": "european_medieval"
-                },
-                "profession": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Character profession identifier",
-                    "example": "blacksmith"
-                },
-                "stats": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "number"
-                    },
-                    "nullable": true,
-                    "description": "Character statistics and attributes",
-                    "example": {
-                        "energy": 0.8,
-                        "health": 1.0,
-                        "hunger": 0.3
-                    }
-                },
-                "skills": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "number"
-                    },
-                    "nullable": true,
-                    "description": "Character skill levels",
-                    "example": {
-                        "blacksmithing": 85,
-                        "trading": 42
-                    }
-                },
-                "location": {
-                    "$ref": "#/$defs/Location",
-                    "nullable": true,
-                    "description": "Current location information for the character"
-                },
-                "relationships": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "number"
-                    },
-                    "nullable": true,
-                    "description": "Relationship values with other characters"
-                },
-                "worldState": {
-                    "type": "object",
-                    "additionalProperties": true,
-                    "nullable": true,
-                    "description": "Relevant world state information"
-                }
-            }
-        },
-        "Location": {
-            "type": "object",
-            "additionalProperties": false,
-            "description": "Character location information including current position, region, and 3D coordinates",
-            "properties": {
-                "current": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Current location name or identifier"
-                },
-                "region": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Region or zone the character is in"
-                },
-                "coordinates": {
-                    "$ref": "#/$defs/Coordinates",
-                    "nullable": true,
-                    "description": "3D spatial coordinates of the character's position in the game world"
-                }
-            }
-        },
-        "Coordinates": {
-            "type": "object",
-            "additionalProperties": false,
-            "description": "3D spatial coordinates representing a position in the game world",
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "description": "X coordinate position"
-                },
-                "y": {
-                    "type": "number",
-                    "description": "Y coordinate position"
-                },
-                "z": {
-                    "type": "number",
-                    "description": "Z coordinate position"
-                }
-            }
+        "BehaviorCategory": {
+            "type": "string",
+            "description": "Category for organizing behaviors",
+            "enum": [
+                "Base",
+                "Cultural",
+                "Professional",
+                "Personal",
+                "Situational",
+                "Ambient"
+            ]
         },
         "CompilationOptions": {
             "description": "Options controlling the ABML compilation process including optimizations and caching",
@@ -229,11 +119,14 @@ public partial class BehaviorController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "behaviorId"
+                "behaviorId",
+                "compilationTimeMs",
+                "isUpdate"
             ],
             "properties": {
                 "behaviorId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique identifier for the compiled behavior (content-addressable hash)",
                     "example": "behavior-a1b2c3d4e5f6g7h8"
                 },
@@ -250,6 +143,7 @@ public partial class BehaviorController
                 },
                 "compilationTimeMs": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Time taken to compile the behavior in milliseconds"
                 },
                 "assetId": {
@@ -257,22 +151,9 @@ public partial class BehaviorController
                     "nullable": true,
                     "description": "Asset service ID where the compiled bytecode is stored. Null only when caching is explicitly disabled."
                 },
-                "bundleId": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Bundle ID if the behavior was added to a bundle. Null if not bundled."
-                },
                 "isUpdate": {
                     "type": "boolean",
                     "description": "True if this replaced an existing behavior with the same content hash"
-                },
-                "warnings": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "nullable": true,
-                    "description": "Non-fatal warnings during compilation"
                 }
             }
         },
@@ -320,6 +201,9 @@ public partial class BehaviorController
             "type": "object",
             "additionalProperties": false,
             "description": "Compiled behavior tree data with bytecode or download reference",
+            "required": [
+                "bytecodeSize"
+            ],
             "properties": {
                 "bytecode": {
                     "type": "string",
@@ -328,6 +212,7 @@ public partial class BehaviorController
                 },
                 "bytecodeSize": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Size of the bytecode in bytes"
                 },
                 "downloadUrl": {
@@ -339,7 +224,7 @@ public partial class BehaviorController
         },
         "ContextSchemaData": {
             "type": "object",
-            "description": "Schema defining required context variables for behavior execution",
+            "description": "Schema defining required context variables for behavior execution.\ nStructure is compiler-generated from ABML context declarations.\nKeys are variable names, values describe expected types and sources.\nNo Bannou service reads specific keys by convention (T29 compliant) \u2014\nthis schema is consumed by the ActorRunner interpreter at runtime.\n",
             "additionalProperties": true
         },
         "GoapGoal": {
@@ -491,6 +376,7 @@ public partial class BehaviorController
             "properties": {
                 "abmlContent": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Raw ABML YAML content to validate"
                 },
                 "strictMode": {
@@ -554,14 +440,7 @@ public partial class BehaviorController
             ],
             "properties": {
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "syntax",
-                        "semantic",
-                        "schema",
-                        "context",
-                        "service_dependency"
-                    ],
+                    "$ref": "#/$defs/ValidationErrorType",
                     "description": "Type of validation error"
                 },
                 "message": {
@@ -570,11 +449,15 @@ public partial class BehaviorController
                 },
                 "lineNumber": {
                     "type": "integer",
-                    "description": "Line number where the error occurred (if applicable)"
+                    "nullable": true,
+                    "minimum": 1,
+                    "description": "Line number where the error occurred. Null if not applicable."
                 },
                 "columnNumber": {
                     "type": "integer",
-                    "description": "Column number where the error occurred (if applicable)"
+                    "nullable": true,
+                    "minimum": 1,
+                    "description": "Column number where the error occurred. Null if not applicable."
                 },
                 "yamlPath": {
                     "type": "string",
@@ -583,6 +466,17 @@ public partial class BehaviorController
                     "example": "behaviors.morning_startup.actions[0]"
                 }
             }
+        },
+        "ValidationErrorType": {
+            "type": "string",
+            "description": "Type of ABML validation error",
+            "enum": [
+                "Syntax",
+                "Semantic",
+                "Schema",
+                "Context",
+                "ServiceDependency"
+            ]
         }
     }
 }
@@ -659,6 +553,7 @@ public partial class BehaviorController
             "properties": {
                 "behaviorId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique identifier for the cached behavior"
                 }
             }
@@ -683,21 +578,12 @@ public partial class BehaviorController
             "properties": {
                 "behaviorId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique identifier for the cached behavior"
                 },
                 "compiledBehavior": {
                     "$ref": "#/$defs/CompiledBehavior",
                     "description": "The compiled behavior data retrieved from cache"
-                },
-                "cacheTimestamp": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the behavior was cached"
-                },
-                "cacheHit": {
-                    "type": "boolean",
-                    "description": "Whether this was a cache hit or miss"
                 }
             }
         },
@@ -745,6 +631,9 @@ public partial class BehaviorController
             "type": "object",
             "additionalProperties": false,
             "description": "Compiled behavior tree data with bytecode or download reference",
+            "required": [
+                "bytecodeSize"
+            ],
             "properties": {
                 "bytecode": {
                     "type": "string",
@@ -753,6 +642,7 @@ public partial class BehaviorController
                 },
                 "bytecodeSize": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Size of the bytecode in bytes"
                 },
                 "downloadUrl": {
@@ -764,7 +654,7 @@ public partial class BehaviorController
         },
         "ContextSchemaData": {
             "type": "object",
-            "description": "Schema defining required context variables for behavior execution",
+            "description": "Schema defining required context variables for behavior execution.\ nStructure is compiler-generated from ABML context declarations.\nKeys are variable names, values describe expected types and sources.\nNo Bannou service reads specific keys by convention (T29 compliant) \u2014\nthis schema is consumed by the ActorRunner interpreter at runtime.\n",
             "additionalProperties": true
         },
         "GoapGoal": {
@@ -916,6 +806,7 @@ public partial class BehaviorController
             "properties": {
                 "behaviorId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique identifier for the cached behavior to invalidate"
                 }
             }
@@ -1001,6 +892,7 @@ public partial class BehaviorController
             "properties": {
                 "agentId": {
                     "type": "string",
+                    "format": "uuid",
                     "nullable": true,
                     "description": "Unique identifier for the agent requesting the plan"
                 },
@@ -1011,7 +903,7 @@ public partial class BehaviorController
                 "worldState": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Current world state as key-value pairs",
+                    "description": "Planner-owned dynamic world state bag for GOAP A* search.\nKeys are arbitrary world state variable names, values are current state.\nNo Bannou service reads specific keys by convention (T29 compliant).\n",
                     "example": {
                         "hunger": 0.8,
                         "gold": 50,
@@ -1020,6 +912,7 @@ public partial class BehaviorController
                 },
                 "behaviorId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "ID of compiled behavior containing GOAP actions"
                 },
                 "options": {
@@ -1083,16 +976,19 @@ public partial class BehaviorController
             "properties": {
                 "maxDepth": {
                     "type": "integer",
+                    "minimum": 1,
                     "default": 10,
                     "description": "Maximum plan depth (number of actions)"
                 },
                 "maxNodes": {
                     "type": "integer",
+                    "minimum": 1,
                     "default": 1000,
                     "description": "Maximum nodes to expand during search"
                 },
                 "timeoutMs": {
                     "type": "integer",
+                    "minimum": 1,
                     "default": 100,
                     "description": "Planning timeout in milliseconds"
                 }
@@ -1119,11 +1015,15 @@ public partial class BehaviorController
                 },
                 "planningTimeMs": {
                     "type": "integer",
-                    "description": "Time spent planning in milliseconds"
+                    "minimum": 0,
+                    "nullable": true,
+                    "description": "Time spent planning in milliseconds. Null when planner did not run."
                 },
                 "nodesExpanded": {
                     "type": "integer",
-                    "description": "Number of nodes expanded during A* search"
+                    "minimum": 0,
+                    "nullable": true,
+                    "description": "Number of nodes expanded during A* search. Null when planner did not run."
                 },
                 "failureReason": {
                     "type": "string",
@@ -1157,6 +1057,7 @@ public partial class BehaviorController
                 "totalCost": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Total cost of all actions in the plan"
                 }
             }
@@ -1173,15 +1074,18 @@ public partial class BehaviorController
             "properties": {
                 "actionId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "ID of the action (flow name)"
                 },
                 "index": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Position in the plan sequence"
                 },
                 "cost": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Cost of this action"
                 }
             }
@@ -1267,12 +1171,13 @@ public partial class BehaviorController
                 },
                 "currentActionIndex": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Index of the action currently being executed"
                 },
                 "worldState": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Current world state"
+                    "description": "Planner-owned dynamic world state bag for plan validation.\nKeys are arbitrary world state variable names, values are current state.\nNo Bannou service reads specific keys by convention (T29 compliant).\n"
                 },
                 "activeGoals": {
                     "type": "array",
@@ -1308,6 +1213,7 @@ public partial class BehaviorController
                 "totalCost": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Total cost of all actions in the plan"
                 }
             }
@@ -1324,15 +1230,18 @@ public partial class BehaviorController
             "properties": {
                 "actionId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "ID of the action (flow name)"
                 },
                 "index": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Position in the plan sequence"
                 },
                 "cost": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Cost of this action"
                 }
             }
@@ -1408,30 +1317,17 @@ public partial class BehaviorController
                     "description": "Whether the plan is still valid"
                 },
                 "reason": {
-                    "type": "string",
-                    "enum": [
-                        "None",
-                        "PreconditionInvalidated",
-                        "ActionFailed",
-                        "BetterGoalAvailable",
-                        "PlanCompleted",
-                        "GoalAlreadySatisfied",
-                        "SuboptimalPlan"
-                    ],
+                    "$ref": "#/$defs/ReplanReason",
                     "description": "Reason for the validation result"
                 },
                 "suggestedAction": {
-                    "type": "string",
-                    "enum": [
-                        "Continue",
-                        "Replan",
-                        "Abort"
-                    ],
+                    "$ref": "#/$defs/ValidationSuggestion",
                     "description": "Suggested action based on validation"
                 },
                 "invalidatedAtIndex": {
                     "type": "integer",
-                    "description": "Index where plan became invalid (if applicable)"
+                    "nullable": true,
+                    "description": "Index where plan became invalid. Null when plan is valid."
                 },
                 "message": {
                     "type": "string",
@@ -1439,6 +1335,28 @@ public partial class BehaviorController
                     "description": "Additional details about the validation result. Null when no additional context is needed."
                 }
             }
+        },
+        "ReplanReason": {
+            "type": "string",
+            "description": "Reason for GOAP plan validation result",
+            "enum": [
+                "None",
+                "PreconditionInvalidated",
+                "ActionFailed",
+                "BetterGoalAvailable",
+                "PlanCompleted",
+                "GoalAlreadySatisfied",
+                "SuboptimalPlan"
+            ]
+        },
+        "ValidationSuggestion": {
+            "type": "string",
+            "description": "Suggested action based on GOAP plan validation",
+            "enum": [
+                "Continue",
+                "Replan",
+                "Abort"
+            ]
         }
     }
 }

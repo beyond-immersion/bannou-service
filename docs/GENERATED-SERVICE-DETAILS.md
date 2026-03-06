@@ -13,7 +13,7 @@ The Account plugin is an internal-only CRUD service (L1 AppFoundation) for manag
 
 ## Achievement {#achievement}
 
-**Version**: 1.0.0 | **Schema**: `schemas/achievement-api.yaml` | **Endpoints**: 11 | **Deep Dive**: [docs/plugins/ACHIEVEMENT.md](plugins/ACHIEVEMENT.md) | **Map**: [docs/maps/ACHIEVEMENT.md](maps/ACHIEVEMENT.md)
+**Version**: 1.0.0 | **Schema**: `schemas/achievement-api.yaml` | **Endpoints**: 12 | **Deep Dive**: [docs/plugins/ACHIEVEMENT.md](plugins/ACHIEVEMENT.md) | **Map**: [docs/maps/ACHIEVEMENT.md](maps/ACHIEVEMENT.md)
 
 The Achievement plugin (L4 GameFeatures) provides a multi-entity achievement and trophy system with progressive/binary unlock types, prerequisite chains, rarity calculations, and platform synchronization (Steam, Xbox, PlayStation). Achievements are scoped to game services, support event-driven auto-unlock from Analytics and Leaderboard events, and include a background service for periodic rarity recalculation.
 
@@ -490,7 +490,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 76
-- **Total endpoints**: 897
+- **Total endpoints**: 898
 
 ---
 

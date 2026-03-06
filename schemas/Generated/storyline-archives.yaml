@@ -47,7 +47,7 @@ components:
           nullable: true
           description: Optional related entity (location, organization, character)
         relatedEntityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           nullable: true
           description: Type of the related entity (if any)
     BackstoryElementType:
@@ -70,13 +70,9 @@ components:
       description: Complete backstory data for a character
       additionalProperties: false
       required:
-      - characterId
       - elements
+      - createdAt
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character this backstory belongs to
         elements:
           type: array
           items:
@@ -85,7 +81,6 @@ components:
         createdAt:
           type: string
           format: date-time
-          nullable: true
           description: When this backstory was first created
         updatedAt:
           type: string
@@ -220,9 +215,10 @@ components:
           description: Whether historical participations exist
         participations:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/HistoricalParticipation'
-          description: Historical event participations (empty if hasParticipations=false)
+          description: Historical event participations (null if hasParticipations=false)
         hasBackstory:
           type: boolean
           description: Whether backstory elements exist
@@ -526,6 +522,34 @@ components:
           items:
             $ref: '#/components/schemas/EncounterPerspectiveModel'
           description: All perspectives on this encounter
+    EntityType:
+      type: string
+      description: |
+        Universal entity type identifier for first-class Bannou entities.
+        Used for polymorphic entity references (ownerType, entityType, partyType).
+
+        NOT for game-configurable content type codes (use opaque strings) or
+        service-specific roles that include non-entity values (use service-specific enums).
+        See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
+      enum:
+      - System
+      - Account
+      - Character
+      - Actor
+      - Guild
+      - Organization
+      - Government
+      - Faction
+      - Location
+      - Realm
+      - Item
+      - Monster
+      - Relationship
+      - Session
+      - Deity
+      - Dungeon
+      - Custom
+      - Other
     EventCategory:
       type: string
       description: Categories of historical events that characters can participate in
@@ -576,6 +600,8 @@ components:
           description: ID of the historical event
         eventName:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Name of the event (for display and summarization)
         eventCategory:
           $ref: '#/components/schemas/EventCategory'
@@ -612,14 +638,9 @@ components:
       description: Generated text summaries for character compression
       additionalProperties: false
       required:
-      - characterId
       - keyBackstoryPoints
       - majorLifeEvents
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character summarized
         keyBackstoryPoints:
           type: array
           items:
@@ -1004,6 +1025,7 @@ components:
         changeCount:
           type: integer
           default: 0
+          minimum: 0
           description: Number of times this trait has evolved
 x-archive-types:
 - CharacterBaseArchive

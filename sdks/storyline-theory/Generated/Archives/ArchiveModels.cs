@@ -110,7 +110,8 @@ public partial class BackstoryElement
     /// Type of the related entity (if any)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relatedEntityType")]
-    public string? RelatedEntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType? RelatedEntityType { get; set; } = default!;
 
 }
 
@@ -162,13 +163,6 @@ public partial class BackstoryResponse
 {
 
     /// <summary>
-    /// ID of the character this backstory belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
     /// All backstory elements for this character
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("elements")]
@@ -179,7 +173,8 @@ public partial class BackstoryResponse
     /// When this backstory was first created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    public System.DateTimeOffset? CreatedAt { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
     /// When this backstory was last modified
@@ -344,10 +339,10 @@ public partial class CharacterHistoryArchive : ResourceArchiveBase
     public bool HasParticipations { get; set; } = default!;
 
     /// <summary>
-    /// Historical event participations (empty if hasParticipations=false)
+    /// Historical event participations (null if hasParticipations=false)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("participations")]
-    public System.Collections.Generic.ICollection<HistoricalParticipation> Participations { get; set; } = default!;
+    public System.Collections.Generic.ICollection<HistoricalParticipation>? Participations { get; set; } = default!;
 
     /// <summary>
     /// Whether backstory elements exist
@@ -819,6 +814,77 @@ public partial class EncounterResponse
 }
 
 /// <summary>
+/// Universal entity type identifier for first-class Bannou entities.
+/// <br/>Used for polymorphic entity references (ownerType, entityType, partyType).
+/// <br/>
+/// <br/>NOT for game-configurable content type codes (use opaque strings) or
+/// <br/>service-specific roles that include non-entity values (use service-specific enums).
+/// <br/>See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum EntityType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"System")]
+    System = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Account")]
+    Account = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Character")]
+    Character = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Actor")]
+    Actor = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Guild")]
+    Guild = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Organization")]
+    Organization = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Government")]
+    Government = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Faction")]
+    Faction = 7,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Location")]
+    Location = 8,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Realm")]
+    Realm = 9,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Item")]
+    Item = 10,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Monster")]
+    Monster = 11,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Relationship")]
+    Relationship = 12,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Session")]
+    Session = 13,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Deity")]
+    Deity = 14,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Dungeon")]
+    Dungeon = 15,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Custom")]
+    Custom = 16,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Other")]
+    Other = 17,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Categories of historical events that characters can participate in
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -910,7 +976,8 @@ public partial class HistoricalParticipation
     /// Name of the event (for display and summarization)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
     public string EventName { get; set; } = default!;
 
     /// <summary>
@@ -966,13 +1033,6 @@ public partial class HistoricalParticipation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class HistorySummaryResponse
 {
-
-    /// <summary>
-    /// ID of the character summarized
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid CharacterId { get; set; } = default!;
 
     /// <summary>
     /// Key backstory elements as text summaries.
@@ -1604,6 +1664,7 @@ public partial class TraitValue
     /// Number of times this trait has evolved
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changeCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int ChangeCount { get; set; } = 0;
 
 }

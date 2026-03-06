@@ -14,6 +14,7 @@ This document lists all state store components used in Bannou.
 | `achievement-definition` | Redis | Achievement | Achievement definitions |
 | `achievement-lock` | Redis | Achievement | Distributed locks for achievement progress updates |
 | `achievement-progress` | Redis | Achievement | Player achievement progress |
+| `achievement-sync` | Redis | Achievement | Per-entity per-platform sync tracking |
 | `actor-assignments` | Redis | Actor | Actor-to-node assignments |
 | `actor-instances` | Redis | Actor | Active actor instance registry |
 | `actor-pool-nodes` | Redis | Actor | Actor pool node assignments |
@@ -198,7 +199,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 188 stores (117 Redis, 71 MySQL)
+**Total**: 189 stores (118 Redis, 71 MySQL)
 
 ## Naming Conventions
 

@@ -61,6 +61,26 @@ export class CharacterEncounterProxy {
   }
 
   /**
+   * Record new encounter with perspectives
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async characterEncounterRecordEncounterAsync(
+    request: Schemas['RecordEncounterRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['EncounterResponse']>> {
+    return this.client.invokeAsync<Schemas['RecordEncounterRequest'], Schemas['EncounterResponse']>(
+      '/character-encounter/record',
+      request,
+      channel,
+      timeout
+    );
+  }
+
+  /**
    * Get character's encounters (paginated)
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -155,6 +175,24 @@ export class CharacterEncounterProxy {
   }
 
   /**
+   * Bulk sentiment for multiple targets
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async characterEncounterBatchGetSentimentAsync(
+    request: Schemas['BatchGetSentimentRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['BatchSentimentResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['BatchGetSentimentRequest'],
+      Schemas['BatchSentimentResponse']
+    >('/character-encounter/batch-get', request, channel, timeout);
+  }
+
+  /**
    * Get character's view of encounter
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -170,6 +208,44 @@ export class CharacterEncounterProxy {
       Schemas['GetPerspectiveRequest'],
       Schemas['PerspectiveResponse']
     >('/character-encounter/get-perspective', request, channel, timeout);
+  }
+
+  /**
+   * Update perspective (reflection)
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async characterEncounterUpdatePerspectiveAsync(
+    request: Schemas['UpdatePerspectiveRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['PerspectiveResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['UpdatePerspectiveRequest'],
+      Schemas['PerspectiveResponse']
+    >('/character-encounter/update-perspective', request, channel, timeout);
+  }
+
+  /**
+   * Strengthen memory (referenced)
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async characterEncounterRefreshMemoryAsync(
+    request: Schemas['RefreshMemoryRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['PerspectiveResponse']>> {
+    return this.client.invokeAsync<Schemas['RefreshMemoryRequest'], Schemas['PerspectiveResponse']>(
+      '/character-encounter/refresh-memory',
+      request,
+      channel,
+      timeout
+    );
   }
 
   /**

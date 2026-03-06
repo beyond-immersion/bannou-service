@@ -1317,10 +1317,10 @@ public partial class PlatformStatus
     public int SyncedCount { get; set; } = default!;
 
     /// <summary>
-    /// Achievements pending sync
+    /// Achievements pending sync (null when retry queue is not active)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pendingCount")]
-    public int PendingCount { get; set; } = default!;
+    public int? PendingCount { get; set; } = default!;
 
     /// <summary>
     /// Achievements that failed to sync
@@ -1339,6 +1339,39 @@ public partial class PlatformStatus
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastError")]
     public string? LastError { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to delete all achievement progress for a character
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByCharacterRequest
+{
+
+    /// <summary>
+    /// Character whose achievement progress should be deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from cleanup-by-character operation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByCharacterResponse
+{
+
+    /// <summary>
+    /// Number of progress records deleted across all game services
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("progressRecordsDeleted")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int ProgressRecordsDeleted { get; set; } = default!;
 
 }
 

@@ -43,6 +43,44 @@ export class CharacterPersonalityProxy {
   }
 
   /**
+   * Record an experience that may evolve personality
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async characterPersonalityRecordExperienceAsync(
+    request: Schemas['RecordExperienceRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ExperienceResult']>> {
+    return this.client.invokeAsync<Schemas['RecordExperienceRequest'], Schemas['ExperienceResult']>(
+      '/character-personality/evolve',
+      request,
+      channel,
+      timeout
+    );
+  }
+
+  /**
+   * Get personalities for multiple characters
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async characterPersonalityBatchGetPersonalitiesAsync(
+    request: Schemas['BatchGetPersonalitiesRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['BatchPersonalityResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['BatchGetPersonalitiesRequest'],
+      Schemas['BatchPersonalityResponse']
+    >('/character-personality/batch-get', request, channel, timeout);
+  }
+
+  /**
    * Get combat preferences for a character
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -58,6 +96,24 @@ export class CharacterPersonalityProxy {
       Schemas['GetCombatPreferencesRequest'],
       Schemas['CombatPreferencesResponse']
     >('/character-personality/get-combat', request, channel, timeout);
+  }
+
+  /**
+   * Record combat experience that may evolve preferences
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async characterPersonalityEvolveCombatPreferencesAsync(
+    request: Schemas['EvolveCombatRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['CombatEvolutionResult']>> {
+    return this.client.invokeAsync<
+      Schemas['EvolveCombatRequest'],
+      Schemas['CombatEvolutionResult']
+    >('/character-personality/evolve-combat', request, channel, timeout);
   }
 
   /**

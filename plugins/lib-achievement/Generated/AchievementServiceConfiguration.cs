@@ -135,6 +135,20 @@ public class AchievementServiceConfiguration : BaseServiceConfiguration
     public int ProgressTtlSeconds { get; set; } = 0;
 
     /// <summary>
+    /// TTL in seconds for sync history data in Redis, applied at record creation (0 = no expiry, sync history persists indefinitely)
+    /// Environment variable: ACHIEVEMENT_SYNC_HISTORY_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0)]
+    public int SyncHistoryTtlSeconds { get; set; } = 0;
+
+    /// <summary>
+    /// Maximum retry attempts for ETag conflicts when updating sync status records
+    /// Environment variable: ACHIEVEMENT_SYNC_STATUS_RETRY_ATTEMPTS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int SyncStatusRetryAttempts { get; set; } = 3;
+
+    /// <summary>
     /// Progress percentage thresholds at which client milestone events are published (comma-separated in env var)
     /// Environment variable: ACHIEVEMENT_PROGRESS_MILESTONE_PERCENTS
     /// </summary>

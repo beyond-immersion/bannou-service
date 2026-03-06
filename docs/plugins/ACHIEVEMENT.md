@@ -17,7 +17,11 @@ The Achievement plugin (L4 GameFeatures) provides a multi-entity achievement and
 |-----------|-------------|
 | Game clients (via Connect) | Receive `achievement.progress.unlocked` and `achievement.progress.milestone-reached` client events via WebSocket push |
 
-The Achievement plugin is currently a leaf service — it reacts to external events but no other Bannou service subscribes to its output events or calls AchievementClient. Game clients receive unlock and progress milestone notifications via the Connect service's client event push system (IEntitySessionRegistry).
+The Achievement plugin is primarily a leaf service — it reacts to external events. Game clients receive unlock and progress milestone notifications via the Connect service's client event push system (IEntitySessionRegistry). Achievement also participates in the Quest prerequisite system via `IPrerequisiteProviderFactory`, enabling quests to require specific achievements before acceptance.
+
+| Dependent | Relationship |
+|-----------|-------------|
+| lib-quest (via DI) | Discovers `AchievementPrerequisiteProviderFactory` via `IEnumerable<IPrerequisiteProviderFactory>` for dynamic prerequisite validation |
 
 ## Configuration
 
@@ -123,14 +127,11 @@ The Achievement plugin is currently a leaf service — it reacts to external eve
 
 ### Design Considerations (Requires Planning)
 
-- **Missing `IPrerequisiteProviderFactory` implementation**: SERVICE-HIERARCHY.md explicitly lists Achievement as a dynamic prerequisite provider for Quest (`providerName: "achievement"`). Quest validates prerequisites via `IPrerequisiteProviderFactory` — Achievement should implement this interface so quests can require specific achievements before acceptance. Currently no provider exists.
-  <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/578 -->
+- ~~**Missing `IPrerequisiteProviderFactory` implementation**~~: **FIXED** (2026-03-05) — Implemented `AchievementPrerequisiteProviderFactory` in `Providers/`. Registered as singleton via `AchievementServicePlugin.ConfigureServices`. Provider name: `"achievement"`. Checks entity progress for unlock status given `gameServiceId` (required parameter) and optional `entityType` (defaults to Character).
 
-- **No lib-resource cleanup for entity deletion (T28)**: Achievement progress is keyed by `{gameServiceId}:{entityType}:{entityId}`. When a character, account, or other entity is deleted, this progress data becomes permanently orphaned in Redis. Per T28, Achievement should implement `ISeededResourceProvider` to clean up progress data when referenced entities are deleted. This is not the high-frequency exception — progress is per-entity, entities are long-lived.
-  <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/579 -->
+- ~~**No lib-resource cleanup for entity deletion (T28)**~~: **FIXED** (2026-03-06) — Added `x-references` targeting `character` with `sourceType: achievement-progress`. Cleanup endpoint `/achievement/cleanup-by-character` deletes progress across all game services. References registered on first progress creation for Character entities. Cleanup callbacks registered via `AchievementServicePlugin.OnRunningAsync`.
 
-- **T13: Write endpoints with empty x-permissions**: `UpdateAchievementProgress` and `UnlockAchievement` have `x-permissions: []`, meaning anonymous WebSocket access. These are primarily called by event handlers (service-to-service) but the empty permissions expose them to any connected client. Needs explicit decision on whether to add role requirements or document anonymous access as intentional.
-  <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/580 -->
+- ~~**T13: Write endpoints with empty x-permissions**~~: **RESOLVED** (2026-03-06) — Investigation of issue #580 revealed that `x-permissions: []` does NOT mean "anonymous WebSocket access." It means "not exposed to WebSocket clients at all" — the endpoint is excluded from the permission matrix, receives no session GUID, and is reachable only via lib-mesh (service-to-service). The `[]` on `UpdateAchievementProgress` and `UnlockAchievement` is correct: these are called by event handlers via lib-mesh. The root cause was a misleading comment in SCHEMA-RULES.md (`# Explicitly public (rare)`) that has been corrected.
 
 - **TotalEligibleEntities never populated**: The rarity calculation background worker depends on `TotalEligibleEntities > 0`, but this field is never written by any endpoint. The rarity percentage calculation branch will never execute, making the rarity system effectively dead code until this field is automated or manually populated.
   <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/581 -->
@@ -148,11 +149,13 @@ The Achievement plugin is currently a leaf service — it reacts to external eve
 
 This section tracks active development work on items from the quirks/bugs lists above.
 
-### Active
+### Completed
 
-- [#578](https://github.com/beyond-immersion/bannou-service/issues/578) — Implement `IPrerequisiteProviderFactory` for Quest prerequisite validation
-- [#579](https://github.com/beyond-immersion/bannou-service/issues/579) — T28 lib-resource cleanup for entity deletion
-- [#580](https://github.com/beyond-immersion/bannou-service/issues/580) — T13 review: write endpoints with empty x-permissions
+- **2026-03-06**: [#580](https://github.com/beyond-immersion/bannou-service/issues/580) — T13 review: `x-permissions: []` is correct (service-to-service only); root cause was misleading SCHEMA-RULES.md documentation, now fixed
+- **2026-03-06**: [#579](https://github.com/beyond-immersion/bannou-service/issues/579) — T28 lib-resource cleanup for character entity deletion
+- **2026-03-05**: [#578](https://github.com/beyond-immersion/bannou-service/issues/578) — Implemented `AchievementPrerequisiteProviderFactory` for Quest prerequisite validation
+
+### Active
 - [#581](https://github.com/beyond-immersion/bannou-service/issues/581) — TotalEligibleEntities automation for rarity calculation
 - [#582](https://github.com/beyond-immersion/bannou-service/issues/582) — Event handler N+1 definition loading — add caching layer
 - [#583](https://github.com/beyond-immersion/bannou-service/issues/583) — Platform sync permanent failure retry queue

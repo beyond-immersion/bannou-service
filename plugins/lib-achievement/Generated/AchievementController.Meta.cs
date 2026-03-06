@@ -2761,7 +2761,6 @@ public partial class AchievementController
                 "platform",
                 "isLinked",
                 "syncedCount",
-                "pendingCount",
                 "failedCount"
             ],
             "properties": {
@@ -2784,7 +2783,8 @@ public partial class AchievementController
                 },
                 "pendingCount": {
                     "type": "integer",
-                    "description": "Achievements pending sync"
+                    "nullable": true,
+                    "description": "Achievements pending sync (null when retry queue is not active)"
                 },
                 "failedCount": {
                     "type": "integer",
@@ -2868,6 +2868,110 @@ public partial class AchievementController
             _GetPlatformSyncStatus_Info,
             _GetPlatformSyncStatus_RequestSchema,
             _GetPlatformSyncStatus_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CleanupByCharacter
+
+    private static readonly string _CleanupByCharacter_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByCharacterRequest",
+    "$defs": {
+        "CleanupByCharacterRequest": {
+            "type": "object",
+            "description": "Request to delete all achievement progress for a character",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character whose achievement progress should be deleted"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByCharacter_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByCharacterResponse",
+    "$defs": {
+        "CleanupByCharacterResponse": {
+            "type": "object",
+            "description": "Response from cleanup-by-character operation",
+            "additionalProperties": false,
+            "required": [
+                "progressRecordsDeleted"
+            ],
+            "properties": {
+                "progressRecordsDeleted": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of progress records deleted across all game services"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByCharacter_Info = """
+{
+    "summary": "Delete all achievement progress for a character",
+    "description": "Deletes all achievement progress records for a specific character across all game services.\nCalled by lib-resource during character deletion cleanup. This is a hard delete.\n",
+    "tags": [
+        "Resource Cleanup"
+    ],
+    "deprecated": false,
+    "operationId": "cleanupByCharacter"
+}
+""";
+
+    /// <summary>Returns endpoint information for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/cleanup-by-character/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Achievement",
+            "POST",
+            "/achievement/cleanup-by-character",
+            _CleanupByCharacter_Info));
+
+    /// <summary>Returns request schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/cleanup-by-character/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Achievement",
+            "POST",
+            "/achievement/cleanup-by-character",
+            "request-schema",
+            _CleanupByCharacter_RequestSchema));
+
+    /// <summary>Returns response schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/cleanup-by-character/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Achievement",
+            "POST",
+            "/achievement/cleanup-by-character",
+            "response-schema",
+            _CleanupByCharacter_ResponseSchema));
+
+    /// <summary>Returns full schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/cleanup-by-character/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Achievement",
+            "POST",
+            "/achievement/cleanup-by-character",
+            _CleanupByCharacter_Info,
+            _CleanupByCharacter_RequestSchema,
+            _CleanupByCharacter_ResponseSchema));
 
     #endregion
 }

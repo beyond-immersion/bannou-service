@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Divine;
@@ -19,18 +20,18 @@ public partial class DivineService
         eventConsumer.RegisterHandler<IDivineService, AnalyticsScoreUpdatedEvent>(
             "analytics.score.updated",
             async (svc, evt) => await ((DivineService)svc).HandleAnalyticsScoreUpdatedAsync(evt));
-
     }
 
     /// <summary>
-    /// Handles analytics.score.updated events.
-    /// TODO: Implement event handling logic.
+    /// Handles analytics.score.updated events for domain-relevant divinity generation.
+    /// Maps analytics categories to domain codes and queues divinity generation events.
     /// </summary>
-    /// <param name="evt">The event data.</param>
-    public Task HandleAnalyticsScoreUpdatedAsync(AnalyticsScoreUpdatedEvent evt)
+    /// <param name="evt">The analytics score updated event data.</param>
+    public async Task HandleAnalyticsScoreUpdatedAsync(AnalyticsScoreUpdatedEvent evt)
     {
-        // TODO: Implement analytics.score.updated event handling
-        _logger.LogInformation("Received {Topic} event", "analytics.score.updated");
-        return Task.CompletedTask;
+        using var activity = _telemetryProvider.StartActivity("bannou.divine", "DivineService.HandleAnalyticsScoreUpdatedAsync");
+        // TODO: Map analytics categories to domain codes, queue DivinityEventModel entries
+        _logger.LogInformation("Received {Topic} event for game service {GameServiceId}", "analytics.score.updated", evt.GameServiceId);
+        await Task.CompletedTask;
     }
 }

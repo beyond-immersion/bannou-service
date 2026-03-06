@@ -34,6 +34,8 @@ public static class StateStoreDefinitions
     public const string AchievementLock = "achievement-lock";
     /// <summary>Player achievement progress</summary>
     public const string AchievementProgress = "achievement-progress";
+    /// <summary>Per-entity per-platform sync tracking</summary>
+    public const string AchievementSync = "achievement-sync";
 
     // Actor Service
     /// <summary>Actor-to-node assignments</summary>
@@ -517,6 +519,7 @@ public static class StateStoreDefinitions
             [AchievementDefinition] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "ach:def" },
             [AchievementLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "ach:lock" },
             [AchievementProgress] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "ach:prog" },
+            [AchievementSync] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "ach:sync" },
             [ActorAssignments] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "actor:assign" },
             [ActorInstances] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "actor:inst" },
             [ActorPoolNodes] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "actor:pool" },
@@ -717,6 +720,7 @@ public static class StateStoreDefinitions
             [AchievementDefinition] = new StoreMetadata("Achievement", "Achievement definitions", "redis"),
             [AchievementLock] = new StoreMetadata("Achievement", "Distributed locks for achievement progress updates", "redis"),
             [AchievementProgress] = new StoreMetadata("Achievement", "Player achievement progress", "redis"),
+            [AchievementSync] = new StoreMetadata("Achievement", "Per-entity per-platform sync tracking", "redis"),
             [ActorAssignments] = new StoreMetadata("Actor", "Actor-to-node assignments", "redis"),
             [ActorInstances] = new StoreMetadata("Actor", "Active actor instance registry", "redis"),
             [ActorPoolNodes] = new StoreMetadata("Actor", "Actor pool node assignments", "redis"),

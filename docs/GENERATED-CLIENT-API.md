@@ -10,7 +10,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | Service | Proxy Property | Methods | Description |
 |---------|---------------|---------|-------------|
 | [Bannou Account Service API](#account) | `client.Account` | 18 | Internal account management service (CRUD operations only, n... |
-| [Bannou Achievement Service API](#achievement) | `client.Achievement` | 11 | Achievement and trophy system with progress tracking and pla... |
+| [Bannou Achievement Service API](#achievement) | `client.Achievement` | 12 | Achievement and trophy system with progress tracking and pla... |
 | [Actor Service API](#actor) | `client.Actor` | 17 | Distributed actor management and execution for NPC brains, e... |
 | [Bannou Analytics Service API](#analytics) | `client.Analytics` | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Asset Service API](#asset) | `client.Asset` | 20 | Asset management service for storage, versioning, and distri... |
@@ -167,6 +167,12 @@ Achievement and trophy system with progress tracking and platform synchronizatio
 | `UpdateAchievementprogressAsync` | `UpdateAchievementProgressRequest` | `UpdateAchievementProgressResponse` | Update achievement progress |
 | `UnlockachievementAsync` | `UnlockAchievementRequest` | `UnlockAchievementResponse` | Directly unlock an achievement |
 | `ListUnlockedachievementsAsync` | `ListUnlockedAchievementsRequest` | `ListUnlockedAchievementsResponse` | List unlocked achievements |
+
+### Resource Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Delete all achievement progress for a character |
 
 ---
 
@@ -2543,7 +2549,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 55
-- **Total methods**: 890
+- **Total methods**: 891
 
 ---
 
